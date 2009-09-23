@@ -341,6 +341,9 @@ int pagetic;
 char *pagename = "TITLEPIC";
 
 //  PROTOS
+void HereticPatchEngine(void);
+void Chex1PatchEngine(void);
+
 void D_PageDrawer(char *lumpname);
 void D_AdvanceDemo(void);
 

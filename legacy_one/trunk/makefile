@@ -1386,7 +1386,7 @@ $(O)/i_main.o: $(INTERFACE)/i_main.c doomdef.h \
 $(O)/md5.o: md5.c md5.h
 	$(CC) $(CFLAGS) $(LDFLAGS) $(WFLAGS) -c $< -o $@
 
-$(O)/p_chex.o: p_chex.c p_chex.h
+$(O)/p_chex.o: p_chex.c
 	$(CC) $(CFLAGS) $(LDFLAGS) $(WFLAGS) -c $< -o $@
 
 $(O)/filesrch.o: $(INTERFACE)/filesrch.c filesrch.h d_netfil.h

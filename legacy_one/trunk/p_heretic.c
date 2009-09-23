@@ -48,7 +48,6 @@
 #include "s_sound.h"
 #include "m_random.h"
 #include "dstrings.h"
-#include "p_heretic.h"
 
 //---------------------------------------------------------------------------
 //
