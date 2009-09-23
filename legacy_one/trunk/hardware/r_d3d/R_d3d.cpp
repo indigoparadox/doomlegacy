@@ -690,7 +690,7 @@ void Flush( void )
 EXPORT boolean HWRAPI( Init ) (I_Error_t FatalErrorFunction)
 {
     I_Error_GL = FatalErrorFunction;
-    DBG_Printf ("%s v%d.%d%s\n", DRIVER_STRING, VERSION/100, VERSION%100, VERSIONSTRING);
+    DBG_Printf ("%s, %s\n", DRIVER_STRING, VERSION_BANNER);
     return 1;
 }
 

@@ -1,7 +1,7 @@
 // Emacs style mode select   -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id: I_cdmus.c,v 1.2 2000/08/10 11:07:51 ydario Exp $
+// $Id$
 //
 // Copyright (C) 1998-2000 by DooM Legacy Team.
 //

@@ -2,7 +2,7 @@
 // Microsoft Developer Studio generated include file.
 //-----------------------------------------------------------------------------
 //
-// $Id: resource.h,v 1.2 2000/02/27 00:42:12 hurdler Exp $
+// $Id$
 //
 // Copyright (C) 1998-2000 by DooM Legacy Team.
 //

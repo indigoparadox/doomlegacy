@@ -1,7 +1,7 @@
 // Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
-// $Id: i_video_ggi.c,v 1.7 2004/05/16 19:11:53 hurdler Exp $
+// $Id$
 //
 // Copyright (C) 1998-2000 by DooM Legacy Team.
 //

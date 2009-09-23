@@ -1,7 +1,7 @@
 // Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
-// $Id: ogl_sdl.h,v 1.2 2000/11/02 19:49:40 bpereira Exp $
+// $Id$
 //
 // Copyright (C) 1998-2000 by DooM Legacy Team.
 //

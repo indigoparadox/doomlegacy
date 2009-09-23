@@ -1,7 +1,7 @@
 // Emacs style mode select   -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id: dosstr.c,v 1.2 2000/09/10 10:53:46 metzgermeister Exp $
+// $Id$
 //
 // Copyright (C) 1998-2000 by DooM Legacy Team.
 //

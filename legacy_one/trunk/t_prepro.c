@@ -1,7 +1,7 @@
 // Emacs style mode select -*- C++ -*-
 //----------------------------------------------------------------------------
 //
-// $Id: t_prepro.c,v 1.1 2000/11/02 17:57:28 stroggonmeth Exp $
+// $Id$
 //
 // Copyright(C) 2000 Simon Howard
 //

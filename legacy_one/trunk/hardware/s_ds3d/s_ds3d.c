@@ -1,7 +1,7 @@
 // Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
-// $Id: s_ds3d.c,v 1.6 2002/10/07 19:28:35 judgecutor Exp $
+// $Id$
 //
 // Copyright (C) 2001 by DooM Legacy Team.
 //

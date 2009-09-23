@@ -1,7 +1,7 @@
 // Emacs style mode select   -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id: win_main.c,v 1.15 2003/06/10 21:33:20 ssntails Exp $
+// $Id$
 //
 // Copyright (C) 1998-2000 by DooM Legacy Team.
 //
@@ -469,8 +469,7 @@ int WINAPI HandledWinMain(HINSTANCE hInstance,
     myInstance = hInstance;
 
     // open a dummy window, both 3dfx Glide and DirectX need one.
-    if ( (hWndMain = OpenMainWindow(hInstance,nCmdShow,
-                va("Doom Legacy v%i.%i"VERSIONSTRING,VERSION/100,VERSION%100))) == NULL )
+    if ( (hWndMain = OpenMainWindow(hInstance,nCmdShow, VERSION_BANNER) == NULL ))
     {
         tlErrorMessage("Couldn't open window");
         return FALSE;

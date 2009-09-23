@@ -1,6 +1,8 @@
 // Emacs style mode select -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
+// $Id$
+//
 // Copyright(C) 2000 James Haley
 //
 // This program is free software; you can redistribute it and/or modify

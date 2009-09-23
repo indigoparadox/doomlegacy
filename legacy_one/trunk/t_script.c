@@ -1,7 +1,7 @@
 // Emacs style mode select -*- C++ -*-
 //----------------------------------------------------------------------------
 //
-// $Id: t_script.c,v 1.3 2004/09/17 23:04:49 darkwolf95 Exp $
+// $Id$
 //
 // Copyright(C) 2000 Simon Howard
 //

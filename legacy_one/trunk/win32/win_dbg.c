@@ -1,7 +1,7 @@
 // Emacs style mode select   -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id: win_dbg.c,v 1.8 2001/01/25 22:15:45 bpereira Exp $
+// $Id$
 //
 // Copyright (C) 1998-2000 by DooM Legacy Team.
 //
@@ -371,7 +371,7 @@ int __cdecl RecordExceptionInfo (PEXCEPTION_POINTERS data, const char *Message, 
     // Print out some blank lines to separate this error log from any previous ones.
     FPrintf (fileHandle, "Email this file to Doom legacy support so we can fix the bugs\r\n");
     FPrintf (fileHandle, "\r\n\r\n\r\n\r\n");
-    FPrintf (fileHandle, "Doom Legacy v%d.%d%s -ERROR LOG-\r\n\r\n", VERSION/100, VERSION%100, VERSIONSTRING);
+    FPrintf (fileHandle, "%s -ERROR LOG-\r\n\r\n", VERSION_BANNER);
     FPrintf (fileHandle, "Command Line parameters: ");
     for (i = 1;i<myargc;i++)
         FPrintf (fileHandle, "%s ", myargv[i] );

@@ -1,7 +1,7 @@
 // Emacs style mode select   -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id: hw3dsdrv.h,v 1.2 2002/01/21 23:27:06 judgecutor Exp $
+// $Id$
 //
 // Copyright (C) 2001 by DooM Legacy Team.
 //

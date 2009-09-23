@@ -1,10 +1,10 @@
 // Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
-// $Id: d_main.c,v 1.66 2005/12/20 14:58:25 darkwolf95 Exp $
+// $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2009 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -318,6 +318,20 @@
 #include "hardware/hw3sound.h"
 
 #include "b_game.h"     //added by AC for acbot
+
+
+// Versioning
+#ifndef SVN_REV
+#define SVN_REV "none"
+#endif
+
+// Version number: major.minor.revision
+const int  VERSION  = 144; // major*100 + minor
+const int  REVISION = 0;   // for bugfix releases, should not affect compatibility. has nothing to do with svn revisions.
+const char VERSIONSTRING[] = "test (rev " SVN_REV ")";
+char VERSION_BANNER[80];
+
+
 
 //
 //  DEMO LOOP
@@ -1266,7 +1280,7 @@ void IdentifyVersion(void)
 // Just print the nice red titlebar like the original DOOM2 for DOS.
 /* ======================================================================== */
 #ifdef PC_DOS
-void D_Titlebar(char *title1, char *title2)
+void D_Titlebar(const char *title1, const char *title2)
 {
     // DOOM LEGACY banner
     clrscr();
@@ -1289,29 +1303,29 @@ void D_Titlebar(char *title1, char *title2)
 //
 //  Center the title string, then add the date and time of compilation.
 //
-void D_MakeTitleString(char *s)
+static const char *D_MakeTitleString(const char *s)
 {
-    char temp[82];
-    char *t;
-    char *u;
-    int i;
+  static char banner[81];
+  memset(banner, ' ', sizeof(banner));
 
-    for (i = 0, t = temp; i < 82; i++)
-        *t++ = ' ';
+  int i;
 
-    for (t = temp + (80 - strlen(s)) / 2, u = s; *u != '\0';)
-        *t++ = *u++;
+  for (i = (80 - strlen(s)) / 2; *s; )
+    banner[i++] = *s++;
 
-    u = __DATE__;
-    for (t = temp + 1, i = 11; i--;)
-        *t++ = *u++;
-    u = __TIME__;
-    for (t = temp + 71, i = 8; i--;)
-        *t++ = *u++;
+  const char *u = __DATE__;
+  for (i = 0; i < 11; i++)
+    banner[i + 1] = u[i]; 
 
-    temp[80] = '\0';
-    strcpy(s, temp);
+  u = __TIME__;
+  for (i = 0; i < 8; i++)
+    banner[i + 71] = u[i];
+
+  banner[80] = '\0';
+  return banner;
 }
+
+
 
 void D_CheckWadVersion()
 {
@@ -1365,12 +1379,14 @@ void D_DoomMain(void)
 {
     int p;
     char file[256];
-    char legacy[82];            //added:18-02-98: legacy title banner
-    char title[82];             //added:11-01-98:moved, doesn't need to be global
+    const char *legacy, *title;  //added:18-02-98: legacy title banner
 
     int startepisode;
     int startmap;
     boolean autostart;
+
+    // print version banner just once here, use it anywhere
+    sprintf(VERSION_BANNER, "Doom Legacy %d.%d.%d %s", VERSION/100, VERSION%100, REVISION, VERSIONSTRING);
 
     //added:18-02-98:keep error messages until the final flush(stderr)
     if (setvbuf(stderr, NULL, _IOFBF, 1000))
@@ -1394,31 +1410,30 @@ void D_DoomMain(void)
     //  Now the string is centered in a larger one just before output,
     //  and the date and time of compilation is added. (see below)
     switch (gamemode)
-    {
-        case retail:
-            strcpy(title, "The Ultimate DOOM Startup");
-            break;
-        case shareware:
-            strcpy(title, "DOOM Shareware Startup");
-            break;
-        case registered:
-            strcpy(title, "DOOM Registered Startup");
-            break;
-        case commercial:
-            strcpy(title, "DOOM 2: Hell on Earth");
-            break;
+      {
+      case retail:
+	title = "The Ultimate DOOM Startup";
+	break;
+      case shareware:
+	title = "DOOM Shareware Startup";
+	break;
+      case registered:
+	title = "DOOM Registered Startup";
+	break;
+      case commercial:
+	title = "DOOM 2: Hell on Earth";
+	break;
 /*FIXME
       case pack_plut :strcpy (title,"DOOM 2: Plutonia Experiment");break;
       case pack_tnt  :strcpy (title,"DOOM 2: TNT - Evilution");    break;
 */
-        default:
-            strcpy(title, "Public DOOM");
-            break;
-    }
+      default:
+	title = "Public DOOM";
+	break;
+      }
 
     //added:11-01-98:center the string, add compilation time and date.
-    sprintf(legacy, "Doom LEGACY v%i.%i" VERSIONSTRING, VERSION / 100, VERSION % 100);
-    D_MakeTitleString(legacy);
+    legacy = D_MakeTitleString(VERSION_BANNER);
 
 #ifdef PC_DOS
     D_Titlebar(legacy, title);
@@ -1428,7 +1443,7 @@ void D_DoomMain(void)
 
 #ifdef __OS2__
     // set PM window title
-    snprintf(pmData->title, sizeof(pmData->title), "Doom LEGACY v%i.%i" VERSIONSTRING ": %s", VERSION / 100, VERSION % 100, title);
+    snprintf(pmData->title, sizeof(pmData->title), "%s: %s", VERSION_BANNER, title);
 #endif
 
     if (devparm)

@@ -1,7 +1,7 @@
 // Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
-// $Id: hw_trick.c,v 1.10 2002/07/26 15:22:44 hurdler Exp $
+// $Id$
 //
 // Copyright (C) 1998-2001 by DooM Legacy Team.
 //

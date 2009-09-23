@@ -1,7 +1,7 @@
 // Emacs style mode select -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
-// $Id: b_node.c,v 1.3 2002/09/28 06:53:11 tonyd Exp $
+// $Id$
 //
 // Copyright (C) 2002 by DooM Legacy Team.
 //

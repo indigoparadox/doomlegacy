@@ -1,6 +1,6 @@
 /*
  *  Debug.c (c) 1995 Yuri DARIO
- *  $Id: debug.c,v 1.3 2000/08/10 11:07:51 ydario Exp $
+ *  $Id$
  *
  *  Codice visualizzazione messaggi Debug
  *

@@ -1,7 +1,7 @@
 // Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
-// $Id: qmus2mid.h,v 1.4 2000/09/10 10:46:15 metzgermeister Exp $
+// $Id$
 //
 // Copyright (C) 1995 by Sebastien Bacquet.
 // Portions Copyright (C) 1998-2000 by DooM Legacy Team.

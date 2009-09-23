@@ -1,7 +1,7 @@
 // Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
-// $Id: hw3sound.h,v 1.4 2003/01/19 21:24:26 bock Exp $
+// $Id$
 //
 // Copyright (C) 2001 by DooM Legacy Team.
 //

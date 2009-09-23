@@ -1,7 +1,7 @@
 // Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
-// $Id: I_video.c,v 1.8 2004/05/16 19:11:53 hurdler Exp $
+// $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
 //
@@ -46,7 +46,7 @@
 //-----------------------------------------------------------------------------
 
 static const char
-rcsid[] = "$Id: I_video.c,v 1.8 2004/05/16 19:11:53 hurdler Exp $";
+rcsid[] = "$Id$";
 
 #include <stdlib.h>
 #include <stdarg.h>

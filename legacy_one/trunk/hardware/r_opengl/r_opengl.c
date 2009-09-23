@@ -1,7 +1,7 @@
 // Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
-// $Id: r_opengl.c,v 1.60 2002/09/21 11:10:28 hurdler Exp $
+// $Id$
 //
 // Copyright (C) 1998-2000 by DooM Legacy Team.
 //
@@ -522,7 +522,7 @@ int isExtAvailable(char *extension)
 EXPORT boolean HWRAPI( Init ) (I_Error_t FatalErrorFunction)
 {
     I_Error_GL = FatalErrorFunction;
-    DBG_Printf ("%s v%d.%d%s\n", DRIVER_STRING, VERSION/100, VERSION%100, VERSIONSTRING);
+    DBG_Printf ("%s, %s\n", DRIVER_STRING, VERSION_BANNER);
     return 1;
 }
 

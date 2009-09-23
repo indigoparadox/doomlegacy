@@ -1,7 +1,7 @@
 // Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
-// $Id: doomdef.h,v 1.45 2004/05/16 20:25:47 hurdler Exp $
+// $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
 // Portions Copyright (C) 1998-2000 by DooM Legacy Team.
@@ -212,8 +212,13 @@
 #if defined(__WIN32__) || defined(LINUX)
 #define LOGMESSAGES             // write message in log.txt (win32 and Linux only for the moment)
 #endif
-#define VERSION        143      // Game version
-#define VERSIONSTRING  ""
+
+
+// version numbering
+extern const int  VERSION;
+extern const int  REVISION;
+extern const char VERSION_BANNER[];
+
 
 #if defined (LOGMESSAGES) && defined(LINUX)
 #define INVALID_HANDLE_VALUE -1

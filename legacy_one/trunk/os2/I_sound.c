@@ -1,7 +1,7 @@
 // Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
-// $Id: I_sound.c,v 1.6 2007/01/29 06:16:03 chiphog Exp $
+// $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
 //

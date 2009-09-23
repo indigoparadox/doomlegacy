@@ -1,7 +1,7 @@
 // Emacs style mode select -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
-// $Id: b_look.c,v 1.5 2003/06/11 04:20:45 ssntails Exp $
+// $Id$
 //
 // Copyright (C) 2002 by DooM Legacy Team.
 //
