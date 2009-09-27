@@ -95,7 +95,7 @@ int     oglflags = 0; // FIXME: do we have to handle this under Linux as well?
 
 EXPORT void _init() {
 #ifdef DEBUG_TO_FILE
-   logstream = open("ogllog.txt",O_WRONLY|O_CREAT);
+  logstream = open("ogllog.txt", O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
 #endif
 }
 

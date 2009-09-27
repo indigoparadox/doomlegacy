@@ -495,8 +495,8 @@ endif #ifdef SOLARIS
 
 ifdef SDL
 # subdirectory for objects
-  O    := ../objs
-  BIN  := ../bin
+  O    := objs
+  BIN  := bin
   OBJS := $(O)/i_video.o $(O)/dosstr.o $(O)/endtxt.o \
     $(O)/hw_bsp.o $(O)/hw_draw.o $(O)/hw_light.o $(O)/hw_main.o \
     $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o \
@@ -680,6 +680,8 @@ OBJS :=  $(OBJS) \
 		$(O)/b_look.o	\
 		$(O)/b_node.o	\
 		$(O)/b_search.o
+
+
 
 
 ifdef LINUX

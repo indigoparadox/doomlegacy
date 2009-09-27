@@ -250,7 +250,7 @@ void    G_DoWorldDone (void);
 // the game version, if it's older, the changes are not done, and the older
 // code is used for compatibility.
 //
-byte            demoversion=VERSION;
+byte            demoversion;
 
 byte            gameepisode;
 byte            gamemap;

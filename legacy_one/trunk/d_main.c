@@ -307,9 +307,7 @@
 #include "z_zone.h"
 #include "d_main.h"
 #include "d_netfil.h"
-#include "p_heretic.h"
 #include "m_cheat.h"
-#include "p_chex.h"
 
 #ifdef HWRENDER
 #include "hardware/hw_main.h"   // 3D View Rendering
@@ -1390,6 +1388,7 @@ void D_DoomMain(void)
 
     // print version banner just once here, use it anywhere
     sprintf(VERSION_BANNER, "Doom Legacy %d.%d.%d %s", VERSION/100, VERSION%100, REVISION, VERSIONSTRING);
+    demoversion = VERSION;
 
     //added:18-02-98:keep error messages until the final flush(stderr)
     if (setvbuf(stderr, NULL, _IOFBF, 1000))

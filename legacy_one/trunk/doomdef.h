@@ -217,7 +217,7 @@
 // version numbering
 extern const int  VERSION;
 extern const int  REVISION;
-extern const char VERSION_BANNER[];
+extern char VERSION_BANNER[];
 
 
 #if defined (LOGMESSAGES) && defined(LINUX)
