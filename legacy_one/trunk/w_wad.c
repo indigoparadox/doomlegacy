@@ -265,7 +265,7 @@ int W_LoadWadFile (char *filename)
     {
         // this code emulate a wadfile with one lump name "DEHACKED" 
         // at position 0 and size of the whole file
-        // this allow deh fiel to be like all wad, can be copied by network 
+        // this allow deh file to be like all wad, can be copied by network 
         // and loaded at the console
         fstat(handle,&bufstat);
         numlumps = 1; 
@@ -630,7 +630,11 @@ int W_GetNumForName (char* name)
                  "from any shareware or commercial version of Doom or Heretic!\n");
         }
         else
+#ifdef DEBUG_CHEXQUEST
+        I_SoftError ("W_GetNumForName: %s not found!\n", name);	// [WDJ] 4/28/2009 Chexquest
+#else
         I_Error ("W_GetNumForName: %s not found!\n", name);
+#endif
     }
 
     return i;
@@ -671,7 +675,7 @@ int W_GetNumForNameFirst (char* name)
 int W_LumpLength (int lump)
 {
 #ifdef PARANOIA
-    if (lump<0) I_Error("W_LumpLenght: lump not exist\n");
+    if (lump<0) I_Error("W_LumpLength: lump not exist\n");
 
     if ((lump&0xFFFF) >= wadfiles[lump>>16]->numlumps)
         I_Error ("W_LumpLength: %i >= numlumps",lump);
@@ -754,19 +758,27 @@ void* W_CacheLumpNum ( int lump, int tag )
     byte*         ptr;
     lumpcache_t*  lumpcache;
 
-    //SoM: 4/8/2000: Don't keep doing oporations to the lump variable!
+    //SoM: 4/8/2000: Don't keep doing operations to the lump variable!
     int           llump = lump & 0xffff;
     int           lfile = lump >> 16;
 
+#ifdef DEBUG_CHEXQUEST
+   // [WDJ] Crashes in chexquest with black screen, cannot debug
+   if(lump == -1) {
+       // [WDJ] prevent SIGSEGV in chexquest
+      I_SoftError ("W_CacheLumpNum: -1 passed!\n");
+      return NULL;
+    }
+#endif   
 #ifdef PARANOIA
     // check return value of a previous W_CheckNumForName()
     //SoM: 4/8/2000: Do better checking. No more SIGSEGV's!
+    if(lump == -1)	// [WDJ] must be first to protect use as index
+      I_Error ("W_CacheLumpNum: -1 passed!\n");
     if (lfile >= numwadfiles)
       I_Error("W_CacheLumpNum: %i >= numwadfiles(%i)\n", lfile, numwadfiles);
     if (llump >= wadfiles[lfile]->numlumps)
       I_Error ("W_CacheLumpNum: %i >= numlumps", llump);
-    if(lump == -1)
-      I_Error ("W_CacheLumpNum: -1 passed!\n");
     if(llump < 0)
       I_Error ("W_CacheLumpNum: %i < 0!\n", llump);
 #endif
@@ -874,7 +886,7 @@ void* W_CachePatchName ( char*   name,
 void *W_CacheRawAsPic( int lump, int width, int height, int tag)
 {
     lumpcache_t*  lumpcache;
-    //SoM: 4/8/2000: Don't keep doing oporations to the lump variable!
+    //SoM: 4/8/2000: Don't keep doing operations to the lump variable!
     int           llump = lump & 0xffff;
     int           lfile = lump >> 16;
     pic_t         *pic;

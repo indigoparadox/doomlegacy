@@ -362,6 +362,19 @@ void SendNetXCmd2(byte id,void *param,int nparam)
 }
 
 
+static void D_Clearticcmd(int tic)
+{
+    int i;
+
+    for(i=0;i<MAXPLAYERS;i++)
+    {
+        textcmds[tic%BACKUPTICS][i][0]=0;
+        netcmds[tic%BACKUPTICS][i].angleturn = 0; //&= ~TICCMD_RECEIVED;
+    }
+    DEBFILE(va("clear tic %5d (%2d)\n",tic,tic%BACKUPTICS));
+}
+
+
 static void ExtraDataTicker(void)
 {
     int  i,tic;
@@ -373,6 +386,7 @@ static void ExtraDataTicker(void)
         if((playeringame[i]) || (i==0))
         {
             curpos=(byte *)&(textcmds[tic][i]);
+	   // [WDJ] need check for buffer overrun here !!
             bufferend=&curpos[curpos[0]+1];
             curpos++;
             while(curpos<bufferend)
@@ -386,24 +400,25 @@ static void ExtraDataTicker(void)
                     DEBFILE("done\n");
                 }
                 else
+	        {
+#if 1
+		   // [WDJ] Why should a bad demo command byte be fatal.
+                    I_SoftError("Got unknown net/demo command [%d]=%d (max %d)\n"
+                           ,curpos-(byte *)&(textcmds[tic][i])
+                           ,*curpos,textcmds[tic][i][0]);
+		    D_Clearticcmd(tic);
+		    return;
+#else
+		   // Old fatal behavior
                     I_Error("Got unknown net command [%d]=%d (max %d)\n"
                            ,curpos-(byte *)&(textcmds[tic][i])
                            ,*curpos,textcmds[tic][i][0]);
+#endif		   
+		}
             }
         }
 }
 
-static void D_Clearticcmd(int tic)
-{
-    int i;
-
-    for(i=0;i<MAXPLAYERS;i++)
-    {
-        textcmds[tic%BACKUPTICS][i][0]=0;
-        netcmds[tic%BACKUPTICS][i].angleturn = 0; //&= ~TICCMD_RECEIVED;
-    }
-    DEBFILE(va("clear tic %5d (%2d)\n",tic,tic%BACKUPTICS));
-}
 
 // -----------------------------------------------------------------
 //  end of extra data function

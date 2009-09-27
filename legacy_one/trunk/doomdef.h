@@ -237,6 +237,16 @@ extern int logstream;
 #define FRAGGLESCRIPT           // SoM: Activate FraggleScript
 #define FIXROVERBUGS // Fix some 3dfloor bugs. SSNTails 06-13-2002
 
+// [WDJ] Heretic has missing sprites, SOFTERROR is needed to continue play
+// instead of fatal error message.
+#define SOFTERROR
+
+#ifdef SOFTERROR
+void I_SoftError (char *error, ...);
+#else
+#define I_SoftError   I_Error
+#endif
+
 // =========================================================================
 
 

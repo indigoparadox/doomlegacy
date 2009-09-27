@@ -1197,9 +1197,9 @@ void IdentifyVersion(void)
             gamemode = heretic;
         else if (!stricmp("hexen.wad", pathiwad + i))
             gamemode = hexen;
-		//DarkWolf95:July 14, 2003:Chex Quest Support
-		else if (!stricmp("chex.wad",pathiwad+i))
-			gamemode = chexquest1;
+	//DarkWolf95:July 14, 2003:Chex Quest Support
+	else if (!stricmp("chex.wad",pathiwad+i))
+	    gamemode = chexquest1;
         else if (!stricmp(text[DOOM2WAD_NUM], pathiwad + i))
             gamemode = commercial;
         else if (!stricmp(text[DOOMUWAD_NUM], pathiwad + i))
@@ -1258,12 +1258,12 @@ void IdentifyVersion(void)
         gamemode = hexen;
         D_AddFile(hexenwad);
     }
-	//DarkWolf95:July 14, 2003:Chex Quest Support
-	else if (!access (chex1wad, R_OK))
-	{
-		gamemode = chexquest1;
-		D_AddFile (chex1wad);
-	}
+    //DarkWolf95:July 14, 2003:Chex Quest Support
+    else if (!access (chex1wad, R_OK))
+    {
+	gamemode = chexquest1;
+	D_AddFile (chex1wad);
+    }
     else
     {
         I_Error("Main WAD file not found\n" "You need either doom.wad, doom1.wad, doom2.wad,\n" "tnt.wad, plutonia.wad, heretic.wad or heretic1.wad\n"
@@ -1871,3 +1871,47 @@ void D_DoomMain(void)
 
     }
 }
+
+
+#ifdef SOFTERROR
+// Print error and continue game [WDJ] 1/19/2009
+#define SoftError_listsize   8
+static char *  SE_msg[SoftError_listsize];
+static int     SE_val[SoftError_listsize];	// assume there are int, we only want to compare
+static int  SE_msgcnt = 0;
+static int  SE_next_msg_slot = 0;
+
+// Print out error and continue program.  Maintains list of errors and
+// does not repeat error messages in recent history.
+void I_SoftError (char *error, ...)
+{
+    va_list     argptr;
+    int		index, errval;
+
+    // Message first.
+    va_start (argptr,error);
+    errval = *(int*) argptr;	// sample it as an int, no matter what
+//  fprintf(stderr,"errval=%d\n", errval );   // debug
+    for( index = 0; index < SE_msgcnt; index ++ ){
+       if( error == SE_msg[index] ){
+	  if( errval == SE_val[index] ) goto done;	// it is a repeat msg
+       }
+    }
+    // save comparison info
+    SE_msg[SE_next_msg_slot] = error;
+    SE_val[SE_next_msg_slot] = errval;
+    SE_next_msg_slot++;
+    if( SE_next_msg_slot >= SoftError_listsize )  SE_next_msg_slot = 0;  // wrap
+    if( SE_msgcnt < SoftError_listsize ) SE_msgcnt++;  // limit
+    // print msg
+    fprintf (stderr, "Error: ");
+    vfprintf (stderr,error,argptr);
+//    fprintf (stderr, "\n");
+done:   
+    va_end (argptr);
+
+    fflush( stderr );
+
+   
+}
+#endif
