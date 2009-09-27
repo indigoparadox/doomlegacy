@@ -72,11 +72,8 @@
 
 #include <stdlib.h>
 
-#ifdef FREEBSD
-#include <SDL.h>
-#else
-#include <SDL/SDL.h>
-#endif
+#include "SDL.h"
+
 
 #include "doomdef.h"
 

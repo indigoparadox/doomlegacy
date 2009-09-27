@@ -33,11 +33,9 @@
 
 
 #include <stdlib.h>
-#ifdef FREEBSD
-#include <SDL.h>
-#else
-#include <SDL/SDL.h>
-#endif
+
+#include "SDL.h"
+
 #include "doomtype.h"
 #include "i_sound.h"
 #include "command.h"

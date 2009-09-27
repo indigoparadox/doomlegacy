@@ -81,22 +81,13 @@
 //-----------------------------------------------------------------------------
 
 #include <math.h>
-
-#ifdef FREEBSD
-#include <SDL.h>
-#include <SDL_audio.h>
-#include <SDL_mutex.h>
-#include <SDL_byteorder.h>
-#include <SDL_version.h>
-#else
-#include <SDL/SDL.h>
-#include <SDL/SDL_audio.h>
-#include <SDL/SDL_mutex.h>
-#include <SDL/SDL_byteorder.h>
-#include <SDL/SDL_version.h>
-#endif
-
 #include <unistd.h>
+
+#include "SDL.h"
+#include "SDL_audio.h"
+#include "SDL_mutex.h"
+#include "SDL_byteorder.h"
+#include "SDL_version.h"
 
 #include "z_zone.h"
 

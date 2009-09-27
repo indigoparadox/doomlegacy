@@ -41,11 +41,9 @@
 //
 //-----------------------------------------------------------------------------
 
-#ifdef FREEBSD
-#include <SDL.h>
-#else
-#include <SDL/SDL.h>
-#endif
+
+#include "SDL.h"
+
 #include <GL/gl.h>
 #include <GL/glu.h>
 

@@ -72,11 +72,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#ifdef FREEBSD
-#include <SDL.h>
-#else
-#include <SDL/SDL.h>
-#endif
+#include "SDL.h"
+
 
 #ifdef LINUX
 #ifndef FREEBSD
