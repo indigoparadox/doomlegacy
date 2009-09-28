@@ -158,6 +158,15 @@ extern consvar_t cv_viewheight; // p_mobj.c
 //26-07-98: p_mobj.c
 extern  consvar_t cv_gravity;
 
+#ifdef DOORDELAY_CONTROL
+// [WDJ] 1/15/2009 support control of door and event delay. see p_doors.c
+// init in r_main.c
+extern  int  adj_ticks_per_sec;
+extern  consvar_t  cv_doordelay;
+#else
+// standard ticks per second
+#define adj_ticks_per_sec  35
+#endif
 
 //
 // P_TICK

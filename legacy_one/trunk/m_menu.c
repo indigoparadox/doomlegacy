@@ -1519,6 +1519,9 @@ menuitem_t GameOptionsMenu[]=
     {IT_STRING | IT_CVAR,0,"Gravity"             ,&cv_gravity            ,0},
     {IT_STRING | IT_CVAR,0,"Solid corpse"        ,&cv_solidcorpse        ,0},
     {IT_STRING | IT_CVAR,0,"BloodTime"           ,&cv_bloodtime          ,0},
+#ifdef DOORDELAY_CONTROL
+    {IT_STRING | IT_CVAR,0,"Door Delay"          ,&cv_doordelay          ,0},  // [WDJ]
+#endif
     {IT_CALL   | IT_WHITESTRING,0,"Network Options..."  ,M_NetOption     ,110}
 };
 

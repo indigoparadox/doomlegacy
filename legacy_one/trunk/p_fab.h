@@ -45,7 +45,8 @@ void A_SmokeTrailer (mobj_t* actor);
 // hack the states table to set Doom Legacy's default translucency on sprites
 void P_SetTranslucencies (void);
 
+// [WDJ] All misc init
 // add commands for deathmatch rules and style (like more blood) :)
-void D_AddDeathmatchCommands (void);
+void D_RegisterMiscCommands (void);
 
 #endif

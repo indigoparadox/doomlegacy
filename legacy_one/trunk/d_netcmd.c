@@ -409,9 +409,6 @@ void D_RegisterClientCommands(void)
     CV_RegisterVar(&cv_playername2);
     CV_RegisterVar(&cv_playercolor2);
 
-    //FIXME: not to be here.. but needs be done for config loading
-    CV_RegisterVar(&cv_usegamma);
-
     //m_menu.c
     CV_RegisterVar(&cv_crosshair);
     //CV_RegisterVar (&cv_crosshairscale); // doesn't work for now

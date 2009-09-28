@@ -247,6 +247,14 @@ void I_SoftError (char *error, ...);
 #define I_SoftError   I_Error
 #endif
 
+// [WDJ] Gives a menu item that allows adjusting the time a door waits open.
+// A few of the timed doors in doom2 are near impossible to get thru in time,
+// and I have to use cheats to get past that part of the game.
+// This is for us old people don't have super-twitch fingers anymore, or don't
+// want to repeat from save game 20 times to get past these bad spots.
+#define DOORDELAY_CONTROL
+  // See p_fab.c, giving it NETVAR status causes saved games to crash program.
+
 // =========================================================================
 
 

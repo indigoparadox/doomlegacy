@@ -1690,7 +1690,7 @@ void D_DoomMain(void)
     CON_Init();
 
     D_RegisterClientCommands(); //Hurdler: be sure that this is called before D_CheckNetGame
-    D_AddDeathmatchCommands();
+    D_RegisterMiscCommands();	//[WDJ] more than just DeathMatch
     ST_AddCommands();
     T_AddCommands();
     B_AddCommands();    //added by AC for acbot

@@ -73,6 +73,11 @@
 
 #include "hardware/hw3sound.h"
 
+#ifdef DOORDELAY_CONTROL
+// [WDJ] 1/15/2009 support control of door and event delay
+int  adj_ticks_per_sec = 35;
+#endif
+
 #if 0
 //
 // Sliding door frame information
@@ -185,14 +190,14 @@ void T_VerticalDoor(vldoor_t * door)
 
                     case close30ThenOpen:
                         door->direction = 0;
-                        door->topcountdown = 35 * 30;
+                        door->topcountdown = 30 * adj_ticks_per_sec; // [WDJ]
                         break;
 
                         //SoM: 3/6/2000: General door stuff
                     case genCdO:
                     case genBlazeCdO:
                         door->direction = 0;
-                        door->topcountdown = door->topwait;
+                        door->topcountdown = (door->topwait * adj_ticks_per_sec) / 35;  // [WDJ]
                         break;
 
                     default:
@@ -256,7 +261,7 @@ void T_VerticalDoor(vldoor_t * door)
                     case genRaise:     //SoM: 3/6/2000
                     case genBlazeRaise:        //SoM: 3/6/2000
                         door->direction = 0;    // wait at top
-                        door->topcountdown = door->topwait;
+                        door->topcountdown = (door->topwait * adj_ticks_per_sec) / 35;  // [WDJ]
                         break;
 
                     case close30ThenOpen:
@@ -722,7 +727,7 @@ void P_SpawnDoorCloseIn30(sector_t * sec)
     door->direction = 0;
     door->type = normalDoor;
     door->speed = VDOORSPEED;
-    door->topcountdown = 30 * 35;
+    door->topcountdown = 30 * adj_ticks_per_sec;  // [WDJ]
     door->line = NULL;  //SoM: Remember the line that triggered the door.
 }
 
@@ -751,7 +756,7 @@ P_SpawnDoorRaiseIn5Mins
     door->topheight = P_FindLowestCeilingSurrounding(sec);
     door->topheight -= 4 * FRACUNIT;
     door->topwait = VDOORWAIT;
-    door->topcountdown = 5 * 60 * 35;
+    door->topcountdown = 5 * 60 * adj_ticks_per_sec;  // [WDJ]
     door->line = NULL;  //SoM: 3/6/2000: You know....
 }
 
