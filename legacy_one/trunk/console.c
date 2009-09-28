@@ -1018,7 +1018,7 @@ void CON_Print (char *msg)
 
 //  Console print! Wahooo! Lots o fun!
 //
-void CONS_Printf (char *fmt, ...)
+void CONS_Printf (const char *fmt, ...)
 {
     va_list     argptr;
     char        txt[512];

@@ -120,7 +120,7 @@ ticcmd_t* I_BaseTiccmd (void);
 // Called by M_Responder when quit is selected, return code 0.
 void I_Quit (void);
 
-void I_Error (char *error, ...);
+void I_Error (const char *error, ...);
 
 // Allocates from low memory under dos,
 // just mallocs under unix

@@ -270,13 +270,18 @@
 #     -DLINUX  -> use for the linux specific
 #     -D__OS2__  -> use for the OS/2 specific
 #
-#     Compile the Linux version with 'make LINUX=1'
+#  The preferred multimedia interface is SDL.
+#     Compile the generic SDL version with 'make SDL=1'
+#     Add 'HAVE_MIXER=1'  for SDL_mixer music.
+#     Add 'PROFILEMODE=1' for the debug/profile version.
+#
+#     Compile the Solaris/SDL version by adding 'SOLARIS=1'
+#     Compile the FreeBSD/SDL version by adding 'FBSD_SDL=1'
+#
+#  Other options:
+#     Compile the Linux X11 version with 'make LINUX=1'
 #     Compile the FreeBSD version with 'gmake FREEBSD=1'
-#     Compile the Solaris/SDL version with 'make SOLARIS=1'
 #     Compile the OS/2 version with  'make OS2=1'
-#     Compile a debug/profile version with 'make LINUX=1 PROFILEMODE=1'
-#     Compile the SDL version with 'make LINUX=1 SDL=1'
-#     Compile the SDL/FreeBSD version with 'gmake FREEBSD=1 FBSD_SDL=1'
 #
 #############################################################################
 
@@ -285,7 +290,7 @@
 CC=gcc
 
 
-WFLAGS=-Wall # -W -Wno-unused -Wno-sign-compare
+WFLAGS = -Wall # -Wwrite-strings
 
 #uncomment if you want to use the POLL_POINTER hack
 #POLL_POINTER=-DPOLL_POINTER
@@ -297,9 +302,7 @@ ifndef OS2
 ifndef LINUX
 ifndef SDL
 ifndef FREEBSD
-ifndef SOLARIS
   DJGPPDOS=1
-endif
 endif
 endif
 endif
@@ -310,17 +313,13 @@ ifdef DJGPPDOS
   INTERFACE=DJGPPDOS
   NASMFORMAT=coff
 else
+  NASMFORMAT=elf -DLINUX
+
   ifdef LINUX
     INTERFACE=linux_x
-    NASMFORMAT=elf -DLINUX
   endif
   ifdef FREEBSD
     INTERFACE=linux_x
-    NASMFORMAT=elf -DLINUX
-  endif
-  ifdef SOLARIS
-    INTERFACE=sdl
-    NASMFORMAT=elf -DLINUX
   endif
   ifdef OS2
     INTERFACE=os2
@@ -413,11 +412,9 @@ ifdef FREEBSD
 #use the x86 asm code
   #USEASM=1
 
-  ifndef FBSD_SDL
-    OPTS=-DLINUX -DFREEBSD -DOLD_SOUND_DRIVER -DSNDSERV -DHWRENDER -DDIRECTFULLSCREEN
-    ifndef FBSD_GGI
-      X=1
-    endif
+  OPTS=-DLINUX -DFREEBSD -DOLD_SOUND_DRIVER -DSNDSERV -DHWRENDER -DDIRECTFULLSCREEN
+  ifndef FBSD_GGI
+    X=1
   endif
 
   ifdef X
@@ -432,64 +429,18 @@ ifdef FREEBSD
       $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o
 
   else #ifdef X
-    ifdef FBSD_SDL
-      INTERFACE=sdl
-      OPTS := -DLINUX -DFREEBSD -DHWRENDER -DDIRECTFULLSCREEN -DHAVE_MIXER -DSDL -DVID_X11 $(POLL_POINTER) -I. -I/usr/local/include/SDL11 -I/usr/X11R6/include -Wall
-      SFLAGS=-g $(OPTS)
-      OBJS=$(O)/i_video.o $(O)/dosstr.o $(O)/endtxt.o \
-        $(O)/hw_bsp.o $(O)/hw_draw.o $(O)/hw_light.o $(O)/hw_main.o \
-        $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o \
-        $(O)/r_opengl.o $(O)/ogl_sdl.o $(O)/hwsym_sdl.o
-
-      DEBUGLIBS=$(LIBS)
-
-      LDFLAGS=-L/usr/X11R6/lib -L/usr/local/lib
-      LIBS=-lm -lSDL-1.1 -lSDL_mixer -lGL -lGLU -lipx -lkvm -pthread
-      DEBUGLIBS=$(LIBS)
-
-      # name of the exefile
-      EXENAME=lsdldoom
-
-    else #ifdef FBSD_SDL
-      OPTS := $(OPTS) -DVID_GGI -I. -I/usr/local/include
-      LDFLAGS=
-      LIBS=-lggi -lm -lipx
-      # name of the exefile
-      EXENAME=llggidoom
-      SFLAGS=-g $(OPTS)
-      OBJS=$(O)/i_video_ggi.o $(O)/dosstr.o $(O)/searchp.o $(O)/endtxt.o \
-        $(O)/hw_bsp.o $(O)/hw_draw.o $(O)/hw_light.o $(O)/hw_main.o \
-        $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o
-    endif #ifdef FBSD_SDL
+    OPTS := $(OPTS) -DVID_GGI -I. -I/usr/local/include
+    LDFLAGS=
+    LIBS=-lggi -lm -lipx
+    # name of the exefile
+    EXENAME=llggidoom
+    SFLAGS=-g $(OPTS)
+    OBJS=$(O)/i_video_ggi.o $(O)/dosstr.o $(O)/searchp.o $(O)/endtxt.o \
+      $(O)/hw_bsp.o $(O)/hw_draw.o $(O)/hw_light.o $(O)/hw_main.o \
+      $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o
   endif #ifdef X
 endif #ifdef FREEBSD
 
-
-
-ifdef SOLARIS
-# subdirectory for objects
-  O=../objs
-  BIN=../bin
-  OPTS := -DLINUX -DHWRENDER -DDIRECTFULLSCREEN -DHAVE_MIXER -DSDL -DVID_X11 
-  OPTS := $(OPTS) -I. -I/usr/local/include -I/usr/X11R6/include -Wall
-  OPTS := $(OPTS) -DBSD_COMP -DSOLARIS 
-  OPTS := $(OPTS) -DDONTDEFINEBOOL -DTRUE=1 -DFALSE=0 -DINADDR_NONE=INADDR_ANY 
-  OPTS := $(OPTS) -D__BIG_ENDIAN__
-
-  SFLAGS=-g $(OPTS)
-
-  OBJS=$(O)/i_video.o $(O)/dosstr.o $(O)/endtxt.o \
-    $(O)/hw_bsp.o $(O)/hw_draw.o $(O)/hw_light.o $(O)/hw_main.o \
-    $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o \
-    $(O)/r_opengl.o $(O)/ogl_sdl.o $(O)/hwsym_sdl.o
-
-
-  LDFLAGS = -L/usr/X/lib -L/usr/local/lib
-  LIBS    = -lSDL -lSDL_mixer -lGL -lGLU -lpthread -lsocket -lnsl -lm
-
-# name of the exefile
-  EXENAME=lsdldoom
-endif #ifdef SOLARIS
 
 
 
@@ -504,7 +455,6 @@ ifdef SDL
 
   OPTS := -DLINUX -DHWRENDER -DDIRECTFULLSCREEN -DSDL -DVID_X11 $(POLL_POINTER) $(shell sdl-config --cflags) -I.
 
-  SFLAGS := -g $(OPTS)
   LDFLAGS :=
   LIBS := -lm -lpthread -lGL -lGLU $(shell sdl-config --libs)
   DEBUGLIBS := $(LIBS)
@@ -513,6 +463,25 @@ ifdef SDL
     OPTS += -DHAVE_MIXER
     LIBS += -lSDL_mixer 
   endif
+
+
+  ifdef FBSD_SDL
+# extras for FreeBSD/SDL
+    LIBS += -lipx -lkvm
+  endif
+
+  ifdef SOLARIS
+# extras for Solaris/SDL
+    OPTS += -DBSD_COMP -DSOLARIS 
+    OPTS += -DDONTDEFINEBOOL -DTRUE=1 -DFALSE=0 -DINADDR_NONE=INADDR_ANY
+    OPTS += -Wno-unknown-pragmas -I/usr/X/include
+
+    LDFLAGS += -L/usr/X/lib
+    LIBS    +=  -lsocket -lnsl
+  endif #ifdef SOLARIS
+
+
+  SFLAGS := -g $(OPTS)
 
 # name of the exefile
   EXENAME := lsdldoom
@@ -567,11 +536,7 @@ endif
 
 
 ifdef FREEBSD
-  ifndef FBSD_SDL
-    i_cdmus_o=$(O)/i_cdmus_fbsd.o
-  else
-    i_cdmus_o=$(O)/i_cdmus.o
-  endif
+  i_cdmus_o=$(O)/i_cdmus_fbsd.o
 else
   i_cdmus_o=$(O)/i_cdmus.o
 endif
@@ -701,26 +666,19 @@ ifdef LINUX
 	rm -f $(SNDSERV)/linux/*
 	rm -f $(MUSSERV)/linux/*
 else
-ifdef SDL
+  ifdef SDL
 	rm -f *.o *.flc
 	rm -f $(O)/*
-else
-ifdef FREEBSD
-	rm -f *.o *.flc
-	rm -f $(O)/*
-	rm -f $(SNDSERV)/linux/*
-	rm -f $(MUSSERV)/linux/*
-else
-ifdef SOLARIS
+  else
+    ifdef FREEBSD
 	rm -f *.o *.flc
 	rm -f $(O)/*
 	rm -f $(SNDSERV)/linux/*
 	rm -f $(MUSSERV)/linux/*
-else
+    else
 	del $(O)\*.* >NUL
-endif
-endif
-endif
+    endif
+  endif
 endif
 
 #make a big doom3.s that is the disasm of the exe (dos only ?)
@@ -765,20 +723,12 @@ $(O)/r_opengl.o:	hardware/r_opengl/r_opengl.c hardware/r_opengl/r_opengl.h
 	$(CC) $(CFLAGS) -c $< -o $@
 endif
 
+
 ifdef FREEBSD
-ifdef FBSD_SDL
-$(O)/r_opengl.o:	hardware/r_opengl/r_opengl.c hardware/r_opengl/r_opengl.h
-	$(CC) $(CFLAGS) -I/usr/X11R6/include -c $< -o $@
-else  #FBSD_SDL
 $(O)/r_opengl.o:	hardware/r_opengl/r_opengl.c hardware/r_opengl/r_opengl.h
 	$(CC) -O3 -o $(O)/r_opengl.o	-DHWRENDER -DVID_X11 -DLINUX -DFREEBSD $(POLL_POINTER) -shared -nostartfiles -I/usr/X11R6/include -c hardware/r_opengl/r_opengl.c
-endif #FBSD_SDL
 endif #FREEBSD
 
-ifdef SOLARIS
-$(O)/r_opengl.o:	hardware/r_opengl/r_opengl.c hardware/r_opengl/r_opengl.h
-	$(CC) $(CFLAGS) -Wno-unknown-pragmas -I/usr/X/include -c $< -o $@
-endif
 
 ifndef FREEBSD
 $(O)/ogl_x11.o:  hardware/r_opengl/ogl_x11.c hardware/r_opengl/r_opengl.h

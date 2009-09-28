@@ -286,10 +286,10 @@ extern byte     demoversion;
 // commonly used routines - moved here for include convenience
 
 // i_system.h
-void I_Error (char *error, ...);
+void I_Error (const char *error, ...);
 
 // console.h
-void    CONS_Printf (char *fmt, ...);
+void    CONS_Printf (const char *fmt, ...);
 
 #include "m_swap.h"
 
