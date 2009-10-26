@@ -1023,7 +1023,7 @@ int R_CreateColormap(char *p1, char *p2, char *p3)
   extra_colormaps[mapnum].fadeend = fadeend;
   extra_colormaps[mapnum].fog = fog;
 
-#define ABS2(x) (x) < 0 ? -(x) : (x)
+#define ABS2(x) ((x) < 0 ? -(x) : (x))
 #ifdef HWRENDER
   if(rendermode == render_soft)
 #endif

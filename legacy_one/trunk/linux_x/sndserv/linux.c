@@ -48,6 +48,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -102,7 +103,7 @@ I_InitSound
     audio_fd = open("/dev/dsp", O_WRONLY);
     if (audio_fd<0)
     {
-        fprintf(stderr, "Could not open /dev/dsp\n");
+      fprintf(stderr, "Could not open /dev/dsp: %s\n", strerror(errno));
         return;
     }
    
