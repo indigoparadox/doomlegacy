@@ -1084,11 +1084,11 @@ void CONS_Error (char *msg)
     }
 #endif
     CONS_Printf ("\2%s",msg);   // write error msg in different colour
-    CONS_Printf ("Press ENTER to continue\n");
 
+    // CONS_Printf ("Press ENTER to continue\n");
     // dirty quick hack, but for the good cause
-    while (I_GetKey() != KEY_ENTER)
-        ;
+    // while (I_GetKey() != KEY_ENTER)
+    //   ;
 }
 
 

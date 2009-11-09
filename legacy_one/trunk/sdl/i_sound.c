@@ -4,6 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
+// Copyright (C) 2000-2009 by Doom Legacy team
 //
 // This source is available for distribution and/or modification
 // only under the terms of the DOOM Source Code License as
@@ -89,6 +90,10 @@
 #include "SDL_byteorder.h"
 #include "SDL_version.h"
 
+#ifdef HAVE_MIXER
+# include "SDL_mixer.h"
+#endif
+
 #include "z_zone.h"
 
 #include "m_swap.h"
@@ -105,11 +110,6 @@
 
 #include "d_main.h"
 
-#ifdef FREEBSD
-#include <SDL_mixer.h>
-#else
-#include <SDL/SDL_mixer.h>
-#endif
 #include "qmus2mid.h"
 
 #define W_CacheLumpNum(num) (W_CacheLumpNum)((num),1)
@@ -166,7 +166,7 @@ static int *channelleftvol_lookup[NUM_CHANNELS];
 static int *channelrightvol_lookup[NUM_CHANNELS];
 
 // Buffer for MIDI
-static char *musicbuffer;
+static char *mus2mid_buffer;
 
 // Flags for the -nosound and -nomusic options
 extern boolean nosound;
@@ -714,14 +714,22 @@ void I_StartupSound()
 #endif
 }
 
+
+
 //
 // MUSIC API.
 //
 
-/* FIXME: Make this file instance-specific */
-#define MIDI_TMPFILE    "/tmp/.lsdlmidi"
+#ifdef HAVE_MIXER
+/// the "registered" piece of music
+static struct music_channel_t
+{
+  Mix_Music *mus;
+  SDL_RWops *rwop; ///< must not be freed before music is halted
+} music = { NULL, NULL };
+#endif
 
-static Mix_Music *music[2] = { NULL, NULL };
+
 
 void I_ShutdownMusic(void)
 {
@@ -779,7 +787,7 @@ void I_InitMusic(void)
 
     Mix_ResumeMusic();  // start music playback
     // FIXME: XXX: we need to test the return value of Z_Malloc
-    musicbuffer = (char *) Z_Malloc(MIDBUFFERSIZE, PU_STATIC, NULL);
+    mus2mid_buffer = (char *) Z_Malloc(MIDBUFFERSIZE, PU_STATIC, NULL);
     CONS_Printf(" Music initialized.\n");
     musicStarted = true;
 #endif
@@ -787,12 +795,12 @@ void I_InitMusic(void)
 
 void I_PlaySong(int handle, int looping)
 {
-    if (nomusic)
-        return;
+  if (nomusic)
+    return;
 
-    if (music[handle])
+  if (music.mus)
     {
-        Mix_FadeInMusic(music[handle], looping ? -1 : 0, 500);
+      Mix_FadeInMusic(music.mus, looping ? -1 : 0, 500);
     }
 }
 
@@ -819,74 +827,67 @@ void I_StopSong(int handle)
     Mix_FadeOutMusic(500);
 }
 
+
 void I_UnRegisterSong(int handle)
 {
-    if (nomusic)
-        return;
+#ifdef HAVE_MIXER
+  if (nomusic)
+    return;
 
-    if (music[handle])
+  if (music.mus)
     {
-        Mix_FreeMusic(music[handle]);
-        music[handle] = NULL;
+      Mix_FreeMusic(music.mus);
+      music.mus = NULL;
+      music.rwop = NULL;
     }
-    unlink(MIDI_TMPFILE);
+#endif
 }
 
-int I_RegisterSong(void *data, int len)
+
+int I_RegisterSong(void* data, int len)
 {
+#ifdef HAVE_MIXER
+  if (nomusic)
+    return 0;
 
-    int err;
-    ULONG midlength;
-    FILE *midfile;
-
-    if (nomusic)
-        return 0;
-
-    midfile = fopen(MIDI_TMPFILE, "wb");
-    if (midfile == NULL)
+  if (music.mus)
     {
-        CONS_Printf("Couldn't write MIDI to %s\n", MIDI_TMPFILE);
-        return 0;
+      I_Error("Two registered pieces of music simultaneously!\n");
     }
 
-    if (memcmp(data, "MUS", 3) == 0)
+  if (memcmp(data, MUSMAGIC, 4) == 0)
     {
-        // convert mus to mid with a wonderfull function
-        // thanks to S.Bacquet for the source of qmus2mid
-        // convert mus to mid and load it in memory
-        if ((err = qmus2mid((char *) data, musicbuffer, 89, 64, 0, len, MIDBUFFERSIZE, &midlength)) != 0)
-        {
-            CONS_Printf("Cannot convert mus to mid, converterror :%d\n", err);
-            return 0;
-        }
-        fwrite(musicbuffer, 1, midlength, midfile);
+      int err;
+      Uint32 midlength;
+      // convert mus to mid in memory with a wonderful function
+      // thanks to S.Bacquet for the source of qmus2mid
+      if ((err = qmus2mid(data, mus2mid_buffer, 89, 64, 0, len, MIDBUFFERSIZE, &midlength)) != 0)
+	{
+	  CONS_Printf("Cannot convert MUS to MIDI: error %d.\n", err);
+	  return 0;
+	}
+
+      music.rwop = SDL_RWFromConstMem(mus2mid_buffer, midlength);
     }
-    else
-        // support mid file in WAD !!!
-    if (memcmp(data, "MThd", 4) == 0)
+  else
     {
-        fwrite(data, 1, len, midfile);
+      // MIDI, MP3, Ogg Vorbis, various module formats
+      music.rwop = SDL_RWFromConstMem(data, len);
     }
-    else
+  
+  // SDL_mixer automatically frees the rwop when the music is stopped.
+  music.mus = Mix_LoadMUS_RW(music.rwop);
+  if (!music.mus)
     {
-        CONS_Printf("Music Lump is not MID or MUS lump\n");
-        return 0;
+      CONS_Printf("Couldn't load music lump: %s\n", Mix_GetError());
+      music.rwop = NULL;
     }
 
-    fclose(midfile);
+#endif
 
-    music[0] = Mix_LoadMUS(MIDI_TMPFILE);
-    // As soon as MP3 support is included in SDL_Mixer, we can put in an mp3 file here as well
-    // at the moment, the sound is played back at 11kHz with 44kHz sampling frequency - spooky :)
-    // For testing:
-    //music[0] = Mix_LoadMUS("/home/rob/cd2/mp3/Lenny%20Cravitz%20-%20American%20Woman.mp3");
-
-    if (music[0] == NULL)
-    {
-        CONS_Printf("Couldn't load MIDI from %s: %s\n", MIDI_TMPFILE, Mix_GetError());
-    }
-    return (0);
+  return 0;
 }
+
 
 void I_SetMusicVolume(int volume)
 {
