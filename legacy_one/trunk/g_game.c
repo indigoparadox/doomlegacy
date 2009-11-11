@@ -2164,6 +2164,7 @@ void G_DoSaveGame (int   savegameslot, char* savedescription)
 
     // draw the pattern into the back screen
     R_FillBackScreen ();
+    ST_Drawer( 1 );	// [WDJ] refresh status background without global flags
 }
 
 
