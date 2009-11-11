@@ -121,6 +121,11 @@ void V_DrawMappedPatch ( int           x,
                          patch_t*      patch,
                          byte*         colormap );
 
+// with temp patch load to cache
+void V_DrawMappedPatch_Name ( int x, int y, int scrn,
+			      char*         name,
+			      byte*         colormap );
+
 //added:05-02-98:V_DrawPatch scaled 2,3,4 times size and position.
 
 // flags hacked in scrn (not supported by all functions (see src))
@@ -137,6 +142,10 @@ void V_DrawScaledPatch ( int           x,
                          int           y,
                          int           scrn,    // + flags
                          patch_t*      patch );
+
+// with temp patch load to cache
+void V_DrawScaledPatch_Name(int x, int y, int scrn, char * name );
+void V_DrawScaledPatch_Num(int x, int y, int scrn, int patch_num );
 
 //added:05-02-98:kiktest : this draws a patch using translucency
 void V_DrawTransPatch ( int           x,

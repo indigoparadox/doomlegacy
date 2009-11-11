@@ -708,8 +708,7 @@ void F_BunnyScroll (void)
         return;
     if (finalecount < 1180)
     {
-        V_DrawScaledPatch ((320-13*8)/2,
-                           (200-8*8)/2,0, W_CachePatchName ("END0",PU_CACHE));
+        V_DrawScaledPatch_Name ((320-13*8)/2, (200-8*8)/2,0, "END0" );
         laststage = 0;
         return;
     }
@@ -828,22 +827,18 @@ void F_Drawer (void)
         {
           case 1:
             if ( gamemode == retail || gamemode == chexquest1 )
-              V_DrawScaledPatch (0,0,0,
-                         W_CachePatchName(text[CREDIT_NUM],PU_CACHE));
+              V_DrawScaledPatch_Name (0,0,0, text[CREDIT_NUM] );
             else
-              V_DrawScaledPatch (0,0,0,
-                         W_CachePatchName(text[HELP2_NUM],PU_CACHE));
+              V_DrawScaledPatch_Name (0,0,0, text[HELP2_NUM] );
             break;
           case 2:
-            V_DrawScaledPatch(0,0,0,
-                        W_CachePatchName(text[VICTORY2_NUM],PU_CACHE));
+            V_DrawScaledPatch_Name(0,0,0, text[VICTORY2_NUM] );
             break;
           case 3:
             F_BunnyScroll ();
             break;
           case 4:
-            V_DrawScaledPatch (0,0,0,
-                         W_CachePatchName(text[ENDPIC_NUM],PU_CACHE));
+            V_DrawScaledPatch_Name (0,0,0, text[ENDPIC_NUM] );
             break;
         }
     }

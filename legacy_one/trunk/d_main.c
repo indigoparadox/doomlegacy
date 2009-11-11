@@ -864,10 +864,12 @@ void D_PageDrawer(char *lumpname)
     {
         V_DrawRawScreen(0, 0, W_GetNumForName(lumpname), 320, 200);
         if (demosequence == 0 && pagetic <= 140)
-            V_DrawScaledPatch(4, 160, 0, W_CachePatchName("ADVISOR", PU_CACHE));
+            V_DrawScaledPatch_Name(4, 160, 0, "ADVISOR" );
     }
     else
-        V_DrawScaledPatch(0, 0, 0, W_CachePatchName(lumpname, PU_CACHE));
+    {
+        V_DrawScaledPatch_Name(0, 0, 0, lumpname );
+    }
 
     //added:08-01-98:if you wanna centre the pages it's here.
     //          I think it's not so beautiful to have the pic centered,
