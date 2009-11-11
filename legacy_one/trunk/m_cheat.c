@@ -268,7 +268,7 @@ boolean cht_Responder(event_t * ev)
                 //plyr->message = STSTR_DQDOFF;
                 msg = STSTR_DQDOFF;
         }
-        // 'fa' cheat for killer fucking arsenal
+        // 'fa' cheat for killer full arsenal
         else if (cht_CheckCheat(&cheat_ammonokey, ev->data1))
         {
             plyr->armorpoints = idfa_armor;
