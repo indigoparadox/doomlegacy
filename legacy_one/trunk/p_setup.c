@@ -952,8 +952,9 @@ void P_LoadSideDefs2(int lump)
             else
               sd->bottomtexture = num;
           }
-	  break;   // [WDJ]  no fall through
 #endif
+	  break;   // [WDJ]  no fall through
+
         case 282:                       //SoM: 4/4/2000: Just colormap transfer
 
 // SoM: R_CreateColormap will only create a colormap in software mode...
