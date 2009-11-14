@@ -55,56 +55,38 @@ static inline int32_t read_32(byte **p)
 
 static inline void write_16(byte **p, int16_t val)
 {
-  **p = LE_SHORT(val);
+  *(int16_t *)*p = LE_SHORT(val);
   *p += sizeof(int16_t);
 }
 
 static inline void write_32(byte **p, int32_t val)
 {
-  **p = LE_LONG(val);
+  *(int32_t *)*p = LE_LONG(val);
   *p += sizeof(int32_t);
 }
 
 
-static inline short read_16_inplace(short *p)
-{
-  int16_t temp = *p;
-  return LE_SHORT(temp);
-}
-
-static inline short read_32_inplace(long *p)
-{
-  int32_t temp = *p;
-  return LE_LONG(temp);
-}
-
-
-
-#define writeshort(p,b)     *(short*)(p)   = LE_SHORT(b) // do not increment pointer
-#define writelong(p,b)      *(long *)(p)   = LE_LONG(b)  // do not increment pointer
-#define WRITEBYTE(p,b)      *p++ = b
-#define WRITECHAR(p,b)      *p++ = (byte)b
+#define WRITEBYTE(p,b)      *(p)++ = (b)
+#define WRITECHAR(p,b)      *(p)++ = (byte)(b)
 #define WRITESHORT(p,b)     write_16(&p, b)
 #define WRITEUSHORT(p,b)    write_16(&p, b)
 #define WRITELONG(p,b)      write_32(&p, b)
 #define WRITEULONG(p,b)     write_32(&p, b)
 #define WRITEFIXED(p,b)     write_32(&p, b)
 #define WRITEANGLE(p,b)     write_32(&p, b)
-#define WRITESTRING(p,b)    { int tmp_i=0; do { WRITECHAR(p,b[tmp_i]); } while(b[tmp_i++]); }
-#define WRITESTRINGN(p,b,n) { int tmp_i=0; do { WRITECHAR(p,b[tmp_i]); if(!b[tmp_i]) break;tmp_i++; } while(tmp_i<n); }
-#define WRITEMEM(p,s,n)     memcpy(p, s, n);p+=n
+#define WRITESTRING(p,b)    { int tmp_i=0; do { WRITECHAR((p), (b)[tmp_i]); } while ((b)[tmp_i++]); }
+#define WRITESTRINGN(p,b,n) { int tmp_i=0; do { WRITECHAR((p), (b)[tmp_i]); if (!(b)[tmp_i]) break; tmp_i++; } while (tmp_i<(n)); }
+#define WRITEMEM(p,s,n)     memcpy((p),(s),(n)); (p)+=(n)
 
-#define readshort(p)	    read_16_inplace((short  *)p) // do not increment pointer
-#define readlong(p)	    read_32_inplace((long  *)p)  // do not increment pointer
-#define READBYTE(p)         *p++
-#define READCHAR(p)         (char)*p++
+
+#define READBYTE(p)         *(p)++
+#define READCHAR(p)         (char)*(p)++
 #define READSHORT(p)          (short)read_16(&p)
 #define READUSHORT(p)        (USHORT)read_16(&p)
 #define READLONG(p)            (long)read_32(&p)
 #define READULONG(p)          (ULONG)read_32(&p)
 #define READFIXED(p)        (fixed_t)read_32(&p)
 #define READANGLE(p)        (angle_t)read_32(&p)
-#define READSTRING(p,s)     { int tmp_i=0; do { s[tmp_i]=READBYTE(p);  } while(s[tmp_i++]); }
+#define READSTRING(p,s)     { int tmp_i=0; do { (s)[tmp_i] = READBYTE(p); } while ((s)[tmp_i++]); }
 #define SKIPSTRING(p)       while(READBYTE(p))
 #define READMEM(p,s,n)      memcpy(s, p, n);p+=n
-
