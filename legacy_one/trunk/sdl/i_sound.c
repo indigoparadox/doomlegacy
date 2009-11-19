@@ -733,6 +733,7 @@ static struct music_channel_t
 
 void I_ShutdownMusic(void)
 {
+#ifdef HAVE_MIXER
     if (nomusic)
         return;
 
@@ -743,14 +744,13 @@ void I_ShutdownMusic(void)
 
     CONS_Printf("I_ShutdownMusic: shut down\n");
     musicStarted = false;
-
+#endif
 }
 
 void I_InitMusic(void)
 {
     if (nosound)
     {
-        // FIXME: workaround for shitty programming undoc'ed features
         nomusic = true;
         return;
     }
@@ -795,6 +795,7 @@ void I_InitMusic(void)
 
 void I_PlaySong(int handle, int looping)
 {
+#ifdef HAVE_MIXER
   if (nomusic)
     return;
 
@@ -802,6 +803,7 @@ void I_PlaySong(int handle, int looping)
     {
       Mix_FadeInMusic(music.mus, looping ? -1 : 0, 500);
     }
+#endif
 }
 
 void I_PauseSong(int handle)
@@ -822,9 +824,12 @@ void I_ResumeSong(int handle)
 
 void I_StopSong(int handle)
 {
+#ifdef HAVE_MIXER
     if (nomusic)
         return;
+
     Mix_FadeOutMusic(500);
+#endif
 }
 
 
@@ -891,10 +896,12 @@ int I_RegisterSong(void* data, int len)
 
 void I_SetMusicVolume(int volume)
 {
+#ifdef HAVE_MIXER
     if (nomusic)
         return;
 
     Mix_VolumeMusic(volume * 2);
+#endif
 }
 
 //Hurdler: TODO
