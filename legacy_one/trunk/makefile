@@ -271,7 +271,7 @@
 #     -D__OS2__  -> use for the OS/2 specific
 #
 #  The preferred multimedia interface is SDL.
-#     Compile the generic SDL version with 'make SDL=1'
+#     Compile the generic SDL version with 'make SDL=1' (default)
 #     Add 'HAVE_MIXER=1'  for SDL_mixer music.
 #     Add 'PROFILEMODE=1' for the debug/profile version.
 #
@@ -289,6 +289,10 @@
 #CC=@gcc
 CC=gcc
 
+# subdirectories for objects and binaries
+O=../objs
+BIN=../bin
+
 
 WFLAGS = -Wall # -Wwrite-strings
 
@@ -300,154 +304,24 @@ WFLAGS = -Wall # -Wwrite-strings
 #indicate platform and what interface use with
 ifndef OS2
 ifndef LINUX
-ifndef SDL
+ifndef DJGPPDOS
 ifndef FREEBSD
-  DJGPPDOS=1
+  SDL=1
 endif
 endif
 endif
 endif
 
-#determine the interface directory (where you put all i_*.c)
-ifdef DJGPPDOS
-  INTERFACE=DJGPPDOS
-  NASMFORMAT=coff
-else
-  NASMFORMAT=elf -DLINUX
 
-  ifdef LINUX
-    INTERFACE=linux_x
-  endif
-  ifdef FREEBSD
-    INTERFACE=linux_x
-  endif
-  ifdef OS2
-    INTERFACE=os2
-    NASMFORMAT=coff
-  endif
-  ifdef SDL
-    INTERFACE=sdl
-  endif
-endif
+NASMFORMAT=elf -DLINUX
 
-
-
-ifdef DJGPPDOS
-# subdirectory for objects
-  O=objs
-  BIN=bin
-
-#use the x86 asm code
-  #USEASM=1
-
-# options
-  OPTS=-DPC_DOS -g
-
-  DEBUGLIBS=-lalleg -lbcd -lsocket
-  LIBS=-lalleg -lbcd -lsocket
-
-  SFLAGS=
-
-  OBJS=$(O)/i_video.o $(O)/vid_vesa.o
-
-# name of the exefile
-  EXENAME=DOOM3.exe
-endif #ifdef DJGPPDOS
-
-
-
-ifdef LINUX
-# subdirectory for objects
-  O=../objs
-  BIN=../bin
-  MUSSERV=linux_x/musserv
-  SNDSERV=linux_x/sndserv
-
-#use the x86 asm code
-  #USEASM=1
-
-  OPTS=-DLINUX -DOLD_SOUND_DRIVER -DMUSSERV -DSNDSERV -DHWRENDER -DDIRECTFULLSCREEN
-  X=1
-
-  ifdef X
-    OPTS := $(OPTS) -DVID_X11 $(POLL_POINTER) -I. -I/usr/X11R6/include
-    LDFLAGS=-L/usr/X11R6/lib
-    LIBS=-lXext -lX11 -lm -ldl -lXxf86vm
-    ifdef WITH_DGA
-      OPTS += -DWITH_DGA
-      LIBS += -lXxf86dga -lXext
-    endif #WITH_DGA
-
-# name of the exefile
-    EXENAME=llxdoom
-    SFLAGS=-g $(OPTS)
-    OBJS=$(O)/i_video_xshm.o $(O)/dosstr.o $(O)/searchp.o $(O)/endtxt.o \
-      $(O)/hw_bsp.o $(O)/hw_draw.o $(O)/hw_light.o $(O)/hw_main.o \
-      $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o
-
-  else
-    OPTS := $(OPTS) -DVID_GGI -I.
-    LDFLAGS=
-    LIBS=-lggi -lm
-# name of the exefile
-    EXENAME=llggidoom
-    SFLAGS=-g $(OPTS)
-    OBJS=$(O)/i_video_ggi.o $(O)/dosstr.o $(O)/searchp.o $(O)/endtxt.o \
-      $(O)/hw_bsp.o $(O)/hw_draw.o $(O)/hw_light.o $(O)/hw_main.o \
-      $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o
-  endif
-endif
-
-
-
-ifdef FREEBSD
-# subdirectory for objects
-  O=../objs
-  BIN=../bin
-  MUSSERV=linux_x/musserv
-  SNDSERV=linux_x/sndserv
-  OSVERSION:=$(shell /sbin/sysctl -n kern.osreldate)
-  OSMAJOR:=$(shell echo $(OSVERSION) | sed 's/.....$$//')
-
-#use the x86 asm code
-  #USEASM=1
-
-  OPTS=-DLINUX -DFREEBSD -DOLD_SOUND_DRIVER -DSNDSERV -DHWRENDER -DDIRECTFULLSCREEN
-  ifndef FBSD_GGI
-    X=1
-  endif
-
-  ifdef X
-    OPTS := $(OPTS) -DVID_X11 $(POLL_POINTER) -I. -I/usr/X11R6/include
-    LDFLAGS=-L/usr/X11R6/lib
-    LIBS=-lXext -lX11 -lm -lXxf86vm -lipx -lkvm -pthread
-    # name of the exefile
-    EXENAME=llxdoom
-    SFLAGS=-g $(OPTS)
-    OBJS=$(O)/i_video_xshm.o $(O)/dosstr.o $(O)/searchp.o $(O)/endtxt.o \
-      $(O)/hw_bsp.o $(O)/hw_draw.o $(O)/hw_light.o $(O)/hw_main.o \
-      $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o
-
-  else #ifdef X
-    OPTS := $(OPTS) -DVID_GGI -I. -I/usr/local/include
-    LDFLAGS=
-    LIBS=-lggi -lm -lipx
-    # name of the exefile
-    EXENAME=llggidoom
-    SFLAGS=-g $(OPTS)
-    OBJS=$(O)/i_video_ggi.o $(O)/dosstr.o $(O)/searchp.o $(O)/endtxt.o \
-      $(O)/hw_bsp.o $(O)/hw_draw.o $(O)/hw_light.o $(O)/hw_main.o \
-      $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o
-  endif #ifdef X
-endif #ifdef FREEBSD
-
-
-
-
+#=================================
 ifdef SDL
-# subdirectory for objects
-  O    := objs
-  BIN  := bin
+# SDL is the default multimedia interface.
+
+# interface directory (where you put all i_*.c)
+  INTERFACE=sdl
+
   OBJS := $(O)/i_video.o $(O)/dosstr.o $(O)/endtxt.o \
     $(O)/hw_bsp.o $(O)/hw_draw.o $(O)/hw_light.o $(O)/hw_main.o \
     $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o \
@@ -485,14 +359,94 @@ ifdef SDL
 
 # name of the exefile
   EXENAME := lsdldoom
-endif
+
+#=================================
+else ifdef LINUX
+  INTERFACE=linux_x
+
+  MUSSERV=linux_x/musserv
+  SNDSERV=linux_x/sndserv
+
+#use the x86 asm code
+  #USEASM=1
+
+  OPTS=-DLINUX -DOLD_SOUND_DRIVER -DMUSSERV -DSNDSERV -DHWRENDER -DDIRECTFULLSCREEN
+  X=1
+
+  ifdef X
+    OPTS := $(OPTS) -DVID_X11 $(POLL_POINTER) -I. -I/usr/X11R6/include
+    LDFLAGS=-L/usr/X11R6/lib
+    LIBS=-lXext -lX11 -lm -ldl -lXxf86vm
+    ifdef WITH_DGA
+      OPTS += -DWITH_DGA
+      LIBS += -lXxf86dga -lXext
+    endif #WITH_DGA
+
+# name of the exefile
+    EXENAME=llxdoom
+    SFLAGS=-g $(OPTS)
+    OBJS=$(O)/i_video_xshm.o $(O)/dosstr.o $(O)/searchp.o $(O)/endtxt.o \
+      $(O)/hw_bsp.o $(O)/hw_draw.o $(O)/hw_light.o $(O)/hw_main.o \
+      $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o
+
+  else
+    OPTS := $(OPTS) -DVID_GGI -I.
+    LDFLAGS=
+    LIBS=-lggi -lm
+# name of the exefile
+    EXENAME=llggidoom
+    SFLAGS=-g $(OPTS)
+    OBJS=$(O)/i_video_ggi.o $(O)/dosstr.o $(O)/searchp.o $(O)/endtxt.o \
+      $(O)/hw_bsp.o $(O)/hw_draw.o $(O)/hw_light.o $(O)/hw_main.o \
+      $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o
+  endif
 
 
+#=================================
+else ifdef FREEBSD
+  INTERFACE=linux_x
 
-ifdef OS2
-# subdirectory for objects
-  O=objs
-  BIN=bin
+  MUSSERV=linux_x/musserv
+  SNDSERV=linux_x/sndserv
+  OSVERSION:=$(shell /sbin/sysctl -n kern.osreldate)
+  OSMAJOR:=$(shell echo $(OSVERSION) | sed 's/.....$$//')
+
+#use the x86 asm code
+  #USEASM=1
+
+  OPTS=-DLINUX -DFREEBSD -DOLD_SOUND_DRIVER -DSNDSERV -DHWRENDER -DDIRECTFULLSCREEN
+  ifndef FBSD_GGI
+    X=1
+  endif
+
+  ifdef X
+    OPTS := $(OPTS) -DVID_X11 $(POLL_POINTER) -I. -I/usr/X11R6/include
+    LDFLAGS=-L/usr/X11R6/lib
+    LIBS=-lXext -lX11 -lm -lXxf86vm -lipx -lkvm -pthread
+    # name of the exefile
+    EXENAME=llxdoom
+    SFLAGS=-g $(OPTS)
+    OBJS=$(O)/i_video_xshm.o $(O)/dosstr.o $(O)/searchp.o $(O)/endtxt.o \
+      $(O)/hw_bsp.o $(O)/hw_draw.o $(O)/hw_light.o $(O)/hw_main.o \
+      $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o
+
+  else #ifdef X
+    OPTS := $(OPTS) -DVID_GGI -I. -I/usr/local/include
+    LDFLAGS=
+    LIBS=-lggi -lm -lipx
+    # name of the exefile
+    EXENAME=llggidoom
+    SFLAGS=-g $(OPTS)
+    OBJS=$(O)/i_video_ggi.o $(O)/dosstr.o $(O)/searchp.o $(O)/endtxt.o \
+      $(O)/hw_bsp.o $(O)/hw_draw.o $(O)/hw_light.o $(O)/hw_main.o \
+      $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o
+  endif #ifdef X
+
+
+#=================================
+else ifdef OS2
+  INTERFACE=os2
+  NASMFORMAT=coff
 
 #use the x86 asm code
   NASM=nasm
@@ -511,7 +465,30 @@ ifdef OS2
 
 # name of the exefile
   EXENAME=Doom2.exe
-endif
+
+
+#=================================
+else ifdef DJGPPDOS
+  INTERFACE=djgppdos
+  NASMFORMAT=coff
+
+#use the x86 asm code
+  #USEASM=1
+
+# options
+  OPTS=-DPC_DOS -g
+
+  DEBUGLIBS=-lalleg -lbcd -lsocket
+  LIBS=-lalleg -lbcd -lsocket
+
+  SFLAGS=
+
+  OBJS=$(O)/i_video.o $(O)/vid_vesa.o
+
+# name of the exefile
+  EXENAME=DOOM3.exe
+endif #ifdef DJGPPDOS
+
 
 
 
