@@ -301,6 +301,24 @@ WFLAGS = -Wall # -Wwrite-strings
 
 #WITH_DGA=1
 
+# optimization level, debugging may change this because it is confusing
+# OPTLEV=-O5
+
+# debug enable, difficult to remember, save on reinventing this everytime
+#DEBUG=1
+ifdef DEBUG
+#  DEBUG:=-g
+  DEBUG:=-g3
+  # reduce optimization to something less confusing to debugger
+  OPTLEV=-O1
+endif
+
+# standard
+#STD= -std=c99
+  # not ready yet
+  # fails because of alloca, it is not std under c99
+  # std=c89, does not support // commments, no inline, no asm
+
 #indicate platform and what interface use with
 ifndef OS2
 ifndef LINUX
@@ -310,6 +328,21 @@ ifndef FREEBSD
 endif
 endif
 endif
+endif
+
+ifndef SDL
+  ifdef LINUX
+    LINUX_X11=1
+  endif
+  ifdef FREEBSD
+    FREEBSD_X11=1
+  endif
+  ifdef OS2
+    OS2_NATIVE=1
+  endif
+  ifdef DJGPPDOS
+    DJGPPDOS_NATIVE=1
+  endif
 endif
 
 
@@ -327,9 +360,16 @@ ifdef SDL
     $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o \
     $(O)/r_opengl.o $(O)/ogl_sdl.o $(O)/hwsym_sdl.o
 
-  OPTS := -DLINUX -DHWRENDER -DDIRECTFULLSCREEN -DSDL -DVID_X11 $(POLL_POINTER) $(shell sdl-config --cflags) -I.
 
+ifdef LINUX
+  OPTS := -DLINUX -DHWRENDER -DDIRECTFULLSCREEN -DSDL -DVID_X11 $(POLL_POINTER) $(shell sdl-config --cflags) -I.
+  LDFLAGS=-L/usr/X11R6/lib
+else
+  # ?? LINUX flag for OS2, FREEBSD ???
+  OPTS := -DLINUX -DHWRENDER -DDIRECTFULLSCREEN -DSDL -DVID_X11 $(POLL_POINTER) $(shell sdl-config --cflags) -I.
   LDFLAGS :=
+endif
+
   LIBS := -lm -lpthread -lGL -lGLU $(shell sdl-config --libs)
   DEBUGLIBS := $(LIBS)
 
@@ -360,8 +400,10 @@ ifdef SDL
 # name of the exefile
   EXENAME := lsdldoom
 
+endif
+
 #=================================
-else ifdef LINUX
+ifdef LINUX_X11
   INTERFACE=linux_x
 
   MUSSERV=linux_x/musserv
@@ -401,9 +443,10 @@ else ifdef LINUX
       $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o
   endif
 
+endif
 
 #=================================
-else ifdef FREEBSD
+ifdef FREEBSD_X11
   INTERFACE=linux_x
 
   MUSSERV=linux_x/musserv
@@ -442,9 +485,10 @@ else ifdef FREEBSD
       $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o
   endif #ifdef X
 
+endif
 
 #=================================
-else ifdef OS2
+ifdef OS2_NATIVE
   INTERFACE=os2
   NASMFORMAT=coff
 
@@ -466,9 +510,10 @@ else ifdef OS2
 # name of the exefile
   EXENAME=Doom2.exe
 
+endif
 
 #=================================
-else ifdef DJGPPDOS
+ifdef DJGPPDOS_NATIVE
   INTERFACE=djgppdos
   NASMFORMAT=coff
 
@@ -487,7 +532,7 @@ else ifdef DJGPPDOS
 
 # name of the exefile
   EXENAME=DOOM3.exe
-endif #ifdef DJGPPDOS
+endif #ifdef DJGPPDOS_NATIVE
 
 
 
@@ -506,8 +551,16 @@ ifdef PROFILEMODE
   CFLAGS = $(WFLAGS) -g -pg $(OPTS)
   LDFLAGS = $(WFLAGS) -g -pg
 else
+ifdef DEBUG
+  CFLAGS =  $(DEBUG) $(WFLAGS) $(OPTLEV) -ffast-math -fomit-frame-pointer -fno-strict-aliasing $(OPTS)
+else
+ifdef OPTLEV
+  CFLAGS =  $(WFLAGS) $(OPTLEV) $(STD) -ffast-math -fomit-frame-pointer -fno-strict-aliasing $(OPTS)
+else
 # build a normal optimised version
-  CFLAGS =  $(WFLAGS) -O3 -ffast-math -fomit-frame-pointer -fno-strict-aliasing $(OPTS)
+  CFLAGS =  $(WFLAGS) -O3 $(STD) -ffast-math -fomit-frame-pointer -fno-strict-aliasing $(OPTS)
+endif
+endif
 endif
 
 
@@ -626,10 +679,10 @@ OBJS :=  $(OBJS) \
 
 
 
-ifdef LINUX
+ifdef LINUX_X11
 all:	 $(BIN)/$(EXENAME) dll musserv sndserv
 else
-ifdef FREEBSD
+ifdef FREEBSD_X11
 all:	 $(BIN)/$(EXENAME) dll sndserv
 else
 all:	 $(BIN)/$(EXENAME)
@@ -637,7 +690,7 @@ endif
 endif
 
 clean:
-ifdef LINUX
+ifdef LINUX_X11
 	rm -f *.o *.flc
 	rm -f $(O)/*
 	rm -f $(SNDSERV)/linux/*
@@ -647,7 +700,7 @@ else
 	rm -f *.o *.flc
 	rm -f $(O)/*
   else
-    ifdef FREEBSD
+    ifdef FREEBSD_X11
 	rm -f *.o *.flc
 	rm -f $(O)/*
 	rm -f $(SNDSERV)/linux/*
@@ -690,7 +743,7 @@ sndserv:
 	cd $(SNDSERV) \
 	&& $(MAKE) $(SNDSERV_EXTRAFLAGS)
 
-ifdef LINUX
+ifdef LINUX_X11
 $(O)/r_opengl.o:	hardware/r_opengl/r_opengl.c hardware/r_opengl/r_opengl.h
 	$(CC) $(CFLAGS) -DHWRENDER -DVID_X11 -DLINUX $(POLL_POINTER) -shared -nostartfiles -c $< -o $@
 endif
@@ -701,13 +754,13 @@ $(O)/r_opengl.o:	hardware/r_opengl/r_opengl.c hardware/r_opengl/r_opengl.h
 endif
 
 
-ifdef FREEBSD
+ifdef FREEBSD_X11
 $(O)/r_opengl.o:	hardware/r_opengl/r_opengl.c hardware/r_opengl/r_opengl.h
 	$(CC) -O3 -o $(O)/r_opengl.o	-DHWRENDER -DVID_X11 -DLINUX -DFREEBSD $(POLL_POINTER) -shared -nostartfiles -I/usr/X11R6/include -c hardware/r_opengl/r_opengl.c
 endif #FREEBSD
 
 
-ifndef FREEBSD
+ifndef FREEBSD_X11
 $(O)/ogl_x11.o:  hardware/r_opengl/ogl_x11.c hardware/r_opengl/r_opengl.h
 	$(CC) -O3 -o $(O)/ogl_x11.o -DHWRENDER -DVID_X11 -DLINUX $(POLL_POINTER) -shared -nostartfiles -I/usr/X11R6/include -c hardware/r_opengl/ogl_x11.c
 else
