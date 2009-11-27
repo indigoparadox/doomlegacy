@@ -617,7 +617,7 @@ void I_ShutdownSystem()
 
 }
 
-void I_GetDiskFreeSpace(long long *freespace) {
+void I_GetDiskFreeSpace(int64_t *freespace) {
 
 #ifdef LINUX
 #ifdef SOLARIS

@@ -151,7 +151,7 @@ void I_RemoveExitFunc (void (*func)());
 int  I_StartupSystem (void);
 void I_ShutdownSystem (void);
 
-void I_GetDiskFreeSpace(INT64 *freespace);
+void I_GetDiskFreeSpace(int64_t *freespace);
 char *I_GetUserName(void);
 int  I_mkdir(const char *dirname, int unixright);
 
