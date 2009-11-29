@@ -97,9 +97,9 @@ extern lighttable_t*    colormaps;
 extern int                 num_extra_colormaps;
 extern extracolormap_t     extra_colormaps[MAXCOLORMAPS];
 
-extern int              viewwidth;
-extern int              scaledviewwidth;
-extern int              viewheight;
+extern int		rdraw_viewwidth;		// was viewwidth
+extern int              rdraw_scaledviewwidth;		// was scaledrviewwidth
+extern int              rdraw_viewheight;		// was viewheight
 
 extern int              firstflat;
 extern int              firstwaterflat; //added:18-02-98:WATER!

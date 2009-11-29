@@ -195,9 +195,9 @@ extern  boolean         noblit;
 
 extern  int             viewwindowx;
 extern  int             viewwindowy;
-extern  int             viewheight;
-extern  int             viewwidth;
-extern  int             scaledviewwidth;
+extern  int             rdraw_viewheight;		// was viewheight
+extern  int             rdraw_viewwidth;		// was viewwidth
+extern  int             rdraw_scaledviewwidth;		// was scaledrviewwidth
 
 
 

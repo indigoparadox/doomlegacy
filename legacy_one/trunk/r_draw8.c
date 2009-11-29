@@ -379,8 +379,8 @@ void R_DrawFuzzColumn_8(void)
         dc_yl = 1;
 
     // .. and high.
-    if (dc_yh == viewheight - 1)
-        dc_yh = viewheight - 2;
+    if (dc_yh == rdraw_viewheight - 1)
+        dc_yh = rdraw_viewheight - 2;
 
     count = dc_yh - dc_yl;
 

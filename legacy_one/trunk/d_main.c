@@ -543,7 +543,7 @@ void D_Display(void)
         }
 
         // see if the border needs to be updated to the screen
-        if (!automapactive && (scaledviewwidth != vid.width))
+        if (!automapactive && (rdraw_scaledviewwidth != vid.width))
         {
             // the menu may draw over parts out of the view window,
             // which are refreshed only when needed
@@ -588,14 +588,16 @@ void D_Display(void)
                 else
 #endif
                 {
+		    // Alter the draw tables to draw into second player window
                     //faB: Boris hack :P !!
                     viewwindowy = vid.height / 2;
-                    memcpy(ylookup, ylookup2, viewheight * sizeof(ylookup[0]));
+                    memcpy(ylookup, ylookup2, rdraw_viewheight * sizeof(ylookup[0]));
 
                     R_RenderPlayerView(&players[secondarydisplayplayer]);
 
+		    // Restore first player tables
                     viewwindowy = 0;
-                    memcpy(ylookup, ylookup1, viewheight * sizeof(ylookup[0]));
+                    memcpy(ylookup, ylookup1, rdraw_viewheight * sizeof(ylookup[0]));
                 }
 #ifdef CLIENTPREDICTION2
                 players[secondarydisplayplayer].mo->flags2 &= ~MF2_DONTDRAW;

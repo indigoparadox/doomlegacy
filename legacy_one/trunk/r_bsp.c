@@ -316,7 +316,7 @@ void R_ClearClipSegs (void)
 {
     solidsegs[0].first = -0x7fffffff;
     solidsegs[0].last = -1;
-    solidsegs[1].first = viewwidth;
+    solidsegs[1].first = rdraw_viewwidth;
     solidsegs[1].last = 0x7fffffff;
     newend = solidsegs+2;
 }

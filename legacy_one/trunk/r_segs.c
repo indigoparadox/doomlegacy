@@ -737,7 +737,7 @@ void R_RenderThickSideRange (drawseg_t* ds,
     sector_t        tempsec;
     int             templight;
     int             i, p;
-    fixed_t         bottombounds = viewheight << FRACBITS;
+    fixed_t         bottombounds = rdraw_viewheight << FRACBITS;
     fixed_t         topbounds = (con_clipviewtop - 1) << FRACBITS;
     fixed_t         offsetvalue = 0;
     lightlist_t     *light;
@@ -1318,7 +1318,7 @@ void R_RenderSegLoop (void)
             
             // dont draw anything more for this column, since
             // a midtexture blocks the view
-            ceilingclip[rw_x] = viewheight;
+            ceilingclip[rw_x] = rdraw_viewheight;
             floorclip[rw_x] = -1;
         }
         else
@@ -1496,7 +1496,7 @@ void R_StoreWallRange( int   start, int   stop)
 
     
 #ifdef RANGECHECK
-    if (start >=viewwidth || start > stop)
+    if (start >=rdraw_viewwidth || start > stop)
         I_Error ("Bad R_RenderWallRange: %i to %i", start , stop);
 #endif
     

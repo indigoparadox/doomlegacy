@@ -1040,13 +1040,13 @@ void HU_Erase (void)
         topline = 0;
         for (y=topline,yoffset=y*vid.width; y<bottomline ; y++,yoffset+=vid.width)
         {
-            if (y < viewwindowy || y >= viewwindowy + viewheight)
+            if (y < viewwindowy || y >= viewwindowy + rdraw_viewheight)
                 R_VideoErase(yoffset, vid.width); // erase entire line
             else
             {
                 R_VideoErase(yoffset, viewwindowx); // erase left border
                 // erase right border
-                R_VideoErase(yoffset + viewwindowx + viewwidth, viewwindowx);
+                R_VideoErase(yoffset + viewwindowx + rdraw_viewwidth, viewwindowx);
             }
         }
         con_hudupdate = false;      // if it was set..
@@ -1234,7 +1234,7 @@ void HU_drawCrosshair (void)
         y = gr_basewindowcentery;
     else
 #endif
-        y = viewwindowy+(viewheight>>1);
+        y = viewwindowy+(rdraw_viewheight>>1);
 
 /*	if (cv_crosshairscale.value)
 		V_DrawTranslucentPatch (vid.width>>1, y, 0, crosshair[i-1]);
@@ -1248,7 +1248,7 @@ void HU_drawCrosshair (void)
             y += gr_viewheight;
         else
 #endif
-            y += viewheight;
+            y += rdraw_viewheight;
 
 /*		if (cv_crosshairscale.value)
 			V_DrawTranslucentPatch (vid.width>>1, y, 0, crosshair[i-1]);

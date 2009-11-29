@@ -246,8 +246,8 @@ void R_MapPlane
 #ifdef RANGECHECK
     if (x2 < x1
         || x1<0
-        || x2>=viewwidth
-        || (unsigned)y>viewheight)
+        || x2>=rdraw_viewwidth
+        || (unsigned)y>rdraw_viewheight)    // [WDJ] ??  y>=rdraw_viewheight
     {
         I_Error ("R_MapPlane: %i, %i at %i",x1,x2,y);
     }
@@ -285,8 +285,8 @@ void R_MapPlane
         ds_xfrac += FixedMul(finecosine[angle], (bgofs<<FRACBITS));
         ds_yfrac += FixedMul(finesine[angle], (bgofs<<FRACBITS));
 
-        if (y+bgofs>=viewheight)
-            bgofs = viewheight-y-1;
+        if (y+bgofs>=rdraw_viewheight)
+            bgofs = rdraw_viewheight-y-1;
         if (y+bgofs<0)
             bgofs = -y;
     }
@@ -315,7 +315,7 @@ void R_MapPlane
 #ifdef TIMING
   ProfZeroTimer();
 #endif
-
+   
   spanfunc ();
 
 #ifdef TIMING
@@ -346,14 +346,14 @@ void R_ClearPlanes (player_t *player)
 #endif
 
     // opening / clipping determination
-    for (i=0 ; i<viewwidth ; i++)
+    for (i=0 ; i<rdraw_viewwidth ; i++)
     {
-        floorclip[i] = viewheight;
+        floorclip[i] = rdraw_viewheight;
         ceilingclip[i] = con_clipviewtop;       //Fab:26-04-98: was -1
         frontscale[i] = MAXINT;
         for(p = 0; p < MAXFFLOORS; p++)
         {
-          ffloor[p].f_clip[i] = viewheight;
+          ffloor[p].f_clip[i] = rdraw_viewheight;
           ffloor[p].c_clip[i] = con_clipviewtop;
         }
     }
@@ -369,12 +369,12 @@ void R_ClearPlanes (player_t *player)
 
     if (viewz>waterz)
     {
-        for (i=0; i<viewwidth; i++)
-            waterclip[i] = viewheight;
+        for (i=0; i<rdraw_viewwidth; i++)
+            waterclip[i] = rdraw_viewheight;
     }
     else
     {
-        for (i=0; i<viewwidth; i++)
+        for (i=0; i<rdraw_viewwidth; i++)
             waterclip[i] = -1;
     }
 #endif
@@ -798,7 +798,7 @@ void R_DrawPlanes (void)
 
 // Kik test non-moving sky .. weird
 // cy = centery;
-// centery = (viewheight/2);
+// centery = (rdraw_viewheight/2);
 
             // Sky is allways drawn full bright,
             //  i.e. colormaps[0] is used.

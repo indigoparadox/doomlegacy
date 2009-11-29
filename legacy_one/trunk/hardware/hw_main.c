@@ -3141,9 +3141,10 @@ void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
     ty = (float) (psp->sy - spritetopoffset[lump]) * crapmul;
     if (cv_splitscreen.value && (cv_grfov.value == 90))
         ty -= 20;       //Hurdler: so it's a bit higher
-    if (raven)
-        if (viewheight == vid.height || (!cv_scalestatusbar.value && vid.dupy > 1))
+    if (raven) {
+        if (rdraw_viewheight == vid.height || (!cv_scalestatusbar.value && vid.dupy > 1))
             ty += crapmul * PSpriteSY[viewplayer->readyweapon];
+    }
 
     wallVerts[3].y = wallVerts[2].y = (float) BASEYCENTER - ty;
 
