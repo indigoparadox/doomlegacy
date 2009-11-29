@@ -146,8 +146,12 @@ Fixes the SHORT bug, which overused the SHORT and LONG macros to do endian swaps
 
 *** w17_rdraw
 patchfile= w17_rdraw.patch
+- committed revision 572   by wesley johnson
 Rename of some rdraw variables to add the prefix rdraw_ to give them more unique names,
 because they were named identical to some other variables in structs.  This makes it
 much easier to grep or search for all uses, and to realize exactly which variable was
 being used.
 
+*** w18_SM
+patchfile= w18_SM.patch
+Make use of ENUM values for legacy flat modes, instead of int literals.

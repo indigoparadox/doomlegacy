@@ -3195,13 +3195,15 @@ void SF_SectorColormap()
             if (mapnum == -1)
             {
                 sectors[i].midmap = 0;
-                sectors[i].altheightsec = 0;
+//                sectors[i].altheightsec = 0;
+                sectors[i].model = SM_normal;
                 sectors[i].heightsec = 0;
             }
             else
             {
                 sectors[i].midmap = mapnum;
-                sectors[i].altheightsec = 2;
+//                sectors[i].altheightsec = 2;
+                sectors[i].model = SM_colormap;
                 sectors[i].heightsec = 0;
             }
         }

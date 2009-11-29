@@ -2922,7 +2922,10 @@ void P_SpawnSpecials (void)
           case 242:	// Boom deep water
             sec = sides[*lines[i].sidenum].sector-sectors;
             for (s = -1; (s = P_FindSectorFromLineTag(lines+i,s)) >= 0;)
+	    {
               sectors[s].heightsec = sec;
+              sectors[s].model = SM_Boom_deep_water;
+	    }
             break;
 
           //SoM: 3/20/2000: support for drawn heights coming from different sector
@@ -2931,7 +2934,8 @@ void P_SpawnSpecials (void)
             for (s = -1; (s = P_FindSectorFromLineTag(lines+i,s)) >= 0;)
             {
               sectors[s].heightsec = sec;
-              sectors[s].altheightsec = 1;
+//              sectors[s].altheightsec = 1;
+              sectors[s].model = SM_Legacy_water;
             }
             break;
 
@@ -2941,7 +2945,8 @@ void P_SpawnSpecials (void)
             for(s = -1; (s = P_FindSectorFromLineTag(lines + i, s)) >= 0;)
             {
               sectors[s].midmap = lines[i].frontsector->midmap;
-              sectors[s].altheightsec = 2;
+//              sectors[s].altheightsec = 2;
+              sectors[s].model = SM_colormap;
             }
             break;
 
@@ -3708,11 +3713,12 @@ void T_Pusher(pusher_t *p)
 			// Find the area that the 'thing' is in
 			// Kudos to P_MobjCheckWater().
 			// SSNTails 09-25-2002
-			if (sec->heightsec > -1 && sec->altheightsec == 1)
+//			if (sec->heightsec > -1 && sec->altheightsec == 1)
+			if (sec->heightsec > -1 && sec->model == SM_Legacy_water)
 			{
 				boolean water;
 				water = false;
-
+				// from above test, how could it be anything else [WDJ] ???
 				if (sec->heightsec > -1)  //water hack
 				{
 					z = (sectors[sec->heightsec].floorheight);

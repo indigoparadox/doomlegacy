@@ -1067,7 +1067,9 @@ void P_MobjCheckWater(mobj_t * mobj)
     oldeflags = mobj->eflags;
 
     //SoM: 3/28/2000: Only use 280 water type of water. Some boom levels get messed up.
-    if ((sector->heightsec > -1 && sector->altheightsec == 1) || (sector->floortype == FLOOR_WATER && sector->heightsec == -1))
+//    if ((sector->heightsec > -1 && sector->altheightsec == 1) || (sector->floortype == FLOOR_WATER && sector->heightsec == -1))
+    if ((sector->heightsec > -1 && sector->model == SM_Legacy_water)
+	|| (sector->floortype == FLOOR_WATER && sector->heightsec == -1))
     {
         if (sector->heightsec > -1)     //water hack
             z = (sectors[sector->heightsec].floorheight);
