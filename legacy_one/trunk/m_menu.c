@@ -1487,8 +1487,12 @@ menuitem_t MouseOptionsMenu[]=
      | IT_CV_SLIDER     ,0,"Mouse Speed"     , &cv_mousesens       ,0},
     {IT_STRING | IT_CVAR
      | IT_CV_SLIDER     ,0,"Mlook Speed"     , &cv_mlooksens       ,0}
+#if 0
+//[WDJ] disabled in 143beta_macosx
+//[segabor]
 #ifdef __MACOS__
         ,{IT_CALL   | IT_WHITESTRING,0,"Configure Input Sprocket..."  ,macConfigureInput     ,60}
+#endif
 #endif
 };
 

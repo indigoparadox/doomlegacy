@@ -336,6 +336,10 @@ void VID_BlitLinearScreen(byte * srcptr, byte * destptr, int width, int height, 
 }
 #endif
 
+// FIX ME
+//[WDJ] BUG caused by using SHORT for BIG_ENDIAN byte swap
+// Many instances in this file.
+
 //
 //  V_DrawMappedPatch : like V_DrawScaledPatch, but with a colormap.
 //
@@ -1202,7 +1206,12 @@ void V_DrawString(int x, int y, int option, char *string)
             continue;
         }
 
+	//[segabor]
+        w = hu_font[c]->width * dupx;
+#if 0
+//[WDJ] BUG caused by using SHORT for BIG_ENDIAN byte swap, SHORT unneeded here
         w = SHORT(hu_font[c]->width) * dupx;
+#endif
         if (cx + w > scrwidth)
             break;
         if (option & V_WHITEMAP)
@@ -1284,7 +1293,12 @@ int V_StringWidth(char *string)
         if (c < 0 || c >= HU_FONTSIZE)
             w += 4;
         else
+	    //[segabor]
+            w += hu_font[c]->width;
+#if 0
+//[WDJ] BUG caused by using SHORT for BIG_ENDIAN byte swap, SHORT unneeded here
             w += SHORT(hu_font[c]->width);
+#endif       
     }
 
     return w;

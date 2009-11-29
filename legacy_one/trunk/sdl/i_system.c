@@ -721,7 +721,8 @@ char *I_GetUserName(void)
 
 int  I_mkdir(const char *dirname, int unixright)
 {
-#ifdef LINUX
+//[segabor]  ([WDJ] from 143beta_macosx)
+#if defined(LINUX) || defined(__MACH__)
     return mkdir(dirname, unixright);
 #else
     return mkdir(dirname);

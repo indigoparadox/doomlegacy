@@ -292,6 +292,9 @@ void S_RegisterSoundStuff(void)
     CV_RegisterVar(&surround);
 #endif
 
+#if 0
+//[WDJ]  disabled in 143beta_macosx
+//[segabor]
 #ifdef __MACOS__        //mp3 playlist stuff
     {
         int i;
@@ -307,6 +310,7 @@ void S_RegisterSoundStuff(void)
         }
         CV_RegisterVar(&play_mode);
     }
+#endif
 #endif
 }
 

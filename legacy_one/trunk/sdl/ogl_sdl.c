@@ -44,8 +44,15 @@
 
 #include "SDL.h"
 
+
+//[segabor]
+#ifdef __MACH__
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#else
 #include <GL/gl.h>
 #include <GL/glu.h>
+#endif
 
 #include "../hardware/r_opengl/r_opengl.h"
 #include "v_video.h"
@@ -55,7 +62,15 @@
 HANDLE logstream = -1;
 #endif
 
+// [WDJ] appeared in 143beta_macosx without static, shared
+//   It may be the MAC version of gcc 3.3, so make it conditional on MACOS
+#ifdef __MACOS__
+//[segabor]
+extern SDL_Surface *vidSurface; // use the one from sdl/i_video.c
+#else
 static SDL_Surface *vidSurface = NULL; //use the one from i_video_sdl.c instead?
+#endif
+
 int     oglflags = 0;
 
 void HWR_Startup(void);

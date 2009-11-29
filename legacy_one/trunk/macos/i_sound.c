@@ -739,11 +739,21 @@ boolean PlayThis(char *name)
 		}
 		else
 		{
+#ifdef __MACH__
+			//[segabor]: If Music folder is in the Resources folder get mid from there
+			extern char mac_music_home[256];
+
+			if (mac_music_home[0] == '.')
+				sprintf(mid_file, "./Music/%s", name);
+			else
+				sprintf(mid_file, "%s/%s", mac_music_home, name);
+#else
 			path = malloc(256);
 			if ( getcwd(path, 256) == NULL )
 				path = ".";
 			sprintf(mid_file, "%s/Music/%s", path, name);
 			free(path);
+#endif
 		}
 	}
 	

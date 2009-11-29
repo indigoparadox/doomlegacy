@@ -583,11 +583,22 @@ void HWR_InitMD2()
     }
     // read the md2.dat file
 
+#ifdef __MACOS__
+    //[segabor]: md2 in the 'Doom Legacy.app/Contents/Resources' folder
+    extern char mac_md2_wad[256];
+   
+    if (!(f = fopen(mac_md2_wad, "rt")))
+    {
+        CONS_Printf("Error while loading md2.dat\n");
+        return;
+    }
+#else
     if (!(f = fopen("md2.dat", "rt")))
     {
         CONS_Printf("Error while loading md2.dat\n");
         return;
     }
+#endif
     while ( (i=fscanf(f, "%s %s %f %f", name, filename, &scale, &offset)) == 4)
     {
         for (i=0; i<NUMSPRITES; i++)

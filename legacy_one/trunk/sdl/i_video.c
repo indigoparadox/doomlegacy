@@ -127,7 +127,17 @@ boolean allow_fullscreen = false;
 event_t event;
 
 // SDL vars
+
+// [WDJ] appeared in 143beta_macosx without static
+//   It may be the MAC version of gcc 3.3, so make it conditional on MACOS
+#ifdef __MACOS__
+//[segabor] !!! I had problem compiling this source with gcc 3.3
+// maybe gcc 3.2 does it better
+	     SDL_Surface *vidSurface=NULL;
+#else
 static       SDL_Surface *vidSurface=NULL;
+#endif
+
 static       SDL_Color    localPalette[256];
 static       SDL_Rect   **modeList=NULL;
 static       Uint8        BitsPerPixel;
@@ -701,6 +711,13 @@ void I_StartupGraphics(void)
     }
 
     // Get video info for screen resolutions
+#ifdef __MACH__
+    //[segabor]: it's ok on Mac OS X with SDL
+    SDL_VideoInfo *videoInfo = SDL_GetVideoInfo();
+    BitsPerPixel	= videoInfo->vfmt->BitsPerPixel;
+    vid.bpp		= videoInfo->vfmt->BytesPerPixel;
+    highcolor		= (vid.bpp == 2) ? true:false;
+#else
     //videoInfo = SDL_GetVideoInfo();
     // even if I set vid.bpp and highscreen properly it does seem to
     // support only 8 bit  ...  strange
@@ -710,6 +727,7 @@ void I_StartupGraphics(void)
     // Set color depth; either 1=256pseudocolor or 2=hicolor
     vid.bpp = 1 /*videoInfo->vfmt->BytesPerPixel*/;
     highcolor = (vid.bpp == 2) ? true:false;
+#endif    
 
     modeList = SDL_ListModes(NULL, SDL_FULLSCREEN|surfaceFlags);
 
@@ -740,7 +758,13 @@ void I_StartupGraphics(void)
     // Window title
     SDL_WM_SetCaption("Legacy", "Legacy");
 
-    if(M_CheckParm("-opengl"))
+// [WDJ] To be safe, make it conditional on MACOS
+#ifdef __MACOS__
+    //[segabor]: Mac hack
+    if(M_CheckParm("-opengl") || rendermode == render_opengl) 
+#else     
+    if(M_CheckParm("-opengl")) 
+#endif  
     {
        rendermode = render_opengl;
        HWD.pfnInit             = hwSym("Init");

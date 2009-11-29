@@ -75,8 +75,14 @@
 #ifndef _R_OPENGL_H_
 #define _R_OPENGL_H_
 
+//[segabor]
+#ifdef __MACH__
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#else
 #include <GL/gl.h>
 #include <GL/glu.h>
+#endif
 
 #define  _CREATE_DLL_  // necessary for Unix AND Windows
 #include "../../doomdef.h"
