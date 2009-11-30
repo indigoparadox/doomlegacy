@@ -794,6 +794,8 @@ void* W_CacheLumpNum ( int lump, int tag )
     }
     else {
         //CONS_Printf ("cache hit on lump %i\n",lump);
+        // [WDJ] Do not degrade lump to PU_CACHE while it is in use.
+        if( tag == PU_CACHE )   tag = PU_CACHE_DEFAULT;
         Z_ChangeTag (lumpcache[llump],tag);
     }
 

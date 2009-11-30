@@ -321,7 +321,7 @@ static void CON_SetupBackColormap (void)
     whitemap = (byte *) Z_Malloc(256,PU_STATIC,NULL);
     graymap  = (byte *) Z_Malloc(256,PU_STATIC,NULL);
 
-    pal = W_CacheLumpName ("PLAYPAL",PU_CACHE);
+    pal = W_CacheLumpName ("PLAYPAL",PU_CACHE); // temp, only used next loop
 
     for(i=0,k=0; i<768; i+=3,k++)
     {

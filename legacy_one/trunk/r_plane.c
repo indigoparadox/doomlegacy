@@ -992,11 +992,10 @@ void R_DrawSinglePlane(visplane_t* pl, boolean handlesource)
 
   if(handlesource)
   {
-        int size;
-    ds_source = (byte *) R_GetFlat (levelflats[pl->picnum].lumpnum);
+        // [WDJ] Flat use is safe from alloc, change to PU_CACHE at function exit.
+        ds_source = (byte *) R_GetFlat (levelflats[pl->picnum].lumpnum);
 
-        size = W_LumpLength(levelflats[pl->picnum].lumpnum);
-
+        int size = W_LumpLength(levelflats[pl->picnum].lumpnum);
         switch(size)
         {
                 case 4194304: // 2048x2048 lump

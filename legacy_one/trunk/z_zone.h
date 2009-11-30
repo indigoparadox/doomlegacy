@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Copyright (C) 1998-2009 by DooM Legacy Team.
+// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -64,85 +64,103 @@
 //
 // ZONE MEMORY
 // PU - purge tags.
-// Tags < PU_PURGELEVEL are not overwritten until freed.
+// Order is important, inequality tests are used.
 typedef enum
 {
+// Internal use tags, do NOT use for user allocations
   PU_FREE = 0, // free, unallocated block
+  PU_ZONE,     // head of a zone allocation, exclude from some checks
 
+// User allocation tags
+// Non-purgable tags.
   PU_STATIC,   // static entire execution time
   PU_SOUND,    // static while playing
   PU_MUSIC,    // static while playing
   PU_DAVE,     // anything else Dave wants static
   PU_HWRPATCHINFO,      // Hardware GlidePatch_t struct for OpenGl/Glide texture cache
   PU_HWRPATCHCOLMIPMAP, // Hardware GlideMipmap_t struct colormap variation of patch
+// Tags that convert to PU_CACHE at level exit.
+// Will not override more restrictive existing tag.
+  PU_LUMP,      // Generic temp Lump.
+  PU_IN_USE,    // Temp in use, user degraded to
+		// PU_CACHE using Z_ChangeTags_To.
+// Tags purged at level exit.
   PU_LEVEL,    // static until level exited
   PU_LEVSPEC,  // a special thinker in a level
   PU_HWRPLANE,
 
+// Tags >= PU_PURGELEVEL are purgable whenever needed.
   PU_PURGELEVEL, // Tags >= PU_PURGELEVEL are purgable whenever needed.
   PU_CACHE,
-  PU_HWRCACHE    // 'second-level' cache for graphics stored in hardware format and downloaded as needed
-} memtag_t;
+  PU_HWRCACHE,   // 'second-level' cache for graphics stored in hardware format and downloaded as needed
+  PU_STALE_CACHE,	// not referenced recently
+     
+// Tag param, conditional on existing tag
+  PU_CACHE_DEFAULT	// set to PU_CACHE, but not when
+     			// already < PU_PURGELEVEL
+} memtag_e;
 
 //#define ZDEBUG
 
 
-void    Z_Init();
-void    Z_FreeTags(memtag_t lowtag, memtag_t hightag);
-void    Z_DumpHeap(memtag_t lowtag, memtag_t hightag);
-void    Z_FileDumpHeap(FILE *f);
-void    Z_CheckHeap(int i);
-void    Z_ChangeTag2(void *ptr, memtag_t tag);
+void    Z_Init (void);
+void    Z_FreeTags(memtag_e lowtag, memtag_e hightag);
+void    Z_DumpHeap(memtag_e lowtag, memtag_e hightag);
+void    Z_FileDumpHeap (FILE *f);
+void    Z_CheckHeap (int i);
+void    Z_ChangeTag2 (void *ptr, memtag_e tag);
+
+// Change all allocations of old_tag to new_tag.
+void	Z_ChangeTags_To( memtag_e old_tag, memtag_e new_tag );
 
 // returns number of bytes allocated for one tag type
-int     Z_TagUsage(memtag_t tag);
+int     Z_TagUsage(memtag_e tag);
 
-void    Z_FreeMemory(int *realfree,int *cachemem,int *usedmem,int *largefreeblock);
+void    Z_FreeMemory (int *realfree, int *cachemem, int *usedmem, int *largefreeblock);
 
 #ifdef ZDEBUG
-#define Z_Free(p) Z_Free2(p, __FILE__, __LINE__)
-void    Z_Free2 (void *ptr, char *file, int line);
-#define Z_Malloc(s, t, p) Z_Malloc2(s, t, p, 0, __FILE__, __LINE__)
-#define Z_MallocAlign(s, t, p, a) Z_Malloc2(s, t, p, a, __FILE__, __LINE__)
-void*   Z_Malloc2 (int size, memtag_t tag, void *ptr, int alignbits, char *file, int line);
+#define Z_Free(p) Z_Free2(p,__FILE__,__LINE__)
+void    Z_Free2 (void *ptr,char *file,int line);
+#define Z_Malloc(s,t,p) Z_Malloc2(s,t,p,0,__FILE__,__LINE__)
+#define Z_MallocAlign(s,t,p,a) Z_Malloc2(s,t,p,a,__FILE__,__LINE__)
+void*   Z_Malloc2 (int reqsize, memtag_e tag, void *ptr, int alignbits, char *file,int line);
 #else
 void    Z_Free (void *ptr);
-void*   Z_MallocAlign(int size, memtag_t tag, void **user, int alignbits);
-#define Z_Malloc(s, t, p) Z_MallocAlign(s, t, p, 0)
+void*   Z_MallocAlign(int reqsize, memtag_e tag, void* user, int alignbits);
+#define Z_Malloc(s,t,p) Z_MallocAlign(s,t,p,0)
 #endif
 
-char *Z_Strdup(const char *s, memtag_t tag, void **user);
+char *Z_Strdup(const char *s, memtag_e tag, void **user);
 
 
 typedef struct memblock_s
 {
-  // [WDJ] only works for int >= 32bit, or else havoc in Z_ALLOC
-  int                 size;   // including the header and possibly tiny fragments
-  memtag_t            tag;    // purgelevel, free block has PU_FREE as tag
-  int                 id;     // should be ZONEID
-  void**              user;   // NULL if no user specified (or several...)
-  struct memblock_s*  prev;
-  struct memblock_s*  next;
+   // [WDJ] only works for int >= 32bit, or else havoc in Z_ALLOC
+    int                 size;   // including the header and possibly tiny fragments
+    memtag_e            tag;    // purgelevel
+    int                 id;     // should be ZONEID
+    void**              user;   // NULL if a free block
+    struct memblock_s*  next;
+    struct memblock_s*  prev;
 #ifdef ZDEBUG
-  char             *ownerfile;
-  int               ownerline; 
+    char             *ownerfile;
+    int               ownerline; 
 #endif
 } memblock_t;
-
 
 //
 // This is used to get the local FILE:LINE info from CPP
 // prior to really call the function in question.
 //
 #ifdef PARANOIA
-#define Z_ChangeTag(p, t) \
+#define Z_ChangeTag(p,t) \
 { \
       if (( (memblock_t *)( (byte *)(p) - sizeof(memblock_t)))->id!=0x1d4a11) \
           I_Error("Z_CT at "__FILE__":%i",__LINE__); \
       Z_ChangeTag2(p,t); \
 };
 #else
-#define Z_ChangeTag(p, t)  Z_ChangeTag2(p, t)
+#define Z_ChangeTag(p,t)  Z_ChangeTag2(p,t)
 #endif
 
 #endif

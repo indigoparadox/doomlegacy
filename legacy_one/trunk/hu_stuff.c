@@ -1145,21 +1145,20 @@ int HU_CreateTeamFragTbl(fragsort_t *fragtab,int dmtotals[],int fragtbl[MAXPLAYE
 //
 void HU_drawDeathmatchRankings (void)
 {
-    patch_t*     p;
     fragsort_t   fragtab[MAXPLAYERS];
     int          i;
     int          scorelines;
     int          whiteplayer;
-	int          y;
-	char*		 title;
-	boolean		 large;
+    int          y;
+    char*	 title;
+    boolean	 large;
 
     // draw the ranking title panel
-	if(!cv_splitscreen.value)
-	{
-		p = W_CachePatchName("RANKINGS",PU_CACHE);
-		V_DrawScaledPatch ((BASEVIDWIDTH-p->width)/2,5,0,p);
-	}
+    if(!cv_splitscreen.value)
+    {
+	patch_t*  p = W_CachePatchName("RANKINGS",PU_CACHE);
+	V_DrawScaledPatch ((BASEVIDWIDTH-p->width)/2,5,0,p);
+    }
 
     // count frags for each present player
     scorelines = 0;

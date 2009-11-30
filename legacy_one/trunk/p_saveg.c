@@ -474,7 +474,8 @@ void P_ArchiveWorld(void)
     byte diff;
     byte diff2;
 
-    ms = W_CacheLumpNum(lastloadedmaplumpnum + ML_SECTORS, PU_CACHE);
+    // [WDJ] protect lump during this function
+    ms = W_CacheLumpNum(lastloadedmaplumpnum + ML_SECTORS, PU_IN_USE);
     ss = sectors;
     put = save_p;
 
@@ -562,8 +563,8 @@ void P_ArchiveWorld(void)
     }
     WRITEUSHORT(put, 0xffff);
 
-    mld = W_CacheLumpNum(lastloadedmaplumpnum + ML_LINEDEFS, PU_CACHE);
-    msd = W_CacheLumpNum(lastloadedmaplumpnum + ML_SIDEDEFS, PU_CACHE);
+    mld = W_CacheLumpNum(lastloadedmaplumpnum + ML_LINEDEFS, PU_IN_USE);
+    msd = W_CacheLumpNum(lastloadedmaplumpnum + ML_SIDEDEFS, PU_IN_USE);
     li = lines;
     // do lines
     for (i = 0; i < numlines; i++, mld++, li++)
@@ -649,6 +650,7 @@ void P_ArchiveWorld(void)
 
     //CONS_Printf("sector saved %d/%d, line saved %d/%d\n",statsec,numsectors,statline,numlines);
     save_p = put;
+    Z_ChangeTags_To( PU_IN_USE, PU_CACHE ); // now can free
 }
 
 //
