@@ -929,6 +929,10 @@ skipwaterdraw:
 
 
 
+/* handlesource: get flat when true, is only false when caller has already got
+ flat into ds_source, as in water.  Caller must also set_flat_globals.
+ If OLDWATER is removed then this param is unnecessary.
+ */
 void R_DrawSinglePlane(visplane_t* pl, boolean handlesource)
 {
   int                 light = 0;

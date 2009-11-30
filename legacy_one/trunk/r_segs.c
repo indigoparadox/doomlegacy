@@ -2075,7 +2075,7 @@ void R_StoreWallRange( int   start, int   stop)
     if (markwater)
     {
         if (waterplane==NULL)
-            I_Error("fuck no waterplane!");
+            I_Error("no waterplane!");
         waterstep = -FixedMul (rw_scalestep, waterz);
         waterfrac = (centeryfrac>>4) - FixedMul (waterz, rw_scale);
     }

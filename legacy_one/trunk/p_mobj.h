@@ -232,7 +232,7 @@ typedef enum
     // Hmm ???.
     MF_TRANSSHIFT       = 26,
 
-    // for chase camera, don't be blocked by things (parsial cliping)
+    // for chase camera, don't be blocked by things (partial clipping)
     MF_NOCLIPTHING      = 0x40000000,
 
     MF_FLOORHUGGER      = 0x80000000
@@ -333,10 +333,10 @@ typedef struct mobj_s
                                    // non NULL (currently hack for player
                                    // bodies so they 'remember' the skin)
                                    //
-                                   // secondary used when player die and
-                                   // play the die sound problem is he is
-                                   // already respawn and the corps play
-                                   // the sound !!! (he yeah it happens :\)
+                                   // secondary use is when player die and
+                                   // we play the die sound. problem is he has
+                                   // already respawn and want the corpse to
+   				   // play the sound !!! (yeah it happens :\)
 
     // Interaction info, by BLOCKMAP.
     // Links in blocks (if needed).
