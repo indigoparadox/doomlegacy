@@ -1207,7 +1207,6 @@ void R_SetupFrame (player_t* player)
 
     if ( rendermode == render_soft )
     {
-        int indx;	// [WDJ] debug
         // clip it in the case we are looking a hardware 90° full aiming
         // (lmps, nework and use F12...)
         G_ClipAimingPitch(&aimingangle);	// limit aimingangle

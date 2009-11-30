@@ -238,7 +238,8 @@ int             numsegs;
 seg_t*          segs;
 
 int             numsectors;
-sector_t*       sectors;
+sector_t*       sectors = NULL;
+	// FIXME: contains realloc memory, must clear with deallocator [WDJ] 11/14/2009
 
 int             numsubsectors;
 subsector_t*    subsectors;

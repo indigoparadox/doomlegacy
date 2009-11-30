@@ -160,8 +160,9 @@ line_t*         blockingline;
 
 // keep track of special lines as they are hit,
 // but don't process them until the move is proven valid
-int             *spechit;                //SoM: 3/15/2000: Limit removal
-int             numspechit;
+int             *spechit = NULL;                //SoM: 3/15/2000: Limit removal
+		// realloc, never deallocated
+int             numspechit = 0;
 
 //SoM: 3/15/2000
 msecnode_t*  sector_list = NULL;
