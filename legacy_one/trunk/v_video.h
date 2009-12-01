@@ -84,9 +84,13 @@ extern  byte*   screens[5];
 
 extern  int     dirtybox[4];
 
-extern  byte    gammatable[5][256];
 extern  consvar_t cv_ticrate;
 extern  consvar_t cv_usegamma;
+#ifdef GAMMA_FUNCS
+extern  consvar_t cv_gammafunc;
+extern  consvar_t cv_black;	// input to gammafunc
+extern  consvar_t cv_bright;	// input to gammafunc
+#endif
 
 
 // Allocates buffer screens, call before R_Init.
