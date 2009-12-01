@@ -203,7 +203,7 @@ Large amount of re-indentation and added {} in p_spec.c.
 
 *** w25_gamma
 patchfile = w25_gamma.patch
-- TODO
+- committed revision 480    by wesley johnson
 Replaces w3_gamma.  Compile option with multiple gamma table generators.
 Adds control to select gamma table generator.
 Removes old gamma tables.
