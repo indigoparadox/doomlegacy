@@ -123,10 +123,10 @@ void    Z_FreeMemory (int *realfree, int *cachemem, int *usedmem, int *largefree
 void    Z_Free2 (void *ptr,char *file,int line);
 #define Z_Malloc(s,t,p) Z_Malloc2(s,t,p,0,__FILE__,__LINE__)
 #define Z_MallocAlign(s,t,p,a) Z_Malloc2(s,t,p,a,__FILE__,__LINE__)
-void*   Z_Malloc2 (int reqsize, memtag_e tag, void *ptr, int alignbits, char *file,int line);
+void*   Z_Malloc2 (int reqsize, memtag_e tag, void **user, int alignbits, char *file,int line);
 #else
 void    Z_Free (void *ptr);
-void*   Z_MallocAlign(int reqsize, memtag_e tag, void* user, int alignbits);
+void*   Z_MallocAlign(int reqsize, memtag_e tag, void **user, int alignbits);
 #define Z_Malloc(s,t,p) Z_MallocAlign(s,t,p,0)
 #endif
 

@@ -709,7 +709,7 @@ void P_LoadThings (int lump)
     int                 i;
     mapthing_t*         mt;
     boolean             spawn;
-    char                *data, *datastart;
+    byte                *data, *datastart;
 
     data = datastart = W_CacheLumpNum (lump,PU_LEVEL);
     nummapthings     = W_LumpLength (lump) / (5 * sizeof(short));
