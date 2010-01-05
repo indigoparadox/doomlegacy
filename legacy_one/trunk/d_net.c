@@ -787,12 +787,12 @@ static void DebugPrintpacket(char *header)
            break;
        case PT_SERVERCFG:
            fprintf(debugfile
-                  ,"    playermask %x players %d clientnode %d serverplayer %d gametic %li gamestate %d\n"
+                  ,"    playermask %x players %d clientnode %d serverplayer %d gametic %lu gamestate %d\n"
                   ,(unsigned int)netbuffer->u.servercfg.playerdetected
                   ,netbuffer->u.servercfg.totalplayernum
                   ,netbuffer->u.servercfg.clientnode
                   ,netbuffer->u.servercfg.serverplayer
-                  ,netbuffer->u.servercfg.gametic
+                  ,(unsigned long)netbuffer->u.servercfg.gametic
                   ,netbuffer->u.servercfg.gamestate);
            break;
        case PT_SERVERINFO :
@@ -813,10 +813,10 @@ static void DebugPrintpacket(char *header)
            break;
        case PT_FILEFRAGMENT :
            fprintf(debugfile
-                  ,"    fileid %d datasize %d position %li\n"
+                  ,"    fileid %d datasize %d position %lu\n"
                   ,netbuffer->u.filetxpak.fileid
                   ,netbuffer->u.filetxpak.size
-                  ,netbuffer->u.filetxpak.position);
+                  ,(unsigned long)netbuffer->u.filetxpak.position);
            break;
        case PT_REQUESTFILE :
        default : // write as a raw packet

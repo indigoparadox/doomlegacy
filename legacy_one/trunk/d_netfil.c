@@ -178,7 +178,7 @@ char *downloaddir="DOWNLOAD";
 char *PutFileNeeded(void)
 {
     int   i;
-    char *p;
+    byte *p;  // macros want byte*
     char  wadfilename[MAX_WADPATH];
 
     p=(byte *)&netbuffer->u.serverinfo.fileneeded;

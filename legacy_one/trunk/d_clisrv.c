@@ -2271,10 +2271,10 @@ void TryRunTics (tic_t realtics)
     if (debugfile && (realtics || neededtic>gametic))
     {
         //SoM: 3/30/2000: Need long int in the format string for args 4 & 5.
-        //Shut up stupid warning!
         fprintf (debugfile,
-                 "------------ Tryruntic : REAL:%li NEED:%li GAME:%li LOAD: %i\n",
-                 realtics, neededtic, gametic, load);
+                 "------------ Tryruntic : REAL:%lu NEED:%lu GAME:%lu LOAD: %i\n",
+                 (unsigned long)realtics, (unsigned long)neededtic,
+		 (unsigned long)gametic, load);
         load=100000;
     }
 #endif
