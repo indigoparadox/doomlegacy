@@ -291,7 +291,7 @@ byte* R_GenerateTexture (int texnum)
 	// texturecache automatically
         block = Z_Malloc (blocksize,
                           PU_STATIC,         // will change tag at end of this function
-                          &texturecache[texnum]);
+                          (void**)&texturecache[texnum]);
         // [WDJ] Only need lump for following memcpy,
         // without Z_Malloc between which could deallocate PU_CACHE memory
         realpatch = W_CacheLumpNum (patch->patch, PU_CACHE);
@@ -324,7 +324,7 @@ byte* R_GenerateTexture (int texnum)
 
     block = Z_Malloc (blocksize,
                       PU_STATIC,
-                      &texturecache[texnum]);
+                      (void**)&texturecache[texnum]);
 
     // columns lookup table
     colofs = (unsigned int*)block;

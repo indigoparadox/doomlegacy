@@ -329,6 +329,9 @@ const int  REVISION = 0;   // for bugfix releases, should not affect compatibili
 const char VERSIONSTRING[] = "test (rev " SVN_REV ")";
 char VERSION_BANNER[80];
 
+// [WDJ] change this if legacy.dat is changed
+// Legacy 144 still uses legacy.dat version 142
+static int min_wadversion = 142;
 
 
 //
@@ -1355,6 +1358,7 @@ static const char *D_MakeTitleString(const char *s)
 void D_CheckWadVersion()
 {
     int wadversion = 0;
+    int max_wadversion = VERSION;	// usual case
     int lump;
 /* BP: disabled since this should work fine now...
     // check main iwad using demo1 version 
@@ -1392,9 +1396,11 @@ void D_CheckWadVersion()
                 wadversion += l * 100;
         }
     }
-    if (wadversion != VERSION)
+    if (wadversion < min_wadversion || wadversion > max_wadversion)
+    {
         I_Error("Your legacy.dat file is version %d.%d, you need version %d.%d\n" "Use the legacy.dat that came in the same zip file as this executable.\n" "\n"
-                "Use -nocheckwadversion to remove this check,\n" "but this can cause Legacy to hang\n", wadversion / 100, wadversion % 100, VERSION / 100, VERSION % 100);
+                "Use -nocheckwadversion to remove this check,\n" "but this can cause Legacy to hang\n", wadversion / 100, wadversion % 100, min_wadversion / 100, min_wadversion % 100);
+    }
 }
 
 //

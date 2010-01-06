@@ -302,6 +302,7 @@ static polyvertex_t  pt;
     return &pt;
 }
 
+#if 0
 //Hurdler: it's not used anymore
 static boolean NearVertice (polyvertex_t* p1, polyvertex_t* p2)
 {
@@ -322,6 +323,7 @@ static boolean NearVertice (polyvertex_t* p1, polyvertex_t* p2)
     // p1 and p2 are considered the same vertex
     return true;
 }
+#endif
 
 // if two vertice coords have a x and/or y difference
 // of less or equal than 1 FRACUNIT, they are considered the same

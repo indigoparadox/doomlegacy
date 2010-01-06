@@ -120,6 +120,8 @@ void P_StripSpaces(char *line)
     }
 }
 
+#if 0
+// [WDJ] found to be unused, 12/5/2009
 static void P_RemoveComments(char *line)
 {
   char *temp = line;
@@ -133,6 +135,7 @@ static void P_RemoveComments(char *line)
       temp++;
     }
 }
+#endif
 
 static void P_RemoveEqualses(char *line)
 {

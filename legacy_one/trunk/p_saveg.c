@@ -1698,8 +1698,8 @@ void P_ArchiveLevelScript()
                     WRITEFIXED(save_p, sv->value.fixed);
                     break;
                 }
-				case svt_array: // haleyjd: arrays
-			   {
+		case svt_array: // haleyjd: arrays
+                {
 				  sfarray_t *cur;
 				  int *int_p;
 
@@ -1717,7 +1717,7 @@ void P_ArchiveLevelScript()
 				  WRITELONG(save_p, (unsigned char *)int_p);
 				  
 				  break;
-			   }
+		}
             }
             sv = sv->next;
         }
