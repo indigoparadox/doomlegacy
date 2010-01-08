@@ -569,8 +569,8 @@ found:
     // put flag so receiver know the totalsize
     if( transfer[i].position+size==f->size )
         p->position |= 0x80000000;
-    p->position = LONG(p->position);
-    p->size     = SHORT(size);
+    p->position = LE_SWAP32_FAST(p->position);
+    p->size     = LE_SWAP16_FAST(size);
     p->fileid   = f->fileid;
     netbuffer->packettype=PT_FILEFRAGMENT;
     if (!HSendPacket(i,true,0,FILETXHEADER+size ) ) // reliable SEND
@@ -614,10 +614,10 @@ static int time=0;
     if( fileneeded[filenum].status==FS_DOWNLOADING )
     {
 	// Swap file position and size on big_endian machines.
-	netbuffer->u.filetxpak.position	= LONG (netbuffer->u.filetxpak.position);
-	netbuffer->u.filetxpak.size	= SHORT(netbuffer->u.filetxpak.size);
+	netbuffer->u.filetxpak.position	= LE_SWAP32_FAST(netbuffer->u.filetxpak.position);
+	netbuffer->u.filetxpak.size	= LE_SWAP16_FAST(netbuffer->u.filetxpak.size);
 
-        // use a special tric to know when file is finished (not allways used)
+        // use a special trick to know when file is finished (not always used)
         // WARNING: filepak can arrive out of order so don't stop now !
         if( netbuffer->u.filetxpak.position & 0x80000000 ) 
         {

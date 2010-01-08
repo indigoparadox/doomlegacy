@@ -126,6 +126,7 @@ int32_t swap_int32( uint32_t x);
 #endif
 
 
+#if 0
 // TODO FIXME convert all endianness handling to use the code above, remove code below.
 #ifdef __BIG_ENDIAN__
 
@@ -146,6 +147,8 @@ int32_t swap_int32( uint32_t x);
 #else
 #define SHORT(x)  ((short)x)
 #define LONG(x)	  ((long) x)
+#endif
+
 #endif
 
 

@@ -166,10 +166,6 @@ int strupr(char *n); // from dosstr.c
 int strlwr(char *n); // from dosstr.c
 #endif
 
-// [WDJ] temp defines until fix m_swap
-//#define LE_SWAP16(x)   LE_SHORT(x)
-//#define LE_SWAP32(x)   LE_LONG(x)
-
 //===========================================================================
 //                                                                    GLOBALS
 //===========================================================================

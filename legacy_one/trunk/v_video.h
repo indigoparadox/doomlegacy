@@ -187,12 +187,13 @@ void V_GetBlock ( int           x,
                   byte*         dest );
 
 // draw a pic_t, SCALED
-void V_DrawScalePic ( int           x1,
+void V_DrawScalePic_Num ( int           x1,
                       int           y1,
                       int           scrn,
                       int           lumpnum /*pic_t*        pic */);
 
-void V_DrawRawScreen(int x, int y, int lumpnum, int width, int height);
+// Heretic raw pic
+void V_DrawRawScreen_Num(int x, int y, int lumpnum, int width, int height);
 
 void V_MarkRect ( int           x,
                   int           y,

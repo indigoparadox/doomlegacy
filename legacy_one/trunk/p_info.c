@@ -546,24 +546,25 @@ void P_LoadLevelInfo(int lumpnum)
 
   if(lumpsize > 0)
   {
-    rover = lump = W_CacheLumpNum(lumpnum, PU_STATIC);
+    rover = lump = W_CacheLumpNum(lumpnum, PU_STATIC);  // level info
     while(rover < lump + lumpsize)
-      {
+    {
         if(*rover == '\n') // end of line
-          {
+        {
           P_ParseInfoCmd(readline);  // parse line
           readline[0] = '\0';
-          }
+        }
         else
-        // add to line if valid char
-        if(isprint(*rover) || *rover == '{' || *rover == '}')
+        {
+          // add to line if valid char
+          if(isprint(*rover) || *rover == '{' || *rover == '}')
           {
             // add char
             readline[strlen(readline)+1] = '\0';
             readline[strlen(readline)] = *rover;
           }
-
-      rover++;
+	}
+        rover++;
     }
 
     // parse last line

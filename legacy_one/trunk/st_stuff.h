@@ -54,7 +54,7 @@
 extern int ST_Y;
 extern int fgbuffer;
 extern int st_x;
-extern boolean st_statusbaron;
+extern boolean st_statusbar_on;
 extern int st_scalex;
 extern int st_scaley;
 
