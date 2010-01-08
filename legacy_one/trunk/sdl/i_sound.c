@@ -166,7 +166,7 @@ static int *channelleftvol_lookup[NUM_CHANNELS];
 static int *channelrightvol_lookup[NUM_CHANNELS];
 
 // Buffer for MIDI
-static char *mus2mid_buffer;
+static byte *mus2mid_buffer;
 
 // Flags for the -nosound and -nomusic options
 extern boolean nosound;
@@ -186,26 +186,30 @@ static void *getsfx(const char *sfxname, int *len)
     int i;
     int size;
     int paddedsize;
-    char name[20];
+    char name[20] = "\0\0\0\0\0\0\0\0";  // do not leave this to chance [WDJ]
     int sfxlump;
 
     // Get the sound data from the WAD, allocate lump
     //  in zone memory.
-    sprintf(name, "ds%s", sfxname);
+    if (gamemode == heretic){	// [WDJ] heretic names are different
+       sprintf(name, "%s", sfxname);
+    }else{
+       sprintf(name, "ds%s", sfxname);
+    }
 
-    // Now, there is a severe problem with the
-    //  sound handling, in it is not (yet/anymore)
-    //  gamemode aware. That means, sounds from
-    //  DOOM II will be requested even with DOOM
-    //  shareware.
-    // The sound list is wired into sounds.c,
-    //  which sets the external variable.
-    // I do not do runtime patches to that
-    //  variable. Instead, we will use a
-    //  default sound for replacement.
+    // Now, there is a severe problem with the sound handling,
+    // in it is not (yet/anymore) gamemode aware. That means, sounds from
+    // DOOM II will be requested even with DOOM shareware.
+    // The sound list is wired into sounds.c, which sets the external variable.
+    // I do not do runtime patches to that variable. Instead, we will use a
+    // default sound for replacement.
 
     if (W_CheckNumForName(name) == -1)
     {
+//	fprintf(stderr,"Sound missing: %s, Using default sound\n",name);  // [WDJ] debug
+	// Heretic shareware: get many missing sound names at sound init,
+	// but not after game starts.  These come from list of sounds
+	// in sounds.c, but not all those are in the game.
         if (gamemode == heretic)
             sfxlump = W_GetNumForName("keyup");
         else
@@ -282,7 +286,7 @@ static int addsfx(int sfxid, int volume, int step, int seperation)
         }
     }
 
-    // Loop all channels to find oldest SFX.
+    // Loop all channels to find unused channel, or oldest SFX.
     for (i = 0; (i < NUM_CHANNELS) && (channels[i]); i++)
     {
         if (channelstart[i] < oldest)
@@ -533,11 +537,6 @@ void I_UpdateSound_sdl(void *unused, Uint8 * stream, int len)
 
     if (nosound)
         return;
-    // Mix in the music
-    //music_mixer(NULL, stream, len); // TODO: see what we have to do
-
-    if (nosound)
-        return;
 
     // Left and right channel
     //  are in audio stream, alternating.
@@ -641,7 +640,7 @@ void I_ShutdownSound(void)
     soundStarted = false;
 }
 
-static SDL_AudioSpec audio;
+static SDL_AudioSpec audspec;  // [WDJ] desc name, too many audio in this file
 
 void I_StartupSound()
 {
@@ -660,25 +659,43 @@ void I_StartupSound()
         return;
     }
     // Open the audio device
-    audio.freq = SAMPLERATE;
+    audspec.freq = SAMPLERATE;
 #if ( SDL_BYTEORDER == SDL_BIG_ENDIAN )
-    audio.format = AUDIO_S16MSB;
+    audspec.format = AUDIO_S16MSB;
 #else
-    audio.format = AUDIO_S16LSB;
+    audspec.format = AUDIO_S16LSB;
 #endif
-    audio.channels = 2;
-    audio.samples = samplecount;
-    audio.callback = I_UpdateSound_sdl;
+    audspec.channels = 2;
+    audspec.samples = samplecount;
+    audspec.callback = I_UpdateSound_sdl;
     I_SetChannels();
 #ifndef HAVE_MIXER
-    if (SDL_OpenAudio(&audio, NULL) < 0)
+#ifdef __MACOS__
+// [WDJ] segabor had this second call to SDL_Init in 143beta_macosx
+// in place of the call to SDL_OpenAudio, but that does not seem right.
+// The 143 CVS source has the SDL_OpenAudio call, conditional on HAVE_MIXER
+// and it has been changed more recently, so go with that.
+
+// [WDJ] this conditional on MACOS, rather than delete it.
+// Do not delete this until someone with a MAC verifies which works !!!
+    //[segabor]
+    if( (SDL_Init(SDL_INIT_AUDIO) == -1)
+	    || (SDL_WasInit(SDL_INIT_AUDIO) == 0) ) {	// [WDJ]
+	CONS_Printf("couldn't open audio with desired format\n");
+	nosound = true;
+	return;
+    }
+#else
+// [WDJ] required for Linux, SDL_Init does not suffice.
+    if (SDL_OpenAudio(&audspec, NULL) < 0)
     {
         CONS_Printf("couldn't open audio with desired format\n");
         SDL_CloseAudio();
         nosound = true;
         return;
     }
-    samplecount = audio.samples;
+#endif   
+    samplecount = audspec.samples;
     CONS_Printf(" configured audio device with %d samples/slice\n", samplecount);
 #endif
 
@@ -757,27 +774,34 @@ void I_InitMusic(void)
 
 #ifndef HAVE_MIXER
     nomusic = true;
+    musicStarted = false;	// also wards off compiler warnings
 #else
     // because we use SDL_mixer, audio is opened here.
-    if (Mix_OpenAudio(audio.freq, audio.format, audio.channels, audio.samples)
+    if (Mix_OpenAudio(audspec.freq, audspec.format, audspec.channels, audspec.samples)
 	< 0)
     {
+
+    // [WDJ] On sound cards without midi ports, opening audio will block music.
+    // When midi music is played through Timidity, it will also try to use the
+    // dsp port, which is already in use.  Need to use a mixer on sound
+    // effect and Timidity output.  Some sound cards have two dsp ports.
+
         CONS_Printf(" Unable to open audio: %s\n", Mix_GetError());
         nosound = nomusic = true;
         return;
     }
 
-    int temp; // aargh!
-    if (!Mix_QuerySpec(&audio.freq, &audio.format, &temp))
+    int number_channels;	// for QuerySpec
+    if (!Mix_QuerySpec(&audspec.freq, &audspec.format, &number_channels))
     {
       CONS_Printf(" Mix_QuerySpec: %s\n", Mix_GetError());
       nosound = nomusic = true;
       return;
     }
 
-    Mix_SetPostMix(audio.callback, NULL);  // after mixing music, add sound fx
+    Mix_SetPostMix(audspec.callback, NULL);  // after mixing music, add sound fx
     CONS_Printf(" Audio device initialized: %d Hz, %d samples/slice.\n",
-	audio.freq, audio.samples);
+	audspec.freq, audspec.samples);
     Mix_Resume(-1); // start all sound channels (although they are not used)
 
     soundStarted = true;
@@ -786,7 +810,6 @@ void I_InitMusic(void)
         return;
 
     Mix_ResumeMusic();  // start music playback
-    // FIXME: XXX: we need to test the return value of Z_Malloc
     mus2mid_buffer = (char *) Z_Malloc(MIDBUFFERSIZE, PU_STATIC, NULL);
     CONS_Printf(" Music initialized.\n");
     musicStarted = true;
@@ -856,38 +879,41 @@ int I_RegisterSong(void* data, int len)
     return 0;
 
   if (music.mus)
-    {
+  {
       I_Error("Two registered pieces of music simultaneously!\n");
-    }
+  }
 
   if (memcmp(data, MUSMAGIC, 4) == 0)
-    {
+  {
       int err;
-      Uint32 midlength;
+//      Uint32 midlength;
+      unsigned long midilength;  // per qmus2mid, SDL_RWFromConstMem wants int
       // convert mus to mid in memory with a wonderful function
       // thanks to S.Bacquet for the source of qmus2mid
-      if ((err = qmus2mid(data, mus2mid_buffer, 89, 64, 0, len, MIDBUFFERSIZE, &midlength)) != 0)
-	{
+      err = qmus2mid(data, mus2mid_buffer, 89, 64, 0, len, MIDBUFFERSIZE, &midilength);
+      if ( err != 0 )
+      {
 	  CONS_Printf("Cannot convert MUS to MIDI: error %d.\n", err);
 	  return 0;
-	}
+      }
 
-      music.rwop = SDL_RWFromConstMem(mus2mid_buffer, midlength);
-    }
+      music.rwop = SDL_RWFromConstMem(mus2mid_buffer, midilength);
+  }
   else
-    {
+  {
       // MIDI, MP3, Ogg Vorbis, various module formats
       music.rwop = SDL_RWFromConstMem(data, len);
-    }
+  }
   
   // SDL_mixer automatically frees the rwop when the music is stopped.
   music.mus = Mix_LoadMUS_RW(music.rwop);
   if (!music.mus)
-    {
+  {
       CONS_Printf("Couldn't load music lump: %s\n", Mix_GetError());
       music.rwop = NULL;
-    }
+  }
 
+//  CONS_Printf("register song\n"); 	// [WDJ] debug
 #endif
 
   return 0;

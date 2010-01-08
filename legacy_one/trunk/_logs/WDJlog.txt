@@ -231,7 +231,7 @@ Caused by init of sectors to NULL, and is unexplainable.
 
 *** w29_sound
 patchfile = w29_sound.patch
-- committed revision   by wesley johnson
+- committed revision 587  by wesley johnson
 Fix (again) the heretic sound, where names are different than Doom.
 Fix (again) some sound code for SDL.
 
