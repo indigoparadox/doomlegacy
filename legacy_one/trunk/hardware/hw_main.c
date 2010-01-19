@@ -612,6 +612,7 @@ static FOutVector planeVerts[MAXPLANEVERTICES];
 // -----------------+
 // HWR_RenderPlane  : Render a floor or ceiling convex polygon
 // -----------------+
+// Called from HWR_Subsector, HWR_Render3DWater
 void HWR_RenderPlane(extrasubsector_t * xsub, fixed_t fixedheight, FBITFIELD PolyFlags, int lightlevel, int lumpnum)    // SoM: 3D floors ect.
 {
     polyvertex_t *pv;
@@ -765,6 +766,7 @@ void HWR_RenderPlane(extrasubsector_t * xsub, fixed_t fixedheight, FBITFIELD Pol
 #ifdef POLYSKY
 // this don't draw anything it only update the z-buffer so there isn't problem with
 // wall/things upper that sky (map12)
+// Called from HWR_Subsector
 static void HWR_RenderSkyPlane(extrasubsector_t * xsub, fixed_t fixedheight)
 //                              FBITFIELD         PolyFlags )
 {
@@ -818,6 +820,7 @@ static void HWR_RenderSkyPlane(extrasubsector_t * xsub, fixed_t fixedheight)
           0--1
 */
 #ifdef WALLSPLATS
+// Called from HWR_ProjectWall, HWR_RenderWall
 void HWR_DrawSegsSplats(FSurfaceInfo * pSurf)
 {
     FOutVector trVerts[4], *wv;
@@ -906,7 +909,7 @@ void HWR_DrawSegsSplats(FSurfaceInfo * pSurf)
 // ==========================================================================
 //                                        WALL GENERATION FROM SUBSECTOR SEGS
 // ==========================================================================
-
+// Called from HWR_StoreWallRange, HWR_DrawSprite
 int HWR_TranstableToAlpha(int transtablenum, FSurfaceInfo * pSurf)
 {
     switch (transtablenum)
@@ -946,6 +949,7 @@ void HWR_AddTransparentWall(wallVert3D * wallVerts, FSurfaceInfo * pSurf, int te
           |/ |
           0--1
 */
+// Called from HWR_SplitWall, HWR_StoreWallRange
 void HWR_ProjectWall(wallVert3D * wallVerts, FSurfaceInfo * pSurf, int blendmode)
 {
     FOutVector trVerts[4];
@@ -2544,6 +2548,7 @@ angle_t fineanglefov = FIELDOFVIEW;
 #endif
 
 //BP : exactely the same as R_InitTextureMapping
+// Called from r_main:R_ExecuteSetViewSize
 void HWR_InitTextureMapping(void)
 {
     int i;
@@ -3867,6 +3872,7 @@ typedef struct
 
 static wallinfo_t *wallinfo = NULL;
 
+// Called from HWR_SplitWall, HWR_StoreWallRange
 void HWR_AddTransparentWall(wallVert3D * wallVerts, FSurfaceInfo * pSurf, int texnum, int blend)
 {
     if (!(numwalls % MAX_TRANSPARENTWALL))

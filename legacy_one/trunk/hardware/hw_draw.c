@@ -728,8 +728,9 @@ void saveTGA(char *file_name, int width, int height, GLRGB *buffer)
         return;
 
     memset(&tga_hdr, 0, sizeof(tga_hdr));
-    tga_hdr.width = SHORT(width);
-    tga_hdr.height = SHORT(height);
+    // TGA format is little-endian
+    tga_hdr.width = LE_SWAP16(width);
+    tga_hdr.height = LE_SWAP16(height);
     tga_hdr.image_pix_size = 24;
     tga_hdr.image_type = 2;
     tga_hdr.image_descriptor = 32;

@@ -1008,6 +1008,7 @@ void AjustSegs(void)
 
 // call this routine after the BSP of a Doom wad file is loaded,
 // and it will generate all the convex polys for the hardware renderer
+// Called from P_SetupLevel
 void HWR_CreatePlanePolygons (int bspnum)
 {
     poly_t*       rootp;

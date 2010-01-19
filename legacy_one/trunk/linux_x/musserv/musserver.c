@@ -52,7 +52,8 @@ int pcheck = 1;
 int pcheck = 0;
 #endif
 
-extern int readdir(FILE *wadfile, int version);
+// readwad.c
+extern int read_wad_dir_music(FILE *wadfile, int version);
 extern int readmus(int lumpnum);
 extern int playmus(char *musdata, unsigned int mussize, int play_once);
 extern void seq_setup(int pref_dev, int dev_num);
@@ -292,7 +293,7 @@ int main(int argc, char **argv)
     }
 
     /* read the wadfile, get music data */
-    readdir(infile, doomver);
+    read_wad_dir_music(infile, doomver);
     if (doomver)	/*  if not shareware doom, scan for external PWADs */
 	read_extra_wads(doomver);
 

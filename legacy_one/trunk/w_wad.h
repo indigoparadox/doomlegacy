@@ -187,6 +187,7 @@ void*   W_CacheLumpName (char* name, int tag);
 void*   W_CachePatchName (char* name, int tag);
 
 void*   W_CachePatchNum (int lump, int tag);                        // return a patch_t
+void*   W_CachePatchNum_Endian ( int lump, int tag );
 
 void*   W_CacheRawAsPic( int lump, int width, int height, int tag); // return a pic_t
 

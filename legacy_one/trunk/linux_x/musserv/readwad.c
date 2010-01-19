@@ -23,7 +23,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/soundcard.h>
+#include <stdint.h>
 #include "musserver.h"
+#include "../../m_swap.h"
 
 static unsigned long lumpsize[35] = {	/* size in bytes of data lumps */
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -63,6 +65,12 @@ static char *doom1names[] = {
 
 unsigned long genmidipos;
 
+// [WDJ] 1/16/2010 replaced local defs of swap when little-endian (BE_SWAP),
+// with opposite LE_SWAP16, LE_SWAP32
+// Music in MIDI file is big-endian, but this reads wad headers which
+// are little-endian (see w_wad.c).
+#if 0
+// [WDJ] Old swap code, just in case you don't believe the above stmt.
 #ifndef BIGEND
 #define LONG(x) (x)
 #define SHORT(x) (x)
@@ -83,11 +91,13 @@ unsigned short SwapSHORT(unsigned short x)
         (x>>8) | (x<<8);
 }
 #endif
+#endif
 
-int readdir(FILE *wadfile, int version) {
+// [WDJ] To not confuse with the readdir system call
+int read_wad_dir_music(FILE *wadfile, int version) {
     int inmus = 0;		/* flag */
     long count = 0;		/* counting variable */
-    long dirpos, tmp;		/* position of directory in wad file */
+    uint32_t dirpos, tmp;	/* position of directory in wad file */
     int lumpindex = 0;		/* index (0 to 34) of current lump */
     char lumpname[10];		/* name of current lump */
     int musiclump;		/* tells whether current lump contains music */
@@ -95,8 +105,10 @@ int readdir(FILE *wadfile, int version) {
 
     /* skip first 8 bytes to find and read the wad directory offset */
     fseek(wadfile, WADHEADER, SEEK_SET);
-    fread((char*)&tmp, 4, 1, wadfile);
-    dirpos = LONG(tmp);
+    fread((char*)&tmp, 4, 1, wadfile);  // read infotableofs
+    // [WDJ] 1/16/2010 changed from swap when little-endian to LE_SWAP32,
+    // wad directory is little-endian (see w_wad.c)
+    dirpos = LE_SWAP32(tmp);
     
     /* seek to the name of the first wad directory entry */
     fseek(wadfile, dirpos + 8, SEEK_SET);
@@ -134,11 +146,13 @@ int readdir(FILE *wadfile, int version) {
 	    }
 	    
 	    if (musiclump) {
+	        // [WDJ] the wad dir is little-endian,
+		// changed lump pos and size from BE_SWAP to LE_SWAP
 		fseek(wadfile, -16, SEEK_CUR);
                 fread((char*)&tmp, 4, 1, wadfile);
-                lumppos[lumpindex] = LONG(tmp);
+                lumppos[lumpindex] = LE_SWAP32(tmp);
                 fread((char*)&tmp, 4, 1, wadfile);
-                lumpsize[lumpindex] = LONG(tmp);
+                lumpsize[lumpindex] = LE_SWAP32(tmp);
 		lumpfp[lumpindex] = wadfile;
 		fseek(wadfile, 16, SEEK_CUR);
 		++found;
@@ -146,7 +160,9 @@ int readdir(FILE *wadfile, int version) {
 	} else if (!strncmp(lumpname, "GENMIDI", 7)) {
 	    fseek(wadfile, -16, SEEK_CUR);
             fread((char*)&tmp, 4, 1, wadfile);
-            genmidipos = LONG(tmp);
+            // [WDJ] the wad dir is little-endian,
+            // changed lump pos and size from BE_SWAP to LE_SWAP
+            genmidipos = LE_SWAP32(tmp);
 	    fseek(wadfile, 20, SEEK_CUR);
 	} else if (!strcmp(lumpname, "F_END")) {
 	    break;
@@ -161,24 +177,28 @@ int readdir(FILE *wadfile, int version) {
 
 int readmus(int lumpnum)
 {
+
+// [WDJ] The MUS header
+// All other ports are reading this as little-endian.
 struct mus_header {			/* header of music lump */
 	char		id[4];
-	unsigned short	music_size;
-	unsigned short	header_size;
-	unsigned short	channels;
-	unsigned short	sec_channels;
-	unsigned short	instrnum;
-	unsigned short	dummy;
+	uint16_t	music_size;
+	uint16_t	header_size;
+	uint16_t	channels;
+	uint16_t	sec_channels;
+	uint16_t	instrnum;
+	uint16_t	dummy;
 } header;
+
 FILE *wadfile;
-short tmp;
 
   wadfile = lumpfp[lumpnum];
   fseek(wadfile, lumppos[lumpnum], SEEK_SET);
   fread(&header, 1, sizeof(header), wadfile);
-  tmp = header.music_size; header.music_size = SHORT(tmp);
-  tmp = header.header_size; header.header_size = SHORT(tmp);
-
+  // [WDJ] this is read of MUS lump header, which is little-endian
+  // changed from BE_SWAP to LE_SWAP
+  header.music_size = LE_SWAP16( header.music_size );
+  header.header_size = LE_SWAP16( header.header_size );
 
   fseek(wadfile, lumppos[lumpnum], SEEK_SET);
 
@@ -186,10 +206,10 @@ short tmp;
 
   musicdata = malloc(header.music_size);
   if (musicdata == NULL)
-    {
+  {
     printf("musserver: could not allocate %d bytes for music data, exiting.\n", header.music_size);
     cleanup(1);
-    }
+  }
   fread(musicdata, 1, header.music_size, wadfile);
   return header.music_size;
 }
@@ -201,10 +221,10 @@ char header[9];
   fseek(wadfile, genmidipos, SEEK_SET);
   fread(&header, 1, 8, wadfile);
   if (strncmp(header, "#OPL_II#", 8))
-    {
+  {
     printf("musserver: couldn't find GENMIDI entry in wadfile, exiting.\n");
     cleanup(1);
-    }
+  }
   fread(&fm_instruments, sizeof(struct opl_instr), 175, wadfile);
 }
 
@@ -224,7 +244,7 @@ static void readwad(char *s, int doomver) {
     fprintf(stderr, "musserver: trying external PWAD %s\n", wadfilename);
     if ((fp = fopen(wadfilename, "r"))) {
         int found;
-        found = readdir(fp, doomver);
+        found = read_wad_dir_music(fp, doomver);
         fprintf(stderr, "%d soundtracks found in %s\n", found, wadfilename);
         if (!found)
             fclose(fp); /* don't need it */

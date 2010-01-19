@@ -554,15 +554,16 @@ boolean I_InitTcpNetwork( void )
         // if no number is specified here, the server starts with 1 client, others can join in-game.
         // since Boris has implemented join in-game, there is no actual need for specifying a particular number here
         // FIXME: for dedicated server, numnodes needs to be set to 0 upon start
+	// [WDJ] Network is little-endian
         if( M_IsNextParm() )
-            doomcom->numnodes=SHORT(atoi(M_GetNextParm()));
+            doomcom->numnodes=LE_SWAP16(atoi(M_GetNextParm()));
         else
-            doomcom->numnodes=SHORT(1);
+            doomcom->numnodes=LE_SWAP16(1);
 
-        if (SHORT(doomcom->numnodes)<1)
-            doomcom->numnodes=SHORT(1);
-        if (SHORT(doomcom->numnodes)>MAXNETNODES)
-            doomcom->numnodes=SHORT(MAXNETNODES);
+        if (LE_SWAP16(doomcom->numnodes)<1)
+            doomcom->numnodes=LE_SWAP16(1);
+        if (LE_SWAP16(doomcom->numnodes)>MAXNETNODES)
+            doomcom->numnodes=LE_SWAP16(MAXNETNODES);
 
         // server
         servernode = 0;

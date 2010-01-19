@@ -761,7 +761,9 @@ void HWR_WallLighting(FOutVector *wlVerts)
 
         HWR_SetLight();
 
-        Surf.FlatColor.rgba = LONG(dynlights->p_lspr[j]->dynamic_color);
+        // [WDJ] FIXME: Do not know why this is swap, it is not done for corona.
+	// Is hardware little-endian ??
+        Surf.FlatColor.rgba = LE_SWAP32(dynlights->p_lspr[j]->dynamic_color);
 #ifdef DL_HIGH_QUALITY
         Surf.FlatColor.s.alpha *= (1-dist_p2d/DL_SQRRADIUS(j));
 #endif
@@ -826,7 +828,9 @@ void HWR_PlaneLighting(FOutVector *clVerts, int nrClipVerts)
 
         HWR_SetLight();
 
-        Surf.FlatColor.rgba = LONG(dynlights->p_lspr[j]->dynamic_color);
+        // [WDJ] FIXME: Do not know why this is swap, it is not done for corona.
+	// Is hardware little-endian ??
+        Surf.FlatColor.rgba = LE_SWAP32(dynlights->p_lspr[j]->dynamic_color);
 #ifdef DL_HIGH_QUALITY
         Surf.FlatColor.s.alpha *= (1-dist_p2d/DL_SQRRADIUS(j));
 #endif
@@ -1017,6 +1021,7 @@ void HWR_DrawCoronas( void )
 // --------------------------------------------------------------------------
 // Remove all the dynamic lights at eatch frame
 // --------------------------------------------------------------------------
+// Called from P_SetupLevel, and maybe from HWR_RenderPlayerView
 void HWR_ResetLights(void)
 {
     dynlights->nb = 0;
@@ -1025,6 +1030,7 @@ void HWR_ResetLights(void)
 // --------------------------------------------------------------------------
 // Change view, thus change lights (splitscreen)
 // --------------------------------------------------------------------------
+// Called from HWR_RenderPlayerView
 void HWR_SetLights(int viewnumber)
 {
     dynlights = &view_dynlights[viewnumber];
@@ -1312,6 +1318,7 @@ static void HWR_SearchLightsInMobjs(void)
 //
 // HWR_CreateStaticLightmaps()
 //
+// Called from P_SetupLevel
 void HWR_CreateStaticLightmaps(int bspnum)
 {
     return; //Hurdler: TODO!

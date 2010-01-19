@@ -819,6 +819,7 @@ extern boolean raven;       // true with heretic and hexen
 // and some levels have deep water trick, invisible staircases etc.
 // --------------------------------------------------------------------------
 // FIXME: put some nice default texture in legacy.dat and use it
+// Called from P_SetupLevel
 void HWR_CorrectSWTricks(void)
 {
     int i, k;
