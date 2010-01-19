@@ -189,7 +189,12 @@ static void R_BuildGammaTable(float gamma)
 
   // calculate gammatable anew each time
   for (i=0; i<256; i++)
+#ifdef __USE_ISOC99
+    // round is ISOC99
     gammatable[i] = round(255.0*pow((i+1)/256.0, gamma));
+#else
+    gammatable[i] = rint(255.0*pow((i+1)/256.0, gamma));
+#endif
 }
 
 
@@ -216,7 +221,12 @@ inline float gamma_lookup( int ind )
 
 static void put_gammatable( int i, float fv )
 {
+#ifdef __USE_ISOC99
+    // roundf is ISOC99
    int gv = roundf( fv );
+#else
+   int gv = rint( fv );
+#endif
    if( gv < 0 ) gv = 0; 
    if( gv > 255 ) gv = 255;
    gammatable[i] = gv;
