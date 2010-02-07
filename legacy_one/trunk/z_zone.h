@@ -70,6 +70,8 @@ typedef enum
 // Internal use tags, do NOT use for user allocations
   PU_FREE = 0, // free, unallocated block
   PU_ZONE,     // head of a zone allocation, exclude from some checks
+  PU_INVALID,  // no longer a valid memory block
+// Do not move PU_INVALID, it is used to protect tags below it.
 
 // User allocation tags
 // Non-purgable tags.
@@ -91,8 +93,9 @@ typedef enum
 
 // Tags >= PU_PURGELEVEL are purgable whenever needed.
   PU_PURGELEVEL, // Tags >= PU_PURGELEVEL are purgable whenever needed.
-  PU_CACHE,
+  PU_PRIV_CACHE,
   PU_HWRCACHE,   // 'second-level' cache for graphics stored in hardware format and downloaded as needed
+  PU_CACHE,
   PU_STALE_CACHE,	// not referenced recently
      
 // Tag param, conditional on existing tag
