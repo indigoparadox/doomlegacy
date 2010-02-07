@@ -2650,21 +2650,6 @@ void P_PlayerInSpecialSector (player_t* player)
     //Fab: keep track of what sector type the player's currently in
     player->specialsector = sector->special;
 
-#ifdef OLDWATER
-    //Fab: VERY NASTY hack for water QUICK TEST !!!!!!!!!!!!!!!!!!!!!!!
-    if (sector->tag < 0)
-    {
-        player->specialsector = 888;    // no particular value
-        return;
-    }
-    else
-    // old water (flat texture)
-    if (levelflats[sector->floorpic].iswater)
-    {
-        player->specialsector = 887;
-        return;
-    }
-#endif
 
     if (!player->specialsector)     // nothing special, exit
         return;

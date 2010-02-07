@@ -147,10 +147,6 @@
 // a patch or sprite is composed of zero or more columns.
 //
 
-#ifdef OLDWATER
-int             firstwaterflat; //added:18-02-98:WATER!
-#endif
-
 int             firstflat, lastflat, numflats;
 int             firstpatch, lastpatch, numpatches;
 int             firstspritelump, lastspritelump, numspritelumps;
@@ -976,11 +972,6 @@ void R_InitFlats ()
   numflatlists = 0;
   flats = NULL;
   cfile = clump = 0;
-
-#ifdef OLDWATER
-  //added:18-02-98: WATER! flatnum of the first waterflat
-  firstwaterflat = W_GetNumForName ("WATER0");
-#endif
 
   for(;cfile < numwadfiles;cfile ++, clump = 0)
   {

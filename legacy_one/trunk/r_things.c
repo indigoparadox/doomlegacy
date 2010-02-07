@@ -2000,7 +2000,7 @@ void R_DrawMasked (void)
       if(r2->plane)
       {
         next = r2->prev;
-        R_DrawSinglePlane(r2->plane, true);
+        R_DrawSinglePlane(r2->plane);
         R_DoneWithNode(r2);
         r2 = next;
       }

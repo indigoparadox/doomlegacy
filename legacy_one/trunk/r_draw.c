@@ -132,12 +132,6 @@ int                     dc_x;
 int                     dc_yl;
 int                     dc_yh;
 
-//Hurdler: 04/06/2000: asm code still use it
-//#ifdef OLDWATER
-int                     dc_yw;          //added:24-02-98: WATER!
-lighttable_t*           dc_wcolormap;   //added:24-02-98:WATER!
-//#endif
-
 fixed_t                 dc_iscale;
 fixed_t                 dc_texturemid;
 

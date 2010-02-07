@@ -102,10 +102,6 @@ typedef struct visplane_s
 extern visplane_t*    floorplane;
 extern visplane_t*    ceilingplane;
 
-#ifdef OLDWATER
-extern visplane_t*    waterplane;
-#endif
-
 
 // Visplane related.
 extern  short*          lastopening;
@@ -156,9 +152,8 @@ visplane_t* R_CheckPlane
 
 void R_ExpandPlane(visplane_t*  pl, int start, int stop);
 
-// SoM: Draws a single visplane. If !handlesource, it won't allocate or
-// remove ds_source.
-void R_DrawSinglePlane(visplane_t* pl, boolean handlesource);
+// SoM: Draws a single visplane.
+void R_DrawSinglePlane(visplane_t* pl);
 void R_PlaneBounds(visplane_t* plane);
 
 
