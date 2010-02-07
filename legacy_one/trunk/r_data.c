@@ -184,7 +184,7 @@ lighttable_t    *colormaps;
 //faB: for debugging/info purpose
 int             flatmemory;
 int             spritememory;
-int             texturememory;
+int             texturememory;	// all textures
 
 
 //faB: highcolor stuff
@@ -1629,7 +1629,7 @@ void R_PrecacheLevel (void)
     //if (devparm)
     //    CONS_Printf("Generating textures..\n");
 
-    texturememory = 0;
+    texturememory = 0;  // global
     for (i=0 ; i<numtextures ; i++)
     {
         if (!texturepresent[i])

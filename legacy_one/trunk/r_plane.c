@@ -865,8 +865,11 @@ void R_DrawPlanes (void)
                 dc_yl = pl->top[x];
                 dc_yh = pl->bottom[x];
 
-                if (dc_yl <= dc_yh)
+                if (dc_yl <= dc_yh && dc_yh >= 0 && dc_yl < rdraw_viewheight )
                 {
+		   //[WDJ] phobiata.wad has many views that need clipping
+		    if ( dc_yl < 0 )   dc_yl = 0;
+		    if ( dc_yh >= rdraw_viewheight )   dc_yh = rdraw_viewheight - 1;
                     angle = (viewangle + xtoviewangle[x])>>ANGLETOSKYSHIFT;
                     dc_x = x;
                     dc_source = R_GetColumn(skytexture, angle);

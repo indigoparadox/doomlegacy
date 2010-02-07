@@ -97,8 +97,12 @@
 // (view is already used by player, window is also used, rw_ is used)
 byte*           viewimage;
 int             rdraw_viewwidth;		// was viewwidth
+			// width used by drawing routines
+			// half of pixel width when low res
 int             rdraw_scaledviewwidth;		// was scaledrviewwidth
+			// width of view window in pixels
 int             rdraw_viewheight;		// was viewheight
+			// height of view window in rows (pixels)
 // position of smaller rdraw_view window within vid window
 int             viewwindowx;
 int             viewwindowy;
