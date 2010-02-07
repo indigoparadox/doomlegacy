@@ -849,16 +849,11 @@ inline void* W_CachePatchNum_Endian ( int lump, int tag )
 	patch->topoffset = LE_SWAP16(patch->topoffset);
 	patch->leftoffset = LE_SWAP16(patch->leftoffset);
         {
-#if 1
-	    // [WDJ] Paranoid, until someone can test this
-            int i = 7;	    
-#else
-	    // [WDJ] Only uses columnofs[ 0 .. width-1 ],
-            int i = patch->width - 1;  // max 0..7
-	    // but do one more for safety, at least until proven safe.
-            if( i < 7 ) i++;  // max 0..7
-#endif
-            for( ; i>=0; i-- )  patch->columnofs[i] = LE_SWAP32( patch->columnofs[i] );
+	    // [WDJ] columnofs[ 0 .. width-1 ]
+	    // The patch structure only shows 8, but there can be many more.
+            int i = patch->width - 1;
+            for( ; i>=0; i-- )
+	       patch->columnofs[i] = LE_SWAP32( patch->columnofs[i] );
 	}
     }
     return patch;

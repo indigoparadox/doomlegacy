@@ -94,7 +94,7 @@ void R_InitSkyMap (void)
 //
 void R_SetupSkyDraw (void)
 {
-    texpatch_t*  patches;
+    texpatch_t*  texpatch;
     patch_t      wpatch;
     int          count;
     int          height;
@@ -108,10 +108,10 @@ void R_SetupSkyDraw (void)
     //       skies, but the patches it use will give the right size
 
     count   = textures[skytexture]->patchcount;
-    patches = &textures[skytexture]->patches[0];
-    for (height=0,i=0;i<count;i++,patches++)
+    texpatch = &textures[skytexture]->patches[0];
+    for (height=0,i=0;i<count;i++,texpatch++)
     {
-        W_ReadLumpHeader (patches->patch, &wpatch, sizeof(patch_t));
+        W_ReadLumpHeader (texpatch->patchnum, &wpatch, sizeof(patch_t));
         // [WDJ] Do endian fix as this is read.
         wpatch.height = LE_SWAP16(wpatch.height);
         if (wpatch.height>height)

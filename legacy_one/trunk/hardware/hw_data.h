@@ -106,11 +106,26 @@ struct GlideTexture_s {
 typedef struct GlideTexture_s GlideTexture_t;
 
 
-// a cached patch as converted to hardware format, holding the original patch_t
+// A cached patch as converted to hardware format, holding the original patch_t
 // header so that the existing code can retrieve ->width, ->height as usual
 // This is returned by W_CachePatchNum()/W_CachePatchName(), when rendermode
 // is 'render_glide'. Else it returns the normal patch_t data.
 
+#if 1
+// [WDJ] This is used for reading patches from wad.
+struct GlidePatch_s {
+        // the 4 first fields come right away from the original patch_t
+        uint16_t            width;          // bounding box size
+        uint16_t            height;
+        int16_t             leftoffset;     // pixels to the left of origin
+        int16_t             topoffset;      // pixels below the origin
+        //
+        float               max_s,max_t;
+        int                 patchlump;      // the software patch lump num for when the hardware patch
+                                            // was flushed, and we need to re-create it
+        GlideMipmap_t       mipmap;
+};
+#else
 struct GlidePatch_s {
         // the 4 first fields come right away from the original patch_t
         short               width;
@@ -123,6 +138,7 @@ struct GlidePatch_s {
                                             // was flushed, and we need to re-create it
         GlideMipmap_t       mipmap;
 };
+#endif
 typedef struct GlidePatch_s GlidePatch_t;
 
 #endif //_HWR_DATA_

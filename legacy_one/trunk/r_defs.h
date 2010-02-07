@@ -734,6 +734,19 @@ typedef struct drawseg_s
 // of patches.
 //
 //WARNING: this structure is cloned in GlidePatch_t
+#if 1
+// [WDJ] This is used for reading patches from wad.
+struct patch_s
+{
+    uint16_t            width;          // bounding box size
+    uint16_t            height;
+    int16_t             leftoffset;     // pixels to the left of origin
+    int16_t             topoffset;      // pixels below the origin
+    uint32_t            columnofs[8];   // actually [width]
+       // offset of each column from start of patch header
+       // the [0] is &columnofs[width]
+};
+#else
 struct patch_s
 {
     short               width;          // bounding box size
@@ -743,6 +756,7 @@ struct patch_s
     int                 columnofs[8];   // only [width] used
     // the [0] is &columnofs[width]
 };
+#endif
 typedef struct patch_s patch_t;
 
 

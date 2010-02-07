@@ -246,7 +246,10 @@ static void HWR_DrawPatchInCache (GlideMipmap_t* mipmap,
             yfrac = 0;
             //yfracstep = (patchcol->length << 16) / count;
             if (position < 0) {
-                yfrac = -position<<16;
+	        // [WDJ] Original doom had a bug in clipping.
+		// To reproduce that bug, comment out the next line.
+                yfrac = -position<<16;  // skip pixels in patch (not in original doom)
+
                 count += (((position * scale_y) + (FRACUNIT/2)) >> 16);
                 position = 0;
             }
@@ -505,7 +508,7 @@ static void HWR_GenerateTexture (int texnum, GlideTexture_t* grtex)
 {
     byte*               block;
     texture_t*          texture;
-    texpatch_t*         patch;
+    texpatch_t*         texpatch;
     patch_t*            realpatch;
 
     int         i;
@@ -551,11 +554,12 @@ static void HWR_GenerateTexture (int texnum, GlideTexture_t* grtex)
     }
 
     // Composite the columns together.
-    for (i=0 , patch = texture->patches;
+    texpatch = texture->patches;
+    for (i=0 ;
          i<texture->patchcount;
-         i++, patch++)
+         i++, texpatch++)
     {
-        realpatch = W_CachePatchNum_Endian (patch->patch, PU_CACHE);
+        realpatch = W_CachePatchNum_Endian (texpatch->patchnum, PU_CACHE);
         // correct texture size for Legacy's large skies
         if (skyspecial) {
             //CONS_Printf("sky %d, %d\n",texture->width,realpatch->width);
@@ -566,7 +570,7 @@ static void HWR_GenerateTexture (int texnum, GlideTexture_t* grtex)
                               blockwidth, blockheight,
                               blockwidth*format2bpp[grtex->mipmap.grInfo.format],
                               texture->width, texture->height,
-                              patch->originx, patch->originy,
+                              texpatch->originx, texpatch->originy,
                               realpatch,
                               format2bpp[grtex->mipmap.grInfo.format]);
     }
