@@ -58,10 +58,6 @@
 #include <windows.h>
 #endif
 
-#ifdef VID_X11
-#include <GL/glx.h>
-#endif
-
 #include "../doomdef.h"
 //THIS MUST DISAPPEAR!!!
 #include "hw_glide.h"

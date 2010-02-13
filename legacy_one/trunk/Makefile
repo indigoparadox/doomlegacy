@@ -1,9 +1,9 @@
 #############################################################################
 #
 # $Id$
-# GNU Make makefile for DOS/LINUX version of Doom LEGACY (legacy@newdoom.com)
+# GNU Make makefile for Doom Legacy (legacy@newdoom.com)
 #
-# Copyright (C) 1998-2009 by DooM Legacy Team.
+# Copyright (C) 1998-2010 by DooM Legacy Team.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,302 +16,31 @@
 # GNU General Public License for more details.
 #
 #
-# $Log: makefile,v $
-# Revision 1.77  2007/01/28 14:45:00  chiphog
-# This patch addresses 2 issues:
-# * Separated the SDL and HAVE_MIXER assumptions.  We can now compile with
-#   SDL=1 but without specifying HAVE_MIXER=1.
-# * Fixed the playing of MIDI (from MUS) music under SDL.  One needs to
-#   compile with SDL=1 and HAVE_MIXER=1 to get SDL music.  This involved
-#   two things:
-#   + Removed/replaced the conflicting functions explained here:
-#     http://jonatkins.org/SDL_mixer/SDL_mixer.html#SEC5
-#   + Backported some SDL mixer mystery magic from legacy-2
-# This patch has been tested on linux with:
-# - make LINUX=1                       # you get sound, but it ain't SDL
-# - make LINUX=1 SDL=1                 # you get SDL sound but no music
-# - make LINUX=1 SDL=1 HAVE_MIXER=1    # you get SDL sound and SDL music
-# Compiling with HAVE_MIXER=1 but without SDL=1 will fail.
-#
-# Revision 1.76  2004/08/26 23:15:42  hurdler
-# add FS functions in console (+ minor linux fixes)
-#
-# Revision 1.75  2004/04/20 00:34:26  andyp
-# Linux compilation fixes and string cleanups
-#
-# Revision 1.74  2004/04/17 12:55:26  hurdler
-# now compile with gcc 3.3.3 under Linux
-#
-# Revision 1.73  2003/08/11 13:50:01  hurdler
-# go final + translucent HUD + fix spawn in net game
-#
-# Revision 1.72  2003/05/04 02:15:47  sburke
-# Added Solaris build rules.
-#
-# Revision 1.71  2003/01/19 21:24:26  bock
-# Make sources buildable on FreeBSD 5-CURRENT.
-#
-# Revision 1.70  2002/12/17 19:56:50  bock
-# Add esound support without SDL.
-# Sorry about this, this code is disabled by default.
-# You should build with HAVE_ESD=1 flag.
-#
-# Revision 1.69  2002/10/30 23:50:03  bock
-# Fix CR+LF
-#
-# Revision 1.68  2002/09/27 16:40:08  tonyd
-# First commit of acbot
-#
-# Revision 1.67  2002/09/07 12:23:19  hurdler
-# Ok, that option work on my config, should we put dga as a cvar?
-#
-# Revision 1.66  2002/07/26 15:21:36  hurdler
-# near RC release
-#
-# Revision 1.65  2002/07/01 19:59:58  metzgermeister
-# *** empty log message ***
-#
-# Revision 1.64  2002/06/30 21:37:48  hurdler
-# Ready for 1.32 beta 5 release
-#
-# Revision 1.63  2002/01/03 19:20:06  bock
-# Add FreeBSD code to I_GetFreeMem.
-# Modified Files:
-#     makefile linux_x/i_system.c sdl/i_system.c
-#
-# Revision 1.62  2001/08/20 20:40:39  metzgermeister
-# *** empty log message ***
-#
-# Revision 1.61  2001/05/29 22:18:41  bock
-# Small BSD commit: build r_opengl.so, sndserver
-#
-# Revision 1.60  2001/05/21 14:57:05  crashrl
-# Readded directory crawling file search function
-#
-# Revision 1.59  2001/05/17 14:52:07  crashrl
-# Fixed misplaced else concerning i_cdmus and FREEBSD
-#
-# Revision 1.58  2001/05/16 22:33:34  bock
-# Initial FreeBSD support.
-#
-# Revision 1.57  2001/05/16 17:12:52  crashrl
-# Added md5-sum support, removed recursiv wad search
-#
-# Revision 1.56  2001/05/05 20:34:08  hurdler
-# restore old value again
-#
-# Revision 1.55  2001/05/03 21:22:25  hurdler
-# remove some warnings
-#
-# Revision 1.53  2001/04/29 14:25:26  hurdler
-# small fix
-#
-# Revision 1.52  2001/04/13 10:24:49  metzgermeister
-# compile sndserver and musserver
-#
-# Revision 1.51  2001/04/01 17:35:06  bpereira
-# no message
-#
-# Revision 1.50  2001/03/30 17:12:50  bpereira
-# no message
-#
-# Revision 1.49  2001/03/25 18:11:23  metzgermeister
-#   * SDL sound bug with swapped stereo channels fixed
-#   * separate hw_trick.c now for HW_correctSWTrick(.)
-#
-# Revision 1.48  2001/03/19 21:18:48  metzgermeister
-#   * missing textures in HW mode are replaced by default texture
-#   * fixed crash bug with P_SpawnMissile(.) returning NULL
-#   * deep water trick and other nasty thing work now in HW mode (tested with tnt/map02 eternal/map02)
-#   * added cvar gr_correcttricks
-#
-# Revision 1.47  2001/03/13 22:14:19  stroggonmeth
-# Long time no commit. 3D floors, FraggleScript, portals, ect.
-#
-# Revision 1.46  2001/03/09 21:53:55  metzgermeister
-# *** empty log message ***
-#
-# Revision 1.44  2001/02/13 20:37:27  metzgermeister
-# *** empty log message ***
-#
-# Revision 1.43  2001/02/10 15:24:19  hurdler
-# Apply Rob's patch for Linux version
-#
-# Revision 1.42  2001/01/25 22:15:43  bpereira
-# added heretic support
-#
-# Revision 1.41  2000/11/21 21:13:17  stroggonmeth
-# Optimised 3D floors and fixed crashing bug in high resolutions.
-#
-# Revision 1.40  2000/11/09 17:56:20  stroggonmeth
-# Hopefully fixed a few bugs and did a few optimizations.
-#
-# Revision 1.39  2000/11/06 20:52:15  bpereira
-# no message
-#
-# Revision 1.38  2000/11/03 03:27:17  stroggonmeth
-# Again with the bug fixing...
-#
-# Revision 1.37  2000/11/02 21:54:26  bpereira
-# no message
-#
-# Revision 1.36  2000/11/02 19:49:35  bpereira
-# no message
-#
-# Revision 1.35  2000/11/02 17:50:07  stroggonmeth
-# Big 3Dfloors & FraggleScript commit!!
-#
-# Revision 1.34  2000/10/21 23:21:56  hurdler
-# Minor updates
-#
-# Revision 1.33  2000/10/07 12:45:59  crashrl
-# added -fwritable-strings to linux CFLAGS to fix teamplay activation segfault
-#
-# Revision 1.32  2000/10/01 10:23:59  bpereira
-# no message
-#
-# Revision 1.31  2000/10/01 10:18:17  bpereira
-# no message
-#
-# Revision 1.30  2000/09/28 20:57:15  bpereira
-# no message
-#
-# Revision 1.29  2000/09/10 10:44:42  metzgermeister
-# resolved SDL messup
-#
-# Revision 1.28  2000/08/31 14:30:55  bpereira
-# no message
-#
-# Revision 1.27  2000/08/10 19:58:04  bpereira
-# no message
-#
-# Revision 1.26  2000/08/10 14:57:26  ydario
-# OS/2 port
-#
-# Revision 1.25  2000/08/03 17:57:42  bpereira
-# no message
-#
-# Revision 1.24  2000/07/01 09:23:49  bpereira
-# no message
-#
-# Revision 1.23  2000/05/07 08:27:57  metzgermeister
-# no message
-#
-# Revision 1.20  2000/04/25 19:53:12  metzgermeister
-# fixed the old tabs and spaces problem
-#
-# Revision 1.19  2000/04/24 20:24:38  bpereira
-# no message
-#
-# Revision 1.18  2000/04/22 20:26:01  metzgermeister
-# commandline compile options
-#
-# Revision 1.17  2000/04/21 08:23:47  emanne
-# To have SDL working.
-# Makefile: made the hiding by "@" optional. See the CC variable at
-# the begining. Sorry, but I like to see what's going on while building
-#
-# qmus2mid.h: force include of qmus2mid_sdl.h when needed.
-# s_sound.c: ??!
-# s_sound.h: with it.
-# (sorry for s_sound.* : I had problems with cvs...)
-#
-# Revision 1.16  2000/04/18 14:50:36  hurdler
-# no message
-#
-# Revision 1.15  2000/04/16 18:38:07  bpereira
-# no message
-#
-# Revision 1.14  2000/04/13 23:47:47  stroggonmeth
-# See logs
-#
-# Revision 1.13  2000/04/12 19:32:04  metzgermeister
-# added support for commandline OS switch
-#
-# Revision 1.12  2000/04/11 19:07:23  stroggonmeth
-# Finished my logs, fixed a crashing bug.
-#
-# Revision 1.11  2000/04/09 02:30:57  stroggonmeth
-# Fixed missing sprite def :\
-#
-# Revision 1.10  2000/04/08 17:29:24  stroggonmeth
-# no message
-#
-# Revision 1.9	2000/04/07 23:10:15  metzgermeister
-# fullscreen support under X in Linux
-#
-# Revision 1.8	2000/04/04 19:28:42  stroggonmeth
-# Global colormaps working. Added a new linedef type 272.
-#
-# Revision 1.7	2000/04/04 00:32:46  stroggonmeth
-# Initial Boom compatability plus few misc changes all around.
-#
-# Revision 1.6	2000/03/29 19:39:48  bpereira
-# no message
-#
-# Revision 1.5	2000/03/07 03:32:24  hurdler
-# fix linux compilation
-#
-# Revision 1.4	2000/03/05 17:17:03  bpereira
-# no message
-#
-# Revision 1.3	2000/03/04 23:27:08  hurdler
-# fix "missing operator" problem
-#
-# Revision 1.2	2000/02/27 00:42:10  hurdler
-# fix CR+LF problem
-#
-# Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
-# Initial import into CVS (v1.29 pr3)
-#
-#
-#     -DUSEASM -> use assembly routines instead of C ones, where possible.
-#     -DPC_DOS -> use dos specific code (eg:textmode stuff)...
-#     -DLINUX  -> use for the linux specific
-#     -D__OS2__  -> use for the OS/2 specific
-#
 #  The preferred multimedia interface is SDL.
-#     Compile the generic SDL version with 'make SDL=1' (default)
-#     Add 'HAVE_MIXER=1'  for SDL_mixer music.
-#     Add 'PROFILEMODE=1' for the debug/profile version.
+#     Compile the generic SDL version with 'make' (default)
+#     Add 'HAVE_MIXER=1' for SDL_mixer music.
+#     Add 'DEBUG=1' for debugging information.
 #
-#     Compile the Solaris/SDL version by adding 'SOLARIS=1'
-#     Compile the FreeBSD/SDL version by adding 'FBSD_SDL=1'
-#
-#  Other options:
-#     Compile the Linux X11 version with 'make LINUX=1'
-#     Compile the FreeBSD version with 'gmake FREEBSD=1'
-#     Compile the OS/2 version with  'make OS2=1'
+#  Other options (possibly outdated):
+#     Compile the Linux X11 version with 'make IF=LINUX_X11'
+#     Compile the FreeBSD X11 version with 'make IF=FREEBSD_X11'
+#     Compile the OS/2 version with  'make IF=OS2_NATIVE'
 #
 #############################################################################
 
 # gcc or g++
-#CC=@gcc
 CC=gcc
+RM=rm
 
 # subdirectories for objects and binaries
 O=../objs
 BIN=../bin
 
-
+# warning flags
 WFLAGS = -Wall # -Wwrite-strings
 
 #uncomment if you want to use the POLL_POINTER hack
 #POLL_POINTER=-DPOLL_POINTER
-
-#WITH_DGA=1
-
-# optimization level, debugging may change this because it is confusing
-# OPTLEV=-O5
-
-# debug enable, difficult to remember, save on reinventing this everytime
-#DEBUG=1
-ifdef DEBUG
-#  DEBUG:=-g
-  DEBUG:=-g3
-  # reduce optimization to something less confusing to debugger
-  OPTLEV=-O1
-endif
 
 # standard
 #STD= -std=c99
@@ -319,38 +48,20 @@ endif
   # fails because of alloca, it is not std under c99
   # std=c89, does not support // commments, no inline, no asm
 
-#indicate platform and what interface use with
-ifndef OS2
-ifndef LINUX
-ifndef DJGPPDOS
-ifndef FREEBSD
-  SDL=1
-endif
-endif
-endif
-endif
 
-ifndef SDL
-  ifdef LINUX
-    LINUX_X11=1
-  endif
-  ifdef FREEBSD
-    FREEBSD_X11=1
-  endif
-  ifdef OS2
-    OS2_NATIVE=1
-  endif
-  ifdef DJGPPDOS
-    DJGPPDOS_NATIVE=1
-  endif
-endif
-
-
+# random stuff
 NASMFORMAT=elf -DLINUX
+i_cdmus_o=$(O)/i_cdmus.o
+
+
+# default multimedia interface
+ifndef IF
+  IF = SDL
+endif
 
 #=================================
-ifdef SDL
-# SDL is the default multimedia interface.
+ifeq ($(IF), SDL)
+# SDL is the default multimedia interface. This is what all modern systems should use.
 
 # interface directory (where you put all i_*.c)
   INTERFACE=sdl
@@ -361,14 +72,8 @@ ifdef SDL
     $(O)/r_opengl.o $(O)/ogl_sdl.o $(O)/hwsym_sdl.o
 
 
-ifdef LINUX
-  OPTS := -DLINUX -DHWRENDER -DDIRECTFULLSCREEN -DSDL -DVID_X11 $(POLL_POINTER) $(shell sdl-config --cflags) -I.
+  OPTS := -DLINUX -DHWRENDER -DSDL $(POLL_POINTER) $(shell sdl-config --cflags) -I.
   LDFLAGS=-L/usr/X11R6/lib
-else
-  # ?? LINUX flag for OS2, FREEBSD ???
-  OPTS := -DLINUX -DHWRENDER -DDIRECTFULLSCREEN -DSDL -DVID_X11 $(POLL_POINTER) $(shell sdl-config --cflags) -I.
-  LDFLAGS :=
-endif
 
   LIBS := -lm -lpthread -lGL -lGLU $(shell sdl-config --libs)
   DEBUGLIBS := $(LIBS)
@@ -379,20 +84,16 @@ endif
   endif
 
 
-  ifdef FBSD_SDL
+#  ifdef FBSD_SDL
 # extras for FreeBSD/SDL
-    LIBS += -lipx -lkvm
-  endif
+#    LIBS += -lipx -lkvm
+#  endif
 
-  ifdef SOLARIS
+#  ifdef SOLARIS_SDL
 # extras for Solaris/SDL
-    OPTS += -DBSD_COMP -DSOLARIS 
-    OPTS += -DDONTDEFINEBOOL -DTRUE=1 -DFALSE=0 -DINADDR_NONE=INADDR_ANY
-    OPTS += -Wno-unknown-pragmas -I/usr/X/include
-
-    LDFLAGS += -L/usr/X/lib
-    LIBS    +=  -lsocket -lnsl
-  endif #ifdef SOLARIS
+#    OPTS += -DBSD_COMP -DSOLARIS 
+#    LIBS    +=  -lsocket -lnsl
+#  endif
 
 
   SFLAGS := -g $(OPTS)
@@ -400,10 +101,10 @@ endif
 # name of the exefile
   EXENAME := lsdldoom
 
-endif
 
 #=================================
-ifdef LINUX_X11
+else
+ifeq ($(IF), LINUX_X11)
   INTERFACE=linux_x
 
   MUSSERV=linux_x/musserv
@@ -412,13 +113,15 @@ ifdef LINUX_X11
 #use the x86 asm code
   #USEASM=1
 
-  OPTS=-DLINUX -DOLD_SOUND_DRIVER -DMUSSERV -DSNDSERV -DHWRENDER -DDIRECTFULLSCREEN
+  OPTS=-DLINUX -DOLD_SOUND_DRIVER -DMUSSERV -DSNDSERV -DHWRENDER
   X=1
 
   ifdef X
-    OPTS := $(OPTS) -DVID_X11 $(POLL_POINTER) -I. -I/usr/X11R6/include
+    OPTS := $(OPTS) $(POLL_POINTER) -I. -I/usr/X11R6/include
     LDFLAGS=-L/usr/X11R6/lib
     LIBS=-lXext -lX11 -lm -ldl -lXxf86vm
+
+    #WITH_DGA=1
     ifdef WITH_DGA
       OPTS += -DWITH_DGA
       LIBS += -lXxf86dga -lXext
@@ -443,10 +146,10 @@ ifdef LINUX_X11
       $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o
   endif
 
-endif
 
 #=================================
-ifdef FREEBSD_X11
+else
+ifeq ($(IF), FREEBSD_X11)
   INTERFACE=linux_x
 
   MUSSERV=linux_x/musserv
@@ -457,13 +160,17 @@ ifdef FREEBSD_X11
 #use the x86 asm code
   #USEASM=1
 
-  OPTS=-DLINUX -DFREEBSD -DOLD_SOUND_DRIVER -DSNDSERV -DHWRENDER -DDIRECTFULLSCREEN
+  # this should be an #ifdef in the source file
+  i_cdmus_o=$(O)/i_cdmus_fbsd.o
+
+
+  OPTS=-DLINUX -DFREEBSD -DOLD_SOUND_DRIVER -DSNDSERV -DHWRENDER
   ifndef FBSD_GGI
     X=1
   endif
 
   ifdef X
-    OPTS := $(OPTS) -DVID_X11 $(POLL_POINTER) -I. -I/usr/X11R6/include
+    OPTS := $(OPTS) $(POLL_POINTER) -I. -I/usr/X11R6/include
     LDFLAGS=-L/usr/X11R6/lib
     LIBS=-lXext -lX11 -lm -lXxf86vm -lipx -lkvm -pthread
     # name of the exefile
@@ -485,10 +192,10 @@ ifdef FREEBSD_X11
       $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o
   endif #ifdef X
 
-endif
 
 #=================================
-ifdef OS2_NATIVE
+else
+ifeq ($(IF), OS2_NATIVE)
   INTERFACE=os2
   NASMFORMAT=coff
 
@@ -510,10 +217,11 @@ ifdef OS2_NATIVE
 # name of the exefile
   EXENAME=Doom2.exe
 
-endif
 
 #=================================
-ifdef DJGPPDOS_NATIVE
+else
+ifeq ($(IF), DJGPPDOS_NATIVE)
+  RM=del
   INTERFACE=djgppdos
   NASMFORMAT=coff
 
@@ -532,11 +240,17 @@ ifdef DJGPPDOS_NATIVE
 
 # name of the exefile
   EXENAME=DOOM3.exe
-endif #ifdef DJGPPDOS_NATIVE
+endif
+endif
+endif
+endif
+endif
+#=================================
 
 
 
 
+# use assembly routines?
 ifdef USEASM
    OBJS:= $(OBJS) $(O)/tmap.o $(O)/vid_copy.o
    OPTS:= $(OPTS) -DUSEASM
@@ -544,32 +258,24 @@ endif
 
 
 
-
 # compiler and linker flags
 ifdef PROFILEMODE
 # build with gprof profiling information
-  CFLAGS = $(WFLAGS) -g -pg $(OPTS)
-  LDFLAGS = $(WFLAGS) -g -pg
+  CFLAGS = -g -pg
 else
 ifdef DEBUG
-  CFLAGS =  $(DEBUG) $(WFLAGS) $(OPTLEV) -ffast-math -fomit-frame-pointer -fno-strict-aliasing $(OPTS)
-else
-ifdef OPTLEV
-  CFLAGS =  $(WFLAGS) $(OPTLEV) $(STD) -ffast-math -fomit-frame-pointer -fno-strict-aliasing $(OPTS)
+# debug version
+  CFLAGS =  -g3 -O0
 else
 # build a normal optimised version
-  CFLAGS =  $(WFLAGS) -O3 $(STD) -ffast-math -fomit-frame-pointer -fno-strict-aliasing $(OPTS)
-endif
+  CFLAGS = -O3
 endif
 endif
 
+CFLAGS += $(WFLAGS) $(OPTS) -ffast-math -fomit-frame-pointer -fno-strict-aliasing
 
 
-ifdef FREEBSD
-  i_cdmus_o=$(O)/i_cdmus_fbsd.o
-else
-  i_cdmus_o=$(O)/i_cdmus.o
-endif
+
 
 
 
@@ -678,38 +384,47 @@ OBJS :=  $(OBJS) \
 
 
 
+#=======================================================
+# rules
+#=======================================================
 
-ifdef LINUX_X11
+ifeq ($(IF), LINUX_X11)
 all:	 $(BIN)/$(EXENAME) dll musserv sndserv
+
 else
-ifdef FREEBSD_X11
+ifeq ($(IF), FREEBSD_X11)
 all:	 $(BIN)/$(EXENAME) dll sndserv
+
 else
 all:	 $(BIN)/$(EXENAME)
+
 endif
 endif
 
+
+
 clean:
-ifdef LINUX_X11
-	rm -f *.o *.flc
-	rm -f $(O)/*
-	rm -f $(SNDSERV)/linux/*
-	rm -f $(MUSSERV)/linux/*
+	$(RM) $(O)/*
+ifeq ($(IF), LINUX_X11)
+	$(RM) $(SNDSERV)/linux/*
+	$(RM) $(MUSSERV)/linux/*
 else
-  ifdef SDL
-	rm -f *.o *.flc
-	rm -f $(O)/*
-  else
-    ifdef FREEBSD_X11
-	rm -f *.o *.flc
-	rm -f $(O)/*
-	rm -f $(SNDSERV)/linux/*
-	rm -f $(MUSSERV)/linux/*
-    else
-	del $(O)\*.* >NUL
-    endif
-  endif
+ifeq ($(IF), FREEBSD_X11)
+	$(RM) $(SNDSERV)/linux/*
+	$(RM) $(MUSSERV)/linux/*
 endif
+endif
+
+
+
+$(O):
+	@mkdir $(O)
+
+
+versionstring:
+	$(CC) -c $(CFLAGS) -DSVN_REV=\"`svn info | grep Revision | sed -e 's/Revision: //'`\" d_main.c -o $(O)/d_main.o
+
+
 
 #make a big doom3.s that is the disasm of the exe (dos only ?)
 asm:
@@ -718,16 +433,16 @@ asm:
 	objdump  -d $(O)/tmp.exe --no-show-raw-insn > doom3.s
 	del $(O)\tmp.exe
 
-# executable
 
-$(BIN)/$(EXENAME):	$(O) $(OBJS) $(O)/i_main.o
+# executable
+$(BIN)/$(EXENAME): $(O) $(OBJS) $(O)/i_main.o versionstring
 #	 @mkdir $(BIN)
 	@echo Linking...
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(O)/i_main.o \
 	-o $(BIN)/$(EXENAME) $(LIBS)
 
-$(O):
-	@mkdir $(O)
+
+
 
 #dll
 dll : $(O)/r_opengl.o $(O)/ogl_x11.o
@@ -743,30 +458,26 @@ sndserv:
 	cd $(SNDSERV) \
 	&& $(MAKE) $(SNDSERV_EXTRAFLAGS)
 
-ifdef LINUX_X11
-$(O)/r_opengl.o:	hardware/r_opengl/r_opengl.c hardware/r_opengl/r_opengl.h
-	$(CC) $(CFLAGS) -DHWRENDER -DVID_X11 -DLINUX $(POLL_POINTER) -shared -nostartfiles -c $< -o $@
-endif
 
-ifdef SDL
-$(O)/r_opengl.o:	hardware/r_opengl/r_opengl.c hardware/r_opengl/r_opengl.h
+
+ifeq ($(IF), SDL)
+$(O)/r_opengl.o: hardware/r_opengl/r_opengl.c hardware/r_opengl/r_opengl.h
 	$(CC) $(CFLAGS) -c $< -o $@
+
+else 
+# LINUX_X11, FREEBSD_X11 at least
+$(O)/r_opengl.o: hardware/r_opengl/r_opengl.c hardware/r_opengl/r_opengl.h
+	$(CC) $(CFLAGS) -shared -nostartfiles -c $< -o $@
 endif
 
 
-ifdef FREEBSD_X11
-$(O)/r_opengl.o:	hardware/r_opengl/r_opengl.c hardware/r_opengl/r_opengl.h
-	$(CC) -O3 -o $(O)/r_opengl.o	-DHWRENDER -DVID_X11 -DLINUX -DFREEBSD $(POLL_POINTER) -shared -nostartfiles -I/usr/X11R6/include -c hardware/r_opengl/r_opengl.c
-endif #FREEBSD
+$(O)/ogl_x11.o:  hardware/r_opengl/ogl_x11.c hardware/r_opengl/r_opengl.h
+	$(CC) $(CFLAGS) -shared -nostartfiles -I/usr/X11R6/include -c $< -o $@ 
 
 
-ifndef FREEBSD_X11
-$(O)/ogl_x11.o:  hardware/r_opengl/ogl_x11.c hardware/r_opengl/r_opengl.h
-	$(CC) -O3 -o $(O)/ogl_x11.o -DHWRENDER -DVID_X11 -DLINUX $(POLL_POINTER) -shared -nostartfiles -I/usr/X11R6/include -c hardware/r_opengl/ogl_x11.c
-else
-$(O)/ogl_x11.o:  hardware/r_opengl/ogl_x11.c hardware/r_opengl/r_opengl.h
-	$(CC) -O3 -o $(O)/ogl_x11.o -DHWRENDER -DVID_X11 -DLINUX -DFREEBSD $(POLL_POINTER) -shared -nostartfiles -I/usr/X11R6/include -c hardware/r_opengl/ogl_x11.c
-endif
+#=======================================================
+
+
 
 
 #dependecy made by gcc itself ! (see makedep.mak for more)
@@ -857,7 +568,6 @@ $(O)/d_net.o: d_net.c doomdef.h doomtype.h g_state.h m_swap.h d_clisrv.h \
  d_player.h d_items.h p_pspr.h m_fixed.h tables.h info.h d_think.h \
  p_mobj.h d_event.h i_net.h i_system.h m_argv.h d_net.h
 	$(CC) $(CFLAGS) -c $< -o $@
-
 $(O)/d_items.o: d_items.c info.h d_think.h d_items.h doomdef.h doomtype.h \
  g_state.h m_swap.h
 	$(CC) $(CFLAGS) -c $< -o $@

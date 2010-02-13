@@ -89,7 +89,6 @@ typedef uint32_t  tic_t;
 
 #ifdef __APPLE_CC__
 #define __MACOS__
-#define DIRECTFULLSCREEN
 #define DEBUG_LOG
 #define HWRENDER
 #endif

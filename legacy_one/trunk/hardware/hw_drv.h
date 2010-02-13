@@ -75,6 +75,12 @@
 #include "hw_defs.h"
 #include "hw_md2.h"
 
+
+#if !defined(__WIN32__) && !defined(__MACOS__)
+# define VID_X11 // use GLX to get an OpenGL context   TODO [VB] SDL would probably be the best choice for all of these systems
+# include <GL/glx.h>
+#endif
+
 // Function declaration for exports from the DLL :
 // EXPORT <return-type> HWRAPI(<function-name>) ( <arguments> ) ;
 // If _CREATE_DLL_ is defined the above declaration translates to :
@@ -124,7 +130,7 @@ EXPORT void    HWRAPI( SetPalette ) (RGBA_t* pal, RGBA_t *gamma) ;
 EXPORT Window  HWRAPI( HookXwin ) (Display*,int,int,boolean) ;
 EXPORT void    HWRAPI( SetPalette ) (RGBA_t* pal, RGBA_t *gamma) ;
 #endif
-#if defined( PURESDL) || defined(__MACOS__)
+#ifdef __MACOS__
 EXPORT void HWRAPI( SetPalette ) (int*, RGBA_t *gamma);
 #endif
 EXPORT void HWRAPI( FinishUpdate ) ( int waitvbl ) ;
