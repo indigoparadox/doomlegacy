@@ -61,12 +61,12 @@ struct svalue_s
   int type;
   union
   {
-    long i;
-    fixed_t f;
-    char *s;
-    char *labelptr; // goto() label
-    mobj_t *mobj;
-	sfarray_t *a;   // arrays
+    int32_t  i;
+    fixed_t  f;
+    char    *s;
+    mobj_t  *mobj;
+    sfarray_t *a;   // arrays
+    char    *labelptr; // goto() label
   } value;
 };
 
