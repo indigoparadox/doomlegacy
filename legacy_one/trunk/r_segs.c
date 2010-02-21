@@ -1479,6 +1479,15 @@ void R_RenderSegLoop (void)
         rw_scale += rw_scalestep;
         topfrac += topstep;
         bottomfrac += bottomstep;
+        // [WDJ] Overflow protection.  Overflow and underflow of topfrac and
+        // bottomfrac cause off-screen textures to be drawn as large bars.
+	// See phobiata.wad map07, which has a floor at -20000.
+	// The cause of the overflow many times seems to be the step value.
+        if( bottomfrac < topfrac ) {
+	   // Uncomment to see which map areas cause this overflow.
+//	   fprintf(stderr,"Overflow break: bottomfrac(%i) < topfrac(%i)\n", bottomfrac, topfrac );
+	   break;
+	}
     }
 }
 
