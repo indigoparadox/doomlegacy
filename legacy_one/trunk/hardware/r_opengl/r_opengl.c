@@ -321,21 +321,19 @@ static I_Error_t I_Error_GL = NULL;
 void DBG_Printf( LPCTSTR lpFmt, ... )
 {
 #ifdef DEBUG_TO_FILE
-    char    str[4096];
-    va_list arglist;
+#define BUF_SIZE 4096
+    va_list ap;
+    char    str[BUF_SIZE];
+
+    va_start(ap, lpFmt);
+    vsnprintf(str, BUF_SIZE, lpFmt, ap);
+    va_end(ap);
 
 #ifdef __WIN32__
     DWORD   bytesWritten;
-
-    va_start (arglist, lpFmt);
-    vsprintf (str, lpFmt, arglist); //FIXME: having a vsnprintf
-    va_end   (arglist);
     if( logstream != INVALID_HANDLE_VALUE )
         WriteFile( logstream, str, lstrlen(str), &bytesWritten, NULL );
 #else
-    va_start (arglist, lpFmt);
-    vsnprintf (str, 4096, lpFmt, arglist);
-    va_end   (arglist);
     if( logstream!=-1 )
         write( logstream, str, strlen(str) );
 #endif

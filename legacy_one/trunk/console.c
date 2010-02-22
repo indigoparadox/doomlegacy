@@ -1020,12 +1020,13 @@ void CON_Print (char *msg)
 //
 void CONS_Printf (const char *fmt, ...)
 {
-    va_list     argptr;
-    char        txt[512];
+#define BUF_SIZE 1024
+    va_list ap;
+    char    txt[BUF_SIZE];
 
-    va_start (argptr,fmt);
-    vsprintf (txt,fmt,argptr);
-    va_end   (argptr);
+    va_start(ap, fmt);
+    int nchars = vsnprintf(txt, BUF_SIZE, fmt, ap);
+    va_end(ap);
 
     // echo console prints to log file
 #ifdef LOGMESSAGES

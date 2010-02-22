@@ -505,14 +505,15 @@ void M_ScreenShot (void)
 //
 char*   va(char *format, ...)
 {
+#define BUF_SIZE 1024
     va_list      argptr;
-    static char  string[1024];
+    static char  buffer[BUF_SIZE];
 
-    va_start (argptr, format);
-    vsprintf (string, format,argptr);
-    va_end (argptr);
+    va_start(argptr, format);
+    vsnprintf(buffer, BUF_SIZE, format, argptr);
+    va_end(argptr);
 
-    return string;
+    return buffer;
 }
 
 
