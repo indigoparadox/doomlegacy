@@ -121,6 +121,8 @@
 //
 //-----------------------------------------------------------------------------
 
+#include <stddef.h>
+
 #include "doomdef.h"
 #include "r_local.h"
 #include "r_sky.h"
@@ -1512,17 +1514,19 @@ void R_StoreWallRange( int   start, int   stop)
 
     if (ds_p == drawsegs+maxdrawsegs)
     {
-      unsigned pos = ds_p - drawsegs;
-      unsigned pos2 = firstnewseg - drawsegs;
+      ptrdiff_t pos = ds_p - drawsegs;
+      ptrdiff_t pos2 = firstnewseg - drawsegs;
       unsigned newmax = maxdrawsegs ? maxdrawsegs*2 : 128;
-      if(firstseg)
-        firstseg = (drawseg_t *)(firstseg - drawsegs);
+
+      ptrdiff_t temp = firstseg ? firstseg - drawsegs : 0;
+
       drawsegs = realloc(drawsegs,newmax*sizeof(*drawsegs));
       ds_p = drawsegs + pos;
       firstnewseg = drawsegs + pos2;
       maxdrawsegs = newmax;
-      if(firstseg)
-        firstseg = drawsegs + (int)firstseg;
+
+      if (firstseg)
+        firstseg = drawsegs + temp;
     }
 
     

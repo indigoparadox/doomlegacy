@@ -118,10 +118,10 @@ void G_BuildTiccmd (ticcmd_t* cmd, int realtics);
 void G_BuildTiccmd2(ticcmd_t* cmd, int realtics);
 
 //added:22-02-98: clip the console player aiming to the view
-short G_ClipAimingPitch (int* aiming);
+short G_ClipAimingPitch(angle_t *aiming);
 
 extern angle_t localangle,localangle2;
-extern int     localaiming,localaiming2; // should be a angle_t but signed
+extern angle_t localaiming,localaiming2; // should be a angle_t but signed
 
 extern int extramovefactor;		// Extra speed to move at
 

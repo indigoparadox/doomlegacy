@@ -367,9 +367,7 @@ typedef enum
 
 
 //SoM: 3/6/2000
-int P_SectorActive
-( special_e t,
-  sector_t* s );
+boolean P_SectorActive(special_e t, sector_t *s);
 
 
 typedef enum

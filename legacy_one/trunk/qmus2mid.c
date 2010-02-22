@@ -261,7 +261,7 @@ int qmus2mid (byte  *mus,
         return NOTMUSFILE;
 
     //fseek( file_mus, MUSh.scoreStart, SEEK_SET );
-    file_mus = (char *)mus + MUSh->scoreStart;
+    file_mus = mus + MUSh->scoreStart;
 
     if (MUSh->channels > 15)      /* <=> MUSchannels+drums > 16 */
         return TOOMCHAN;

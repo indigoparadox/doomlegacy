@@ -163,14 +163,16 @@ int  I_GetKey          (void)
     int rc=0;
 
     // return the first keypress from the event queue
-    for ( ; eventtail != eventhead ; eventtail = (++eventtail)&(MAXEVENTS-1) )
+    while (eventtail != eventhead)
     {
         ev = &events[eventtail];
         if(ev->type == ev_keydown)
         {
             rc = ev->data1;
-            continue;
         }
+
+	eventtail++;
+	eventtail = eventtail & (MAXEVENTS-1);
     }
 
     return rc;

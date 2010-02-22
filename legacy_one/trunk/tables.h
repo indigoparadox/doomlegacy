@@ -80,7 +80,7 @@ extern fixed_t          finetangent[FINEANGLES/2];
 #define ANGLE_1     (ANGLE_45/45)
 #define ANGLE_60    (ANGLE_180/3)
 
-typedef unsigned angle_t;
+typedef uint32_t angle_t;
 
 
 // to get a global angle from cartesian coordinates, the coordinates are

@@ -102,6 +102,8 @@
 #ifndef __D_CLISRV__
 #define __D_CLISRV__
 
+#include <stddef.h>
+
 #include "d_ticcmd.h"
 #include "d_netcmd.h"
 #include "tables.h"
@@ -278,9 +280,9 @@ extern  doomdata_t*   netbuffer;
 
 extern consvar_t cv_playdemospeed;
 
-#define BASEPACKETSIZE     ((int)&( ((doomdata_t *)0)->u))
-#define FILETXHEADER       ((int)   ((filetx_pak *)0)->data)
-#define BASESERVERTICSSIZE ((int)&( ((doomdata_t *)0)->u.serverpak.cmds[0]))
+#define BASEPACKETSIZE     offsetof(doomdata_t, u) //((int)&( ((doomdata_t *)0)->u))
+#define FILETXHEADER       offsetof(filetx_pak, data) //((int)   ((filetx_pak *)0)->data)
+#define BASESERVERTICSSIZE offsetof(doomdata_t, u.serverpak.cmds[0]) //((int)&( ((doomdata_t *)0)->u.serverpak.cmds[0]))
 
 extern boolean   server;
 extern USHORT    software_MAXPACKETLENGTH;

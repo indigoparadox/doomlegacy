@@ -810,7 +810,7 @@ void I_InitMusic(void)
         return;
 
     Mix_ResumeMusic();  // start music playback
-    mus2mid_buffer = (char *) Z_Malloc(MIDBUFFERSIZE, PU_STATIC, NULL);
+    mus2mid_buffer = (byte *)Z_Malloc(MIDBUFFERSIZE, PU_STATIC, NULL);
     CONS_Printf(" Music initialized.\n");
     musicStarted = true;
 #endif
@@ -885,12 +885,10 @@ int I_RegisterSong(void* data, int len)
 
   if (memcmp(data, MUSMAGIC, 4) == 0)
   {
-      int err;
-//      Uint32 midlength;
       unsigned long midilength;  // per qmus2mid, SDL_RWFromConstMem wants int
       // convert mus to mid in memory with a wonderful function
       // thanks to S.Bacquet for the source of qmus2mid
-      err = qmus2mid(data, mus2mid_buffer, 89, 64, 0, len, MIDBUFFERSIZE, &midilength);
+      int err = qmus2mid(data, mus2mid_buffer, 89, 64, 0, len, MIDBUFFERSIZE, &midilength);
       if ( err != 0 )
       {
 	  CONS_Printf("Cannot convert MUS to MIDI: error %d.\n", err);

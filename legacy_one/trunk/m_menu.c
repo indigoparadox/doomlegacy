@@ -303,11 +303,14 @@ char    savegamestrings[10][SAVESTRINGSIZE];
 
 extern consvar_t   cv_monbehavior;
 
+
+typedef void (*menufunc_t)(int choice);
+
 typedef union
 {
     struct menu_s     *submenu;               // IT_SUBMENU
     consvar_t         *cvar;                  // IT_CVAR
-    void             (*routine)(int choice);  // IT_CALL, IT_KEYHANDLER, IT_ARROWS
+    menufunc_t         routine;  // IT_CALL, IT_KEYHANDLER, IT_ARROWS
 } itemaction_t;
 
 //
@@ -3128,7 +3131,7 @@ boolean M_Responder (event_t* ev)
     static  int     lasty = 0;
     static  int     mousex = 0;
     static  int     lastx = 0;
-    void  (*routine)(int choice);  // for some casting problem
+    menufunc_t routine;  // for some casting problem
 
     ch = -1;
 

@@ -350,7 +350,7 @@ void I_ShutdownCD (void)
 void I_InitCD (void)
 {
     int i;
-    char *cdName;
+    const char *cdName;
     
     // Don't start music on a dedicated server
     if (M_CheckParm("-dedicated"))

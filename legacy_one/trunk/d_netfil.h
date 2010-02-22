@@ -84,8 +84,8 @@ extern fileneeded_t fileneeded[MAX_WADFILES];
 
 void D_NetFileInit(void);
 
-char *PutFileNeeded(void);
-void D_ParseFileneeded(int fileneedednum_parm, char *fileneededstr);
+byte *PutFileNeeded(void);
+void D_ParseFileneeded(int fileneedednum_parm, byte *fileneededstr);
 void CL_PrepareDownloadSaveGame(const char *tmpsave);
 
 // check file list in wadfiles return 0 when a file is not found 

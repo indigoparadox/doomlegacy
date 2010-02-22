@@ -475,7 +475,7 @@ void ReadLmpExtraData(byte **demo_pointer,int playernum)
     if(demoversion==112) // support old demos v1.12
     {
         int    size=0;
-        char   *p=*demo_pointer+1; // skip nextra
+        byte  *p = *demo_pointer+1; // skip nextra
 
         textcmds[gametic%BACKUPTICS][playernum][0]=0;
 
@@ -1892,7 +1892,7 @@ static void GetPackets (void)
                 realstart  = ExpandTics (netbuffer->u.serverpak.starttic);
                 realend    = realstart+netbuffer->u.serverpak.numtics;
 
-                txtpak=(char *)&netbuffer->u.serverpak.cmds[netbuffer->u.serverpak.numplayers*netbuffer->u.serverpak.numtics];
+                txtpak = (byte *)&netbuffer->u.serverpak.cmds[netbuffer->u.serverpak.numplayers*netbuffer->u.serverpak.numtics];
 
                 if( realend>gametic+BACKUPTICS )
                     realend=gametic+BACKUPTICS;

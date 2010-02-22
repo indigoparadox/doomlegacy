@@ -139,7 +139,7 @@ void M_FindResponseFile (void)
             int             index;
             int             indexinfile;
             boolean         inquote = false;
-            byte    *infile;
+            char    *infile;
             char    *file;
             char    *moreargs[20];
             char    *firstargv;

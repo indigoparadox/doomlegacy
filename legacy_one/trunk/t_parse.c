@@ -851,7 +851,7 @@ char *stringvalue(svalue_t v)
 
         case svt_int:
         default:
-            sprintf(buffer, "%li", v.value.i);
+            sprintf(buffer, "%d", v.value.i);
             return buffer;
     }
 }

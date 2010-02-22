@@ -423,7 +423,7 @@ void P_InitWeapons()
 #define HU_TITLET (text[THUSTR_1_NUM + gamemap-1])
 #define HU_TITLEH (text[HERETIC_E1M1_NUM + (gameepisode-1)*9+gamemap-1])
 
-unsigned char *levelname;
+static char *levelname;
 
 void P_FindLevelName()
 {
