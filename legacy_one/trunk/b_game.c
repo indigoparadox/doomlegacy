@@ -416,7 +416,7 @@ void B_AimWeapon(player_t* p)
 		}
 
 		realAngle = angle = R_PointToAngle2 (source->x, source->y, px, py);
-		p->cmd.aiming = ((int)((atan ((pz - source->z + (dest->height - source->height)/2) / (double)dist)) * ANGLE_180/M_PI))>>FRACBITS;
+		p->cmd.aiming = ((int)((atan ((pz - source->z + (dest->height - source->height)/2) / (double)dist)) * ANG180/M_PI))>>FRACBITS;
 
 		if ((P_AproxDistance(dest->momx, dest->momy)>>FRACBITS) > 8)	//enemy is moving reasonably fast, so not perfectly acurate
 		{

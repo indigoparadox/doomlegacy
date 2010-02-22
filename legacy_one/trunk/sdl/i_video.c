@@ -386,6 +386,7 @@ void I_GetEvent(void)
     }
 }
 
+#ifdef HAS_SDL_BEEN_FIXED
 static void doGrabMouse(void)
 {
   if(SDL_GRAB_OFF == SDL_WM_GrabInput(SDL_GRAB_QUERY))
@@ -393,6 +394,7 @@ static void doGrabMouse(void)
     SDL_WM_GrabInput(SDL_GRAB_ON);
   }
 }
+#endif
 
 static void doUngrabMouse(void)
 {

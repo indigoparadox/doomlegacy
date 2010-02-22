@@ -1543,9 +1543,9 @@ void A_RemovePod(mobj_t *actor)
 {
         mobj_t *mo;
 
-        if(actor->special2)
+        if(actor->target)
         {
-                mo = (mobj_t *)actor->special2;
+                mo = actor->target;
                 if(mo->special1 > 0)
                 {
                         mo->special1--;
@@ -1585,7 +1585,9 @@ void A_MakePod(mobj_t *actor)
         P_ThrustMobj(mo, P_Random()<<24, (fixed_t)(4.5*FRACUNIT));
         S_StartSound(mo, sfx_newpod);
         actor->special1++; // Increment generated pod count
-        mo->special2 = (int)actor; // Link the generator to the pod
+
+        //mo->special2 = (int)actor; // Link the generator to the pod
+	mo->target = actor; // [smite] here target means owner/parent, naturally! I'm so happy we got rid of this in Legacy2.
         return;
 }
 

@@ -94,7 +94,7 @@ typedef struct
     char         sidemove;       // *2048 for move
     short        angleturn;      // <<16 for angle delta
                                  // SAVED AS A BYTE into demos
-    signed short aiming;    //added:16-02-98:mouse aiming, see G_BuildTicCmd
+    short        aiming;    // pitch angle (up-down)
     byte         buttons;
 } ticcmd_t;
 

@@ -3391,7 +3391,7 @@ boolean M_Responder (event_t* ev)
 
     if(currentMenu->menuitems[itemOn].status==IT_MSGHANDLER)
     {
-        if(currentMenu->menuitems[itemOn].alphaKey==true)
+        if(currentMenu->menuitems[itemOn].alphaKey == true)
         {
             if(ch == ' ' || ch == 'n' || ch == 'y' || ch == KEY_ESCAPE)
             {
@@ -3405,9 +3405,10 @@ boolean M_Responder (event_t* ev)
         {
             //added:07-02-98:dirty hak:for the customise controls, I want only
             //      buttons/keys, not moves
+	    void (*hack)(event_t *) = currentMenu->menuitems[itemOn].itemaction;
             if (ev->type==ev_mouse || ev->type==ev_joystick )
                 return true;
-            if(routine) routine((int)ev);
+            if (hack) hack(ev);
             return true;
         }
     }

@@ -1343,8 +1343,8 @@ int R_ColormapNumForName(char *name)
 // data and not the colormap data. 
 double  deltas[256][3], map[256][3];
 
-unsigned char  NearestColor(unsigned char r, unsigned char g, unsigned char b);
-int            RoundUp(double number);
+byte NearestColor(byte r, byte g, byte b);
+int  RoundUp(double number);
 
 int R_CreateColormap(char *p1, char *p2, char *p3)
 {
@@ -1354,7 +1354,7 @@ int R_CreateColormap(char *p1, char *p2, char *p3)
   double maskamt = 0, othermask = 0;
   int    mask;
   int    i, p;
-  char   *colormap_p;
+  byte  *colormap_p;
   unsigned int  cr, cg, cb;
   unsigned int  maskcolor, fadecolor;
   unsigned int  fadestart = 0, fadeend = 33, fadedist = 33;
@@ -1526,7 +1526,8 @@ int R_CreateColormap(char *p1, char *p2, char *p3)
 
 //Thanks to quake2 source!
 //utils3/qdata/images.c
-unsigned char NearestColor(unsigned char r, unsigned char g, unsigned char b) {
+byte NearestColor(byte r, byte g, byte b)
+{
   int dr, dg, db;
   int distortion;
   int bestdistortion = 256 * 256 * 4;
@@ -1549,7 +1550,7 @@ unsigned char NearestColor(unsigned char r, unsigned char g, unsigned char b) {
     }
 
   return bestcolor;
-  }
+}
 
 
 // Rounds off floating numbers and checks for 0 - 255 bounds

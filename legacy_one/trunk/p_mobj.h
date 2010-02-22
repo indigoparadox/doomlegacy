@@ -379,7 +379,10 @@ typedef struct mobj_s
 
     // Thing being chased/attacked (or NULL),
     // also the originator for missiles.
+  union {
     struct mobj_s*      target;
+    uint32_t            target_id; // used during loading
+  };
 
 	// Nodes
 	struct mobj_s*		nextnode;		// Next node object to chase after touching current
@@ -407,7 +410,10 @@ typedef struct mobj_s
     mapthing_t          *spawnpoint;
 
     // Thing being chased/attacked for tracers.
+  union {
     struct mobj_s*      tracer;
+    uint32_t            tracer_id; // used during loading
+  };
 
     //SoM: Friction.
     int friction;

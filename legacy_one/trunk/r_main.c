@@ -211,16 +211,6 @@ int                     viewangletox[FINEANGLES/2];
 angle_t                 xtoviewangle[MAXVIDWIDTH+1];
 
 
-// UNUSED.
-// The finetangentgent[angle+FINEANGLES/4] table
-// holds the fixed_t tangent values for view angles,
-// ranging from MININT to 0 to MAXINT.
-// fixed_t              finetangent[FINEANGLES/2];
-
-// fixed_t              finesine[5*FINEANGLES/4];
-fixed_t*                finecosine = &finesine[FINEANGLES/4];
-
-
 lighttable_t*           scalelight[LIGHTLEVELS][MAXLIGHTSCALE];
 lighttable_t*           scalelightfixed[MAXLIGHTSCALE];
 lighttable_t*           zlight[LIGHTLEVELS][MAXLIGHTZ];
@@ -1209,7 +1199,7 @@ void R_SetupFrame (player_t* player)
     {
         // clip it in the case we are looking a hardware 90° full aiming
         // (lmps, nework and use F12...)
-        G_ClipAimingPitch(&aimingangle);	// limit aimingangle
+        aimingangle = G_ClipAimingPitch(aimingangle);	// limit aimingangle
 
 #if 1
         // [WDJ] cleaned up

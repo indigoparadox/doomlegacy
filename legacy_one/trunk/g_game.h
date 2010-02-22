@@ -118,7 +118,7 @@ void G_BuildTiccmd (ticcmd_t* cmd, int realtics);
 void G_BuildTiccmd2(ticcmd_t* cmd, int realtics);
 
 //added:22-02-98: clip the console player aiming to the view
-short G_ClipAimingPitch(angle_t *aiming);
+angle_t G_ClipAimingPitch(angle_t aiming);
 
 extern angle_t localangle,localangle2;
 extern angle_t localaiming,localaiming2; // should be a angle_t but signed

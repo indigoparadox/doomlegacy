@@ -954,7 +954,7 @@ void A_DeathBallImpact(mobj_t *ball)
                                         newAngle = true;
                                         break;
                                 }
-                                angle += ANGLE_45/2;
+                                angle += ANG45/2;
                         }
                 }
                 if(newAngle)
