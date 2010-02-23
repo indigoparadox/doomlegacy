@@ -16,31 +16,62 @@
 # GNU General Public License for more details.
 #
 #
-#  The preferred multimedia interface is SDL.
+#  The preferred system media interface is SDL.
 #     Compile the generic SDL version with 'make' (default)
 #     Add 'HAVE_MIXER=1' for SDL_mixer music.
 #     Add 'DEBUG=1' for debugging information.
 #
 #  Other options (possibly outdated):
-#     Compile the Linux X11 version with 'make IF=LINUX_X11'
-#     Compile the FreeBSD X11 version with 'make IF=FREEBSD_X11'
-#     Compile the OS/2 version with  'make IF=OS2_NATIVE'
+#     Compile the Linux X11 version with 'make SMIF=LINUX_X11'
+#     Compile the FreeBSD X11 version with 'make SMIF=FREEBSD_X11'
+#     Compile the OS/2 version with  'make SMIF=OS2_NATIVE'
 #
 #############################################################################
 
-# gcc or g++
-CC=gcc
-RM=rm
+# User tunable settings.  Edit here or set by command line SMIF=LINUX_X11
+# Most can just uncomment an appropriate selection for your system.
 
-# subdirectories for objects and binaries
+# SMIF - System Media Interface (default=SDL)
+#SMIF=SDL
+#SMIF=LINUX_X11
+#SMIF=FREEBSD_X11
+#SMIF=OS2_NATIVE
+#SMIF=DJGPPDOS_NATIVE
+
+# SDL Mixer, to get music
+#HAVE_MIXER=1
+
+# Developers with svn can enable this to have svn number in executable.
+# Causes compile error message otherwise.
+# Until can find test for presence of svn, this is best that can be done.
+#SVN_ENABLE=1
+
+# Uncomment if you want to use the POLL_POINTER hack
+#POLL_POINTER=-DPOLL_POINTER
+
+# Subdirectories for objects and binaries
 O=../objs
 BIN=../bin
 
-# warning flags
+# Warning flags
 WFLAGS = -Wall # -Wwrite-strings
 
-#uncomment if you want to use the POLL_POINTER hack
-#POLL_POINTER=-DPOLL_POINTER
+# Optimization level, -O0 to -O5
+OPTLEV = -O3
+#OPTLEV = -O5
+
+# Debug enables, save on reinventing this everytime.
+#DEBUG=1
+#PROFILEMODE=1
+# Customize to your debugging environment.
+ifdef DEBUG
+# Normal debug (-g), MACRO info (-g3), stabs or gdb debug info
+  DEBUG:= -g3
+#  DEBUG:= -ggdb
+  # Debuggers do not cope with optimization well, so DEBUG ignores OPTLEV.
+  # To debug with optimization, include it here, (-O0, -O1, or $(OPTLEV)).
+#  DEBUG+= $(OPTLEV)
+endif
 
 # standard
 #STD= -std=c99
@@ -48,20 +79,27 @@ WFLAGS = -Wall # -Wwrite-strings
   # fails because of alloca, it is not std under c99
   # std=c89, does not support // commments, no inline, no asm
 
+# gcc or g++
+CC=gcc
 
+# End of User tunable settings
+
+# Values changed by system detection
+# file delete command, init value
+RM=rm
 # random stuff
 NASMFORMAT=elf -DLINUX
 i_cdmus_o=$(O)/i_cdmus.o
 
 
-# default multimedia interface
-ifndef IF
-  IF = SDL
+# default system media interface
+ifndef SMIF
+  SMIF = SDL
 endif
 
 #=================================
-ifeq ($(IF), SDL)
-# SDL is the default multimedia interface. This is what all modern systems should use.
+ifeq ($(SMIF), SDL)
+# SDL is the default system media interface. This is what all modern systems should use.
 
 # interface directory (where you put all i_*.c)
   INTERFACE=sdl
@@ -104,7 +142,7 @@ ifeq ($(IF), SDL)
 
 #=================================
 else
-ifeq ($(IF), LINUX_X11)
+ifeq ($(SMIF), LINUX_X11)
   INTERFACE=linux_x
 
   MUSSERV=linux_x/musserv
@@ -149,7 +187,7 @@ ifeq ($(IF), LINUX_X11)
 
 #=================================
 else
-ifeq ($(IF), FREEBSD_X11)
+ifeq ($(SMIF), FREEBSD_X11)
   INTERFACE=linux_x
 
   MUSSERV=linux_x/musserv
@@ -195,7 +233,7 @@ ifeq ($(IF), FREEBSD_X11)
 
 #=================================
 else
-ifeq ($(IF), OS2_NATIVE)
+ifeq ($(SMIF), OS2_NATIVE)
   INTERFACE=os2
   NASMFORMAT=coff
 
@@ -220,7 +258,7 @@ ifeq ($(IF), OS2_NATIVE)
 
 #=================================
 else
-ifeq ($(IF), DJGPPDOS_NATIVE)
+ifeq ($(SMIF), DJGPPDOS_NATIVE)
   RM=del
   INTERFACE=djgppdos
   NASMFORMAT=coff
@@ -261,20 +299,20 @@ endif
 # compiler and linker flags
 ifdef PROFILEMODE
 # build with gprof profiling information
-  CFLAGS = -g -pg
+  CFLAGS = -g -pg -fomit-frame-pointer
 else
 ifdef DEBUG
-# debug version
-  CFLAGS =  -g3 -O0
+# No -fomit-frame-pointer because debugging on some machines depends upon it.
+  #CFLAGS =  -g3 -O0
+  CFLAGS = $(DEBUG) -fno_guess_branch_probability
 else
 # build a normal optimised version
-  CFLAGS = -O3
+  #CFLAGS = -O3
+  CFLAGS = $(OPTLEV) -fomit-frame-pointer
 endif
 endif
 
-CFLAGS += $(WFLAGS) $(OPTS) -ffast-math -fomit-frame-pointer -fno-strict-aliasing
-
-
+CFLAGS += $(WFLAGS) $(OPTS) -ffast-math -fno-strict-aliasing
 
 
 
@@ -387,12 +425,14 @@ OBJS :=  $(OBJS) \
 #=======================================================
 # rules
 #=======================================================
+.PHONY : all clean asm dll
 
-ifeq ($(IF), LINUX_X11)
+
+ifeq ($(SMIF), LINUX_X11)
 all:	 $(BIN)/$(EXENAME) dll musserv sndserv
 
 else
-ifeq ($(IF), FREEBSD_X11)
+ifeq ($(SMIF), FREEBSD_X11)
 all:	 $(BIN)/$(EXENAME) dll sndserv
 
 else
@@ -402,14 +442,13 @@ endif
 endif
 
 
-
 clean:
 	$(RM) $(O)/*
-ifeq ($(IF), LINUX_X11)
+ifeq ($(SMIF), LINUX_X11)
 	$(RM) $(SNDSERV)/linux/*
 	$(RM) $(MUSSERV)/linux/*
 else
-ifeq ($(IF), FREEBSD_X11)
+ifeq ($(SMIF), FREEBSD_X11)
 	$(RM) $(SNDSERV)/linux/*
 	$(RM) $(MUSSERV)/linux/*
 endif
@@ -420,9 +459,13 @@ endif
 $(O):
 	@mkdir $(O)
 
-
+.PHONY : versionstring
+# This may fail because, (a) svn not installed, (b) not a svn directory.
+# This compiles d_main a second time, with SVN_REV set.
 versionstring:
+ifdef SVN_ENABLE
 	$(CC) -c $(CFLAGS) -DSVN_REV=\"`svn info | grep Revision | sed -e 's/Revision: //'`\" d_main.c -o $(O)/d_main.o
+endif
 
 
 
@@ -460,7 +503,7 @@ sndserv:
 
 
 
-ifeq ($(IF), SDL)
+ifeq ($(SMIF), SDL)
 $(O)/r_opengl.o: hardware/r_opengl/r_opengl.c hardware/r_opengl/r_opengl.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -477,8 +520,38 @@ $(O)/ogl_x11.o:  hardware/r_opengl/ogl_x11.c hardware/r_opengl/r_opengl.h
 
 #=======================================================
 
+$(O)/%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
+$(O)/%.o: $(INTERFACE)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
+$(O)/%.o: hardware/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+ifeq ($(SMIF), OS2_NATIVE)
+$(O)/%.res: os2/%.rc
+	rc.exe -i .\os2 -r $< $@
+endif
+
+#=======================================================
+#[WDJ] Dependencies, replaces makedep.mak, which was unmaintained.
+
+.PHONY : depend
+depend: main.dep $(INTERFACE).dep
+
+main.dep :: *.c
+$(INTERFACE).dep :: $(INTERFACE)/*.c
+
+%.dep :
+	$(CC) $(CFLAGS) -MM $^ > $(@F)
+
+-include main.dep
+-include $(INTERFACE).dep
+
+#=======================================================
+# If you have a really old make or want these old dependencies.
+ifdef OLD_DEPENDENCIES
 
 #dependecy made by gcc itself ! (see makedep.mak for more)
 $(O)/dstrings.o: dstrings.c dstrings.h d_englsh.h
@@ -1080,18 +1153,6 @@ $(O)/b_node.o: b_node.c b_bot.h b_node.h z_zone.h \
 $(O)/b_search.o: b_search.c g_game.h r_defs.h p_local.h \
  m_random.h r_main.h z_zone.h b_search.h b_node.h
 
-$(O)/%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(O)/%.o: $(INTERFACE)/%.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(O)/%.o: hardware/%.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-ifdef OS2
-$(O)/%.res: os2/%.rc
-	rc.exe -i .\os2 -r $< $@
 endif
 
 #############################################################
