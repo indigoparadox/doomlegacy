@@ -61,7 +61,7 @@ OPTLEV = -O3
 #OPTLEV = -O5
 
 # Debug enables, save on reinventing this everytime.
-DEBUG=1
+#DEBUG=1
 #PROFILEMODE=1
 
 # Customize to your debugging environment.
@@ -69,6 +69,7 @@ DEBUG=1
 ifdef PROFILEMODE
 # build with gprof profiling information
   CFLAGS = -g -pg -fomit-frame-pointer
+
 else
 ifdef DEBUG
 # Normal debug (-g), MACRO info (-g3), stabs or gdb debug info
@@ -80,9 +81,10 @@ ifdef DEBUG
 # To debug with optimization, include it here, (-O0, -O1, or $(OPTLEV)).
 #  CFLAGS += $(OPTLEV)
 #  CFLAGS += -O0
-#  CFLAGS += -fno_guess_branch_probability
+#  CFLAGS += -fno-guess-branch-probability
+
 else
-# build a normal optimised version
+# build a normal optimized version
   CFLAGS = $(OPTLEV) -fomit-frame-pointer
 endif
 endif
@@ -537,17 +539,30 @@ endif
 #=======================================================
 #[WDJ] Dependencies, replaces makedep.mak, which was unmaintained.
 
+# This PHONY disables automatic dep file generation when a file changes.
+# Comment it out for automtic dep file generation.
+.PHONY : *.dep
+
 .PHONY : depend
 depend: main.dep $(INTERFACE).dep
 
-main.dep :: *.c
-$(INTERFACE).dep :: $(INTERFACE)/*.c
+main.dep : *.c
+hardware.dep : hardware/*.c hardware/*/*.c
+# $(INTERFACE).dep : $(INTERFACE)/*.c
+djgppdos.dep : djgppdos/*.c
+linux_x.dep : linux_x/*.c linux_x/musserv/*.c linux_x/sndserv/*.c
+os_2.dep : os2/*.c
+macos.dep : macos/*.c
+sdl.dep : sdl/*.c
+win32.dep : win32/*.c
 
 %.dep :
+	@echo "Making dependencies $(@F)"
 	$(CC) $(CFLAGS) -MM $^ > $(@F)
 
--include main.dep
--include $(INTERFACE).dep
+include main.dep
+include hardware.dep
+include $(INTERFACE).dep
 
 #=======================================================
 # If you have a really old make or want these old dependencies.
