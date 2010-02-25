@@ -76,7 +76,7 @@ static inline fixed_t Tan(angle_t a)
 // The +1 size is to handle the case when x==y without additional checking.
 extern const angle_t tantoangle[SLOPERANGE+1];
 
-/// Encapsulation for arcustangent (for the range 0 <= x <= 1)
+/// Encapsulation for arctangent (for the range 0 <= x <= 1)
 static inline angle_t ArcTan(fixed_t x) { return tantoangle[x >> DBITS]; }
 
 

@@ -280,9 +280,12 @@ extern  doomdata_t*   netbuffer;
 
 extern consvar_t cv_playdemospeed;
 
-#define BASEPACKETSIZE     offsetof(doomdata_t, u) //((int)&( ((doomdata_t *)0)->u))
-#define FILETXHEADER       offsetof(filetx_pak, data) //((int)   ((filetx_pak *)0)->data)
-#define BASESERVERTICSSIZE offsetof(doomdata_t, u.serverpak.cmds[0]) //((int)&( ((doomdata_t *)0)->u.serverpak.cmds[0]))
+//#define BASEPACKETSIZE     ((int)&( ((doomdata_t *)0)->u))
+#define BASEPACKETSIZE     offsetof(doomdata_t, u)
+//#define FILETXHEADER       ((int)   ((filetx_pak *)0)->data)
+#define FILETXHEADER       offsetof(filetx_pak, data)
+//#define BASESERVERTICSSIZE  ((int)&( ((doomdata_t *)0)->u.serverpak.cmds[0]))
+#define BASESERVERTICSSIZE offsetof(doomdata_t, u.serverpak.cmds[0])
 
 extern boolean   server;
 extern USHORT    software_MAXPACKETLENGTH;

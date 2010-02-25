@@ -373,4 +373,11 @@ Disable of automatic dependency generation was needed, user can choose.
 DEBUG var set from command line is not modifiable in makefile.
 - clashed with changes by smite
 
+*** svn612_reaction
+patchfile = svn612_reaction.patch
+- committed revision 615   by wesley johnson
+Some adjustments to large compiler-error removal patches.
+Some compilers put comments after macros into the macro expansion, with dramatic failure.
+Adjusted and commented realloc of drawsegs, with alternative code.
+
 
