@@ -392,3 +392,11 @@ patchfile = w40_misc.patch
 Misc. cosmetic and alignment.
 Preparation for savegame improvements.
 
+*** w40_tarray
+patchfile = w40_tarray.patch
+- committed revision 619   by wesley johnson
+Inconsistencies in t_array allocation.
+Gave it some protection until issue is finally determined.
+Some cosmetic improvements too.
+Preparation for savegame improvements.
+

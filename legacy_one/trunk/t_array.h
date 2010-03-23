@@ -34,6 +34,12 @@
 void T_AddArray(sfarray_t *);
 void T_InitSaveList(void);
 
+//#define SAVELIST_STRUCTHEAD
+// The structure head seems to be unused, can just be a ptr.
+#ifdef SAVELIST_STRUCTHEAD
 extern sfarray_t sfsavelist;
+#else
+extern sfarray_t * sfsavelist;
+#endif
 
 #endif
