@@ -411,3 +411,16 @@ without having to rename files.
 Added wad_selection.txt documentation.
 Removed game name string allocation that was lost memory.
 
+*** w40_savegame
+patchfile = w40_savegame.patch
+- committed revision 621   by wesley johnson
+The big savegame change.
+Added headers to savegame.
+Savegame sync bytes are written and checked.
+Provision for optional savegame sections.
+Checks to not load savegames of different word length or endianess.
+Checks that wad and game are same as when saved.
+Made saving of raw structures more robust.  Easier for
+programmer to support and helps avoid making silent errors in savegame.
+
+
