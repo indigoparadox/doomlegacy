@@ -165,6 +165,17 @@ void FIL_DefaultExtension (char *path, char *extension)
 }
 
 
+// Point to start of the filename in longer string
+char * FIL_Filename_of( char * nstr )
+{
+    int i;
+    // point to start of filename only
+    for (i = strlen(nstr) - 1; i >= 0; i--)
+      if (nstr[i] == '\\' || nstr[i] == '/' || nstr[i] == ':')
+        break;
+    return &nstr[i+1];
+}
+
 //  Creates a resource name (max 8 chars 0 padded) from a file path
 //
 void FIL_ExtractFileBase ( char*  path,  char* dest )
