@@ -351,7 +351,7 @@ void D_RegisterClientCommands(void)
     COM_AddCommand("changeconfig", Command_ChangeConfig_f);
     COM_AddCommand("screenshot", M_ScreenShot);
 
-	COM_AddCommand("kill", Command_Kill);
+    COM_AddCommand("kill", Command_Kill);
 
     //Added by Hurdler for master server connection
     AddMServCommands();
@@ -1022,7 +1022,7 @@ void Command_Save_f(void)
 
     if (COM_Argc() != 3)
     {
-        CONS_Printf("save <slot> <desciption>: save game\n");
+        CONS_Printf("save <slot> <description>: save game\n");
         return;
     }
 
@@ -1046,6 +1046,7 @@ void Got_SaveGamecmd(char **cp, int playernum)
     strcpy(description, *cp);
     *cp += strlen(description) + 1;
 
+    // Write the save game file
     G_DoSaveGame(slot, description);
 }
 

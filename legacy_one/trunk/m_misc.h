@@ -62,6 +62,9 @@ int  FIL_ReadFile ( char const*   name,
 
 void FIL_DefaultExtension (char *path, char *extension);
 
+// Point to start of the filename in longer string
+char * FIL_Filename_of( char * nstr );
+
 //added:11-01-98:now declared here for use by G_DoPlayDemo(), see there...
 void FIL_ExtractFileBase (char* path, char* dest);
 
