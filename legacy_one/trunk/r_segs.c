@@ -1633,7 +1633,8 @@ void R_StoreWallRange( int   start, int   stop)
     ds_p->x2 = stop;
     ds_p->curline = curline;
     rw_stopx = stop+1;
-    if( rw_stopx >= rdraw_viewwidth )  rw_stopx = rdraw_viewwidth-1;
+    // [WDJ] draw range is rw_x .. rw_stopx-1
+    if( rw_stopx > rdraw_viewwidth )  rw_stopx = rdraw_viewwidth;
 
     //SoM: Code to remove limits on openings.
     {
