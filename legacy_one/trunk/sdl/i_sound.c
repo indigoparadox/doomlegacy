@@ -91,6 +91,7 @@
 #include "SDL_version.h"
 
 #ifdef HAVE_MIXER
+#define  USE_RWOPS
 # include "SDL_mixer.h"
 #endif
 
@@ -747,6 +748,49 @@ static struct music_channel_t
 #endif
 
 
+#if ((SDL_MIXER_MAJOR_VERSION*100)+(SDL_MIXER_MINOR_VERSION*10)+SDL_MIXER_PATCHLEVEL) < 127
+  // Older SDL without RWOPS
+#define OLD_SDL_MIXER
+
+#ifdef PC_DOS
+char * midiname = "DoomMUS.mid";
+#else
+char midiname[24] = "/tmp/DoomMUSXXXXXX";
+#endif
+FILE * midifile;
+
+void Init_OLD_SDL_MIXER( void )
+{
+#ifndef PC_DOS
+    // Make temp file name
+    mkstemp( midiname );
+//    strcat( midiname, ".mid" );
+#endif
+//    fprintf( stderr, "Midiname= %s\n", midiname );
+}
+
+void Free_OLD_SDL_MIXER( void )
+{
+    // delete the temp file
+    remove( midiname );
+}
+
+void Midifile_OLD_SDL_MIXER( byte* midibuf, unsigned long midilength )
+{
+    midifile = fopen( midiname, "wb" );
+    if( midifile )
+    {
+	  fwrite( midibuf, midilength, 1, midifile );
+	  fclose( midifile );
+          fprintf( stderr, "Midifile written: %s size=%li\n", midiname, midilength );
+	 
+	  music.mus = Mix_LoadMUS( midiname );
+          if( music.mus == NULL )
+	     I_SoftError("Music load file failed\n");
+    }
+}
+#endif
+
 
 void I_ShutdownMusic(void)
 {
@@ -761,6 +805,9 @@ void I_ShutdownMusic(void)
 
     CONS_Printf("I_ShutdownMusic: shut down\n");
     musicStarted = false;
+#ifdef OLD_SDL_MIXER
+    Free_OLD_SDL_MIXER();
+#endif
 #endif
 }
 
@@ -776,6 +823,9 @@ void I_InitMusic(void)
     nomusic = true;
     musicStarted = false;	// also wards off compiler warnings
 #else
+#ifdef OLD_SDL_MIXER
+    Init_OLD_SDL_MIXER();
+#endif
     // because we use SDL_mixer, audio is opened here.
     if (Mix_OpenAudio(audspec.freq, audspec.format, audspec.channels, audspec.samples)
 	< 0)
@@ -823,9 +873,9 @@ void I_PlaySong(int handle, int looping)
     return;
 
   if (music.mus)
-    {
+  {
       Mix_FadeInMusic(music.mus, looping ? -1 : 0, 500);
-    }
+  }
 #endif
 }
 
@@ -863,11 +913,11 @@ void I_UnRegisterSong(int handle)
     return;
 
   if (music.mus)
-    {
+  {
       Mix_FreeMusic(music.mus);
       music.mus = NULL;
       music.rwop = NULL;
-    }
+  }
 #endif
 }
 
@@ -894,17 +944,24 @@ int I_RegisterSong(void* data, int len)
 	  CONS_Printf("Cannot convert MUS to MIDI: error %d.\n", err);
 	  return 0;
       }
-
+#ifdef OLD_SDL_MIXER
+      Midifile_OLD_SDL_MIXER( mus2mid_buffer, midilength );
+#else     
       music.rwop = SDL_RWFromConstMem(mus2mid_buffer, midilength);
+#endif   
   }
   else
   {
       // MIDI, MP3, Ogg Vorbis, various module formats
       music.rwop = SDL_RWFromConstMem(data, len);
   }
-  
+
+#ifdef OLD_SDL_MIXER
+  // In old mixer Mix_LoadMUS_RW does not work.
+#else
   // SDL_mixer automatically frees the rwop when the music is stopped.
   music.mus = Mix_LoadMUS_RW(music.rwop);
+#endif   
   if (!music.mus)
   {
       CONS_Printf("Couldn't load music lump: %s\n", Mix_GetError());
