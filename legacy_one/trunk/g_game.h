@@ -146,9 +146,16 @@ void G_DeferedPlayDemo (char* demo);
 
 // Can be called by the startup code or M_Responder,
 // calls P_SetupLevel or W_EnterWorld.
+#ifdef SAVEGAMEDIR
+//void G_LoadGame ( char * savegamedir, int slot );
 void G_LoadGame (int slot);
 void G_DoLoadGame (int slot);
+#else
+void G_LoadGame (int slot);
+void G_DoLoadGame (int slot);
+#endif
 
+void G_Savegame_Name( /*OUT*/ char * namebuf, /*IN*/ int slot );
 
 // Called by M_Responder.
 void G_DoSaveGame(int slot, char* description);

@@ -267,6 +267,10 @@ void I_SoftError (char *error, ...);
 #  define EFFECTS_MENU
 #endif
 
+// [WDJ] 3/25/2010  Savegame slots 0..99
+#define SAVEGAME99
+#define SAVEGAMEDIR
+
 // =========================================================================
 
 
