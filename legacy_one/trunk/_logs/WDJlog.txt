@@ -463,3 +463,11 @@ patchfile = w41_makefile.patch
 Fixes dependencies so that they are recognized by MAKE.
 This fix may only work on Linux.
 
+*** w41_main
+patchfile = w41_main.patch
+- committed revision 627   by wesley johnson
+Makes the legacy home directory available to the savegame code.
+Simplifies some of the directory string copies.
+Preparation for savegame directories and files.
+Removes some old code.
+
