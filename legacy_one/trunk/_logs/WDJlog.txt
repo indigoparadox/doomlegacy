@@ -471,3 +471,11 @@ Simplifies some of the directory string copies.
 Preparation for savegame directories and files.
 Removes some old code.
 
+*** w41_savegame_time
+patchfile = w41_savegame_time.patch
+- committed revision 628   by wesley johnson
+Adds the level time to the savegame header.
+Fixes error messages.
+Handles a NULL mobj pointer, instead of I_Error on it.
+
+

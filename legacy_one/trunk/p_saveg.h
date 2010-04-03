@@ -63,6 +63,7 @@ typedef struct {
    char * game; // game name
    char * wad;  // wad name containing level
    char * map;  // level MAP01, E1M2, etc.
+   char * levtime; // time into this level, as string
    boolean  have_game, have_wad;  // validity checks on read
    char   msg[60];  // currently uses 46 chars max
 } savegame_info_t;
@@ -78,6 +79,5 @@ boolean P_LoadGame (void);
 extern byte*		savebuffer;
 extern byte*            save_p; 
 extern int		savebuffer_size;
-
 
 #endif
