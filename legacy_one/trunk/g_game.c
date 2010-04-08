@@ -1173,12 +1173,12 @@ void G_DoLoadLevel (boolean resetplayer)
 
     levelstarttic = gametic;        // for time calculation
 	
-	// Reset certain attributes
-	// (should be in resetplayer 'if'?)
-	fadealpha = 0;
-	extramovefactor = 0;
-	JUMPGRAVITY = (6*FRACUNIT/NEWTICRATERATIO);
-	players[consoleplayer].locked = false;
+    // Reset certain attributes
+    // (should be in resetplayer 'if'?)
+    fadealpha = 0;
+    extramovefactor = 0;
+    JUMPGRAVITY = (6*FRACUNIT/NEWTICRATERATIO);
+    players[consoleplayer].locked = false;
 
     if (wipegamestate == GS_LEVEL)
         wipegamestate = -1;             // force a wipe
@@ -1219,7 +1219,7 @@ void G_DoLoadLevel (boolean resetplayer)
     mousex = mousey = 0;
 
     // clear hud messages remains (usually from game startup)
-	HU_ClearFSPics();
+    HU_ClearFSPics();
     CON_ClearHUD ();
 
 }
@@ -2049,6 +2049,8 @@ void compose_message( char * str1, char * str2 )
 
 extern char  savegamedir[SAVESTRINGSIZE];
 
+// Must be able to handle 99 savegame slots, even when
+// not SAVEGAME99, so net game saves are universally accepted.
 void G_Savegame_Name( /*OUT*/ char * namebuf, /*IN*/ int slot )
 {
 #ifdef SAVEGAMEDIR
@@ -2056,15 +2058,13 @@ void G_Savegame_Name( /*OUT*/ char * namebuf, /*IN*/ int slot )
 #else
     sprintf(namebuf, savegamename, slot);
 #endif
-#ifdef SAVEGAME99
-# ifdef PC_DOS
+#ifdef PC_DOS
     if( slot > 9 )
     {
         // shorten name to 8 char
         int ln = strlen( namebuf );
         memmove( &namebuf[ln-4], &namebuf[ln-3], 4 );
     }
-# endif
 #endif
 }
 
@@ -2076,6 +2076,7 @@ void G_Savegame_Name( /*OUT*/ char * namebuf, /*IN*/ int slot )
 // and from D_Main code for -loadgame command line switch.
 void G_LoadGame (int slot)
 {
+    // [WDJ] will handle 99 slots
     COM_BufAddText(va("load %d\n",slot));
     // net command call to G_DoLoadGame
 }
@@ -2088,11 +2089,7 @@ void G_DoLoadGame (int slot)
     char        savename[255];
     savegame_info_t   sginfo;  // read header info
 
-#ifdef SAVEGAME99
     G_Savegame_Name( savename, slot );
-#else   
-    sprintf(savename, savegamename, slot);
-#endif
 
     // read file into savebuffer, Z_Malloc allocated as size of file
     length = FIL_ReadFile (savename, &savebuffer);
@@ -2150,10 +2147,16 @@ wrong_wad:
     goto failed_exit;
 
 load_failed:
-    M_SimpleMessage( "savegame file corrupted\n\nPress ESC\n" );
+    M_SimpleMessage("savegame file corrupted\n\nPress ESC\n" );
     Command_ExitGame_f();
 failed_exit:
     Z_Free (savebuffer);
+    // were not playing, but server got started by sending load message
+    if( gamestate == GS_WAITINGPLAYERS )
+    {
+        // [WDJ] fix ALLREADYPLAYING message, so that still not playing
+        Command_ExitGame_f();
+    }
     return;
 }
 
@@ -2167,8 +2170,11 @@ void G_SaveGame ( int   slot, char* description )
 {
     // Solo player has server, net player without server cannot save.
     if (server)
+    {
+        // [WDJ] will handle 99 slots
         COM_BufAddText(va("save %d \"%s\"\n",slot,description));
         // Net command call to G_DoSaveGame
+    }
 }
 
 // Called from network command sent from G_SaveGame.

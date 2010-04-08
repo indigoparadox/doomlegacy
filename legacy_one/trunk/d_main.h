@@ -55,7 +55,8 @@
 // make sure not to write back the config until it's been correctly loaded
 extern tic_t      rendergametic;
 
-// so can extract legacyhome from savegamename
+// to make savegamename and directories
+extern char * legacyhome;
 extern int  legacyhome_len;
 
 // for dedicated server
