@@ -2038,12 +2038,12 @@ void G_DoWorldDone (void)
 
 
 // compose menu message from strings
-void compose_StartMessage( char * str1, char * str2 )
+void compose_message( char * str1, char * str2 )
 {
     char msgtemp[128];
     if( str2 == NULL )  str2 = "";
     sprintf( msgtemp, "%s %s\n\nPress ESC\n", str1, str2 );
-    M_StartMessage ( msgtemp, NULL, MM_NOTHING);
+    M_SimpleMessage ( msgtemp );
 }
 
 
@@ -2138,19 +2138,19 @@ void G_DoLoadGame (int slot)
     return;
 
 load_header_failed:
-    compose_StartMessage( sginfo.msg, NULL );
+    compose_message( sginfo.msg, NULL );
     goto failed_exit;
 
 wrong_game:
-    compose_StartMessage( "savegame requires game:", sginfo.game );
+    compose_message( "savegame requires game:", sginfo.game );
     goto failed_exit;
 
 wrong_wad:
-    compose_StartMessage( "savegame requires wad:", sginfo.wad );
+    compose_message( "savegame requires wad:", sginfo.wad );
     goto failed_exit;
 
 load_failed:
-    M_StartMessage ("savegame file corrupted\n\nPress ESC\n", NULL, MM_NOTHING);
+    M_SimpleMessage( "savegame file corrupted\n\nPress ESC\n" );
     Command_ExitGame_f();
 failed_exit:
     Z_Free (savebuffer);

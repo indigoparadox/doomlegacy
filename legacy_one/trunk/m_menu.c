@@ -782,7 +782,7 @@ void M_ConnectMenu(int choise)
 {
     if( Playing() )
     {
-        M_StartMessage(ALLREADYPLAYING,NULL,MM_NOTHING);
+        M_SimpleMessage(ALLREADYPLAYING);
         return;
     }
 
@@ -877,7 +877,7 @@ void M_StartServerMenu(int choise)
 {
     if( Playing() )
     {
-        M_StartMessage(ALLREADYPLAYING,NULL,MM_NOTHING);
+        M_SimpleMessage(ALLREADYPLAYING);
         return;
     }
 
@@ -1313,7 +1313,7 @@ void M_Episode(int choice)
          && choice)
     {
         M_SetupNextMenu(&ReadDef1);
-        M_StartMessage(SWSTRING,NULL,MM_NOTHING);
+        M_SimpleMessage(SWSTRING);
         return;
     }
 
@@ -1382,13 +1382,13 @@ void M_NewGame(int choice)
 {
     if( Playing() )
     {
-        M_StartMessage(ALLREADYPLAYING,NULL,MM_NOTHING);
+        M_SimpleMessage(ALLREADYPLAYING);
         return;
     }
 
     if (netgame)
     {
-        M_StartMessage(NEWGAME,NULL,MM_NOTHING);
+        M_SimpleMessage(NEWGAME);
         return;
     }
 
@@ -1656,7 +1656,7 @@ void M_GameOption(int choice)
 {
     if(!server)
     {
-        M_StartMessage("You are not the server\nYou can't change the options\n",NULL,MM_NOTHING);
+        M_SimpleMessage("You are not the server\nYou can't change the options\n");
         return;
     }
     M_SetupNextMenu(&GameOptionDef);
@@ -1701,7 +1701,7 @@ void M_NetOption(int choice)
 {
     if(!server)
     {
-        M_StartMessage("You are not the server\nYou can't change the options\n",NULL,MM_NOTHING);
+        M_SimpleMessage("You are not the server\nYou can't change the options\n");
         return;
     }
     M_SetupNextMenu(&NetOptionDef);
@@ -2791,7 +2791,7 @@ void M_LoadGame (int choice)
     if (netgame && !server)
     {
         // running network game and am not the server, cannot load
-        M_StartMessage(LOADNET,NULL,MM_NOTHING);
+        M_SimpleMessage(LOADNET);
         return;
     }
 
@@ -3019,13 +3019,13 @@ void M_SaveGame (int choice)
 {
     if(demorecording)
     {
-        M_StartMessage("You can't save while recording demos\n\nPress a key\n",NULL,MM_NOTHING);
+        M_SimpleMessage("You can't save while recording demos\n\nPress a key\n");
         return;
     }
 
     if (demoplayback || demorecording)
     {
-        M_StartMessage(SAVEDEAD,NULL,MM_NOTHING);
+        M_SimpleMessage(SAVEDEAD);
         return;
     }
 
@@ -3034,7 +3034,7 @@ void M_SaveGame (int choice)
 
     if (netgame && !server)
     {
-        M_StartMessage("You are not the server",NULL,MM_NOTHING);
+        M_SimpleMessage("You are not the server");
         return;
     }
 
@@ -3115,14 +3115,14 @@ void M_QuickLoad(void)
 {
     if (netgame)
     {
-        M_StartMessage(QLOADNET,NULL,MM_NOTHING);
+        M_SimpleMessage(QLOADNET);
         return;
     }
 
     if (quickSaveSlot < 0)
     {
         // No save slot selected
-        M_StartMessage(QSAVESPOT,NULL,MM_NOTHING);
+        M_SimpleMessage(QSAVESPOT);
         return;
     }
     // Show load name, ask for quick load ack.
@@ -3159,7 +3159,7 @@ void M_EndGame(int choice)
 /*
     if (netgame)
     {
-        M_StartMessage(NETEND,NULL,MM_NOTHING);
+        M_SimpleMessage(NETEND);
         return;
     }
 */
@@ -3464,6 +3464,12 @@ void M_StartMessage ( const char*       string,
     currentMenu = &MessageDef;
     itemOn=0;
 }
+
+void M_SimpleMessage ( const char * string )
+{
+    M_StartMessage ( string, NULL, MM_NOTHING );
+}
+
 
 #define MAXMSGLINELEN 256
 
@@ -4487,7 +4493,7 @@ void M_OpenGLOption(int choice)
     if (rendermode != render_soft )
         M_SetupNextMenu(&OpenGLOptionDef);
     else
-        M_StartMessage("You are in software mode\nYou can't change the options\n",NULL,MM_NOTHING);
+        M_SimpleMessage("You are in software mode\nYou can't change the options\n");
 }
 
 

@@ -87,9 +87,13 @@ typedef enum
     MM_EVENTHANDLER     // the same of above but without 'y' or 'n' restriction
                         // and routine is void routine(event_t *) (ex: set control)
 } menumessagetype_t;
+
 void M_StartMessage ( const char*       string,
                       void*             routine,
                       menumessagetype_t itemtype );
+
+// M_StartMessage with NULL routine and MM_NOTHING
+void M_SimpleMessage ( const char*       string );
 
 // Called by linux_x/i_video_xshm.c
 void M_QuitResponse(int ch);
