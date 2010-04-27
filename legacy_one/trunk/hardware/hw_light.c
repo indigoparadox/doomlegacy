@@ -162,6 +162,7 @@
 #include "../z_zone.h"
 #include "../m_random.h"
 #include "../m_bbox.h"
+#include "../m_swap.h"
 #include "../w_wad.h"
 #include "../r_state.h"
 #include "../r_main.h"

@@ -2448,7 +2448,7 @@ void G_ReadDemoTiccmd (ticcmd_t* cmd,int playernum)
             if(demoversion<125)
                 oldcmd[playernum].angleturn = READBYTE(demo_p)<<8;
             else
-                oldcmd[playernum].angleturn = READSHORT(demo_p);
+                oldcmd[playernum].angleturn = READ16(demo_p);
         }
         if(ziptic & ZT_BUTTONS)
             oldcmd[playernum].buttons = READBYTE(demo_p);
@@ -2457,7 +2457,7 @@ void G_ReadDemoTiccmd (ticcmd_t* cmd,int playernum)
             if(demoversion<128)
                 oldcmd[playernum].aiming = READCHAR(demo_p);
             else
-                oldcmd[playernum].aiming = READSHORT(demo_p);
+                oldcmd[playernum].aiming = READ16(demo_p);
         }
         if(ziptic & ZT_CHAT)
             demo_p++;

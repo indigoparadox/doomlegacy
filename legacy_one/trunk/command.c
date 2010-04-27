@@ -1043,7 +1043,7 @@ void Got_NetVar(char **p,int playernum)
 {
     byte * bp = (byte*) *p;	// macros READ,SKIP want byte*
 
-    consvar_t *cvar = CV_FindNetVar(READUSHORT(bp));
+    consvar_t *cvar = CV_FindNetVar(READU16(bp));
     char *svalue = (char *)bp;
     SKIPSTRING(bp);
     *p = (char*)bp;	// return updated ptr only once
@@ -1067,7 +1067,7 @@ void CV_SaveNetVars( char **p )
     {
         if (cvar->flags & CV_NETVAR)
         {
-            WRITESHORT(bp,cvar->netid);
+            WRITE16(bp,cvar->netid);
             WRITESTRING(bp,cvar->string);
         }
     }
@@ -1111,7 +1111,7 @@ void CV_Set (consvar_t *var, char *value)
             return;
         }
         p=buf;
-        WRITEUSHORT(p, var->netid);
+        WRITEU16(p, var->netid);
         WRITESTRING(p, value);
         SendNetXCmd (XD_NETVAR, buf, p-buf);
     }

@@ -184,7 +184,7 @@ byte *PutFileNeeded(void)
     p=(byte *)&netbuffer->u.serverinfo.fileneeded;
     for(i=0;i<numwadfiles;i++)
     {
-        WRITEULONG(p,wadfiles[i]->filesize);
+        WRITEU32(p,wadfiles[i]->filesize);
         strcpy(wadfilename,wadfiles[i]->filename);
         nameonly(wadfilename);
         WRITESTRING(p,wadfilename);
@@ -204,7 +204,7 @@ void D_ParseFileneeded(int fileneedednum_parm, byte *fileneededstr)
     for(i=0;i<fileneedednum;i++)
     {
         fileneeded[i].status = FS_NOTFOUND;
-        fileneeded[i].totalsize = READULONG(p);
+        fileneeded[i].totalsize = READU32(p);
         fileneeded[i].phandle = NULL;
         READSTRING(p,fileneeded[i].filename);
         READMEM(p,fileneeded[i].md5sum,16);

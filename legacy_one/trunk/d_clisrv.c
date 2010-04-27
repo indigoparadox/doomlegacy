@@ -1573,8 +1573,8 @@ static void TicCmdCopy(ticcmd_t * dst, ticcmd_t * src, int n)
     for (i = 0; i < n; src++, dst++, i++)
     {
 #ifdef CLIENTPREDICTION2
-	dst->x = LE_LONG(src->x);
-	dst->y = LE_LONG(src->y);
+	dst->x = LE_SWAP32_FAST(src->x);
+	dst->y = LE_SWAP32_FAST(src->y);
 #endif
 	dst->forwardmove = src->forwardmove;
 	dst->sidemove    = src->sidemove;

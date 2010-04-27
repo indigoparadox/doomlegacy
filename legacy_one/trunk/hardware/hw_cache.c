@@ -147,6 +147,7 @@
 
 #include "../doomstat.h"    //gamemode
 #include "../i_video.h"     //rendermode
+#include "../m_swap.h"
 #include "../r_data.h"
 #include "../w_wad.h"
 #include "../z_zone.h"

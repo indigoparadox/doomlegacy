@@ -737,11 +737,11 @@ void P_LoadThings (int lump)
 
         // Do spawn all other stuff.
         // SoM: Do this first so all the mapthing slots are filled!
-        mt->x = READSHORT(data);
-        mt->y = READSHORT(data);
-        mt->angle = READSHORT(data);
-        mt->type = READSHORT(data);
-        mt->options = READSHORT(data);
+        mt->x = READ16(data);
+        mt->y = READ16(data);
+        mt->angle = READ16(data);
+        mt->type = READ16(data);
+        mt->options = READ16(data);
         mt->mobj = NULL; //SoM:
 
         P_SpawnMapThing (mt);
