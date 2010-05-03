@@ -56,3 +56,10 @@ ZONEID is now the first field in memblock_t so that it'll be the first
 field to be corrupted by an overflow in the preceding block(s).
 Replaced all if(block->user > 0x100) tests by if(block->user).
 
+
+*** Game modes, commandline switches
+= rev 636
+GDESC system now recognizes Strife, will abort if an unsupported game
+is run (currently Hexen or Strife).
+Added support for the standard --version and --help commandline switches.
+
