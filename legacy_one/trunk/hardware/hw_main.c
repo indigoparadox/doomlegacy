@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2010 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -400,8 +400,13 @@ struct hwdriver_s hwdriver;
 // ==========================================================================
 //                                                                     PROTOS
 // ==========================================================================
+#define SPRITE_LIGHTLEVEL
 
+#ifdef SPRITE_LIGHTLEVEL
+static void HWR_AddSprites(sector_t* sec, int lightlevel);
+#else  
 static void HWR_AddSprites(sector_t * sec);
+#endif
 static void HWR_ProjectSprite(mobj_t * thing);
 static void HWR_Add3DWater(int lumpnum, extrasubsector_t * xsub, fixed_t fixedheight, int lightlevel, int alpha);
 static void HWR_Render3DWater();
@@ -565,6 +570,78 @@ static float gr_viewludcos;
 static float gr_fovlud;
 
 // ==========================================================================
+//                                    Transforms
+// ==========================================================================
+
+#define TERM_TRANSFORM
+#ifdef TERM_TRANSFORM
+// The only terms needed, the other terms are 0.
+// Don't try to make this a matrix, this is much easier to understand and maintain.
+static float world_trans_x_to_x, world_trans_y_to_x,
+  world_trans_x_to_y, world_trans_y_to_y, world_trans_z_to_y,
+  world_trans_x_to_z, world_trans_y_to_z, world_trans_z_to_z;
+static float sprite_trans_x_to_x, sprite_trans_y_to_y, sprite_trans_z_to_y,
+  sprite_trans_z_to_z, sprite_trans_y_to_z;
+
+void HWR_set_view_transform( void )
+{
+    // Combined transforms for position, direction, look up/down, and scaling
+    // translation is separate and done first
+    // In order:
+    //   rotation around vertical y axis
+    //   look up/down
+    //   scale y before frustum so that frustum can be scaled to screen height
+    world_trans_x_to_x = gr_viewsin * gr_fovlud;
+    world_trans_y_to_x = -gr_viewcos * gr_fovlud;
+    world_trans_x_to_y = gr_viewcos * gr_viewludcos * ORIGINAL_ASPECT * gr_fovlud;
+    world_trans_y_to_y = gr_viewsin * gr_viewludcos * ORIGINAL_ASPECT * gr_fovlud;
+    world_trans_z_to_y = gr_viewludsin * ORIGINAL_ASPECT * gr_fovlud;
+    world_trans_x_to_z = gr_viewcos * gr_viewludsin;
+    world_trans_y_to_z = gr_viewsin * gr_viewludsin;
+    world_trans_z_to_z = -gr_viewludcos;
+
+    // look up/down and scaling
+    sprite_trans_x_to_x = gr_fovlud;
+    sprite_trans_y_to_y = gr_viewludsin * ORIGINAL_ASPECT * gr_fovlud;
+    sprite_trans_z_to_y = gr_viewludcos * ORIGINAL_ASPECT * gr_fovlud;
+    sprite_trans_z_to_z = gr_viewludsin;
+    sprite_trans_y_to_z = -gr_viewludcos;
+}
+
+#if 0
+// unused because of confused wall drawing
+// wx,wy,wz in world coord, to screen FOutVector
+void HWR_transform_world_FOut(float wx, float wy, float wz, FOutVector * fovp)
+{
+    // Combined transforms for position, direction, look up/down, and scaling.
+    // translation
+    // x world, to x screen
+    // vert z world, to vert y screen
+    // y world, to screen depth
+    float tr_x = wx - gr_viewx;
+    float tr_y = wy - gr_viewy;
+    float tr_z = wz - gr_viewz;
+    fovp->x = (tr_x * world_trans_x_to_x)
+       + (tr_y * world_trans_y_to_x);
+    fovp->y = (tr_x * world_trans_x_to_y )
+       + (tr_y * world_trans_y_to_y )
+       + (tr_z * world_trans_z_to_y );
+    fovp->z = (tr_x * world_trans_x_to_z )
+       + (tr_y * world_trans_y_to_z )
+       + (tr_z * world_trans_z_to_z );
+}
+#endif
+
+void HWR_transform_sprite_FOut(float cx, float cy, float cz, FOutVector * fovp)
+{
+    // Combined transforms for look up/down, and scaling
+   fovp->y = (cy * sprite_trans_y_to_y) + (cz * sprite_trans_z_to_y);
+   fovp->z = (cy * sprite_trans_y_to_z) + (cz * sprite_trans_z_to_z);
+   fovp->x = (cx * sprite_trans_x_to_x);
+}
+#endif
+
+// ==========================================================================
 //                                    LIGHT stuffs
 // ==========================================================================
 
@@ -576,11 +653,24 @@ byte LightLevelToLum(int l)
     if (fixedcolormap)
         return 255;
     l = lightleveltonumlut[l];
-    l += (extralight << 4);
+    l += (extralight << 4);	// from guns
     if (l > 255)
         l = 255;
     return l;
 }
+
+// Need to select extra
+byte LightLevelToLum_extra(int l, int extra)
+{
+    if (fixedcolormap)
+        return 255;
+    l = lightleveltonumlut[l];
+    l += (extra << 4);	// from guns, etc..
+    if (l > 255)
+        l = 255;
+    return l;
+}
+
 
 static void InitLumLut()
 {
@@ -588,7 +678,9 @@ static void InitLumLut()
     for (i = 0; i < 256; i++)
     {
         // this polygone is the solution of equ : f(0)=0, f(1)=1 f(.5)=.5, f'(0)=0, f'(1)=0), f'(.5)=K
-#define K   2
+//#define K   2
+// [WDJ] Reduce to match software renderer brightness
+#define K   1.2f
 #define A  (-24+16*K)
 #define B  ( 60-40*K)
 #define C  (32*K-50)
@@ -2081,27 +2173,72 @@ static void HWR_AddLine(seg_t * line)
         goto clipsolid;
 
     gr_backsector = R_FakeFlat(gr_backsector, &tempsec, NULL, NULL, true);
+   
+#ifdef DOORCLOSED_FIX
+    // [WDJ] Improvement on door closed detection from r_bsp
+    doorclosed = 0; //SoM: 3/25/2000
+#endif
 
     // Closed door.
-    if (gr_backsector->ceilingheight <= gr_frontsector->floorheight || gr_backsector->floorheight >= gr_frontsector->ceilingheight)
+    if (gr_backsector->ceilingheight <= gr_frontsector->floorheight
+	|| gr_backsector->floorheight >= gr_frontsector->ceilingheight)
         goto clipsolid;
 
+#ifdef DOORCLOSED_FIX
+    //SoM: 3/25/2000: Check for automap fix. Store in doorclosed for r_segs.c
+    if ((doorclosed = R_DoorClosed()))
+      goto clipsolid;
+#endif
+
     // Window.
-    if (gr_backsector->ceilingheight != gr_frontsector->ceilingheight || gr_backsector->floorheight != gr_frontsector->floorheight)
+    if (gr_backsector->ceilingheight != gr_frontsector->ceilingheight
+	|| gr_backsector->floorheight != gr_frontsector->floorheight)
         goto clippass;
 
+#if 1
+    // [WDJ] 4/20/2010 From software renderer, to get improvements
+    // Reject empty lines used for triggers and special events.
+    // Identical floor and ceiling on both sides,
+    // identical light levels on both sides, and no middle texture.
+    if (gr_backsector->ceilingpic == gr_frontsector->ceilingpic
+        && gr_backsector->floorpic == gr_frontsector->floorpic
+        && gr_backsector->lightlevel == gr_frontsector->lightlevel
+        && gr_curline->sidedef->midtexture == 0
+
+        //SoM: 3/22/2000: Check offsets too!
+        && gr_backsector->floor_xoffs == gr_frontsector->floor_xoffs
+        && gr_backsector->floor_yoffs == gr_frontsector->floor_yoffs
+        && gr_backsector->ceiling_xoffs == gr_frontsector->ceiling_xoffs
+        && gr_backsector->ceiling_yoffs == gr_frontsector->ceiling_yoffs
+
+        //SoM: 3/17/2000: consider altered lighting
+        && gr_backsector->floorlightsec == gr_frontsector->floorlightsec
+        && gr_backsector->ceilinglightsec == gr_frontsector->ceilinglightsec
+        //SoM: 4/3/2000: Consider colormaps
+        && gr_backsector->extra_colormap == gr_frontsector->extra_colormap
+        && ((!gr_frontsector->ffloors && !gr_backsector->ffloors) ||
+           (gr_frontsector->tag == gr_backsector->tag)))
+    {
+        return;
+    }
+#else
     // Reject empty lines used for triggers and special events.
     // Identical floor and ceiling on both sides,
     //  identical light levels on both sides,
     //  and no middle texture.
-    if (gr_backsector->ceilingpic == gr_frontsector->ceilingpic && gr_backsector->floorpic == gr_frontsector->floorpic && gr_backsector->lightlevel == gr_frontsector->lightlevel
-        && gr_curline->sidedef->midtexture == 0 && !gr_backsector->ffloors && !gr_frontsector->ffloors)
+    if (gr_backsector->ceilingpic == gr_frontsector->ceilingpic
+	&& gr_backsector->floorpic == gr_frontsector->floorpic
+	&& gr_backsector->lightlevel == gr_frontsector->lightlevel
+        && gr_curline->sidedef->midtexture == 0
+	&& !gr_backsector->ffloors
+	&& !gr_frontsector->ffloors)
         // SoM: For 3D sides... Boris, would you like to take a
         // crack at rendering 3D sides? You would need to add the
         // above check and add code to HWR_StoreWallRange...
     {
         return;
     }
+#endif
 
   clippass:
     if (x1 == x2)
@@ -2323,8 +2460,27 @@ static void HWR_Subsector(int num)
             sub->sector->moved = gr_frontsector->moved = false;
         }
 
+#if 1
+        // [WDJ] from r_bsp.c 4/22/2010
+	// adapted to local vars, and may still need a little tuning
+//        light = R_GetPlaneLight(gr_frontsector, gr_frontsector->floorheight, false);
+        light = R_GetPlaneLight(gr_frontsector, locFloorHeight, false);
+        if(gr_frontsector->floorlightsec == -1)
+        {
+	  floorlightlevel = *gr_frontsector->lightlist[light].lightlevel;
+//        floorcolormap = frontsector->lightlist[light].extra_colormap;
+//        light = R_GetPlaneLight(frontsector, frontsector->ceilingheight, false);
+        }
+        light = R_GetPlaneLight(gr_frontsector, locCeilingHeight, false);
+        if(gr_frontsector->ceilinglightsec == -1)
+        {
+	  ceilinglightlevel = *gr_frontsector->lightlist[light].lightlevel;
+//        ceilingcolormap = frontsector->lightlist[light].extra_colormap;
+	}
+#else
         floorlightlevel = *gr_frontsector->lightlist[R_GetPlaneLight(gr_frontsector, locFloorHeight, false)].lightlevel;
         ceilinglightlevel = *gr_frontsector->lightlist[R_GetPlaneLight(gr_frontsector, locCeilingHeight, false)].lightlevel;
+#endif
     }
 
     // render floor ?
@@ -2439,7 +2595,12 @@ static void HWR_Subsector(int num)
     {
         // draw sprites first , coz they are clipped to the solidsegs of
         // subsectors more 'in front'
+#ifdef SPRITE_LIGHTLEVEL
+	HWR_AddSprites(gr_frontsector, tempsec.lightlevel);  // ???
+//	HWR_AddSprites(gr_frontsector, gr_frontsector->lightlevel);  // ???
+#else
         HWR_AddSprites(gr_frontsector);
+#endif
 
         //Hurdler: at this point validcount must be the same, but is not because
         //         gr_frontsector doesn't point anymore to sub->sector due to
@@ -2697,11 +2858,13 @@ gr_vissprite_t *HWR_NewVisSprite(void)
 // -----------------+
 static void HWR_DrawSprite(gr_vissprite_t * spr)
 {
+#ifndef TERM_TRANSFORM
     int i;
     float tr_x;
     float tr_y;
-    FOutVector wallVerts[4];
     FOutVector *wv;
+#endif   
+    FOutVector wallVerts[4];
     GlidePatch_t *gpatch;       //sprite patch converted to hardware
     FSurfaceInfo Surf;
 
@@ -2729,6 +2892,31 @@ static void HWR_DrawSprite(gr_vissprite_t * spr)
     //  | /|
     //  |/ |
     //  0--1
+
+#ifdef TERM_TRANSFORM
+#if 1
+    // fastest, use transform terms in optimized shared code
+    // Combined transforms for look up/down and scaling
+    float topty = spr->ty - gpatch->height;
+    wallVerts[0].x = wallVerts[3].x = (spr->x1 * sprite_trans_x_to_x);
+    wallVerts[1].x = wallVerts[2].x = (spr->x2 * sprite_trans_x_to_x);
+    float tranzy = spr->tz * sprite_trans_z_to_y;
+    wallVerts[0].y = wallVerts[1].y = (topty * sprite_trans_y_to_y) + tranzy;
+    wallVerts[2].y = wallVerts[3].y = (spr->ty * sprite_trans_y_to_y) + tranzy;
+    float tranzz = spr->tz * sprite_trans_z_to_z;
+    wallVerts[0].z = wallVerts[1].z = (topty * sprite_trans_y_to_z) + tranzz;
+    wallVerts[2].z = wallVerts[3].z = (spr->ty * sprite_trans_y_to_z) + tranzz;
+#else
+    // Use standard transform calls, many redundant calculations
+    // Combined transforms for look up/down and scaling
+    float topty = spr->ty - gpatch->height;
+    HWR_transform_sprite_FOut(spr->x1, topty, spr->tz, &wallVerts[0]);
+    HWR_transform_sprite_FOut(spr->x2, topty, spr->tz, &wallVerts[1]);
+    HWR_transform_sprite_FOut(spr->x2, spr->ty, spr->tz, &wallVerts[2]);
+    HWR_transform_sprite_FOut(spr->x1, spr->ty, spr->tz, &wallVerts[3]);
+#endif
+#else
+    // old serial transform code
     wallVerts[0].x = wallVerts[3].x = spr->x1;
     wallVerts[2].x = wallVerts[1].x = spr->x2;
     wallVerts[2].y = wallVerts[3].y = spr->ty;
@@ -2743,17 +2931,17 @@ static void HWR_DrawSprite(gr_vissprite_t * spr)
 
     for (i = 0; i < 4; i++, wv++)
     {
-        //look up/down ----TOTAL SUCKS!!!--- do the 2 in one!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        //look up/down
         tr_x = wv->z;
         tr_y = wv->y;
         wv->y = (tr_x * gr_viewludcos) + (tr_y * gr_viewludsin);
         wv->z = (tr_x * gr_viewludsin) - (tr_y * gr_viewludcos);
-        // ---------------------- mega lame test ----------------------------------
 
         //scale y before frustum so that frustum can be scaled to screen height
         wv->y *= ORIGINAL_ASPECT * gr_fovlud;
         wv->x *= gr_fovlud;
     }
+#endif   
 
     if (spr->flip)
     {
@@ -2931,7 +3119,12 @@ static void HWR_DrawMD2S(void)
 // During BSP traversal, this adds sprites by sector.
 // --------------------------------------------------------------------------
 static unsigned char sectorlight;
+// Does not need separate lightlevel as long as it is called with frontsector.
+#ifdef SPRITE_LIGHTLEVEL
+static void HWR_AddSprites(sector_t * sec, int sprite_lightlevel)
+#else
 static void HWR_AddSprites(sector_t * sec)
+#endif
 {
     mobj_t *thing;
 
@@ -2945,8 +3138,24 @@ static void HWR_AddSprites(sector_t * sec)
     // Well, now it will be done.
     sec->validcount = validcount;
 
+#if 1
     // sprite lighting
+    if(!sec->numlights) // when numlights then light in DrawSprite
+    {
+#ifdef SPRITE_LIGHTLEVEL
+      int lightlevel = sprite_lightlevel;
+      if(sec->model < SM_fluid)   lightlevel = sec->lightlevel;
+#else      
+      // from frontsector is correct for all models
+      int lightlevel = sec->lightlevel;
+#endif       
+      sectorlight = LightLevelToLum(lightlevel); // add extra light
+    }
+#else
+    // old sprite lighting
+    // [WDJ] The "& 0xff" ought to cause lighting errors
     sectorlight = LightLevelToLum(sec->lightlevel & 0xff);
+#endif
 
     // Handle all things in sector.
     for (thing = sec->thinglist; thing; thing = thing->snext)
@@ -3071,6 +3280,59 @@ static void HWR_ProjectSprite(mobj_t * thing)
 #endif
         return;
 
+#if 1
+   {
+   // [WDJ] from r_things.c
+   // This fixes the thing lighting in special sectors
+    sector_t*		thingsector;	 // [WDJ] 11/14/2009
+    int                 thingmodelsec;
+    boolean	        thing_has_model;  // has a model, such as water
+    int light;
+    fixed_t  gz_top = thing->z + spritetopoffset[lump];
+    thingsector = thing->subsector->sector;	 // [WDJ] 11/14/2009
+    if(thingsector->numlights)
+    {
+      int lightlevel;
+      light = R_GetPlaneLight(thingsector, gz_top, false);
+      lightlevel = *thingsector->lightlist[light].lightlevel;
+      if(thingsector->lightlist[light].caster && thingsector->lightlist[light].caster->flags & FF_FOG)
+	 sectorlight = LightLevelToLum(lightlevel); // add extralight
+      else
+         sectorlight = LightLevelToLum_extra(lightlevel, 0);  // extralight=0
+    }
+
+    thingmodelsec = thingsector->modelsec;
+    thing_has_model = thingsector->model > SM_fluid; // water
+
+    if (thing_has_model)   // only clip things which are in special sectors
+    {
+      sector_t * thingmodsecp = & sectors[thingmodelsec];
+      int phs_modelsec = viewplayer->mo->subsector->sector->modelsec;
+      // [WDJ] modelsec is used for more than water, do proper test
+      boolean phs_has_mod = viewplayer->mo->subsector->sector->model > SM_fluid;
+      // [WDJ] 4/20/2010  Added some structure and ()
+      if (phs_has_mod)
+      {
+	  if( (viewz < sectors[phs_modelsec].floorheight) ?
+	      (thing->z >= thingmodsecp->floorheight)
+	      : (gz_top < thingmodsecp->floorheight)
+	      )
+	      return;
+	  if( (viewz > sectors[phs_modelsec].ceilingheight) ?
+	      ((gz_top < thingmodsecp->ceilingheight) && (viewz >= thingmodsecp->ceilingheight))
+	      : (thing->z >= thingmodsecp->ceilingheight)
+	      )
+	      return;
+      }
+    }
+   }
+#if 0
+    // gr vis does not have a heightsec (yet ??)
+    // [WDJ] Only pass water models, not colormap model sectors
+    vis->heightsec = thing_has_model ? thingmodelsec : -1 ; //SoM: 3/17/2000
+#endif
+#endif
+   
     //
     // store information in a vissprite
     //
@@ -3518,6 +3780,10 @@ void HWR_RenderPlayerView(int viewnumber, player_t * player)
     //04/01/2000: Hurdler: added for T&L
     //                     Actually it only works on Walls and Planes
     HWD.pfnSetTransform(&atransform);
+#ifdef TERM_TRANSFORM
+    // [WDJ] transform upgrade
+    HWR_set_view_transform();
+#endif
 
     validcount++;
     HWR_RenderBSPNode(numnodes - 1);
@@ -3773,6 +4039,27 @@ void HWR_Shutdown(void)
     HWR_FreeTextureCache();
 }
 
+
+#ifdef TERM_TRANSFORM
+// temporary, to supply old call
+void transform(float *cx, float *cy, float *cz)
+{
+    // translation
+    // Combined transforms for position, direction, look up/down, and scaling
+    float tr_x = *cx - gr_viewx;  // wx is passed in *cx
+    float tr_y = *cz - gr_viewy;  // wy is passed in *cz
+    float tr_z = *cy - gr_viewz;  // wz is passed in *cy
+    *cx = (tr_x * world_trans_x_to_x)
+       + (tr_y * world_trans_y_to_x);
+    *cy = (tr_x * world_trans_x_to_y )
+       + (tr_y * world_trans_y_to_y )
+       + (tr_z * world_trans_z_to_y );
+    *cz = (tr_x * world_trans_x_to_z )
+       + (tr_y * world_trans_y_to_z )
+       + (tr_z * world_trans_z_to_z );
+}
+
+#else
 void transform(float *cx, float *cy, float *cz)
 {
     float tr_x, tr_y;
@@ -3785,7 +4072,7 @@ void transform(float *cx, float *cy, float *cz)
     *cx = (tr_x * gr_viewsin) - (tr_y * gr_viewcos);
     tr_x = (tr_x * gr_viewcos) + (tr_y * gr_viewsin);
 
-    //look up/down ----TOTAL SUCKS!!!--- do the 2 in one!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //look up/down
     tr_y = *cy - gr_viewz;
 
     *cy = (tr_x * gr_viewludcos) + (tr_y * gr_viewludsin);
@@ -3795,6 +4082,7 @@ void transform(float *cx, float *cy, float *cz)
     *cy *= ORIGINAL_ASPECT * gr_fovlud;
     *cx *= gr_fovlud;
 }
+#endif
 
 //Hurdler: 3D Water stuff
 #define ABS(x) ((x) < 0 ? -(x) : (x))
