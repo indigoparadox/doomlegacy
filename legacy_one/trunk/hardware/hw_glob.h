@@ -75,8 +75,6 @@
 #include "hw_defs.h"
 #include "hw_main.h"
 
-#define crapmul (1.0f / 65536.0f)
-
 // the original aspect ratio of Doom graphics isn't square
 #define ORIGINAL_ASPECT     (320.0f/200.0f)
 

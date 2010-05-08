@@ -792,10 +792,10 @@ void HWR_PlaneLighting(FOutVector *clVerts, int nrClipVerts)
     int     i, j;
     FOutVector p1,p2;
 
-    p1.z=bbox[BOXTOP]*crapmul;
-    p1.x=bbox[BOXLEFT]*crapmul;
-    p2.z=bbox[BOXBOTTOM]*crapmul;
-    p2.x=bbox[BOXRIGHT]*crapmul;
+    p1.z=FIXED_TO_FLOAT( bbox[BOXTOP] );
+    p1.x=FIXED_TO_FLOAT( bbox[BOXLEFT] );
+    p2.z=FIXED_TO_FLOAT( bbox[BOXBOTTOM] );
+    p2.x=FIXED_TO_FLOAT( bbox[BOXRIGHT] );
     p2.y=clVerts[0].y;
     p1.y=clVerts[0].y;
 
@@ -888,7 +888,7 @@ void HWR_DoCoronasLighting(FOutVector *outVerts, gr_vissprite_t *spr)
         }
         if (size > p_lspr->corona_radius) 
             size = p_lspr->corona_radius;
-        size *= FIXED_TO_FLOAT(cv_grcoronasize.value<<1);
+        size *= FIXED_TO_FLOAT( cv_grcoronasize.value<<1 );
 
         // compute position doing average
         for (i=0; i<4; i++) {
@@ -986,12 +986,12 @@ void HWR_DrawCoronas( void )
                 size  = p_lspr->corona_radius  * ((cz+60.0f)/100.0f); // d'ou vienne ces constante ?
                 break;
             default:
-                I_Error("HWR_DoCoronasLighting: unknow light type %d",p_lspr->type);
+                I_Error("HWR_DoCoronasLighting: unknown light type %d",p_lspr->type);
                 continue;
         }
         if (size > p_lspr->corona_radius)
             size = p_lspr->corona_radius;
-        size *= FIXED_TO_FLOAT(cv_grcoronasize.value<<1);
+        size *= FIXED_TO_FLOAT( cv_grcoronasize.value<<1 );
 
         // put light little forward the sprite so there is no 
         // z-buffer problem (coplanaire polygons)
@@ -1060,9 +1060,10 @@ void HWR_DL_AddLight(gr_vissprite_t *spr, GlidePatch_t *patch)
          && (dynlights->nb < DL_MAX_LIGHT) 
          && spr->mobj->state )
     {
-        LIGHT_POS(dynlights->nb).x = spr->mobj->x*crapmul;
-        LIGHT_POS(dynlights->nb).y = spr->mobj->z*crapmul+FIXED_TO_FLOAT(spr->mobj->height>>1)+p_lspr->light_yoffset;
-        LIGHT_POS(dynlights->nb).z = spr->mobj->y*crapmul;
+        LIGHT_POS(dynlights->nb).x = FIXED_TO_FLOAT( spr->mobj->x );
+        LIGHT_POS(dynlights->nb).y = FIXED_TO_FLOAT( spr->mobj->z )
+	 + FIXED_TO_FLOAT( spr->mobj->height>>1 ) + p_lspr->light_yoffset;
+        LIGHT_POS(dynlights->nb).z = FIXED_TO_FLOAT( spr->mobj->y );
 
         dynlights->mo[dynlights->nb] = spr->mobj;
         if( (spr->mobj->state>=&states[S_EXPLODE1] && spr->mobj->state<=&states[S_EXPLODE3])
@@ -1217,10 +1218,10 @@ static void HWR_AddLightMapForLine( int lightnum, seg_t *line)
     }
 */
 
-    p1.y=gr_curline->v1->y*crapmul;
-    p1.x=gr_curline->v1->x*crapmul;
-    p2.y=gr_curline->v2->y*crapmul;
-    p2.x=gr_curline->v2->x*crapmul;
+    p1.y=FIXED_TO_FLOAT( gr_curline->v1->y );
+    p1.x=FIXED_TO_FLOAT( gr_curline->v1->x );
+    p2.y=FIXED_TO_FLOAT( gr_curline->v2->y );
+    p2.x=FIXED_TO_FLOAT( gr_curline->v2->x );
 
     // check bbox of the seg
 //    if( CircleTouchBBox(&p1, &p2, &LIGHT_POS(lightnum), DL_RADIUS(lightnum))==false )    
@@ -1240,10 +1241,10 @@ static void HWR_CheckSubsector( int num, fixed_t *bbox )
     FVector     p1,p2;
     int         lightnum;
 
-    p1.y=bbox[BOXTOP]*crapmul;
-    p1.x=bbox[BOXLEFT]*crapmul;
-    p2.y=bbox[BOXBOTTOM]*crapmul;
-    p2.x=bbox[BOXRIGHT]*crapmul;
+    p1.y=FIXED_TO_FLOAT( bbox[BOXTOP] );
+    p1.x=FIXED_TO_FLOAT( bbox[BOXLEFT] );
+    p2.y=FIXED_TO_FLOAT( bbox[BOXBOTTOM] );
+    p2.x=FIXED_TO_FLOAT( bbox[BOXRIGHT] );
 
 
     if (num < numsubsectors)
@@ -1273,9 +1274,9 @@ static void HWR_AddMobjLights(mobj_t *thing)
 {
     if ( t_lspr[thing->sprite]->type & CORONA_SPR )
     {
-        LIGHT_POS(dynlights->nb).x = (float)thing->x * crapmul;
-        LIGHT_POS(dynlights->nb).y = (float)thing->z * crapmul + t_lspr[thing->sprite]->light_yoffset;
-        LIGHT_POS(dynlights->nb).z = (float)thing->y * crapmul;
+        LIGHT_POS(dynlights->nb).x = FIXED_TO_FLOAT( thing->x );
+        LIGHT_POS(dynlights->nb).y = FIXED_TO_FLOAT( thing->z ) + t_lspr[thing->sprite]->light_yoffset;
+        LIGHT_POS(dynlights->nb).z = FIXED_TO_FLOAT( thing->y );
         
         dynlights->p_lspr[dynlights->nb] = t_lspr[thing->sprite];
         

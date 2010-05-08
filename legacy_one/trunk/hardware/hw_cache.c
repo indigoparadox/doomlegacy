@@ -592,8 +592,8 @@ static void HWR_GenerateTexture (int texnum, GlideTexture_t* grtex)
     // use PU_PURGELEVEL so we can Z_FreeTags all at once
     Z_ChangeTag (block, PU_HWRCACHE);
 
-    grtex->scaleX = crapmul / (float)texture->width;
-    grtex->scaleY = crapmul / (float)texture->height;
+    grtex->scaleX = FIXED_TO_FLOAT_MULT / (float)texture->width;
+    grtex->scaleY = FIXED_TO_FLOAT_MULT / (float)texture->height;
 }
 
 // grTex : Hardware texture cache info
@@ -715,7 +715,7 @@ void HWR_FreeTextureCache (void)
         }
 
     // free all hardware-converted graphics cached in the heap
-    // our gool is only the textures since user of the texture is the texture cache
+    // our goal is only the textures since user of the texture is the texture cache
     Z_FreeTags (PU_HWRCACHE, PU_HWRCACHE);
 
     // now the heap don't have any 'user' pointing to our

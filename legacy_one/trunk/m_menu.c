@@ -4465,7 +4465,7 @@ menu_t OGL_LightingDef, OGL_FogDef, OGL_ColorDef, OGL_DevDef;
 
 menuitem_t OpenGLOptionsMenu[]=
 {
-    {IT_STRING | IT_CVAR,0, "Mouse look"          , &cv_grcrappymlook     ,  0},
+    {IT_STRING | IT_CVAR,0, "Mouse look"          , &cv_grmlook_extends_fov ,  0},
     {IT_STRING | IT_CVAR,0, "Field of view"       , &cv_grfov             , 10},
     {IT_STRING | IT_CVAR,0, "Quality"             , &cv_scr_depth         , 20},
     {IT_STRING | IT_CVAR,0, "Texture Filter"      , &cv_grfiltermode      , 30},

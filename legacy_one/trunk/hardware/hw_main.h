@@ -128,7 +128,7 @@ void HWR_CorrectSWTricks(void);
 void transform(float *cx, float *cy, float *cz);
 int HWR_TranstableToAlpha(int transtablenum, FSurfaceInfo *pSurf);
 
-extern consvar_t cv_grcrappymlook;
+extern consvar_t cv_grmlook_extends_fov;
 extern consvar_t cv_grdynamiclighting;
 extern consvar_t cv_grstaticlighting;
 extern consvar_t cv_grmblighting;

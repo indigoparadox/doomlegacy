@@ -67,7 +67,9 @@
 #define FRACBITS                16
 #define FRACUNIT                (1<<FRACBITS)
 typedef int32_t fixed_t;
-#define FIXED_TO_FLOAT(x) (((float)(x)) / 65536.0)
+#define FIXED_TO_FLOAT_MULT    (1.0f / 65536.0f)
+//#define FIXED_TO_FLOAT(x) (((float)(x)) / 65536.0)
+#define FIXED_TO_FLOAT(x) (((float)(x)) * FIXED_TO_FLOAT_MULT)
 
 //
 // Declare those functions:

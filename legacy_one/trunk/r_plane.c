@@ -400,6 +400,7 @@ visplane_t* R_FindPlane( fixed_t height,
     hash = visplane_hash(picnum,lightlevel,height);
 
     for (check=visplanes[hash]; check; check=check->next)
+    {
       if (height == check->height &&
           picnum == check->picnum &&
           lightlevel == check->lightlevel &&
@@ -410,6 +411,7 @@ visplane_t* R_FindPlane( fixed_t height,
           check->viewz == viewz &&
           check->viewangle == viewangle)
         return check;
+    }
 
     check = new_visplane(hash);
 
