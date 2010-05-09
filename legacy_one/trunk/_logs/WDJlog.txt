@@ -567,3 +567,13 @@ taking into account multiple floors.
 Code from r_things that fixes the problem with sprites being lighted
 from the sector only.  It takes into account the 3D floors.
 
+*** w47_main_GDESC
+patchfile = w45_main_GDESC.patch
+- committed revision 639   by wesley johnson
+Tests of strife shareware were not recognized and caused segfault.
+Finished Strife and Strife shareware additions.
+Added needed lump recognition.
+Added strife mode, (not implemented).
+Fix change to -game switch so that unrecognized names cause error.
+Other cosmetic and organizational adjustments and removed some old
+comments and code.
