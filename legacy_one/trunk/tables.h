@@ -23,10 +23,10 @@
 
 #include "m_fixed.h"
 
-
+// Binary Angle in fixed point
 typedef uint32_t angle_t;
 
-extern const angle_t ANG45;  // 0x20000000;
+extern const angle_t ANG45;  // 0x20000000;  
 extern const angle_t ANG90;  // 0x40000000;
 extern const angle_t ANG180; // 0x80000000;
 extern const angle_t ANG270; // 0xc0000000;
