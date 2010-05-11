@@ -139,8 +139,9 @@ short                   openings[MAXOPENINGS];
 short*                  lastopening;*/
 
 //SoM: 3/23/2000: Use boom opening limit removal
-size_t maxopenings;
-short *openings,*lastopening;
+size_t maxopenings = 0;
+short *openings = NULL;
+short *lastopening = NULL;
 
 
 
