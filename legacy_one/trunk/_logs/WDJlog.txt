@@ -679,7 +679,7 @@ Eliminated clutter of viewz test in parameter that is now done in function.
 Reduced program size and faster execution.
 
 *** w50_bsp_viewer_common
-patchfile = w49_bspviewer.patch
+patchfile = w50_bspviewer.patch
 - committed revision 654   by wesley johnson
 Removes common determinations on the viewer model sector to a Setup
 function.
@@ -689,7 +689,7 @@ Makes model floor and ceiling transitions more consistent.
 Old code is retained for comparison until such time as correctness is clear.
 
 *** w50_friction
-patchfile = w49_friction.patch
+patchfile = w50_friction.patch
 - committed revision 655   by wesley johnson
 Investigating why prboom has different friction in mud than Legacy.
 That may be due to control device issues and momentum.
@@ -697,11 +697,10 @@ Added some improvements from ZDoom and prboom, for heretic and hexen.
 Comments and cleaned up some.
 
 *** w50_blaze_door_sound
-patchfile = w49_blaze_door_sound.patch
+patchfile = w50_blaze_door_sound.patch
 - committed revision 656   by wesley johnson
 Fix from WikiDoom to known Doom bug.
 When blaze door hits someone and goes back up, it plays the wrong sound.
 Added test for blaze door to play appropriate sound.
-
 
 
