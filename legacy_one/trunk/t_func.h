@@ -40,7 +40,7 @@
 extern camera_t script_camera;
 extern boolean  script_camera_on;
 
-void init_functions();
+void init_functions( void );
 
 #define AngleToFixed(x)  (((double) x) / ((double) ANG45/45)) * FRACUNIT
 #define FixedToAngle(x)  (((double) x) / FRACUNIT) * ANG45/45;

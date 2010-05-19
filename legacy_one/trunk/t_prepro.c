@@ -61,7 +61,7 @@
 
 // clear the script: section and variable slots
 
-void clear_script()
+void clear_script( void )
 {
   int i;
   
@@ -294,7 +294,7 @@ char *process_find_char(char *data, char find)
 
 void get_tokens(char *);         // t_parse.c
 
-void dry_run_script()
+void dry_run_script( void )
 {
   // save some stuff
   char *old_rover = rover;
@@ -433,14 +433,3 @@ void parse_include(char *lumpname)
 }
 
 //---------------------------------------------------------------------------
-//
-// $Log: t_prepro.c,v $
-// Revision 1.1  2000/11/02 17:57:28  stroggonmeth
-// FraggleScript files...
-//
-// Revision 1.1.1.1  2000/04/30 19:12:08  fraggle
-// initial import
-//
-//
-//---------------------------------------------------------------------------
-
