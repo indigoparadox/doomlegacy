@@ -886,11 +886,16 @@ void P_TouchSpecialThing ( mobj_t*       special,
         break;
 
       case SPR_MEDI:
-        if (!P_GiveBody (player, 25))
+        // [WDJ] fix medkit message
+        // DoomWiki fix would put messages first, but that would give
+        // message even when not using the medkit
+        if (!P_GiveBody (player, 25))  // add 25 to health
             return;
+        // if health was used, then give message
         if(cv_showmessages.value==1)
         {
-            if (player->health < 25)
+	    // use fix from prboom, thanks to Quasar
+            if (player->health < 50) // old health was < 25, before adding 25
                 player->message = GOTMEDINEED;
             else
                 player->message = GOTMEDIKIT;
