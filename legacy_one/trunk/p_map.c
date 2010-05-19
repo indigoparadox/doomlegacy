@@ -1615,7 +1615,7 @@ boolean PTR_ShootTraverse (intercept_t* in)
         // BP:13-3-99: fix the side usage
         hitplane = false;
         sectorside=P_PointOnLineSide(shootthing->x,shootthing->y,li);
-        if( li->sidenum[sectorside] != -1 ) // can happen in nocliping mode
+        if( li->sidenum[sectorside] >= 0 ) // can happen in nocliping mode
         {
             sector = sides[li->sidenum[sectorside]].sector;
             floorz = sector->floorheight;

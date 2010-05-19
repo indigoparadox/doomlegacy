@@ -1451,7 +1451,7 @@ void AM_drawThings ( int        colors,
     int         i;
     mobj_t*     t;
 
-    for (i=0;i<numsectors;i++)
+    for (i=0; i<numsectors; i++)
     {
         t = sectors[i].thinglist;
         while (t)

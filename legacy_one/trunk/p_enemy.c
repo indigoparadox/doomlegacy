@@ -234,9 +234,10 @@ static void P_RecursiveSound ( sector_t*     sec,
     sec->soundtraversed = soundblocks+1;
     sec->soundtarget = soundtarget;
 
-    for (i=0 ;i<sec->linecount ; i++)
+    for (i=0 ; i<sec->linecount ; i++)
     {
-        check = sec->lines[i];
+        // for each line of the sector linelist
+        check = sec->linelist[i];
         if (! (check->flags & ML_TWOSIDED) )
             continue;
 

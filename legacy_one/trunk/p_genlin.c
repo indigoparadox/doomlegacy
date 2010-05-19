@@ -702,8 +702,9 @@ manual_stair:
       ok = 0;
       for (i = 0; i < sec->linecount; i++)
       {
-	// for each line in sector lines list
-        register line_t * slinei = sec->lines[i];
+	// for each line in sector linelist
+        register line_t * slinei = sec->linelist[i];
+	   // [WDJ] ptr slinei, saves 0 bytes, but is easier to read.
         if ( !(slinei->backsector) )   // ignore line with no backsector
           continue;
                                   

@@ -181,12 +181,8 @@ int  EV_DoPlat ( line_t* line, plattype_e type, int amount )
 {
     plat_t*     plat;
     int         secnum;
-    int         rtn;
+    int         rtn = 0;
     sector_t*   sec;
-
-    secnum = -1;
-    rtn = 0;
-
 
     //  Activate all <type> plats that are in_stasis
     switch(type)
@@ -204,6 +200,7 @@ int  EV_DoPlat ( line_t* line, plattype_e type, int amount )
         break;
     }
 
+    secnum = -1;  // init search FindSector
     while ((secnum = P_FindSectorFromLineTag(line,secnum)) >= 0)
     {
         sec = &sectors[secnum];

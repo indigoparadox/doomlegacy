@@ -129,7 +129,7 @@ extern int              numsegs;
 extern seg_t*           segs;
 
 extern int              numsectors;
-extern sector_t*        sectors;
+extern sector_t*        sectors;  // [0..(numsectors-1)]
 
 extern int              numsubsectors;
 extern subsector_t*     subsectors;

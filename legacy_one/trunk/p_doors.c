@@ -620,7 +620,7 @@ EV_VerticalDoor
 
     // if the sector has an active thinker, use it
     sec = sides[line->sidenum[1]].sector;
-    secnum = sec - sectors;
+    secnum = sec - sectors; // sector number
 
     if (sec->ceilingdata)       //SoM: 3/6/2000
     {
