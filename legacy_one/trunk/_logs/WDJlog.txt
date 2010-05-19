@@ -612,3 +612,12 @@ so they do not occupy space in the processor cache.
 patchfile = w48_comments1.patch
 - committed revision 645   by wesley johnson
 Comments added to main structures, as aid to debugging their use.
+
+*** w49_animation_interpic
+patchfile = w49_animinterpic.patch
+- committed revision 646   by wesley johnson
+Two animation structures had the same name.
+Renaming of structures and some variables, to make reading and search
+easier.
+Comments added.
+

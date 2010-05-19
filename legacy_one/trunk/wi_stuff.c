@@ -98,7 +98,7 @@
 
 
 //
-// Different vetween registered DOOM (1994) and
+// Different between registered DOOM (1994) and
 //  Ultimate DOOM - Final edition (retail, 1995?).
 // This is supposedly ignored for commercial
 //  release (aka DOOM II), which had 34 maps
@@ -149,7 +149,7 @@ typedef enum
     ANIM_RANDOM,
     ANIM_LEVEL
 
-} animenum_t;
+} animtype_e;
 
 typedef struct
 {
@@ -160,12 +160,12 @@ typedef struct
 
 
 //
-// Animation.
-// There is another anim_t used in p_spec.
+// Background Animation in Intermission.
+// Texture animation is in p_spec.c.
 //
 typedef struct
 {
-    animenum_t  type;
+    animtype_e  type;
 
     // period in tics between animations
     int         period;
@@ -203,7 +203,7 @@ typedef struct
     // used by RANDOM and LEVEL when animating
     int         state;
 
-} anim_t;
+} anim_inter_t;
 
 static point_t doomlnodes[NUMEPISODES][NUMMAPS] =
 {
@@ -290,7 +290,7 @@ static point_t YAHspot[3][9] =
 // Using patches saves a lot of space,
 //  as they replace 320x200 full screen frames.
 //
-static anim_t epsd0animinfo[] =
+static anim_inter_t epsd0animinfo[] =
 {
     { ANIM_ALWAYS, TICRATE/3, 3, { 224, 104 } },
     { ANIM_ALWAYS, TICRATE/3, 3, { 184, 160 } },
@@ -304,7 +304,7 @@ static anim_t epsd0animinfo[] =
     { ANIM_ALWAYS, TICRATE/3, 3, { 64, 24 } }
 };
 
-static anim_t epsd1animinfo[] =
+static anim_inter_t epsd1animinfo[] =
 {
     { ANIM_LEVEL, TICRATE/3, 1, { 128, 136 }, 1 },
     { ANIM_LEVEL, TICRATE/3, 1, { 128, 136 }, 2 },
@@ -317,7 +317,7 @@ static anim_t epsd1animinfo[] =
     { ANIM_LEVEL, TICRATE/3, 1, { 128, 136 }, 8 }
 };
 
-static anim_t epsd2animinfo[] =
+static anim_inter_t epsd2animinfo[] =
 {
     { ANIM_ALWAYS, TICRATE/3, 3, { 104, 168 } },
     { ANIM_ALWAYS, TICRATE/3, 3, { 40, 136 } },
@@ -329,12 +329,12 @@ static anim_t epsd2animinfo[] =
 
 static int NUMANIMS[NUMEPISODES] =
 {
-    sizeof(epsd0animinfo)/sizeof(anim_t),
-    sizeof(epsd1animinfo)/sizeof(anim_t),
-    sizeof(epsd2animinfo)/sizeof(anim_t)
+    sizeof(epsd0animinfo)/sizeof(anim_inter_t),
+    sizeof(epsd1animinfo)/sizeof(anim_inter_t),
+    sizeof(epsd2animinfo)/sizeof(anim_inter_t)
 };
 
-static anim_t *anims[NUMEPISODES] =
+static anim_inter_t * anim_inter_info[NUMEPISODES] =
 {
     epsd0animinfo,
     epsd1animinfo,
@@ -638,7 +638,7 @@ static void IN_DrawYAH(void)
 static void WI_initAnimatedBack(void)
 {
     int         i;
-    anim_t*     a;
+    anim_inter_t*  ai;
 
 	//DarkWolf95:September 12, 2004: Don't draw animations for FS changed interpic
     if (gamemode == commercial || gamemode == heretic || *info_interpic)
@@ -647,20 +647,20 @@ static void WI_initAnimatedBack(void)
     if (wbs->epsd > 2)
         return;
 
-    for (i=0;i<NUMANIMS[wbs->epsd];i++)
+    for (i=0; i<NUMANIMS[wbs->epsd]; i++)
     {
-        a = &anims[wbs->epsd][i];
+        ai = &anim_inter_info[wbs->epsd][i];
 
         // init variables
-        a->ctr = -1;
+        ai->ctr = -1;
 
         // specify the next time to draw it
-        if (a->type == ANIM_ALWAYS)
-            a->nexttic = bcnt + 1 + (M_Random()%a->period);
-        else if (a->type == ANIM_RANDOM)
-            a->nexttic = bcnt + 1 + a->data2+(M_Random()%a->data1);
-        else if (a->type == ANIM_LEVEL)
-            a->nexttic = bcnt + 1;
+        if (ai->type == ANIM_ALWAYS)
+            ai->nexttic = bcnt + 1 + (M_Random()%ai->period);
+        else if (ai->type == ANIM_RANDOM)
+            ai->nexttic = bcnt + 1 + ai->data2+(M_Random()%ai->data1);
+        else if (ai->type == ANIM_LEVEL)
+            ai->nexttic = bcnt + 1;
     }
 
 }
@@ -668,7 +668,7 @@ static void WI_initAnimatedBack(void)
 static void WI_updateAnimatedBack(void)
 {
     int         i;
-    anim_t*     a;
+    anim_inter_t*  ai;
 
 	//DarkWolf95:September 12, 2004: Don't draw animations for FS changed interpic
     if (gamemode == commercial || gamemode == heretic || *info_interpic)
@@ -679,35 +679,35 @@ static void WI_updateAnimatedBack(void)
 
     for (i=0;i<NUMANIMS[wbs->epsd];i++)
     {
-        a = &anims[wbs->epsd][i];
+        ai = &anim_inter_info[wbs->epsd][i];
 
-        if (bcnt >= a->nexttic)
+        if (bcnt >= ai->nexttic)
         {
-            switch (a->type)
+            switch (ai->type)
             {
               case ANIM_ALWAYS:
-                if (++a->ctr >= a->nanims) a->ctr = 0;
-                a->nexttic = bcnt + a->period;
+                if (++ai->ctr >= ai->nanims) ai->ctr = 0;
+                ai->nexttic = bcnt + ai->period;
                 break;
 
               case ANIM_RANDOM:
-                a->ctr++;
-                if (a->ctr == a->nanims)
+                ai->ctr++;
+                if (ai->ctr == ai->nanims)
                 {
-                    a->ctr = -1;
-                    a->nexttic = bcnt+a->data2+(M_Random()%a->data1);
+                    ai->ctr = -1;
+                    ai->nexttic = bcnt + ai->data2 + (M_Random()%ai->data1);
                 }
-                else a->nexttic = bcnt + a->period;
+                else ai->nexttic = bcnt + ai->period;
                 break;
 
               case ANIM_LEVEL:
                 // gawd-awful hack for level anims
                 if (!(state == StatCount && i == 7)
-                    && wbs->next == a->data1)
+                    && wbs->next == ai->data1)
                 {
-                    a->ctr++;
-                    if (a->ctr == a->nanims) a->ctr--;
-                    a->nexttic = bcnt + a->period;
+                    ai->ctr++;
+                    if (ai->ctr == ai->nanims) ai->ctr--;
+                    ai->nexttic = bcnt + ai->period;
                 }
                 break;
             }
@@ -719,8 +719,8 @@ static void WI_updateAnimatedBack(void)
 
 static void WI_drawAnimatedBack(void)
 {
-    int                 i;
-    anim_t*             a;
+    int  i;
+    anim_inter_t*  ai; // interpic animation data
 
     //BP: fixed it was "if (commercial)" 
 	//DarkWolf95:September 12, 2004: Don't draw animations for FS changed interpic
@@ -732,10 +732,10 @@ static void WI_drawAnimatedBack(void)
 
     for (i=0 ; i<NUMANIMS[wbs->epsd] ; i++)
     {
-        a = &anims[wbs->epsd][i];
+        ai = &anim_inter_info[wbs->epsd][i];
 
-        if (a->ctr >= 0)
-            V_DrawScaledPatch(a->loc.x, a->loc.y, FB, a->p[a->ctr]);
+        if (ai->ctr >= 0)
+            V_DrawScaledPatch(ai->loc.x, ai->loc.y, FB, ai->p[ai->ctr]);
     }
 
 }
@@ -1859,14 +1859,13 @@ void WI_Ticker(void)
 
 static void WI_loadData(void)
 {
-    int         i;
-    int         j;
-    anim_t*     a;
+    int         i, j;
+    anim_inter_t*  ai; // interpic animation data
     char        name[9];
 
     // choose the background of the intermission
     if (*info_interpic)
-         strcpy(bgname, info_interpic);
+        strcpy(bgname, info_interpic);
     else if (gamemode == commercial)
         strcpy(bgname, "INTERPIC");
     else if( gamemode == heretic )
@@ -1935,22 +1934,22 @@ static void WI_loadData(void)
 
         if (wbs->epsd < 3)
         {
-            for (j=0;j<NUMANIMS[wbs->epsd];j++)
+            for (j=0; j<NUMANIMS[wbs->epsd]; j++)
             {
-                a = &anims[wbs->epsd][j];
-                for (i=0;i<a->nanims;i++)
+                ai = &anim_inter_info[wbs->epsd][j];
+                for (i=0; i<ai->nanims; i++)
                 {
                     // MONDO HACK!
                     if (wbs->epsd != 1 || j != 8)
                     {
                         // animations
                         sprintf(name, "WIA%d%.2d%.2d", wbs->epsd, j, i);
-                        a->p[i] = W_CachePatchName(name, PU_STATIC);
+                        ai->p[i] = W_CachePatchName(name, PU_STATIC);
                     }
                     else
                     {
                         // HACK ALERT!
-                        a->p[i] = anims[1][4].p[i];
+                        ai->p[i] = anim_inter_info[1][4].p[i];
                     }
                 }
             }
@@ -2035,25 +2034,24 @@ static void WI_loadData(void)
 
 static void WI_unloadData(void)
 {
-    int         i;
-    int         j;
+    int i, j;
 
     //faB: never Z_ChangeTag() a pointer returned by W_CachePatchxxx()
     //     it doesn't work and is unecessary
     if (rendermode==render_soft)
     {
-    Z_ChangeTag(wiminus, PU_CACHE);
+      Z_ChangeTag(wiminus, PU_CACHE);
 
-    for (i=0 ; i<10 ; i++)
+      for (i=0 ; i<10 ; i++)
         Z_ChangeTag(num[i], PU_CACHE);
 
-    if (gamemode == commercial)
-    {
+      if (gamemode == commercial)
+      {
         for (i=0 ; i<NUMCMAPS ; i++)
             Z_ChangeTag(lnames[i], PU_CACHE);
-    }
-    else
-    {
+      }
+      else
+      {
         Z_ChangeTag(yah[0], PU_CACHE);
         Z_ChangeTag(yah[1], PU_CACHE);
 
@@ -2064,14 +2062,16 @@ static void WI_unloadData(void)
 
         if (wbs->epsd < 3)
         {
-            for (j=0;j<NUMANIMS[wbs->epsd];j++)
+            for (j=0; j<NUMANIMS[wbs->epsd]; j++)
             {
                 if (wbs->epsd != 1 || j != 8)
-                    for (i=0;i<anims[wbs->epsd][j].nanims;i++)
-                        Z_ChangeTag(anims[wbs->epsd][j].p[i], PU_CACHE);
+	        {
+                    for (i=0; i<anim_inter_info[wbs->epsd][j].nanims; i++)
+                        Z_ChangeTag( anim_inter_info[wbs->epsd][j].p[i], PU_CACHE);
+		}
             }
         }
-    }
+      }
     }
 
     Z_Free(lnames);
