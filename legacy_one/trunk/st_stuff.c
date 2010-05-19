@@ -598,7 +598,9 @@ static void ST_updateFaceWidget(void)
             // being attacked
             priority = 7;
 
-            if (plyr->health - st_oldhealth > ST_MUCHPAIN)
+	    // [WDJ] Ouch-face when damage>20, fix from DoomWiki, same as prboom
+//            if (plyr->health - st_oldhealth > ST_MUCHPAIN) // orig bug
+            if (st_oldhealth - plyr->health > ST_MUCHPAIN)
             {
                 st_facecount = ST_TURNCOUNT;
                 st_faceindex = ST_calcPainOffset() + ST_OUCHOFFSET;
