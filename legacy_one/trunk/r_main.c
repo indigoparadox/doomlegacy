@@ -1217,6 +1217,11 @@ void R_SetupFrame (player_t* player)
     centery = (rdraw_viewheight/2) + dy;
     centeryfrac = centery<<FRACBITS;
 
+#ifdef BSPVIEWER
+    R_SetupBSPRender();	// setup viewer relation to BSP render
+    	// Call before R_RenderBSPNode or R_DrawMasked or R_ProjectSprite
+#endif
+
     framecount++;
     validcount++;
 }

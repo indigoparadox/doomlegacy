@@ -86,6 +86,17 @@ void R_ClearClipSegs (void);
 void R_SetupClipSegs();
 void R_ClearDrawSegs (void);
 
+#define BSPVIEWER
+#ifdef BSPVIEWER
+// Setup viewer before call to recursive R_RenderBSPNode
+void R_SetupBSPRender( void );
+
+// [WDJ] viewer setup as used by R_RenderBSPNode, R_FakeFlat, R_ProjectSprite
+extern int      viewer_modelsec;
+extern boolean  viewer_has_model;
+extern boolean  viewer_underwater;  // only set when viewer_has_model
+extern boolean  viewer_overceiling; // only set when viewer_has_model
+#endif
 
 void R_RenderBSPNode (int bspnum);
 
