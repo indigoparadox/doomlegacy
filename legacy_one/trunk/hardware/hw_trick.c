@@ -566,6 +566,7 @@ static boolean areToptexturesMissing(sector_t *thisSector)
 
 	if(backSector->ceilingheight < frontSector->ceilingheight)
 	{
+	    // texture num are either 0=no-texture, or valid
 	    if(sdr->toptexture != 0)
 	    {
 		nomiss++;
@@ -575,6 +576,7 @@ static boolean areToptexturesMissing(sector_t *thisSector)
 	
 	else if(backSector->ceilingheight > frontSector->ceilingheight)
 	{
+	    // texture num are either 0=no-texture, or valid
 	    if(sdl->toptexture != 0)
 	    {
 		nomiss++;
@@ -622,6 +624,7 @@ static boolean areBottomtexturesMissing(sector_t *thisSector)
 	
 	if(backSector->floorheight > frontSector->floorheight)
 	{
+	    // texture num are either 0=no-texture, or valid
 	    if(sdr->bottomtexture != 0)
 	    {
 		nomiss++;
@@ -631,6 +634,7 @@ static boolean areBottomtexturesMissing(sector_t *thisSector)
 	
 	else if(backSector->floorheight < frontSector->floorheight)
 	{
+	    // texture num are either 0=no-texture, or valid
 	    if(sdl->bottomtexture != 0)
 	    {
 		nomiss++;
@@ -955,6 +959,7 @@ void HWR_CorrectSWTricks(void)
 		if(secl->floorheight > secr->floorheight)
 		{
 		    // now check if r-sidedef is correct
+		    // texture num are either 0=no-texture, or valid
 		    if(sdr->bottomtexture == 0)
 		    {
 			if(sdr->midtexture == 0)
@@ -966,6 +971,7 @@ void HWR_CorrectSWTricks(void)
 		else if(secl->floorheight < secr->floorheight)
 		{
 		    // now check if l-sidedef is correct
+		    // texture num are either 0=no-texture, or valid
 		    if(sdl->bottomtexture == 0)
 		    {
 			if(sdl->midtexture == 0)
@@ -981,6 +987,7 @@ void HWR_CorrectSWTricks(void)
 		if(secl->ceilingheight < secr->ceilingheight)
 		{
 		    // now check if r-sidedef is correct
+		    // texture num are either 0=no-texture, or valid
 		    if(sdr->toptexture == 0)
 		    {
 			if(sdr->midtexture == 0)
@@ -994,10 +1001,10 @@ void HWR_CorrectSWTricks(void)
 		    // now check if l-sidedef is correct
 		    if(sdl->toptexture == 0)
 		    {
-		    if(sdl->midtexture == 0)
-			sdl->toptexture = R_TextureNumForName("STONE2");
-		    else
-			sdl->toptexture = sdl->midtexture;
+		        if(sdl->midtexture == 0)
+			    sdl->toptexture = R_TextureNumForName("STONE2");
+		        else
+			    sdl->toptexture = sdl->midtexture;
 		    
 		    }
 		}

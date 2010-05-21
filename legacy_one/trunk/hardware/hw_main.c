@@ -1293,7 +1293,7 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
 
     GlideTexture_t *grTex;
     float cliplow, cliphigh;
-    int gr_midtexture;
+    int midtexnum;
     fixed_t h, l;               // 3D sides and 2s middle textures
 
     FUINT lightnum = 0;         // shut up compiler
@@ -1441,19 +1441,25 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
         }
 
         // check TOP TEXTURE
-        if (worldbacktop < worldtop && texturetranslation[gr_sidedef->toptexture])
+        // texture num are either 0=no-texture, or valid
+        int toptexnum = texturetranslation[gr_sidedef->toptexture];
+        if (worldbacktop < worldtop && toptexnum)
         {
             if (drawtextured)
             {
                 fixed_t texturevpegtop; //top
 
-                grTex = HWR_GetTexture(texturetranslation[gr_sidedef->toptexture]);
+                grTex = HWR_GetTexture(toptexnum);
 
                 // PEGGING
                 if (gr_linedef->flags & ML_DONTPEGTOP)
                     texturevpegtop = 0;
                 else
-                    texturevpegtop = worldbacktop + textureheight[gr_sidedef->toptexture] - worldtop;
+	        {
+		    // [WDJ] sometimes maybe textureheight[gr_sidedef->toptexture] != textureheight[toptexnum]
+//                    texturevpegtop = worldbacktop + textureheight[gr_sidedef->toptexture] - worldtop;
+                    texturevpegtop = worldbacktop + textureheight[toptexnum] - worldtop;
+		}
 
                 texturevpegtop += gr_sidedef->rowoffset;
 
@@ -1468,21 +1474,23 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
             wallVerts[0].y = wallVerts[1].y = FIXED_TO_FLOAT( worldbacktop );
 
             if (gr_frontsector->numlights)
-                HWR_SplitWall(gr_frontsector, wallVerts, texturetranslation[gr_sidedef->toptexture], &Surf, FF_CUTSOLIDS);
+                HWR_SplitWall(gr_frontsector, wallVerts, toptexnum, &Surf, FF_CUTSOLIDS);
             else if (grTex->mipmap.flags & TF_TRANSPARENT)
-                HWR_AddTransparentWall(wallVerts, &Surf, texturetranslation[gr_sidedef->toptexture], PF_Environment);
+                HWR_AddTransparentWall(wallVerts, &Surf, toptexnum, PF_Environment);
             else
                 HWR_ProjectWall(wallVerts, &Surf, PF_Masked);
         }
 
         // check BOTTOM TEXTURE
-        if (worldbackbottom > worldbottom && texturetranslation[gr_sidedef->bottomtexture])    //only if VISIBLE!!!
+        // texture num are either 0=no-texture, or valid
+        int bottomtexnum = texturetranslation[gr_sidedef->bottomtexture];
+        if (worldbackbottom > worldbottom && bottomtexnum)    //only if VISIBLE!!!
         {
             if (drawtextured)
             {
                 fixed_t texturevpegbottom = 0;  //bottom
 
-                grTex = HWR_GetTexture(texturetranslation[gr_sidedef->bottomtexture]);
+                grTex = HWR_GetTexture(bottomtexnum);
 
                 // PEGGING
                 if (gr_linedef->flags & ML_DONTPEGBOTTOM)
@@ -1503,14 +1511,15 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
             wallVerts[0].y = wallVerts[1].y = FIXED_TO_FLOAT( worldbottom );
 
             if (gr_frontsector->numlights)
-                HWR_SplitWall(gr_frontsector, wallVerts, texturetranslation[gr_sidedef->bottomtexture], &Surf, FF_CUTSOLIDS);
+                HWR_SplitWall(gr_frontsector, wallVerts, bottomtexnum, &Surf, FF_CUTSOLIDS);
             else if (grTex->mipmap.flags & TF_TRANSPARENT)
-                HWR_AddTransparentWall(wallVerts, &Surf, texturetranslation[gr_sidedef->bottomtexture], PF_Environment);
+                HWR_AddTransparentWall(wallVerts, &Surf, bottomtexnum, PF_Environment);
             else
                 HWR_ProjectWall(wallVerts, &Surf, PF_Masked);
         }
-        gr_midtexture = texturetranslation[gr_sidedef->midtexture];
-        if (gr_midtexture)
+        // texture num are either 0=no-texture, or valid
+        midtexnum = texturetranslation[gr_sidedef->midtexture];
+        if (midtexnum)
         {
             int blendmode;
             fixed_t opentop, openbottom, polytop, polybottom;
@@ -1522,18 +1531,18 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
             // heights of the polygon, and h & l, are the final (clipped)
             // poly coords.
 
-            opentop = worldtop < worldbacktop ? worldtop : worldbacktop;
-            openbottom = worldbottom > worldbackbottom ? worldbottom : worldbackbottom;
+            opentop = (worldtop < worldbacktop) ? worldtop : worldbacktop;
+            openbottom = (worldbottom > worldbackbottom) ? worldbottom : worldbackbottom;
 
             if (gr_linedef->flags & ML_DONTPEGBOTTOM)
             {
                 polybottom = openbottom + gr_sidedef->rowoffset;
-                polytop = polybottom + textureheight[gr_midtexture];
+                polytop = polybottom + textureheight[midtexnum];
             }
             else
             {
                 polytop = opentop + gr_sidedef->rowoffset;
-                polybottom = polytop - textureheight[gr_midtexture];
+                polybottom = polytop - textureheight[midtexnum];
             }
             if ((gr_frontsector->ceilingheight == gr_backsector->ceilingheight) || (gr_linedef->flags & ML_DONTDRAW))
                 h = polytop;
@@ -1554,7 +1563,7 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
                 else
                     texturevpeg = polytop - h;
 
-                grTex = HWR_GetTexture(gr_midtexture);
+                grTex = HWR_GetTexture(midtexnum);
 
                 wallVerts[3].t = wallVerts[2].t = texturevpeg * grTex->scaleY;
                 wallVerts[0].t = wallVerts[1].t = (h - l + texturevpeg) * grTex->scaleY;
@@ -1598,7 +1607,7 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
                 blendmode = PF_Environment;
 
             if (blendmode != PF_Masked)
-                HWR_AddTransparentWall(wallVerts, &Surf, gr_midtexture, blendmode);
+                HWR_AddTransparentWall(wallVerts, &Surf, midtexnum, blendmode);
             else
                 HWR_ProjectWall(wallVerts, &Surf, blendmode);
         }
@@ -1606,20 +1615,20 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
     else
     {
         // Single sided line... Deal only with the middletexture (if one exists)
-        gr_midtexture = texturetranslation[gr_sidedef->midtexture];
-        if (gr_midtexture)
+        midtexnum = texturetranslation[gr_sidedef->midtexture];
+        if (midtexnum)
         {
             if (drawtextured)
             {
                 fixed_t texturevpeg;
                 // PEGGING
-                if (gr_linedef->flags & ML_DONTPEGBOTTOM)
+                if ((unsigned short)gr_linedef->flags & ML_DONTPEGBOTTOM)
                     texturevpeg = worldbottom + textureheight[gr_sidedef->midtexture] - worldtop + gr_sidedef->rowoffset;
                 else
                     // top of texture at top
                     texturevpeg = gr_sidedef->rowoffset;
 
-                grTex = HWR_GetTexture(gr_midtexture);
+                grTex = HWR_GetTexture(midtexnum);
 
                 wallVerts[3].t = wallVerts[2].t = texturevpeg * grTex->scaleY;
                 wallVerts[0].t = wallVerts[1].t = (texturevpeg + worldtop - worldbottom) * grTex->scaleY;
@@ -1632,11 +1641,11 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
 
             // I don't think that solid walls can use translucent linedef types...
             if (gr_frontsector->numlights)
-                HWR_SplitWall(gr_frontsector, wallVerts, gr_midtexture, &Surf, FF_CUTSOLIDS);
+                HWR_SplitWall(gr_frontsector, wallVerts, midtexnum, &Surf, FF_CUTSOLIDS);
             else
             {
                 if (grTex->mipmap.flags & TF_TRANSPARENT)
-                    HWR_AddTransparentWall(wallVerts, &Surf, gr_midtexture, PF_Environment);
+                    HWR_AddTransparentWall(wallVerts, &Surf, midtexnum, PF_Environment);
                 else
                     HWR_ProjectWall(wallVerts, &Surf, PF_Masked);
             }
@@ -2471,7 +2480,7 @@ static void HWR_Subsector(int num)
 	  floorlightlevel = *gr_frontsector->lightlist[light].lightlevel;
 //        floorcolormap = gr_frontsector->lightlist[light].extra_colormap;
         }
-//        light = R_GetPlaneLight(gr_frontsector, frontsector->ceilingheight);
+//        light = R_GetPlaneLight(gr_frontsector, gr_frontsector->ceilingheight);
         light = R_GetPlaneLight(gr_frontsector, locCeilingHeight);
         if(gr_frontsector->ceilinglightsec == -1)
         {

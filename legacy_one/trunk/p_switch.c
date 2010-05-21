@@ -244,6 +244,7 @@ void P_ChangeSwitchTexture ( line_t*       line,
     if (!useAgain)
         line->special = 0;
 
+    // texture num are either 0=no-texture, or valid
     texTop = sides[line->sidenum[0]].toptexture;
     texMid = sides[line->sidenum[0]].midtexture;
     texBot = sides[line->sidenum[0]].bottomtexture;

@@ -677,7 +677,7 @@ int EV_DoFloor ( line_t* line, floor_e floortype )
 }
 
 
-// SoM: 3/6/2000: Function for chaning just the floor texture and type.
+// SoM: 3/6/2000: Function for changing just the floor texture and type.
 //
 // EV_DoChange()
 //

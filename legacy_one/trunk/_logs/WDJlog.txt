@@ -703,10 +703,20 @@ Fix from WikiDoom to known Doom bug.
 When blaze door hits someone and goes back up, it plays the wrong sound.
 Added test for blaze door to play appropriate sound.
 
+***
+- committed revision 657   by wesley johnson
+WDJlog.txt  update
+
 *** w51_hardware_world
 patchfile = w51_hardware_world.patch
-- committed revision 657   by wesley johnson
+- committed revision 658   by wesley johnson
 Hardware renderer use of world names fixed same as software renderer.
 Some other name changes to more descriptive.
 
+*** w51_textures
+patchfile = w51_textures.patch
+- committed revision 659   by wesley johnson
+Commented code as to the conflict between texture[0] and 0=no-texture.
+Added a fix for the conflict that allows the first texture to be displayed.
+Some changes to names and array accesses.
 

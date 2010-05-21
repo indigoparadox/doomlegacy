@@ -95,9 +95,9 @@ typedef struct
 {
   int16_t       textureoffset;
   int16_t       rowoffset;
-  char          toptexture[8];
-  char          bottomtexture[8];
-  char          midtexture[8];
+  char          toptexture[8];		// 8 char name
+  char          bottomtexture[8];	// 8 char name
+  char          midtexture[8];		// 8 char name
   // Front sector, towards viewer.
   int16_t       sector;
 } mapsidedef_t;
@@ -174,8 +174,8 @@ typedef struct
 {
   int16_t       floorheight;
   int16_t       ceilingheight;
-  char          floorpic[8];
-  char          ceilingpic[8];
+  char          floorpic[8];	// 8 char name
+  char          ceilingpic[8];  // 8 char name
   int16_t       lightlevel;
   int16_t       special;
   int16_t       tag;
