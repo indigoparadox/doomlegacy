@@ -1286,10 +1286,10 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
     wallVert3D wallVerts[4];
     v2d_t vs, ve;               // start, end vertices of 2d line (view from above)
 
-    fixed_t worldtop;
+    fixed_t worldtop;		// front sector
     fixed_t worldbottom;
-    fixed_t worldhigh = 0;
-    fixed_t worldlow = 0;
+    fixed_t worldbacktop = 0;	// back sector, only used on two sided lines
+    fixed_t worldbackbottom = 0;
 
     GlideTexture_t *grTex;
     float cliplow, cliphigh;
@@ -1431,17 +1431,17 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
     if (gr_backsector)
     {
         // two sided line
-        worldhigh = gr_backsector->ceilingheight;
-        worldlow = gr_backsector->floorheight;
+        worldbacktop = gr_backsector->ceilingheight;
+        worldbackbottom = gr_backsector->floorheight;
 
         // hack to allow height changes in outdoor areas
         if (gr_frontsector->ceilingpic == skyflatnum && gr_backsector->ceilingpic == skyflatnum)
         {
-            worldtop = worldhigh;
+            worldtop = worldbacktop;
         }
 
         // check TOP TEXTURE
-        if (worldhigh < worldtop && texturetranslation[gr_sidedef->toptexture])
+        if (worldbacktop < worldtop && texturetranslation[gr_sidedef->toptexture])
         {
             if (drawtextured)
             {
@@ -1453,19 +1453,19 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
                 if (gr_linedef->flags & ML_DONTPEGTOP)
                     texturevpegtop = 0;
                 else
-                    texturevpegtop = worldhigh + textureheight[gr_sidedef->toptexture] - worldtop;
+                    texturevpegtop = worldbacktop + textureheight[gr_sidedef->toptexture] - worldtop;
 
                 texturevpegtop += gr_sidedef->rowoffset;
 
                 wallVerts[3].t = wallVerts[2].t = texturevpegtop * grTex->scaleY;
-                wallVerts[0].t = wallVerts[1].t = (texturevpegtop + worldtop - worldhigh) * grTex->scaleY;
+                wallVerts[0].t = wallVerts[1].t = (texturevpegtop + worldtop - worldbacktop) * grTex->scaleY;
                 wallVerts[0].s = wallVerts[3].s = cliplow * grTex->scaleX;
                 wallVerts[2].s = wallVerts[1].s = cliphigh * grTex->scaleX;
             }
 
             // set top/bottom coords
             wallVerts[2].y = wallVerts[3].y = FIXED_TO_FLOAT( worldtop );
-            wallVerts[0].y = wallVerts[1].y = FIXED_TO_FLOAT( worldhigh );
+            wallVerts[0].y = wallVerts[1].y = FIXED_TO_FLOAT( worldbacktop );
 
             if (gr_frontsector->numlights)
                 HWR_SplitWall(gr_frontsector, wallVerts, texturetranslation[gr_sidedef->toptexture], &Surf, FF_CUTSOLIDS);
@@ -1476,7 +1476,7 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
         }
 
         // check BOTTOM TEXTURE
-        if (worldlow > worldbottom && texturetranslation[gr_sidedef->bottomtexture])    //only if VISIBLE!!!
+        if (worldbackbottom > worldbottom && texturetranslation[gr_sidedef->bottomtexture])    //only if VISIBLE!!!
         {
             if (drawtextured)
             {
@@ -1486,20 +1486,20 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
 
                 // PEGGING
                 if (gr_linedef->flags & ML_DONTPEGBOTTOM)
-                    texturevpegbottom = worldtop - worldlow;
+                    texturevpegbottom = worldtop - worldbackbottom;
                 else
                     texturevpegbottom = 0;
 
                 texturevpegbottom += gr_sidedef->rowoffset;
 
                 wallVerts[3].t = wallVerts[2].t = texturevpegbottom * grTex->scaleY;
-                wallVerts[0].t = wallVerts[1].t = (texturevpegbottom + worldlow - worldbottom) * grTex->scaleY;
+                wallVerts[0].t = wallVerts[1].t = (texturevpegbottom + worldbackbottom - worldbottom) * grTex->scaleY;
                 wallVerts[0].s = wallVerts[3].s = cliplow * grTex->scaleX;
                 wallVerts[2].s = wallVerts[1].s = cliphigh * grTex->scaleX;
             }
 
             // set top/bottom coords
-            wallVerts[2].y = wallVerts[3].y = FIXED_TO_FLOAT( worldlow );
+            wallVerts[2].y = wallVerts[3].y = FIXED_TO_FLOAT( worldbackbottom );
             wallVerts[0].y = wallVerts[1].y = FIXED_TO_FLOAT( worldbottom );
 
             if (gr_frontsector->numlights)
@@ -1522,8 +1522,8 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
             // heights of the polygon, and h & l, are the final (clipped)
             // poly coords.
 
-            opentop = worldtop < worldhigh ? worldtop : worldhigh;
-            openbottom = worldbottom > worldlow ? worldbottom : worldlow;
+            opentop = worldtop < worldbacktop ? worldtop : worldbacktop;
+            openbottom = worldbottom > worldbackbottom ? worldbottom : worldbackbottom;
 
             if (gr_linedef->flags & ML_DONTPEGBOTTOM)
             {
@@ -1809,7 +1809,7 @@ static void HWR_ClipSolidWallSegment(int first, int last)
     cliprange_t *next;
     cliprange_t *start;
     float lowfrac, highfrac;
-    boolean poorhack = false;
+    boolean clipwalls_fragment = false;
 
     // Find the first range that touches the range
     //  (adjacent pixels are touching).
@@ -1842,9 +1842,9 @@ static void HWR_ClipSolidWallSegment(int first, int last)
         // There is a fragment above *start.
         if (!cv_grclipwalls.value)
         {
-            if (!poorhack)
+            if (!clipwalls_fragment)
                 HWR_StoreWallRange(first, last);
-            poorhack = true;
+            clipwalls_fragment = true;
         }
         else
         {
@@ -1867,9 +1867,9 @@ static void HWR_ClipSolidWallSegment(int first, int last)
         // There is a fragment between two posts.
         if (!cv_grclipwalls.value)
         {
-            if (!poorhack)
+            if (!clipwalls_fragment)
                 HWR_StoreWallRange(first, last);
-            poorhack = true;
+            clipwalls_fragment = true;
         }
         else
         {
@@ -1892,9 +1892,9 @@ static void HWR_ClipSolidWallSegment(int first, int last)
     {
         if (!cv_grclipwalls.value)
         {
-            if (!poorhack)
+            if (!clipwalls_fragment)
                 HWR_StoreWallRange(first, last);
-            poorhack = true;
+            clipwalls_fragment = true;
         }
         else
             HWR_StoreWallRange(0, 1);
@@ -1904,9 +1904,9 @@ static void HWR_ClipSolidWallSegment(int first, int last)
         // There is a fragment after *next.
         if (!cv_grclipwalls.value)
         {
-            if (!poorhack)
+            if (!clipwalls_fragment)
                 HWR_StoreWallRange(first, last);
-            poorhack = true;
+            clipwalls_fragment = true;
         }
         else
         {
@@ -1946,7 +1946,7 @@ static void HWR_ClipPassWallSegment(int first, int last)
     cliprange_t *start;
     float lowfrac, highfrac;
     //to allow noclipwalls but still solidseg reject of non-visible walls
-    boolean poorhack = false;
+    boolean clipwalls_fragment = false;
 
     // Find the first range that touches the range
     //  (adjacent pixels are touching).
@@ -1967,9 +1967,9 @@ static void HWR_ClipPassWallSegment(int first, int last)
         if (!cv_grclipwalls.value)
         {
             //20/08/99: Changed by Hurdler (taken from faB's code)
-            if (!poorhack)
+            if (!clipwalls_fragment)
                 HWR_StoreWallRange(0, 1);
-            poorhack = true;
+            clipwalls_fragment = true;
         }
         else
         {
@@ -1987,9 +1987,9 @@ static void HWR_ClipPassWallSegment(int first, int last)
         // There is a fragment between two posts.
         if (!cv_grclipwalls.value)
         {
-            if (!poorhack)
+            if (!clipwalls_fragment)
                 HWR_StoreWallRange(0, 1);
-            poorhack = true;
+            clipwalls_fragment = true;
         }
         else
         {
@@ -2007,9 +2007,9 @@ static void HWR_ClipPassWallSegment(int first, int last)
     {
         if (!cv_grclipwalls.value)
         {
-            if (!poorhack)
+            if (!clipwalls_fragment)
                 HWR_StoreWallRange(0, 1);
-            poorhack = true;
+            clipwalls_fragment = true;
         }
         else
             HWR_StoreWallRange(0, 1);
@@ -2019,9 +2019,9 @@ static void HWR_ClipPassWallSegment(int first, int last)
         // There is a fragment after *next.
         if (!cv_grclipwalls.value)
         {
-            if (!poorhack)
+            if (!clipwalls_fragment)
                 HWR_StoreWallRange(0, 1);
-            poorhack = true;
+            clipwalls_fragment = true;
         }
         else
         {
@@ -2363,6 +2363,7 @@ sector_t *R_FakeFlat(sector_t *, sector_t *, int *, int *, boolean);
 // Notes            : Sets gr_cursectorlight to the light of the parent sector, to modulate wall textures
 // -----------------+
 static int doomwaterflat;       //set by R_InitFlats hack
+// Called from HWR_RenderBSPNode
 static void HWR_Subsector(int num)
 {
     int count;
@@ -2468,14 +2469,14 @@ static void HWR_Subsector(int num)
         if(gr_frontsector->floorlightsec == -1)
         {
 	  floorlightlevel = *gr_frontsector->lightlist[light].lightlevel;
-//        floorcolormap = frontsector->lightlist[light].extra_colormap;
-//        light = R_GetPlaneLight(frontsector, frontsector->ceilingheight, false);
+//        floorcolormap = gr_frontsector->lightlist[light].extra_colormap;
         }
-        light = R_GetPlaneLight(gr_frontsector, locCeilingHeight, false);
+//        light = R_GetPlaneLight(gr_frontsector, frontsector->ceilingheight);
+        light = R_GetPlaneLight(gr_frontsector, locCeilingHeight);
         if(gr_frontsector->ceilinglightsec == -1)
         {
 	  ceilinglightlevel = *gr_frontsector->lightlist[light].lightlevel;
-//        ceilingcolormap = frontsector->lightlist[light].extra_colormap;
+//        ceilingcolormap = gr_frontsector->lightlist[light].extra_colormap;
 	}
 #else
         floorlightlevel = *gr_frontsector->lightlist[R_GetPlaneLight(gr_frontsector, locFloorHeight, false)].lightlevel;

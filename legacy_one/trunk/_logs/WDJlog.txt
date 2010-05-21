@@ -703,4 +703,10 @@ Fix from WikiDoom to known Doom bug.
 When blaze door hits someone and goes back up, it plays the wrong sound.
 Added test for blaze door to play appropriate sound.
 
+*** w51_hardware_world
+patchfile = w51_hardware_world.patch
+- committed revision 657   by wesley johnson
+Hardware renderer use of world names fixed same as software renderer.
+Some other name changes to more descriptive.
+
 
