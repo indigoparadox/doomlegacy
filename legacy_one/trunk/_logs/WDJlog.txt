@@ -838,3 +838,9 @@ patchfile = w52_hw_bsp_viewer.patch
 - committed revision 674   by wesley johnson
 Convert hardware renderer to use the same bsp viewer global variables
 that are used in the software renderer, as in bsp.c.
+
+*** w52_hw_brightness
+patchfile = w52_hw_brightness.patch
+- committed revision 675   by wesley johnson
+Adjust hardware brightness again, because rgba[] now gives some darkness.
+

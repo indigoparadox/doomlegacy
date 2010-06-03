@@ -680,8 +680,9 @@ static void InitLumLut()
     {
         // this polygone is the solution of equ : f(0)=0, f(1)=1 f(.5)=.5, f'(0)=0, f'(1)=0), f'(.5)=K
 //#define K   2
-// [WDJ] Reduce to match software renderer brightness
-#define K   1.2f
+// [WDJ] Match software renderer brightness,
+// with single rgba use 1.25, with rgba[] use 1.9 to 2.1
+#define K   1.95f
 #define A  (-24+16*K)
 #define B  ( 60-40*K)
 #define C  (32*K-50)
