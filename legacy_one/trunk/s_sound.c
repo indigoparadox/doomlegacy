@@ -1100,6 +1100,11 @@ int S_AdjustSoundParams(mobj_t * listener, mobj_t * source, int *vol, int *sep, 
     fixed_t adx;
     fixed_t ady;
     angle_t angle;
+   
+    // [WDJ] FIXME: Observed segfault here, with listener=NULL, when starting
+    // two-player game, with inactive second player.
+    // Occurs on MAP01, when entering first lift.
+    // First player had music and sound effects.
 
     // calculate the distance to sound origin
     //  and clip it if necessary

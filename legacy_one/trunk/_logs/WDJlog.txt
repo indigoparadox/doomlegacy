@@ -730,3 +730,12 @@ Catches error when 3Dslab does not have side texture.
 patchfile = w52_attack_self.patch
 - committed revision 661  by wesley johnson
 Documents a fix for a monster attacking itself.
+See WikiDoom bugs.
+
+*** w52_2player_segfault
+patchfile = w52_2player_segfault.patch
+- committed revision 662   by wesley johnson
+Documents a bug that is not fixed.
+When 2 players, with 2nd player not active, the second player will segfault
+at the marked location, when the 1st player enters the lift on MAP01.
+This would be the first act making a sound that the other player could hear.
