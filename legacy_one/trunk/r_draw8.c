@@ -427,7 +427,9 @@ void R_DrawFuzzColumn_8(void)
         // Lookup framebuffer, and retrieve a pixel that is either one column
         //  left or right of the current one.
         // Add index from colormap to index.
-        *dest = reg_colormaps[6 * 256 + dest[fuzzoffset[fuzzpos]]];
+	// Remap existing dest, modify position, dim through LIGHTTABLE[6].
+//        *dest = reg_colormaps[6 * 256 + dest[fuzzoffset[fuzzpos]]];
+        *dest = reg_colormaps[LIGHTTABLE(6) + dest[fuzzoffset[fuzzpos]]];
 
         // Clamp table lookup index.
         if (++fuzzpos == FUZZTABLE)
@@ -486,8 +488,10 @@ void R_DrawShadeColumn_8(void)
     do
     {
         // apply shading/translucent with existing showing through
+        // Remap the existing dest color, dimming it through source LIGHTTABLE.
 //        *dest = *(reg_colormaps + (dc_source[frac >> FRACBITS] << 8) + (*dest));
-        *dest = reg_colormaps[ (dc_source[frac >> FRACBITS] << 8) + (*dest) ];
+        *dest = reg_colormaps[ LIGHTTABLE(dc_source[frac >> FRACBITS]) + (*dest) ];
+
         dest += vid.width;
         frac += fracstep;
     }

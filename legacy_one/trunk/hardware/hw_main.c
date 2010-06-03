@@ -1149,7 +1149,7 @@ static void HWR_SplitWall(sector_t * sector, wallVert3D * wallVerts, int texnum,
     float pegt, pegb, pegmul;
     float height, bheight = 0;
     int solid, i;
-    lightlist_t *list = sector->lightlist;
+    ff_lightlist_t *ffl_list = sector->lightlist;  // fakefloor lightlist
 
     realtop = top = wallVerts[2].y;
     realbot = bot = wallVerts[0].y;
@@ -1166,14 +1166,14 @@ static void HWR_SplitWall(sector_t * sector, wallVert3D * wallVerts, int texnum,
         //if (!list[i].caster)
         //    continue;
 
-        if (list[i].caster)
-            solid = list[i].caster->flags & cutflag;
+        if (ffl_list[i].caster)
+            solid = ffl_list[i].caster->flags & cutflag;
         else
             solid = false;
 
-        height = FIXED_TO_FLOAT( list[i].height );
+        height = FIXED_TO_FLOAT( ffl_list[i].height );
         if (solid)
-            bheight = FIXED_TO_FLOAT( *list[i].caster->bottomheight );
+            bheight = FIXED_TO_FLOAT( *ffl_list[i].caster->bottomheight );
 
         if (height >= top)
         {
@@ -1193,12 +1193,12 @@ static void HWR_SplitWall(sector_t * sector, wallVert3D * wallVerts, int texnum,
             FUINT lightnum;
             sector_t *sector;
 
-            lightnum = LightLevelToLum(*list[i - 1].lightlevel);
+            lightnum = LightLevelToLum(*ffl_list[i - 1].lightlevel);
             // store Surface->FlatColor to modulate wall texture
             Surf->FlatColor.s.red = Surf->FlatColor.s.green = Surf->FlatColor.s.blue = lightnum;
 
             //Hurdler: colormap test
-            sector = list[i - 1].caster ? &sectors[list[i - 1].caster->model_secnum] : gr_frontsector;
+            sector = (ffl_list[i - 1].caster)? &sectors[ ffl_list[i - 1].caster->model_secnum] : gr_frontsector;
             if (sector->extra_colormap)
             {
                 RGBA_t temp;
@@ -1241,11 +1241,11 @@ static void HWR_SplitWall(sector_t * sector, wallVert3D * wallVerts, int texnum,
         FUINT lightnum;
         sector_t *sector;
 
-        lightnum = LightLevelToLum(*list[i - 1].lightlevel);
+        lightnum = LightLevelToLum(*ffl_list[i - 1].lightlevel);
         // store Surface->FlatColor to modulate wall texture
         Surf->FlatColor.s.red = Surf->FlatColor.s.green = Surf->FlatColor.s.blue = lightnum;
 
-        sector = list[i - 1].caster ? &sectors[list[i - 1].caster->model_secnum] : gr_frontsector;
+        sector = ffl_list[i - 1].caster ? &sectors[ffl_list[i - 1].caster->model_secnum] : gr_frontsector;
         if (sector->extra_colormap)
         {
             RGBA_t temp;

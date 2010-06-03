@@ -434,18 +434,19 @@ static void R_DrawWallSplats ()
 
 void  expand_lightlist( void )
 {
-    dc_maxlights = dc_numlights;
     struct r_lightlist_s *  newlist = 
-	realloc(dc_lightlist, sizeof(r_lightlist_t) * dc_maxlights);
+	realloc(dc_lightlist, sizeof(r_lightlist_t) * dc_numlights);
     if( newlist )
     {
         dc_lightlist = newlist;
+        dc_maxlights = dc_numlights;
     }
     else
     {
         // non-fatal protection, allow savegame
         // realloc fail does not disturb existing allocation
-        dc_numlights = 0;
+        dc_numlights = dc_maxlights;
+        I_SoftError( "Expand lightlist realloc failed.\n" );
     }
 }
 
@@ -566,18 +567,15 @@ void R_Render2sidedMultiPatchColumn (column_t* column)
 }
 
 
-void R_RenderMaskedSegRange (drawseg_t* ds,
-                             int        x1,
-                             int        x2 )
+void R_RenderMaskedSegRange (drawseg_t* ds, int x1, int x2 )
 {
-    unsigned        index;
     column_t*       col;
     int             lightnum;
     int             texnum;
     int             i;
     fixed_t         lightheight;
     fixed_t         realbot;
-    lightlist_t     *light;
+    ff_lightlist_t  *ff_light;
     r_lightlist_t   *rlight;
 
     void (*colfunc_2s) (column_t*);
@@ -666,13 +664,14 @@ void R_RenderMaskedSegRange (drawseg_t* ds,
       for(i = 0; i < dc_numlights; i++)
       {
 	// setup a lightlist entry
-        light = &frontsector->lightlist[i];
+        ff_light = &frontsector->lightlist[i];
         rlight = &dc_lightlist[i];
-        rlight->height = (centeryfrac) - FixedMul((light->height - viewz), spryscale);
-        rlight->heightstep = -FixedMul (rw_scalestep, (light->height - viewz));
-        rlight->lightlevel = *light->lightlevel;
-        rlight->extra_colormap = light->extra_colormap;
-        rlight->flags = light->flags;
+	// fake floor light heights in screen coord.
+        rlight->height = (centeryfrac) - FixedMul((ff_light->height - viewz), spryscale);
+        rlight->heightstep = -FixedMul (rw_scalestep, (ff_light->height - viewz));
+        rlight->lightlevel = *ff_light->lightlevel;
+        rlight->extra_colormap = ff_light->extra_colormap;
+        rlight->flags = ff_light->flags;
 
         if(rlight->flags & FF_FOG || (rlight->extra_colormap && rlight->extra_colormap->fog))
           lightnum = (rlight->lightlevel >> LIGHTSEGSHIFT);
@@ -681,7 +680,8 @@ void R_RenderMaskedSegRange (drawseg_t* ds,
         else
           lightnum = (rlight->lightlevel >> LIGHTSEGSHIFT)+extralight;
 
-        if (rlight->extra_colormap && rlight->extra_colormap->fog);
+        if (rlight->extra_colormap && rlight->extra_colormap->fog)
+	   ;
         else if (curline->v1->y == curline->v2->y)
           lightnum--;
         else if (curline->v1->x == curline->v2->x)
@@ -786,7 +786,7 @@ void R_RenderMaskedSegRange (drawseg_t* ds,
               else
                   xwalllights = scalelight[rlight->lightnum];
 
-              index = spryscale>>LIGHTSCALESHIFT;
+              unsigned index = spryscale>>LIGHTSCALESHIFT;
 
               if (index >=  MAXLIGHTSCALE )
                   index = MAXLIGHTSCALE-1;
@@ -835,7 +835,7 @@ void R_RenderMaskedSegRange (drawseg_t* ds,
           // calculate lighting
           if (!fixedcolormap)
           {
-                index = spryscale>>LIGHTSCALESHIFT;
+                unsigned index = spryscale>>LIGHTSCALESHIFT;
                 
                 if (index >=  MAXLIGHTSCALE )
                     index = MAXLIGHTSCALE-1;
@@ -877,11 +877,11 @@ void R_RenderThickSideRange (drawseg_t* ds,
     int             texnum;
     sector_t        tempsec;
     int             templight;
-    int             i, p;
+    int             i, cnt;
     fixed_t         bottombounds = rdraw_viewheight << FRACBITS;
     fixed_t         topbounds = (con_clipviewtop - 1) << FRACBITS;
     fixed_t         offsetvalue = 0;
-    lightlist_t     *light;
+    ff_lightlist_t  *ff_light;
     r_lightlist_t   *rlight;
     fixed_t         lheight;
 
@@ -928,31 +928,32 @@ void R_RenderThickSideRange (drawseg_t* ds,
       dc_numlights = frontsector->numlights;
       if(dc_numlights > dc_maxlights)    expand_lightlist();
 
-      for(i = p = 0; i < dc_numlights; i++)
+      cnt = 0; // cnt of rlight created, some ff_light will be skipped
+      for(i = 0; i < dc_numlights; i++)
       {
-        light = &frontsector->lightlist[i];
-        rlight = &dc_lightlist[p];
+        ff_light = &frontsector->lightlist[i];
+        rlight = &dc_lightlist[cnt];
 
-        if(light->height < *ffloor->bottomheight)
+        if(ff_light->height < *ffloor->bottomheight)
           continue;
 
-        if(light->height > *ffloor->topheight)
+        if(ff_light->height > *ffloor->topheight)
           if(i+1 < dc_numlights && frontsector->lightlist[i+1].height > *ffloor->topheight)
             continue;
 
-        lheight = light->height;// > *ffloor->topheight ? *ffloor->topheight + FRACUNIT : light->height;
+        lheight = ff_light->height;// > *ffloor->topheight ? *ffloor->topheight + FRACUNIT : ff_light->height;
         rlight->heightstep = -FixedMul (rw_scalestep, (lheight - viewz));
         rlight->height = (centeryfrac) - FixedMul((lheight - viewz), spryscale) - rlight->heightstep;
-        rlight->flags = light->flags;
-        if(light->flags & FF_CUTLEVEL)
+        rlight->flags = ff_light->flags;
+        if(ff_light->flags & FF_CUTLEVEL)
         {
-          lheight = *light->caster->bottomheight;// > *ffloor->topheight ? *ffloor->topheight + FRACUNIT : *light->caster->bottomheight;
+          lheight = *ff_light->caster->bottomheight;// > *ffloor->topheight ? *ffloor->topheight + FRACUNIT : *ff_light->caster->bottomheight;
           rlight->botheightstep = -FixedMul (rw_scalestep, (lheight - viewz));
           rlight->botheight = (centeryfrac) - FixedMul((lheight - viewz), spryscale) - rlight->botheightstep;
         }
 
-        rlight->lightlevel = *light->lightlevel;
-        rlight->extra_colormap = light->extra_colormap;
+        rlight->lightlevel = *ff_light->lightlevel;
+        rlight->extra_colormap = ff_light->extra_colormap;
 
         // Check if the current light effects the colormap/lightlevel
         if((dc_lightlist[i].flags & FF_NOSHADE))
@@ -971,9 +972,9 @@ void R_RenderThickSideRange (drawseg_t* ds,
         else if (curline->v1->x == curline->v2->x)
           rlight->lightnum++;
 
-        p++;
+        cnt++;
       }
-      dc_numlights = p;
+      dc_numlights = cnt;
     }
     else
     {
@@ -985,10 +986,15 @@ void R_RenderThickSideRange (drawseg_t* ds,
       else if(colfunc == fuzzcolfunc)
         lightnum = LIGHTLEVELS-1;
       else
-        lightnum = (R_FakeFlat(frontsector, &tempsec, &templight, &templight, false)
-                    ->lightlevel >> LIGHTSEGSHIFT)+extralight;
+      {
+	sector_t * lightsec = R_FakeFlat(frontsector, &tempsec, &templight, &templight, false);
+	lightnum = (lightsec->lightlevel >> LIGHTSEGSHIFT)+extralight;
+//        lightnum = (R_FakeFlat(frontsector, &tempsec, &templight, &templight, false)
+//                    ->lightlevel >> LIGHTSEGSHIFT)+extralight;
+      }
 
-      if (ffloor->flags & FF_FOG || (frontsector->extra_colormap && frontsector->extra_colormap->fog));
+      if (ffloor->flags & FF_FOG || (frontsector->extra_colormap && frontsector->extra_colormap->fog))
+	 ;
       else if (curline->v1->y == curline->v2->y)
           lightnum--;
       else if (curline->v1->x == curline->v2->x)
@@ -1393,36 +1399,44 @@ void R_RenderSegLoop (void)
           lighttable_t** xwalllights;
           for(i = 0; i < dc_numlights; i++)
           {
-            int lightnum;
-            if((frontsector->lightlist[i].caster && frontsector->lightlist[i].caster->flags & FF_FOG && frontsector->lightlist[i].height != *frontsector->lightlist[i].caster->bottomheight) || (dc_lightlist[i].extra_colormap && dc_lightlist[i].extra_colormap->fog))
-              lightnum = (dc_lightlist[i].lightlevel >> LIGHTSEGSHIFT);
-            else
-              lightnum = (dc_lightlist[i].lightlevel >> LIGHTSEGSHIFT)+extralight;
-
-            if (dc_lightlist[i].extra_colormap);
-            else if (curline->v1->y == curline->v2->y)
+	    r_lightlist_t * rlight = & dc_lightlist[i];
+	    if(fixedcolormap)
+              rlight->rcolormap = fixedcolormap;
+	    else
+	    {
+	      int lightnum;
+              if((frontsector->lightlist[i].caster && frontsector->lightlist[i].caster->flags & FF_FOG && frontsector->lightlist[i].height != *frontsector->lightlist[i].caster->bottomheight) || (dc_lightlist[i].extra_colormap && dc_lightlist[i].extra_colormap->fog))
+                lightnum = (rlight->lightlevel >> LIGHTSEGSHIFT);
+              else
+                lightnum = (rlight->lightlevel >> LIGHTSEGSHIFT)+extralight;
+   
+              if (rlight->extra_colormap)
+		 ;
+              else if (curline->v1->y == curline->v2->y)
                 lightnum--;
-            else if (curline->v1->x == curline->v2->x)
+	      else if (curline->v1->x == curline->v2->x)
                 lightnum++;
-    
-            if (lightnum < 0)
+
+	      if (lightnum < 0)
                 xwalllights = scalelight[0];
-            else if (lightnum >= LIGHTLEVELS)
+	      else if (lightnum >= LIGHTLEVELS)
                 xwalllights = scalelight[LIGHTLEVELS-1];
-            else
+	      else
                 xwalllights = scalelight[lightnum];
 
-            index = rw_scale>>LIGHTSCALESHIFT;
+	      index = rw_scale>>LIGHTSCALESHIFT;
             
-            if (index >=  MAXLIGHTSCALE )
+	      if (index >=  MAXLIGHTSCALE )
                 index = MAXLIGHTSCALE-1;
 
-            if(dc_lightlist[i].extra_colormap && !fixedcolormap)
-              dc_lightlist[i].rcolormap = dc_lightlist[i].extra_colormap->colormap + (xwalllights[index] - reg_colormaps);
-            else if(!fixedcolormap)
-              dc_lightlist[i].rcolormap = xwalllights[index];
-            else
-              dc_lightlist[i].rcolormap = fixedcolormap;
+              rlight->rcolormap = xwalllights[index];
+	      if(rlight->extra_colormap )
+	      {
+		 // reverse indexing, and change to extra_colormap
+		 int lightindex = rlight->rcolormap - reg_colormaps;
+		 rlight->rcolormap = & rlight->extra_colormap->colormap[ lightindex ];
+	      }
+	    }
 
             colfunc = R_DrawColumnShadowed_8;
           }
@@ -1654,8 +1668,8 @@ void R_StoreWallRange( int   start, int   stop)
     angle_t             distangle, offsetangle;
     fixed_t             vtop;
     int                 lightnum;
-    int                 i, p;
-    lightlist_t         *light;
+    int                 i, cnt;
+    ff_lightlist_t      *ff_light;
     r_lightlist_t       *rlight;
     fixed_t             lheight;
 
@@ -2185,40 +2199,44 @@ void R_StoreWallRange( int   start, int   stop)
 
     dc_numlights = 0;
 
-    if(frontsector->numlights)
+    if(frontsector->numlights)  // has ff_lights
     {
       dc_numlights = frontsector->numlights;
       if(dc_numlights >= dc_maxlights)    expand_lightlist();
 
-      for(i = p = 0; i < dc_numlights; i++)
+      cnt = 0; // cnt of rlight created, some ff_light will be skipped
+      for(i = 0; i < dc_numlights; i++)
       {
-        light = &frontsector->lightlist[i];
-        rlight = &dc_lightlist[p];
+        ff_light = &frontsector->lightlist[i];
+        rlight = &dc_lightlist[cnt];
 
         if(i != 0)
         {
-          if(light->height < frontsector->floorheight)
+          if(ff_light->height < frontsector->floorheight)
             continue;
 
-          if(light->height > frontsector->ceilingheight)
+          if(ff_light->height > frontsector->ceilingheight)
             if(i+1 < dc_numlights && frontsector->lightlist[i+1].height > frontsector->ceilingheight)
               continue;
         }
-        rlight->height = (centeryfrac>>4) - FixedMul((light->height - viewz) >> 4, rw_scale);
-        rlight->heightstep = -FixedMul (rw_scalestep, (light->height - viewz) >> 4);
-        rlight->flags = light->flags;
-        if(light->caster && light->caster->flags & FF_SOLID)
+        rlight->height = (centeryfrac>>4) - FixedMul((ff_light->height - viewz) >> 4, rw_scale);
+        rlight->heightstep = -FixedMul (rw_scalestep, (ff_light->height - viewz) >> 4);
+        rlight->flags = ff_light->flags;
+        if(ff_light->caster && ff_light->caster->flags & FF_SOLID)
         {
-          lheight = *light->caster->bottomheight > frontsector->ceilingheight ? frontsector->ceilingheight + FRACUNIT : *light->caster->bottomheight;
-          rlight->botheight = (centeryfrac >> 4) - FixedMul((*light->caster->bottomheight - viewz) >> 4, rw_scale);
-          rlight->botheightstep = -FixedMul (rw_scalestep, (*light->caster->bottomheight - viewz) >> 4);
+          lheight = (*ff_light->caster->bottomheight > frontsector->ceilingheight) ?
+	      frontsector->ceilingheight + FRACUNIT
+	     : *ff_light->caster->bottomheight;
+	  // in screen coord.
+          rlight->botheight = (centeryfrac >> 4) - FixedMul((*ff_light->caster->bottomheight - viewz) >> 4, rw_scale);
+          rlight->botheightstep = -FixedMul (rw_scalestep, (*ff_light->caster->bottomheight - viewz) >> 4);
         }
 
-        rlight->lightlevel = *light->lightlevel;
-        rlight->extra_colormap = light->extra_colormap;
-        p++;
+        rlight->lightlevel = *ff_light->lightlevel;
+        rlight->extra_colormap = ff_light->extra_colormap;
+        cnt++;
       }
-      dc_numlights = p;
+      dc_numlights = cnt;
     }
 
     if(numffloors)

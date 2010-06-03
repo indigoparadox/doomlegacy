@@ -778,3 +778,12 @@ from files.
 Rename the standard colormap tables as reg_colormaps, to differentiate
 them from all the other things named colormap.
 
+*** w52_lighttable
+patchfile = w52_lighttable.patch
+- committed revision 667   by wesley johnson
+Use LIGHTTABLE on colormaps, hiding table indexing calculations.
+Renamed the fakefloor lightlist_t to ff_lightlist_t to differentiate it
+from the other r_lightlist_t.
+Renamed some list uses to ff_list, to differentiate them from other lists.
+Fixed expand_lightlist, gave it an error message on failure.
+

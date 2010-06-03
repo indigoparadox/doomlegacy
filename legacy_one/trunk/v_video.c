@@ -1289,7 +1289,7 @@ void V_DrawFadeScreen(void)
     int *buf;
     unsigned quad;
     byte p1, p2, p3, p4;
-    byte *fadetable = (byte*) & reg_colormaps[ 16*256 ];
+    byte *fadetable = (byte*) & reg_colormaps[ LIGHTTABLE(16) ];
     //short*    wput;
 
 #ifdef HWRENDER // not win32 only 19990829 by Kin

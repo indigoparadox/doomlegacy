@@ -187,7 +187,9 @@ void R_DrawFuzzColumn_16 (void)
         // Lookup framebuffer, and retrieve a pixel that is either one column
         //  left or right of the current one.
         // Add index from colormap to index.
-        *dest = color8to16[reg_colormaps[(6*256)+dest[fuzzoffset[fuzzpos]]]];
+	// Remap existing dest, modify position, dim through LIGHTTABLE[6].
+//        *dest = color8to16[reg_colormaps[6*256+dest[fuzzoffset[fuzzpos]]]];
+        *dest = color8to16[ reg_colormaps[ LIGHTTABLE(6) + dest[fuzzoffset[fuzzpos]]] ];
 
         // Clamp table lookup index.
         if (++fuzzpos == FUZZTABLE)

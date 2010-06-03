@@ -387,7 +387,7 @@ static void ShadeLine(int x, int y, int height, int shade)
     byte *shades;
     
 //    shades = reg_colormaps+9*256+shade*2*256;
-    shades = & reg_colormaps[ 9*256 + shade*2*256 ];
+    shades = & reg_colormaps[ LIGHTTABLE( 9 + shade*2 ) ];
     dest = screens[0]+y*vid.width+x;
     while(height--)
     {

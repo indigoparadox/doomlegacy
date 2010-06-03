@@ -165,11 +165,14 @@
 
 // SoM: Moved this here...
 // This could be wider for >8 bit display.
-// Indeed, true color support is posibble
+// Indeed, true color support is possible
 //  precalculating 24bpp lightmap/colormap LUT.
 //  from darkening PLAYPAL to all black.
-// Could even us emore than 32 levels.
-typedef byte    lighttable_t;
+// Could even use more than 32 levels.
+typedef byte    lighttable_t;  // light map table
+   // can be an array of map tables [256], or just one
+// index a lighttable by mult by sizeof lighttable ( *256  =>  <<8 )
+#define LIGHTTABLE(t)   ((t)<<8)
 
 
 // SoM: ExtraColormap type. Use for extra_colormaps from now on.
@@ -284,11 +287,11 @@ typedef struct ffloor_s
 // information for casted shadows.
 typedef struct lightlist_s {
   fixed_t                 height;
-  short                   *lightlevel;
-  extracolormap_t*        extra_colormap;
   int                     flags;
+  short *                 lightlevel;
+  extracolormap_t*        extra_colormap;
   ffloor_t*               caster;
-} lightlist_t;
+} ff_lightlist_t;
 
 
 // SoM: This struct is used for rendering walls with shadows casted on them...
@@ -411,35 +414,36 @@ typedef struct sector_s
     struct line_s**     linelist;  // [linecount] size
 
     //SoM: 2/23/2000: Improved fake floor hack
-    ffloor_t*                  ffloors;
-    int                        *attached;	// list of control sectors
+    ffloor_t*           ffloors;
+    int  *              attached;	// list of control sectors
              // malloc, realloc
 	     // FIXME: must deallocate attached before free PU_LEVEL [WDJ] 11/14/2009
-    int                        numattached;
-    lightlist_t*               lightlist;
-    int                        numlights;
-    boolean                    moved;
+    int                 numattached;
+    ff_lightlist_t*     lightlist;  // fake floor lights
+    int                 numlights;
+    boolean             moved;  // floor was moved
 
-    int                        validsort; //if == validsort allready been sorted
-    boolean                    added;
+    int                 validsort; //if == validsort allready been sorted
+    boolean             added;
 
     // SoM: 4/3/2000: per-sector colormaps!
-    extracolormap_t*           extra_colormap;
+    extracolormap_t*    extra_colormap;  // using colormap for this frame
+         // selected from bottommap,midmap,topmap, from special linedefs
 
     // ----- for special tricks with HW renderer -----
-    boolean                    pseudoSector;
-    boolean                    virtualFloor;
-    fixed_t                    virtualFloorheight;
-    boolean                    virtualCeiling;
-    fixed_t                    virtualCeilingheight;
-    linechain_t               *sectorLines;
-    struct sector_s           **stackList;
+    boolean             pseudoSector;
+    boolean             virtualFloor;
+    fixed_t             virtualFloorheight;
+    boolean             virtualCeiling;
+    fixed_t             virtualCeilingheight;
+    linechain_t *       sectorLines;
+    struct sector_s **  stackList;
 #ifdef SOLARIS
     // Until we get Z_MallocAlign sorted out, make this a float
     // so that we don't get alignment problems.
-    float                      lineoutLength;
+    float               lineoutLength;
 #else
-    double                     lineoutLength;
+    double              lineoutLength;
 #endif
     // ----- end special tricks -----
 } sector_t;
