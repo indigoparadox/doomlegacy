@@ -801,3 +801,9 @@ patchfile = w52_draw_masked.patch
 The R_RenderMasked routines have some global parameters.  Rename them
 with dm_ so they can be easily identified.
 Simplify some colormap code segments where there were redundant tests.
+
+*** w52_fog_sheet
+patchfile = w52_fog_sheet.patch
+- committed revision 670   by wesley johnson
+Fixes fog sheet bug, where fog sheet would not display in software renderer.
+Adds code to clip the fog sheet properly.

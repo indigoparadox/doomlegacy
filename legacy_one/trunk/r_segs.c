@@ -582,6 +582,7 @@ void R_RenderMaskedSegRange (drawseg_t* ds, int x1, int x2 )
     int             lightnum;
     int             texnum;
     int             i;
+    fixed_t	    windowclip_top, windowclip_bottom;
     fixed_t         lightheight;
     fixed_t         realbot;
     ff_lightlist_t  *ff_light;
@@ -603,6 +604,7 @@ void R_RenderMaskedSegRange (drawseg_t* ds, int x1, int x2 )
     texnum = texturetranslation[curline->sidedef->midtexture];
 
     dm_windowbottom = dm_windowtop = dm_botscreen = MAXINT;	// default no clip
+    windowclip_top = windowclip_bottom = MAXINT;
 
     // Select the default, or special effect column drawing functions,
     // which are called by the colfunc_2s functions.
@@ -624,9 +626,16 @@ void R_RenderMaskedSegRange (drawseg_t* ds, int x1, int x2 )
     else
     if (ldef->special==283)	// Legacy Fog sheet
     {
+        // Display fog sheet (128 high) as transparent middle texture.
+	// Only where there is a middle texture (in place of it).
         colfunc = R_DrawFogColumn_8;
-        dm_windowtop = frontsector->ceilingheight;
-        dm_windowbottom = frontsector->floorheight;
+        // [WDJ] clip at ceiling and floor, unlike other transparent texture
+        // world coord, relative to viewer
+        windowclip_top = frontsector->ceilingheight - viewz;
+	windowclip_bottom = frontsector->floorheight - viewz;
+// original failed, not screen coord, no perspective, it blocked display entirely 
+//        dm_windowtop = frontsector->ceilingheight;
+//        dm_windowbottom = frontsector->floorheight;
     }
     else
         colfunc = basecolfunc;
@@ -868,6 +877,13 @@ void R_RenderMaskedSegRange (drawseg_t* ds, int x1, int x2 )
                  dc_colormap = & frontsector->extra_colormap->colormap[ lightindex ];
 	      }
 	  } // fixedcolormap
+
+	  if( windowclip_top != MAXINT )
+	  {
+	    // fog sheet clipping to ceiling and floor
+	    dm_windowtop = centeryfrac - FixedMul(windowclip_top, dm_yscale);
+	    dm_windowbottom = centeryfrac - FixedMul(windowclip_bottom, dm_yscale);
+	  }
 
 	  // top of texture, screen coord.
           dm_topscreen = centeryfrac - FixedMul(dc_texturemid, dm_yscale);
