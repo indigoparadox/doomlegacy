@@ -726,3 +726,7 @@ patchfile = w52_no_texture.patch
 Check for no texture, and prevent segfault.
 Catches error when 3Dslab does not have side texture.
 
+*** w52_attack_self
+patchfile = w52_attack_self.patch
+- committed revision 661  by wesley johnson
+Documents a fix for a monster attacking itself.

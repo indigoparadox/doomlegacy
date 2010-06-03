@@ -2483,7 +2483,7 @@ boolean P_DamageMobj ( mobj_t*   target,
     }
 
     if ( (!target->threshold || target->type == MT_VILE)
-         && source && source != target
+         && source && source != target  // fixes bug where monster attacks self
          && source->type != MT_VILE
          && !(source->flags2&MF2_BOSS)
          && !(target->type == MT_SORCERER2 && source->type == MT_WIZARD))
