@@ -1131,7 +1131,11 @@ void R_Prep3DFloors(sector_t*  sector)
     sector->lightlist[i].height = maxheight = bestheight;
     sector->lightlist[i].caster = best;
     sector->lightlist[i].flags = best->flags;
-    sec = &sectors[best->secnum];
+    // [WDJ] FIXME ??:
+    // This is messing with the model sector, which could be used for many sectors,
+    // settings are independent of this lightlist,
+    // this could be done elsewhere, once.
+    sec = &sectors[best->model_secnum];
     mapnum = sec->midmap;
     if(mapnum >= 0 && mapnum < num_extra_colormaps)
       sec->extra_colormap = &extra_colormaps[mapnum];

@@ -825,7 +825,7 @@ void HWR_RenderPlane(extrasubsector_t * xsub, fixed_t fixedheight,
             ffloor_t *caster;
 
             caster = gr_frontsector->lightlist[R_GetPlaneLight(gr_frontsector, fixedheight, false)].caster;
-            sector = caster ? &sectors[caster->secnum] : gr_frontsector;
+            sector = caster ? &sectors[caster->model_secnum] : gr_frontsector;
         }
         if (sector && sector->extra_colormap)
         {
@@ -1198,7 +1198,7 @@ static void HWR_SplitWall(sector_t * sector, wallVert3D * wallVerts, int texnum,
             Surf->FlatColor.s.red = Surf->FlatColor.s.green = Surf->FlatColor.s.blue = lightnum;
 
             //Hurdler: colormap test
-            sector = list[i - 1].caster ? &sectors[list[i - 1].caster->secnum] : gr_frontsector;
+            sector = list[i - 1].caster ? &sectors[list[i - 1].caster->model_secnum] : gr_frontsector;
             if (sector->extra_colormap)
             {
                 RGBA_t temp;
@@ -1245,7 +1245,7 @@ static void HWR_SplitWall(sector_t * sector, wallVert3D * wallVerts, int texnum,
         // store Surface->FlatColor to modulate wall texture
         Surf->FlatColor.s.red = Surf->FlatColor.s.green = Surf->FlatColor.s.blue = lightnum;
 
-        sector = list[i - 1].caster ? &sectors[list[i - 1].caster->secnum] : gr_frontsector;
+        sector = list[i - 1].caster ? &sectors[list[i - 1].caster->model_secnum] : gr_frontsector;
         if (sector->extra_colormap)
         {
             RGBA_t temp;
@@ -1411,7 +1411,7 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
                 ffloor_t *caster;
 
                 caster = sector->lightlist[R_GetPlaneLight(sector, sector->floorheight, false)].caster;
-                sector = caster ? &sectors[caster->secnum] : sector;
+                sector = caster ? &sectors[caster->model_secnum] : sector;
             }
             if (sector->extra_colormap)
             {
@@ -2987,7 +2987,7 @@ static void HWR_DrawSprite(gr_vissprite_t * spr)
             ffloor_t *caster;
 
             caster = sector->lightlist[R_GetPlaneLight(sector, spr->mobj->z, false)].caster;
-            sector = caster ? &sectors[caster->secnum] : sector;
+	    sector = caster ? &sectors[caster->model_secnum] : sector;
         }
         if (sector->extra_colormap)
         {
@@ -3519,7 +3519,7 @@ void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
                 ffloor_t *caster;
 
                 caster = sector->lightlist[R_GetPlaneLight(sector, dup_viewz, false)].caster;
-                sector = caster ? &sectors[caster->secnum] : sector;
+                sector = caster ? &sectors[caster->model_secnum] : sector;
             }
             if (sector->extra_colormap)
             {

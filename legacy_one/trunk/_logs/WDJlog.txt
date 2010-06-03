@@ -746,3 +746,10 @@ patchfile = w52_moving_sector.patch
 Found too many uses of variable "move" in code, so renamed and commented
 some of them.
 
+*** w52_model_sector_colormap
+patchfile = w52_model_sector_colormap.patch
+- committed revision 664   by wesley johnson
+Cleanup colormap setup in p_spec.c, and commented the special linedefs.
+Rename the color mapping control sector as model_sector.
+
+

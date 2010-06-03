@@ -265,7 +265,7 @@ typedef struct ffloor_s
 
   fixed_t          delta;
 
-  int              secnum;
+  int              model_secnum; // model sector num used in linedef
   ffloortype_e     flags;
   struct line_s*   master;
 
