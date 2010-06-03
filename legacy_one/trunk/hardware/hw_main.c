@@ -697,6 +697,26 @@ static void InitLumLut()
     }
 }
 
+
+// [WDJ] Handle the extra_colormap, transforming into GL surface info.
+// Smaller when inline, but easier to alter in this function.
+// This function is only going to get more complicated.
+void Extracolormap_to_Surf( /*IN*/ extracolormap_t * extracmap, int light,
+			    /*OUT*/ FSurfaceInfo * surfp )
+{
+    RGBA_t temp;
+
+    // [WDJ] the rgba color can change according to light level
+    // This accomodates the fade in CreateColormap, and Colormap_Analyze.
+    temp.rgba = extracmap->rgba[ light >> LIGHT_TO_RGBA_SHIFT ];
+    int alpha = temp.s.alpha;
+    // 26 levels of alpha because of CreateColormap alpha= a..z
+    surfp->FlatColor.s.red = ((26 - alpha) * light + alpha * temp.s.red) / 26;
+    surfp->FlatColor.s.blue = ((26 - alpha) * light + alpha * temp.s.blue) / 26;
+    surfp->FlatColor.s.green = ((26 - alpha) * light + alpha * temp.s.green) / 26;
+    surfp->FlatColor.s.alpha = 0xff;
+}
+
 // ==========================================================================
 //                                   FLOOR/CEILING GENERATION FROM SUBSECTORS
 // ==========================================================================
@@ -826,27 +846,20 @@ void HWR_RenderPlane(extrasubsector_t * xsub, fixed_t fixedheight,
         {
             ffloor_t *caster;
 
-            caster = gr_frontsector->lightlist[R_GetPlaneLight(gr_frontsector, fixedheight, false)].caster;
+            caster = gr_frontsector->lightlist[R_GetPlaneLight(gr_frontsector, fixedheight)].caster;
             sector = caster ? &sectors[caster->model_secnum] : gr_frontsector;
         }
         if (sector && sector->extra_colormap)
         {
-            RGBA_t temp;
-            int light;
-            int alpha;
-
-            light = LightLevelToLum(lightlevel);
-            temp.rgba = sector->extra_colormap->rgba;
-            alpha = temp.s.alpha;
-            Surf.FlatColor.s.red = ((26 - alpha) * light + alpha * temp.s.red) / 26;
-            Surf.FlatColor.s.blue = ((26 - alpha) * light + alpha * temp.s.blue) / 26;
-            Surf.FlatColor.s.green = ((26 - alpha) * light + alpha * temp.s.green) / 26;
-            Surf.FlatColor.s.alpha = 0xff;
+	    Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, LightLevelToLum(lightlevel),
+				   /*OUT*/ & Surf );
         }
     }
 
     if ((PolyFlags & PF_Translucent) && !fixedcolormap)
     {
+        // get alpha from HWR_Render3DWater
+        // PolyFlags = PF_Translucent | (planeinfo[i].alpha << 24);
         Surf.FlatColor.s.alpha = PolyFlags >> 24;
         HWD.pfnDrawPolygon(&Surf, planeVerts, nrPlaneVerts, PF_Translucent | PF_Modulated | PF_Occlude | PF_Clip);
     }
@@ -921,7 +934,7 @@ static void HWR_RenderSkyPlane(extrasubsector_t * xsub, fixed_t fixedheight)
 */
 #ifdef WALLSPLATS
 // Called from HWR_ProjectWall, HWR_RenderWall
-void HWR_DrawSegsSplats(FSurfaceInfo * pSurf)
+void HWR_DrawSegsSplats(FSurfaceInfo * pSurfin)
 {
     FOutVector trVerts[4], *wv;
     wallVert3D wallVerts[4];
@@ -992,7 +1005,7 @@ void HWR_DrawSegsSplats(FSurfaceInfo * pSurf)
             wv->sow = pwallVerts->s;
             wv->tow = pwallVerts->t;
         }
-        memcpy(&pSurf2, pSurf, sizeof(FSurfaceInfo));
+        memcpy(&pSurf2, pSurfin, sizeof(FSurfaceInfo));
         switch (splat->flags & SPLATDRAWMODE_MASK)
         {
             case SPLATDRAWMODE_OPAQUE:
@@ -1172,7 +1185,7 @@ static float HWR_ClipViewSegment(int x, polyvertex_t * v1, polyvertex_t * v2)
 //
 // HWR_SplitWall
 //
-static void HWR_SplitWall(sector_t * sector, wallVert3D * wallVerts, int texnum, FSurfaceInfo * Surf, int cutflag)
+static void HWR_SplitWall(sector_t * sector, wallVert3D * wallVerts, int texnum, FSurfaceInfo * Surfp, int cutflag)
 {
     /*
        SoM: split up and light walls according to the
@@ -1230,22 +1243,15 @@ static void HWR_SplitWall(sector_t * sector, wallVert3D * wallVerts, int texnum,
 
             lightnum = LightLevelToLum(*ffl_list[i - 1].lightlevel);
             // store Surface->FlatColor to modulate wall texture
-            Surf->FlatColor.s.red = Surf->FlatColor.s.green = Surf->FlatColor.s.blue = lightnum;
+            Surfp->FlatColor.s.red = Surfp->FlatColor.s.green = Surfp->FlatColor.s.blue = lightnum;
 
             //Hurdler: colormap test
             sector = (ffl_list[i - 1].caster)? &sectors[ ffl_list[i - 1].caster->model_secnum] : gr_frontsector;
             if (sector->extra_colormap)
             {
-                RGBA_t temp;
-                int alpha;
-
-                temp.rgba = sector->extra_colormap->rgba;
-                alpha = temp.s.alpha;
-                Surf->FlatColor.s.red = ((26 - alpha) * lightnum + alpha * temp.s.red) / 26;
-                Surf->FlatColor.s.blue = ((26 - alpha) * lightnum + alpha * temp.s.blue) / 26;
-                Surf->FlatColor.s.green = ((26 - alpha) * lightnum + alpha * temp.s.green) / 26;
-                Surf->FlatColor.s.alpha = 0xff;
-            }
+	        Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, lightnum,
+				       /*OUT*/ Surfp );
+	    }
         }
 
         wallVerts[3].t = wallVerts[2].t = pegt + ((realtop - top) * pegmul);
@@ -1257,9 +1263,9 @@ static void HWR_SplitWall(sector_t * sector, wallVert3D * wallVerts, int texnum,
 
         glTex = HWR_GetTexture(texnum);
         if (glTex->mipmap.flags & TF_TRANSPARENT)
-            HWR_AddTransparentWall(wallVerts, Surf, texnum, PF_Environment);
+            HWR_AddTransparentWall(wallVerts, Surfp, texnum, PF_Environment);
         else
-            HWR_ProjectWall(wallVerts, Surf, PF_Masked);
+            HWR_ProjectWall(wallVerts, Surfp, PF_Masked);
 
         if (solid)
             top = bheight;
@@ -1278,20 +1284,13 @@ static void HWR_SplitWall(sector_t * sector, wallVert3D * wallVerts, int texnum,
 
         lightnum = LightLevelToLum(*ffl_list[i - 1].lightlevel);
         // store Surface->FlatColor to modulate wall texture
-        Surf->FlatColor.s.red = Surf->FlatColor.s.green = Surf->FlatColor.s.blue = lightnum;
+        Surfp->FlatColor.s.red = Surfp->FlatColor.s.green = Surfp->FlatColor.s.blue = lightnum;
 
         sector = ffl_list[i - 1].caster ? &sectors[ffl_list[i - 1].caster->model_secnum] : gr_frontsector;
         if (sector->extra_colormap)
         {
-            RGBA_t temp;
-            int alpha;
-
-            temp.rgba = sector->extra_colormap->rgba;
-            alpha = temp.s.alpha;
-            Surf->FlatColor.s.red = ((26 - alpha) * lightnum + alpha * temp.s.red) / 26;
-            Surf->FlatColor.s.blue = ((26 - alpha) * lightnum + alpha * temp.s.blue) / 26;
-            Surf->FlatColor.s.green = ((26 - alpha) * lightnum + alpha * temp.s.green) / 26;
-            Surf->FlatColor.s.alpha = 0xff;
+	    Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, lightnum,
+				   /*OUT*/ Surfp );
         }
     }
 
@@ -1304,9 +1303,9 @@ static void HWR_SplitWall(sector_t * sector, wallVert3D * wallVerts, int texnum,
 
     glTex = HWR_GetTexture(texnum);
     if (glTex->mipmap.flags & TF_TRANSPARENT)
-        HWR_AddTransparentWall(wallVerts, Surf, texnum, PF_Environment);
+        HWR_AddTransparentWall(wallVerts, Surfp, texnum, PF_Environment);
     else
-        HWR_ProjectWall(wallVerts, Surf, PF_Masked);
+        HWR_ProjectWall(wallVerts, Surfp, PF_Masked);
 }
 
 //
@@ -1445,20 +1444,13 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
             {
                 ffloor_t *caster;
 
-                caster = sector->lightlist[R_GetPlaneLight(sector, sector->floorheight, false)].caster;
+                caster = sector->lightlist[R_GetPlaneLight(sector, sector->floorheight)].caster;
                 sector = caster ? &sectors[caster->model_secnum] : sector;
             }
             if (sector->extra_colormap)
             {
-                RGBA_t temp;
-                int alpha;
-
-                temp.rgba = sector->extra_colormap->rgba;
-                alpha = temp.s.alpha;
-                Surf.FlatColor.s.red = ((26 - alpha) * lightnum + alpha * temp.s.red) / 26;
-                Surf.FlatColor.s.blue = ((26 - alpha) * lightnum + alpha * temp.s.blue) / 26;
-                Surf.FlatColor.s.green = ((26 - alpha) * lightnum + alpha * temp.s.green) / 26;
-                Surf.FlatColor.s.alpha = 0xff;
+	        Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, lightnum,
+				       /*OUT*/ & Surf );
             }
         }
     }
@@ -2534,8 +2526,8 @@ static void HWR_Subsector(int num)
 #if 1
         // [WDJ] from r_bsp.c 4/22/2010
 	// adapted to local vars, and may still need a little tuning
-//        light = R_GetPlaneLight(gr_frontsector, gr_frontsector->floorheight, false);
-        light = R_GetPlaneLight(gr_frontsector, locFloorHeight, false);
+//        light = R_GetPlaneLight(gr_frontsector, gr_frontsector->floorheight);
+        light = R_GetPlaneLight(gr_frontsector, locFloorHeight);
         if(gr_frontsector->floorlightsec == -1)
         {
 	  floorlightlevel = *gr_frontsector->lightlist[light].lightlevel;
@@ -2549,8 +2541,8 @@ static void HWR_Subsector(int num)
 //        ceilingcolormap = gr_frontsector->lightlist[light].extra_colormap;
 	}
 #else
-        floorlightlevel = *gr_frontsector->lightlist[R_GetPlaneLight(gr_frontsector, locFloorHeight, false)].lightlevel;
-        ceilinglightlevel = *gr_frontsector->lightlist[R_GetPlaneLight(gr_frontsector, locCeilingHeight, false)].lightlevel;
+        floorlightlevel = *gr_frontsector->lightlist[R_GetPlaneLight(gr_frontsector, locFloorHeight)].lightlevel;
+        ceilinglightlevel = *gr_frontsector->lightlist[R_GetPlaneLight(gr_frontsector, locCeilingHeight)].lightlevel;
 #endif
     }
 
@@ -2620,14 +2612,14 @@ static void HWR_Subsector(int num)
             {
                 if (rover->flags & (FF_TRANSLUCENT | FF_FOG))   // SoM: Flags are more efficient
                 {
-                    light = R_GetPlaneLight(gr_frontsector, *rover->bottomheight, dup_viewz < *rover->bottomheight ? true : false);
+                    light = R_GetPlaneLight_viewz(gr_frontsector, *rover->bottomheight);
                     HWR_Add3DWater(levelflats[*rover->bottompic].lumpnum, &extrasubsectors[num],
 				   *rover->bottomheight, *gr_frontsector->lightlist[light].lightlevel, rover->alpha);
                 }
                 else
                 {
                     HWR_GetFlat(levelflats[*rover->bottompic].lumpnum);
-                    light = R_GetPlaneLight(gr_frontsector, *rover->bottomheight, dup_viewz < *rover->bottomheight ? true : false);
+                    light = R_GetPlaneLight_viewz(gr_frontsector, *rover->bottomheight);
                     HWR_RenderPlane(&extrasubsectors[num], *rover->bottomheight, PF_Occlude,
 				    *gr_frontsector->lightlist[light].lightlevel, levelflats[*rover->bottompic].lumpnum);
                 }
@@ -2640,14 +2632,14 @@ static void HWR_Subsector(int num)
             {
                 if (rover->flags & (FF_TRANSLUCENT | FF_FOG))
                 {
-                    light = R_GetPlaneLight(gr_frontsector, *rover->topheight, dup_viewz < *rover->topheight ? true : false);
+                    light = R_GetPlaneLight_viewz(gr_frontsector, *rover->topheight);
                     HWR_Add3DWater(levelflats[*rover->toppic].lumpnum, &extrasubsectors[num],
 				   *rover->topheight, *gr_frontsector->lightlist[light].lightlevel, rover->alpha);
                 }
                 else
                 {
                     HWR_GetFlat(levelflats[*rover->toppic].lumpnum);
-                    light = R_GetPlaneLight(gr_frontsector, *rover->topheight, dup_viewz < *rover->topheight ? true : false);
+                    light = R_GetPlaneLight_viewz(gr_frontsector, *rover->topheight);
                     HWR_RenderPlane(&extrasubsectors[num], *rover->topheight, PF_Occlude,
 				    *gr_frontsector->lightlist[light].lightlevel, levelflats[*rover->toppic].lumpnum);
                 }
@@ -3045,20 +3037,13 @@ static void HWR_DrawSprite(gr_vissprite_t * spr)
         {
             ffloor_t *caster;
 
-            caster = sector->lightlist[R_GetPlaneLight(sector, spr->mobj->z, false)].caster;
+            caster = sector->lightlist[R_GetPlaneLight(sector, spr->mobj->z)].caster;
 	    sector = caster ? &sectors[caster->model_secnum] : sector;
         }
         if (sector->extra_colormap)
         {
-            RGBA_t temp;
-            int alpha;
-
-            temp.rgba = sector->extra_colormap->rgba;
-            alpha = temp.s.alpha;
-            Surf.FlatColor.s.red = ((26 - alpha) * spr->sectorlight + alpha * temp.s.red) / 26;
-            Surf.FlatColor.s.blue = ((26 - alpha) * spr->sectorlight + alpha * temp.s.blue) / 26;
-            Surf.FlatColor.s.green = ((26 - alpha) * spr->sectorlight + alpha * temp.s.green) / 26;
-            Surf.FlatColor.s.alpha = 0xff;
+	    Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, spr->sectorlight,
+				       /*OUT*/ & Surf );
         }
     }
 
@@ -3364,7 +3349,7 @@ static void HWR_ProjectSprite(mobj_t * thing)
     if(thingsector->numlights)
     {
       int lightlevel;
-      light = R_GetPlaneLight(thingsector, gz_top, false);
+      light = R_GetPlaneLight(thingsector, gz_top);
       lightlevel = *thingsector->lightlist[light].lightlevel;
       if(thingsector->lightlist[light].caster && thingsector->lightlist[light].caster->flags & FF_FOG)
 	 sectorlight = LightLevelToLum(lightlevel); // add extralight
@@ -3596,20 +3581,13 @@ void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
             {
                 ffloor_t *caster;
 
-                caster = sector->lightlist[R_GetPlaneLight(sector, dup_viewz, false)].caster;
+                caster = sector->lightlist[R_GetPlaneLight(sector, dup_viewz)].caster;
                 sector = caster ? &sectors[caster->model_secnum] : sector;
             }
             if (sector->extra_colormap)
             {
-                RGBA_t temp;
-                int alpha;
-
-                temp.rgba = sector->extra_colormap->rgba;
-                alpha = temp.s.alpha;
-                Surf.FlatColor.s.red = ((26 - alpha) * lightlevel + alpha * temp.s.red) / 26;
-                Surf.FlatColor.s.blue = ((26 - alpha) * lightlevel + alpha * temp.s.blue) / 26;
-                Surf.FlatColor.s.green = ((26 - alpha) * lightlevel + alpha * temp.s.green) / 26;
-                Surf.FlatColor.s.alpha = 0xff;
+	        Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, lightlevel,
+				       /*OUT*/ & Surf );
             }
         }
     }
@@ -3632,7 +3610,7 @@ static void HWR_DrawPlayerSprites(void)
 
     if (viewplayer->mo->subsector->sector->numlights)
     {
-        light = R_GetPlaneLight(viewplayer->mo->subsector->sector, viewplayer->mo->z + viewplayer->mo->info->height, false);
+        light = R_GetPlaneLight(viewplayer->mo->subsector->sector, viewplayer->mo->z + viewplayer->mo->info->height);
         lightlevel = LightLevelToLum(*viewplayer->mo->subsector->sector->lightlist[light].lightlevel);
     }
     else

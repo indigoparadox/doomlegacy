@@ -856,3 +856,13 @@ patchfile = w52_view_colormap_gen.patch
 - committed revision 677   by wesley johnson
 Turn off VIEW_COLORMAP_GEN debug enable, which had got left on.
 
+*** w52_hw_extracolormap_surf
+patchfile = w52_extracolormap_surf.patch
+- committed revision 678   by wesley johnson
+Extracolormap_to_Surf, common function for hardware rgba[] handling,
+because these operations is getting more and more complicated.
+This was in w52_hw_colormap.patch, but was found to be missing after
+the latest commit.
+GetPlaneLight changes in hw_main.c.
+These were in w50_planelight.patch, but were found to be missing after
+this latest commit.
