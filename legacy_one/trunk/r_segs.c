@@ -1369,6 +1369,9 @@ void R_RenderSegLoop (void)
         // texturecolumn and lighting are independent of wall tiers
         if (segtextured)
         {
+            dc_x = rw_x;
+            dc_iscale = 0xffffffffu / (unsigned)rw_scale;
+
             // calculate lighting
             index = rw_scale>>LIGHTSCALESHIFT;
             
@@ -1376,11 +1379,13 @@ void R_RenderSegLoop (void)
                 index = MAXLIGHTSCALE-1;
 
             dc_colormap = walllights[index];
-            dc_x = rw_x;
-            dc_iscale = 0xffffffffu / (unsigned)rw_scale;
 
             if(frontsector->extra_colormap && !fixedcolormap)
-                dc_colormap = frontsector->extra_colormap->colormap + (dc_colormap - colormaps);
+	    {
+	        // reverse indexing, and change to extra_colormap
+		int lightindex = dc_colormap - colormaps;
+                dc_colormap = & frontsector->extra_colormap->colormap[ lightindex ];
+	    }
         }
 
         if(dc_numlights)

@@ -383,7 +383,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
                      int *floorlightlevel, int *ceilinglightlevel,
                      boolean back)
 {
-  int        mapnum = -1; //SoM: 4/4/2000
+  int        colormapnum = -1; //SoM: 4/4/2000
   int	     floorlightsubst, ceilinglightsubst; // light from another sector
 #ifndef BSPVIEWER
   // [WDJ] partial duplicate of viewmobj setup by R_SetupFrame
@@ -395,8 +395,8 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
   ceilinglightsubst = sec->ceilinglightsec;
 
   //SoM: 4/4/2000: If the sector has a midmap, it's probably from 280 type
-  if(sec->midmap != -1 && sec->model == SM_colormap)
-    mapnum = sec->midmap;
+  if(sec->model == SM_colormap && sec->midmap != -1 )
+    colormapnum = sec->midmap;  // explicit colormap
 
 //  if (sec->modelsec != -1 && sec->model == SM_Boom_deep_water)	// [WDJ] 11/14/2009
   if (sec->model == SM_Boom_deep_water)	// [WDJ] 11/14/2009
@@ -412,7 +412,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 
       // Replace sector being drawn, with a copy to be hacked
       *tempsec = *sec;
-      mapnum = modsecp->midmap;
+      colormapnum = modsecp->midmap;  // Deep-water colormap, middle-section default
 
       // Replace floor and ceiling height with other sector's heights.
       if( viewer_underwater )
@@ -454,7 +454,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
                 tempsec->ceiling_xoffs = modsecp->ceiling_xoffs;
                 tempsec->ceiling_yoffs = modsecp->ceiling_yoffs;
             }
-              mapnum = modsecp->bottommap;
+            colormapnum = modsecp->bottommap; // Boom colormap, underwater
           }
 
           tempsec->lightlevel  = modsecp->lightlevel;
@@ -485,7 +485,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
             tempsec->floor_xoffs = tempsec->ceiling_xoffs = modsecp->ceiling_xoffs;
             tempsec->floor_yoffs = tempsec->ceiling_yoffs = modsecp->ceiling_yoffs;
 
-            mapnum = modsecp->topmap;
+            colormapnum = modsecp->topmap; // Boom colormap, over ceiling
 
             if (modsecp->floorpic != skyflatnum)
             {
@@ -524,7 +524,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
     if(viewer_underwater)
     {
       // view below model sector floor
-      mapnum = modsecp->bottommap;
+      colormapnum = modsecp->bottommap; // Legacy colormap, underwater
       if(sec->floorlightsec != -1)
       {
 	// use substitute light
@@ -547,7 +547,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 #endif
     {
       // view over model sector ceiling
-      mapnum = modsecp->topmap;
+      colormapnum = modsecp->topmap; // Legacy colormap, over ceiling
       if(sec->ceilinglightsec != -1)
       {
 	// use substitute light
@@ -564,7 +564,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
     }
     else
     {
-      mapnum = modsecp->midmap;
+      colormapnum = modsecp->midmap;  // Legacy colormap, middle section
       //SoM: Use middle normal sector's lightlevels.
       if(modsecp->floorheight > tempsec->floorheight)
       {
@@ -592,8 +592,9 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
     sec = tempsec;
   }
 
-  if(mapnum >= 0 && mapnum < num_extra_colormaps)
-    sec->extra_colormap = &extra_colormaps[mapnum];
+  // colormap that this sector uses for this frame, from colormapnum.
+  if(colormapnum >= 0 && colormapnum < num_extra_colormaps)
+    sec->extra_colormap = &extra_colormaps[colormapnum];
   else
     sec->extra_colormap = NULL;
 

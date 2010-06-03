@@ -223,6 +223,11 @@ int R_CheckTextureNumForName (char *name);
 
 void R_ClearColormaps();
 int R_ColormapNumForName(char *name);
-int R_CreateColormap(char *p1, char *p2, char *p3);
+
+// The colorstr is the toptexture name.
+// The ctrlstr is the midtexture name.
+// The fadestr is the bottomtexture name.
+int R_CreateColormap(char *colorstr, char *ctrlstr, char *fadestr);
+
 char *R_ColormapNameForNum(int num);
 #endif

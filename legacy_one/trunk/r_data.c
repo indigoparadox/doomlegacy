@@ -130,7 +130,7 @@
 #include "w_wad.h"
 #include "z_zone.h"
 #include "p_setup.h" //levelflats
-#include "v_video.h" //pLoaclPalette
+#include "v_video.h" //pLocalPalette
 
 #ifdef __WIN32__
 #include "malloc.h"
@@ -1291,6 +1291,19 @@ void R_InitSpriteLumps (void)
 }
 
 
+// ----------------------------------------
+// COLORMAPS
+// 
+// COLORMAP lump : array[34]  of mapping tables [256].
+//   [0]  : brightest, light level = 248..255, maps direct to palette colors
+//   [31] : darkest, light level = 0..7,       maps to grey,black
+//   [32] : invulnerability map,               maps to whites and grays
+//   [33] : black map,			       maps entirely to black
+//   
+// Boom: Extra colormaps can be included in the wad.  They are the same
+// size and format as the Doom colormap.
+// WATERMAP is predefined by Boom, but may be overloaded.
+
 void R_InitExtraColormaps();
 void R_ClearColormaps();
 
@@ -1301,11 +1314,11 @@ void R_InitColormaps (void)
 {
     int lump;
 
-    // Load in the light tables,
+    // Load in the standard colormap lightmap tables (defined by lump),
     // now 64k aligned for smokie...
     lump = W_GetNumForName("COLORMAP");
     colormaps = Z_MallocAlign (W_LumpLength (lump), PU_STATIC, 0, 16);
-    W_ReadLump (lump,colormaps);
+    W_ReadLump (lump, colormaps);
 
     //SoM: 3/30/2000: Init Boom colormaps.
     {
@@ -1328,16 +1341,17 @@ void R_ClearColormaps()
   memset(extra_colormaps, 0, sizeof(extra_colormaps));
 }
 
+// [WDJ] Enable to print out results of colormap generate.
+#define VIEW_COLORMAP_GEN
 
 // [WDJ] The name parameter has trailing garbage, but the name lookup
 // only uses the first 8 chars.
+// Return the new colormap id number
 int R_ColormapNumForName(char *name)
 {
   int lump, i;
 
-  if(num_extra_colormaps == MAXCOLORMAPS)
-    I_Error("R_ColormapNumForName: Too many colormaps!\n");
-
+  // Check for existing colormap of same name
   lump = R_CheckNumForNameList(name, colormaplumps, numcolormaplumps);
   if(lump == -1)
     I_Error("R_ColormapNumForName: Cannot find colormap lump %s\n", name);
@@ -1346,20 +1360,16 @@ int R_ColormapNumForName(char *name)
     if(lump == foundcolormaps[i])
       return i;
 
+  // Add another colormap
+  if(num_extra_colormaps == MAXCOLORMAPS)
+    I_Error("R_ColormapNumForName: Too many colormaps!\n");
+
   foundcolormaps[num_extra_colormaps] = lump;
 
   // aligned on 8 bit for asm code
   extra_colormaps[num_extra_colormaps].colormap = Z_MallocAlign (W_LumpLength (lump), PU_LEVEL, 0, 8);
-  W_ReadLump (lump,extra_colormaps[num_extra_colormaps].colormap);
-
-  // SoM: Added, we set all params of the colormap to normal because there
-  // is no real way to tell how GL should handle a colormap lump anyway..
-  extra_colormaps[num_extra_colormaps].maskcolor = 0xffff;
-  extra_colormaps[num_extra_colormaps].fadecolor = 0x0;
-  extra_colormaps[num_extra_colormaps].maskamt = 0x0;
-  extra_colormaps[num_extra_colormaps].fadestart = 0;
-  extra_colormaps[num_extra_colormaps].fadeend = 33;
-  extra_colormaps[num_extra_colormaps].fog = 0;
+  // read colormap tables [][] of byte, mapping to alternative palette colors
+  W_ReadLump (lump, extra_colormaps[num_extra_colormaps].colormap);
 
   num_extra_colormaps++;
   return num_extra_colormaps - 1;
@@ -1379,86 +1389,109 @@ double  deltas[256][3], map[256][3];
 byte NearestColor(byte r, byte g, byte b);
 int  RoundUp(double number);
 
-int R_CreateColormap(char *p1, char *p2, char *p3)
+#define HEX_TO_INT(x) (x >= '0' && x <= '9' ? x - '0' : x >= 'a' && x <= 'f' ? x - 'a' + 10 : x >= 'A' && x <= 'F' ? x - 'A' + 10 : 0)
+#define ALPHA_TO_INT(x) (x >= 'a' && x <= 'z' ? x - 'a' : x >= 'A' && x <= 'Z' ? x - 'A' : 0)
+#define CHAR_TO_INT(c)  (c >= '0' && c <= '9' ? c - '0' : 0)
+#define ABS2(x) ((x) < 0 ? -(x) : (x))
+
+// [WDJ]
+// The colorstr is the toptexture name:   '#' R(2) G(2) B(2) A(1)
+// The ctrlstr is the midtexture name.    '#' FOG(1) FADE_BEGIN(2)  FADE_END(2)
+// The fadestr is the bottomtexture name: '#' R(2) G(2) B(2).
+// Translations:
+//   R(2), G(2), B(2):   2-digit HEX => 256 color (8bit)
+//   A(1): char a-z or A-Z  => 0 to 25 alpha
+//   FOG: '0'= not-fog, '1'= fog-effect
+//   FADE_BEGIN: 2-digit decimal (0..32) colormap where fade begins
+//   FADE_END:   2-digit decimal (1..33) colormap where fade-to color is reached.
+// Return the new colormap id number
+int R_CreateColormap(char *colorstr, char *ctrlstr, char *fadestr)
 {
-  double cmaskr, cmaskg, cmaskb, cdestr, cdestg, cdestb;
+  double color_r, color_g, color_b; // color RGB from top-texture
+  double cfade_r, cfade_g, cfade_b; // fade-to color from bottom-texture
   double r, g, b;
   double cbrightness;
   double maskamt = 0, othermask = 0;
-  int    mask;
+  int    alphamask = 0;
   int    i, p;
-  byte  *colormap_p;
-  unsigned int  cr, cg, cb;
+  unsigned int  cr, cg, cb;  // color RGB as INT
   unsigned int  maskcolor, fadecolor;
   unsigned int  fadestart = 0, fadeend = 33, fadedist = 33;
-  int           fog = 0;
-  int           mapnum = num_extra_colormaps;
+  int    fog = 0;
+  int    mapnum = num_extra_colormaps;  // the new colormap id number
+  extracolormap_t * extra_colormap_p;
+  byte  *colormap_p;
 
-  #define HEX2INT(x) (x >= '0' && x <= '9' ? x - '0' : x >= 'a' && x <= 'f' ? x - 'a' + 10 : x >= 'A' && x <= 'F' ? x - 'A' + 10 : 0)
-  if(p1[0] == '#')
+  if(colorstr[0] == '#')  // colormap generate string is recognized
   {
-    cr = cmaskr = ((HEX2INT(p1[1]) * 16) + HEX2INT(p1[2]));
-    cg = cmaskg = ((HEX2INT(p1[3]) * 16) + HEX2INT(p1[4]));
-    cb = cmaskb = ((HEX2INT(p1[5]) * 16) + HEX2INT(p1[6]));
+    // color value from top texture string
+    cr = color_r = ((HEX_TO_INT(colorstr[1])<<4) + HEX_TO_INT(colorstr[2]));
+    cg = color_g = ((HEX_TO_INT(colorstr[3])<<4) + HEX_TO_INT(colorstr[4]));
+    cb = color_b = ((HEX_TO_INT(colorstr[5])<<4) + HEX_TO_INT(colorstr[6]));
     // Create a rough approximation of the color (a 16 bit color)
+    //  16bit, color 5:6:5
     maskcolor = ((cb) >> 3) + (((cg) >> 2) << 5) + (((cr) >> 3) << 11);
-    if(p1[7] >= 'a' && p1[7] <= 'z')
-      mask = (p1[7] - 'a');
-    else if(p1[7] >= 'A' && p1[7] <= 'Z')
-      mask = (p1[7] - 'A');
+    //  16bit, color 5:5:5
+//    maskcolor = ((cb) >> 3) + (((cg) >> 3) << 5) + (((cr) >> 3) << 10);
+    if(colorstr[7] >= 'a' && colorstr[7] <= 'z')
+      alphamask = (colorstr[7] - 'a');
+    else if(colorstr[7] >= 'A' && colorstr[7] <= 'Z')
+      alphamask = (colorstr[7] - 'A');
     else
-      mask = 24;
+      alphamask = 24;
 
 
-    maskamt = (double)mask / (double)24;
+    maskamt = (double)alphamask / (double)24;
 
     othermask = 1 - maskamt;
     maskamt /= 0xff;
-    cmaskr *= maskamt;
-    cmaskg *= maskamt;
-    cmaskb *= maskamt;
   }
   else
   {
-    cmaskr = 0xff;
-    cmaskg = 0xff;
-    cmaskb = 0xff;
+    // [WDJ] default for missing upper is not in docs, and was inconsistent
+    // Cannot be 0xff after multiply by maskamt=0.
+    color_r = 0xff;
+    color_g = 0xff;
+    color_b = 0xff;
     maskamt = 0;
+    //  16bit, color 5:6:5
     maskcolor = ((0xff) >> 3) + (((0xff) >> 2) << 5) + (((0xff) >> 3) << 11);
+    //  16bit, color 5:5:5
+//    maskcolor = ((0xff) >> 3) + (((0xff) >> 3) << 5) + (((0xff) >> 3) << 10);
   }
 
 
-  #define NUMFROMCHAR(c)  (c >= '0' && c <= '9' ? c - '0' : 0)
-  if(p2[0] == '#')
+  if(ctrlstr[0] == '#')
   {
     // SoM: Get parameters like, fadestart, fadeend, and the fogflag...
-    fadestart = NUMFROMCHAR(p2[3]) + (NUMFROMCHAR(p2[2]) * 10);
-    fadeend = NUMFROMCHAR(p2[5]) + (NUMFROMCHAR(p2[4]) * 10);
+    fadestart = CHAR_TO_INT(ctrlstr[3]) + (CHAR_TO_INT(ctrlstr[2]) * 10);
+    fadeend = CHAR_TO_INT(ctrlstr[5]) + (CHAR_TO_INT(ctrlstr[4]) * 10);
     if(fadestart > 32 || fadestart < 0)
       fadestart = 0;
     if(fadeend > 33 || fadeend < 1)
       fadeend = 33;
     fadedist = fadeend - fadestart;
-    fog = NUMFROMCHAR(p2[1]) ? 1 : 0;
+    fog = CHAR_TO_INT(ctrlstr[1]) ? 1 : 0;
   }
-  #undef getnum
 
 
-  if(p3[0] == '#')
+  if(fadestr[0] == '#')
   {
-    cdestr = cr = ((HEX2INT(p3[1]) * 16) + HEX2INT(p3[2]));
-    cdestg = cg = ((HEX2INT(p3[3]) * 16) + HEX2INT(p3[4]));
-    cdestb = cb = ((HEX2INT(p3[5]) * 16) + HEX2INT(p3[6]));
+    cfade_r = cr = ((HEX_TO_INT(fadestr[1]) * 16) + HEX_TO_INT(fadestr[2]));
+    cfade_g = cg = ((HEX_TO_INT(fadestr[3]) * 16) + HEX_TO_INT(fadestr[4]));
+    cfade_b = cb = ((HEX_TO_INT(fadestr[5]) * 16) + HEX_TO_INT(fadestr[6]));
+    //  16bit, color 5:6:5
     fadecolor = (((cb) >> 3) + (((cg) >> 2) << 5) + (((cr) >> 3) << 11));
+    //  16bit, color 5:5:5
+//    fadecolor = (((cb) >> 3) + (((cg) >> 3) << 5) + (((cr) >> 3) << 10));
   }
   else
   {
-    cdestr = 0;
-    cdestg = 0;
-    cdestb = 0;
+    cfade_r = 0;
+    cfade_g = 0;
+    cfade_b = 0;
     fadecolor = 0;
   }
-  #undef HEX2INT
 
   for(i = 0; i < num_extra_colormaps; i++)
   {
@@ -1477,10 +1510,30 @@ int R_CreateColormap(char *p1, char *p2, char *p3)
     I_Error("R_CreateColormap: Too many colormaps!\n");
   num_extra_colormaps++;
 
+  foundcolormaps[mapnum] = -1;
+  extra_colormap_p = &extra_colormaps[mapnum];
+
+  // aligned on 8 bit for asm code
+  extra_colormap_p->colormap = NULL;
+  extra_colormap_p->maskcolor = maskcolor;
+  extra_colormap_p->fadecolor = fadecolor;
+  extra_colormap_p->maskamt = maskamt;
+  extra_colormap_p->fadestart = fadestart;
+  extra_colormap_p->fadeend = fadeend;
+  extra_colormap_p->fog = fog;
+
 #ifdef HWRENDER
+  // Hardware renderer does not use, nor allocate, the colormap.
+  // It uses the rgba field instead.
   if(rendermode == render_soft)
 #endif
   {
+    extra_colormap_p->colormap = colormap_p = Z_MallocAlign((256 * 34) + 10, PU_LEVEL, 0, 16); // Aligning on 16 bits, NOT 8, keeps it from crashing! SSNTails 12-13-2002
+     
+    // premultiply, this messes up rgba calc so it must be done here
+    color_r *= maskamt;
+    color_g *= maskamt;
+    color_b *= maskamt;
     for(i = 0; i < 256; i++)
     {
       r = pLocalPalette[i].s.red;
@@ -1489,40 +1542,21 @@ int R_CreateColormap(char *p1, char *p2, char *p3)
       cbrightness = sqrt((r*r) + (g*g) + (b*b));
 
 
-      map[i][0] = (cbrightness * cmaskr) + (r * othermask);
+      map[i][0] = (cbrightness * color_r) + (r * othermask);
       if(map[i][0] > 255.0)
         map[i][0] = 255.0;
-      deltas[i][0] = (map[i][0] - cdestr) / (double)fadedist;
+      deltas[i][0] = (map[i][0] - cfade_r) / (double)fadedist;
 
-      map[i][1] = (cbrightness * cmaskg) + (g * othermask);
+      map[i][1] = (cbrightness * color_g) + (g * othermask);
       if(map[i][1] > 255.0)
         map[i][1] = 255.0;
-      deltas[i][1] = (map[i][1] - cdestg) / (double)fadedist;
+      deltas[i][1] = (map[i][1] - cfade_g) / (double)fadedist;
 
-      map[i][2] = (cbrightness * cmaskb) + (b * othermask);
+      map[i][2] = (cbrightness * color_b) + (b * othermask);
       if(map[i][2] > 255.0)
         map[i][2] = 255.0;
-      deltas[i][2] = (map[i][2] - cdestb) / (double)fadedist;
+      deltas[i][2] = (map[i][2] - cfade_b) / (double)fadedist;
     }
-  }
-
-  foundcolormaps[mapnum] = -1;
-
-  // aligned on 8 bit for asm code
-  extra_colormaps[mapnum].colormap = NULL;
-  extra_colormaps[mapnum].maskcolor = maskcolor;
-  extra_colormaps[mapnum].fadecolor = fadecolor;
-  extra_colormaps[mapnum].maskamt = maskamt;
-  extra_colormaps[mapnum].fadestart = fadestart;
-  extra_colormaps[mapnum].fadeend = fadeend;
-  extra_colormaps[mapnum].fog = fog;
-
-#define ABS2(x) ((x) < 0 ? -(x) : (x))
-#ifdef HWRENDER
-  if(rendermode == render_soft)
-#endif
-  {
-    extra_colormaps[mapnum].colormap = colormap_p = Z_MallocAlign((256 * 34) + 10, PU_LEVEL, 0, 16); // Aligning on 16 bits, NOT 8, keeps it from crashing! SSNTails 12-13-2002
 
     for(p = 0; p < 34; p++)
     {
@@ -1534,27 +1568,53 @@ int R_CreateColormap(char *p1, char *p2, char *p3)
         if((unsigned int)p < fadestart)
           continue;
   
-        if(ABS2(map[i][0] - cdestr) > ABS2(deltas[i][0]))
+        if(ABS2(map[i][0] - cfade_r) > ABS2(deltas[i][0]))
           map[i][0] -= deltas[i][0];
         else
-          map[i][0] = cdestr;
+          map[i][0] = cfade_r;
 
-        if(ABS2(map[i][1] - cdestg) > ABS2(deltas[i][1]))
+        if(ABS2(map[i][1] - cfade_g) > ABS2(deltas[i][1]))
           map[i][1] -= deltas[i][1];
         else
-          map[i][1] = cdestg;
+          map[i][1] = cfade_g;
 
-        if(ABS2(map[i][2] - cdestb) > ABS2(deltas[i][1]))
+        if(ABS2(map[i][2] - cfade_b) > ABS2(deltas[i][1]))
           map[i][2] -= deltas[i][2];
         else
-          map[i][2] = cdestb;
+          map[i][2] = cfade_b;
       }
     }
   }
-#undef ABS2
+#ifdef HWRENDER
+  else
+  {
+     // [WDJ] This will be fixed to use fade also.
+     // hardware needs color_r, color_g, color_b, before they get *maskamt.
+     cr = (int)( color_r );
+     cg = (int)( color_g );
+     cb = (int)( color_b );
+     extra_colormap_p->rgba = (alphamask<<24)|(cb<<16)|(cg<<8)|(cr);
+#if 1
+#ifdef VIEW_COLORMAP_GEN
+    // [WDJ] DEBUG, TEST AGAINST OLD HDW CODE
+    unsigned rgba_oldhw = 
+	  (HEX_TO_INT(colorstr[1]) << 4) + (HEX_TO_INT(colorstr[2]) << 0) +
+	  (HEX_TO_INT(colorstr[3]) << 12) + (HEX_TO_INT(colorstr[4]) << 8) +
+	  (HEX_TO_INT(colorstr[5]) << 20) + (HEX_TO_INT(colorstr[6]) << 16) + 
+	  (ALPHA_TO_INT(colorstr[7]) << 24);
+   if( rgba_oldhw != extra_colormap_p->rgba )
+      fprintf(stderr,"RGBA: old=%X, new=%x\n", rgba_oldhw, extra_colormap_p->rgba);
+#endif
+#endif
+  }
+#endif	       
 
   return mapnum;
 }
+//  #undef getnum
+#undef ALPHA_TO_INT
+#undef HEX_TO_INT
+#undef ABS2
 
 
 //Thanks to quake2 source!

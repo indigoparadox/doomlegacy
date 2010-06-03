@@ -93,9 +93,9 @@ extern lighttable_t*    colormaps;
 //SoM: 4/7/2000: Had to put a limit on colormaps :(
 #define                 MAXCOLORMAPS 30
 
-
-extern int                 num_extra_colormaps;
-extern extracolormap_t     extra_colormaps[MAXCOLORMAPS];
+// defined colormap lightmaps descriptors
+extern int              num_extra_colormaps;
+extern extracolormap_t  extra_colormaps[MAXCOLORMAPS];
 
 extern int		rdraw_viewwidth;		// was viewwidth
 extern int              rdraw_scaledviewwidth;		// was scaledrviewwidth

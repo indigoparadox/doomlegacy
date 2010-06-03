@@ -194,8 +194,8 @@ typedef struct player_s
     // So gun flashes light up areas.
     int                 extralight;
 
-    // Current PLAYPAL, ???
-    //  can be set to REDCOLORMAP for pain, etc.
+    // Normally 0, which allows normal colormap.
+    // pain=>REDCOLORMAP, invulnerability=>INVERSECOLORMAP, goggles=>1
     int                 fixedcolormap;
 
     // Player skin colorshift,

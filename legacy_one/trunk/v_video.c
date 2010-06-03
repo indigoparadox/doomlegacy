@@ -400,7 +400,7 @@ static void LoadPalette(char *lumpname)
 
   byte *pal = W_CacheLumpNum(i, PU_CACHE);
   for (i = 0; i < palsize; i++)
-    {
+  {
       pLocalPalette[i].s.red = gammatable[*pal++];
       pLocalPalette[i].s.green = gammatable[*pal++];
       pLocalPalette[i].s.blue = gammatable[*pal++];
@@ -408,7 +408,7 @@ static void LoadPalette(char *lumpname)
 //            pLocalPalette[i].s.alpha = 0;
 //        else
       pLocalPalette[i].s.alpha = 0xff;
-    }
+  }
 }
 
 // -------------+

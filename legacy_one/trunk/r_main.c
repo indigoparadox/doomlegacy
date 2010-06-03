@@ -156,9 +156,6 @@ int                     viewangleoffset;
 // increment every time a check is made
 int                     validcount = 1;
 
-
-lighttable_t*           fixedcolormap;
-
 // center of perspective projection, in screen coordinates, 0=top
 int                     centerx;
 int                     centery;
@@ -178,6 +175,15 @@ int                     framecount;
 int                     sscount;
 int                     linecount;
 int                     loopcount;
+
+// current viewer
+// Set by R_SetupFrame
+
+// Normally NULL, which allows normal colormap.
+// Set to one lighttable_t entry of colormap table.
+// pain=>REDCOLORMAP, invulnerability=>INVERSECOLORMAP, goggles=>colormap[1]
+// Set from current viewer
+lighttable_t*           fixedcolormap;
 
 fixed_t                 viewx;
 fixed_t                 viewy;
@@ -1085,13 +1091,12 @@ void P_ResetCamera (player_t *player);
 
 void R_SetupFrame (player_t* player)
 {
-    int         i;
-    int         fixedcolormap_setup;
-    int         dy=0; //added:10-02-98:
+    int  i;
+    int  fixedcolormap_num;
+    int  dy=0; //added:10-02-98:
 
     extralight = player->extralight;
 
-    //
     if (cv_chasecam.value && !camera.chase)
     {
         P_ResetCamera(player);
@@ -1103,34 +1108,37 @@ void R_SetupFrame (player_t* player)
 #ifdef FRAGGLESCRIPT
     if (script_camera_on)
     {
+        // fragglescript camera as viewer
         viewmobj = script_camera.mo;
 #ifdef PARANOIA
         if (!viewmobj)
             I_Error("no mobj for the camera");
 #endif
         viewz = viewmobj->z;
-        fixedcolormap_setup = camera.fixedcolormap;
+        fixedcolormap_num = camera.fixedcolormap;
         aimingangle=script_camera.aiming;
         viewangle = viewmobj->angle;
     }
     else
 #endif
     if (camera.chase)
-    // use outside cam view
     {
+        // chase camera as viewer
+        // use outside cam view
         viewmobj = camera.mo;
 #ifdef PARANOIA
         if (!viewmobj)
             I_Error("no mobj for the camera");
 #endif
         viewz = viewmobj->z + (viewmobj->height>>1);
-        fixedcolormap_setup = camera.fixedcolormap;
+        fixedcolormap_num = camera.fixedcolormap;
         aimingangle=camera.aiming;
         viewangle = viewmobj->angle;
     }
     else
-    // use the player's eyes view
     {
+        // player as viewer
+        // use the player's eyes view
         viewz = player->viewz;
 #ifdef CLIENTPREDICTION2
         if( demoplayback || !player->spirit)
@@ -1143,7 +1151,7 @@ void R_SetupFrame (player_t* player)
 #else
         viewmobj = player->mo;
 #endif
-        fixedcolormap_setup = player->fixedcolormap;
+        fixedcolormap_num = player->fixedcolormap;
         aimingangle=player->aiming;
         viewangle = viewmobj->angle+viewangleoffset;
 
@@ -1177,19 +1185,20 @@ void R_SetupFrame (player_t* player)
 
     sscount = 0;
 
-    if (fixedcolormap_setup)
+    if (fixedcolormap_num)
     {
+        // the fixedcolormap overrides sector colormaps
         fixedcolormap =
-            colormaps
-            + fixedcolormap_setup*256*sizeof(lighttable_t);
+            & colormaps[ fixedcolormap_num*256*sizeof(lighttable_t) ];
 
         walllights = scalelightfixed;
 
+        // refresh scalelights to fixedcolormap
         for (i=0 ; i<MAXLIGHTSCALE ; i++)
             scalelightfixed[i] = fixedcolormap;
     }
     else
-        fixedcolormap = 0;
+        fixedcolormap = NULL;
 
     //added:06-02-98:recalc necessary stuff for mouseaiming
     //               slopes are already calculated for the full

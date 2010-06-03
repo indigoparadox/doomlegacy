@@ -899,25 +899,29 @@ void P_LoadSideDefs (int lump)
 //Hurdler: 04/04/2000: proto added
 int R_ColormapNumForName(char *name);
 
+// Interpret Linedef specials in sidedefs,
+// after other supporting data has been loaded.
 void P_LoadSideDefs2(int lump)
 {
-  byte *data = W_CacheLumpNum(lump,PU_STATIC);  // sidedefs temp lump
+  mapsidedef_t * msdlump = W_CacheLumpNum(lump, PU_IN_USE);  // sidedefs lump
   // [WDJ] Do endian as read from temp sidedefs lump
   int  i;
   int  num;
-  int  mapnum;
 
   for (i=0; i<numsides; i++)
   {
-      register mapsidedef_t *msd = (mapsidedef_t *) data + i;
-      register side_t *sd = sides + i;
+      register mapsidedef_t *msd = & msdlump[i]; // map sidedef
+      register side_t *sd = & sides[i];
       register sector_t *sec;
 
       sd->textureoffset = LE_SWAP16(msd->textureoffset)<<FRACBITS;
       sd->rowoffset = LE_SWAP16(msd->rowoffset)<<FRACBITS;
 
-      // refined to allow colormaps to work as wall textures
-      // if invalid as colormaps, but valid as textures.
+      // Refined to allow special linedef colormap (in texture name) to instead
+      // be a wall texture (wall texture name instead of colormap name)
+      // using the normal colormap.
+      // Check if valid texture first, on failure check if valid colormap,
+      // because we have func that can check texture without error.
 
       sd->sector = sec = &sectors[LE_SWAP16(msd->sector)];
       // original linedef types are 1..141, higher values are extensions
@@ -925,77 +929,55 @@ void P_LoadSideDefs2(int lump)
       {
         case 242:	// Boom deep water, sidedef1 texture is colormap
         case 280:       //SoM: 3/22/2000: Legacy water type.
-#ifdef HWRENDER
-          if(rendermode == render_soft)
-          {
-#endif
+	  // Sets topmap,midmap,bottommap colormaps, in the tagged sectors.
+	  // Uses the model sector lightlevel underwater, and over ceiling.
+	  // [WDJ] There is no good reason for HWRENDER to block recording the
+	  // colormaps if the worse that the hardware renderer does is ignore them.
+	  {
             num = R_CheckTextureNumForName(msd->toptexture);
-
             if(num == -1)	// if not texture
             {
 	      // must be colormap
-              sec->topmap = mapnum = R_ColormapNumForName(msd->toptexture);
-              sd->toptexture = 0;
+              sec->topmap = R_ColormapNumForName(msd->toptexture);
+              num = 0;
             }
-            else
-              sd->toptexture = num;
+	    sd->toptexture = num; // never set to -1
 
             num = R_CheckTextureNumForName(msd->midtexture);
             if(num == -1)
             {
-              sec->midmap = mapnum = R_ColormapNumForName(msd->midtexture);
-              sd->midtexture = 0;
+              sec->midmap = R_ColormapNumForName(msd->midtexture);
+              num = 0;
             }
-            else
-              sd->midtexture = num;
+	    sd->midtexture = num; // never set to -1
+
 
             num = R_CheckTextureNumForName(msd->bottomtexture);
             if(num == -1)
             {
-              sec->bottommap = mapnum = R_ColormapNumForName(msd->bottomtexture);
-              sd->bottomtexture = 0;
+              sec->bottommap = R_ColormapNumForName(msd->bottomtexture);
+              num = 0;
             }
-            else
-              sd->bottomtexture = num;
-#ifdef HWRENDER
-          }
-          else
-          {
-            if((num = R_CheckTextureNumForName(msd->toptexture)) == -1)
-              sd->toptexture = 0;
-            else
-              sd->toptexture = num;
-
-            if((num = R_CheckTextureNumForName(msd->midtexture)) == -1)
-              sd->midtexture = 0;
-            else
-              sd->midtexture = num;
-
-            if((num = R_CheckTextureNumForName(msd->bottomtexture)) == -1)
-              sd->bottomtexture = 0;
-            else
-              sd->bottomtexture = num;
-          }
-#endif
-	  break;   // [WDJ]  no fall through
+	    sd->bottomtexture = num; // never set to -1
+	  }
+  	  break;   // [WDJ]  no fall through
 
         case 282:                       //SoM: 4/4/2000: Just colormap transfer
+	  // Set the colormap of all tagged sectors.
 
-// SoM: R_CreateColormap will only create a colormap in software mode...
-// Perhaps we should just call it instead of doing the calculations here.
-#ifdef HWRENDER
-          if(rendermode == render_soft)
-          {
-#endif
-            if(msd->toptexture[0] == '#' || msd->bottomtexture[0] == '#')
+	  // SoM: R_CreateColormap will only create a colormap in software mode...
+	  {
+	    if(msd->toptexture[0] == '#' || msd->bottomtexture[0] == '#')
             {
  	      // generate colormap from sidedef1 texture text strings
               sec->midmap = R_CreateColormap(msd->toptexture, msd->midtexture, msd->bottomtexture);
               sd->toptexture = sd->bottomtexture = 0;
+              sec->extra_colormap = &extra_colormaps[sec->midmap];
             }
             else
             {
-              if((num = R_CheckTextureNumForName(msd->toptexture)) == -1)
+	      // textures never set to -1
+	      if((num = R_CheckTextureNumForName(msd->toptexture)) == -1)
                 sd->toptexture = 0;
               else
                 sd->toptexture = num;
@@ -1008,55 +990,20 @@ void P_LoadSideDefs2(int lump)
               else
                 sd->bottomtexture = num;
             }
-
-#ifdef HWRENDER
-          }
-          else
-          {
-            //Hurdler: for now, full support of toptexture only
-            if(msd->toptexture[0] == '#')// || msd->bottomtexture[0] == '#')
-            {
-                char *col = msd->toptexture;
-
-                sec->midmap = R_CreateColormap(msd->toptexture, msd->midtexture, msd->bottomtexture);
-                sd->toptexture = sd->bottomtexture = 0;
-                #define HEX2INT(x) (x >= '0' && x <= '9' ? x - '0' : x >= 'a' && x <= 'f' ? x - 'a' + 10 : x >= 'A' && x <= 'F' ? x - 'A' + 10 : 0)
-                #define ALPHA2INT(x) (x >= 'a' && x <= 'z' ? x - 'a' : x >= 'A' && x <= 'Z' ? x - 'A' : 0)
-                sec->extra_colormap = &extra_colormaps[sec->midmap];
-                sec->extra_colormap->rgba = 
-                            (HEX2INT(col[1]) << 4) + (HEX2INT(col[2]) << 0) +
-                            (HEX2INT(col[3]) << 12) + (HEX2INT(col[4]) << 8) +
-                            (HEX2INT(col[5]) << 20) + (HEX2INT(col[6]) << 16) + 
-                            (ALPHA2INT(col[7]) << 24);
-                #undef ALPHA2INT
-                #undef HEX2INT
-            }
-            else
-            {
-                if((num = R_CheckTextureNumForName(msd->toptexture)) == -1)
-                  sd->toptexture = 0;
-                else
-                  sd->toptexture = num;
-
-                if((num = R_CheckTextureNumForName(msd->midtexture)) == -1)
-                  sd->midtexture = 0;
-                else
-                  sd->midtexture = num;
-
-                if((num = R_CheckTextureNumForName(msd->bottomtexture)) == -1)
-                  sd->bottomtexture = 0;
-                else
-                  sd->bottomtexture = num;
-            }
-          }
-#endif
+	  }
 	  break;  // [WDJ]  no fall through
 	   	  // case 282, if(render_soft), was falling through,
 	          // but as 260 has same tests, the damage was benign
 	   
 
         case 260:	// Boom transparency
-          num = R_CheckTextureNumForName(msd->midtexture);
+	  // When tag=0: this sidedef middle texture is made translucent using TRANMAP.
+	  // When tag!=0: all same tagged linedef have their middle texture
+	  // made translucent.
+	  // If this sidedef middle texture is a TRANMAP, size=64K, then it
+	  // is used for the transluceny.
+	  // never set to -1
+	  num = R_CheckTextureNumForName(msd->midtexture);
           if(num == -1)
             sd->midtexture = 1;
           else
@@ -1074,7 +1021,6 @@ void P_LoadSideDefs2(int lump)
           else
             sd->bottomtexture = num;
           break;
-
 /*        case 260: // killough 4/11/98: apply translucency to 2s normal texture
           sd->midtexture = strncasecmp("TRANMAP", msd->midtexture, 8) ?
             (sd->special = W_CheckNumForName(msd->midtexture)) < 0 ||
@@ -1089,6 +1035,9 @@ void P_LoadSideDefs2(int lump)
        //Hurdler: added for alpha value with translucent 3D-floors/water
         case 300:	// Legacy solid translucent 3D floor in tagged
         case 301:	// Legacy translucent 3D water in tagged
+	    // 3Dfloor slab uses model sector ceiling and floor, heights and flats.
+	    // Upper texture encodes the translucent alpha: #nnn  => 0..255
+	    // Uses model sector colormap and lightlevel
             if(msd->toptexture[0] == '#')
             {
 	        // interpret texture name string as decimal number
@@ -1097,7 +1046,7 @@ void P_LoadSideDefs2(int lump)
             }
             else
                 sd->toptexture = sd->bottomtexture = 0;
-            sd->midtexture = R_TextureNumForName(msd->midtexture);
+            sd->midtexture = R_TextureNumForName(msd->midtexture); // side texture
             break;
 
         default:                        // normal cases
@@ -1111,7 +1060,7 @@ void P_LoadSideDefs2(int lump)
           break;
       }
   }
-  Z_Free (data);
+  Z_Free (msdlump);
 }
 
 
@@ -1545,6 +1494,7 @@ boolean P_SetupLevel (int           episode,
 
     //BP: spawnplayers now (beffor all structure are not inititialized)
     for (i=0 ; i<MAXPLAYERS ; i++)
+    {
         if (playeringame[i])
         {
             if (cv_deathmatch.value)
@@ -1559,6 +1509,7 @@ boolean P_SetupLevel (int           episode,
                     G_CoopSpawnPlayer (i);
                 }
         }
+    }
 
     // clear special respawning que
     iquehead = iquetail = 0;

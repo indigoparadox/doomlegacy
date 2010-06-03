@@ -752,4 +752,17 @@ patchfile = w52_model_sector_colormap.patch
 Cleanup colormap setup in p_spec.c, and commented the special linedefs.
 Rename the color mapping control sector as model_sector.
 
+*** w52_colormap
+patchfile = w52_colormap.patch
+- committed revision 665   by wesley johnson
+Extensive visit of all the colormap code.
+Comment uses of colormaps.
+Cleanup colormap setup in p_setup.c, and commented special linedefs,
+and removed incomplete hardware renderer code for colormap generation.
+Have hardware renderer use the same colormap generator function as the
+software renderer, and same linedef setup.
+Cleanup the colormap generator, comment, and have it calc hardware
+renderer fields too.
+
+
 

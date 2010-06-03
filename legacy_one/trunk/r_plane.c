@@ -270,7 +270,7 @@ void R_MapPlane
 
 
     if (fixedcolormap)
-        ds_colormap = fixedcolormap;
+        ds_colormap = fixedcolormap; // overriding colormap
     else
     {
         index = distance >> LIGHTZSHIFT;
@@ -279,9 +279,13 @@ void R_MapPlane
             index = MAXLIGHTZ-1;
 
         ds_colormap = planezlight[index];
+        if(currentplane->extra_colormap)
+        {
+	    // reverse indexing, and change to extra_colormap
+	    int lightindex = ds_colormap - colormaps;
+	    ds_colormap = & currentplane->extra_colormap->colormap[ lightindex ];
+	}
     }
-    if(currentplane->extra_colormap && !fixedcolormap)
-      ds_colormap = currentplane->extra_colormap->colormap + (ds_colormap - colormaps);
 
     ds_y = y;
     ds_x1 = x1;
@@ -411,7 +415,7 @@ visplane_t* R_FindPlane( fixed_t height,
           !ffloor && !check->ffloor &&
           check->viewz == viewz &&
           check->viewangle == viewangle)
-        return check;
+        return check; // found matching
     }
 
     check = new_visplane(hash);
