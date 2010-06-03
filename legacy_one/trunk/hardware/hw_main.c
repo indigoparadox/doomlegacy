@@ -1718,10 +1718,13 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
                 wallVerts[2].y = wallVerts[3].y = FIXED_TO_FLOAT( h );
                 wallVerts[0].y = wallVerts[1].y = FIXED_TO_FLOAT( l );
 
+	        // protect against missing middle texture
+	        midtexnum = texturetranslation[sides[rover->master->sidenum[0]].midtexture];
+	        if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
+
                 if (drawtextured)
                 {
-		    midtexnum = texturetranslation[sides[rover->master->sidenum[0]].midtexture];
-		    if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
+//		    if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
                     grTex = HWR_GetTexture( midtexnum );
 
                     wallVerts[3].t = wallVerts[2].t = (*rover->topheight - h) * grTex->scaleY;
@@ -1745,11 +1748,19 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
                     }
 
                     if (gr_frontsector->numlights)
-                        HWR_SplitWall(gr_frontsector, wallVerts, texturetranslation[sides[rover->master->sidenum[0]].midtexture], &Surf, rover->flags & FF_EXTRA ? FF_CUTEXTRA : FF_CUTSOLIDS);
+		    {
+//		        if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
+                        HWR_SplitWall(gr_frontsector, wallVerts,
+				      midtexnum, &Surf,
+				      rover->flags & FF_EXTRA ? FF_CUTEXTRA : FF_CUTSOLIDS);
+		    }
                     else
                     {
                         if (blendmode != PF_Masked)
-                            HWR_AddTransparentWall(wallVerts, &Surf, texturetranslation[sides[rover->master->sidenum[0]].midtexture], blendmode);
+		        {
+//			    if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
+                            HWR_AddTransparentWall(wallVerts, &Surf, midtexnum, blendmode);
+			}
                         else
                             HWR_ProjectWall(wallVerts, &Surf, PF_Masked);
                     }
@@ -1777,9 +1788,14 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
                 wallVerts[2].y = wallVerts[3].y = FIXED_TO_FLOAT( h );
                 wallVerts[0].y = wallVerts[1].y = FIXED_TO_FLOAT( l );
 
+	        // protect against missing middle texture
+	        midtexnum = texturetranslation[sides[rover->master->sidenum[0]].midtexture];
+	        if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
+
                 if (drawtextured)
                 {
-                    grTex = HWR_GetTexture(texturetranslation[sides[rover->master->sidenum[0]].midtexture]);
+//		    if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
+                    grTex = HWR_GetTexture( midtexnum );
 
                     wallVerts[3].t = wallVerts[2].t = (*rover->topheight - h) * grTex->scaleY;
                     wallVerts[0].t = wallVerts[1].t = (h - l + (*rover->topheight - h)) * grTex->scaleY;
@@ -1802,11 +1818,19 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
                     }
 
                     if (gr_backsector->numlights)
-                        HWR_SplitWall(gr_backsector, wallVerts, texturetranslation[sides[rover->master->sidenum[0]].midtexture], &Surf, rover->flags & FF_EXTRA ? FF_CUTEXTRA : FF_CUTSOLIDS);
+		    {
+//		        if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
+                        HWR_SplitWall(gr_backsector, wallVerts,
+				      midtexnum, &Surf,
+				      rover->flags & FF_EXTRA ? FF_CUTEXTRA : FF_CUTSOLIDS);
+		    }
                     else
                     {
                         if (blendmode != PF_Masked)
-                            HWR_AddTransparentWall(wallVerts, &Surf, texturetranslation[sides[rover->master->sidenum[0]].midtexture], blendmode);
+		        {
+//			    if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
+                            HWR_AddTransparentWall(wallVerts, &Surf, midtexnum, blendmode);
+			}
                         else
                             HWR_ProjectWall(wallVerts, &Surf, PF_Masked);
                     }

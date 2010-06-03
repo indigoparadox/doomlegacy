@@ -844,3 +844,10 @@ patchfile = w52_hw_brightness.patch
 - committed revision 675   by wesley johnson
 Adjust hardware brightness again, because rgba[] now gives some darkness.
 
+*** w52_hw_no_texture2
+patchfile = w52_hw_no_texture2.patch
+- committed revision 676   by wesley johnson
+More no-texture tests needed in FakeFloor rover code, with wider protection.
+A 3Dslab that is missing a side texture could cause a segfault, eventually,
+when it is referenced during FakeFloor roving.
+
