@@ -462,7 +462,8 @@ consvar_t cv_grsolvetjoin = { "gr_solvetjoin", "On", 0, CV_OnOff };
 // console variables in development
 consvar_t cv_grpolygonsmooth = { "gr_polygonsmooth", "Off", CV_CALL, CV_OnOff, CV_grPolygonSmooth_OnChange };
 consvar_t cv_grmd2 = { "gr_md2", "Off", 0, CV_OnOff };
-consvar_t cv_grtranswall = { "gr_transwall", "Off", 0, CV_OnOff };
+//consvar_t cv_grtranswall = { "gr_transwall", "Off", 0, CV_OnOff };
+consvar_t cv_grtranswall = { "gr_transwall", "On", 0, CV_OnOff };  // [WDJ] Tried to fix it, again.
 	// cv_grtranswall not registered, cannot use from console
 
 // faB : needs fix : walls are incorrectly clipped one column less
@@ -511,7 +512,7 @@ angle_t gr_xtoviewangle[MAXVIDWIDTH + 1];
 #define DOPLANES
 //#define DOWALLS
 
-// BP: test of draw sky by polygone like in sofware with visplane, unfortunately
+// BP: test of draw sky by polygon like in sofware with visplane, unfortunately
 // this don't work since we must have z for pixel and z for texture (not like now with z=oow)
 //#define POLYSKY
 
@@ -3720,7 +3721,7 @@ void ST_overlayDrawer(int playernum);
 
 //Hurdler: 3D water sutffs
 static int numplanes = 0;
-static int numwalls = 0;
+static int num_late_walls = 0;  // drawn late, transparent walls
 
 // ==========================================================================
 //
@@ -3857,7 +3858,7 @@ void HWR_RenderPlayerView(int viewnumber, player_t * player)
         dup_viewangle += ANG90;
     }
 #endif
-    if (numwalls && !cv_grtranswall.value)      //Hurdler: render transparent walls after everything
+    if (num_late_walls && !cv_grtranswall.value)      //Hurdler: render transparent walls after everything
     {
         HWR_RenderTransparentWalls();
     }
@@ -3881,12 +3882,12 @@ void HWR_RenderPlayerView(int viewnumber, player_t * player)
     HWR_DrawCoronas();
 #endif
 
-    if (numplanes || numwalls)  //Hurdler: render 3D water and transparent walls after everything
+    if (numplanes || num_late_walls)  //Hurdler: render 3D water and transparent walls after everything
     {
         HWD.pfnSetTransform(&atransform);
         if (numplanes)
             HWR_Render3DWater();
-        if (numwalls && cv_grtranswall.value)
+        if (num_late_walls && cv_grtranswall.value)
             HWR_RenderTransparentWalls();
         HWD.pfnSetTransform(NULL);
     }
@@ -4217,6 +4218,7 @@ void HWR_Render3DWater()
     gr_frontsector = NULL;      //Hurdler: gr_fronsector is no longer valid
     for (i = 0; i < numplanes; i++)
     {
+        // pass alpha to HWR_RenderPlane
         FBITFIELD PolyFlags = PF_Translucent | (planeinfo[i].alpha << 24);
 
         HWR_GetFlat(planeinfo[i].lumpnum);
@@ -4227,7 +4229,7 @@ void HWR_Render3DWater()
 
 //Hurdler: manage transparent texture a little better
 #define ABS(x) ((x) < 0 ? -(x) : (x))
-#define MAX_TRANSPARENTWALL 256
+#define LATE_WALLINFO_INC  128
 
 typedef struct
 {
@@ -4235,22 +4237,34 @@ typedef struct
     FSurfaceInfo Surf;
     int texnum;
     int blend;
-} wallinfo_t;
+} late_wallinfo_t;
 
-static wallinfo_t *wallinfo = NULL;
+static late_wallinfo_t * late_wallinfo = NULL;
+static int late_wallinfo_size = 0;
+
+
+void  expand_late_wallinfo( void )
+{
+    late_wallinfo_size += LATE_WALLINFO_INC;
+    late_wallinfo =
+     (late_wallinfo_t *) realloc(late_wallinfo, late_wallinfo_size * sizeof(late_wallinfo_t));
+    if( late_wallinfo == NULL )
+    {
+        // failure
+	I_Error( "Late wallinfo realloc failed, %i\n", late_wallinfo_size );
+    }
+}
 
 // Called from HWR_SplitWall, HWR_StoreWallRange
 void HWR_AddTransparentWall(wallVert3D * wallVerts, FSurfaceInfo * pSurf, int texnum, int blend)
 {
-    if (!(numwalls % MAX_TRANSPARENTWALL))
-    {
-        wallinfo = (wallinfo_t *) realloc(wallinfo, (numwalls + MAX_TRANSPARENTWALL) * sizeof(wallinfo_t));
-    }
-    memcpy(wallinfo[numwalls].wallVerts, wallVerts, sizeof(wallinfo[numwalls].wallVerts));
-    memcpy(&wallinfo[numwalls].Surf, pSurf, sizeof(FSurfaceInfo));
-    wallinfo[numwalls].texnum = texnum;
-    wallinfo[numwalls].blend = blend;
-    numwalls++;
+    if( num_late_walls >= late_wallinfo_size )  expand_late_wallinfo();
+
+    memcpy(late_wallinfo[num_late_walls].wallVerts, wallVerts, sizeof(late_wallinfo[num_late_walls].wallVerts));
+    memcpy(&late_wallinfo[num_late_walls].Surf, pSurf, sizeof(FSurfaceInfo));
+    late_wallinfo[num_late_walls].texnum = texnum;
+    late_wallinfo[num_late_walls].blend = blend;
+    num_late_walls++;
 }
 
 void HWR_RenderWall(wallVert3D * wallVerts, FSurfaceInfo * pSurf, int blend);
@@ -4265,14 +4279,14 @@ void HWR_RenderTransparentWalls()
        while (permut)
        {
        int j;
-       for (j=0, permut=0; j<numwalls-1; j++)
+       for (j=0, permut=0; j<num_late_walls-1; j++)
        {
-       if (ABS(wallinfo[j].fixedheight-dup_viewz) < ABS(wallinfo[j+1].fixedheight-dup_viewz))
+       if (ABS(late_wallinfo[j].fixedheight-dup_viewz) < ABS(late_wallinfo[j+1].fixedheight-dup_viewz))
        {
-       wallinfo_t temp;
-       memcpy(&temp, &wallinfo[j+1], sizeof(wallinfo_t));
-       memcpy(&wallinfo[j+1], &wallinfo[j], sizeof(wallinfo_t));
-       memcpy(&wallinfo[j], &temp, sizeof(wallinfo_t));
+       late_wallinfo_t temp;
+       memcpy(&temp, &late_wallinfo[j+1], sizeof(late_wallinfo_t));
+       memcpy(&late_wallinfo[j+1], &late_wallinfo[j], sizeof(late_wallinfo_t));
+       memcpy(&late_wallinfo[j], &temp, sizeof(late_wallinfo_t));
        permut = 1;
        }
        }
@@ -4280,12 +4294,12 @@ void HWR_RenderTransparentWalls()
        }
      */
 
-    for (i = 0; i < numwalls; i++)
+    for (i = 0; i < num_late_walls; i++)
     {
-        HWR_GetTexture(wallinfo[i].texnum);
-        HWR_RenderWall(wallinfo[i].wallVerts, &wallinfo[i].Surf, wallinfo[i].blend);
+        HWR_GetTexture(late_wallinfo[i].texnum);
+        HWR_RenderWall(late_wallinfo[i].wallVerts, &late_wallinfo[i].Surf, late_wallinfo[i].blend);
     }
-    numwalls = 0;
+    num_late_walls = 0;
 }
 
 void HWR_RenderWall(wallVert3D * wallVerts, FSurfaceInfo * pSurf, int blend)

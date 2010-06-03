@@ -825,3 +825,11 @@ Enhance the extra_colormap rgba field to be an array, selected by lightlevel.
 This gives the opengl colormaps some lightlevel effect.
 Enhance ColormapGenerate, to fill out the rgba lightlevel array.
 
+*** w52_hw_transparent_wall
+patchfile = w52_hw_transwall.patch
+- committed revision 673   by wesley johnson
+Sprites behind transparent walls are not drawn.
+Transparent walls are drawn after the sprites so they can be overlayed.
+There was work already done, that needed to be enabled.
+Made it clearer and added comments.
+
