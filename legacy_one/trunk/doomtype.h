@@ -163,7 +163,7 @@ typedef uint32_t  tic_t;
 #endif
 
 union FColorRGBA {
-    ULONG rgba;
+    uint32_t  rgba;
     struct {
         byte  red;
         byte  green;

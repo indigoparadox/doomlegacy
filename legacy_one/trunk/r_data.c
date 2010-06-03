@@ -1301,6 +1301,13 @@ void R_InitSpriteLumps (void)
 //   [32] : invulnerability map,               maps to whites and grays
 //   [33] : black map,			       maps entirely to black
 //   
+// Specific palette colors:
+//  [0] = black 0,0,0
+//  [4] = white 255,255,255
+//  [176] = red 255,0,0
+//  [112] = green 103,223,95
+//  [200] = blue 0,0,255
+
 // Boom: Extra colormaps can be included in the wad.  They are the same
 // size and format as the Doom colormap.
 // WATERMAP is predefined by Boom, but may be overloaded.
@@ -1342,8 +1349,240 @@ void R_ClearColormaps()
   memset(extra_colormaps, 0, sizeof(extra_colormaps));
 }
 
+
 // [WDJ] Enable to print out results of colormap generate.
 #define VIEW_COLORMAP_GEN
+
+// In order: whiteindex, greyindex, redindex, greenindex, blueindex
+static byte  doom_analyze_index[5] = {
+    4, 97, 176, 112, 200
+};
+static byte  heretic_analyze_index[5] = {
+    35, 17, 160, 217, 196
+};
+
+// [WDJ] Analyze an extra colormap to derive some GL parameters
+void  R_Colormap_Analyze( int mapnum )
+{
+    extracolormap_t * colormapp = & extra_colormaps[ mapnum ];
+    colormapp->fadestart = 0;
+    colormapp->fadeend = 33;
+    colormapp->maskamt = 0x0;
+    colormapp->fog = 0;
+
+#ifdef HWRENDER
+  // Hardware renderer does not use, nor allocate, the colormap.
+  // It uses the rgba field instead.
+  if(rendermode == render_soft)
+#endif     
+  {
+    // Software renderer defaults.
+    // SoM: Added, we set all params of the colormap to normal because there
+    // is no real way to tell how GL should handle a colormap lump anyway..
+    colormapp->maskcolor = 0x00ffffff; // white
+    colormapp->fadecolor = 0x0; // black
+    colormapp->rgba[0] = 0x17ffffff;
+  }
+#ifdef HWRENDER
+  else
+  {
+    // Analyze the Boom colormap for the hardware renderer.
+    // The Boom colormap has been loaded already.
+    // lighttable_t = byte array
+    byte * cm = extra_colormaps[mapnum].colormap; // Boom colormap
+    byte * tstcolor = & doom_analyze_index[0];  // colors to test
+    RGBA_t work_rgba;
+    int i;
+
+    if( gamemode == heretic )
+       tstcolor = & heretic_analyze_index[0];  // heretic colors to test
+
+#if 0
+    // For new port, analyze the colormap to find white, grey, red, blue, green.
+    // This only affects this color analyzer, and is not fatal.
+    int whiteness = 0;
+    int greyness = 0;
+    int redness = 0;
+    int greenness = 0;
+    int blueness = 0;
+    for(i=0; i<256; i++)
+    {
+        int cr = pLocalPalette[i].s.red;
+        int cg = pLocalPalette[i].s.green;
+        int cb = pLocalPalette[i].s.blue;
+        int n = cr+cg+cb;
+        if( n>whiteness )
+        {
+            whiteness = n;
+	    tstcolor[0] = i;
+	}
+        n = ((cr > 128)? 255 - cr : cr) + ((cg > 128)? 255 - cg : cg) + ((cb > 128)? 255 - cb : cb);
+        if( n>greyness )  // med grey
+        {
+	    greyness = n;
+            tstcolor[1] = i;
+	}
+        n = cr-cg-cb;
+        if( n>redness )
+        {
+	    redness = n;
+	    tstcolor[2] = i; // red
+	}
+        n= cg-cr-cb;
+        if( n>greenness )
+        {
+	    greenness = n;
+	    tstcolor[3] = i; // green
+	}
+        n= cb-cr-cg;
+        if( n>blueness )
+        {
+	    blueness = n;
+	    tstcolor[4] = i;  // blue
+	}
+    }
+#ifdef VIEW_COLORMAP_GEN
+    fprintf(stderr,"White index=%i, grey index=%i, red index=%i, green index=%i, blue index=%i\n",
+	   tstcolor[0], tstcolor[1], tstcolor[2], tstcolor[3], tstcolor[4]);
+#endif   
+#endif   
+
+    // [WDJ] Analyze the colormap to get some imitative parameters.
+    for(i=0; i<NUM_RGBA_LEVELS; i++)
+    {
+        // rgba[0]=darkest, rgba[NUM_RGBA_LEVELS-1] is the brightest
+        // Within a range, analyze a map nearer the middle of the range.
+        int mapindex = (((NUM_RGBA_LEVELS-1-i) * 32) + 8) / NUM_RGBA_LEVELS;
+        // Estimate an alpha, could set it to max,
+        // smaller alpha indicates washed out color.
+        // This is completely ad-hoc, and rough.  It purposely favors high alpha.
+
+// Analyze 4
+        // the brightest red, green, blue should have the same brightness
+        float h4r = 0.0; // alpha = 1
+        int cnt =0;
+        int try_cnt = 0;
+        int dd4, dn4, k1, k2;
+        // for all combinations of tstcolor
+        for( k1=0; k1<4; k1++ )
+        {
+	    byte i1 = tstcolor[k1];
+	    byte cm1 = cm[ LIGHTTABLE(mapindex) + i1 ];
+	    for( k2=k1+1; k2<5; k2++ )
+	    {
+	        byte i2 = tstcolor[k2];
+	        byte cm2 = cm[ LIGHTTABLE(mapindex) + i2 ];
+	        // for each color
+	        int krgb;
+	        for( krgb=0; krgb<3; krgb++ )  // red, green, blue
+	        { 
+		    //  (1-h) = (cm[b].r - cm[r].r) / (p[b].r -  p[r].r)
+		    switch( krgb )
+		    {
+		     case 0: // red
+		        dd4 = pLocalPalette[i1].s.red -  pLocalPalette[i2].s.red;
+		        dn4 = pLocalPalette[cm1].s.red - pLocalPalette[cm2].s.red;
+		        break;
+		     case 1: // green
+		        dd4 = pLocalPalette[i1].s.green -  pLocalPalette[i2].s.green;
+		        dn4 = pLocalPalette[cm1].s.green - pLocalPalette[cm2].s.green;
+		        break;
+		     default: // blue
+		        dd4 = pLocalPalette[i1].s.blue -  pLocalPalette[i2].s.blue;
+		        dn4 = pLocalPalette[cm1].s.blue - pLocalPalette[cm2].s.blue;
+		        break;
+		    }
+		    if( dn4 && (dd4 > 0.01 || dd4 < -0.01))
+		    {
+		        float h3 = (float)dn4 / (float)dd4;
+		        if( h3 > 1.0 )   h3 = 1.0;
+		        if( h3 < 0.01 )  h3 = 0.01;
+		        h4r += h3;  // total for avg
+		        cnt ++;
+		    }
+		    try_cnt ++;  // for fog
+		}
+	    }
+	}
+        h4r /= cnt;
+        int m4_fog = 0;
+        // h = 0.0 is a useless table
+        if( h4r > 0.99 ) {
+	    h4r = 0.99;
+	    m4_fog = 1;
+	}
+        if( h4r < 0.00 ) {
+	    h4r = 0.00;
+	    m4_fog = 1;
+	}
+        if( cnt * 2 < try_cnt )  m4_fog = 1;
+        h4r = h4r * (0.66 / 1.732);  // correction for testing at 1/3 max brightness
+        float h4 = 1.0 - h4r;
+        int m4_red, m4_blue, m4_green;
+#if 0
+        // Generate color tint from changes grey.
+        byte greyindex = tstcolor[1];
+        byte cm_grey = cm[ LIGHTTABLE(mapindex) + greyindex ];  // white
+        // cr = (cm[w].r - (1-h) * p[w].r) / h ;
+        m4_red = ( pLocalPalette[cm_grey].s.red - (h4r* pLocalPalette[greyindex].s.red)) / h4;
+        if( m4_red > 255 ) m4_red = 255;
+        if( m4_red < 0 ) m4_red = 0;
+        // cg = (cm[w].g - (1-h) * p[w].g) / h ;
+        m4_green = ( pLocalPalette[cm_grey].s.green - (h4r* pLocalPalette[greyindex].s.green)) / h4;
+        if( m4_green > 255 ) m4_green = 255;
+        if( m4_green < 0 ) m4_green = 0;
+        // cb = (cm[w].b - (1-h) * p[w].b) / h ;
+        m4_blue = ( pLocalPalette[cm_grey].s.blue - (h4r* pLocalPalette[greyindex].s.blue)) / h4;
+        if( m4_blue > 255 ) m4_blue = 255;
+        if( m4_blue < 0 ) m4_blue = 0;
+#else
+        // Generate color tint from changes white.
+        byte whiteindex = tstcolor[0];
+        byte cm_white = cm[ LIGHTTABLE(mapindex) + whiteindex ];  // white
+        // cr = (cm[w].r - (1-h) * p[w].r) / h ;
+        m4_red = ( pLocalPalette[cm_white].s.red - (h4r* pLocalPalette[whiteindex].s.red)) / h4;
+        if( m4_red > 255 ) m4_red = 255;
+        if( m4_red < 0 ) m4_red = 0;
+        // cg = (cm[w].g - (1-h) * p[w].g) / h ;
+        m4_green = ( pLocalPalette[cm_white].s.green - (h4r* pLocalPalette[whiteindex].s.green)) / h4;
+        if( m4_green > 255 ) m4_green = 255;
+        if( m4_green < 0 ) m4_green = 0;
+        // cb = (cm[w].b - (1-h) * p[w].b) / h ;
+        m4_blue = ( pLocalPalette[cm_white].s.blue - (h4r* pLocalPalette[whiteindex].s.blue)) / h4;
+        if( m4_blue > 255 ) m4_blue = 255;
+        if( m4_blue < 0 ) m4_blue = 0;
+#endif
+#ifdef VIEW_COLORMAP_GEN
+        // Enable to see results of analysis.
+        fprintf( stderr,
+	       "Analyze4: alpha=%i  red=%i  green=%i  blue=%i  fog=%i\n",
+	       (int)(255.0*h4), m4_red, m4_green, m4_blue, m4_fog );
+#endif      
+        // Not great, get some tints wrong, and sometimes too light.
+        work_rgba.s.alpha = (int)(h4 * 26.0);
+        work_rgba.s.red = m4_red;
+        work_rgba.s.green = m4_green;
+        work_rgba.s.blue = m4_blue;
+
+        colormapp->rgba[i] = work_rgba.rgba;  // to extra_colormap
+
+#ifdef VIEW_COLORMAP_GEN
+        // Enable to view settings of RGBA for hardware renderer.
+        fprintf(stderr,"RGBA[%i]: %8x   (alpha=%i, R=%i, G=%i, B=%i)\n",
+	      i, colormapp->rgba[i],
+	      (int)work_rgba.s.alpha,
+	      (int)work_rgba.s.red, (int)work_rgba.s.green, (int)work_rgba.s.blue );
+#endif
+    }
+    // They had plans, but these are still unused in hardware renderer.
+    colormapp->maskcolor = colormapp->rgba[NUM_RGBA_LEVELS-1];
+    colormapp->fadecolor = colormapp->rgba[0];
+//   colormapp->maskcolor = ((cb) >> 3) + (((cg) >> 2) << 5) + (((cr) >> 3) << 11);
+  
+  }
+#endif
+}
+
 
 // [WDJ] The name parameter has trailing garbage, but the name lookup
 // only uses the first 8 chars.
@@ -1372,6 +1611,11 @@ int R_ColormapNumForName(char *name)
   // read colormap tables [][] of byte, mapping to alternative palette colors
   W_ReadLump (lump, extra_colormaps[num_extra_colormaps].colormap);
 
+#ifdef VIEW_COLORMAP_GEN
+  fprintf(stderr, "\nBoom Colormap: num=%i name= %8.8s\n", num_extra_colormaps, name );
+#endif
+  R_Colormap_Analyze( num_extra_colormaps );
+  
   num_extra_colormaps++;
   return num_extra_colormaps - 1;
 }
@@ -1507,6 +1751,13 @@ int R_CreateColormap(char *colorstr, char *ctrlstr, char *fadestr)
       return i;
   }
 
+#ifdef VIEW_COLORMAP_GEN
+  fprintf(stderr, "\nGenerate Colormap: num=%i\n", num_extra_colormaps );
+  fprintf(stderr, " alpha=%2x, color=(%2x,%2x,%2x), fade=(%2x,%2x,%2x), fog=%i\n",
+	  alphamask, (int)color_r, (int)color_g, (int)color_b,
+	  	     (int)cfade_r, (int)cfade_g, (int)cfade_b, fog );
+#endif
+
   if(num_extra_colormaps == MAXCOLORMAPS)
     I_Error("R_CreateColormap: Too many colormaps!\n");
   num_extra_colormaps++;
@@ -1589,13 +1840,39 @@ int R_CreateColormap(char *colorstr, char *ctrlstr, char *fadestr)
 #ifdef HWRENDER
   else
   {
-     // [WDJ] This will be fixed to use fade also.
-     // hardware needs color_r, color_g, color_b, before they get *maskamt.
-     cr = (int)( color_r );
-     cg = (int)( color_g );
-     cb = (int)( color_b );
-     extra_colormap_p->rgba = (alphamask<<24)|(cb<<16)|(cg<<8)|(cr);
-#if 1
+      // hardware needs color_r, color_g, color_b, before they get *maskamt.
+      for( i=0; i<NUM_RGBA_LEVELS; i++ )
+      {
+	  // rgba[0]=darkest, rgba[NUM_RGBA_LEVELS-1] is the brightest
+          int mapindex = ((NUM_RGBA_LEVELS-1-i) * 34) / NUM_RGBA_LEVELS;
+          double colorper, fadeper;
+          if( mapindex <= fadestart )
+          {
+	      colorper = 1.0; // rgba = color
+              fadeper = 0.0;
+          }
+          else if( mapindex < fadeend )
+          {
+              // mapindex != fadeend, fadeend != fadestart
+	      // proportional ramp from color to fade color
+	      colorper = ((double)(fadeend-mapindex))/(fadeend-fadestart);
+	      fadeper = 1.0 - colorper;
+	  }
+	  else
+	  {
+	      // fadeend and after
+	      colorper = 0.0;
+	      fadeper = 1.0; // rgba = fade
+	  }
+	  cr = (int)( colorper*color_r + fadeper*cfade_r );
+	  cg = (int)( colorper*color_g + fadeper*cfade_g );
+	  cb = (int)( colorper*color_b + fadeper*cfade_b );
+	  extra_colormap_p->rgba[i] = (alphamask<<24)|(cb<<16)|(cg<<8)|(cr);
+#ifdef VIEW_COLORMAP_GEN
+	  fprintf(stderr,"RGBA[%i]: %x\n", i, extra_colormap_p->rgba[i]);
+#endif
+      }
+#if 0
 #ifdef VIEW_COLORMAP_GEN
     // [WDJ] DEBUG, TEST AGAINST OLD HDW CODE
     unsigned rgba_oldhw = 
@@ -1603,8 +1880,8 @@ int R_CreateColormap(char *colorstr, char *ctrlstr, char *fadestr)
 	  (HEX_TO_INT(colorstr[3]) << 12) + (HEX_TO_INT(colorstr[4]) << 8) +
 	  (HEX_TO_INT(colorstr[5]) << 20) + (HEX_TO_INT(colorstr[6]) << 16) + 
 	  (ALPHA_TO_INT(colorstr[7]) << 24);
-   if( rgba_oldhw != extra_colormap_p->rgba )
-      fprintf(stderr,"RGBA: old=%X, new=%x\n", rgba_oldhw, extra_colormap_p->rgba);
+   if( rgba_oldhw != extra_colormap_p->rgba[0] )
+      fprintf(stderr,"RGBA: old=%X, new=%x\n", rgba_oldhw, extra_colormap_p->rgba[i-1]);
 #endif
 #endif
   }

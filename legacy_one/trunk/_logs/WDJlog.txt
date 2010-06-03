@@ -815,3 +815,13 @@ Provided alternative code where FF_FOG test for setting colormap was
 unusual compared to other places in the code.  Not sure which is
 correct.
 
+*** w52_hw_colormap
+patchfile = w52_hw_colormap.patch
+- committed revision 672   by wesley johnson
+Bug fix, hardware renderer can now display Boom colormaps, and can now
+display levels of colormap brightness.
+Create R_ColormapAnalyze, to generate hardware rgba info from Boom colormaps.
+Enhance the extra_colormap rgba field to be an array, selected by lightlevel.
+This gives the opengl colormaps some lightlevel effect.
+Enhance ColormapGenerate, to fill out the rgba lightlevel array.
+

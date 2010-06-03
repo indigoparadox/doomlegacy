@@ -174,18 +174,31 @@ typedef byte    lighttable_t;  // light map table
 // index a lighttable by mult by sizeof lighttable ( *256  =>  <<8 )
 #define LIGHTTABLE(t)   ((t)<<8)
 
+// right shift to convert 0..255 to 0..(NUM_RGBA_LEVELS-1)
+//#define NUM_RGBA_LEVELS  4
+//#define LIGHT_TO_RGBA_SHIFT  6
+#define NUM_RGBA_LEVELS  8
+#define LIGHT_TO_RGBA_SHIFT  5
+//#define NUM_RGBA_LEVELS  16
+//#define LIGHT_TO_RGBA_SHIFT  4
+//#define NUM_RGBA_LEVELS  32
+//#define LIGHT_TO_RGBA_SHIFT  3
 
 // SoM: ExtraColormap type. Use for extra_colormaps from now on.
 typedef struct
 {
-  unsigned short  maskcolor;
-  unsigned short  fadecolor;
+  uint32_t        maskcolor;
+  uint32_t        fadecolor;
   double          maskamt;
-  unsigned short  fadestart, fadeend;
+  uint16_t        fadestart, fadeend;
   int             fog;
 
   //Hurdler: rgba is used in hw mode for coloured sector lighting
-  int             rgba; // similar to maskcolor in sw mode
+  // [WDJ] Separate rgba for light levels [0]=darkest, [NUM-1]=brightest
+  // This is cast into a union of byte components.
+  uint32_t        rgba[NUM_RGBA_LEVELS]; // similar to maskcolor in sw mode
+     // alpha=0..26, 0=black/white tint, 26=saturated color
+     // r,g,b are the saturated color, 0..255
 
   lighttable_t*   colormap;
 } extracolormap_t;
