@@ -926,13 +926,13 @@ void R_Subsector (int num)
     // levels and colormaps.
     if(frontsector->ffloors)
     {
-      if(frontsector->moved)
+      if(frontsector->moved) // floor or ceiling moved, must refresh
       {
         frontsector->numlights = sub->sector->numlights = 0;
-        R_Prep3DFloors(frontsector);
+        R_Prep3DFloors(frontsector);  // refresh light lists
         sub->sector->lightlist = frontsector->lightlist;
         sub->sector->numlights = frontsector->numlights;
-        sub->sector->moved = frontsector->moved = false;
+        sub->sector->moved = frontsector->moved = false;  // clear until next move
       }
 
       light = R_GetPlaneLight(frontsector, frontsector->floorheight);

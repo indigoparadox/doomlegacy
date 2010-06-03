@@ -707,9 +707,9 @@ int SL_SearchServer( int node )
 void SL_InsertServer( serverinfo_pak *info, int node)
 {
     int i;
-    boolean moved;
+    boolean move_in_list;  // continue until no movement in list
 
-    // search if not allready on it
+    // search if not already on it
     i = SL_SearchServer( node );
     if( i==-1 )
     {
@@ -725,7 +725,7 @@ void SL_InsertServer( serverinfo_pak *info, int node)
     // list is sorted by time (ping)
     // so move the entry until it is sorted
     do {
-        moved = false;
+        move_in_list = false;
         if( i>0 && serverlist[i].info.time < serverlist[i-1].info.time )
         {
             serverelem_t s;
@@ -733,7 +733,7 @@ void SL_InsertServer( serverinfo_pak *info, int node)
             serverlist[i] =  serverlist[i-1];
             serverlist[i-1] = s;
             i--;
-            moved = true;
+            move_in_list = true;
         }
         else
         if( i<serverlistcount-1 && serverlist[i].info.time > serverlist[i+1].info.time )
@@ -743,9 +743,9 @@ void SL_InsertServer( serverinfo_pak *info, int node)
             serverlist[i] =  serverlist[i+1];
             serverlist[i+1] = s;
             i++;
-            moved = true;
+            move_in_list = true;
         }
-    } while(moved);
+    } while(move_in_list);
 }
 
 void CL_UpdateServerList( boolean internetsearch )

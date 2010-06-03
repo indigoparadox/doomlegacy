@@ -739,3 +739,10 @@ Documents a bug that is not fixed.
 When 2 players, with 2nd player not active, the second player will segfault
 at the marked location, when the 1st player enters the lift on MAP01.
 This would be the first act making a sound that the other player could hear.
+
+*** w52_moving_sector
+patchfile = w52_moving_sector.patch
+- committed revision 663   by wesley johnson
+Found too many uses of variable "move" in code, so renamed and commented
+some of them.
+

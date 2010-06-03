@@ -80,6 +80,7 @@
 // Move a plane (floor or ceiling) and check for crushing
 //
 //SoM: I had to copy the entire function from Boom because it was causing errors.
+// Move a floor or ceiling, update all affected structures.
 result_e T_MovePlane ( sector_t*     sector,
 		       fixed_t       speed,
 		       fixed_t       dest,

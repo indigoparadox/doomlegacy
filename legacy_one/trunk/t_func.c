@@ -2554,7 +2554,7 @@ void SF_MoveCamera( void )
     int angledir = 0;
     mobj_t *camera;
     mobj_t *target;
-    int moved = 0;
+    int moved = 0; // camera moved
     int quad1, quad2;
 
     if (t_argc < 6)

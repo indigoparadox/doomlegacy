@@ -2233,6 +2233,7 @@ boolean P_ChangeSector ( sector_t*     sector,
 
 
 //SoM: 3/15/2000: New function. Much faster.
+// Check sector after floor or ceiling movement, update affected structures.
 // crunch enables crushing damage
 boolean P_CheckSector(sector_t* sector, boolean crunch)
 {
@@ -2259,18 +2260,21 @@ boolean P_CheckSector(sector_t* sector, boolean crunch)
     sector_t*      sec;
     for(i = 0; i < sector->numattached; i ++)
     {
+      // for each sector attached to the moved sector
       sec = &sectors[sector->attached[i]];
+      // Mark things as stale.
       for (n=sec->touching_thinglist; n; n=n->m_snext)
         n->visited = false;
 
-      sec->moved = true;
+      sec->moved = true;  // the sector lightlists are stale
 
+      // Update things until all are visited.
       do {
         for (n=sec->touching_thinglist; n; n=n->m_snext)
 	{
-          if (!n->visited)
+          if (!n->visited)               // unprocessed thing found
           {
-            n->visited  = true;
+            n->visited  = true;         // mark thing as processed
             if (!(n->m_thing->flags & MF_NOBLOCKMAP))
               PIT_ChangeSector(n->m_thing);
             break;
@@ -2279,14 +2283,17 @@ boolean P_CheckSector(sector_t* sector, boolean crunch)
       } while (n);
     }
   }
-  // Mark all things invalid
-  sector->moved = true;
+  // Mark all things invalid in moved sector
+  sector->moved = true;  // the moved sector lightlist is stale
 
+  // Mark things as stale.
   for (n=sector->touching_thinglist; n; n=n->m_snext)
       n->visited = false;
   
+  // Update things until all are visited.
   do {
       for (n=sector->touching_thinglist; n; n=n->m_snext)  // go through list
+      {
           if (!n->visited)               // unprocessed thing found
           {
               n->visited  = true;          // mark thing as processed
@@ -2294,6 +2301,7 @@ boolean P_CheckSector(sector_t* sector, boolean crunch)
                   PIT_ChangeSector(n->m_thing);    // process it
               break;                 // exit and start over
           }
+      }
   } while (n);  // repeat from scratch until all things left are marked valid
   
   return nofit;

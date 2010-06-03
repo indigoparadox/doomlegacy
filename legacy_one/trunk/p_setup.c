@@ -636,6 +636,7 @@ void P_LoadSectors (int lump)
         ss->prevsec = -1;
 
         ss->modelsec = -1; //SoM: 3/17/2000: This causes some real problems
+       			   // [WDJ] Is now dependent upon model
         ss->model = SM_normal; //SoM: 3/20/2000, [WDJ] 11/14/2009
         ss->floorlightsec = -1;
         ss->ceilinglightsec = -1;
@@ -644,7 +645,7 @@ void P_LoadSectors (int lump)
         ss->numlights = 0;
         ss->attached = NULL;
         ss->numattached = 0;
-        ss->moved = true;
+        ss->moved = true;  // force init of light lists
         ss->floor_xoffs = ss->ceiling_xoffs = ss->floor_yoffs = ss->ceiling_yoffs = 0;
         ss->bottommap = ss->midmap = ss->topmap = -1;
         
