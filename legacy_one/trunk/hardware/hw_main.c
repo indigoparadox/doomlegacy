@@ -1015,29 +1015,62 @@ void HWR_DrawSegsSplats(FSurfaceInfo * pSurf)
 // ==========================================================================
 //                                        WALL GENERATION FROM SUBSECTOR SEGS
 // ==========================================================================
+
+#if 1
+// [WDJ] 6/1/2010 Translucent to GL operations table
+typedef struct
+{
+    int PF_op;
+    byte alpha_equiv;
+} translucent_lookup_t;
+
+static  translucent_lookup_t  translucent_lookup[] =
+{
+   {0, 0},  // not translucent
+   {PF_Translucent, 0x80}, // TRANSLU_med
+   {PF_Translucent, 0x40}, // TRANSLU_more
+   {PF_Translucent, 0x30}, // TRANSLU_hi
+   {PF_Additive,    0x80}, // TRANSLU_fire
+   {PF_Translucent, 0xff}  // TRANSLU_fx1
+};
+  
+// Called from HWR_StoreWallRange, HWR_DrawSprite
+int HWR_TranstableToAlpha(int transtablenum, FSurfaceInfo * pSurf)
+{
+    if( transtablenum <= TRANSLU_fx1 )
+    {
+        translucent_lookup_t *  tlup = & translucent_lookup[ transtablenum ];
+        pSurf->FlatColor.s.alpha = tlup->alpha_equiv;
+        return tlup->PF_op;
+    }
+    return PF_Translucent;
+}
+#else
+// Old code, before 6/1/2010
 // Called from HWR_StoreWallRange, HWR_DrawSprite
 int HWR_TranstableToAlpha(int transtablenum, FSurfaceInfo * pSurf)
 {
     switch (transtablenum)
     {
-        case tr_transmed:
+        case TRANSLU_med:
             pSurf->FlatColor.s.alpha = 0x80;
             return PF_Translucent;
-        case tr_transmor:
+        case TRANSLU_more:
             pSurf->FlatColor.s.alpha = 0x40;
             return PF_Translucent;
-        case tr_transhi:
+        case TRANSLU_hi:
             pSurf->FlatColor.s.alpha = 0x30;
             return PF_Translucent;
-        case tr_transfir:
+        case TRANSLU_fire:
             pSurf->FlatColor.s.alpha = 0x80;
             return PF_Additive;
-        case tr_transfx1:
+        case TRANSLU_fx1:
             pSurf->FlatColor.s.alpha = 0xff;
             return PF_Translucent;
     }
     return PF_Translucent;
 }
+#endif
 
 // v1,v2 : the start & end vertices along the original wall segment, that may have been
 //         clipped so that only a visible portion of the wall seg is drawn.
@@ -1581,20 +1614,20 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
                 case 260:  // Boom make translucent
 	                   // Legacy translucent  284 to 288
                 case 284:  // Legacy translucent, brighten (greenish)
-                    blendmode = HWR_TranstableToAlpha(tr_transmed, &Surf);
+                    blendmode = HWR_TranstableToAlpha(TRANSLU_med, &Surf);
                     break;
                 case 285:  // Legacy translucent, brighten (less greenish)
-                    blendmode = HWR_TranstableToAlpha(tr_transmor, &Surf);
+                    blendmode = HWR_TranstableToAlpha(TRANSLU_more, &Surf);
                     break;
                 case 286:  // Legacy translucent, darkens
-                    blendmode = HWR_TranstableToAlpha(tr_transhi, &Surf);
+                    blendmode = HWR_TranstableToAlpha(TRANSLU_hi, &Surf);
                     break;
                 case 287:  // Legacy translucent, brightens
-                    blendmode = HWR_TranstableToAlpha(tr_transfir, &Surf);
+                    blendmode = HWR_TranstableToAlpha(TRANSLU_fire, &Surf);
                     break;
                 case 288:  // Legacy selective translucent, on selected colors
 	            //FIXME: not work like this must be loaded with firetranslucent to true !
-                    blendmode = HWR_TranstableToAlpha(tr_transfx1, &Surf);
+                    blendmode = HWR_TranstableToAlpha(TRANSLU_fx1, &Surf);
                     break;
                 case 283:  // Legacy fog sheet
                     blendmode = PF_Substractive;
@@ -2887,7 +2920,7 @@ static void HWR_DrawSprite(gr_vissprite_t * spr)
     //          in memory and we add the md2 model if it exists for that sprite
 
     // convert sprite differently when fxtranslucent is detected
-    if ((spr->mobj->frame & FF_TRANSMASK) == tr_transfx1 << FF_TRANSSHIFT)
+    if ((spr->mobj->frame & FF_TRANSMASK) == (TRANSLU_fx1<<FF_TRANSSHIFT))
     {
         firetranslucent = true;
         gpatch = W_CachePatchNum(spr->patchlumpnum, PU_CACHE);

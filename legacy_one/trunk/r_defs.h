@@ -537,11 +537,11 @@ typedef struct line_s
     void*       splats;
     
     //SoM: 3/6/2000
-    int tranlump;          // translucency filter, -1 == none 
+//    int tranlump;          // translucency filter, -1 == none 
                            // (Will have to fix to use with Legacy's Translucency?)
     int firsttag,nexttag;  // improves searches for tags.
 
-    int ecolormap;         // SoM: Used for 282 linedefs
+//    int ecolormap;         // SoM: Used for 282 linedefs
 } line_t;
 
 
@@ -863,7 +863,7 @@ typedef struct vissprite_s
     lighttable_t*       colormap;
 
     //Fab:29-04-98: for MF_SHADOW sprites, which translucency table to use
-    byte*               transmap;
+    byte*               translucentmap;
 
     int                 mobjflags;
 

@@ -660,7 +660,7 @@ void HWR_DrawMD2( gr_vissprite_t* spr )
     //          in memory and we add the md2 model if it exists for that sprite
 
     // convert srpite differently when fxtranslucent is detected
-    if( (spr->mobj->frame & FF_TRANSMASK) == tr_transfx1<<FF_TRANSSHIFT)
+    if( (spr->mobj->frame & FF_TRANSMASK) == (TRANSLU_fx1<<FF_TRANSSHIFT))
     {
         firetranslucent = true;
         gpatch = W_CachePatchNum (spr->patchlumpnum, PU_CACHE );

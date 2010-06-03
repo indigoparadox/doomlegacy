@@ -787,3 +787,10 @@ from the other r_lightlist_t.
 Renamed some list uses to ff_list, to differentiate them from other lists.
 Fixed expand_lightlist, gave it an error message on failure.
 
+*** w52_translucent
+patchfile = w52_translucent.patch
+- committed revision 668   by wesley johnson
+Spell out translucent, so can differentiate it from other trans operations.
+Rename trans enum values to be readable.
+Use translucenttable[xxx] syntax, instad of *(translucenttable + xxx).
+Make table for translucent selection to GL conversion.

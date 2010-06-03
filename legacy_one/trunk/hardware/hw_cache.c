@@ -164,7 +164,7 @@ static  int     blocksize;
 static  int     blockwidth;
 static  int     blockheight;
 
-extern byte *transtables;
+extern byte *   translucenttables;  // set of translucent tables 
 
 int patchformat   = GR_TEXFMT_AP_88; // use alpha for holes
 int textureformat = GR_TEXFMT_P_8; // use chromakey for hole
@@ -262,12 +262,17 @@ static void HWR_DrawPatchInCache (GlideMipmap_t* mipmap,
             dest = block + (position*blockmodulo);
             while (count>0)
             {
-                byte texel;
+                byte texel = source[yfrac>>16];
                 count--;
 
                 texel = source[yfrac>>16];
 
-                if( firetranslucent && (transtables[(texel<<8)+0x40000]!=texel) )
+		// [WDJ] FIXME or COMMENT THIS, is this test on fire or fx1. 
+		// Verified that 0x40000 is the fx1 translucent table.
+                if( firetranslucent
+// 		    && (translucenttables[(texel<<8)+0x40000]!=texel) ) // orig
+		    && (translucenttables[TRANSLU_TABLE_fx1 + (texel<<8)] != texel) )
+//		    && (translucenttables[TRANSLU_TABLE_fire + (texel<<8)] != texel) )
                     alpha = 0x80;
                 else
                     alpha = 0xff;

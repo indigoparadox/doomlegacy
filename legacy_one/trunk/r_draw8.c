@@ -541,7 +541,7 @@ void R_DrawTranslucentColumn_8(void)
     // Here we do an additional index re-mapping.
     do
     {
-        *dest = dc_colormap[*(dc_transmap + (dc_source[frac >> FRACBITS] << 8) + (*dest))];
+        *dest = dc_colormap[ dc_translucentmap[ (dc_source[frac >> FRACBITS] << 8) + (*dest) ]];
         dest += vid.width;
         frac += fracstep;
     }
@@ -605,7 +605,7 @@ void R_DrawTranslucentColumn_8(void)
                 //  using a lighting/special effects LUT.
                 // heightmask is the Tutti-Frutti fix -- killough
 
-                *dest = dc_colormap[*(dc_transmap + (source[frac >> FRACBITS] << 8) + (*dest))];
+                *dest = dc_colormap[ dc_translucentmap[ (source[frac >> FRACBITS] << 8) + (*dest) ]];
                 dest += vid.width;
                 if ((frac += fracstep) >= heightmask)
                     frac -= heightmask;
@@ -616,15 +616,15 @@ void R_DrawTranslucentColumn_8(void)
         {
             while ((count -= 2) >= 0)   // texture height is a power of 2 -- killough
             {
-                *dest = dc_colormap[*(dc_transmap + (source[frac >> FRACBITS] << 8) + (*dest))];
+                *dest = dc_colormap[ dc_translucentmap[ (source[frac >> FRACBITS] << 8) + (*dest) ]];
                 dest += vid.width;
                 frac += fracstep;
-                *dest = dc_colormap[*(dc_transmap + (source[frac >> FRACBITS] << 8) + (*dest))];
+                *dest = dc_colormap[ dc_translucentmap[ (source[frac >> FRACBITS] << 8) + (*dest) ]];
                 dest += vid.width;
                 frac += fracstep;
             }
             if (count & 1)
-                *dest = dc_colormap[*(dc_transmap + (source[frac >> FRACBITS] << 8) + (*dest))];
+                *dest = dc_colormap[ dc_translucentmap[ (source[frac >> FRACBITS] << 8) + (*dest) ]];
         }
     }
 }
@@ -684,7 +684,7 @@ void R_DrawTranslatedTranslucentColumn_8(void)
                 //  using a lighting/special effects LUT.
                 // heightmask is the Tutti-Frutti fix -- killough
 
-                *dest = dc_colormap[*(dc_transmap + (dc_colormap[dc_skintran[dc_source[frac >> FRACBITS]]] << 8) + (*dest))];
+                *dest = dc_colormap[ dc_translucentmap[ (dc_colormap[dc_skintran[dc_source[frac >> FRACBITS]]] << 8) + (*dest) ]];
 
                 dest += vid.width;
                 if ((frac += fracstep) >= heightmask)
@@ -696,16 +696,16 @@ void R_DrawTranslatedTranslucentColumn_8(void)
         {
             while ((count -= 2) >= 0)   // texture height is a power of 2 -- killough
             {
-                *dest = dc_colormap[*(dc_transmap + (dc_colormap[dc_skintran[dc_source[frac >> FRACBITS]]] << 8) + (*dest))];
+                *dest = dc_colormap[ dc_translucentmap[ (dc_colormap[dc_skintran[dc_source[frac >> FRACBITS]]] << 8) + (*dest) ]];
                 dest += vid.width;
                 frac += fracstep;
-                *dest = dc_colormap[*(dc_transmap + (dc_colormap[dc_skintran[dc_source[frac >> FRACBITS]]] << 8) + (*dest))];
+                *dest = dc_colormap[ dc_translucentmap[ (dc_colormap[dc_skintran[dc_source[frac >> FRACBITS]]] << 8) + (*dest) ]];
                 dest += vid.width;
                 frac += fracstep;
             }
             if (count & 1)
             {
-                *dest = dc_colormap[*(dc_transmap + (dc_colormap[dc_skintran[dc_source[frac >> FRACBITS]]] << 8) + (*dest))];
+                *dest = dc_colormap[ dc_translucentmap[ (dc_colormap[dc_skintran[dc_source[frac >> FRACBITS]]] << 8) + (*dest) ]];
             }
         }
     }
@@ -889,8 +889,8 @@ void R_DrawTranslucentSpan_8(void)
         // Lookup pixel from flat texture tile,
         //  re-index using light/colormap.
         //      *dest++ = ds_colormap[ds_source[spot]];
-//              *dest++ = ds_colormap[*(ds_transmap + (ds_source[spot] << 8) + (*dest))];
-        *dest = ds_colormap[*(ds_transmap + (ds_source[((yfrac >> (16 - flatsubtract)) & (flatmask)) | (xfrac >> 16)] << 8) + (*dest))];
+//              *dest++ = ds_colormap[*(ds_translucentmap + (ds_source[spot] << 8) + (*dest))];
+        *dest = ds_colormap[ ds_translucentmap[ (ds_source[((yfrac >> (16 - flatsubtract)) & (flatmask)) | (xfrac >> 16)] << 8) + (*dest) ]];
         dest++;	// [WDJ] warning: undetermined order when combined with above
 
         // Next step in u,v.
@@ -918,7 +918,7 @@ void R_DrawTranslucentSpan_8(void)
 
        source = ds_source;
        colormap = ds_colormap;
-       transmap = ds_transmap;
+       transmap = ds_translucentmap;
        dest = ylookup[ds_y] + columnofs[ds_x1];
        count = ds_x2 - ds_x1 + 1; 
 
@@ -978,10 +978,11 @@ void R_DrawFogSpan_8(void)
     unsigned count;
 
     colormap = ds_colormap;
-    transmap = ds_transmap;
+    transmap = ds_translucentmap;
     dest = ylookup[ds_y] + columnofs[ds_x1];
     count = ds_x2 - ds_x1 + 1;
 
+    // partial unrolled loop, for speed
     while (count >= 4)
     {
         dest[0] = colormap[dest[0]];
@@ -996,6 +997,7 @@ void R_DrawFogSpan_8(void)
         count -= 4;
     }
 
+    // leftover, count = 0..3
     while (count--) {
         *dest = colormap[*dest];
         dest++;	// [WDJ] warning: undetermined order when combined with above

@@ -952,7 +952,7 @@ void V_DrawTranslucentPatch(int x, int y, int scrn,     // hacked flag on it
             ofs = 0;
             while (count--)
             {
-                *dest = *(transtables + ((source[ofs >> FRACBITS] << 8) & 0xFF00) + (*dest & 0xFF));
+                *dest = translucenttables[ ((source[ofs >> FRACBITS] << 8) & 0xFF00) + (*dest & 0xFF) ];
                 dest += vid.width;
                 ofs += rowfrac;
             }

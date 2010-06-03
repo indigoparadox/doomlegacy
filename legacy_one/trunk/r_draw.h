@@ -85,8 +85,8 @@ extern fixed_t          dc_texturemid;
 extern byte*            dc_source;      // first pixel in a column
 
 // translucency stuff here
-extern byte*            transtables;    // translucency tables, should be (*transtables)[5][256][256]
-extern byte*            dc_transmap;
+extern byte*            translucenttables;   // translucency tables, should be (*transtables)[5][256][256]
+extern byte*            dc_translucentmap;   // ptr to selected table
 
 // Variable flat sizes SSNTails 06-10-2003
 extern int flatsize;
@@ -130,7 +130,7 @@ extern fixed_t          ds_xstep;
 extern fixed_t          ds_ystep;
 
 extern byte*            ds_source;      // start of a 64*64 tile image
-extern byte*            ds_transmap;
+extern byte*            ds_translucentmap; // ptr to one translucent map
 
 
 // viewborder patches lump numbers

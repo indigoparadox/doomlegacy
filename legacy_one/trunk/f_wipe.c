@@ -156,9 +156,9 @@ int wipe_doColorXForm ( int   width,
         {
             if (*w != *e)
             {
-                if((newval=transtables[(*e<<8)+*w+((tr_transmor-1)<<FF_TRANSSHIFT)])==*w)
-                    if((newval=transtables[(*e<<8)+*w+((tr_transmed-1)<<FF_TRANSSHIFT)])==*w)
-                        if((newval=transtables[(*w<<8)+*e+((tr_transmor-1)<<FF_TRANSSHIFT)])==*w)
+                if((newval=translucenttables[TRANSLU_TABLE_more+(*e<<8)+*w])==*w)
+                    if((newval=translucenttables[TRANSLU_TABLE_med+(*e<<8)+*w])==*w)
+                        if((newval=translucenttables[TRANSLU_TABLE_more+(*w<<8)+*e])==*w)
                             newval=*e;
                 *w=newval;
                 changed = true;

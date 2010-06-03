@@ -367,7 +367,7 @@ static void R_DrawWallSplats ()
                     colfunc = basecolfunc;
                 else
                 {
-                    dc_transmap = ((tr_transmed-1)<<FF_TRANSSHIFT) + transtables;
+                    dc_translucentmap = & translucenttables[ TRANSLU_TABLE_med ];
                     colfunc = fuzzcolfunc;
                 }
     
@@ -598,18 +598,18 @@ void R_RenderMaskedSegRange (drawseg_t* ds, int x1, int x2 )
     // Select the default, or special effect column drawing functions,
     // which are called by the colfunc_2s functions.
 
-    //faB: hack translucent linedef types (201-205 for transtables 1-5)
+    //faB: hack translucent linedef types (201-205 for translucenttables 1-5)
     //SoM: 201-205 are taken... So I'm switching to 284 - 288
     ldef = curline->linedef;
     if (ldef->special>=284 && ldef->special<=288)  // Legacy translucents
     {
-        dc_transmap = ((ldef->special-284)<<FF_TRANSSHIFT) + transtables;
+        dc_translucentmap = & translucenttables[ ((ldef->special-284)<<FF_TRANSSHIFT) ];
         colfunc = fuzzcolfunc;
     }
     else
     if (ldef->special==260)	// Boom make translucent
     {
-        dc_transmap = transtables; // get first transtable 50/50
+        dc_translucentmap = & translucenttables[0]; // get first transtable 50/50
         colfunc = fuzzcolfunc;
     }
     else
@@ -905,13 +905,13 @@ void R_RenderThickSideRange (drawseg_t* ds,
 
     if(ffloor->flags & FF_TRANSLUCENT)
     {
-	  // Hacked up support for alpha value in software mode SSNTails 09-24-2002
-	  if(ffloor->alpha < 64)
-		  dc_transmap = ((3)<<FF_TRANSSHIFT) - 0x10000 + transtables;
-	  else if(ffloor->alpha < 128 && ffloor->alpha > 63)
-		  dc_transmap = ((2)<<FF_TRANSSHIFT) - 0x10000 + transtables;
-	  else
-		  dc_transmap = ((1)<<FF_TRANSSHIFT) - 0x10000 + transtables;
+      // Hacked up support for alpha value in software mode SSNTails 09-24-2002
+      if(ffloor->alpha < 64)
+          dc_translucentmap = & translucenttables[ TRANSLU_TABLE_hi ];
+      else if(ffloor->alpha < 128 && ffloor->alpha > 63)
+          dc_translucentmap = & translucenttables[ TRANSLU_TABLE_more ];
+      else
+	  dc_translucentmap = & translucenttables[ TRANSLU_TABLE_med ];
 
       colfunc = fuzzcolfunc;
     }

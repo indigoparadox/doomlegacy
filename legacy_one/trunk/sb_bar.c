@@ -313,7 +313,7 @@ static void DrINumber(signed int val, int x, int y)
 //#define V_DrawShadowedPatch(x,y,p) V_DrawTranslucentPatch(x,y,V_SCALESTART|0,p)
 void V_DrawShadowedPatch(int x,int y,patch_t *p)
 {
-//    V_DrawTranslucentPatch(x+2,y+2,V_SCALESTART|0,p/*,transtables*/);
+//    V_DrawTranslucentPatch(x+2,y+2,V_SCALESTART|0,p/*,translucenttables*/);
     V_DrawScaledPatch(x,y,V_SCALESTART|0,p);
 }
 

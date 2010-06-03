@@ -141,12 +141,12 @@ byte*                   dc_source;
 // -----------------------
 // translucency stuff here
 // -----------------------
-#define NUMTRANSTABLES  5     // how many translucency tables are used
+#define NUM_TRANSLUCENTTABLES  5     // how many translucency tables are used
 
-byte*                   transtables;    // translucency tables
+byte*                   translucenttables;    // translucency tables
 
 // R_DrawTransColumn uses this
-byte*                   dc_transmap;    // one of the translucency tables
+byte*                   dc_translucentmap;    // one of the translucency tables
 
 
 // ----------------------
@@ -182,7 +182,7 @@ fixed_t                 ds_xstep;
 fixed_t                 ds_ystep;
 
 byte*                   ds_source;      // start of a 64*64 tile image
-byte*                   ds_transmap;    // one of the translucency tables
+byte*                   ds_translucentmap;    // one of the translucency tables
 
 // Variable flat sizes SSNTails 06-10-2003
 int flatsize;
@@ -306,30 +306,31 @@ void R_InitTranslationTables (void)
 {
     skin_trans_desc_t  * skindesc = & doom_skins;
     int i;
+    // Each translucent table is 256x256, has size 65536 = 0x10000.
 
     //added:11-01-98: load here the transparency lookup tables 'TINTTAB'
     // NOTE: the TINTTAB resource MUST BE aligned on 64k for the asm optimised
-    //       (in other words, transtables pointer low word is 0)
-    transtables = Z_MallocAlign (NUMTRANSTABLES*0x10000, PU_STATIC, 0, 16);
+    //       (in other words, translucenttables pointer low word is 0)
+    translucenttables = Z_MallocAlign (NUM_TRANSLUCENTTABLES*0x10000, PU_STATIC, 0, 16);
 
     // load in translucency tables
     if( gamemode == heretic )
     {
         skindesc = & heretic_skins; // skin translation desc
-        W_ReadLump( W_GetNumForName("TINTTAB"), transtables );
-        W_ReadLump( W_GetNumForName("TINTTAB"), transtables+0x10000 );
-        W_ReadLump( W_GetNumForName("TINTTAB"), transtables+0x20000 );
-        W_ReadLump( W_GetNumForName("TINTTAB"), transtables+0x30000 );
-        W_ReadLump( W_GetNumForName("TINTTAB"), transtables+0x40000 );
+        W_ReadLump( W_GetNumForName("TINTTAB"), translucenttables );
+        W_ReadLump( W_GetNumForName("TINTTAB"), translucenttables+0x10000 );
+        W_ReadLump( W_GetNumForName("TINTTAB"), translucenttables+0x20000 );
+        W_ReadLump( W_GetNumForName("TINTTAB"), translucenttables+0x30000 );
+        W_ReadLump( W_GetNumForName("TINTTAB"), translucenttables+0x40000 );
     }
     else
     {
         skindesc = & doom_skins;  // skin translation desc
-        W_ReadLump( W_GetNumForName("TRANSMED"), transtables );
-        W_ReadLump( W_GetNumForName("TRANSMOR"), transtables+0x10000 );
-        W_ReadLump( W_GetNumForName("TRANSHI"),  transtables+0x20000 );
-        W_ReadLump( W_GetNumForName("TRANSFIR"), transtables+0x30000 );
-        W_ReadLump( W_GetNumForName("TRANSFX1"), transtables+0x40000 );
+        W_ReadLump( W_GetNumForName("TRANSMED"), translucenttables );
+        W_ReadLump( W_GetNumForName("TRANSMOR"), translucenttables+0x10000 );
+        W_ReadLump( W_GetNumForName("TRANSHI"),  translucenttables+0x20000 );
+        W_ReadLump( W_GetNumForName("TRANSFIR"), translucenttables+0x30000 );
+        W_ReadLump( W_GetNumForName("TRANSFX1"), translucenttables+0x40000 );
     }
 
     skintranstables = Z_MallocAlign (256*(MAXSKINCOLORS-1), PU_STATIC, 0, 8);

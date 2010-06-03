@@ -745,21 +745,23 @@ static void R_DrawVisSprite ( vissprite_t*          vis,
     dc_colormap = vis->colormap;
 	
     // Support for translated and translucent sprites. SSNTails 11-11-2002
-    if(vis->mobjflags & MF_TRANSLATION && vis->transmap)
+    if(vis->mobjflags & MF_TRANSLATION && vis->translucentmap)
     {
 	colfunc = transtransfunc;
-	dc_transmap = vis->transmap;
+	dc_translucentmap = vis->translucentmap;
 //	dc_skintran = translationtables - 256 +
 //	 ( (vis->mobjflags & MF_TRANSLATION) >> (MF_TRANSSHIFT-8) );
 	dc_skintran = MF_TO_SKINMAP( vis->mobjflags ); // skins 1..
     }
-    if (vis->transmap==VIS_SMOKESHADE)
+    if (vis->translucentmap==VIS_SMOKESHADE)
+    {
         // shadecolfunc uses 'reg_colormaps'
         colfunc = shadecolfunc;
-    else if (vis->transmap)
+    }
+    else if (vis->translucentmap)
     {
         colfunc = fuzzcolfunc;
-        dc_transmap = vis->transmap;    //Fab:29-04-98: translucency table
+        dc_translucentmap = vis->translucentmap;    //Fab:29-04-98: translucency table
     }
     else if (vis->mobjflags & MF_TRANSLATION)
     {
@@ -892,7 +894,9 @@ static void R_SplitSprite (vissprite_t* sprite, mobj_t* thing)
 
         if (fixedcolormap )
           ;
-        else if ((thing->frame & (FF_FULLBRIGHT|FF_TRANSMASK) || thing->flags & MF_SHADOW) && (!newsprite->extra_colormap || !newsprite->extra_colormap->fog))
+        else if ((thing->frame & (FF_FULLBRIGHT|FF_TRANSMASK)
+		  || thing->flags & MF_SHADOW)
+		 && !(newsprite->extra_colormap && newsprite->extra_colormap->fog))
           ;
         else
         {
@@ -1176,20 +1180,24 @@ static void R_ProjectSprite (mobj_t* thing)
 //
 // determine the colormap (lightlevel & special effects)
 //
-    vis->transmap = NULL;
+    vis->translucentmap = NULL;
     
     // specific translucency
     if (thing->frame & FF_SMOKESHADE)
-        // not realy a colormap ... see R_DrawVisSprite
+    {
+        // not really a colormap ... see R_DrawVisSprite
         vis->colormap = VIS_SMOKESHADE; 
+    }
     else
     {
         if (thing->frame & FF_TRANSMASK)
-            vis->transmap = (thing->frame & FF_TRANSMASK) - 0x10000 + transtables;
+            vis->translucentmap = & translucenttables[ FF_TRANSLU_TABLE_INDEX(thing->frame) ];
         else if (thing->flags & MF_SHADOW)
+        {
             // actually only the player should use this (temporary invisibility)
             // because now the translucency is set through FF_TRANSMASK
-            vis->transmap = ((tr_transhi-1)<<FF_TRANSSHIFT) + transtables;
+            vis->translucentmap = & translucenttables[ TRANSLU_TABLE_hi ];
+	}
 
     
         if (fixedcolormap )
@@ -1198,7 +1206,8 @@ static void R_ProjectSprite (mobj_t* thing)
             //  eg: negative effect of invulnerability
             vis->colormap = fixedcolormap;
         }
-        else if (((thing->frame & (FF_FULLBRIGHT|FF_TRANSMASK)) || (thing->flags & MF_SHADOW)) && (!vis->extra_colormap || !vis->extra_colormap->fog))
+        else if (((thing->frame & (FF_FULLBRIGHT|FF_TRANSMASK)) || (thing->flags & MF_SHADOW))
+		 && (!vis->extra_colormap || !vis->extra_colormap->fog))
         {
             // full bright : goggles
             vis->colormap = & reg_colormaps[0];
@@ -1281,7 +1290,7 @@ const int PSpriteSY[NUMWEAPONS] =
 };
 
 //
-// R_DrawPSprite
+// R_DrawPSprite, Draw one player sprite.
 //
 void R_DrawPSprite (pspdef_t* psp)
 {
@@ -1393,7 +1402,7 @@ void R_DrawPSprite (pspdef_t* psp)
 
     //Fab: see above for more about lumpid,lumppat
     vis->patch = sprframe->lumppat[0];
-    vis->transmap = NULL;
+    vis->translucentmap = NULL;
     if (viewplayer->mo->flags & MF_SHADOW)      // invisibility effect
     {
         vis->colormap = NULL;   // use translucency
@@ -1401,10 +1410,10 @@ void R_DrawPSprite (pspdef_t* psp)
         // in Doom2, it used to switch between invis/opaque the last seconds
         // now it switch between invis/less invis the last seconds
         if (viewplayer->powers[pw_invisibility] > 4*TICRATE
-            || viewplayer->powers[pw_invisibility] & 8)
-            vis->transmap = ((tr_transhi-1)<<FF_TRANSSHIFT) + transtables;
+                 || viewplayer->powers[pw_invisibility] & 8)
+            vis->translucentmap = & translucenttables[ TRANSLU_TABLE_hi ];
         else
-            vis->transmap = ((tr_transmed-1)<<FF_TRANSSHIFT) + transtables;
+            vis->translucentmap = & translucenttables[ TRANSLU_TABLE_med ];
     }
     else if (fixedcolormap)
     {

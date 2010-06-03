@@ -722,13 +722,13 @@ void R_DrawSinglePlane(visplane_t* pl)
     {
       spanfunc = R_DrawTranslucentSpan_8;
 
-          // Hacked up support for alpha value in software mode SSNTails 09-24-2002
-          if(pl->ffloor->alpha < 64)
-                  ds_transmap = ((3)<<FF_TRANSSHIFT) - 0x10000 + transtables;
-          else if(pl->ffloor->alpha < 128 && pl->ffloor->alpha > 63)
-                  ds_transmap = ((2)<<FF_TRANSSHIFT) - 0x10000 + transtables;
-          else
-                  ds_transmap = ((1)<<FF_TRANSSHIFT) - 0x10000 + transtables;
+      // Hacked up support for alpha value in software mode SSNTails 09-24-2002
+      if(pl->ffloor->alpha < 64)
+          ds_translucentmap = & translucenttables[ TRANSLU_TABLE_hi ];
+      else if(pl->ffloor->alpha < 128 && pl->ffloor->alpha > 63)
+          ds_translucentmap = & translucenttables[ TRANSLU_TABLE_more ];
+      else
+          ds_translucentmap = & translucenttables[ TRANSLU_TABLE_med ];
 
       if(pl->extra_colormap && pl->extra_colormap->fog)
         light = (pl->lightlevel >> LIGHTSEGSHIFT);
