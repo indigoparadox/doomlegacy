@@ -3353,23 +3353,39 @@ static void HWR_ProjectSprite(mobj_t * thing)
     if (thing_has_model)   // only clip things which are in special sectors
     {
       sector_t * thingmodsecp = & sectors[thingmodelsec];
-      int phs_modelsec = viewplayer->mo->subsector->sector->modelsec;
-      // [WDJ] modelsec is used for more than water, do proper test
-      boolean phs_has_mod = viewplayer->mo->subsector->sector->model > SM_fluid;
-      // [WDJ] 4/20/2010  Added some structure and ()
-      if (phs_has_mod)
+#ifdef BSPVIEWER
+      if (viewer_has_model)
       {
-	  if( (viewz < sectors[phs_modelsec].floorheight) ?
+	  if( viewer_underwater ?
 	      (thing->z >= thingmodsecp->floorheight)
 	      : (gz_top < thingmodsecp->floorheight)
 	      )
 	      return;
-	  if( (viewz > sectors[phs_modelsec].ceilingheight) ?
+	  if( viewer_overceiling ?
 	      ((gz_top < thingmodsecp->ceilingheight) && (viewz >= thingmodsecp->ceilingheight))
 	      : (thing->z >= thingmodsecp->ceilingheight)
 	      )
 	      return;
       }
+#else
+      int viewer_modelsec = viewplayer->mo->subsector->sector->modelsec;
+      // [WDJ] modelsec is used for more than water, do proper test
+      boolean viewer_has_model = viewplayer->mo->subsector->sector->model > SM_fluid;
+      // [WDJ] 4/20/2010  Added some structure and ()
+      if (viewer_has_model)
+      {
+	  if( (viewz < sectors[viewer_modelsec].floorheight) ?
+	      (thing->z >= thingmodsecp->floorheight)
+	      : (gz_top < thingmodsecp->floorheight)
+	      )
+	      return;
+	  if( (viewz > sectors[viewer_modelsec].ceilingheight) ?
+	      ((gz_top < thingmodsecp->ceilingheight) && (viewz >= thingmodsecp->ceilingheight))
+	      : (thing->z >= thingmodsecp->ceilingheight)
+	      )
+	      return;
+      }
+#endif       
     }
    }
 #if 0

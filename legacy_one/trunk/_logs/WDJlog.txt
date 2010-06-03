@@ -833,3 +833,8 @@ Transparent walls are drawn after the sprites so they can be overlayed.
 There was work already done, that needed to be enabled.
 Made it clearer and added comments.
 
+*** w52_hw_bsp_viewer
+patchfile = w52_hw_bsp_viewer.patch
+- committed revision 674   by wesley johnson
+Convert hardware renderer to use the same bsp viewer global variables
+that are used in the software renderer, as in bsp.c.
