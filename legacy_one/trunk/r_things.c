@@ -749,11 +749,12 @@ static void R_DrawVisSprite ( vissprite_t*          vis,
     {
 	colfunc = transtransfunc;
 	dc_transmap = vis->transmap;
-	dc_translation = translationtables - 256 +
-	 ( (vis->mobjflags & MF_TRANSLATION) >> (MF_TRANSSHIFT-8) );
+//	dc_skintran = translationtables - 256 +
+//	 ( (vis->mobjflags & MF_TRANSLATION) >> (MF_TRANSSHIFT-8) );
+	dc_skintran = MF_TO_SKINMAP( vis->mobjflags ); // skins 1..
     }
     if (vis->transmap==VIS_SMOKESHADE)
-        // shadecolfunc uses 'colormaps'
+        // shadecolfunc uses 'reg_colormaps'
         colfunc = shadecolfunc;
     else if (vis->transmap)
     {
@@ -764,19 +765,19 @@ static void R_DrawVisSprite ( vissprite_t*          vis,
     {
         // translate green skin to another color
         colfunc = transcolfunc;
-        dc_translation = translationtables - 256 +
-            ( (vis->mobjflags & MF_TRANSLATION) >> (MF_TRANSSHIFT-8) );
+//        dc_skintran = translationtables - 256 +
+//            ( (vis->mobjflags & MF_TRANSLATION) >> (MF_TRANSSHIFT-8) );
+        dc_skintran = MF_TO_SKINMAP( vis->mobjflags ); // skins 1..
     }
 
     if(vis->extra_colormap && !fixedcolormap)
     {
-      if(!dc_colormap)
-        dc_colormap = vis->extra_colormap->colormap;
-      else
-        dc_colormap = &vis->extra_colormap->colormap[dc_colormap - colormaps];
+       // reverse indexing, and change to extra_colormap, default 0
+       int lightindex = dc_colormap? (dc_colormap - reg_colormaps) : 0;
+       dc_colormap = & vis->extra_colormap->colormap[ lightindex ];
     }
     if(!dc_colormap)
-      dc_colormap = colormaps;
+      dc_colormap = & reg_colormaps[0];
 
     //dc_iscale = abs(vis->xiscale)>>detailshift;  ???
     dc_iscale = FixedDiv (FRACUNIT, vis->scale);
@@ -1200,7 +1201,7 @@ static void R_ProjectSprite (mobj_t* thing)
         else if (((thing->frame & (FF_FULLBRIGHT|FF_TRANSMASK)) || (thing->flags & MF_SHADOW)) && (!vis->extra_colormap || !vis->extra_colormap->fog))
         {
             // full bright : goggles
-            vis->colormap = colormaps;
+            vis->colormap = & reg_colormaps[0];
         }
         else
         {
@@ -1413,7 +1414,7 @@ void R_DrawPSprite (pspdef_t* psp)
     else if (psp->state->frame & FF_FULLBRIGHT)
     {
         // full bright
-        vis->colormap = colormaps;
+        vis->colormap = & reg_colormaps[0]; // [0]
     }
     else
     {

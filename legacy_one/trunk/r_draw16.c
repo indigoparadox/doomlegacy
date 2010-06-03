@@ -184,11 +184,10 @@ void R_DrawFuzzColumn_16 (void)
 
     do
     {
-        // Lookup framebuffer, and retrieve
-        //  a pixel that is either one column
+        // Lookup framebuffer, and retrieve a pixel that is either one column
         //  left or right of the current one.
         // Add index from colormap to index.
-        *dest = color8to16[colormaps[6*256+dest[fuzzoffset[fuzzpos]]]];
+        *dest = color8to16[reg_colormaps[(6*256)+dest[fuzzoffset[fuzzpos]]]];
 
         // Clamp table lookup index.
         if (++fuzzpos == FUZZTABLE)
@@ -299,7 +298,7 @@ void R_DrawTranslatedColumn_16 (void)
     // Here we do an additional index re-mapping.
     do
     {
-        *dest = color8to16[ dc_colormap[dc_translation[dc_source[frac>>FRACBITS]]] ];
+        *dest = color8to16[ dc_colormap[ dc_skintran[ dc_source[frac>>FRACBITS]]] ];
         dest += vid.width;
 
         frac += fracstep;

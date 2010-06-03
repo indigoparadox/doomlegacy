@@ -87,7 +87,8 @@ extern fixed_t*         spriteoffset;
 extern fixed_t*         spritetopoffset;
 extern fixed_t*         spriteheight;
 
-extern lighttable_t*    colormaps;
+// colormap lightmaps from wad COLORMAP lump
+extern lighttable_t*    reg_colormaps;
 
 //SoM: 3/30/2000: Boom colormaps.
 //SoM: 4/7/2000: Had to put a limit on colormaps :(

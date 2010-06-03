@@ -480,9 +480,12 @@ static void ST_refreshBackground(void)
 
         // draw the faceback for the statusbarplayer
         if (plyr->skincolor==0)
-            colormap = colormaps;
+            colormap = & reg_colormaps[0]; // [0]
         else
-            colormap = translationtables - 256 + (plyr->skincolor<<8);
+        {
+//            colormap = translationtables - 256 + (plyr->skincolor<<8);
+            colormap = SKIN_TO_SKINMAP( plyr->skincolor );
+	}
 
         V_DrawMappedPatch (st_x+ST_FX, ST_Y, flags, faceback, colormap);
 

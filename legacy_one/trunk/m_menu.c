@@ -1173,9 +1173,12 @@ void M_DrawSetupMultiPlayerMenu(void)
     lump  = sprframe->lumppat[0];
 
     if (setupm_cvcolor->value==0)
-        colormap = colormaps;
+        colormap = reg_colormaps;
     else
-        colormap = (byte *) translationtables - 256 + (setupm_cvcolor->value<<8);
+    {
+//        colormap = (byte *) translationtables - 256 + (setupm_cvcolor->value<<8);
+        colormap = SKIN_TO_SKINMAP( setupm_cvcolor->value );
+    }
     // draw player sprite
     // temp usage of sprite lump, until end of function
     patch = W_CachePatchNum (lump, PU_CACHE_DEFAULT);  // endian fix

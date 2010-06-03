@@ -394,7 +394,7 @@ static void R_DrawWallSplats ()
             }
 
             if(frontsector->extra_colormap && !fixedcolormap)
-              dc_colormap = frontsector->extra_colormap->colormap + (dc_colormap - colormaps);
+              dc_colormap = frontsector->extra_colormap->colormap + (dc_colormap - reg_colormaps);
 
             sprtopscreen = centeryfrac - FixedMul(dc_texturemid, spryscale);
             dc_iscale = 0xffffffffu / (unsigned)spryscale;
@@ -792,7 +792,7 @@ void R_RenderMaskedSegRange (drawseg_t* ds,
                   index = MAXLIGHTSCALE-1;
 
               if(rlight->extra_colormap && !fixedcolormap)
-                rlight->rcolormap = rlight->extra_colormap->colormap + (xwalllights[index] - colormaps);
+                rlight->rcolormap = rlight->extra_colormap->colormap + (xwalllights[index] - reg_colormaps);
               else if(!fixedcolormap)
                 rlight->rcolormap = xwalllights[index];
               else
@@ -844,7 +844,7 @@ void R_RenderMaskedSegRange (drawseg_t* ds,
 	  }
 
 	  if(frontsector->extra_colormap && !fixedcolormap)
-              dc_colormap = frontsector->extra_colormap->colormap + (dc_colormap - colormaps);
+              dc_colormap = frontsector->extra_colormap->colormap + (dc_colormap - reg_colormaps);
           sprtopscreen = centeryfrac - FixedMul(dc_texturemid, spryscale);
           dc_iscale = 0xffffffffu / (unsigned)spryscale;
 
@@ -1110,14 +1110,14 @@ void R_RenderThickSideRange (drawseg_t* ds,
               if(ffloor->flags & FF_FOG)
               {
                 if(ffloor->master->frontsector->extra_colormap && !fixedcolormap)
-                  rlight->rcolormap = ffloor->master->frontsector->extra_colormap->colormap + (xwalllights[index] - colormaps);
+                  rlight->rcolormap = ffloor->master->frontsector->extra_colormap->colormap + (xwalllights[index] - reg_colormaps);
                 else if(!fixedcolormap)
                   rlight->rcolormap = xwalllights[index];
               }
               else
               {
                 if(rlight->extra_colormap && !fixedcolormap)
-                  rlight->rcolormap = rlight->extra_colormap->colormap + (xwalllights[index] - colormaps);
+                  rlight->rcolormap = rlight->extra_colormap->colormap + (xwalllights[index] - reg_colormaps);
                 else if(!fixedcolormap)
                   rlight->rcolormap = xwalllights[index];
               }
@@ -1202,9 +1202,9 @@ void R_RenderThickSideRange (drawseg_t* ds,
                 
             dc_colormap = walllights[index];
             if(frontsector->extra_colormap)
-                dc_colormap = frontsector->extra_colormap->colormap + (dc_colormap - colormaps);
+                dc_colormap = frontsector->extra_colormap->colormap + (dc_colormap - reg_colormaps);
             if(ffloor->flags & FF_FOG && ffloor->master->frontsector->extra_colormap)
-                dc_colormap = ffloor->master->frontsector->extra_colormap->colormap + (dc_colormap - colormaps);
+                dc_colormap = ffloor->master->frontsector->extra_colormap->colormap + (dc_colormap - reg_colormaps);
         }
 
         sprtopscreen = windowtop = (centeryfrac - FixedMul((dc_texturemid - offsetvalue), spryscale));
@@ -1383,7 +1383,7 @@ void R_RenderSegLoop (void)
             if(frontsector->extra_colormap && !fixedcolormap)
 	    {
 	        // reverse indexing, and change to extra_colormap
-		int lightindex = dc_colormap - colormaps;
+		int lightindex = dc_colormap - reg_colormaps;
                 dc_colormap = & frontsector->extra_colormap->colormap[ lightindex ];
 	    }
         }
@@ -1418,7 +1418,7 @@ void R_RenderSegLoop (void)
                 index = MAXLIGHTSCALE-1;
 
             if(dc_lightlist[i].extra_colormap && !fixedcolormap)
-              dc_lightlist[i].rcolormap = dc_lightlist[i].extra_colormap->colormap + (xwalllights[index] - colormaps);
+              dc_lightlist[i].rcolormap = dc_lightlist[i].extra_colormap->colormap + (xwalllights[index] - reg_colormaps);
             else if(!fixedcolormap)
               dc_lightlist[i].rcolormap = xwalllights[index];
             else

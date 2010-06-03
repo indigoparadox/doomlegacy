@@ -194,7 +194,8 @@ fixed_t*        spriteoffset;
 fixed_t*        spritetopoffset;
 fixed_t*        spriteheight; //SoM
 
-lighttable_t    *colormaps;
+// colormap lightmaps from wad COLORMAP lump
+lighttable_t *  reg_colormaps;
 
 
 //faB: for debugging/info purpose
@@ -1317,8 +1318,8 @@ void R_InitColormaps (void)
     // Load in the standard colormap lightmap tables (defined by lump),
     // now 64k aligned for smokie...
     lump = W_GetNumForName("COLORMAP");
-    colormaps = Z_MallocAlign (W_LumpLength (lump), PU_STATIC, 0, 16);
-    W_ReadLump (lump, colormaps);
+    reg_colormaps = Z_MallocAlign (W_LumpLength (lump), PU_STATIC, 0, 16);
+    W_ReadLump (lump, reg_colormaps);
 
     //SoM: 3/30/2000: Init Boom colormaps.
     {

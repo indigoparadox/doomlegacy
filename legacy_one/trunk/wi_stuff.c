@@ -1004,7 +1004,7 @@ void WI_drawRancking(char *title,int x,int y,fragsort_t *fragtable
                    , int scorelines, boolean large, int white)
 {
     int   i,j;
-    int   color;
+    int   skin_color, color;
     char  num[12];
     int   plnum;
     int   frags;
@@ -1018,13 +1018,17 @@ void WI_drawRancking(char *title,int x,int y,fragsort_t *fragtable
 
     // sort the frags count
     for (i=0; i<scorelines; i++)
+    {
         for(j=0; j<scorelines-1-i; j++)
+        {
             if( fragtable[j].count < fragtable[j+1].count )
             {
                 temp = fragtable[j];
                 fragtable[j] = fragtable[j+1];
                 fragtable[j+1] = temp;
             }
+	}
+    }
 
     if(title)
         V_DrawString (x, y-14, 0, title);
@@ -1035,11 +1039,14 @@ void WI_drawRancking(char *title,int x,int y,fragsort_t *fragtable
         plnum = fragtable[i].num;
 
         // draw color background
-        color = fragtable[i].color;
-        if (!color)
-            color = *( (byte *)colormaps + colornum );
+        skin_color = fragtable[i].color;
+        if (!skin_color)
+            color = reg_colormaps[ colornum ];
         else
-            color = *( (byte *)translationtables - 256 + (color<<8) + colornum );
+        {
+//            color = *( (byte *)translationtables - 256 + (color<<8) + colornum );
+            color = SKIN_TO_SKINMAP(skin_color)[ colornum ];
+	}
         V_DrawFill (x-1,y-1,large ? 40 : 26,9,color);
 
         // draw frags count
@@ -1079,6 +1086,7 @@ static void WI_drawDeathmatchStats(void)
     // count frags for each present player
     scorelines = 0;
     for (i=0; i<MAXPLAYERS; i++)
+    {
         if (playeringame[i])
         {
             fragtab[scorelines].count = dm_totals[i];
@@ -1087,11 +1095,13 @@ static void WI_drawDeathmatchStats(void)
             fragtab[scorelines].name  = player_names[i];
             scorelines++;
         }
+    }
     WI_drawRancking("Frags",5,RANKINGY,fragtab,scorelines,false,whiteplayer);
 
     // count buchholz
     scorelines = 0;
     for (i=0; i<MAXPLAYERS; i++)
+    {
         if (playeringame[i])
         {
             fragtab[scorelines].count = 0;
@@ -1104,11 +1114,13 @@ static void WI_drawDeathmatchStats(void)
             fragtab[scorelines].name  = player_names[i];
             scorelines++;
         }
+    }
     WI_drawRancking("Buchholz",85,RANKINGY,fragtab,scorelines,false,whiteplayer);
 
     // count individuel
     scorelines = 0;
     for (i=0; i<MAXPLAYERS; i++)
+    {
         if (playeringame[i])
         {
             fragtab[scorelines].count = 0;
@@ -1127,11 +1139,13 @@ static void WI_drawDeathmatchStats(void)
             fragtab[scorelines].name  = player_names[i];
             scorelines++;
         }
+    }
     WI_drawRancking("indiv.",165,RANKINGY,fragtab,scorelines,false,whiteplayer);
 
     // count deads
     scorelines = 0;
     for (i=0; i<MAXPLAYERS; i++)
+    {
         if (playeringame[i])
         {
             fragtab[scorelines].count = 0;
@@ -1144,6 +1158,7 @@ static void WI_drawDeathmatchStats(void)
 
             scorelines++;
         }
+    }
     WI_drawRancking("deads",245,RANKINGY,fragtab,scorelines,false,whiteplayer);
 
     timeleft=va("start in %d",cnt_pause/TICRATE);
@@ -1202,6 +1217,7 @@ static void WI_drawTeamsStats(void)
     // count buchholz
     scorelines = 0;
     for (i=0; i<MAXPLAYERS; i++)
+    {
         if (teamingame(i))
         {
             fragtab[scorelines].count = 0;
@@ -1214,11 +1230,13 @@ static void WI_drawTeamsStats(void)
             fragtab[scorelines].name  = team_names[i];
             scorelines++;
         }
+    }
     WI_drawRancking("Buchholz",85,80,fragtab,scorelines,false,whiteplayer);
 
     // count individuel
     scorelines = 0;
     for (i=0; i<MAXPLAYERS; i++)
+    {
         if (teamingame(i))
         {
             fragtab[scorelines].count = 0;
@@ -1237,11 +1255,13 @@ static void WI_drawTeamsStats(void)
             fragtab[scorelines].name  = team_names[i];
             scorelines++;
         }
+    }
     WI_drawRancking("indiv.",165,80,fragtab,scorelines,false,whiteplayer);
 
     // count deads
     scorelines = 0;
     for (i=0; i<MAXPLAYERS; i++)
+    {
         if (teamingame(i))
         {
             fragtab[scorelines].count = 0;
@@ -1254,6 +1274,7 @@ static void WI_drawTeamsStats(void)
 
             scorelines++;
         }
+    }
     WI_drawRancking("deads",245,80,fragtab,scorelines,false,whiteplayer);
 }
 
@@ -1606,9 +1627,12 @@ static void WI_drawNetgameStats(void)
 
         x = NG_STATSX;
         if (players[i].skincolor==0)
-            colormap = colormaps;       //no translation table for green guy
+            colormap = & reg_colormaps[0]; // no translation table for green guy
         else
-            colormap = (byte *) translationtables - 256 + (players[i].skincolor<<8);
+        {
+//            colormap = (byte *) translationtables - 256 + (players[i].skincolor<<8);
+            colormap = SKIN_TO_SKINMAP( players[i].skincolor ); // skins 1..
+	}
 
         V_DrawMappedPatch(x-(stpb->width), y, FB, stpb, colormap);
 

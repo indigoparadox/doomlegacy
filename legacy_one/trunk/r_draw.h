@@ -95,8 +95,16 @@ extern int flatsubtract;
 
 // translation stuff here
 
-extern byte*            translationtables;
-extern byte*            dc_translation;
+// [WDJ] player skin translation, skintrans[MAXSKINCOLORS][256]
+// Boom calls these TRANSLATION, but that confuses with translucent.
+extern byte*            skintranstables;  // player skin translation tables
+extern byte*            dc_skintran;  // ptr to selected skin table
+
+// for skin = 1..(MAXSKINNUM-1), skin=0 does not use translation
+#define SKIN_TO_SKINMAP( skin )  (&skintranstables[ ((skin)-1)<<8 ])
+// for flags containing MF_TRANSLATION bits, 0=original skin
+#define MF_TO_SKINMAP( flags )  (&skintranstables[ (((flags) & MF_TRANSLATION) >> (MF_TRANSSHIFT-8)) - 256 ])
+
 
 extern struct r_lightlist_s*      dc_lightlist;
 extern int                        dc_numlights;

@@ -1435,7 +1435,10 @@ void AM_drawPlayers(void)
             if(p->skincolor==0)
                 color = GREENS;
             else
-                color = *(translationtables + ((p->skincolor-1)<<8) +GREENS+8);
+	    {
+//                color = *(translationtables + ((p->skincolor-1)<<8) +GREENS+8);
+                color = SKIN_TO_SKINMAP(p->skincolor)[GREENS+8];
+	    }
         }
 
         AM_drawLineCharacter

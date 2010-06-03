@@ -902,7 +902,7 @@ void HWR_GetMappedPatch(GlidePatch_t* gpatch, byte *colormap)
 {
     GlideMipmap_t   *grmip, *newmip;
 
-    if( (colormap==colormaps) || (colormap==NULL) )
+    if( (colormap==reg_colormaps) || (colormap==NULL) )
     {
         // Load the default (green) color in doom cache (temporary?) AND hardware cache
         HWR_GetPatch(gpatch);

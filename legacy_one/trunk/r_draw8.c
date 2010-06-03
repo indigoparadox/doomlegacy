@@ -424,11 +424,10 @@ void R_DrawFuzzColumn_8(void)
 
     do
     {
-        // Lookup framebuffer, and retrieve
-        //  a pixel that is either one column
+        // Lookup framebuffer, and retrieve a pixel that is either one column
         //  left or right of the current one.
         // Add index from colormap to index.
-        *dest = colormaps[6 * 256 + dest[fuzzoffset[fuzzpos]]];
+        *dest = reg_colormaps[6 * 256 + dest[fuzzoffset[fuzzpos]]];
 
         // Clamp table lookup index.
         if (++fuzzpos == FUZZTABLE)
@@ -486,7 +485,9 @@ void R_DrawShadeColumn_8(void)
     // Here we do an additional index re-mapping.
     do
     {
-        *dest = *(colormaps + (dc_source[frac >> FRACBITS] << 8) + (*dest));
+        // apply shading/translucent with existing showing through
+//        *dest = *(reg_colormaps + (dc_source[frac >> FRACBITS] << 8) + (*dest));
+        *dest = reg_colormaps[ (dc_source[frac >> FRACBITS] << 8) + (*dest) ];
         dest += vid.width;
         frac += fracstep;
     }
@@ -679,7 +680,7 @@ void R_DrawTranslatedTranslucentColumn_8(void)
                 //  using a lighting/special effects LUT.
                 // heightmask is the Tutti-Frutti fix -- killough
 
-                *dest = dc_colormap[*(dc_transmap + (dc_colormap[dc_translation[dc_source[frac >> FRACBITS]]] << 8) + (*dest))];
+                *dest = dc_colormap[*(dc_transmap + (dc_colormap[dc_skintran[dc_source[frac >> FRACBITS]]] << 8) + (*dest))];
 
                 dest += vid.width;
                 if ((frac += fracstep) >= heightmask)
@@ -691,16 +692,16 @@ void R_DrawTranslatedTranslucentColumn_8(void)
         {
             while ((count -= 2) >= 0)   // texture height is a power of 2 -- killough
             {
-                *dest = dc_colormap[*(dc_transmap + (dc_colormap[dc_translation[dc_source[frac >> FRACBITS]]] << 8) + (*dest))];
+                *dest = dc_colormap[*(dc_transmap + (dc_colormap[dc_skintran[dc_source[frac >> FRACBITS]]] << 8) + (*dest))];
                 dest += vid.width;
                 frac += fracstep;
-                *dest = dc_colormap[*(dc_transmap + (dc_colormap[dc_translation[dc_source[frac >> FRACBITS]]] << 8) + (*dest))];
+                *dest = dc_colormap[*(dc_transmap + (dc_colormap[dc_skintran[dc_source[frac >> FRACBITS]]] << 8) + (*dest))];
                 dest += vid.width;
                 frac += fracstep;
             }
             if (count & 1)
             {
-                *dest = dc_colormap[*(dc_transmap + (dc_colormap[dc_translation[dc_source[frac >> FRACBITS]]] << 8) + (*dest))];
+                *dest = dc_colormap[*(dc_transmap + (dc_colormap[dc_skintran[dc_source[frac >> FRACBITS]]] << 8) + (*dest))];
             }
         }
     }
@@ -740,12 +741,12 @@ void R_DrawTranslatedColumn_8(void)
     // Here we do an additional index re-mapping.
     do
     {
-        // Translation tables are used
+        // Skin Translation tables are used
         //  to map certain colorramps to other ones,
-        //  used with PLAY sprites.
+        //  used with PLAYER sprites.
         // Thus the "green" ramp of the player 0 sprite
         //  is mapped to gray, red, black/indigo.
-        *dest = dc_colormap[dc_translation[dc_source[frac >> FRACBITS]]];
+        *dest = dc_colormap[dc_skintran[dc_source[frac >> FRACBITS]]];
 
         dest += vid.width;
 

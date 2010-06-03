@@ -780,7 +780,7 @@ void R_InitLightTables (void)
             if (level >= NUMCOLORMAPS)
                 level = NUMCOLORMAPS-1;
 
-            zlight[i][j] = colormaps + level*256;
+            zlight[i][j] = & reg_colormaps[ level*256 ];
         }
     }
 }
@@ -951,7 +951,7 @@ void R_ExecuteSetViewSize (void)
             if (level >= NUMCOLORMAPS)
                 level = NUMCOLORMAPS-1;
 
-            scalelight[i][j] = colormaps + level*256;
+            scalelight[i][j] = & reg_colormaps[ level*256 ];
         }
     }
 
@@ -1189,7 +1189,7 @@ void R_SetupFrame (player_t* player)
     {
         // the fixedcolormap overrides sector colormaps
         fixedcolormap =
-            & colormaps[ fixedcolormap_num*256*sizeof(lighttable_t) ];
+            & reg_colormaps[ fixedcolormap_num*256*sizeof(lighttable_t) ];
 
         walllights = scalelightfixed;
 

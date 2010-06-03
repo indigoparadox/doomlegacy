@@ -3358,9 +3358,12 @@ static void HWR_ProjectSprite(mobj_t * thing)
 
     //Hurdler: 25/04/2000: now support colormap in hardware mode
     if (thing->flags & MF_TRANSLATION)
-        vis->colormap = (byte *) translationtables - 256 + ((thing->flags & MF_TRANSLATION) >> (MF_TRANSSHIFT - 8));
+    {
+//        vis->colormap = (byte *) translationtables - 256 + ((thing->flags & MF_TRANSLATION) >> (MF_TRANSSHIFT - 8));
+        vis->colormap = MF_TO_SKINMAP( thing->flags ); // skins 1..
+    }
     else
-        vis->colormap = colormaps;
+        vis->colormap = & reg_colormaps[0];
 
     // set top/bottom coords
     vis->ty = FIXED_TO_FLOAT( thing->z + spritetopoffset[lump] ) - gr_viewz;

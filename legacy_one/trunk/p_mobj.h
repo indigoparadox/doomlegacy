@@ -228,16 +228,14 @@ typedef enum
     // If 0x4 0x8 or 0xc,
     //  use a translation table for player colormaps
     MF_TRANSLATION      = 0x3C000000,    // 0xc000000, original 4color
-
-    // Hmm ???.
-    MF_TRANSSHIFT       = 26,
+    MF_TRANSSHIFT       = 26,  // to shift MF_TRANSLATION bits to INT
 
     // for chase camera, don't be blocked by things (partial clipping)
     MF_NOCLIPTHING      = 0x40000000,
 
     MF_FLOORHUGGER      = 0x80000000
 
-} mobjflag_t;
+} mobjflag_e;
 
 
 typedef enum {

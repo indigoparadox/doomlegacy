@@ -764,5 +764,17 @@ software renderer, and same linedef setup.
 Cleanup the colormap generator, comment, and have it calc hardware
 renderer fields too.
 
-
+*** w52_skintable_translations
+patchfile = w52_skintable.patch
+- committed revision 666   by wesley johnson
+Too many uses of the term trans, confusing translucent and skin
+translation.
+The skin tables are renamed from translationtables to skintranstables,
+and dc_translation becomes dc_skintran.
+Define SKIN_TO_SKINMAP, MT_TO_SKINMAP, to bring indexing calculations
+to one common place.
+Create skin table lookup, which prepares code to have skin tables read
+from files.
+Rename the standard colormap tables as reg_colormaps, to differentiate
+them from all the other things named colormap.
 

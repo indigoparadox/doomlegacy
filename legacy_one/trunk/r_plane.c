@@ -282,7 +282,7 @@ void R_MapPlane
         if(currentplane->extra_colormap)
         {
 	    // reverse indexing, and change to extra_colormap
-	    int lightindex = ds_colormap - colormaps;
+	    int lightindex = ds_colormap - reg_colormaps;
 	    ds_colormap = & currentplane->extra_colormap->colormap[ lightindex ];
 	}
     }
@@ -672,7 +672,7 @@ void R_DrawPlanes (void)
                 dc_colormap = fixedcolormap;
             else
 #endif
-            dc_colormap = colormaps;
+            dc_colormap = reg_colormaps;  // [0]
             dc_texturemid = skytexturemid;
             dc_texheight = textureheight[skytexture] >> FRACBITS;
             for (x=pl->minx ; x <= pl->maxx ; x++)
