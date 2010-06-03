@@ -807,3 +807,11 @@ patchfile = w52_fog_sheet.patch
 - committed revision 670   by wesley johnson
 Fixes fog sheet bug, where fog sheet would not display in software renderer.
 Adds code to clip the fog sheet properly.
+
+*** w52_fog_floor_colormap
+patchfile = w52_fog_floor_colormap.patch
+- committed revision 671   by wesley johnson
+Provided alternative code where FF_FOG test for setting colormap was
+unusual compared to other places in the code.  Not sure which is
+correct.
+

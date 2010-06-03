@@ -1007,7 +1007,8 @@ void R_RenderThickSideRange (drawseg_t* ds,
         else
           rlight->lightnum = (rlight->lightlevel >> LIGHTSEGSHIFT)+extralight;
 
-        if(ffloor->flags & FF_FOG || rlight->flags & FF_FOG || (rlight->extra_colormap && rlight->extra_colormap->fog));
+        if(ffloor->flags & FF_FOG || rlight->flags & FF_FOG || (rlight->extra_colormap && rlight->extra_colormap->fog))
+	   ;
         else if (curline->v1->y == curline->v2->y)
           rlight->lightnum--;
         else if (curline->v1->x == curline->v2->x)
@@ -1162,7 +1163,25 @@ void R_RenderThickSideRange (drawseg_t* ds,
 
 		rlight->rcolormap = xwalllights[index];
 
-                if(ffloor->flags & FF_FOG)
+#if 1
+		// [WDJ] To not have FF_FOG totally block ffloor colormap.
+		 // Not sure which is correct, but is more consistent with other code.
+                if( (ffloor->flags & FF_FOG)
+		    &&(ffloor->master->frontsector->extra_colormap) )
+		{
+		  // reverse indexing, and change to extra_colormap
+		  int lightindex = rlight->rcolormap - reg_colormaps;
+		  rlight->rcolormap = & ffloor->master->frontsector->extra_colormap->colormap[ lightindex ];
+		}
+		// no FOG, or FOG and no FOG colormap
+		else if(rlight->extra_colormap)
+		{
+		  // reverse indexing, and change to extra_colormap
+		  int lightindex = rlight->rcolormap - reg_colormaps;
+		  rlight->rcolormap = & rlight->extra_colormap->colormap[ lightindex ];
+		}
+#else
+		if(ffloor->flags & FF_FOG)
                 {
 		  if(ffloor->master->frontsector->extra_colormap)
 		  {
@@ -1181,6 +1200,7 @@ void R_RenderThickSideRange (drawseg_t* ds,
 		    rlight->rcolormap = & rlight->extra_colormap->colormap[ lightindex ];
 		  }
 		}
+#endif
 	      } // not fixedcolormap
             } // lighteffect
 
