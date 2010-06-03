@@ -794,3 +794,10 @@ Spell out translucent, so can differentiate it from other trans operations.
 Rename trans enum values to be readable.
 Use translucenttable[xxx] syntax, instad of *(translucenttable + xxx).
 Make table for translucent selection to GL conversion.
+
+*** w52_draw_masked
+patchfile = w52_draw_masked.patch
+- committed revision 669   by wesley johnson
+The R_RenderMasked routines have some global parameters.  Rename them
+with dm_ so they can be easily identified.
+Simplify some colormap code segments where there were redundant tests.

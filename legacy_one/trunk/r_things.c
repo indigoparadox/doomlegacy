@@ -648,46 +648,53 @@ static vissprite_t* R_NewVisSprite (void)
 // Masked means: partly transparent, i.e. stored
 //  in posts/runs of opaque pixels.
 //
-short*          mfloorclip;
-short*          mceilingclip;
+// draw masked global parameters
+short*          dm_floorclip;
+short*          dm_ceilingclip;
 
-fixed_t         spryscale;
-fixed_t         sprtopscreen;
-fixed_t         sprbotscreen;
-fixed_t         windowtop;
-fixed_t         windowbottom;
+fixed_t         dm_yscale;
+// draw masked column top and bottom, in screen coord.
+fixed_t         dm_topscreen;
+fixed_t         dm_botscreen;
+// window clipping in screen coord., set to MAXINT to disable
+// to draw, require dm_windowtop < dm_windowbottom
+fixed_t         dm_windowtop;
+fixed_t         dm_windowbottom;
+
 
 void R_DrawMaskedColumn (column_t* column)
 {
-    int         topscreen;
+    int         topscreen;	// screen coord
     int         bottomscreen;
     fixed_t     basetexturemid;
 
-    basetexturemid = dc_texturemid;
+    basetexturemid = dc_texturemid; // to restore after
 
     for ( ; column->topdelta != 0xff ; )
     {
         // calculate unclipped screen coordinates
         //  for post
-        topscreen = sprtopscreen + spryscale*column->topdelta;
-        bottomscreen = sprbotscreen == MAXINT ? topscreen + spryscale*column->length : 
-                                                sprbotscreen + spryscale*column->length;
+        topscreen = dm_topscreen + dm_yscale*column->topdelta;
+        bottomscreen = (dm_botscreen == MAXINT) ?
+	    topscreen + dm_yscale*column->length
+	    : dm_botscreen + dm_yscale*column->length;
 
         dc_yl = (topscreen+FRACUNIT-1)>>FRACBITS;
         dc_yh = (bottomscreen-1)>>FRACBITS;
 
-        if(windowtop != MAXINT && windowbottom != MAXINT)
+        if(dm_windowtop != MAXINT && dm_windowbottom != MAXINT)
         {
-          if(windowtop > topscreen)
-            dc_yl = (windowtop + FRACUNIT - 1) >> FRACBITS;
-          if(windowbottom < bottomscreen)
-            dc_yh = (windowbottom - 1) >> FRACBITS;
+	  // screen coord. where +y is down screen
+          if(dm_windowtop > topscreen)
+            dc_yl = (dm_windowtop + FRACUNIT - 1) >> FRACBITS;
+          if(dm_windowbottom < bottomscreen)
+            dc_yh = (dm_windowbottom - 1) >> FRACBITS;
         }
 
-        if (dc_yh >= mfloorclip[dc_x])
-            dc_yh = mfloorclip[dc_x]-1;
-        if (dc_yl <= mceilingclip[dc_x])
-            dc_yl = mceilingclip[dc_x]+1;
+        if (dc_yh >= dm_floorclip[dc_x])
+            dc_yh = dm_floorclip[dc_x]-1;
+        if (dc_yl <= dm_ceilingclip[dc_x])
+            dc_yl = dm_ceilingclip[dc_x]+1;
 
         // [WDJ] limit to split screen area above status bar,
         // instead of whole screen,
@@ -704,6 +711,7 @@ void R_DrawMaskedColumn (column_t* column)
 
             // Drawn by either R_DrawColumn
             //  or (SHADOW) R_DrawFuzzColumn.
+#ifdef PARANOIA 
             //Hurdler: quick fix... something more proper should be done!!!
 	    // [WDJ] Fixed by using rdraw_viewheight instead of vid.height
 	    // in limit test above.
@@ -715,6 +723,9 @@ void R_DrawMaskedColumn (column_t* column)
 	    {
                 colfunc ();
 	    }
+#else
+	    colfunc ();
+#endif
         }
         column = (column_t *)(  (byte *)column + column->length + 4);
     }
@@ -726,7 +737,7 @@ void R_DrawMaskedColumn (column_t* column)
 
 //
 // R_DrawVisSprite
-//  mfloorclip and mceilingclip should also be set.
+//  dm_floorclip and dm_ceilingclip should also be set.
 //
 static void R_DrawVisSprite ( vissprite_t*          vis,
                               int                   x1,
@@ -787,9 +798,9 @@ static void R_DrawVisSprite ( vissprite_t*          vis,
     dc_texheight = 0;
 
     texcol_frac = vis->startfrac;
-    spryscale = vis->scale;
-    sprtopscreen = centeryfrac - FixedMul(dc_texturemid,spryscale);
-    windowtop = windowbottom = sprbotscreen = MAXINT;
+    dm_yscale = vis->scale;
+    dm_topscreen = centeryfrac - FixedMul(dc_texturemid,dm_yscale);
+    dm_windowtop = dm_windowbottom = dm_botscreen = MAXINT;
 
     for (dc_x=vis->x1 ; dc_x<=vis->x2 ; dc_x++, texcol_frac += vis->xiscale)
     {
@@ -1487,8 +1498,8 @@ void R_DrawPlayerSprites (void)
         spritelights = scalelight[lightnum];
 
     // clip to screen bounds
-    mfloorclip = screenheightarray;
-    mceilingclip = negonearray;
+    dm_floorclip = screenheightarray;
+    dm_ceilingclip = negonearray;
 
     //added:06-02-98: quickie fix for psprite pos because of freelook
     kikhak = centery;
@@ -1577,7 +1588,7 @@ static drawnode_t*    R_CreateDrawNode (drawnode_t* link);
 static drawnode_t     nodebankhead;
 static drawnode_t     nodehead;
 
-static void R_CreateDrawNodes()
+static void R_CreateDrawNodes( void )
 {
   drawnode_t*   entry;
   drawseg_t*    ds;
@@ -2043,8 +2054,8 @@ void R_DrawSprite (vissprite_t* spr)
             cliptop[x] = con_clipviewtop;
     }
 
-    mfloorclip = clipbot;
-    mceilingclip = cliptop;
+    dm_floorclip = clipbot;
+    dm_ceilingclip = cliptop;
     R_DrawVisSprite (spr, spr->x1, spr->x2);
 }
 

@@ -76,13 +76,13 @@ extern short            negonearray[MAXVIDWIDTH];
 extern short            screenheightarray[MAXVIDWIDTH];
 
 // vars for R_DrawMaskedColumn
-extern short*           mfloorclip;
-extern short*           mceilingclip;
-extern fixed_t          spryscale;
-extern fixed_t          sprtopscreen;
-extern fixed_t          sprbotscreen;
-extern fixed_t          windowtop;
-extern fixed_t          windowbottom;
+extern short*           dm_floorclip;
+extern short*           dm_ceilingclip;
+extern fixed_t          dm_yscale;
+extern fixed_t          dm_topscreen;
+extern fixed_t          dm_botscreen;
+extern fixed_t          dm_windowtop;
+extern fixed_t          dm_windowbottom;
 
 extern fixed_t          pspritescale;
 extern fixed_t          pspriteiscale;
