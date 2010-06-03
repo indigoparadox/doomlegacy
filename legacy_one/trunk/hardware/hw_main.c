@@ -1685,7 +1685,9 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
 
                 if (drawtextured)
                 {
-                    grTex = HWR_GetTexture(texturetranslation[sides[rover->master->sidenum[0]].midtexture]);
+		    midtexnum = texturetranslation[sides[rover->master->sidenum[0]].midtexture];
+		    if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
+                    grTex = HWR_GetTexture( midtexnum );
 
                     wallVerts[3].t = wallVerts[2].t = (*rover->topheight - h) * grTex->scaleY;
                     wallVerts[0].t = wallVerts[1].t = (h - l + (*rover->topheight - h)) * grTex->scaleY;

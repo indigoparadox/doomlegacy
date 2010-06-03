@@ -897,7 +897,9 @@ void R_RenderThickSideRange (drawseg_t* ds,
     frontsector = curline->frontsector == ffloor->target ? curline->backsector : curline->frontsector;
 
     // midtexture, 0=no-texture, otherwise valid
-    texnum = texturetranslation[sides[ffloor->master->sidenum[0]].midtexture];
+    texnum = sides[ffloor->master->sidenum[0]].midtexture;
+    if( texnum == 0 )  return;  // no texture to display (when 3Dslab is missing side texture)
+    texnum = texturetranslation[texnum];
 
     colfunc = basecolfunc;
 
