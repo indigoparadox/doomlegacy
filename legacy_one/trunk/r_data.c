@@ -1351,7 +1351,7 @@ void R_ClearColormaps()
 
 
 // [WDJ] Enable to print out results of colormap generate.
-#define VIEW_COLORMAP_GEN
+//#define VIEW_COLORMAP_GEN
 
 // In order: whiteindex, greyindex, redindex, greenindex, blueindex
 static byte  doom_analyze_index[5] = {

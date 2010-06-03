@@ -851,3 +851,8 @@ More no-texture tests needed in FakeFloor rover code, with wider protection.
 A 3Dslab that is missing a side texture could cause a segfault, eventually,
 when it is referenced during FakeFloor roving.
 
+*** w52_VIEW_COLORMAP_GEN
+patchfile = w52_view_colormap_gen.patch
+- committed revision 677   by wesley johnson
+Turn off VIEW_COLORMAP_GEN debug enable, which had got left on.
+
