@@ -144,7 +144,8 @@ typedef struct
 
 enum gameflags_e {
    GD_idwad       = 0x01, // one of the commercial/shareware wads by id or Raven
-   GD_unsupported = 0x02, // unsupported game type
+   GD_iwad_pref   = 0x02, // load the iwad after legacy.dat to give it preference
+   GD_unsupported = 0x08, // unsupported game type
 };
 
 // Index to game_desc_t entries

@@ -1233,3 +1233,10 @@ char *Z_Strdup(const char *s, memtag_e tag, void **user)
 {
   return strcpy(Z_Malloc(strlen(s)+1, tag, user), s);
 }
+
+// return size of data of this block.
+int Z_Datasize( void* ptr )
+{
+    memblock_t*  block = (memblock_t *) ( (byte *)ptr - sizeof(memblock_t));
+    return  block->size - sizeof(memblock_t);
+}

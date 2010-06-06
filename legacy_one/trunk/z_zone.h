@@ -135,6 +135,9 @@ void*   Z_MallocAlign(int reqsize, memtag_e tag, void **user, int alignbits);
 
 char *Z_Strdup(const char *s, memtag_e tag, void **user);
 
+// return size of data of this block.
+int Z_Datasize( void* ptr );
+
 /// memblock header
 typedef struct memblock_s
 {

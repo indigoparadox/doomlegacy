@@ -873,3 +873,18 @@ patchfile = w52_drawsplats_looping.patch
 The usual test and continue for draw range too high, in this case, left
 the iteration variable unchanged, and thus stuck in a tight loop.
 Changed to not use continue stmt.
+
+*** w53_chexquest
+patchfile = w52_chexquest.patch
+- committed revision 680   by wesley johnson
+Fix chexquest problems.
+Chexquest was showing bloody splats, provided by legacy.dat.
+Added a GDESC_ flag to indicate that the iwad needs to have precedence.
+Reduced the violence of the splats for chexquest mode.
+Added code to detect and intercept Doom graphics that were left in the
+chexquest1 wad by the developers.
+When player escapes the difficulty menu, it goes to the episode menu,
+which is displaying the Doom1 episode names to Chex players.
+Added code to give Chex episode names, instead of Doom episode names,
+or block the episode menu.
+

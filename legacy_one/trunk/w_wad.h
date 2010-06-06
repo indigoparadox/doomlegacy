@@ -195,6 +195,10 @@ void*   W_CacheRawAsPic( int lump, int width, int height, int tag); // return a 
 void*   W_CachePicNum( int lumpnum, int tag );
 void*   W_CachePicName( char* name, int tag );
 
+// [WDJ] Return a sum unique to a lump, to detect replacements.
+// The lumpptr must be to a Z_Malloc lump.
+uint64_t  W_lump_checksum( void* lumpptr );
+
 //SoM: 4/13/2000: Store lists of lumps for F_START/F_END ect.
 typedef struct {
   int         wadfile;

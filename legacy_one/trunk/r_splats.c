@@ -399,11 +399,11 @@ static void R_RenderFloorSplat (floorsplat_t* pSplat, vertex_t* verts, byte* pTe
 {
     // resterizing
     int     miny = vid.height + 1;
-        int     maxy = 0;
-        int     x, y;
+    int     maxy = 0;
+    int     x, y;
     int     x1, y1, x2, y2;
     byte*   pDest;
-        int     tx, ty, tdx, tdy;
+    int     tx, ty, tdx, tdy;
 
     // rendering
     lighttable_t**  planezlight;

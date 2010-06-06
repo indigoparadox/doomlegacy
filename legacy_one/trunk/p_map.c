@@ -505,8 +505,9 @@ static boolean PIT_CheckThing (mobj_t* thing)
 
         // damage / explode
         damage = ((P_Random()%8)+1)*tmthing->info->damage;
-        if( P_DamageMobj (thing, tmthing, tmthing->target, damage) && 
-                         (thing->flags & MF_NOBLOOD)==0 && demoversion>=129 )
+        if( P_DamageMobj (thing, tmthing, tmthing->target, damage)
+	    && (thing->flags & MF_NOBLOOD)==0
+	    && demoversion>=129 )
             P_SpawnBloodSplats (tmthing->x,tmthing->y,tmthing->z, damage, thing->momx, thing->momy);
 
         // don't traverse any more

@@ -1042,7 +1042,7 @@ void R_Subsector (int num)
 
 
 #ifdef FLOORSPLATS
-    if (sub->splats)
+    if (sub->splats && cv_splats.value )
         R_AddVisibleFloorSplats (sub);
 #endif
 

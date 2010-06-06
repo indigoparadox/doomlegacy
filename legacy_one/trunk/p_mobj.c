@@ -2144,10 +2144,17 @@ boolean PTR_BloodTraverse(intercept_t * in)
       hitline:
         P_MakeDivline(li, &divl);
         frac = P_InterceptVector(&divl, &trace);
+	// Chexquest: has green splats, BLUDA0, BLUDB0, and BLUDC0
         if (gamemode == heretic)
+        {
+	    // BLODC0 from heretic wad
             R_AddWallSplat(li, P_PointOnLineSide(bloodspawnpointx, bloodspawnpointy, li), "BLODC0", z, frac, SPLATDRAWMODE_TRANS);
+	}
         else
+        {
+	    // BLUDC0 from wad or legacy.dat, green splat for chexquest
             R_AddWallSplat(li, P_PointOnLineSide(bloodspawnpointx, bloodspawnpointy, li), "BLUDC0", z, frac, SPLATDRAWMODE_TRANS);
+	}
         return false;
     }
 
@@ -2171,9 +2178,15 @@ void P_SpawnBloodSplats(fixed_t x, fixed_t y, fixed_t z, int damage, fixed_t mom
     int numsplats;
     int i;
 #endif
+
+    if ( ! cv_splats.value )  // obey splats option
+        return; 
+
     // spawn the usual falling blood sprites at location
+    // Creates bloodthing passed to PTR_BloodTraverse
     P_SpawnBlood(x, y, z, damage);
     //CONS_Printf ("spawned blood counter %d\n", counter++);
+
     if (demoversion < 129)
         return;
 
@@ -2201,6 +2214,11 @@ void P_SpawnBloodSplats(fixed_t x, fixed_t y, fixed_t z, int damage, fixed_t mom
     // BFG is funy without this check
     if (numsplats > 20)
         numsplats = 20;
+
+    if (gamemode == chexquest1)
+    {
+        distance /=8;  // less violence to splats
+    }
 
     //CONS_Printf ("spawning %d bloodsplats at distance of %d\n", numsplats, distance);
     //CONS_Printf ("damage %d\n", damage);
@@ -2244,6 +2262,14 @@ void P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage)
 
     if (th->tics < 1)
         th->tics = 1;
+
+    if (gamemode == chexquest1)
+    {
+        // less violence to splats
+        th->momx /=8;
+        th->momy /=8;
+        th->momz /=4;
+    }
 
     if (damage <= 12 && damage >= 9)
         P_SetMobjState(th, S_BLOOD2);

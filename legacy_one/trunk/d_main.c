@@ -308,6 +308,7 @@
 #include "d_main.h"
 #include "d_netfil.h"
 #include "m_cheat.h"
+#include "p_chex.h"
 
 #ifdef HWRENDER
 #include "hardware/hw_main.h"   // 3D View Rendering
@@ -343,7 +344,7 @@ char * pagename = "TITLEPIC";
 
 //  PROTOS
 void HereticPatchEngine(void);
-void Chex1PatchEngine(void);
+//void Chex1PatchEngine(void);
 
 void D_PageDrawer(char *lumpname);
 void D_AdvanceDemo(void);
@@ -1140,7 +1141,7 @@ game_desc_t  game_desc_table[ GDESC_num ] =
 	{"ENDSTRF", NULL}, 0, LN_MAP01, GD_idwad|GD_unsupported, strife },
 // GDESC_chex1: Chex Quest
    { "Chex Quest", NULL, "chex1", "chex.wad", NULL,
-	{"W94_1", "POSSH0M0"}, LN_E1M1, LN_TITLE, 0, chexquest1 },
+	{"W94_1", "POSSH0M0"}, LN_E1M1, LN_TITLE, GD_iwad_pref, chexquest1 },
 // GDESC_ultimate_mode: Ultimate Doom replacement
    { "Ultimate mode", NULL, "ultimode", "doom.wad", NULL,
 	{ NULL, NULL}, LN_E1M1, 0, 0, registered },
@@ -1155,7 +1156,7 @@ game_desc_t  game_desc_table[ GDESC_num ] =
 	{ NULL, NULL}, LN_MAP01, 0, GD_unsupported, hexen },
 // GDESC_other: Other iwads, all DoomII features enabled, ptrs to name buffers
    { other_gname, public_title, "", other_iwad_filename, NULL,
-	{ NULL, NULL}, LN_MAP01, 0, 0, commercial }
+	{ NULL, NULL}, LN_MAP01, 0, GD_iwad_pref, commercial }
 };
 
 
@@ -1507,8 +1508,16 @@ void IdentifyVersion(void)
       I_Error("Doom Legacy currently does not support this game.\n");
 
     D_AddFile(pathiwad);
-    D_AddFile(legacywad);
-    if( gamedesc.support_wad )  D_AddFile( gamedesc.support_wad );
+    D_AddFile(legacywad);  // So can replace some graphics with Legacy ones.
+    if( gamedesc.gameflags & GD_iwad_pref )
+    {
+       // Because legacy.dat replaced some things it shouldn't, give the iwad
+       // preference from both search directions.
+       // Chexquest1: legacy.dat was replacing the green splats, with bloody ones.
+       D_AddFile(pathiwad);
+    }
+    if( gamedesc.support_wad )
+       D_AddFile( gamedesc.support_wad );
     return;
    
 iwad_failure:

@@ -233,6 +233,8 @@
 #include "w_wad.h"
 #include "p_local.h"
 #include "p_fab.h"
+#include "p_chex.h"
+  // Chex_safe_pictures
 
 #include "p_saveg.h"
   // savegame header read
@@ -244,6 +246,7 @@
 #include "d_net.h"
 #include "mserv.h"
 #include "p_inter.h"
+
 
 boolean                 menuactive;
 
@@ -4452,7 +4455,32 @@ void M_Init (void)
           NewGameMenu[2].text = "BRINGEST THEM ONETH";
           NewGameMenu[3].text = "THOU ART A SMITE-MEISTER";
           NewGameMenu[4].text = "BLACK PLAGUE POSSESSES THEE";
+          break;
 
+      case chexquest1:
+          if( Chex_safe_pictures( "M_EPI1", NULL ) == NULL )
+          {
+	      // Found Doom episode title in wad.
+#if 1
+	      // [WDJ] Coverup for Doom episode titles in chexquest1 wad
+	      // According to Chexquest3.
+	      EpisodeMenu[0].text = "Rescue on Baziok";
+	      EpisodeMenu[1].text = "Terror in Chex-City"; // Avoid needing (R)
+	      EpisodeMenu[2].text = "Invasion";
+	      EpisodeMenu[3].text = "Episode 4";
+	      EpisodeMenu[4].text = "Episode 5";
+	      EpisodeMenu[0].status = IT_CALL | IT_STRING2;
+	      EpisodeMenu[1].status = IT_CALL | IT_STRING2;
+	      EpisodeMenu[2].status = IT_CALL | IT_STRING2;
+	      EpisodeMenu[3].status = IT_CALL | IT_STRING2;
+	      EpisodeMenu[4].status = IT_CALL | IT_STRING2;
+#else
+	      NewDef.prevMenu = &MainDef;  // disable access to episodes menu
+#endif	     
+	  }
+          break;
+
+       
       default:
         break;
     }
