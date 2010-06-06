@@ -250,11 +250,10 @@ static void R_DrawSplatColumn (column_t* column)
         if (dc_yl <= last_ceilingclip[dc_x])
             dc_yl =  last_ceilingclip[dc_x]+1;
 #endif
-        if ( dc_yh < 0 ) continue;
         //[WDJ] phobiata.wad has many views that need clipping
         if ( dc_yl < 0 ) dc_yl = 0;
         if ( dc_yh >= rdraw_viewheight )   dc_yh = rdraw_viewheight - 1;
-        if (dc_yl <= dc_yh)
+        if (dc_yl <= dc_yh && dc_yh >= 0 )
         {
             dc_source = (byte *)column + 3;
             dc_texturemid = basetexturemid - (column->topdelta<<FRACBITS);

@@ -866,3 +866,10 @@ the latest commit.
 GetPlaneLight changes in hw_main.c.
 These were in w50_planelight.patch, but were found to be missing after
 this latest commit.
+
+*** w53_drawsplats_looping
+patchfile = w52_drawsplats_looping.patch
+- committed revision 679   by wesley johnson
+The usual test and continue for draw range too high, in this case, left
+the iteration variable unchanged, and thus stuck in a tight loop.
+Changed to not use continue stmt.
