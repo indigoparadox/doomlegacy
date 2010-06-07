@@ -905,7 +905,7 @@ moved stair attribute switch stmt out of the loop (const for the loop).
 
 *** w53_line_of_sight
 fpatchfile = w53_lineofsight.patch
-- committed revision 6xx   by wesley johnson
+- committed revision 683   by wesley johnson
 Sleeping Sargeant bug from DoomWiki.
 Line-of-sight code had typo, testing x==node->y, instead of y==node->y.
 
