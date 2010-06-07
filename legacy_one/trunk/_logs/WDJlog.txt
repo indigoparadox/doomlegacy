@@ -860,7 +860,7 @@ Turn off VIEW_COLORMAP_GEN debug enable, which had got left on.
 patchfile = w52_extracolormap_surf.patch
 - committed revision 678   by wesley johnson
 Extracolormap_to_Surf, common function for hardware rgba[] handling,
-because these operations is getting more and more complicated.
+because these operations are getting more and more complicated.
 This was in w52_hw_colormap.patch, but was found to be missing after
 the latest commit.
 GetPlaneLight changes in hw_main.c.
@@ -868,14 +868,14 @@ These were in w50_planelight.patch, but were found to be missing after
 this latest commit.
 
 *** w53_drawsplats_looping
-patchfile = w52_drawsplats_looping.patch
+patchfile = w53_drawsplats_looping.patch
 - committed revision 679   by wesley johnson
 The usual test and continue for draw range too high, in this case, left
 the iteration variable unchanged, and thus stuck in a tight loop.
 Changed to not use continue stmt.
 
 *** w53_chexquest
-patchfile = w52_chexquest.patch
+patchfile = w53_chexquest.patch
 - committed revision 680   by wesley johnson
 Fix chexquest problems.
 Chexquest was showing bloody splats, provided by legacy.dat.
@@ -887,4 +887,26 @@ When player escapes the difficulty menu, it goes to the episode menu,
 which is displaying the Doom1 episode names to Chex players.
 Added code to give Chex episode names, instead of Doom episode names,
 or block the episode menu.
+
+*** w53_bossdeath
+patchfile = w53_bossdeath.patch
+- committed revision 681   by wesley johnson
+Fix from DoomWiki and prboom.
+BossDeath logic from UltimateDoom does not work with some earlier PWAD.
+Upon detect of shareware or registered, revert to earlier BossDeath
+test, that allows all Boss types to trigger effect.
+
+*** w53_buildstairs
+patchfile = w53_buildstairs.patch
+- committed revision 6xx   by wesley johnson
+BuildStairs bug from DoomWiki, already fixed (mostly).
+Init some more fields, init them even when not boomsupport,
+moved stair attribute switch stmt out of the loop (const for the loop).
+
+*** w53_line_of_sight
+fpatchfile = w53_lineofsight.patch
+- committed revision 6xx   by wesley johnson
+Sleeping Sargeant bug from DoomWiki.
+Line-of-sight code had typo, testing x==node->y, instead of y==node->y.
+
 
