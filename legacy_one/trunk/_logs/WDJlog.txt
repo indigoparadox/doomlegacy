@@ -898,7 +898,7 @@ test, that allows all Boss types to trigger effect.
 
 *** w53_buildstairs
 patchfile = w53_buildstairs.patch
-- committed revision 6xx   by wesley johnson
+- committed revision 682   by wesley johnson
 BuildStairs bug from DoomWiki, already fixed (mostly).
 Init some more fields, init them even when not boomsupport,
 moved stair attribute switch stmt out of the loop (const for the loop).
