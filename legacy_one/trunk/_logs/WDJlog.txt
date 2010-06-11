@@ -904,9 +904,14 @@ Init some more fields, init them even when not boomsupport,
 moved stair attribute switch stmt out of the loop (const for the loop).
 
 *** w53_line_of_sight
-fpatchfile = w53_lineofsight.patch
+patchfile = w53_lineofsight.patch
 - committed revision 683   by wesley johnson
 Sleeping Sargeant bug from DoomWiki.
 Line-of-sight code had typo, testing x==node->y, instead of y==node->y.
 
-
+*** w54_dehacked
+patchfile = w54_dehacked.patch
+- committed revision 684   by wesley johnson
+Dehacked file in chexquest-newmaps segfaults due to writing string over const.
+String replacement in sprites changed to use Z_Strdup, and old string
+is abandoned. This one was missed in previous dehacked patch.

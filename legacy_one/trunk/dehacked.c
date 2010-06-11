@@ -364,8 +364,10 @@ static void readtext(MYFILE* f, int len1, int len2,
       {
         if(!strncmp(deh_sprnames[i],s,len1))
         {
-          strncpy( sprnames[i], str2, len2);
-          sprnames[i][len2]='\0';
+	  // May be const string, which will segfault on write
+	  sprnames[i] = Z_Strdup(str2, PU_STATIC, NULL);
+//          strncpy( sprnames[i], str2, len2);
+//          sprnames[i][len2]='\0';
           return;
         }
       }
