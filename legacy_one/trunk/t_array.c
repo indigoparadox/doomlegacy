@@ -85,7 +85,7 @@ void T_InitSaveList(void)
    {
        sfarray_t * sfap, * sfap_nxt;
        // enable to test if this is happening
-       fprintf(stderr, "T_InitSaveList: clearing array list\n" );
+//       fprintf(stderr, "T_InitSaveList: clearing array list\n" );
 #ifdef SAVELIST_STRUCTHEAD
        sfap = sfsavelist.next;
 #else      

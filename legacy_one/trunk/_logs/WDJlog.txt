@@ -915,3 +915,19 @@ patchfile = w54_dehacked.patch
 Dehacked file in chexquest-newmaps segfaults due to writing string over const.
 String replacement in sprites changed to use Z_Strdup, and old string
 is abandoned. This one was missed in previous dehacked patch.
+
+*** w54_lightlist
+patchfile = w54_lightlist.patch
+- committed revision 685   by wesley johnson
+Fix segfault in chexquest-newmaps due to lightlist bad value.
+Init some special lightlist fields, and comment where segfault occurs.
+Do not know how the level causes this, but it is repeatable.
+With the init, the segfault is prevented, and there is no visible effect.
+
+*** w54_crosshairs
+patchfile = w54_crosshairs.patch
+- committed revision 686   by wesley johnson
+Chexquest-newmaps has a scope with crosshairs, that for the software
+render is considerably off to the left.
+Center the fragglescript pictures overlayed upon screen so that the
+scope crosshairs line up with the actual firing point.

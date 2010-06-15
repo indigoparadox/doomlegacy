@@ -972,6 +972,9 @@ void HU_DrawFSPics()
 {
   int       i;
 
+  // [WDJ] Fragglescript overlays must be centered.
+  // Needed for Chexquest-newmaps scope with crosshairs.
+  scaledofs = vid.centerofs;
   for(i = 0; i < maxpicsize; i++)
   {
     if(piclist[i].lumpnum == -1 || piclist[i].draw == false)
@@ -987,6 +990,7 @@ void HU_DrawFSPics()
 
     V_DrawScaledPatch(piclist[i].xpos, piclist[i].ypos, 0, piclist[i].data);
   }
+  scaledofs = 0;
 }
 
 void HU_ClearFSPics()
