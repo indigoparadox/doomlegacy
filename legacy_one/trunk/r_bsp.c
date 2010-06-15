@@ -1070,8 +1070,9 @@ void R_Prep3DFloors(sector_t*  sector)
   ffloor_t*      best;
   fixed_t        bestheight, maxheight;
   int            count, i, mapnum;
-  sector_t*      sec;
+  sector_t*      modelsec;
 
+  // count needed lightlist entries
   count = 1;
   for(rover = sector->ffloors; rover; rover = rover->next)
   {
@@ -1088,8 +1089,8 @@ void R_Prep3DFloors(sector_t*  sector)
     if(sector->lightlist)
       Z_Free(sector->lightlist);
     sector->lightlist = Z_Malloc(sizeof(ff_lightlist_t) * count, PU_LEVEL, 0);
-    memset(sector->lightlist, 0, sizeof(ff_lightlist_t) * count);
     sector->numlights = count;
+    memset(sector->lightlist, 0, sizeof(ff_lightlist_t) * count);
   }
   else
   {
@@ -1097,13 +1098,16 @@ void R_Prep3DFloors(sector_t*  sector)
     memset(sector->lightlist, 0, sizeof(ff_lightlist_t) * count);
   }
 
+  // init [0] to sector light
   sector->lightlist[0].height = sector->ceilingheight + 1;
   sector->lightlist[0].lightlevel = &sector->lightlevel;
   sector->lightlist[0].caster = NULL;
   sector->lightlist[0].extra_colormap = sector->extra_colormap;
   sector->lightlist[0].flags = 0;
 
-  maxheight = MAXINT;
+  // Work down from highest light to lowest light.
+  // Determine each light in lightlist.
+  maxheight = MAXINT;  // down from max, previous light
   for(i = 1; i < count; i++)
   {
     bestheight = MAXINT * -1;
@@ -1113,20 +1117,23 @@ void R_Prep3DFloors(sector_t*  sector)
       if(!(rover->flags & FF_EXISTS) || (rover->flags & FF_NOSHADE && !(rover->flags & FF_CUTLEVEL) && !(rover->flags & FF_CUTSPRITES)))
         continue;
 
+      // find highest topheight, lower than maxheight
       if(*rover->topheight > bestheight && *rover->topheight < maxheight)
       {
         best = rover;
         bestheight = *rover->topheight;
         continue;
       }
-      if(rover->flags & FF_DOUBLESHADOW && *rover->bottomheight > bestheight && *rover->bottomheight < maxheight)
+      // FF_DOUBLESHADOW considers bottomheight too
+      if(rover->flags & FF_DOUBLESHADOW
+	 && *rover->bottomheight > bestheight && *rover->bottomheight < maxheight)
       {
         best = rover;
         bestheight = *rover->bottomheight;
         continue;
       }
     }
-    if(!best)
+    if(!best)  // failure escape
     {
       sector->numlights = i;
       return;
@@ -1139,28 +1146,35 @@ void R_Prep3DFloors(sector_t*  sector)
     // This is messing with the model sector, which could be used for many sectors,
     // settings are independent of this lightlist,
     // this could be done elsewhere, once.
-    sec = &sectors[best->model_secnum];
-    mapnum = sec->midmap;
+    modelsec = &sectors[best->model_secnum];
+    mapnum = modelsec->midmap;
     if(mapnum >= 0 && mapnum < num_extra_colormaps)
-      sec->extra_colormap = &extra_colormaps[mapnum];
+      modelsec->extra_colormap = &extra_colormaps[mapnum];
     else
-      sec->extra_colormap = NULL;
+      modelsec->extra_colormap = NULL;
 
+    // best is highest floor less than maxheight
     if(best->flags & FF_NOSHADE)
     {
+      // FF_NOSHADE, copy next higher light
       sector->lightlist[i].lightlevel = sector->lightlist[i-1].lightlevel;
       sector->lightlist[i].extra_colormap = sector->lightlist[i-1].extra_colormap;
     }
     else
     {
+      // usual light
       sector->lightlist[i].lightlevel = best->toplightlevel;
-      sector->lightlist[i].extra_colormap = sec->extra_colormap;
+      sector->lightlist[i].extra_colormap = modelsec->extra_colormap;
     }
 
     if(best->flags & FF_DOUBLESHADOW)
     {
+      // FF_DOUBLESHADOW, consider bottomheight too.
       if(bestheight == *best->bottomheight)
       {
+	// [WDJ] FIXME: segfault here in Chexquest-newmaps E2M2, best->lastlight wild value
+	// Stopped segfault by init to 0, but what is this trying to do ??
+	// Happens when bottom is found without finding top.
         sector->lightlist[i].lightlevel = sector->lightlist[best->lastlight].lightlevel;
         sector->lightlist[i].extra_colormap = sector->lightlist[best->lastlight].extra_colormap;
       }

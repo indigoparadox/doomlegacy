@@ -2867,6 +2867,10 @@ void P_AddFakeFloor(sector_t* taggedsec, sector_t* modsec, line_t* master, int f
 
   ffloor->flags = flags;
   ffloor->master = master;
+  // [WDJ] do not leave uninit
+  ffloor->delta = 0;
+  ffloor->lastlight = 0;  // caused segfault
+  ffloor->alpha = 0;
 
   if(flags & FF_TRANSLUCENT)
   {

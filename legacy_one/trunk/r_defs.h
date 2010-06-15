@@ -290,8 +290,8 @@ typedef struct ffloor_s
   struct ffloor_s* next;
   struct ffloor_s* prev;
 
-  int              lastlight;
-  int              alpha;
+  int              lastlight;		// light index, FF_DOUBLESHADOW
+  int              alpha;		// FF_TRANSLUCENT
 } ffloor_t;
 
 
