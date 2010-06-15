@@ -1423,7 +1423,9 @@ void M_NewGame(int choice)
         return;
     }
 
-    if ( gamemode == commercial || gamemode == chexquest1) //DarkWolf95: Support for Chex Quest
+    if ( gamemode == commercial
+	 || (gamemode == chexquest1 && !modifiedgame) //DarkWolf95: Support for Chex Quest
+	 )
         M_SetupNextMenu(&NewDef);
     else
         M_SetupNextMenu(&EpiDef);

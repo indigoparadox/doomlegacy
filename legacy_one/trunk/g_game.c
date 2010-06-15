@@ -1853,6 +1853,7 @@ void G_DoCompleted (void)
         AM_Stop ();
 
     if ( gamemode != commercial)
+    {
         switch(gamemap)
         {
           case 8:
@@ -1872,9 +1873,12 @@ void G_DoCompleted (void)
                 players[i].didsecret = true;
             break;
         }
-	//DarkWolf95: September 11, 2004: More chex stuff
-	if (gamemode == chexquest1 && gamemap == 5)
-	{
+    }
+    //DarkWolf95: September 11, 2004: More chex stuff
+    if (gamemode == chexquest1)
+    {
+        if( !modifiedgame && gamemap == 5 )  // original chexquest ends at E1M5
+        {
 		if(cv_deathmatch.value)
 			wminfo.next=0;
 		else
@@ -1884,6 +1888,7 @@ void G_DoCompleted (void)
 			return;
 		}
 	}
+    }
 
     if(!dedicated)
 	wminfo.didsecret = players[consoleplayer].didsecret;

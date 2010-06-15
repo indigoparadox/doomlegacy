@@ -931,3 +931,9 @@ Chexquest-newmaps has a scope with crosshairs, that for the software
 render is considerably off to the left.
 Center the fragglescript pictures overlayed upon screen so that the
 scope crosshairs line up with the actual firing point.
+
+*** w54_new_chexquest
+patchfile = w54_newchexquest.patch
+- committed revision 687   by wesley johnson
+Chexquest-newmaps and others have more than the original 5 maps.
+When a there is a -file (gamemodified=1), then allow all episodes and maps.
