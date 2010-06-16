@@ -937,3 +937,10 @@ patchfile = w54_newchexquest.patch
 - committed revision 687   by wesley johnson
 Chexquest-newmaps and others have more than the original 5 maps.
 When a there is a -file (gamemodified=1), then allow all episodes and maps.
+
+*** w55_savemobj
+patchfile = w55_savemobj.patch
+- committed revision 689   by wesley johnson
+Savegame repeats mobj numbers when more than 1023 mobj.
+Seen in hth2.wad (Hi-Tech Hell 2 - Alien Tech), which saves 1899 thinkers.
+Realloc of mobj list fixed.

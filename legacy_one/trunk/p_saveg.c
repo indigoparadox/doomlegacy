@@ -920,7 +920,7 @@ typedef struct
 typedef struct
 {
   pointermap_cell_t *map; // array of cells
-  unsigned int       len; // number of used cells in the array
+  unsigned int      used; // number of used cells in the array
   unsigned int alloc_len; // number of allocated cells
 } pointermap_t;
 
@@ -930,37 +930,39 @@ static pointermap_t pointermap = {NULL,0,0};
 static void ClearPointermap()
 {
   // Clean release of memory, setup for next call of Alloc_Pointermap 
-  pointermap.len = 0;
+  pointermap.used = 0;
   pointermap.alloc_len = 0;
   if( pointermap.map )  free(pointermap.map);
   pointermap.map = NULL;
 }
 
 // Allocate or reallocate
+// Current pointermap.used is unchanged.
 static boolean  Alloc_Pointermap( int num )
 {
-    unsigned int fi = pointermap.len; // first uninitialized cell
-   
-    pointermap.map = realloc(pointermap.map, num * sizeof(pointermap_cell_t));
-    if( pointermap.map == NULL )
+    // on failure allocpm==NULL, but pointmap.map will remain valid
+    pointermap_cell_t * allocpm = realloc(pointermap.map, num * sizeof(pointermap_cell_t));
+    if( allocpm == NULL )
     {
       I_SoftError("LoadGame: Pointermap alloc failed.\n");
       save_game_abort = 1;  // will be detected by ReadSync
       return 0;
     }
+    // update to new allocation
+    pointermap.map = allocpm;
     pointermap.alloc_len = num;
-    // num is one past the last new cell
-    memset(&pointermap.map[fi], 0, (num-fi) * sizeof(pointermap_cell_t));
+    // num is one past the last new cell of new allocation
+    // pointermap.used is index of first uninitialized cell (one past end of old allocation)
+    memset(&pointermap.map[pointermap.used], 0, (num-pointermap.used) * sizeof(pointermap_cell_t));
     // All mapping has ID==0 map to NULL ptr.
     // This is less expensive than special tests.
     pointermap.map[0].pointer = NULL;	// Map id==0 to NULL
-    pointermap.len = 1;
     return 1;
 }
 
 static void InitPointermap_Save(unsigned int size)
 {
-  pointermap.len = 1;  // all will be free, initialized to 0
+  pointermap.used = 1;  // all will be free, except [0] == NULL ptr
   Alloc_Pointermap( size );
 }
 
@@ -969,7 +971,7 @@ static void InitPointermap_Load(unsigned int size)
   InitPointermap_Save(size);
   // mark everything as initialized (this condition holds all the time during loading)
   // Does not affect anything, yet.
-  pointermap.len = pointermap.alloc_len;
+  pointermap.used = pointermap.alloc_len;
 }
 
 
@@ -985,21 +987,21 @@ static uint32_t GetID(mobj_t *p)
     return 0; // NULL ptr has id == 0
 
   // see if pointer is already there
-  for (id=0; id < pointermap.len; id++)
+  for (id=0; id < pointermap.used; id++)
     if (pointermap.map[id].pointer == p)  // use existing mapping
       return id;
 
   // okay, not there, we must add it
 
   // is there still space or should we enlarge the mapping table?
-  if (pointermap.len == pointermap.alloc_len)
+  if (pointermap.used == pointermap.alloc_len)
   {
     if( ! Alloc_Pointermap( pointermap.alloc_len * 2 ) )
        return 0; // alloc fail
   }
 
   // add the new pointer mapping
-  id = pointermap.len++;
+  id = pointermap.used++;
   pointermap.map[id].pointer = p;
   return id;
 }
@@ -1035,7 +1037,7 @@ static void MapMobjID(uint32_t id, mobj_t *p)
   {
     // no, enlarge the container
     if( ! Alloc_Pointermap( pointermap.alloc_len * 2 ) )  goto failed;
-    pointermap.len = pointermap.alloc_len; // all initialized
+    pointermap.used = pointermap.alloc_len; // all initialized
   }
 
   if (pointermap.map[id].pointer)  goto duplicate_err;  // already exists
@@ -1253,7 +1255,6 @@ void  WRITE_plat( plat_t* platp, byte active )
     // platlist* does not need to be saved
     WRITEBYTE(save_p, active); // active or stopped plat
 }
-
 
 void P_ArchiveThinkers(void)
 {
@@ -1558,7 +1559,7 @@ void P_ArchiveThinkers(void)
 #ifdef PARANOIA
         else if ((int) th->function.acp1 != -1) // wait garbage colection
         {
-            I_SoftError("SaveGame: Unknown thinker type 0x%X", th->function.acp1);
+            I_SoftError("SaveGame: Unknown thinker type 0x%X\n", th->function.acp1);
 	}
 #endif
 
