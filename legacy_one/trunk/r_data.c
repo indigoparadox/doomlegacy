@@ -1122,6 +1122,7 @@ int R_CheckNumForNameList(char *name, lumplist_t* list, int listsize)
 lumplist_t*  colormaplumps;
 int          numcolormaplumps;
 
+// called by R_InitColormaps
 void R_InitExtraColormaps()
 {
     int       startnum;
@@ -1318,6 +1319,7 @@ void R_ClearColormaps();
 //
 // R_InitColormaps
 //
+// called by R_InitData
 void R_InitColormaps (void)
 {
     int lump;
@@ -1336,16 +1338,25 @@ void R_InitColormaps (void)
 }
 
 
-int    foundcolormaps[MAXCOLORMAPS];
+int    fnd_colormap_lump[MAXCOLORMAPS];  // lump number
 
 //SoM: Clears out extra colormaps between levels.
+// called by P_SetupLevel after ZFree(PU_LEVEL,..)
+// called by R_InitColormaps
 void R_ClearColormaps()
 {
   int   i;
+#if 0   
+  if( num_extra_colormaps > 30 )
+     fprintf( stderr, "Number of colormaps: %i\n", num_extra_colormaps );
+#endif
 
   num_extra_colormaps = 0;
   for(i = 0; i < MAXCOLORMAPS; i++)
-    foundcolormaps[i] = -1;
+  {
+    fnd_colormap_lump[i] = -1;
+    // The ZMalloc colormap was PU_LEVEL and thus is already cleared.
+  }
   memset(extra_colormaps, 0, sizeof(extra_colormaps));
 }
 
@@ -1597,14 +1608,14 @@ int R_ColormapNumForName(char *name)
     I_Error("R_ColormapNumForName: Cannot find colormap lump %s\n", name);
 
   for(i = 0; i < num_extra_colormaps; i++)
-    if(lump == foundcolormaps[i])
+    if(lump == fnd_colormap_lump[i])
       return i;
 
   // Add another colormap
   if(num_extra_colormaps == MAXCOLORMAPS)
     I_Error("R_ColormapNumForName: Too many colormaps!\n");
 
-  foundcolormaps[num_extra_colormaps] = lump;
+  fnd_colormap_lump[num_extra_colormaps] = lump;
 
   // aligned on 8 bit for asm code
   extra_colormaps[num_extra_colormaps].colormap = Z_MallocAlign (W_LumpLength (lump), PU_LEVEL, 0, 8);
@@ -1740,7 +1751,7 @@ int R_CreateColormap(char *colorstr, char *ctrlstr, char *fadestr)
 
   for(i = 0; i < num_extra_colormaps; i++)
   {
-    if(foundcolormaps[i] != -1)
+    if(fnd_colormap_lump[i] != -1)
       continue;
     if(maskcolor == extra_colormaps[i].maskcolor &&
        fadecolor == extra_colormaps[i].fadecolor &&
@@ -1762,7 +1773,7 @@ int R_CreateColormap(char *colorstr, char *ctrlstr, char *fadestr)
     I_Error("R_CreateColormap: Too many colormaps!\n");
   num_extra_colormaps++;
 
-  foundcolormaps[mapnum] = -1;
+  fnd_colormap_lump[mapnum] = -1;
   extra_colormap_p = &extra_colormaps[mapnum];
 
   // aligned on 8 bit for asm code
@@ -1949,10 +1960,11 @@ char *R_ColormapNameForNum(int num)
   if(num < 0 || num > MAXCOLORMAPS)
     I_Error("R_ColormapNameForNum: num is invalid!\n");
 
-  if(foundcolormaps[num] == -1)
+  if(fnd_colormap_lump[num] == -1)
     return "INLEVEL";
 
-  return wadfiles[foundcolormaps[num] >> 16]->lumpinfo[foundcolormaps[num] & 0xffff].name;
+//  return wadfiles[fnd_colormap_lump[num] >> 16]->lumpinfo[fnd_colormap_lump[num] & 0xffff].name;
+  return wadfiles[WADFILENUM(fnd_colormap_lump[num])]->lumpinfo[LUMPNUM(fnd_colormap_lump[num])].name;
 }
 
 

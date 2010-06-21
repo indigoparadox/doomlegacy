@@ -1429,7 +1429,8 @@ boolean P_SetupLevel (int           episode,
 //    R_LoadTextures ();
 //    R_FlushTextureCache();
 
-    R_ClearColormaps();
+    R_ClearColormaps();  // colormap ZMalloc cleared by Z_FreeTags(PU_LEVEL, PU_PURGELEVEL-1)
+
 #ifdef FRAGGLESCRIPT
     P_LoadLevelInfo (lastloadedmaplumpnum);    // load level lump info(level name etc)
 #endif

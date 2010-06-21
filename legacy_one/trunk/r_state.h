@@ -92,7 +92,10 @@ extern lighttable_t*    reg_colormaps;
 
 //SoM: 3/30/2000: Boom colormaps.
 //SoM: 4/7/2000: Had to put a limit on colormaps :(
-#define                 MAXCOLORMAPS 30
+//#define                 MAXCOLORMAPS 30
+// [WDJ]: 5/17/2010 hth2.wad uses 38 colormaps
+// To little memory to save to use dynamic methods.
+#define                 MAXCOLORMAPS 64
 
 // defined colormap lightmaps descriptors
 extern int              num_extra_colormaps;

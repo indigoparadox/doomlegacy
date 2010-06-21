@@ -944,3 +944,10 @@ patchfile = w55_savemobj.patch
 Savegame repeats mobj numbers when more than 1023 mobj.
 Seen in hth2.wad (Hi-Tech Hell 2 - Alien Tech), which saves 1899 thinkers.
 Realloc of mobj list fixed.
+
+*** w55_maxcolormap
+patchfile = w55_maxcolormap.patch
+- committed revision 690   by wesley johnson
+Wad hth2.wad uses 38 colormaps, increase to 64 colormaps.
+Comment some colormap vars, and make it more clear.
+Not enough memory saved to use dynamic methods.
