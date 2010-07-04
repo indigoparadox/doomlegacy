@@ -958,3 +958,11 @@ patchfile = w56_savemenu_scroll.patch
 Fix savegame menu so that when pressing uparrow or downarrow the scrolling
 is performed whenever it can, instead of rollover to top or bottom
 of menu.
+
+*** w56_legacy_docs
+patchfile = w56_legacy_doc.patch
+- committed revision 693   by wesley johnson
+Updated the Legacy.html to reflect new controls and switches.
+This is not complete.
+Updated a little bit of Faq.html, but much of it still needs review.
+There are still many references to newdoom in the doc pages.

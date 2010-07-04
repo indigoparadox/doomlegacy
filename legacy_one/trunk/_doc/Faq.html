@@ -3,9 +3,9 @@
 <pre>
 
  DooM LEGACY
- Release v1.40, September 2002.
+ Release v1.44, July 2010.
 
- Last Updated: September 2002
+ Last Updated: July 2010
 
  Original game & sources by: Id Software.
  Additions: (c)1998 by: Fabrice Denis & Boris Pereira
@@ -16,8 +16,8 @@
  Special thanks to Steven McGranahan, Robert Bäuml and Bell Kin for
  their large contribution and to others Legacy Team members.
 
- Web site: http://legacy.newdoom.com
-   e-mail: legacy@newdoom.com
+ Web site: http://doomlegacy.sourceforge.net
+   e-mail: see the doomlegacy project at sourceforge.net
 
 
  -----------------------------------------------------------------------
@@ -31,9 +31,8 @@
  If you find a solution to a problem that was not listed here,
  please tell us so that we can update the FAQ and help other people!
 
- Mail your hardware/software problems to:
-
- legacy@newdoom.com subject: FAQ
+ To contact us see the hardware/software problems pages or forums
+ at the doomlegacy project at sourceforge.net.
 
 
  --------
@@ -128,7 +127,7 @@
    saved to the config : press the key 'D' on the Video Options menu
    to set the current video mode the default.
 
-  * I have some problems with OpenGL mode
+ * I have some problems with OpenGL mode
 
    Have a look at the FAQ for OpenGL on the glLegacy web site:
 
@@ -187,8 +186,9 @@
 
  * DOS:How can I *ALWAYS* disable the sounds or music of the game ?
 
-   Edit the sound.cfg file and set digicard/midicard to 0 (none)
-
+   Edit the sound.cfg file and set digicard/midicard to 0 (none).
+   Edit the config.cfg file and set soundvolume and/or musicvolume
+   to "0".
 
  * DOS:My sterero sound is reversed, how can I set it the right way ?
 
@@ -299,7 +299,7 @@
    server).
 
    This can also happens when there is already a legacy running on your 
-   computer if you whant to try two legacy running on the same computer 
+   computer. If you want to try two legacy running on the same computer 
    use -clientport 12345 (or any other free slot). Then the second will 
    connect to the first one.
 
@@ -382,9 +382,15 @@
    important data (probably hacked away on your diploma thesis for 3
    weeks without saving once) you can also kill Legacy directly. Press
    "CTRL-ALT-F2" and you will get to a console. Log in, type
-   "killall llxdoom" and switch back to the X-Server with "CTRL-ALT-F7".
+   "killall llxdoom" (with SDL "killall lsdldoom") and switch back to
+   the X-Server with "CTRL-ALT-F7".
    Some X-Server crash on this procedure - blame the X-Server for the
    loss of 3 weeks work on your diploma thesis :)
+   
+   If this leaves you with the wrong screen size, then try to close
+   any applications you can with just keypresses,
+   ALT-TAB to select a window, ALT-F3 "C" to close it,
+   then type ALT-F1, "LOG", ENTER, ENTER, to shutdown the X-server.
 
 </pre>
 </html>
