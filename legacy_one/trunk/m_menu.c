@@ -4070,7 +4070,7 @@ boolean M_Responder (event_t* ev)
 
       case ']':
       case KEY_PGDN:
-        if( scroll_callback && (scroll_index < 100))
+        if( scroll_callback && (scroll_index < (99-6)))
         {
 	    scroll_index += 6;
             scroll_callback( 6 );
@@ -4080,6 +4080,15 @@ boolean M_Responder (event_t* ev)
 #endif
 
       case KEY_DOWNARROW:
+#if defined SAVEGAMEDIR || defined SAVEGAME99
+        if( scroll_callback && (scroll_index < 99) && (itemOn > 5))
+        {
+	    // scrolling menu scrolls preferentially
+	    scroll_index ++;
+	    scroll_callback( 1 );
+	    goto ret_pstop;
+	}
+#endif
         do
         {
             if (itemOn+1 > currentMenu->numitems-1)
@@ -4089,6 +4098,16 @@ boolean M_Responder (event_t* ev)
         goto ret_pstop;
 
       case KEY_UPARROW:
+#if defined SAVEGAMEDIR || defined SAVEGAME99
+        if( scroll_callback && (scroll_index > 0) && (itemOn < 2))
+        {
+	    // scrolling menu scrolls preferentially
+	    scroll_index --;
+	    if( scroll_index < 0 )   scroll_index = 0;
+	    scroll_callback( -1 );  // some functions need to correct
+	    goto ret_pstop;
+	}
+#endif       
         do
         {
             if (!itemOn)

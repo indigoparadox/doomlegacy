@@ -951,3 +951,10 @@ patchfile = w55_maxcolormap.patch
 Wad hth2.wad uses 38 colormaps, increase to 64 colormaps.
 Comment some colormap vars, and make it more clear.
 Not enough memory saved to use dynamic methods.
+
+*** w56_savemenu_scroll
+patchfile = w56_savemenu_scroll.patch
+- committed revision 691   by wesley johnson
+Fix savegame menu so that when pressing uparrow or downarrow the scrolling
+is performed whenever it can, instead of rollover to top or bottom
+of menu.
