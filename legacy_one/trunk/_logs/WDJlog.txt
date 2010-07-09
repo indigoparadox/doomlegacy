@@ -997,3 +997,17 @@ Detect bad linedef number, missing sidedefs, in P_LoadSegs.
 Detect missing sidedefs, in P_LoadSubsectors.
 Detect bad sector number, in P_LoadSideDefs2.
 Detect bad seg number, in P_GroupLines.
+
+*** w57_blockmap_overlow_coping
+patchfile = w57_blockmap.patch
+- committed revision 697   by wesley johnson
+Fix blockmap loading to handle large blockmaps.
+Detect blockmap overflow and correct the list indexes.
+Will load Europe.wad which overflows the blockmap x3 times.
+Europe.wad will load and run after this patch, but has automap problems,
+and some other bugs.
+Rename the blockmap global vars to be less confusing, as blockmaphead
+and blockmapindex (as neither is the lump).
+Make the blockmap unsigned, because every value read from it is unsigned
+except for one test, which can be ==0xffff instead.
+Adjust some of the blockmap functions.

@@ -114,17 +114,16 @@ static boolean PTR_SightTraverse (intercept_t *in)
 // x,y are blockmap indexes
 static boolean P_SightBlockLinesIterator (int x, int y )
 {
-    int                     offset;
-    long           *list; // Big Blockmap SSNTails 06-10-2003
-    line_t          *ld;
-    int                     s1, s2;
+    int             offset;
+    int             s1, s2;
     divline_t       dl;
+    const int32_t   *list; // Big Blockmap, SSNTails 06-10-2003
+    line_t          *ld;
     
     offset = y*bmapwidth+x;
+    offset = blockmapindex[offset];
     
-    offset = *(blockmap+offset);
-    
-    for ( list = blockmaplump+offset ; *list != -1 ; list++)
+    for ( list = & blockmaphead[offset] ; *list != -1 ; list++)
     {
         ld = &lines[*list];
         if (ld->validcount == validcount)

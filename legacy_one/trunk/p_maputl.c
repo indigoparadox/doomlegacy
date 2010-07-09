@@ -622,7 +622,7 @@ boolean P_BlockLinesIterator (int x, int y,
                               boolean   (*func)(line_t*) )
 {
     int                 offset;
-    const long*              list; // Big blockmap Tails
+    const int32_t     * list; // Big blockmap, SSNTails
     line_t*             ld;
 
     if (x<0
@@ -634,22 +634,9 @@ boolean P_BlockLinesIterator (int x, int y,
     }
 
     offset = y*bmapwidth+x;
-    offset = *(blockmap+offset); //	offset = blockmap[y*bmapwidth+x];
+    offset = blockmapindex[offset]; //	offset = blockmap[y*bmapwidth+x];
 
-    //Hurdler: FIXME: this a temporary "fix" for the bug with phobia...
-    //                ... but it's not correct!!!!! 
-    if (offset < 0)
-    {
-		static int first = 1;
-		if(first)
-		{
-			CONS_Printf("Warning: this map has reached a limit of the doom engine.\n");
-			first = 0;
-		}
-        return true;
-    }
-
-    for ( list = blockmaplump+offset ; *list != -1 ; list++)
+    for ( list = & blockmaphead[offset] ; *list != -1 ; list++)
     {
         ld = &lines[*list];
 
@@ -668,8 +655,7 @@ boolean P_BlockLinesIterator (int x, int y,
 //
 // P_BlockThingsIterator
 //
-boolean P_BlockThingsIterator ( int                   x,
-                                int                   y,
+boolean P_BlockThingsIterator ( int x, int y,
                                 boolean(*func)(mobj_t*) )
 {
     mobj_t*             mobj;

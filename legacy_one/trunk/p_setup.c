@@ -293,9 +293,9 @@ typedef struct mapdata_s {
 int             bmapwidth;
 int             bmapheight;     // size in mapblocks
 
-long*          blockmap;       // int for large maps
+uint32_t *      blockmapindex;       // for large maps, wad is 16bit
 // offsets in blockmap are from here
-long*          blockmaplump; // Big blockmap SSNTails
+uint32_t *      blockmaphead; // Big blockmap, SSNTails
 
 // origin of block map
 fixed_t         bmaporgx;
@@ -1121,47 +1121,90 @@ void P_LoadSideDefs2(int lump)
 //
 // P_LoadBlockMap
 //
+// Read wad blockmap using int16_t wadblockmaplump[].
+// Expand from 16bit wad to internal 32bit blockmap.
 void P_LoadBlockMap (int lump)
 {
-  long count;
-
-  count = W_LumpLength(lump)/2;
-  {
-      long i;
-      short *wadblockmaplump = W_CacheLumpNum (lump, PU_LEVEL); // blockmap lump temp
-      // [WDJ] Do endian as read from blockmap lump temp
-      blockmaplump = Z_Malloc(sizeof(*blockmaplump) * count, PU_LEVEL, NULL);
+  int count = W_LumpLength(lump)/2;  // number of 16 bit blockmap entries
+  uint16_t * wadblockmaplump = W_CacheLumpNum (lump, PU_LEVEL); // blockmap lump temp
+  uint32_t firstlist, lastlist;  // blockmap block list bounds
+  uint32_t overflow_corr = 0;
+  uint32_t prev_bme = 0;  // for detecting overflow wrap
+  int i;
+   
+  // [WDJ] Do endian as read from blockmap lump temp
+  blockmaphead = Z_Malloc(sizeof(*blockmaphead) * count, PU_LEVEL, NULL);
 
       // killough 3/1/98: Expand wad blockmap into larger internal one,
       // by treating all offsets except -1 as unsigned and zero-extending
       // them. This potentially doubles the size of blockmaps allowed,
       // because Doom originally considered the offsets as always signed.
+      // [WDJ] They are unsigned in Unofficial Doom Spec.
 
-      blockmaplump[0] = LE_SWAP16(wadblockmaplump[0]);
-      blockmaplump[1] = LE_SWAP16(wadblockmaplump[1]);
-      blockmaplump[2] = (long)(LE_SWAP16(wadblockmaplump[2])) & 0xffff;
-      blockmaplump[3] = (long)(LE_SWAP16(wadblockmaplump[3])) & 0xffff;
+  blockmaphead[0] = LE_SWAP16(wadblockmaplump[0]);  // map orgin_x
+  blockmaphead[1] = LE_SWAP16(wadblockmaplump[1]);  // map orgin_y
+  blockmaphead[2] = LE_SWAP16(wadblockmaplump[2]);  // number columns (x size)
+  blockmaphead[3] = LE_SWAP16(wadblockmaplump[3]);  // number rows (y size)
 
-      for (i=4 ; i<count ; i++)
+  bmaporgx = blockmaphead[0]<<FRACBITS;
+  bmaporgy = blockmaphead[1]<<FRACBITS;
+  bmapwidth = blockmaphead[2];
+  bmapheight = blockmaphead[3];
+  blockmapindex = & blockmaphead[4];
+  firstlist = 4 + (bmapwidth*bmapheight);
+  lastlist = count - 1;
+
+  // read blockmap index array
+  for (i=4 ; i<firstlist ; i++)  // for all entries in wad offset index
+  {
+      uint32_t  bme = LE_SWAP16(wadblockmaplump[i]);  // offset
+      // upon overflow, the bme will wrap to low values
+      if ( (bme < firstlist)  // too small to be valid
+	   && (bme < 0x1000) && (prev_bme > 0xf000))  // wrapped
       {
-          short t = LE_SWAP16(wadblockmaplump[i]);          // killough 3/1/98
-          blockmaplump[i] = (t == -1)? -1l : (long) t & 0xffff;
+	  // first or repeated overflow
+	  overflow_corr += 0x00010000;
+	  fprintf( stderr,"Correct blockmap offset[%i...] overflow by adding 0x%X\n",
+		   i, overflow_corr );
       }
-
-      Z_Free(wadblockmaplump);
-
-      bmaporgx = blockmaplump[0]<<FRACBITS;
-      bmaporgy = blockmaplump[1]<<FRACBITS;
-      bmapwidth = blockmaplump[2];
-      bmapheight = blockmaplump[3];
+      prev_bme = bme;  // uncorrected
+      // correct for overflow, or else try without correction
+      if ( overflow_corr )
+      {
+	  uint32_t bmec = bme + overflow_corr;
+	  // First entry of list is 0, but high odds of hitting one randomly.
+	  // Check for valid blockmap offset, and offset overflow
+	  if ( bmec <= lastlist
+               && wadblockmaplump[bmec] == 0      // valid start list
+	       && ((bmec - blockmaphead[i-1]) < 1000))  // reasonably close sequentially
+          {
+	      bme = bmec;
+	  }
+      }
+     
+      if ( bme > lastlist )
+	  I_Error("Blockmap offset[%i]= %i, exceeds bounds.\n", i, bme);
+      if ( bme < firstlist
+	   || wadblockmaplump[bme] != 0 )  // not start list
+	  I_Error("Bad blockmap offset[%i]= %i.\n", i, bme);
+      blockmaphead[i] = bme;
   }
+  // read blockmap lists
+  for (i=firstlist ; i<count ; i++)  // for all list entries in wad blockmap
+  {
+      // killough 3/1/98
+      // keep -1 (0xffff), but other values are unsigned
+      uint16_t  bme = LE_SWAP16(wadblockmaplump[i]);
+      blockmaphead[i] = (bme == 0xffff)? ((uint32_t) -1) : ((uint32_t) bme);
+  }
+
+  Z_Free(wadblockmaplump);
+
 
   // clear out mobj chains
   count = sizeof(*blocklinks)* bmapwidth*bmapheight;
   blocklinks = Z_Malloc (count, PU_LEVEL, NULL);
   memset (blocklinks, 0, count);
-  blockmap = blockmaplump+4;
-
 /* Original
 		blockmaplump = W_CacheLumpNum (lump,PU_LEVEL);
 		blockmap = blockmaplump+4;
