@@ -386,8 +386,7 @@ static const fixed_t yspeed[8] = {0,47000,FRACUNIT,47000,0,-47000,-FRACUNIT,-470
 
 static boolean P_Move (mobj_t* actor)
 {
-    fixed_t     tryx;
-    fixed_t     tryy;
+    fixed_t     tryx, tryy;
 
     line_t*     ld;
 
@@ -407,10 +406,11 @@ static boolean P_Move (mobj_t* actor)
     if (!P_TryMove (actor, tryx, tryy, false))
     {
         // open any specials
-        if (actor->flags & MF_FLOAT && floatok)
+	// tmr_floatok, tmr_floorz returned by P_TryMove
+        if (actor->flags & MF_FLOAT && tmr_floatok)
         {
             // must adjust height
-            if (actor->z < tmfloorz)
+            if (actor->z < tmr_floorz)
                 actor->z += FLOATSPEED;
             else
                 actor->z -= FLOATSPEED;
@@ -477,8 +477,7 @@ static boolean P_TryWalk (mobj_t* actor)
 
 static void P_NewChaseDir (mobj_t*     actor)
 {
-    fixed_t     deltax;
-    fixed_t     deltay;
+    fixed_t     deltax, deltay;
 
     dirtype_t   d[3];
 
