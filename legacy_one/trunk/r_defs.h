@@ -573,8 +573,9 @@ typedef struct subsector_s
 {
     sector_t*   sector;   // part of this sector, from segs->sector of firstline
     // numlines and firstline are from the subsectors lump (nodebuilder)
-    short       numlines;   // number of segs in this subsector
-    short       firstline;  // index into segs lump (loaded from wad)
+    // [WDJ] some wad may be large enough to overflow signed short.
+    unsigned short  numlines;   // number of segs in this subsector
+    unsigned short  firstline;  // index into segs lump (loaded from wad)
     // floorsplat_t list
     void*       splats;
     //Hurdler: added for optimized mlook in hw mode

@@ -580,10 +580,11 @@ void B_InitNodes( void )
 //	xMin-=BOTNODEGRIDSIZE; xMax+=2*BOTNODEGRIDSIZE;
 //	yMin-=BOTNODEGRIDSIZE; yMax+=2*BOTNODEGRIDSIZE;
 
+        // [WDJ] On overly-large map max-min will overflow signed
 	xOffset = xMin/BOTNODEGRIDSIZE;
-	xSize = ceil( (double)(xMax - xMin)/(double)BOTNODEGRIDSIZE) + 1;
+	xSize = ceil( ((double)xMax - (double)xMin)/(double)BOTNODEGRIDSIZE) + 1;
 	yOffset = yMin/BOTNODEGRIDSIZE;	
-	ySize = ceil( (double)(yMax - yMin)/(double)BOTNODEGRIDSIZE) + 1;
+	ySize = ceil( ((double)yMax - (double)yMin)/(double)BOTNODEGRIDSIZE) + 1;
 
 	botNodeArray = (SearchNode_t***)Z_Malloc(xSize*sizeof(SearchNode_t*),PU_LEVEL,0);
 	for (i=0; i<xSize; i++)

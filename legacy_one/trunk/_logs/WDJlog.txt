@@ -983,3 +983,17 @@ Comments added for Sight functions.
 Rename CheckSight global vars to cs_*, and the return global vars to
 see_* (which are also used independently by P_AimLineAttack).
 Rename SightTraverse hsight global vars to strav_*.
+
+*** w57_largemap
+patchfile = w57_largemap.patch
+- committed revision 696   by wesley johnson
+Fix some math overflow for large maps like Europe.wad, where MAP01 is
+enormous.
+Change some short wad field types to uint16_t where needed, as those fields
+could be overflowed and they do not need a sign.
+Detect some buggy wad conditions and correct it as much as possible, 
+or Error msg exit, at least prevent segfaults.
+Detect bad linedef number, missing sidedefs, in P_LoadSegs.
+Detect missing sidedefs, in P_LoadSubsectors.
+Detect bad sector number, in P_LoadSideDefs2.
+Detect bad seg number, in P_GroupLines.
