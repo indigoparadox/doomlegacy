@@ -1011,3 +1011,15 @@ and blockmapindex (as neither is the lump).
 Make the blockmap unsigned, because every value read from it is unsigned
 except for one test, which can be ==0xffff instead.
 Adjust some of the blockmap functions.
+
+*** w57_automap_overflow
+patchfile = w57_automap.patch
+- committed revision 698   by wesley johnson
+Fix automap to handle large maps like Europe.wad.
+Do math as to avoid overflowing integer math.
+Detect when overflow will happen and limit zoom to prevent it.
+Change conversion calculation to floating point math.
+Removed some unused code using #ifdef 0.
+Rewrote some parts to use center of attention instead of corner of
+window, and cope with map edges better.
+
