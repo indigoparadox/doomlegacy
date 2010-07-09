@@ -1355,18 +1355,20 @@ boolean PTR_AimTraverse (intercept_t* in)
         if (li->frontsector->floorheight != li->backsector->floorheight)
         {
             slope = FixedDiv (openbottom - la_shootz , dist);
-	    if (slope > bottomslope)
-                bottomslope = slope;
+	    // see_bottomslope return by P_AimLineAttack
+	    if (slope > see_bottomslope)
+                see_bottomslope = slope;
         }
 
         if (li->frontsector->ceilingheight != li->backsector->ceilingheight)
         {
             slope = FixedDiv (opentop - la_shootz , dist);
-            if (slope < topslope)
-                topslope = slope;
+	    // see_topslope return by P_AimLineAttack
+            if (slope < see_topslope)
+                see_topslope = slope;
         }
 
-        if (topslope <= bottomslope)
+        if (see_topslope <= see_bottomslope)
             return false;               // stop
 
         if(li->frontsector->ffloors || li->backsector->ffloors)
@@ -1461,20 +1463,22 @@ boolean PTR_AimTraverse (intercept_t* in)
     thingtopslope = FixedDiv (th->z+th->height - la_shootz , dist);
 
     //added:15-02-98: bottomslope is negative!
-    if (thingtopslope < bottomslope)
+    // see_bottomslope return by P_AimLineAttack
+    if (thingtopslope < see_bottomslope)
         return true;                    // shot over the thing
 
     thingbottomslope = FixedDiv (th->z - la_shootz, dist);
 
-    if (thingbottomslope > topslope)
+    // see_topslope return by P_AimLineAttack
+    if (thingbottomslope > see_topslope)
         return true;                    // shot under the thing
 
     // this thing can be hit!
-    if (thingtopslope > topslope)
-        thingtopslope = topslope;
+    if (thingtopslope > see_topslope)
+        thingtopslope = see_topslope;
 
-    if (thingbottomslope < bottomslope)
-        thingbottomslope = bottomslope;
+    if (thingbottomslope < see_bottomslope)
+        thingbottomslope = see_bottomslope;
 
     //added:15-02-98: find the slope just in the middle(y) of the thing!
     lar_aimslope = (thingtopslope+thingbottomslope)/2;
@@ -1880,19 +1884,21 @@ fixed_t P_AimLineAttack ( mobj_t*       atkr, // attacker
         x2 = atkr->x + FixedMul(FixedMul(distance,finecosine[angle]),cosineaiming);
         y2 = atkr->y + FixedMul(FixedMul(distance,finesine[angle]),cosineaiming); 
 
-        topslope    =  100*FRACUNIT/160+finetangent[(2048+aiming) & FINEMASK];
-        bottomslope = -100*FRACUNIT/160+finetangent[(2048+aiming) & FINEMASK];
+        // Aimed result using CheckSight global vars
+        see_topslope    =  100*FRACUNIT/160+finetangent[(2048+aiming) & FINEMASK];
+        see_bottomslope = -100*FRACUNIT/160+finetangent[(2048+aiming) & FINEMASK];
     }
     else
     {
         x2 = atkr->x + (distance>>FRACBITS)*finecosine[angle];
         y2 = atkr->y + (distance>>FRACBITS)*finesine[angle];
 
+        // Aimed result using CheckSight global vars
         //added:15-02-98: Fab comments...
         // Doom's base engine says that at a distance of 160,
         // the 2d graphics on the plane x,y correspond 1/1 with plane units
-        topslope = 100*FRACUNIT/160;
-        bottomslope = -100*FRACUNIT/160;
+        see_topslope = 100*FRACUNIT/160;
+        see_bottomslope = -100*FRACUNIT/160;
     }
     // setup global var for P_PathTraverse
     la_shootz = atkr->z + (atkr->height>>1) + 8*FRACUNIT;

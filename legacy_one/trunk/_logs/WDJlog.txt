@@ -966,3 +966,20 @@ Updated the Legacy.html to reflect new controls and switches.
 This is not complete.
 Updated a little bit of Faq.html, but much of it still needs review.
 There are still many references to newdoom in the doc pages.
+
+*** w57_trymove
+patchfile = w57_trymove.patch
+- committed revision 694   by wesley johnson
+Comments added for TryMove, LineAttack.
+Rename TryMove global vars to tm_* and the return global vars to tmr_*.
+Rename LineAttack global vars la_* and the return global vars to lar_*.
+Cleanup some function stubs, and some indenting, and some IF stmts
+to make easier to read.
+
+*** w57_sight
+patchfile = w57_sight.patch
+- committed revision 695   by wesley johnson
+Comments added for Sight functions.
+Rename CheckSight global vars to cs_*, and the return global vars to
+see_* (which are also used independently by P_AimLineAttack).
+Rename SightTraverse hsight global vars to strav_*.

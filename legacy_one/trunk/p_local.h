@@ -362,8 +362,8 @@ boolean P_DamageMobj ( mobj_t* target, mobj_t* inflictor,
 //
 
 // slopes to top and bottom of target
-extern fixed_t  topslope;
-extern fixed_t  bottomslope;
+extern fixed_t  see_topslope;
+extern fixed_t  see_bottomslope;
 
 
 //
