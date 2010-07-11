@@ -55,29 +55,6 @@
 
 #define MAXMOUSESENSITIVITY   40        // sensitivity steps
 
-// number of total 'button' inputs, include keyboard keys, plus virtual
-// keys (mousebuttons and joybuttons becomes keys)
-#define NUMKEYS         256
-
-#define MOUSEBUTTONS    8
-#define JOYBUTTONS      14  // 10 bases + 4 hat
-
-//
-// mouse and joystick buttons are handled as 'virtual' keys
-//
-typedef enum {
-    KEY_MOUSE1        = NUMKEYS,                  
-    KEY_JOY1          = KEY_MOUSE1+MOUSEBUTTONS,  
-    KEY_DBLMOUSE1     = KEY_JOY1+JOYBUTTONS,        // double clicks
-    KEY_DBLJOY1       = KEY_DBLMOUSE1+MOUSEBUTTONS,
-    KEY_2MOUSE1       = KEY_DBLJOY1+JOYBUTTONS,
-    KEY_DBL2MOUSE1    = KEY_2MOUSE1+MOUSEBUTTONS,
-    KEY_MOUSEWHEELUP  = KEY_DBL2MOUSE1+MOUSEBUTTONS,
-    KEY_MOUSEWHEELDOWN,
-    KEY_2MOUSEWHEELUP,
-    KEY_2MOUSEWHEELDOWN,
-    NUMINPUTS
-} key_input_e;
 
 typedef enum
 {

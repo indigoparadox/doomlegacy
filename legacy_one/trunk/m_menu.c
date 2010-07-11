@@ -2111,9 +2111,11 @@ void M_ChangecontrolResponse(event_t* ev)
             // replace mouse and joy clicks by double clicks
             if (ch>=KEY_MOUSE1 && ch<=KEY_MOUSE1+MOUSEBUTTONS)
                 setupcontrols[control][found] = ch-KEY_MOUSE1+KEY_DBLMOUSE1;
+	    /* TODO ignore joystick doubleclicks for now
             else
               if (ch>=KEY_JOY1 && ch<=KEY_JOY1+JOYBUTTONS)
                 setupcontrols[control][found] = ch-KEY_JOY1+KEY_DBLJOY1;
+	    */
         }
         else
         {
@@ -3757,12 +3759,14 @@ boolean M_Responder (event_t* ev)
         
         // added 5-2-98 remap virtual keys (mouse & joystick buttons)
         switch(ch) {
-        case KEY_MOUSE1   : ch=KEY_ENTER;break;
-        case KEY_MOUSE1+1 : ch=KEY_BACKSPACE;break;
-        case KEY_JOY1     :
-        case KEY_JOY1+2   :
-        case KEY_JOY1+3   : ch=KEY_ENTER;break;
-        case KEY_JOY1+1   : ch=KEY_BACKSPACE;break;
+        case KEY_MOUSE1:
+        case KEY_JOY0BUT0:
+	  ch = KEY_ENTER;
+	  break;
+        case KEY_MOUSE1+1:
+        case KEY_JOY0BUT1:
+	  ch = KEY_BACKSPACE;
+	  break;
         }
     }
     else if( menuactive )
@@ -3888,14 +3892,14 @@ boolean M_Responder (event_t* ev)
     {
         switch(ch)
         {
-          case KEY_MINUS:         // Screen size down
+          case '-':         // Screen size down
             if (automapactive || chat_on || con_destlines)     // DIRTY !!!
                 return false;
             CV_SetValue (&cv_viewsize, cv_viewsize.value-1);
             S_StartSound(NULL,sfx_stnmov);
             goto ret_true;
 
-          case KEY_EQUALS:        // Screen size up
+          case '=':        // Screen size up
             if (automapactive || chat_on || con_destlines)     // DIRTY !!!
                 return false;
             CV_SetValue (&cv_viewsize, cv_viewsize.value+1);
@@ -4039,7 +4043,7 @@ boolean M_Responder (event_t* ev)
     switch (ch)
     {
 #if defined SAVEGAMEDIR || defined SAVEGAME99
-      case KEY_DEL:	// delete directory or savegame
+      case KEY_DELETE:	// delete directory or savegame
 #ifdef SAVEGAMEDIR       
         if( delete_callback && itemOn > 0 )
         {

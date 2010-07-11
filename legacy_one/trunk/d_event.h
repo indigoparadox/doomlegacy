@@ -70,5 +70,8 @@ extern  int             eventtail;
 
 extern  gameaction_t    gameaction;
 
+// current modifier key status
+extern boolean shiftdown;
+extern boolean altdown;
 
 #endif

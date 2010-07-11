@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2010 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -124,7 +124,6 @@ byte graphics_started = 0; // Is used in console.c and screen.c
 // To disable fullscreen at startup; is set in VID_PrepareModeList
 boolean allow_fullscreen = false;
 
-event_t event;
 
 // SDL vars
 
@@ -157,98 +156,6 @@ static int windowedModes[MAXWINMODES][2] = {
     {512, 384},
     {400, 300},
     {320, 200}};
-//
-//  Translates the SDL key into Doom key
-//
-
-static int xlatekey(SDLKey sym)
-{
-    int rc=0;
-
-    switch(sym)
-    {
-    case SDLK_LEFT:  rc = KEY_LEFTARROW;     break;
-    case SDLK_RIGHT: rc = KEY_RIGHTARROW;    break;
-    case SDLK_DOWN:  rc = KEY_DOWNARROW;     break;
-    case SDLK_UP:    rc = KEY_UPARROW;       break;
-
-    case SDLK_ESCAPE:   rc = KEY_ESCAPE;        break;
-    case SDLK_RETURN:   rc = KEY_ENTER;         break;
-    case SDLK_TAB:      rc = KEY_TAB;           break;
-    case SDLK_F1:       rc = KEY_F1;            break;
-    case SDLK_F2:       rc = KEY_F2;            break;
-    case SDLK_F3:       rc = KEY_F3;            break;
-    case SDLK_F4:       rc = KEY_F4;            break;
-    case SDLK_F5:       rc = KEY_F5;            break;
-    case SDLK_F6:       rc = KEY_F6;            break;
-    case SDLK_F7:       rc = KEY_F7;            break;
-    case SDLK_F8:       rc = KEY_F8;            break;
-    case SDLK_F9:       rc = KEY_F9;            break;
-    case SDLK_F10:      rc = KEY_F10;           break;
-    case SDLK_F11:      rc = KEY_F11;           break;
-    case SDLK_F12:      rc = KEY_F12;           break;
-
-    case SDLK_BACKSPACE: rc = KEY_BACKSPACE;    break;
-    case SDLK_DELETE:    rc = KEY_DEL;          break;
-
-    case SDLK_PAUSE:     rc = KEY_PAUSE;        break;
-
-    case SDLK_EQUALS:
-    case SDLK_PLUS:      rc = KEY_EQUALS;       break;
-
-    case SDLK_MINUS:     rc = KEY_MINUS;        break;
-
-    case SDLK_LSHIFT:
-    case SDLK_RSHIFT:
-        rc = KEY_SHIFT;
-        break;
-
-        //case SDLK_XK_Caps_Lock:
-        //rc = KEY_CAPSLOCK;
-        //break;
-
-    case SDLK_LCTRL:
-    case SDLK_RCTRL:
-        rc = KEY_CTRL;
-        break;
-
-    case SDLK_LALT:
-    case SDLK_RALT:
-        rc = KEY_ALT;
-        break;
-
-    case SDLK_PAGEUP:   rc = KEY_PGUP; break;
-    case SDLK_PAGEDOWN: rc = KEY_PGDN; break;
-    case SDLK_END:      rc = KEY_END;  break;
-    case SDLK_HOME:     rc = KEY_HOME; break;
-    case SDLK_INSERT:   rc = KEY_INS;  break;
-
-    case SDLK_KP0: rc = KEY_KEYPAD0;  break;
-    case SDLK_KP1: rc = KEY_KEYPAD1;  break;
-    case SDLK_KP2: rc = KEY_KEYPAD2;  break;
-    case SDLK_KP3: rc = KEY_KEYPAD3;  break;
-    case SDLK_KP4: rc = KEY_KEYPAD4;  break;
-    case SDLK_KP5: rc = KEY_KEYPAD5;  break;
-    case SDLK_KP6: rc = KEY_KEYPAD6;  break;
-    case SDLK_KP7: rc = KEY_KEYPAD7;  break;
-    case SDLK_KP8: rc = KEY_KEYPAD8;  break;
-    case SDLK_KP9: rc = KEY_KEYPAD9;  break;
-
-    case SDLK_KP_MINUS:  rc = KEY_KPADDEL;  break;
-    case SDLK_KP_DIVIDE: rc = KEY_KPADSLASH; break;
-    case SDLK_KP_ENTER:  rc = KEY_ENTER;    break;
-
-    default:
-        if (sym >= SDLK_SPACE && sym <= SDLK_DELETE)
-            rc = sym - SDLK_SPACE + ' ';
-        if (sym >= 'A' && sym <= 'Z')
-            rc = sym - 'A' + 'a';
-        break;
-    }
-
-    return rc;
-}
-
 
 
 //
@@ -267,184 +174,6 @@ void I_StartFrame(void)
 
     return;
 }
-
-static int      lastmousex = 0;
-static int      lastmousey = 0;
-
-#ifdef LJOYSTICK
-extern void I_GetJoyEvent();
-#endif
-#ifdef LMOUSE2
-extern void I_GetMouse2Event();
-#endif
-
-
-void I_GetEvent(void)
-{
-    SDL_Event inputEvent;
-
-#ifdef LJOYSTICK
-    I_GetJoyEvent();
-#endif
-#ifdef LMOUSE2
-    I_GetMouse2Event();
-#endif
-
-    SDL_PumpEvents(); // FIXME: do we need this?
-
-    while(SDL_PollEvent(&inputEvent))
-    {
-        switch(inputEvent.type)
-        {
-        case SDL_KEYDOWN:
-            event.type = ev_keydown;
-            event.data1 = xlatekey(inputEvent.key.keysym.sym);
-            D_PostEvent(&event);
-            break;
-        case SDL_KEYUP:
-            event.type = ev_keyup;
-            event.data1 = xlatekey(inputEvent.key.keysym.sym);
-            D_PostEvent(&event);
-            break;
-        case SDL_MOUSEMOTION:
-            if(cv_usemouse.value)
-            {
-                // If the event is from warping the pointer back to middle
-                // of the screen then ignore it.
-                if ((inputEvent.motion.x == vid.width/2) &&
-                    (inputEvent.motion.y == vid.height/2))
-                {
-                    lastmousex = inputEvent.motion.x;
-                    lastmousey = inputEvent.motion.y;
-                    break;
-                }
-                else
-                {
-                    event.data2 = (inputEvent.motion.x - lastmousex) << 2;
-                    lastmousex = inputEvent.motion.x;
-                    event.data3 = (lastmousey - inputEvent.motion.y) << 2;
-                    lastmousey = inputEvent.motion.y;
-                }
-                event.type = ev_mouse;
-                event.data1 = 0;
-
-                D_PostEvent(&event);
-
-                // Warp the pointer back to the middle of the window
-                //  or we cannot move any further if it's at a border.
-                if ((inputEvent.motion.x < (vid.width/2)-(vid.width/4)) ||
-                    (inputEvent.motion.y < (vid.height/2)-(vid.height/4)) ||
-                    (inputEvent.motion.x > (vid.width/2)+(vid.width/4)) ||
-                    (inputEvent.motion.y > (vid.height/2)+(vid.height/4)))
-                {
-                    SDL_WarpMouse(vid.width/2, vid.height/2);
-                }
-            }
-            break;
-        case SDL_MOUSEBUTTONDOWN:
-            if(cv_usemouse.value)
-            {
-                event.type = ev_keydown;
-                if(inputEvent.button.button==4)
-                {
-                        event.data1 = KEY_MOUSEWHEELUP;
-                }
-                else if(inputEvent.button.button==5)
-                {
-                        event.data1 = KEY_MOUSEWHEELDOWN;
-                }
-                else
-                {
-                        event.data1 = KEY_MOUSE1 + inputEvent.button.button -1; // FIXME!
-                }
-                D_PostEvent(&event);
-            }
-            break;
-        case SDL_MOUSEBUTTONUP:
-            if(cv_usemouse.value)
-            {
-                event.type = ev_keyup;
-                if(inputEvent.button.button==4||inputEvent.button.button==5)
-                {
-                        //ignore wheel
-                }
-                else
-                {
-                        event.data1 = KEY_MOUSE1 + inputEvent.button.button -1; // FIXME!
-                        D_PostEvent(&event);
-                }
-            }
-            break;
-
-        case SDL_QUIT:
-            M_QuitResponse('y');
-            break;
-        default:
-            break;
-
-        }
-    }
-}
-
-#ifdef HAS_SDL_BEEN_FIXED
-static void doGrabMouse(void)
-{
-  if(SDL_GRAB_OFF == SDL_WM_GrabInput(SDL_GRAB_QUERY))
-  {
-    SDL_WM_GrabInput(SDL_GRAB_ON);
-  }
-}
-#endif
-
-static void doUngrabMouse(void)
-{
-  if(SDL_GRAB_ON == SDL_WM_GrabInput(SDL_GRAB_QUERY))
-  {
-    SDL_WM_GrabInput(SDL_GRAB_OFF);
-  }
-}
-
-void I_StartupMouse(void)
-{
-    SDL_Event inputEvent;
-
-    // warp to center
-    SDL_WarpMouse(vid.width/2, vid.height/2);
-    lastmousex = vid.width/2;
-    lastmousey = vid.height/2;
-    // remove the mouse event by reading the queue
-    SDL_PollEvent(&inputEvent);
-
-#ifdef HAS_SDL_BEEN_FIXED // FIXME
-  if(cv_usemouse.value)
-    {
-      doGrabMouse();
-    }
-  else
-    {
-      doUngrabMouse();
-    }
-#endif
-    return;
-}
-
-//
-// I_OsPolling
-//
-void I_OsPolling(void)
-{
-    if (!graphics_started)
-        return;
-
-    I_GetEvent();
-
-    //reset wheel like in win32, I don't understand it but works
-    gamekeydown[KEY_MOUSEWHEELUP] = 0;
-    gamekeydown[KEY_MOUSEWHEELDOWN] = 0;
-
-    return;
-}
-
 
 //
 // I_UpdateNoBlit
@@ -712,6 +441,9 @@ void I_StartupGraphics(void)
         return;
     }
 
+    // Enable unicode key conversion
+    SDL_EnableUNICODE(1);
+
     // Get video info for screen resolutions
 #ifdef __MACH__
     //[segabor]: it's ok on Mac OS X with SDL
@@ -758,7 +490,7 @@ void I_StartupGraphics(void)
     vid.recalc = true;
 
     // Window title
-    SDL_WM_SetCaption("Legacy", "Legacy");
+    SDL_WM_SetCaption("Doom Legacy", "Doom Legacy");
 
 // [WDJ] To be safe, make it conditional on MACOS
 #ifdef __MACOS__
@@ -820,6 +552,7 @@ void I_StartupGraphics(void)
 
     return;
 }
+
 
 void I_ShutdownGraphics(void)
 {

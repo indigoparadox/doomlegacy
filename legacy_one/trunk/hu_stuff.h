@@ -67,8 +67,6 @@ extern char    french_shiftxform[];
 //------------------------------------
 //           chat stuff
 //------------------------------------
-#define HU_BROADCAST    5       // first char in chat message
-
 #define HU_MAXMSGLEN    80
 
 extern patch_t*       hu_font[HU_FONTSIZE];

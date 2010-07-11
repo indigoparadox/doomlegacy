@@ -155,6 +155,9 @@ void I_GetDiskFreeSpace(int64_t *freespace);
 char *I_GetUserName(void);
 int  I_mkdir(const char *dirname, int unixright);
 
+
+void doUngrabMouse();
+
 #ifdef LINUX
 void I_LocateWad(void);
 #endif

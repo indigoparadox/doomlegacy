@@ -54,8 +54,6 @@ extern int     con_destlines;
 extern int     con_clearlines;  // lines of top of screen to refresh
 extern boolean con_hudupdate;   // hud messages have changed, need refresh
 
-extern int     con_keymap;      //0 english, 1 french
-
 extern byte*   whitemap;
 extern byte*   greenmap;
 extern byte*   graymap;

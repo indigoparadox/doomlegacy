@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2010 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -76,18 +76,18 @@
 
 
 #ifdef LINUX
-#ifndef FREEBSD
-#include <sys/vfs.h>
-#else
-#include <sys/param.h>
-#include <sys/mount.h>
+# ifndef FREEBSD
+#  include <sys/vfs.h>
+# else
+#  include <sys/param.h>
+#  include <sys/mount.h>
 /*For meminfo*/
-#include <sys/types.h>
-#include <kvm.h>
-#include <nlist.h>
-#include <sys/vmmeter.h>
-#include <fcntl.h>
-#endif
+#  include <sys/types.h>
+#  include <kvm.h>
+#  include <nlist.h>
+#  include <sys/vmmeter.h>
+#  include <fcntl.h>
+# endif
 #endif
 
 #ifdef LMOUSE2
@@ -177,6 +177,205 @@ int  I_GetKey          (void)
 
     return rc;
 }
+
+
+//
+//  Translates the SDL key into Doom key
+//
+static int xlatekey(SDLKey sym)
+{
+  // leave ASCII codes unchanged, as well as most other SDL keys
+  if (sym >= SDLK_BACKSPACE && sym <= SDLK_MENU)
+    return sym;
+
+  return KEY_NULL;
+}
+
+
+static int lastmousex = 0;
+static int lastmousey = 0;
+
+#ifdef LJOYSTICK
+extern void I_GetJoyEvent();
+#endif
+#ifdef LMOUSE2
+extern void I_GetMouse2Event();
+#endif
+
+// current modifier key status
+boolean shiftdown = false;
+boolean altdown = false;
+
+
+void I_GetEvent()
+{
+  SDL_Event inputEvent;
+  SDLKey sym;
+  SDLMod mod;
+
+  event_t event;
+
+#ifdef LJOYSTICK
+  I_GetJoyEvent();
+#endif
+#ifdef LMOUSE2
+  I_GetMouse2Event();
+#endif
+
+  while (SDL_PollEvent(&inputEvent))
+    {
+      switch (inputEvent.type)
+        {
+        case SDL_KEYDOWN:
+	  event.type = ev_keydown;
+	  sym = inputEvent.key.keysym.sym;
+	  event.data1 = xlatekey(sym); // key symbol
+
+	  mod = inputEvent.key.keysym.mod; // modifier key states
+	  // this might actually belong in D_PostEvent
+	  shiftdown = mod & KMOD_SHIFT;
+	  altdown = mod & KMOD_ALT;
+
+	  // Corresponding ASCII char, if applicable (for console etc.)
+	  // NOTE that SDL handles international keyboards and shift maps for us!
+	  Uint16 unicode = inputEvent.key.keysym.unicode; // SDL uses UCS-2 encoding (or maybe UTF-16?)
+	  if ((unicode & 0xff80) == 0)
+	    {
+	      event.data2 = unicode & 0x7F;
+	    }
+	  else
+	    event.data2 = 0; // non-ASCII char
+
+	  D_PostEvent(&event);
+	  break;
+
+        case SDL_KEYUP:
+	  event.type = ev_keyup;
+	  sym = inputEvent.key.keysym.sym;
+	  event.data1 = xlatekey(sym);
+
+	  mod = inputEvent.key.keysym.mod; // modifier key states
+	  shiftdown = mod & KMOD_SHIFT;
+	  altdown = mod & KMOD_ALT;
+
+	  D_PostEvent(&event);
+	  break;
+
+        case SDL_MOUSEMOTION:
+            if(cv_usemouse.value)
+            {
+                // If the event is from warping the pointer back to middle
+                // of the screen then ignore it.
+                if ((inputEvent.motion.x == vid.width/2) &&
+                    (inputEvent.motion.y == vid.height/2))
+                {
+                    lastmousex = inputEvent.motion.x;
+                    lastmousey = inputEvent.motion.y;
+                    break;
+                }
+                else
+                {
+                    event.data2 = (inputEvent.motion.x - lastmousex) << 2;
+                    lastmousex = inputEvent.motion.x;
+                    event.data3 = (lastmousey - inputEvent.motion.y) << 2;
+                    lastmousey = inputEvent.motion.y;
+                }
+                event.type = ev_mouse;
+                event.data1 = 0;
+
+                D_PostEvent(&event);
+
+                // Warp the pointer back to the middle of the window
+                //  or we cannot move any further if it's at a border.
+                if ((inputEvent.motion.x < (vid.width/2)-(vid.width/4)) ||
+                    (inputEvent.motion.y < (vid.height/2)-(vid.height/4)) ||
+                    (inputEvent.motion.x > (vid.width/2)+(vid.width/4)) ||
+                    (inputEvent.motion.y > (vid.height/2)+(vid.height/4)))
+                {
+                    SDL_WarpMouse(vid.width/2, vid.height/2);
+                }
+            }
+            break;
+
+        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEBUTTONUP:
+	  if(cv_usemouse.value)
+            {
+	      if (inputEvent.type == SDL_MOUSEBUTTONDOWN)
+                event.type = ev_keydown;
+	      else
+                event.type = ev_keyup;
+
+	      event.data1 = KEY_MOUSE1 + inputEvent.button.button - SDL_BUTTON_LEFT;
+	      event.data2 = 0; // does not correspond to any character
+	      D_PostEvent(&event);
+            }
+	  break;
+
+        case SDL_QUIT:
+	  //M_QuitResponse('y');
+	  break;
+
+        default:
+            break;
+        }
+    }
+}
+
+#ifdef HAS_SDL_BEEN_FIXED
+static void doGrabMouse()
+{
+  if(SDL_GRAB_OFF == SDL_WM_GrabInput(SDL_GRAB_QUERY))
+  {
+    SDL_WM_GrabInput(SDL_GRAB_ON);
+  }
+}
+#endif
+
+void doUngrabMouse()
+{
+  if(SDL_GRAB_ON == SDL_WM_GrabInput(SDL_GRAB_QUERY))
+  {
+    SDL_WM_GrabInput(SDL_GRAB_OFF);
+  }
+}
+
+void I_StartupMouse(void)
+{
+    SDL_Event inputEvent;
+
+    // warp to center
+    SDL_WarpMouse(vid.width/2, vid.height/2);
+    lastmousex = vid.width/2;
+    lastmousey = vid.height/2;
+    // remove the mouse event by reading the queue
+    SDL_PollEvent(&inputEvent);
+
+#ifdef HAS_SDL_BEEN_FIXED // FIXME
+  if(cv_usemouse.value)
+    {
+      doGrabMouse();
+    }
+  else
+    {
+      doUngrabMouse();
+    }
+#endif
+    return;
+}
+
+//
+// I_OsPolling
+//
+void I_OsPolling()
+{
+  if (!graphics_started)
+    return;
+
+  I_GetEvent();
+}
+
+
 
 #ifdef LJOYSTICK
 //
