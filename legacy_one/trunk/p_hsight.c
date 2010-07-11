@@ -117,13 +117,13 @@ static boolean P_SightBlockLinesIterator (int x, int y )
     int             offset;
     int             s1, s2;
     divline_t       dl;
-    const int32_t   *list; // Big Blockmap, SSNTails 06-10-2003
+    const uint32_t   *list; // Big Blockmap, SSNTails 06-10-2003
     line_t          *ld;
     
     offset = y*bmapwidth+x;
     offset = blockmapindex[offset];
     
-    for ( list = & blockmaphead[offset] ; *list != -1 ; list++)
+    for ( list = & blockmaphead[offset] ; *list != (uint32_t) -1 ; list++)
     {
         ld = &lines[*list];
         if (ld->validcount == validcount)
