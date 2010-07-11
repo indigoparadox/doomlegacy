@@ -327,7 +327,7 @@
 // Version number: major.minor.revision
 const int  VERSION  = 144; // major*100 + minor
 const int  REVISION = 0;   // for bugfix releases, should not affect compatibility. has nothing to do with svn revisions.
-const char VERSIONSTRING[] = "test (rev " SVN_REV ")";
+const char VERSIONSTRING[] = "alpha1 (rev " SVN_REV ")";
 char VERSION_BANNER[80];
 
 // [WDJ] change this if legacy.dat is changed

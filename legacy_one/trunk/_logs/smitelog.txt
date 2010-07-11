@@ -82,14 +82,14 @@ Updated source.html.
 
 
 *** Warnings fixed
-rev 698
+rev 699
 Fixed a number of warnings in p_saveg.c and one in p_hsight.c
 Use id/pointer unions when loading mobj*'s from a savegame instead of
 cast hacks to be 64-bit safe.
 
 
 *** Backported international keyboard support from Legacy 2
-rev 699
+rev 700
 Now we support arbitrary keyboard layouts via SDL (only ASCII chars,
 though), and use SDL keycodes internally.
 Removed some redundant code from console.c and hu_stuff.c
