@@ -153,7 +153,7 @@ const NODE = 147;
 //const PARTICLE = ;
 
 
-// Mapthing property constants, for use with the set/getobjproperty() functions
+// Mapthing property constants, for use with the set/getobjproperty() and objstate() functions
 const RADIUS = 0;
 const HEIGHT = 1;
 const MASS = 2;
@@ -162,32 +162,21 @@ const DAMAGE = 4;
 const SPEED = 5;
 const REACTIONTIME = 6;
 const PAINCHANCE = 7;
-const SPAWNSTATE = 8;
-const SEESTATE = 9;
-const MELEESTATE = 10;
-const MISSILESTATE = 11;
-const PAINSTATE = 12;
-const DEATHSTATE = 13;
-const XDEATHSTATE = 14;
-const CRASHSTATE = 15;
-const RAISESTATE  = 16;
+const ST_SPAWNSTATE = 8;
+const ST_SEESTATE = 9;
+const ST_MELEESTATE = 10;
+const ST_MISSILESTATE = 11;
+const ST_PAINSTATE = 12;
+const ST_DEATHSTATE = 13;
+const ST_XDEATHSTATE = 14;
+const ST_CRASHSTATE = 15;
+const ST_RAISESTATE = 16;
 const SEESOUND = 17;
 const ACTIVESOUND = 18;
 const ATTACKSOUND = 19;
 const PAINSOUND = 20;
 const DEATHSOUND = 21;
 
-
-// State constants, for use with the objstate() function
-const ST_SPAWN = 0;
-const ST_SEE = 1;
-const ST_MELEE = 2;
-const ST_MISSILE = 3;
-const ST_PAIN = 4;
-const ST_DEATH = 5;
-const ST_XDEATH = 6;
-const ST_CRASH = 7;
-const ST_RAISE = 8;
 
 
 // Thing flags (objflag)

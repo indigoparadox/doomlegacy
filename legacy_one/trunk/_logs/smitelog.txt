@@ -95,3 +95,9 @@ though), and use SDL keycodes internally.
 Removed some redundant code from console.c and hu_stuff.c
 Moved all SDL input handling to sdl/i_system.c
 
+
+*** New legacy.wad resources, FS fixes, updated FS docs
+rev 702, 703
+Added the WAD inventory and updated VERSION and THINGS.H lumps.
+Small FS fixes in the new funcs introduced after 1.42.
+Fixed and partially updated _doc/fsfuncs.html.
