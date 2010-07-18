@@ -11,7 +11,7 @@
 <!-- $Id:$ -->
 <body>
 
-<h1>Compiling Doom Legacy 1.x SDL</h1>
+<h2>Compiling Doom Legacy 1.x SDL</h2>
 
 <p>In order to compile Doom Legacy 1.x SDL you'll need to have the following
 libraries installed on your system.<br/>
@@ -63,7 +63,9 @@ Finally, download the
 You can either get the source package or, for the latest code
 snapshot, checkout the <b>legacy_one/trunk/</b> directory from the
 <a href="http://subversion.apache.org/">Subversion</a> repository:
+</p>
 <div class="code">svn co https://doomlegacy.svn.sourceforge.net/svnroot/doomlegacy/legacy_one/trunk some_local_dir</div>
+<p>
 From now on, your local copy of this directory will be referred to as <b>TRUNK</b>.
 </p>
 
@@ -77,8 +79,60 @@ From now on, your local copy of this directory will be referred to as <b>TRUNK</
 </li>
 </ol>
 
+<hr/>
+<h2>Coding rules and practices</h2>
 
-<h1>Know bugs/issues</h1>
+<ul>
+<li>There is one subdirectory in the repository for each platform
+  (SDL, X11, Win32 etc.). Ideally these subdirectories should contain all
+  platform-dependent code.
+</li>
+<li>Do not commit tests or buggy code. Every revision should at least
+  compile and link. If you absolutely feel you need to commit
+  experimental code that does not fully work yet, use #ifdefs with a
+  descriptive name to disable it.</li>
+<li>Fix any and all warnings the compiler gives. They are there for
+  a reason.</li>
+<li>Keep the list of major bugs in ??? up-to-date.</li>
+<li>Doom Legacy is a Doom source port. Do not make noticeable changes
+  to the gameplay without adding an user-controlled option (consvar
+  for example) to disable them.</li>
+<li>Use the developer mailing list to keep other devs informed of
+  your work. If you are not sure about whether a feature/change is a
+  good idea or what is the best way to implement it, discuss it on the mailing list.
+</li>
+<li>
+  Keep a log of your work in the _log directory.
+  This will help other devs to keep up with you and makes it much
+  simpler to update the what's new section of the docs 
+  when making a release.
+</li>
+<li>
+  Use hard tabs when indenting code (i.e. spaces, not tab
+  characters). Use either a 2 or 4 space tab size.
+</li>
+<li>
+  Document all code, variables and functions must have names that
+  are descriptive and help to understand the code (so no names like
+  a2, ex, asdf2721...). Exception: variables that are entirely local
+  in scope and have an obvious purpose, like for loop indices (i, j, k, s, t...) or
+  coordinates (x, y, z, w...).
+</li>
+<li>
+  Try not to have extern declarations and function prototypes in a .c
+  file, they belong in the headers. Use static-scope variables and functions
+  whenever you can to make it clear what their role is. Global
+  variables are usually a bad idea.
+</li>
+<li>
+  Do not overuse #ifdef. Especially avoid platform-dependent #ifdefs in
+  the main code. Likewise, __BIG_ENDIAN__ and __LITTLE_ENDIAN__
+  conditionals only belong in m_swap.*
+</li>
+</ul>
+
+<hr/>
+<h2>Know bugs/issues</h2>
 
 <pre>
  - splats on opengl/glide have serious z-problems and are not clipped 
@@ -100,7 +154,7 @@ From now on, your local copy of this directory will be referred to as <b>TRUNK</
    transparent in 3dfx/opengl
 </pre>
 
-<h1>Explanation of the code</h1>
+<h2>Explanation of the code</h2>
 
 <pre>
  3.1 The memory model (original) (z_zone.c) (by BP)

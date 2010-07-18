@@ -73,8 +73,9 @@ p.new
 div.example
 {
   background: #203000;
-  margin: 0 5em 0 2em;
+  margin: 0 0 0 2em;
   padding: 0.2em 0.5em;
+  display: inline-block;
 }
 
 div.code
@@ -82,8 +83,9 @@ div.code
   white-space: pre;
   color: #CCCCCC;
   background: #305090;
-  margin: 0 5em 0 2em;
+  margin: 0 0 0 2em;
   padding: 0.2em 0.5em;
+  display: inline-block;
 }
 
 
