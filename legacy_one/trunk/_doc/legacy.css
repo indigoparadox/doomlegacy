@@ -80,10 +80,11 @@ div.example
 
 div.code
 {
+  font-family: monospace;
   white-space: pre;
   color: #CCCCCC;
   background: #305090;
-  margin: 0 0 0 2em;
+  margin: 0 0 0.5em 2em;
   padding: 0.2em 0.5em;
   display: inline-block;
 }
@@ -131,6 +132,15 @@ table.def td.warning
   vertical-align: top;
   background: #703000;
   text-align: center;
+}
+
+
+/* horizontal list */
+ul.horizontal li
+{
+  display: inline;
+  list-style: disc;
+  padding-right: 1em;
 }
 
 

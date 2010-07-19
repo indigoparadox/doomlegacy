@@ -72,12 +72,11 @@ your program.
 </p><p>
 Example:
 </p>
-<pre>
-   script 0
-   {
-      print("Hello World!\n");
-   }
-</pre>
+<div class="code">script 0
+{
+  print("Hello World!\n");
+}
+</div>
 <p>
 [parameter-list] := If this is empty, then the function does not accept any
 parameters. When items appear in the list as [type] [name] constructs, then
@@ -713,16 +712,14 @@ of any parameters that occur before the ellipsis.
        return value, calling it repeatedly until it returns 0, and then waiting
        for the next gametic. This could be accomplished as in the following
        example:
-
-       <pre>
-       script 0
-       {
-          while(movecamera(cameranodes.elementAt(0), 40.0, 5.0, 0.0, 0.0))
-          {
-             wait(1);
-          }
-       }
-       </pre>
+<div class="code">script 0
+{
+  while(movecamera(cameranodes.elementAt(0), 40.0, 5.0, 0.0, 0.0))
+  {
+    wait(1);
+  }
+}
+</div>
 
        This example would move the camera toward the first camera node on the
        map at 5 units per tic, with zero change in angle. Notice that the camera's
