@@ -1,0 +1,110 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link rel="stylesheet" href="legacy.css" type="text/css"/>
+  <meta name="keywords" content="Doom, Legacy, documentation, manual, docs, FAQ"/>
+  <meta name="description" content="Doom Legacy is your premiere source port engine for id Software's classic DOOM games and more!"/>
+  <title>Doom Legacy FAQ</title>
+
+ <style type="text/css">
+    dt
+    {
+    margin: 0 0 1em 1em;
+    font-weight: bold;
+    color: #AAAAEE;
+    }
+
+    dd
+    {
+    margin: 0 0 2em 2em;
+    }
+  </style>
+</head>
+<!-- $Id$ -->
+<body>
+<div class="text">
+<h1>Doom Legacy v1.44 FAQ</h1>
+<h1 class="tagline">Last updated 2010-07-26</h1>
+
+<p>
+If you have any trouble with Doom Legacy, you might find a solution here.
+</p>
+<p>
+If you find a solution to a problem that was not listed here,
+please <a href="">tell us</a> so that we can update the FAQ and help other people!
+</p>
+
+<div class="floatbox">
+<ul>
+  <li><a href="#misc">Miscellaneous</a></li>
+  <li><a href="#input">Mouse/Joystick/Keyboard</a></li>
+  <li><a href="#video">Video</a></li>
+  <li><a href="#audio">Audio</a></li>
+  <li><a href="#network">Network</a></li>
+</ul>
+</div>
+
+
+<h2><a name="misc">Miscellaneous</a></h2>
+
+<dl>
+  <dt>
+   I get the error "Error: W_GetNumForName: STBAR not found!"
+   What is it?
+  </dt>
+  <dd>
+   You have a old version of doom.wad. Just upgrade your version to 1.9.
+   You can find a patch on the id Software site.
+  </dd>
+</dl>
+
+
+<h2><a name="input">Mouse/Joystick/Keyboard</a></h2>
+
+<dl>
+  <dt>My mouse/joystick does not work.</dt>
+  <dd>
+    <p>
+   First, check that the mouse/joystick is activated : go at the
+   console and type either 'use_mouse' (or use the respective
+   menuitem) or 'use_joystick'.
+   If it tells '0' or off than the mouse/joystick is not used,
+   set the variable to 1. eg: 'use_mouse 1'.
+    </p>
+    <p>
+   Once the mouse or joystick is activated, you have to
+   bind the buttons to controls in the Setup Controls menu.
+    </p>
+ </dd>
+</dl>
+
+
+<h2><a name="video">Video</a></h2>
+
+<dl>
+  <dt>The game doesn't restore the video mode I have chosen the last time
+   I played Doom Legacy.</dt>
+  <dd>
+   The current video mode has to be made the 'default' so that it is
+   saved to the config: press the key 'd' on the Video Options menu
+   to set the current video mode the default.
+  </dd>
+</dl>
+
+
+<h2><a name="audio">Audio</a></h2>
+
+
+<h2><a name="network">Network</a></h2>
+
+<dl>
+  <dt>Where can I find Internet servers?</dt>
+  <dd>
+    Try <a href="http://home.comcast.net/~mrrocket/dcsite_finals/doomconnector.htm">Doom Connector</a>.
+  </dd>
+</dl>
+
+</div>
+</body>
+</html>
