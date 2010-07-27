@@ -168,6 +168,9 @@
 void Command_Color_f(void);
 void Command_Name_f(void);
 
+void Command_BindJoyaxis_f();
+void Command_UnbindJoyaxis_f();
+
 void Command_WeaponPref(void);
 
 void Got_NameAndcolor(char **cp, int playernum);
@@ -239,46 +242,9 @@ CV_PossibleValue_t mouse2port_cons_t[] = { {0, "/dev/gpmdata"}, {1, "/dev/ttyS0"
 CV_PossibleValue_t mouse2port_cons_t[] = { {1, "COM1"}, {2, "COM2"}, {3, "COM3"}, {4, "COM4"}, {0, NULL} };
 #endif
 
-#ifdef LJOYSTICK
-CV_PossibleValue_t joyport_cons_t[] = { {1, "/dev/js0"}, {2, "/dev/js1"}, {3, "/dev/js2"}, {4, "/dev/js3"}, {0, NULL} };
-#endif
-
-#ifdef __WIN32__
-#define usejoystick_cons_t  NULL        // accept whatever value
-                                        // it is in fact the joystick device number
-#else
-#ifdef __DJGPP__
-CV_PossibleValue_t usejoystick_cons_t[] = { {0, "Off"}
-, {1, "4 BUttons"}
-, {2, "Standart"}
-, {3, "6 Buttons"}
-, {4, "Wingman Extreme"}
-, {5, "Flightstick Pro"}
-, {6, "8 Buttons"}
-, {7, "Sidewinder"}
-, {8, "GamePad Pro"}
-, {9, "Snes lpt1"}
-, {10, "Snes lpt2"}
-, {11, "Snes lpt3"}
-, {12, "Wingman Warrior"}
-, {0, NULL}
-};
-#else
-#define usejoystick_cons_t  NULL
-
-//#error "cv_usejoystick don't have possible value for this OS !"
-#endif
-#endif
-
 consvar_t cv_usemouse = { "use_mouse", "1", CV_SAVE | CV_CALL, usemouse_cons_t, I_StartupMouse };
 consvar_t cv_usemouse2 = { "use_mouse2", "0", CV_SAVE | CV_CALL, usemouse_cons_t, I_StartupMouse2 };
-consvar_t cv_usejoystick = { "use_joystick", "0", CV_SAVE | CV_CALL, usejoystick_cons_t, I_InitJoystick };
 
-#ifdef LJOYSTICK
-extern void I_JoyScale();
-consvar_t cv_joyport = { "joyport", "/dev/js0", CV_SAVE, joyport_cons_t };
-consvar_t cv_joyscale = { "joyscale", "0", CV_SAVE | CV_CALL, NULL, I_JoyScale };
-#endif
 #ifdef LMOUSE2
 consvar_t cv_mouse2port = { "mouse2port", "/dev/gpmdata", CV_SAVE, mouse2port_cons_t };
 consvar_t cv_mouse2opt = { "mouse2opt", "0", CV_SAVE, NULL };
@@ -342,6 +308,8 @@ void D_RegisterClientCommands(void)
     COM_AddCommand("chatmacro", Command_Chatmacro_f);   // hu_stuff.c
     COM_AddCommand("setcontrol", Command_Setcontrol_f);
     COM_AddCommand("setcontrol2", Command_Setcontrol2_f);
+    COM_AddCommand("bindjoyaxis", Command_BindJoyaxis_f);
+    COM_AddCommand("unbindjoyaxis", Command_UnbindJoyaxis_f);
 
     COM_AddCommand("frags", Command_Frags_f);
     COM_AddCommand("teamfrags", Command_TeamFrags_f);
@@ -428,7 +396,6 @@ void D_RegisterClientCommands(void)
     CV_RegisterVar(&cv_mousemove2);
     CV_RegisterVar(&cv_mousesens2);
     CV_RegisterVar(&cv_mlooksens2);
-    CV_RegisterVar(&cv_joystickfreelook);
 
     // WARNING : the order is important when inititing mouse2 
     //           we need the mouse2port
@@ -441,11 +408,7 @@ void D_RegisterClientCommands(void)
     CV_RegisterVar(&cv_controlperkey);
 
     CV_RegisterVar(&cv_usemouse);
-    CV_RegisterVar(&cv_usejoystick);
-#ifdef LJOYSTICK
-    CV_RegisterVar(&cv_joyport);
-    CV_RegisterVar(&cv_joyscale);
-#endif
+
     CV_RegisterVar(&cv_allowjump);
     CV_RegisterVar(&cv_allowrocketjump);
     CV_RegisterVar(&cv_allowautoaim);

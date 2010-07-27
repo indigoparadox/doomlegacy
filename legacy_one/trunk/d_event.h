@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2010 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -45,7 +45,6 @@ typedef enum
     ev_keydown,
     ev_keyup,
     ev_mouse,
-    ev_joystick,
     ev_mouse2
 } evtype_t;
 
@@ -54,8 +53,8 @@ typedef struct
 {
     evtype_t    type;
     int         data1;          // keys / mouse/joystick buttons
-    int         data2;          // mouse/joystick x move
-    int         data3;          // mouse/joystick y move
+    int         data2;          // mouse x move
+    int         data3;          // mouse y move
 } event_t;
 
 

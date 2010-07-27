@@ -104,10 +104,8 @@ extern consvar_t       cv_allowrocketjump;
 extern consvar_t       cv_allowautoaim;
 extern int             mousex;
 extern int             mousey;
-extern int             mlooky;  //mousey with mlookSensitivity
 extern int             mouse2x;
 extern int             mouse2y;
-extern int             mlook2y;
 
 extern int             dclicktime;
 extern int             dclickstate;
@@ -116,8 +114,6 @@ extern int             dclicktime2;
 extern int             dclickstate2;
 extern int             dclicks2;
 
-extern int             joyxmove;
-extern int             joyymove;
 
 // current state of the keys : true if pushed
 extern  byte    gamekeydown[NUMINPUTS];

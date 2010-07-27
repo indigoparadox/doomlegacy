@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Copyright (C) 2000-2009 by Doom Legacy team
+// Copyright (C) 2000-2010 by Doom Legacy team
 //
 // This source is available for distribution and/or modification
 // only under the terms of the DOOM Source Code License as
@@ -645,20 +645,12 @@ static SDL_AudioSpec audspec;  // [WDJ] desc name, too many audio in this file
 
 void I_StartupSound()
 {
-    int i;
-
     if (nosound)
         return;
 
     // Configure sound device
     CONS_Printf("I_InitSound: ");
 
-    if (SDL_Init(SDL_INIT_AUDIO) < 0)
-    {
-        CONS_Printf("Couldn't initialize SDL Audio: %s\n", SDL_GetError());
-        nosound = true;
-        return;
-    }
     // Open the audio device
     audspec.freq = SAMPLERATE;
 #if ( SDL_BYTEORDER == SDL_BIG_ENDIAN )
@@ -670,24 +662,9 @@ void I_StartupSound()
     audspec.samples = samplecount;
     audspec.callback = I_UpdateSound_sdl;
     I_SetChannels();
-#ifndef HAVE_MIXER
-#ifdef __MACOS__
-// [WDJ] segabor had this second call to SDL_Init in 143beta_macosx
-// in place of the call to SDL_OpenAudio, but that does not seem right.
-// The 143 CVS source has the SDL_OpenAudio call, conditional on HAVE_MIXER
-// and it has been changed more recently, so go with that.
 
-// [WDJ] this conditional on MACOS, rather than delete it.
-// Do not delete this until someone with a MAC verifies which works !!!
-    //[segabor]
-    if( (SDL_Init(SDL_INIT_AUDIO) == -1)
-	    || (SDL_WasInit(SDL_INIT_AUDIO) == 0) ) {	// [WDJ]
-	CONS_Printf("couldn't open audio with desired format\n");
-	nosound = true;
-	return;
-    }
-#else
-// [WDJ] required for Linux, SDL_Init does not suffice.
+#ifndef HAVE_MIXER
+    // Open the audio device
     if (SDL_OpenAudio(&audspec, NULL) < 0)
     {
         CONS_Printf("couldn't open audio with desired format\n");
@@ -695,7 +672,7 @@ void I_StartupSound()
         nosound = true;
         return;
     }
-#endif   
+
     samplecount = audspec.samples;
     CONS_Printf(" configured audio device with %d samples/slice\n", samplecount);
 #endif
@@ -703,6 +680,7 @@ void I_StartupSound()
     // Initialize external data (all sounds) at start, keep static.
     CONS_Printf("I_InitSound: (%d sfx)", NUMSFX);
 
+    int i;
     for (i = 1; i < NUMSFX; i++)
     {
         // Alias? Example is the chaingun sound linked to pistol.

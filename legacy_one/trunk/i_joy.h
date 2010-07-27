@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2010 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -35,29 +35,37 @@
 
 #include "g_input.h"
 
-#define JOYAXISRANGE     1023   //faB: (1024-1) so we can do a right shift instead of division
-                                //     (doesnt matter anyway, just give enough precision)
-                                // a gamepad will return -1, 0, or 1 in the event data
-                                // an analog type joystick will return a value
-                                // from -JOYAXISRANGE to +JOYAXISRANGE for each axis
 
-// detect a bug if we increase JOYBUTTONS above DIJOYSTATE's number of buttons
-#if (JOYBUTTONS > 32)
-#error "JOYBUTTONS is greater than DIJOYSTATE number of buttons"
-#endif
+//! All possible actions joystick axes can be bound to.
+typedef enum
+{
+  ja_pitch,  //!< Set up/down looking angle.
+  ja_move,   //!< Moving front and back.
+  ja_turn,   //!< Turn left or right.
+  ja_strafe, //!< Strafing.
+  num_joyactions
+} joyactions_e;
 
-// share some joystick information (maybe 2 for splitscreen), to the game input code,
-// actually, we need to know if it is a gamepad or analog controls
+//! Contains the mappings from joystick axes to game actions.
+typedef struct
+{
+  int joynum;          //!< Which joystick to use.
+  int axisnum;         //!< Which axis is the important one.
+  int playnum;         //!< What player is controlled.
+  joyactions_e action; //!< What should be done.
+  float scale;         //!< A scaling factor. Set negative to flip axis.
+} joybinding_t;
 
-struct JoyType_s {
-    int     bJoyNeedPoll;       // if true, we MUST Poll() to get new joystick data,
-                                // that is: we NEED the DIRECTINPUTDEVICE2 ! (watchout NT compatibility)
-    int     bGamepadStyle;      // this joystick is a gamepad, read: digital axes
-                                // if FALSE, interpret the joystick event data as JOYAXISRANGE
-                                // (see above)
-};
-typedef struct JoyType_s JoyType_t;
 
-extern JoyType_t   Joystick;    //faB: may become an array (2 for splitscreen), I said: MAY BE...
+#define MAX_JOYSTICKS 4 // 4 should be enough for most purposes
+extern int num_joysticks;
+
+#define MAX_JOYBINDINGS 4*MAX_JOYSTICKS // hope this is enough
+extern int num_joybindings;
+extern joybinding_t joybindings[MAX_JOYBINDINGS];
+
+void I_InitJoystick();
+int I_JoystickNumAxes(int joynum);
+int I_JoystickGetAxis(int joynum, int axisnum);
 
 #endif // __I_JOY_H__

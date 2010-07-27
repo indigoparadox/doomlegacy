@@ -2177,9 +2177,9 @@ static void Local_Maketic(int realtics)
 
     rendergametic=gametic;
     // translate inputs (keyboard/mouse/joystick) into game controls
-    G_BuildTiccmd (&localcmds,realtics);
+    G_BuildTiccmd(&localcmds, realtics, 0);
     if (cv_splitscreen.value)
-        G_BuildTiccmd2(&localcmds2,realtics);
+      G_BuildTiccmd(&localcmds2, realtics, 1);
 
 #ifdef CLIENTPREDICTION2
     if( !paused && localgametic<gametic+BACKUPTICS)

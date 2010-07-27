@@ -68,11 +68,6 @@
 extern consvar_t   cv_playername;
 extern consvar_t   cv_playercolor;
 extern consvar_t   cv_usemouse;
-extern consvar_t   cv_usejoystick;
-#ifdef LJOYSTICK
-extern consvar_t   cv_joyport;
-extern consvar_t   cv_joyscale;
-#endif
 extern consvar_t   cv_autoaim;
 extern consvar_t   cv_controlperkey;
 

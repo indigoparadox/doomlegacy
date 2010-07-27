@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2010 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -69,6 +69,11 @@
 #include "keys.h"
 #include "d_net.h"
 #include "console.h"
+#include "i_joy.h"
+
+int num_joybindings = 0;
+joybinding_t joybindings[MAX_JOYBINDINGS];
+
 
 CV_PossibleValue_t mousesens_cons_t[]={{1,"MIN"},{MAXMOUSESENSITIVITY,"MAXCURSOR"},{MAXINT,"MAX"},{0,NULL}};
 CV_PossibleValue_t onecontrolperkey_cons_t[]={{1,"One"},{2,"Several"},{0,NULL}};
@@ -87,15 +92,9 @@ consvar_t  cv_allowrocketjump = {"allowrocketjump","0",CV_NETVAR,CV_YesNo};
 
 int             mousex;
 int             mousey;
-int             mlooky;         //like mousey but with a custom sensitivity
-                                //for mlook
 int             mouse2x;
 int             mouse2y;
-int             mlook2y;
 
-// joystick values are repeated
-int             joyxmove;
-int             joyymove;
 
 // current state of the keys : true if pushed
 byte    gamekeydown[NUMINPUTS];
@@ -145,27 +144,12 @@ void  G_MapEventsToControls (event_t *ev)
 
       case ev_mouse:           // buttons hare virtual keys
         mousex = ev->data2*((cv_mousesens.value*cv_mousesens.value)/110.0f + 0.1);
-        mousey = ev->data3*((cv_mousesens.value*cv_mousesens.value)/110.0f + 0.1);
-
-        //added:10-02-98:
-        // for now I use the mlook sensitivity just for mlook,
-        // instead of having a general mouse y sensitivity.
-        mlooky = ev->data3*((cv_mlooksens.value*cv_mlooksens.value)/110.0f + 0.1);
-        break;
-
-      case ev_joystick:        // buttons are virtual keys
-        joyxmove = ev->data2;
-        joyymove = ev->data3;
+        mousey = ev->data3*((cv_mlooksens.value*cv_mlooksens.value)/110.0f + 0.1);
         break;
 
       case ev_mouse2:           // buttons hare virtual keys
         mouse2x = ev->data2*((cv_mousesens2.value*cv_mousesens2.value)/110.0f + 0.1);
-        mouse2y = ev->data3*((cv_mousesens2.value*cv_mousesens2.value)/110.0f + 0.1);
-
-        //added:10-02-98:
-        // for now I use the mlook sensitivity just for mlook,
-        // instead of having a general mouse y sensitivity.
-        mlook2y = ev->data3*((cv_mlooksens.value*cv_mlooksens.value)/110.0f + 0.1);
+        mouse2y = ev->data3*((cv_mlooksens.value*cv_mlooksens.value)/110.0f + 0.1);
         break;
 
       default:
@@ -576,6 +560,14 @@ void G_SaveKeySetting(FILE *f)
            else
                fprintf(f,"\n");
        }
+
+    // Writes the joystick axis binding commands to the config file.
+  for (i=0; i<num_joybindings; i++)
+    {
+      joybinding_t j = joybindings[i];
+      fprintf(f, "bindjoyaxis %d %d %d %d %f\n",
+	      j.playnum, j.joynum, j.axisnum, (int)(j.action), j.scale);
+    }
 }
 
 void G_CheckDoubleUsage(int keynum)
@@ -650,4 +642,130 @@ void Command_Setcontrol2_f(void)
     }
 
     setcontrol(gamecontrolbis,na);
+}
+
+
+
+//! Magically converts a console command to a joystick axis binding.
+void Command_BindJoyaxis_f()
+{
+  joybinding_t j;
+  unsigned int i;
+
+  int na = COM_Argc();
+
+  if(na == 1) { // Print bindings.
+    if(num_joybindings == 0) {
+      CONS_Printf("No joystick axis bindings defined.\n");
+      return;
+    }
+    CONS_Printf("Current axis bindings.\n");
+    for(i=0; i<num_joybindings; i++) {
+      j = joybindings[i];
+      CONS_Printf("%d %d %d %d %f\n", j.playnum, j.joynum, j.axisnum,
+		  (int)j.action, j.scale);
+    }
+    return;
+  }
+
+  if (na < 5)
+    {
+    CONS_Printf("bindjoyaxis [playnum] [joynum] [axisnum] [action] [scale]\n");
+    return;
+  }
+
+  j.playnum = atoi(COM_Argv(1));
+  j.joynum  = atoi(COM_Argv(2));
+  j.axisnum = atoi(COM_Argv(3));
+  j.action  = (joyactions_e)(atoi(COM_Argv(4)));
+  if (na == 6)
+    j.scale = atof(COM_Argv(5));
+  else
+    j.scale = 1.0f;
+
+  // Check the validity of the binding.
+  if(j.joynum < 0 || j.joynum >= num_joysticks) {
+    CONS_Printf("Attempting to bind non-existent joystick %d.\n", j.joynum);
+    return;
+  }
+  if(j.axisnum < 0 || j.axisnum >= I_JoystickNumAxes(j.joynum)) {
+    CONS_Printf("Attempting to bind non-existent axis %d.\n", j.axisnum);
+    return;
+  }
+  if(j.action < 0 || j.action >= num_joyactions) {
+    CONS_Printf("Attempting to bind non-existent action %d.\n", (int)(j.action));
+    return;
+  }
+
+  // Overwrite existing binding, if any. Otherwise just append.
+  for(i=0; i<num_joybindings; i++) {
+    joybinding_t j2 = joybindings[i];
+    if(j2.joynum == j.joynum && j2.axisnum == j.axisnum) {
+      joybindings[i] = j;
+      CONS_Printf("Joystick binding modified.\n");
+      return;
+    }
+  }
+  // new binding
+  if (num_joybindings < MAX_JOYBINDINGS)
+    {
+      joybindings[num_joybindings++] = j;
+      CONS_Printf("Joystick binding added.\n");
+    }
+  else
+    ;
+}
+
+//! Unbind the specified joystick axises.
+/*! Takes zero to two parameters. The first one is the joystick number
+  and the second is the axis number. If either is not specified, all
+  values are assumed to match. When called without parameters, all
+  bindings are removed.
+*/
+
+void Command_UnbindJoyaxis_f()
+{
+  int joynum  = -1;
+  int axisnum = -1;
+  int na = COM_Argc();
+
+  int num_keep_bindings = 0;
+  joybinding_t keep_bindings[MAX_JOYBINDINGS];
+
+  if(num_joybindings == 0) {
+    CONS_Printf("No bindings to unset.\n");
+    return;
+  }
+
+  if(na > 3) {
+    CONS_Printf("unbindjoyaxis [joynum] [axisnum]\n");
+    return;
+  }
+
+  // Does the user specify axis or joy number?
+  if(na > 2)
+    axisnum = atoi(COM_Argv(2));
+  if(na > 1)
+    joynum = atoi(COM_Argv(1));
+
+  unsigned int i;
+  for(i=0; i<num_joybindings; i++) {
+    joybinding_t j = joybindings[i];
+    if((joynum == -1 || joynum == j.joynum) &&
+       (axisnum == -1 || axisnum == j.axisnum))
+      continue; // We have a binding to prune.
+
+    keep_bindings[num_keep_bindings++] = j; // keep it
+  }
+
+  // We have the new bindings.
+  if (num_keep_bindings == num_joybindings) {
+    CONS_Printf("No bindings matched the parameters.\n");
+    return;
+  }
+
+  // replace the bindings
+  num_joybindings = num_keep_bindings;
+  for(i=0; i<num_keep_bindings; i++)
+    joybindings[i] = keep_bindings[i];
 }

@@ -94,14 +94,6 @@
 #include <termios.h>
 #endif
 
-#ifdef LJOYSTICK // linux joystick 1.x
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>
-#include <linux/joystick.h>
-#endif
-
 #include "doomdef.h"
 #include "m_misc.h"
 #include "i_video.h"
@@ -111,25 +103,22 @@
 #include "d_net.h"
 #include "g_game.h"
 
+#include "keys.h"
+#include "i_joy.h"
+
 #include "endtxt.h"
 
-#include "i_joy.h"
 
 extern void D_PostEvent(event_t*);
 
-#ifdef LJOYSTICK
-int joyfd = -1;
-int joyaxes = 0;
-int joystick_started = 0;
-int joy_scale = 1;
-#endif
-JoyType_t Joystick;
+#define MAX_JOYSTICKS 4 // 4 should be enough for most purposes
+int num_joysticks = 0;
+SDL_Joystick *joysticks[MAX_JOYSTICKS]; 
 
 #ifdef LMOUSE2
 int fdmouse2 = -1;
 int mouse2_started = 0;
 #endif
-
 
 //
 //I_OutputMsg
@@ -183,12 +172,37 @@ static int xlatekey(SDLKey sym)
 }
 
 
+//! Translates a SDL joystick button to a doom key_input_e number.
+static int TranslateJoybutton(Uint8 which, Uint8 button)
+{
+  if (which >= MAXJOYSTICKS) 
+    which = MAXJOYSTICKS-1;
+
+  if (button >= JOYBUTTONS)
+    button = JOYBUTTONS-1;
+
+  return KEY_JOY0BUT0 + JOYBUTTONS*which + button;
+}
+
+int I_JoystickNumAxes(int joynum)
+{
+  if (joynum < num_joysticks)
+    return SDL_JoystickNumAxes(joysticks[joynum]);
+  else
+    return 0;
+}
+
+int I_JoystickGetAxis(int joynum, int axisnum)
+{
+  if (joynum < num_joysticks)
+    return SDL_JoystickGetAxis(joysticks[joynum], axisnum);
+  else
+    return 0;
+}
+
 static int lastmousex = 0;
 static int lastmousey = 0;
 
-#ifdef LJOYSTICK
-extern void I_GetJoyEvent();
-#endif
 #ifdef LMOUSE2
 extern void I_GetMouse2Event();
 #endif
@@ -206,9 +220,6 @@ void I_GetEvent()
 
   event_t event;
 
-#ifdef LJOYSTICK
-  I_GetJoyEvent();
-#endif
 #ifdef LMOUSE2
   I_GetMouse2Event();
 #endif
@@ -303,12 +314,27 @@ void I_GetEvent()
             }
 	  break;
 
+	case SDL_JOYBUTTONDOWN: 
+	  event.type = ev_keydown;
+	  event.data1 = TranslateJoybutton(inputEvent.jbutton.which, 
+					   inputEvent.jbutton.button);
+	  D_PostEvent(&event);
+	  break;
+
+	case SDL_JOYBUTTONUP: 
+	  event.type = ev_keyup;
+	  event.data1 = TranslateJoybutton(inputEvent.jbutton.which, 
+					   inputEvent.jbutton.button);
+	  D_PostEvent(&event);
+	  break;
+
         case SDL_QUIT:
+	  I_Quit();
 	  //M_QuitResponse('y');
 	  break;
 
         default:
-            break;
+	  break;
         }
     }
 }
@@ -355,6 +381,76 @@ void I_StartupMouse(void)
     return;
 }
 
+
+/// Initialize joysticks and print information.
+void I_JoystickInit()
+{
+  // Joystick subsystem was initialized at the same time as video,
+  // because otherwise it won't work. (don't know why, though ...)
+
+  num_joysticks = min(MAX_JOYSTICKS, SDL_NumJoysticks());
+  CONS_Printf(" %d joystick(s) found.\n", num_joysticks);
+
+  // Start receiving joystick events.
+  SDL_JoystickEventState(SDL_ENABLE);
+
+  int i;
+  for (i=0; i < num_joysticks; i++)
+    {
+      SDL_Joystick *joy = SDL_JoystickOpen(i);
+      joysticks[i] = joy;
+      if (devparm)
+	{
+	  CONS_Printf(" Properties of joystick %d:\n", i);
+	  CONS_Printf("    %s.\n", SDL_JoystickName(i));
+	  CONS_Printf("    %d axes.\n", SDL_JoystickNumAxes(joy));
+	  CONS_Printf("    %d buttons.\n", SDL_JoystickNumButtons(joy));
+	  CONS_Printf("    %d hats.\n", SDL_JoystickNumHats(joy));
+	  CONS_Printf("    %d trackballs.\n", SDL_JoystickNumBalls(joy));
+	}
+    }
+}
+
+
+/// Close all joysticks.
+void I_ShutdownJoystick()
+{
+  CONS_Printf("Shutting down joysticks.\n");
+  int i;
+  for(i=0; i < num_joysticks; i++)
+  {
+    CONS_Printf("Closing joystick %s.\n", SDL_JoystickName(i));
+    SDL_JoystickClose(joysticks[i]);
+    joysticks[i] = NULL;
+  }
+  
+  CONS_Printf("Joystick subsystem closed cleanly.\n");
+}
+
+
+/// initialize SDL
+void I_SysInit()
+{
+  CONS_Printf("Initializing SDL...\n");
+
+  // Initialize Audio as well, otherwise DirectX can not use audio
+  if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0)
+    {
+      CONS_Printf(" Couldn't initialize SDL: %s\n", SDL_GetError());
+      I_Quit();
+    }
+
+  // Window title
+  SDL_WM_SetCaption(VERSION_BANNER, "Doom Legacy");
+
+  // Enable unicode key conversion
+  SDL_EnableUNICODE(1);
+
+  // Initialize the joystick subsystem.
+  I_JoystickInit();
+}
+
+
 //
 // I_OsPolling
 //
@@ -367,138 +463,6 @@ void I_OsPolling()
 }
 
 
-
-#ifdef LJOYSTICK
-//
-// I_JoyScale
-//
-void I_JoyScale() {
-  joy_scale = (cv_joyscale.value==0)?1:cv_joyscale.value;
-}
-
-//
-// I_GetJoyEvent
-//
-void I_GetJoyEvent() {
-  struct js_event jdata;
-  static event_t event = {0,0,0,0};
-  static int buttons = 0;
-  if(!joystick_started) return;
-  while(read(joyfd,&jdata,sizeof(jdata))!=-1) {
-    switch(jdata.type) {
-    case JS_EVENT_AXIS:
-      event.type = ev_joystick;
-      event.data1 = 0;
-      switch(jdata.number) {
-      case 0:
-        event.data2 = ((jdata.value >> 5)/joy_scale)*joy_scale;
-        D_PostEvent(&event);
-        break;
-      case 1:
-        event.data3 = ((jdata.value >> 5)/joy_scale)*joy_scale;
-        D_PostEvent(&event);
-      default:
-        break;
-      }
-      break;
-    case JS_EVENT_BUTTON:
-      if(jdata.number<JOYBUTTONS) {
-        if(jdata.value) {
-          if(!((buttons >> jdata.number)&1)) {
-            buttons |= 1 << jdata.number;
-            event.type = ev_keydown;
-            event.data1 = KEY_JOY1+jdata.number;
-            D_PostEvent(&event);
-          }
-        } else {
-          if((buttons>>jdata.number)&1) {
-            buttons ^= 1 << jdata.number;
-            event.type = ev_keyup;
-            event.data1 = KEY_JOY1+jdata.number;
-            D_PostEvent(&event);
-          }
-        }
-      }
-      break;
-    }
-  }
-}
-
-//
-// I_ShutdownJoystick
-//
-void I_ShutdownJoystick() {
-  if(joyfd!=-1) {
-    close(joyfd);
-    joyfd = -1;
-  }
-  joyaxes = 0;
-  joystick_started = 0;
-}
-
-//
-// joy_open
-//
-int joy_open(char *fname) {
-  joyfd = open(fname,O_RDONLY|O_NONBLOCK);
-  if(joyfd==-1) {
-    CONS_Printf("Error opening %s!\n",fname);
-    return 0;
-  }
-  ioctl(joyfd,JSIOCGAXES,&joyaxes);
-  if(joyaxes<2) {
-    CONS_Printf("Not enought axes?\n");
-    joyaxes = 0;
-    joyfd = -1;
-    close(joyfd);
-    return 0;
-  }
-  return joyaxes;
-}
-/*int joy_waitb(int fd, int *xpos,int *ypos,int *hxpos,int *hypos) {
-  int i,xps,yps,hxps,hyps;
-  struct js_event jdata;
-  for(i=0;i<1000;i++) {
-    while(read(fd,&jdata,sizeof(jdata))!=-1) {
-      switch(jdata.type) {
-      case JS_EVENT_AXIS:
-        switch(jdata.number) {
-        case 0: // x
-          xps = jdata.value;
-          break;
-        case 1: // y
-          yps = jdata.value;
-          break;
-        case 3: // hat x
-          hxps = jdata.value;
-          break;
-        case 4: // hat y
-          hyps = jdata.value;
-        default:
-          break;
-        }
-        break;
-      case JS_EVENT_BUTTON:
-        break;
-      }
-    }
-  }
-  }*/
-#endif // LJOYSTICK
-
-//
-// I_InitJoystick
-//
-void I_InitJoystick (void) {
-#ifdef LJOYSTICK
-  I_ShutdownJoystick();
-  if(!strcmp(cv_usejoystick.string,"0"))
-    return;
-  if(!joy_open(cv_joyport.string)) return;
-  joystick_started = 1;
-  return;
-#endif
-}
 
 #ifdef LMOUSE2
 //
@@ -624,7 +588,6 @@ void I_StartupMouse2 (void) {
 }
 
 byte     mb_used = 6+2; // 2 more for caching sound
-static int quiting=0; /* prevent recursive I_Quit() */
 
 //
 // I_Tactile
@@ -660,25 +623,17 @@ ULONG  I_GetTime (void)
 }
 
 
-
-//
-// I_Init
-//
-void I_Init (void)
-{
-    I_StartupSound();
-    I_InitMusic();
-    quiting = 0;
-}
-
 //
 // I_Quit
 //
 void I_Quit (void)
 {
-    /* prevent recursive I_Quit() */
-    if(quiting) return;
-    quiting = 1;
+  // prevent recursive I_Quit()
+  static int quitting = 0;
+
+  if (quitting) return;
+
+  quitting = 1;
   //added:16-02-98: when recording a demo, should exit using 'q' key,
   //        but sometimes we forget and use 'F10'.. so save here too.
     if (demorecording)
@@ -689,6 +644,7 @@ void I_Quit (void)
     I_ShutdownCD();
    // use this for 1.28 19990220 by Kin
     M_SaveConfig (NULL);
+    I_ShutdownJoystick();
     I_ShutdownGraphics();
     I_ShutdownSystem();
     printf("\r");
@@ -725,6 +681,7 @@ void I_Error (const char *error, ...)
         G_CheckDemoStatus();
 
     D_QuitNetGame ();
+    I_ShutdownJoystick();
     I_ShutdownMusic();
     I_ShutdownSound();
     I_ShutdownGraphics();

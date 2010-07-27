@@ -2083,9 +2083,6 @@ void M_ChangecontrolResponse(event_t* ev)
           case ev_mouse:
                ch = KEY_NULL;      // no key
             break;
-          case ev_joystick:
-               ch = KEY_NULL;      // no key
-            break;
 
           // keypad arrows are converted for the menu in cursor arrows
           // so use the event instead of ch
@@ -3771,34 +3768,8 @@ boolean M_Responder (event_t* ev)
     }
     else if( menuactive )
     {
-        if (ev->type == ev_joystick && joywait < I_GetTime())
-        {
-            if (ev->data3 == -1)
-            {
-                ch = KEY_UPARROW;
-                joywait = I_GetTime() + TICRATE/7;
-            }
-            else if (ev->data3 == 1)
-            {
-                ch = KEY_DOWNARROW;
-                joywait = I_GetTime() + TICRATE/7;
-            }
-            
-            if (ev->data2 == -1)
-            {
-                ch = KEY_LEFTARROW;
-                joywait = I_GetTime() + TICRATE/17;
-            }
-            else if (ev->data2 == 1)
-            {
-                ch = KEY_RIGHTARROW;
-                joywait = I_GetTime() + TICRATE/17;
-            }
-        }
-        else
-        {
-            if (ev->type == ev_mouse && mousewait < I_GetTime())
-            {
+      if (ev->type == ev_mouse && mousewait < I_GetTime())
+	{
                 mousey += ev->data3;
                 if (mousey < lasty-30)
                 {
@@ -3826,8 +3797,7 @@ boolean M_Responder (event_t* ev)
                     mousewait = I_GetTime() + TICRATE/7;
                     mousex = lastx += 30;
                 }
-            }
-        }
+	}
     }
 
     if (ch == -1)
@@ -4019,7 +3989,7 @@ boolean M_Responder (event_t* ev)
             //added:07-02-98:dirty hak:for the customize controls, I want only
             //      buttons/keys, not moves
 	    void (*hack)(event_t *) = currentMenu->menuitems[itemOn].itemaction;
-            if (ev->type==ev_mouse || ev->type==ev_joystick )
+            if (ev->type == ev_mouse)
                 goto ret_true;
             if (hack) hack(ev);
         }

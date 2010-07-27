@@ -431,16 +431,6 @@ void I_StartupGraphics()
 
     CV_RegisterVar (&cv_vidwait);
 
-    // Initialize Audio as well, otherwise DirectX can not use audio
-    if(SDL_Init(SDL_INIT_AUDIO|SDL_INIT_VIDEO) < 0)
-    {
-        CONS_Printf("Couldn't initialize SDL: %s\n", SDL_GetError());
-        return;
-    }
-
-    // Enable unicode key conversion
-    SDL_EnableUNICODE(1);
-
     // Get video info for screen resolutions
 #ifdef __MACH__
     //[segabor]: it's ok on Mac OS X with SDL
@@ -485,9 +475,6 @@ void I_StartupGraphics()
     vid.height = BASEVIDHEIGHT;
     vid.rowbytes = vid.width * vid.bpp;
     vid.recalc = true;
-
-    // Window title
-    SDL_WM_SetCaption(VERSION_BANNER, "Doom Legacy");
 
 // [WDJ] To be safe, make it conditional on MACOS
 #ifdef __MACOS__

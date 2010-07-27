@@ -75,6 +75,9 @@ extern BOOL   bDX0300;
 #endif
 
 
+// system initialization
+void I_SysInit();
+
 // return free and total physical memory in the system
 ULONG I_GetFreeMem(ULONG *total);
 
@@ -139,8 +142,6 @@ void I_ShutdownSystem (void);
 void I_GetDiskFreeSpace(int64_t *freespace);
 char *I_GetUserName(void);
 int  I_mkdir(const char *dirname, int unixright);
-
-void I_InitJoystick();
 
 void I_StartupMouse();
 void I_StartupMouse2();
