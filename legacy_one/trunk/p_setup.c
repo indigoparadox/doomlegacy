@@ -732,38 +732,48 @@ void P_LoadNodes (int lump)
 //
 void P_LoadThings (int lump)
 {
+  // Doom mapthing template (internally we use a modified version)
+  typedef struct
+  {
+    int16_t   x, y;   ///< coordinates
+    int16_t  angle;   ///< orientation
+    uint16_t  type;   ///< DoomEd number
+    uint16_t flags;
+  } doom_mapthing_t;
+
     int                 i;
     mapthing_t*         mt;
     boolean             spawn;
-    byte                *data, *datastart;
+    byte               *data;
 
-    data = datastart = W_CacheLumpNum (lump,PU_LEVEL);  // temp things lump
+    data = W_CacheLumpNum (lump,PU_LEVEL);  // temp things lump
     // [WDJ] Do endian as read from temp things lump
-    nummapthings     = W_LumpLength (lump) / (5 * sizeof(short));
+    nummapthings     = W_LumpLength(lump) / sizeof(doom_mapthing_t);
     mapthings        = Z_Malloc(nummapthings * sizeof(mapthing_t), PU_LEVEL, NULL);
 
     //SoM: Because I put a new member into the mapthing_t for use with
     //fragglescript, the format has changed and things won't load correctly
     //using the old method.
 
+    doom_mapthing_t *dmt = (doom_mapthing_t *)data;
     mt = mapthings;
-    for (i=0 ; i<nummapthings ; i++, mt++)
+    for (i=0 ; i<nummapthings ; i++, mt++, dmt++)
     {
         spawn = true;
 
         // Do spawn all other stuff.
         // SoM: Do this first so all the mapthing slots are filled!
-        mt->x = READ16(data);
-        mt->y = READ16(data);
-        mt->angle = READ16(data);
-        mt->type = READ16(data);
-        mt->options = READ16(data);
+        mt->x = LE_SWAP16(dmt->x);
+        mt->y = LE_SWAP16(dmt->y);
+        mt->angle   = LE_SWAP16(dmt->angle);
+        mt->type    = LE_SWAP16(dmt->type);
+        mt->options = LE_SWAP16(dmt->flags);
         mt->mobj = NULL; //SoM:
 
         P_SpawnMapThing (mt);
     }
 
-    Z_Free(datastart);
+    Z_Free(data);
 }
 
 

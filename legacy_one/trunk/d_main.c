@@ -386,11 +386,9 @@ boolean advancedemo;
 #endif
 
 // to make savegamename and directories
-char * legacyhome;
-int  legacyhome_len;
+char *legacyhome;
+int   legacyhome_len;
 
-// [WDJ] Seem to be unused//char wadfile[1024];             // primary wad file
-//char mapdir[1024];              // directory of development maps
 
 #ifdef __MACH__
 //[segabor]: for Mac specific resources
@@ -754,9 +752,6 @@ void D_DoomLoop(void)
 
     // end of loading screen: CONS_Printf() will no more call FinishUpdate()
     con_startup = false;
-
-    CONS_Printf("I_StartupKeyboard...\n");
-    I_StartupKeyboard();
 
 #ifdef __WIN32__
     CONS_Printf("I_StartupMouse...\n");
@@ -1285,24 +1280,18 @@ fail:
 #endif
 
 
-void IdentifyVersion(void)
+void IdentifyVersion()
 {
     int gmi;
-    char *legacywad;
-    char *filename;
-
     char pathtemp[_MAX_PATH];
     char pathiwad[_MAX_PATH + 16];
 
-    char *doomwaddir;
     boolean  other_names = 0;	// indicates -iwad other names
 
     gamedesc_index = GDESC_num; // nothing
-#ifdef LINUX
-    // change to the directory where 'legacy.dat' is found
-    I_LocateWad();
-#endif
-    doomwaddir = getenv("DOOMWADDIR");
+
+    // find legacy.wad, IWADs
+    char *doomwaddir = getenv("DOOMWADDIR");
     if (!doomwaddir)
     {
         // get the current directory (possible problem on NT with "." as current dir)
@@ -1328,6 +1317,7 @@ void IdentifyVersion(void)
     game_desc_table[GDESC_doom_shareware].iwad_filename = text[DOOM1WAD_NUM];
 
     // and... Doom LEGACY !!! :)
+    char *legacywad;
 #ifdef __MACH__
     //[segabor]: on Mac OS X legacy.dat is within .app folder
     legacywad = mac_legacy_wad;
@@ -1421,7 +1411,7 @@ void IdentifyVersion(void)
 
         if (access(pathiwad, R_OK))  goto iwad_failure;
 
-        filename = FIL_Filename_of( pathiwad );
+	char *filename = FIL_Filename_of( pathiwad );
         if ( gamedesc_index == GDESC_num ) // check forcing switch
         {
 	    // No forcing switch
@@ -1627,7 +1617,7 @@ void D_CheckWadVersion()
 //
 // D_DoomMain
 //
-void D_DoomMain(void)
+void D_DoomMain()
 {
     int p;
     char file[FILENAME_SIZE];
@@ -1674,17 +1664,12 @@ void D_DoomMain(void)
     // Title page
     const char *title = gamedesc.startup_title;  // set by IdentifyVersion
     if( title == NULL )   title = gamedesc.gname;
-
     CONS_Printf("%s\n", title);
-
-#ifdef __OS2__
-    // set PM window title
-    snprintf(pmData->title, sizeof(pmData->title), "%s: %s", VERSION_BANNER, title);
-#endif
 
     devparm = M_CheckParm("-devparm");
     if (devparm)
       CONS_Printf(D_DEVSTR);
+
     nomonsters = M_CheckParm("-nomonsters");
 
     // userhome section
@@ -1936,22 +1921,6 @@ void D_DoomMain(void)
     cht_Init();	// init cheats for this iwad
 
     //---------------------------------------------------- READY SCREEN
-    //printf("\nI_StartupComm...");
-
-    CONS_Printf("I_StartupTimer...\n");
-    I_StartupTimer();
-
-    // now initted automatically by use_mouse var code
-    //CONS_Printf("I_StartupMouse...\n");
-    //I_StartupMouse ();
-
-    //CONS_Printf ("I_StartupKeyboard...\n");
-    //I_StartupKeyboard (); // FIXME: this is a dummy, we can remove it!
-
-    // now initialised automatically by use_joystick var code
-    //CONS_Printf (text[I_INIT_NUM]);
-    //I_InitJoystick ();
-
     // we need to check for dedicated before initialization of some subsystems
     dedicated = M_CheckParm("-dedicated") != 0;
 

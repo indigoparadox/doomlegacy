@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2010 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -91,8 +91,5 @@ void I_FinishUpdate (void);
 void I_WaitVBL(int count);
 
 void I_ReadScreen (byte* scr);
-
-void I_BeginRead (void);
-void I_EndRead (void);
 
 #endif

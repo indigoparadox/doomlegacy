@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2010 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -74,8 +74,6 @@ extern boolean winnt;
 extern BOOL   bDX0300;
 #endif
 
-// Called by DoomMain.
-void I_InitJoystick (void);
 
 // return free and total physical memory in the system
 ULONG I_GetFreeMem(ULONG *total);
@@ -122,10 +120,6 @@ void I_Quit (void);
 
 void I_Error (const char *error, ...);
 
-// Allocates from low memory under dos,
-// just mallocs under unix
-byte* I_AllocLow (int length);
-
 void I_Tactile (int on, int off, int total);
 
 //added:18-02-98: write a message to stderr (use before I_Quit)
@@ -133,15 +127,6 @@ void I_Tactile (int on, int off, int total);
 //                the return code 0 of I_Quit();
 void I_OutputMsg (char *error, ...);
 
-void I_StartupMouse (void);
-void I_StartupMouse2(void);
-
-// keyboard startup,shutdown,handler
-void I_StartupKeyboard (void);
-
-// setup timer irq and user timer routine.
-void I_TimerISR (void);      //timer callback routine.
-void I_StartupTimer (void);
 
 /* list of functions to call at program cleanup */
 void I_AddExitFunc (void (*func)());
@@ -155,11 +140,10 @@ void I_GetDiskFreeSpace(int64_t *freespace);
 char *I_GetUserName(void);
 int  I_mkdir(const char *dirname, int unixright);
 
+void I_InitJoystick();
 
+void I_StartupMouse();
+void I_StartupMouse2();
 void doUngrabMouse();
-
-#ifdef LINUX
-void I_LocateWad(void);
-#endif
 
 #endif

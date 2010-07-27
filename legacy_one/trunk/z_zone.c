@@ -356,8 +356,8 @@ memblock_t*  Z_GrowZone( int reqsize, int std_grow )
         mainzone->size += grow_size;
         mb_used = mainzone->size >> 20;	// to MiB
 		   
-        fprintf(stderr,"Z_Malloc: Grow by %i KiB, total=%i MiB\n",
-			   grow_size>>10, mb_used );
+        fprintf(stderr, "Z_Malloc: Grow by %d KiB, total %d MiB\n",
+		grow_size>>10, mb_used);
         return freezone;
     }else{
        return NULL;
@@ -402,8 +402,7 @@ void Z_Init (void)
         uint32_t  freemem, total;
         freemem = I_GetFreeMem(&total)>>20;
         total >>= 20;	// MiB
-        CONS_Printf("system memory %d MiB free %d MiB\n",
-		    (int)total, (int)freemem);
+        CONS_Printf("System memory %d MiB, free %d MiB\n", total, freemem);
         // We assume that system uses a lot of memory for disk cache.
         // Can ask for more than freemem and get it from disk cache.
 	// MEM consts are now defined above, [WDJ]

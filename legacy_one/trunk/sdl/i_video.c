@@ -349,8 +349,8 @@ void VID_PrepareModeList(void)
     return;
 }
 
-int VID_SetMode(int modeNum) {
-
+int VID_SetMode(int modeNum)
+{
     doUngrabMouse();
 
     if(cv_fullscreen.value)
@@ -394,9 +394,6 @@ int VID_SetMode(int modeNum) {
         vid.rowbytes = vid.width * vid.bpp;
         vid.recalc = true;
 
-        // Window title
-        SDL_WM_SetCaption("Legacy", "Legacy");
-
         if(render_soft == rendermode)
         {
             SDL_FreeSurface(vidSurface);
@@ -427,7 +424,7 @@ int VID_SetMode(int modeNum) {
     return 1;
 }
 
-void I_StartupGraphics(void)
+void I_StartupGraphics()
 {
     if(graphics_started)
         return;
@@ -490,7 +487,7 @@ void I_StartupGraphics(void)
     vid.recalc = true;
 
     // Window title
-    SDL_WM_SetCaption("Doom Legacy", "Doom Legacy");
+    SDL_WM_SetCaption(VERSION_BANNER, "Doom Legacy");
 
 // [WDJ] To be safe, make it conditional on MACOS
 #ifdef __MACOS__
@@ -554,7 +551,7 @@ void I_StartupGraphics(void)
 }
 
 
-void I_ShutdownGraphics(void)
+void I_ShutdownGraphics()
 {
     // was graphics initialized anyway?
     if (!graphics_started)
@@ -574,5 +571,4 @@ void I_ShutdownGraphics(void)
     }
 
     SDL_Quit();
-
 }

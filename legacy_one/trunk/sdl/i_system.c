@@ -130,15 +130,6 @@ int fdmouse2 = -1;
 int mouse2_started = 0;
 #endif
 
-//
-// StartupKeyboard
-//
-void I_StartupKeyboard (void) {}
-
-//
-//I_StartupTimer
-//
-void I_StartupTimer    (void) {}
 
 //
 //I_OutputMsg
@@ -710,23 +701,6 @@ void I_WaitVBL(int count)
     SDL_Delay(1);
 }
 
-void I_BeginRead(void)
-{
-}
-
-void I_EndRead(void)
-{
-}
-
-byte*   I_AllocLow(int length)
-{
-    byte*       mem;
-
-    mem = (byte *)malloc (length);
-    memset (mem,0,length);
-    return mem;
-}
-
 
 //
 // I_Error
@@ -930,11 +904,6 @@ int  I_mkdir(const char *dirname, int unixright)
 #endif
 }
 
-
-void I_LocateWad(void) {
-    // relict from the Linux version
-    return;
-}
 
 #ifdef LINUX
 #define MEMINFO_FILE "/proc/meminfo"
