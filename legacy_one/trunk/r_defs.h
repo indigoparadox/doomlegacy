@@ -436,9 +436,7 @@ typedef struct sector_s
    				    // ZMalloc PU_LEVEL, in P_AddFakeFloor
     int  *              attached;   // list of control sectors (by secnum)
    				    // realloc in P_AddFakeFloor
-				    // FIXME: no deallocate
-             // malloc, realloc
-	     // FIXME: must deallocate attached before free PU_LEVEL [WDJ] 11/14/2009
+   				    // [WDJ] 7/2010 deallocate in P_SetupLevel
     int                 numattached;
     ff_lightlist_t *    lightlist;  // fake floor lights
    				    // ZMalloc PU_LEVEL, in R_Prep3DFloors

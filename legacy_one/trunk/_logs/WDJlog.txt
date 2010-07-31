@@ -1023,3 +1023,18 @@ Removed some unused code using #ifdef 0.
 Rewrote some parts to use center of attention instead of corner of
 window, and cope with map edges better.
 
+*** w58_r_defs
+patchfile = w57_r_defs.patch
+- committed revision 715   by wesley johnson
+Comments on many r_defs structure fields.
+Comment out unused ff_delta field.
+Comments where ff_delta was initialized.
+
+*** w58_attached_memory_leak
+patchfile = w57_attached_memory_leak.patch
+- committed revision 716   by wesley johnson
+Free memory allocated to sector->attached before freeing sectors in
+ZMalloc purge.
+Init sectors list pointer, now that it no longer causes save game
+corruption.
+

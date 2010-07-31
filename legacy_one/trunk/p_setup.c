@@ -237,15 +237,8 @@ vertex_t*       vertexes;
 int             numsegs;
 seg_t*          segs;
 
-int             numsectors;
-sector_t*       sectors;
-// [WDJ] 1/5/2010
-//sector_t*       sectors = NULL;
-// Init sectors=NULL causes save games to write a bad save game.
-// After restore of such a save game there are flashing textures and walls
-// drawn displaced randomly.
-// Problem also occurs for previous versions of program loading the saved game.
-// FIXME: sector structure contains realloc memory, must clear with deallocator [WDJ] 11/14/2009
+int             numsectors = 0;
+sector_t*       sectors = NULL;
 
 int             numsubsectors;
 subsector_t*    subsectors;
@@ -1499,6 +1492,19 @@ boolean P_SetupLevel (int           episode,
     // Make sure all sounds are stopped before Z_FreeTags.
     S_StopSounds();
 
+    // [WDJ] 7/2010 Free allocated memory in sectors before PU_LEVEL purge
+    for (i=0 ; i<numsectors ; i++)
+    {
+        sector_t * sp = &sectors[i];
+        if( sp )
+	{
+	    if( sp->attached )  // from realloc in P_AddFakeFloor
+	    {
+	        free( sp->attached );
+	        sp->attached = NULL;
+	    }
+	}
+    }
 
 #if 0 // UNUSED
     if (debugfile)
