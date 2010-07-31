@@ -2852,13 +2852,14 @@ void P_AddFakeFloor(sector_t* taggedsec, sector_t* modsec, line_t* master, int f
   ffloor = Z_Malloc(sizeof(ffloor_t), PU_LEVEL, NULL);
   ffloor->model_secnum = modsec - sectors; // model sector from linedef
   ffloor->target = taggedsec;
+  // model sector floor -> ffloor bottom
   ffloor->bottomheight     = &modsec->floorheight;
   ffloor->bottompic        = &modsec->floorpic;
   //ffloor->bottomlightlevel = &modsec->lightlevel;
   ffloor->bottomxoffs      = &modsec->floor_xoffs;
   ffloor->bottomyoffs      = &modsec->floor_yoffs;
 
-  //Add the ceiling
+  // model sector ceiling -> ffloor top
   ffloor->topheight     = &modsec->ceilingheight;
   ffloor->toppic        = &modsec->ceilingpic;
   ffloor->toplightlevel = &modsec->lightlevel;
@@ -2868,7 +2869,7 @@ void P_AddFakeFloor(sector_t* taggedsec, sector_t* modsec, line_t* master, int f
   ffloor->flags = flags;
   ffloor->master = master;
   // [WDJ] do not leave uninit
-  ffloor->delta = 0;
+//  ffloor->ff_delta = 0;   // unused
   ffloor->lastlight = 0;  // caused segfault
   ffloor->alpha = 0;
 

@@ -200,7 +200,7 @@ typedef struct
      // alpha=0..26, 0=black/white tint, 26=saturated color
      // r,g,b are the saturated color, 0..255
 
-  lighttable_t*   colormap;
+  lighttable_t*   colormap; // colormap tables [32][256]
 } extracolormap_t;
 
 //
@@ -265,33 +265,36 @@ typedef enum
 } ffloortype_e;
 
 
+// created by P_AddFakeFloor
 typedef struct ffloor_s
 {
-  fixed_t          *topheight;
+  // references to model sector, to pass through changes immediately
+  fixed_t          *topheight;  // model sector ceiling
   short            *toppic;
   short            *toplightlevel;
   fixed_t          *topxoffs;
   fixed_t          *topyoffs;
 
-  fixed_t          *bottomheight;
+  fixed_t          *bottomheight;  // model sector floor
   short            *bottompic;
   //short            *bottomlightlevel;
   fixed_t          *bottomxoffs;
   fixed_t          *bottomyoffs;
 
-  fixed_t          delta;
-
   int              model_secnum; // model sector num used in linedef
-  ffloortype_e     flags;
-  struct line_s*   master;
+  ffloortype_e     flags;  // flags from special linedef
 
-  struct sector_s* target;
+  struct line_s  * master; // the special linedef generating this floor
 
+  struct sector_s* target; // tagged sector that is affected
+
+  // double linked list of ffloor_t in sector
   struct ffloor_s* next;
   struct ffloor_s* prev;
 
   int              lastlight;		// light index, FF_DOUBLESHADOW
   int              alpha;		// FF_TRANSLUCENT
+//  fixed_t          ff_delta;		// unused
 } ffloor_t;
 
 
@@ -393,6 +396,7 @@ typedef struct sector_s
     // thinker_t for reversable actions
     // make thinkers on floors, ceilings, lighting, independent of one another
     void *floordata;
+   		     // ZMalloc PU_LEVSPEC, in EV_DoFloor
     void *ceilingdata;
     void *lightingdata;
   
@@ -420,6 +424,7 @@ typedef struct sector_s
     // list of mobjs that are at least partially in the sector
     // thinglist is a subset of touching_thinglist
     struct msecnode_s *touching_thinglist;               // phares 3/14/98  
+   				    // nodes are ZMalloc PU_LEVEL, by P_GetSecnode
     //SoM: 3/6/2000: end stuff...
 
     // list of ptrs to lines that have this sector as a side
@@ -427,12 +432,16 @@ typedef struct sector_s
     struct line_s**     linelist;  // [linecount] size
 
     //SoM: 2/23/2000: Improved fake floor hack
-    ffloor_t*           ffloors;
-    int  *              attached;	// list of control sectors
+    ffloor_t *          ffloors;    // 3D floor list
+   				    // ZMalloc PU_LEVEL, in P_AddFakeFloor
+    int  *              attached;   // list of control sectors (by secnum)
+   				    // realloc in P_AddFakeFloor
+				    // FIXME: no deallocate
              // malloc, realloc
 	     // FIXME: must deallocate attached before free PU_LEVEL [WDJ] 11/14/2009
     int                 numattached;
-    ff_lightlist_t*     lightlist;  // fake floor lights
+    ff_lightlist_t *    lightlist;  // fake floor lights
+   				    // ZMalloc PU_LEVEL, in R_Prep3DFloors
     int                 numlights;
     boolean             moved;  // floor was moved
 
@@ -440,7 +449,7 @@ typedef struct sector_s
     boolean             added;
 
     // SoM: 4/3/2000: per-sector colormaps!
-    extracolormap_t*    extra_colormap;  // using colormap for this frame
+    extracolormap_t*    extra_colormap;  // (ref) using colormap for this frame
          // selected from bottommap,midmap,topmap, from special linedefs
 
     // ----- for special tricks with HW renderer -----
@@ -571,7 +580,7 @@ typedef struct line_s
 //
 typedef struct subsector_s
 {
-    sector_t*   sector;   // part of this sector, from segs->sector of firstline
+    sector_t*   sector;   // (ref) part of this sector, from segs->sector of firstline
     // numlines and firstline are from the subsectors lump (nodebuilder)
     // [WDJ] some wad may be large enough to overflow signed short.
     unsigned short  numlines;   // number of segs in this subsector
@@ -694,10 +703,8 @@ typedef struct
 typedef struct
 {
     // Partition line from (x,y) to x+dx,y+dy)
-    fixed_t     x;
-    fixed_t     y;
-    fixed_t     dx;
-    fixed_t     dy;
+    fixed_t     x, y;
+    fixed_t     dx, dy;
 
     // Bounding box for each child.
     fixed_t     bbox[2][4];
@@ -713,17 +720,20 @@ typedef struct
 } node_t;
 
 
-
+// Example of column data:
+//  post_t, bytes[length], post_t, bytes[length], 0xFF
 
 // posts are runs of non masked source pixels
+// Post format: post_t header, bytes[length] pixels
 typedef struct
 {
-    byte                topdelta;       // -1 is the last post in a column
-                                        // BP: humf, -1 with byte ! (unsigned char) test WARNING
+    byte                topdelta; 	// y offset within patch of this post
+   	// reads (0xFF) at column termination (not a valid post_t)
+	// BP: humf, -1 with byte ! (unsigned char) test WARNING
     byte                length;         // length data bytes follows
 } post_t;
 
-// column_t is a list of 0 or more post_t, (byte)-1 terminated
+// column_t is a list of 0 or more post_t, (0xFF) terminated
 typedef post_t  column_t;
 
 
@@ -798,12 +808,16 @@ struct patch_s
 #else
 struct patch_s
 {
-    short               width;          // bounding box size
+    short               width;          // bounding box size, usually 64, 128, 256
     short               height;
     short               leftoffset;     // pixels to the left of origin
     short               topoffset;      // pixels below the origin
     int                 columnofs[8];   // only [width] used
-    // the [0] is &columnofs[width]
+	    // Offset within patch to column data header, column_t.
+            // Column data starts at &columnofs[width]
+    // This is used as the head of a patch, and columnofs[8] provides
+    // access to an array that is usually [64], [128], or [256].
+    // This would not work if the [8] was actually enforced.
 };
 #endif
 typedef struct patch_s patch_t;
