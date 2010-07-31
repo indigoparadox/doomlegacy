@@ -55,6 +55,10 @@
 #include "screen.h"     //needs MAXVIDWIDTH/MAXVIDHEIGHT
 #include "r_data.h"
 
+// unsigned short invalid for top[], bottom[] arrays in visplane
+// Maximum value disables use in top calculations, it is off bottom of screen.
+#define TOP_MAX   0xffff
+
 //
 // Now what is a visplane, anyway?
 // Simple : kinda floor/ceiling polygon optimised for Doom rendering.
