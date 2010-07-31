@@ -1078,4 +1078,14 @@ Gave visplane global parameters the naming  vsp_*.
 Because of longer names the code got larger.
 Running it through strip, removing the symbols, shows the true code size.
 
+*** w58_visplane_naming
+patchfile = w57_visplane_naming.patch
+- committed revision 721   by wesley johnson
+Preparation for attacking 3Dfloor sprite bug.
+Naming changes, spacing, etc.
+Renamed some structure fields to be explict, such as front_frac and
+back_frac (instead of f_frac and b_frac), and high_top instead of just high.
+Standardize some strange function declarations.
+Many comments added.
+No logic changes.
 

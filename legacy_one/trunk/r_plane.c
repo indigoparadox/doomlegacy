@@ -133,7 +133,8 @@ visplane_t*             vsp_ceilingplane;
 // visplane used by R_MapPlane, set by R_DrawSinglePlane
 visplane_t*             vsp_currentplane;
 
-planemgr_t              ffloor[MAXFFLOORS];  // this use 251 Kb memory (in Legacy 1.43)
+// this use 251 Kb memory (in Legacy 1.43)
+ff_planemgr_t           ffloor[MAXFFLOORS];
 int                     numffloors;
 
 //SoM: 3/23/2000: Boom visplane hashing routine.
@@ -235,10 +236,7 @@ void R_InitPlanes (void)
 
 // Draw plane span at row y, span=(x1..x2)
 // at planeheight, using spanfunc
-void R_MapPlane
-( int           y,              // t1
-  int           x1,
-  int           x2 )
+void R_MapPlane ( int y, int x1, int x2 )
 {
     angle_t     angle;
     fixed_t     distance;
@@ -331,6 +329,7 @@ void R_ClearPlanes (player_t *player)
 
 
     // opening / clipping determination
+    // init to screen limits
     for (i=0 ; i<rdraw_viewwidth ; i++)
     {
         floorclip[i] = rdraw_viewheight;
@@ -338,8 +337,8 @@ void R_ClearPlanes (player_t *player)
         frontscale[i] = MAXINT;
         for(p = 0; p < MAXFFLOORS; p++)
         {
-          ffloor[p].f_clip[i] = rdraw_viewheight;
-          ffloor[p].c_clip[i] = con_clipviewtop;
+          ffloor[p].front_clip[i] = rdraw_viewheight;
+          ffloor[p].con_clip[i] = con_clipviewtop;
         }
     }
 
@@ -498,15 +497,20 @@ visplane_t*  R_CheckPlane( visplane_t*   pl,
     }
 
     //added 30-12-97 : 0xff ne vaut plus -1 avec un short...
+    // find any x in intersect range where have valid top[]
     for (x=intrl ; x<= intrh ; x++)
         if (pl->top[x] != 0xffff)
             break;
 
     //SoM: 3/23/2000: Boom code
     if (x > intrh)
+        // no valid top[] within intersect range
+	// No overlap, can extend visplane to union
       pl->minx = unionl, pl->maxx = unionh;
     else
-      {
+    {
+        // overlap conflict, must create new visplane
+        // new visplane over range start..stop
         unsigned hash = visplane_hash(pl->picnum, pl->lightlevel, pl->height);
         visplane_t *new_pl = new_visplane(hash);
 
@@ -519,11 +523,11 @@ visplane_t*  R_CheckPlane( visplane_t*   pl,
         new_pl->ffloor = pl->ffloor;
         new_pl->viewz = pl->viewz;
         new_pl->viewangle = pl->viewangle;
-        pl = new_pl;
+        pl = new_pl;  // return new visplane
         pl->minx = start;
         pl->maxx = stop;
         memset(pl->top, 0xff, sizeof pl->top);
-      }
+    }
     return pl;
 }
 
@@ -536,14 +540,18 @@ visplane_t*  R_CheckPlane( visplane_t*   pl,
 // need to create new ones with R_CheckPlane, because 3D floor planes
 // are created by subsector and there is no way a subsector can graphically
 // overlap.
+// Called from R_StoreWallRange for ffloors.
 void R_ExpandPlane(visplane_t*  pl, int start, int stop)
 {
+    // intersect of the ranges
     int         intrl;
     int         intrh;
+    // union of the ranges
     int         unionl;
     int         unionh;
-        int                     x;
+    int		x;
 
+    // (unionl,intrl) = minmax( pl->minx, start )
     if (start < pl->minx)
     {
         intrl = pl->minx;
@@ -555,6 +563,7 @@ void R_ExpandPlane(visplane_t*  pl, int start, int stop)
         intrl = start;
     }
 
+    // (intrh,unionh) = minmax( pl->maxx, stop )
     if (stop > pl->maxx)
     {
         intrh = pl->maxx;
@@ -566,6 +575,7 @@ void R_ExpandPlane(visplane_t*  pl, int start, int stop)
         intrh = stop;
     }
 
+    // Find any x in start..stop range where have valid top[], thus overlaps.
     for (x = start ; x <= stop ; x++)
         if (pl->top[x] != 0xffff)
             break;
@@ -588,12 +598,8 @@ void R_ExpandPlane(visplane_t*  pl, int start, int stop)
 // Setup spanstart for next span at rows (t2..b2),
 //    except when disabled by t2>viewheight
 // at planeheight, using spanfunc
-void R_MakeSpans
-( int           x,
-  int           t1,
-  int           b1,
-  int           t2,
-  int           b2 )
+// Param t1,b1,t2,b2 are y values.
+void R_MakeSpans ( int x, int t1, int b1, int t2, int b2 )
 {
     // [WDJ] 11/10/2009  Fix crash in 3DHorror wad, sloppy limit checks on
     // spans caused writes to spanstart[] to overwrite yslope array.
@@ -661,6 +667,7 @@ void R_MakeSpans
 
 byte* R_GetFlat (int  flatnum);
 
+// Draw the visplanes list
 void R_DrawPlanes (void)
 {
     visplane_t*         pl;
@@ -868,6 +875,7 @@ void R_DrawSinglePlane(visplane_t* pl)
 }
 
 
+// Find limits of top[] and bottom[], to highest_top, lowest_bottom
 void R_PlaneBounds(visplane_t* plane)
 {
   int  i;
@@ -878,11 +886,12 @@ void R_PlaneBounds(visplane_t* plane)
 
   for(i = plane->minx + 1; i <= plane->maxx; i++)
   {
+    // in screen coord, where 0 is top (hi)
     if(plane->top[i] < hi)
       hi = plane->top[i];
     if(plane->bottom[i] > low)
       low = plane->bottom[i];
   }
-  plane->high = hi;
-  plane->low = low;
+  plane->highest_top = hi;     // highest top
+  plane->lowest_bottom = low;  // lowest bottom
 }

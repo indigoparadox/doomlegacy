@@ -186,6 +186,7 @@ static int             worldbacktop;	// back sector
 static int             worldbackbottom;
 #endif
 
+// RenderSegLoop global parameters
 static fixed_t         pixhigh;
 static fixed_t         pixlow;
 static fixed_t         pixhighstep;
@@ -197,7 +198,7 @@ static fixed_t         topstep;
 static fixed_t         bottomfrac;
 static fixed_t         bottomstep;
 
-lighttable_t**  walllights;
+lighttable_t**  walllights;  // array[] of colormap selected by lightlevel
 
 short*          maskedtexturecol;
 
@@ -389,7 +390,7 @@ static void R_DrawWallSplats ()
         {
             if (!fixedcolormap)
             {
-	        // distance effect on light
+	        // distance effect on light, yscale is smaller at distance.
                 unsigned  dlit = dm_yscale>>LIGHTSCALESHIFT;
 	        if (dlit >=  MAXLIGHTSCALE )
 		   dlit = MAXLIGHTSCALE-1;
@@ -490,7 +491,7 @@ void  expand_openings( size_t  need )
         ADJUST (spr_bottomclip);
         ADJUST (thicksidecol);
     }
-  #undef ADJUST
+#undef ADJUST
     openings = newopenings;
     lastopening = & openings[ lastindex ];
 }
@@ -574,7 +575,8 @@ void R_Render2sidedMultiPatchColumn (column_t* column)
 }
 
 
-void R_RenderMaskedSegRange (drawseg_t* ds, int x1, int x2 )
+// Render with fog, translucent, and transparent, over range x1..x2
+void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
 {
     column_t*       col;
     int             lightnum;
@@ -584,7 +586,7 @@ void R_RenderMaskedSegRange (drawseg_t* ds, int x1, int x2 )
     fixed_t         lightheight;
     fixed_t         realbot;
     ff_lightlist_t  *ff_light;
-    r_lightlist_t   *rlight;
+    r_lightlist_t   *rlight;  // rover dc_lightlist
 
     void (*colfunc_2s) (column_t*);
 
@@ -631,7 +633,7 @@ void R_RenderMaskedSegRange (drawseg_t* ds, int x1, int x2 )
         // world coord, relative to viewer
         windowclip_top = frontsector->ceilingheight - viewz;
 	windowclip_bottom = frontsector->floorheight - viewz;
-// original failed, not screen coord, no perspective, it blocked display entirely 
+// [WDJ] original failed, not screen coord, no perspective, it blocked display entirely 
 //        dm_windowtop = frontsector->ceilingheight;
 //        dm_windowbottom = frontsector->floorheight;
     }
@@ -680,7 +682,7 @@ void R_RenderMaskedSegRange (drawseg_t* ds, int x1, int x2 )
       {
 	// setup a lightlist entry
         ff_light = &frontsector->lightlist[i];
-        rlight = &dc_lightlist[i];
+        rlight = &dc_lightlist[i];  // create in this list slot
 	// fake floor light heights in screen coord.
         rlight->height = (centeryfrac) - FixedMul((ff_light->height - viewz), dm_yscale);
         rlight->heightstep = -FixedMul (rw_scalestep, (ff_light->height - viewz));
@@ -833,9 +835,10 @@ void R_RenderMaskedSegRange (drawseg_t* ds, int x1, int x2 )
               if(lightheight <= dm_windowtop)
               {
                 dc_colormap = rlight->rcolormap;
-                continue;
+                continue;  // next 3dfloor light
               }
 
+	      // actual drawing using col and colfunc, between 3Dfloors
               dm_windowbottom = lightheight;
               if(dm_windowbottom >= realbot)
               {
@@ -847,23 +850,27 @@ void R_RenderMaskedSegRange (drawseg_t* ds, int x1, int x2 )
                   rlight->height += rlight->heightstep;
                 }
 
-                continue;
+                continue;  // next 3dfloor light
               }  // if( windowbottom > realbot )
               colfunc_2s (col);
               dm_windowtop = dm_windowbottom + 1;
               dc_colormap = rlight->rcolormap;
             } // for( dc_numlights )
+	    // draw down to sector floor
             dm_windowbottom = realbot;
             if(dm_windowtop < dm_windowbottom)
               colfunc_2s (col);
 
             dm_yscale += rw_scalestep;
-            continue;
+            continue;  // next x
           }  // if( dc_numlights )
 
+
+          // Where there are no 3Dfloors ...
           // calculate lighting
           if (!fixedcolormap)
           {
+	      // distance effect on light, yscale is smaller at distance.
 	      unsigned index = dm_yscale>>LIGHTSCALESHIFT;
 
 	      if (index >=  MAXLIGHTSCALE )
@@ -997,7 +1004,7 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
         rlight->lightlevel = *ff_light->lightlevel;
         rlight->extra_colormap = ff_light->extra_colormap;
 
-        // Check if the current light effects the colormap/lightlevel
+        // Check if the current light affects the colormap/lightlevel
         if((dc_lightlist[i].flags & FF_NOSHADE))
           continue; // next ff_light
 
@@ -1414,8 +1421,8 @@ void R_RenderSegLoop (void)
           {
             if(ffloor[i].height < viewz)
             {
-              int top_w = (ffloor[i].f_frac >> HEIGHTBITS) + 1;
-              int bottom_w = ffloor[i].f_clip[rw_x];
+              int top_w = (ffloor[i].front_frac >> HEIGHTBITS) + 1;
+              int bottom_w = ffloor[i].front_clip[rw_x];
 
               if(top_w < ceilingclip[rw_x] + 1)
                 top_w = ceilingclip[rw_x] + 1;
@@ -1431,8 +1438,8 @@ void R_RenderSegLoop (void)
             }
             else if (ffloor[i].height > viewz)
             {
-              int top_w = ffloor[i].c_clip[rw_x] + 1;
-              int bottom_w = (ffloor[i].f_frac >> HEIGHTBITS);
+              int top_w = ffloor[i].con_clip[rw_x] + 1;
+              int bottom_w = (ffloor[i].front_frac >> HEIGHTBITS);
 
               if (top_w < ceilingclip[rw_x] + 1)
                 top_w = ceilingclip[rw_x] + 1;
@@ -1461,7 +1468,7 @@ void R_RenderSegLoop (void)
             dc_x = rw_x;
             dc_iscale = 0xffffffffu / (unsigned)rw_scale;
 
-            // calculate lighting
+	    // distance effect on light, rw_scale is smaller at distance.
             index = rw_scale>>LIGHTSCALESHIFT;
             
             if (index >=  MAXLIGHTSCALE )
@@ -1507,6 +1514,7 @@ void R_RenderSegLoop (void)
 	      else
                 xwalllights = scalelight[lightnum];
 
+	      // distance effect on light, rw_scale is smaller at distance.
 	      index = rw_scale>>LIGHTSCALESHIFT;
             
 	      if (index >=  MAXLIGHTSCALE )
@@ -1523,7 +1531,7 @@ void R_RenderSegLoop (void)
 
             colfunc = R_DrawColumnShadowed_8;
           }
-        }
+        } // if dclights
 
         frontscale[rw_x] = rw_scale;
 
@@ -1711,15 +1719,15 @@ void R_RenderSegLoop (void)
 
         for(i = 0; i < MAXFFLOORS; i++)
         {
-          if (ffloor[i].mark)
+          if (ffloor[i].valid_mark)
           {
-            int y_w = ffloor[i].b_frac >> HEIGHTBITS;
+            int y_w = ffloor[i].back_frac >> HEIGHTBITS;
 
-            ffloor[i].f_clip[rw_x] = ffloor[i].c_clip[rw_x] = y_w;
-            ffloor[i].b_frac += ffloor[i].b_step;
+            ffloor[i].front_clip[rw_x] = ffloor[i].con_clip[rw_x] = y_w;
+            ffloor[i].back_frac += ffloor[i].back_step;
           }
 
-          ffloor[i].f_frac += ffloor[i].f_step;
+          ffloor[i].front_frac += ffloor[i].front_step;
         }
 
         rw_scale += rw_scalestep;
@@ -1837,14 +1845,14 @@ void R_StoreWallRange( int   start, int   stop)
 
     for(i = 0; i < MAXFFLOORS; i++)
     {
-      ffloor[i].mark = false;
+      ffloor[i].valid_mark = false;
       ds_p->thicksides[i] = NULL;
     }
 
     if(numffloors)
     {
       for(i = 0; i < numffloors; i++)
-        ffloor[i].f_pos = ffloor[i].height - viewz;
+        ffloor[i].front_pos = ffloor[i].height - viewz;
     }
 
     if (!backsector)
@@ -2070,6 +2078,8 @@ void R_StoreWallRange( int   start, int   stop)
           if(frontsector->ffloors && backsector->ffloors)
           {
             i = 0;
+
+	    // For all backsector, check all frontsector
             for(rover = backsector->ffloors; rover && i < MAXFFLOORS; rover = rover->next)
             {
               if(!(rover->flags & FF_RENDERSIDES) || !(rover->flags & FF_EXISTS))
@@ -2111,6 +2121,7 @@ void R_StoreWallRange( int   start, int   stop)
               i++;
             }
 
+	    // For all frontsector, check all backsector
             for(rover = frontsector->ffloors; rover && i < MAXFFLOORS; rover = rover->next)
             {
               if(!(rover->flags & FF_RENDERSIDES) || !(rover->flags & FF_EXISTS))
@@ -2154,6 +2165,7 @@ void R_StoreWallRange( int   start, int   stop)
           }
           else if(backsector->ffloors)
           {
+	    // For all backsector
             for(rover = backsector->ffloors, i = 0; rover && i < MAXFFLOORS; rover = rover->next)
             {
               if(!(rover->flags & FF_RENDERSIDES) || !(rover->flags & FF_EXISTS) || rover->flags & FF_INVERTSIDES)
@@ -2167,6 +2179,7 @@ void R_StoreWallRange( int   start, int   stop)
           }
           else if(frontsector->ffloors)
           {
+	    // For all frontsector
             for(rover = frontsector->ffloors, i = 0; rover && i < MAXFFLOORS; rover = rover->next)
             {
               if(!(rover->flags & FF_RENDERSIDES) || !(rover->flags & FF_EXISTS) || !(rover->flags & FF_ALLSIDES))
@@ -2182,7 +2195,7 @@ void R_StoreWallRange( int   start, int   stop)
           }
 
           ds_p->numthicksides = numthicksides = i;
-        }
+        } // if frontsector && backsector ..
         // midtexture, 0=no-texture, otherwise valid
 	if (sidedef->midtexture)
         {
@@ -2332,9 +2345,9 @@ void R_StoreWallRange( int   start, int   stop)
     {
       for(i = 0; i < numffloors; i++)
       {
-        ffloor[i].f_pos >>= 4;
-        ffloor[i].f_step = FixedMul(-rw_scalestep, ffloor[i].f_pos);
-        ffloor[i].f_frac = (centeryfrac>>4) - FixedMul(ffloor[i].f_pos, rw_scale);
+        ffloor[i].front_pos >>= 4;
+        ffloor[i].front_step = FixedMul(-rw_scalestep, ffloor[i].front_pos);
+        ffloor[i].front_frac = (centeryfrac>>4) - FixedMul(ffloor[i].front_pos, rw_scale);
       }
     }
 
@@ -2371,11 +2384,11 @@ void R_StoreWallRange( int   start, int   stop)
                    ((viewz < *rover->bottomheight && !(rover->flags & FF_INVERTPLANES)) ||
                    (viewz > *rover->bottomheight && (rover->flags & FF_BOTHPLANES))))
                 {
-                  ffloor[i].mark = true;
-                  ffloor[i].b_pos = *rover->bottomheight;
-                  ffloor[i].b_pos = (ffloor[i].b_pos - viewz) >> 4;
-                  ffloor[i].b_step = FixedMul(-rw_scalestep, ffloor[i].b_pos);
-                  ffloor[i].b_frac = (centeryfrac >> 4) - FixedMul(ffloor[i].b_pos, rw_scale);
+                  ffloor[i].valid_mark = true;
+                  ffloor[i].back_pos = *rover->bottomheight;
+                  ffloor[i].back_pos = (ffloor[i].back_pos - viewz) >> 4;
+                  ffloor[i].back_step = FixedMul(-rw_scalestep, ffloor[i].back_pos);
+                  ffloor[i].back_frac = (centeryfrac >> 4) - FixedMul(ffloor[i].back_pos, rw_scale);
                   i++;
                 }
                 if(i >= MAXFFLOORS)
@@ -2385,11 +2398,11 @@ void R_StoreWallRange( int   start, int   stop)
                    ((viewz > *rover->topheight && !(rover->flags & FF_INVERTPLANES)) ||
                    (viewz < *rover->topheight && (rover->flags & FF_BOTHPLANES))))
                 {
-                  ffloor[i].mark = true;
-                  ffloor[i].b_pos = *rover->topheight;
-                  ffloor[i].b_pos = (ffloor[i].b_pos - viewz) >> 4;
-                  ffloor[i].b_step = FixedMul(-rw_scalestep, ffloor[i].b_pos);
-                  ffloor[i].b_frac = (centeryfrac >> 4) - FixedMul(ffloor[i].b_pos, rw_scale);
+                  ffloor[i].valid_mark = true;
+                  ffloor[i].back_pos = *rover->topheight;
+                  ffloor[i].back_pos = (ffloor[i].back_pos - viewz) >> 4;
+                  ffloor[i].back_step = FixedMul(-rw_scalestep, ffloor[i].back_pos);
+                  ffloor[i].back_frac = (centeryfrac >> 4) - FixedMul(ffloor[i].back_pos, rw_scale);
                   i++;
                 }
               }
@@ -2406,11 +2419,11 @@ void R_StoreWallRange( int   start, int   stop)
                    ((viewz < *rover->bottomheight && !(rover->flags & FF_INVERTPLANES)) ||
                    (viewz > *rover->bottomheight && (rover->flags & FF_BOTHPLANES))))
                 {
-                  ffloor[i].mark = true;
-                  ffloor[i].b_pos = *rover->bottomheight;
-                  ffloor[i].b_pos = (ffloor[i].b_pos - viewz) >> 4;
-                  ffloor[i].b_step = FixedMul(-rw_scalestep, ffloor[i].b_pos);
-                  ffloor[i].b_frac = (centeryfrac >> 4) - FixedMul(ffloor[i].b_pos, rw_scale);
+                  ffloor[i].valid_mark = true;
+                  ffloor[i].back_pos = *rover->bottomheight;
+                  ffloor[i].back_pos = (ffloor[i].back_pos - viewz) >> 4;
+                  ffloor[i].back_step = FixedMul(-rw_scalestep, ffloor[i].back_pos);
+                  ffloor[i].back_frac = (centeryfrac >> 4) - FixedMul(ffloor[i].back_pos, rw_scale);
                   i++;
                 }
                 if(i >= MAXFFLOORS)
@@ -2420,17 +2433,17 @@ void R_StoreWallRange( int   start, int   stop)
                    ((viewz > *rover->topheight && !(rover->flags & FF_INVERTPLANES)) ||
                    (viewz < *rover->topheight && (rover->flags & FF_BOTHPLANES))))
                 {
-                  ffloor[i].mark = true;
-                  ffloor[i].b_pos = *rover->topheight;
-                  ffloor[i].b_pos = (ffloor[i].b_pos - viewz) >> 4;
-                  ffloor[i].b_step = FixedMul(-rw_scalestep, ffloor[i].b_pos);
-                  ffloor[i].b_frac = (centeryfrac >> 4) - FixedMul(ffloor[i].b_pos, rw_scale);
+                  ffloor[i].valid_mark = true;
+                  ffloor[i].back_pos = *rover->topheight;
+                  ffloor[i].back_pos = (ffloor[i].back_pos - viewz) >> 4;
+                  ffloor[i].back_step = FixedMul(-rw_scalestep, ffloor[i].back_pos);
+                  ffloor[i].back_frac = (centeryfrac >> 4) - FixedMul(ffloor[i].back_pos, rw_scale);
                   i++;
                 }
               }
             }
         }
-    }
+    } // if backsector
     
     // get a new or use the same visplane
     if (markceiling)
