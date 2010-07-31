@@ -76,13 +76,15 @@ extern short            negonearray[MAXVIDWIDTH];
 extern short            screenheightarray[MAXVIDWIDTH];
 
 // vars for R_DrawMaskedColumn
+// clipping array[x], in int screen coord.
 extern short*           dm_floorclip;
 extern short*           dm_ceilingclip;
-extern fixed_t          dm_yscale;
-extern fixed_t          dm_topscreen;
-extern fixed_t          dm_botscreen;
-extern fixed_t          dm_windowtop;
-extern fixed_t          dm_windowbottom;
+
+extern fixed_t          dm_yscale;  // world to fixed_t screen coord
+// drawn patch, in fixed_t screen coord
+extern fixed_t          dm_top_patch, dm_bottom_patch;
+// draw window clipping, in fixed_t screen coord
+extern fixed_t          dm_windowtop, dm_windowbottom;
 
 extern fixed_t          pspritescale;
 extern fixed_t          pspriteiscale;

@@ -215,9 +215,8 @@ static short last_floorclip[MAXVIDWIDTH];
 
 static void R_DrawSplatColumn (column_t* column)
 {
-    int         topscreen;
-    int         bottomscreen;
-    fixed_t     basetexturemid;
+    fixed_t     top_post_sc, bottom_post_sc;  // fixed_t screen coord.
+    fixed_t     basetexturemid = dc_texturemid;  // save to restore later
 
     // dc_x is limited to 0..rdraw_viewwidth by caller x1,x2
 //    if ( (unsigned) dc_x >= rdraw_viewwidth )   return;
@@ -226,17 +225,17 @@ static void R_DrawSplatColumn (column_t* column)
         I_Error ("R_DrawSplatColumn dc_x: %i\n", dc_x);
 #endif
 
-    basetexturemid = dc_texturemid;
-
+    // over all column posts for this column
     for ( ; column->topdelta != 0xff ; )
     {
         // calculate unclipped screen coordinates
         //  for post
-        topscreen = dm_topscreen + dm_yscale*column->topdelta;
-        bottomscreen = topscreen + dm_yscale*column->length;
+        top_post_sc = dm_top_patch + dm_yscale*column->topdelta;
+        bottom_post_sc = top_post_sc + dm_yscale*column->length;
 
-        dc_yl = (topscreen+FRACUNIT-1)>>FRACBITS;
-        dc_yh = (bottomscreen-1)>>FRACBITS;
+        // fixed_t to int screen coord.
+        dc_yl = (top_post_sc+FRACUNIT-1)>>FRACBITS;
+        dc_yh = (bottom_post_sc-1)>>FRACBITS;
 
 
 #ifndef BORIS_FIX
@@ -357,7 +356,7 @@ static void R_DrawWallSplats ()
             dc_texturemid += *splat->yoffset;
 
         // top of splat, screen coord.
-        dm_topscreen = centeryfrac - FixedMul(dc_texturemid,dm_yscale);
+        dm_top_patch = centeryfrac - FixedMul(dc_texturemid,dm_yscale);
 
         // set drawing mode
         switch (splat->flags & SPLATDRAWMODE_MASK)
@@ -391,10 +390,10 @@ static void R_DrawWallSplats ()
             if (!fixedcolormap)
             {
 	        // distance effect on light
-                unsigned  index = dm_yscale>>LIGHTSCALESHIFT;
-	        if (index >=  MAXLIGHTSCALE )
-		   index = MAXLIGHTSCALE-1;
-	        dc_colormap = walllights[index];
+                unsigned  dlit = dm_yscale>>LIGHTSCALESHIFT;
+	        if (dlit >=  MAXLIGHTSCALE )
+		   dlit = MAXLIGHTSCALE-1;
+	        dc_colormap = walllights[dlit];
 
 	        if(frontsector->extra_colormap)
 	        {
@@ -404,7 +403,7 @@ static void R_DrawWallSplats ()
 		}
             }
 
-            dm_topscreen = centeryfrac - FixedMul(dc_texturemid, dm_yscale);
+            dm_top_patch = centeryfrac - FixedMul(dc_texturemid, dm_yscale);
             dc_iscale = 0xffffffffu / (unsigned)dm_yscale;
 
             // find column of patch, from perspective
@@ -535,16 +534,16 @@ static int  column2s_length;     // column->length : for multi-patch on 2sided w
 
 void R_Render2sidedMultiPatchColumn (column_t* column)
 {
-    int         topscreen;
-    int         bottomscreen;
+    fixed_t  top_post_sc, bottom_post_sc; // patch on screen, fixed_t screen coords.
 
     if ( (unsigned) dc_x >= rdraw_viewwidth )   return;
    
-    topscreen = dm_topscreen; // + dm_yscale*column->topdelta;  topdelta is 0 for the wall
-    bottomscreen = topscreen + dm_yscale * column2s_length;
+    top_post_sc = dm_top_patch; // + dm_yscale*column->topdelta;  topdelta is 0 for the wall
+    bottom_post_sc = top_post_sc + dm_yscale * column2s_length;
 
-    dc_yl = (dm_topscreen+FRACUNIT-1)>>FRACBITS;
-    dc_yh = (bottomscreen-1)>>FRACBITS;
+    // set y bounds to patch bounds, unless there is window
+    dc_yl = (dm_top_patch+FRACUNIT-1)>>FRACBITS;
+    dc_yh = (bottom_post_sc-1)>>FRACBITS;
 
     if(dm_windowtop != MAXINT && dm_windowbottom != MAXINT)
     {
@@ -602,7 +601,7 @@ void R_RenderMaskedSegRange (drawseg_t* ds, int x1, int x2 )
     // midtexture, 0=no-texture, otherwise valid
     texnum = texturetranslation[curline->sidedef->midtexture];
 
-    dm_windowbottom = dm_windowtop = dm_botscreen = MAXINT;	// default no clip
+    dm_windowbottom = dm_windowtop = dm_bottom_patch = MAXINT;	// default no clip
     windowclip_top = windowclip_bottom = MAXINT;
 
     // Select the default, or special effect column drawing functions,
@@ -778,36 +777,39 @@ void R_RenderMaskedSegRange (drawseg_t* ds, int x1, int x2 )
     if( x2 >= rdraw_viewwidth )  x2 = rdraw_viewwidth-1;
     for (dc_x = x1 ; dc_x <= x2 ; dc_x++)
     {
-        // calculate lighting
         if (maskedtexturecol[dc_x] != MAXSHORT)
         {
+	  // if not masked
+          // calculate 3Dfloor lighting
           if(dc_numlights)
           {
-            dm_botscreen = MAXINT;
+	    // Where there are 3dfloors ...
+            dm_bottom_patch = MAXINT;
 	    // top/bottom of texture, relative to viewer, screen coord.
-            dm_topscreen = dm_windowtop = (centeryfrac - FixedMul(dc_texturemid, dm_yscale));
-            realbot = dm_windowbottom = FixedMul(textureheight[texnum], dm_yscale) + dm_topscreen;
+            dm_top_patch = dm_windowtop = (centeryfrac - FixedMul(dc_texturemid, dm_yscale));
+            realbot = dm_windowbottom = FixedMul(textureheight[texnum], dm_yscale) + dm_top_patch;
             dc_iscale = 0xffffffffu / (unsigned)dm_yscale;
             
-            // draw the texture
             col = (column_t *)((byte *)R_GetColumn(texnum,maskedtexturecol[dc_x]) - 3);
 
+	    // for each 3Dfloor light
             for(i = 0; i < dc_numlights; i++)
             {
               rlight = &dc_lightlist[i];
 
               if((rlight->flags & FF_NOSHADE))
-                continue;
+                continue; // next 3dfloor light
 
 	      if( fixedcolormap )
 		 rlight->rcolormap = fixedcolormap;
 	      else
 	      {
-		 lighttable_t** xwalllights;
-		 unsigned index = dm_yscale>>LIGHTSCALESHIFT;
+		 lighttable_t** xwalllights;  // local selection of light table
+		 // distance effect on light, yscale is smaller at distance.
+		 unsigned dlit = dm_yscale>>LIGHTSCALESHIFT;
 
-		 if (index >=  MAXLIGHTSCALE )
-                     index = MAXLIGHTSCALE-1;
+		 if (dlit >=  MAXLIGHTSCALE )
+                     dlit = MAXLIGHTSCALE-1;
 
 		 if (rlight->lightnum < 0)
 		     xwalllights = scalelight[0];
@@ -816,7 +818,7 @@ void R_RenderMaskedSegRange (drawseg_t* ds, int x1, int x2 )
 		 else
 		     xwalllights = scalelight[rlight->lightnum];
 
-		 rlight->rcolormap = xwalllights[index];
+		 rlight->rcolormap = xwalllights[dlit];
 		 if(rlight->extra_colormap)
 		 {
 		     // reverse indexing, and change to extra_colormap
@@ -885,10 +887,10 @@ void R_RenderMaskedSegRange (drawseg_t* ds, int x1, int x2 )
 	  }
 
 	  // top of texture, screen coord.
-          dm_topscreen = centeryfrac - FixedMul(dc_texturemid, dm_yscale);
+          dm_top_patch = centeryfrac - FixedMul(dc_texturemid, dm_yscale);
           dc_iscale = 0xffffffffu / (unsigned)dm_yscale;
 
-          // draw the texture
+          // draw texture, as clipped
           col = (column_t *)(
                 (byte *)R_GetColumn(texnum,maskedtexturecol[dc_x]) - 3);
             
@@ -906,12 +908,9 @@ void R_RenderMaskedSegRange (drawseg_t* ds, int x1, int x2 )
 //
 // R_RenderThickSideRange
 // Renders all the thick sides in the given range.
-void R_RenderThickSideRange (drawseg_t* ds,
-                             int        x1,
-                             int        x2,
-                             ffloor_t*  ffloor)
+
+void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
 {
-    unsigned        index;
     column_t*       col;
     int             lightnum;
     int             texnum;
@@ -922,7 +921,7 @@ void R_RenderThickSideRange (drawseg_t* ds,
     fixed_t         topbounds = (con_clipviewtop - 1) << FRACBITS;
     fixed_t         offsetvalue = 0;
     ff_lightlist_t  *ff_light;
-    r_lightlist_t   *rlight;
+    r_lightlist_t   *rlight; // rover dc_lightlist
     fixed_t         lheight;
 
     void (*colfunc_2s) (column_t*);
@@ -972,14 +971,17 @@ void R_RenderThickSideRange (drawseg_t* ds,
       for(i = 0; i < dc_numlights; i++)
       {
         ff_light = &frontsector->lightlist[i];
-        rlight = &dc_lightlist[cnt];
+        rlight = &dc_lightlist[cnt];	// create in this list slot
 
         if(ff_light->height < *ffloor->bottomheight)
-          continue;
+          continue;  // next ff_light
 
         if(ff_light->height > *ffloor->topheight)
-          if(i+1 < dc_numlights && frontsector->lightlist[i+1].height > *ffloor->topheight)
-            continue;
+	{
+          if(i+1 < dc_numlights
+	     && frontsector->lightlist[i+1].height > *ffloor->topheight)
+            continue;  // next ff_light
+	}
 
         lheight = ff_light->height;// > *ffloor->topheight ? *ffloor->topheight + FRACUNIT : ff_light->height;
         rlight->heightstep = -FixedMul (rw_scalestep, (lheight - viewz));
@@ -997,7 +999,7 @@ void R_RenderThickSideRange (drawseg_t* ds,
 
         // Check if the current light effects the colormap/lightlevel
         if((dc_lightlist[i].flags & FF_NOSHADE))
-          continue;
+          continue; // next ff_light
 
         if(ffloor->flags & FF_FOG)
           rlight->lightnum = (ffloor->master->frontsector->lightlevel >> LIGHTSEGSHIFT);
@@ -1107,14 +1109,13 @@ void R_RenderThickSideRange (drawseg_t* ds,
         // will (hopefully) put less strain on the stack.
         if(dc_numlights)
         {
-	  lighttable_t** xwalllights;
           fixed_t        height;
           fixed_t        bheight = 0;
           int            solid = 0;
           int            lighteffect = 0;
 
-          dm_topscreen = dm_windowtop = (centeryfrac - FixedMul((dc_texturemid - offsetvalue), dm_yscale));
-          dm_botscreen = dm_windowbottom = FixedMul(*ffloor->topheight - *ffloor->bottomheight, dm_yscale) + dm_topscreen;
+          dm_top_patch = dm_windowtop = (centeryfrac - FixedMul((dc_texturemid - offsetvalue), dm_yscale));
+          dm_bottom_patch = dm_windowbottom = FixedMul(*ffloor->topheight - *ffloor->bottomheight, dm_yscale) + dm_top_patch;
 
           // SoM: If column is out of range, why bother with it??
           if(dm_windowbottom < topbounds || dm_windowtop > bottombounds)
@@ -1147,6 +1148,13 @@ void R_RenderThickSideRange (drawseg_t* ds,
                 rlight->rcolormap = fixedcolormap;
 	      else
 	      {
+		lighttable_t** xwalllights;  // local selection of lighttable
+	        // distance effect on light, yscale is smaller at distance.
+                unsigned  dlit = dm_yscale>>LIGHTSCALESHIFT;
+
+                if (dlit >=  MAXLIGHTSCALE )
+                  dlit = MAXLIGHTSCALE-1;
+
 		lightnum = rlight->lightnum;
 		if (lightnum < 0)
                   xwalllights = scalelight[0];
@@ -1155,12 +1163,7 @@ void R_RenderThickSideRange (drawseg_t* ds,
                 else
                   xwalllights = scalelight[lightnum];
 
-                index = dm_yscale>>LIGHTSCALESHIFT;
-
-                if (index >=  MAXLIGHTSCALE )
-                  index = MAXLIGHTSCALE-1;
-
-		rlight->rcolormap = xwalllights[index];
+		rlight->rcolormap = xwalllights[dlit];
 
 #if 1
 		// [WDJ] To not have FF_FOG totally block ffloor colormap.
@@ -1240,9 +1243,9 @@ void R_RenderThickSideRange (drawseg_t* ds,
             }
 
             dm_windowbottom = height;
-            if(dm_windowbottom >= dm_botscreen)
+            if(dm_windowbottom >= dm_bottom_patch)
             {
-              dm_windowbottom = dm_botscreen;
+              dm_windowbottom = dm_bottom_patch;
               colfunc_2s (col);
               for(i++ ; i < dc_numlights; i++)
               {
@@ -1258,7 +1261,7 @@ void R_RenderThickSideRange (drawseg_t* ds,
             if(lighteffect)
               dc_colormap = rlight->rcolormap;
           } // for lights
-          dm_windowbottom = dm_botscreen;
+          dm_windowbottom = dm_bottom_patch;
           if(dm_windowtop < dm_windowbottom)
             colfunc_2s (col);
 
@@ -1269,20 +1272,30 @@ void R_RenderThickSideRange (drawseg_t* ds,
         // calculate lighting
         if (!fixedcolormap)
         {
-            index = dm_yscale>>LIGHTSCALESHIFT;
+	    // distance effect on light, yscale is smaller at distance.
+	    unsigned  dlit = dm_yscale>>LIGHTSCALESHIFT;
 
-            if (index >=  MAXLIGHTSCALE )
-                index = MAXLIGHTSCALE-1;
+            if (dlit >=  MAXLIGHTSCALE )
+                dlit = MAXLIGHTSCALE-1;
                 
-            dc_colormap = walllights[index];
+            dc_colormap = walllights[dlit];
+
             if(frontsector->extra_colormap)
-                dc_colormap = frontsector->extra_colormap->colormap + (dc_colormap - reg_colormaps);
+	    {
+	        // reverse indexing, and change to extra_colormap
+	        int lightindex = dc_colormap - reg_colormaps;
+                dc_colormap = & frontsector->extra_colormap->colormap[ lightindex ];
+	    }
             if(ffloor->flags & FF_FOG && ffloor->master->frontsector->extra_colormap)
-                dc_colormap = ffloor->master->frontsector->extra_colormap->colormap + (dc_colormap - reg_colormaps);
+	    {
+	        // reverse indexing, and change to extra_colormap
+	        int lightindex = dc_colormap - reg_colormaps;
+                dc_colormap = & ffloor->master->frontsector->extra_colormap->colormap[ lightindex ];
+	    }
         }
 
-        dm_topscreen = dm_windowtop = (centeryfrac - FixedMul((dc_texturemid - offsetvalue), dm_yscale));
-        dm_botscreen = dm_windowbottom = FixedMul(*ffloor->topheight - *ffloor->bottomheight, dm_yscale) + dm_topscreen;
+        dm_top_patch = dm_windowtop = (centeryfrac - FixedMul((dc_texturemid - offsetvalue), dm_yscale));
+        dm_bottom_patch = dm_windowbottom = FixedMul(*ffloor->topheight - *ffloor->bottomheight, dm_yscale) + dm_top_patch;
         dc_iscale = 0xffffffffu / (unsigned)dm_yscale;
             
         // draw the texture

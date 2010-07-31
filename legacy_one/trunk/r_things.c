@@ -649,45 +649,43 @@ static vissprite_t* R_NewVisSprite (void)
 //  in posts/runs of opaque pixels.
 //
 // draw masked global parameters
+// clipping array[x], in int screen coord.
 short*          dm_floorclip;
 short*          dm_ceilingclip;
 
-fixed_t         dm_yscale;
-// draw masked column top and bottom, in screen coord.
-fixed_t         dm_topscreen;
-fixed_t         dm_botscreen;
-// window clipping in screen coord., set to MAXINT to disable
+fixed_t         dm_yscale;  // world to fixed_t screen coord
+// draw masked column top and bottom, in fixed_t screen coord.
+fixed_t         dm_top_patch, dm_bottom_patch;
+// window clipping in fixed_t screen coord., set to MAXINT to disable
 // to draw, require dm_windowtop < dm_windowbottom
-fixed_t         dm_windowtop;
-fixed_t         dm_windowbottom;
+fixed_t         dm_windowtop, dm_windowbottom;
 
 
 void R_DrawMaskedColumn (column_t* column)
 {
-    int         topscreen;	// screen coord
-    int         bottomscreen;
-    fixed_t     basetexturemid;
+    fixed_t     top_post_sc, bottom_post_sc;  // fixed_t screen coord.
+    fixed_t     basetexturemid = dc_texturemid; // save to restore after
 
-    basetexturemid = dc_texturemid; // to restore after
-
+    // over all column posts for this column
     for ( ; column->topdelta != 0xff ; )
     {
         // calculate unclipped screen coordinates
         //  for post
-        topscreen = dm_topscreen + dm_yscale*column->topdelta;
-        bottomscreen = (dm_botscreen == MAXINT) ?
-	    topscreen + dm_yscale*column->length
-	    : dm_botscreen + dm_yscale*column->length;
+        top_post_sc = dm_top_patch + dm_yscale*column->topdelta;
+        bottom_post_sc = (dm_bottom_patch == MAXINT) ?
+	    top_post_sc + dm_yscale*column->length
+	    : dm_bottom_patch + dm_yscale*column->length;
 
-        dc_yl = (topscreen+FRACUNIT-1)>>FRACBITS;
-        dc_yh = (bottomscreen-1)>>FRACBITS;
+        // fixed_t to int screen coord.
+        dc_yl = (top_post_sc+FRACUNIT-1)>>FRACBITS;
+        dc_yh = (bottom_post_sc-1)>>FRACBITS;
 
         if(dm_windowtop != MAXINT && dm_windowbottom != MAXINT)
         {
 	  // screen coord. where +y is down screen
-          if(dm_windowtop > topscreen)
+          if(dm_windowtop > top_post_sc)
             dc_yl = (dm_windowtop + FRACUNIT - 1) >> FRACBITS;
-          if(dm_windowbottom < bottomscreen)
+          if(dm_windowbottom < bottom_post_sc)
             dc_yh = (dm_windowbottom - 1) >> FRACBITS;
         }
 
@@ -799,8 +797,8 @@ static void R_DrawVisSprite ( vissprite_t*          vis,
 
     texcol_frac = vis->startfrac;
     dm_yscale = vis->scale;
-    dm_topscreen = centeryfrac - FixedMul(dc_texturemid,dm_yscale);
-    dm_windowtop = dm_windowbottom = dm_botscreen = MAXINT;
+    dm_top_patch = centeryfrac - FixedMul(dc_texturemid,dm_yscale);
+    dm_windowtop = dm_windowbottom = dm_bottom_patch = MAXINT; // disable
 
     for (dc_x=vis->x1 ; dc_x<=vis->x2 ; dc_x++, texcol_frac += vis->xiscale)
     {

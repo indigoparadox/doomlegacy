@@ -50,17 +50,10 @@
 
 extern lighttable_t**   walllights;
 
-void
-R_RenderMaskedSegRange
-( drawseg_t*    ds,
-  int           x1,
-  int           x2 );
+// Render with transparency, over range x1..x2
+void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 );
 
+void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor);
 
-void R_RenderThickSideRange (drawseg_t* ds,
-                             int        x1,
-                             int        x2,
-                             ffloor_t*  ffloor);
-
-void R_StoreWallRange( int   start,int   stop );
+void R_StoreWallRange( int start, int stop );
 #endif

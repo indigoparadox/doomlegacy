@@ -1048,3 +1048,15 @@ bsilheight -> sil_bottom_height
 sprtopclip -> spr_topclip
 sprbottomclip -> spr_bottomclip
 
+*** w58_top_patch
+patchfile = w58_top_patch.patch
+- committed revision 718   by wesley johnson
+Clarify some draw_masked and render segs variables, so can understand
+how they are being used.  Preparation for attacking 3Dfloor sprite bugs.
+Standardize some render function defines.
+dm_topscreen -> dm_top_patch
+dm_botscreen -> dm_bottom_patch
+topscreen -> top_post_sc
+bottomscreen -> bottom_post_sc
+local light index -> dlit
+
