@@ -108,30 +108,37 @@ planefunction_t         ceilingfunc = NULL;
 // opening
 //
 
+// [WDJ] visplane base   vispl_
 // Here comes the obnoxious "visplane".
 /*#define                 MAXVISPLANES 128 //SoM: 3/20/2000
-visplane_t*             visplanes;
-visplane_t*             lastvisplane;*/
+visplane_t*             vispl_head;
+visplane_t*             vispl_last;*/
 
 //SoM: 3/23/2000: Use Boom visplane hashing.
-#define           MAXVISPLANES      128
+#define           VISPL_HASHSIZE      128
+// visplane hash array, for fast duplicate check
+static visplane_t *vispl_hashtab[VISPL_HASHSIZE];
 
-static visplane_t *visplanes[MAXVISPLANES];
-static visplane_t *freetail;
-static visplane_t **freehead = &freetail;
+// free list of visplane_t
+// [WDJ] head and tail were reversed from normal linked list meanings
+// Insert at tail, take free off head, use next for linking.
+static visplane_t *vispl_free_head;
+static visplane_t **vispl_free_tail = &vispl_free_head;  // addr of head or next ptr
 
+// [WDJ] visplane_t global parameters  vsp_
+// visplane used for drawing in r_bsp and r_segs
+visplane_t*             vsp_floorplane;
+visplane_t*             vsp_ceilingplane;
 
-visplane_t*             floorplane;
-visplane_t*             ceilingplane;
-
-visplane_t*             currentplane;
+// visplane used by R_MapPlane, set by R_DrawSinglePlane
+visplane_t*             vsp_currentplane;
 
 planemgr_t              ffloor[MAXFFLOORS];  // this use 251 Kb memory (in Legacy 1.43)
 int                     numffloors;
 
 //SoM: 3/23/2000: Boom visplane hashing routine.
 #define visplane_hash(picnum,lightlevel,height) \
-  ((unsigned)((picnum)*3+(lightlevel)+(height)*7) & (MAXVISPLANES-1))
+  ((unsigned)((picnum)*3+(lightlevel)+(height)*7) & (VISPL_HASHSIZE-1))
 
 // ?
 /*#define MAXOPENINGS     MAXVIDWIDTH*128
@@ -262,7 +269,7 @@ void R_MapPlane
         ds_ystep = cachedystep[y];
     }
     length = FixedMul (distance,distscale[x1]);
-    angle = (currentplane->viewangle + x_to_viewangle[x1])>>ANGLETOFINESHIFT;
+    angle = (vsp_currentplane->viewangle + x_to_viewangle[x1])>>ANGLETOFINESHIFT;
     // SoM: Wouldn't it be faster just to add viewx and viewy to the plane's
     // x/yoffs anyway?? (Besides, it serves my purpose well for portals!)
     ds_xfrac = /*viewx +*/ FixedMul(finecosine[angle], length) + xoffs;
@@ -279,11 +286,11 @@ void R_MapPlane
             index = MAXLIGHTZ-1;
 
         ds_colormap = planezlight[index];
-        if(currentplane->extra_colormap)
+        if(vsp_currentplane->extra_colormap)
         {
 	    // reverse indexing, and change to extra_colormap
 	    int lightindex = ds_colormap - reg_colormaps;
-	    ds_colormap = & currentplane->extra_colormap->colormap[ lightindex ];
+	    ds_colormap = & vsp_currentplane->extra_colormap->colormap[ lightindex ];
 	}
     }
 
@@ -338,12 +345,17 @@ void R_ClearPlanes (player_t *player)
 
     numffloors = 0;
 
-    //lastvisplane = visplanes;
+    //vispl_last = vispl_head;
 
     //SoM: 3/23/2000
-    for (i=0;i<MAXVISPLANES;i++)
-      for (*freehead = visplanes[i], visplanes[i] = NULL; *freehead; )
-        freehead = &(*freehead)->next;
+    // put all visplanes to free list, while clearing vispl_hashtab[] to NULL
+    for (i=0; i<VISPL_HASHSIZE; i++)
+    {
+        *vispl_free_tail = vispl_hashtab[i];
+        vispl_hashtab[i] = NULL;
+        while( *vispl_free_tail )
+	    vispl_free_tail = &(*vispl_free_tail)->next;
+    }
 
     lastopening = openings;
 
@@ -360,17 +372,27 @@ void R_ClearPlanes (player_t *player)
 
 
 //SoM: 3/23/2000: New function, by Lee Killough
-static visplane_t *new_visplane(unsigned hash)
+// [WDJ] 7/2010 Mostly rewritten.
+static visplane_t*  new_visplane(unsigned hash)
 {
-  visplane_t *check = freetail;
-  if (!check)
-    check = calloc(1, sizeof *check);
+  // return the next visplane_t from the free list
+  visplane_t*  np = vispl_free_head;
+  if (np)
+  {
+    // unlink from free list
+    vispl_free_head = vispl_free_head->next;
+    if ( ! vispl_free_head )
+      vispl_free_tail = &vispl_free_head;	// empty free list
+  }
   else
-    if (!(freetail = freetail->next))
-      freehead = &freetail;
-  check->next = visplanes[hash];
-  visplanes[hash] = check;
-  return check;
+  {
+    // list empty, make a new visplane
+    np = calloc(1, sizeof(visplane_t));  // 1 visplane_t, zeroed
+  }
+  // link into hash, at [hash]
+  np->next = vispl_hashtab[hash];
+  vispl_hashtab[hash] = np;
+  return np;
 }
 
 
@@ -404,7 +426,7 @@ visplane_t* R_FindPlane( fixed_t height,
     //SoM: 3/23/2000: New visplane algorithm uses hash table -- killough
     hash = visplane_hash(picnum,lightlevel,height);
 
-    for (check=visplanes[hash]; check; check=check->next)
+    for (check=vispl_hashtab[hash]; check; check=check->next)
     {
       if (height == check->height &&
           picnum == check->picnum &&
@@ -648,8 +670,9 @@ void R_DrawPlanes (void)
 
     spanfunc = basespanfunc;
 
-    for (i=0;i<MAXVISPLANES;i++, pl++)
-    for (pl=visplanes[i]; pl; pl=pl->next)
+    // over all visplane in hash table, following the linked lists
+    for (i=0; i<VISPL_HASHSIZE; i++)
+    for (pl=vispl_hashtab[i]; pl; pl=pl->next)
     {
         // sky flat
         if (pl->picnum == skyflatnum)
@@ -764,7 +787,7 @@ void R_DrawSinglePlane(visplane_t* pl)
     viewangle = pl->viewangle;
   }
 
-  currentplane = pl;
+  vsp_currentplane = pl;
 
 
   // [WDJ] Flat use is safe from alloc, change to PU_CACHE at function exit.

@@ -1067,3 +1067,15 @@ Rename of viewangle arrays to make them readable.
 xtoviewangle -> x_to_viewangle
 viewangletox -> viewangle_to_x
 
+*** w58_visplane_hash
+patchfile = w58_visplane_hash.patch
+- committed revision 720   by wesley johnson
+Clarified the visplane hashing, renamed, and rewrote some free list
+functions, to make it more explicit and understandable.
+Plane freelist had head and tail reversed from usual list interpretations.
+Gave visplane base the naming  vispl_*.
+Gave visplane global parameters the naming  vsp_*.
+Because of longer names the code got larger.
+Running it through strip, removing the symbols, shows the true code size.
+
+

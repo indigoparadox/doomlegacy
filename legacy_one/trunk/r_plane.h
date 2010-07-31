@@ -99,8 +99,9 @@ typedef struct visplane_s
 } visplane_t;
 
 
-extern visplane_t*    floorplane;
-extern visplane_t*    ceilingplane;
+// [WDJ] visplane_t global parameters  vsp
+extern visplane_t*    vsp_floorplane;
+extern visplane_t*    vsp_ceilingplane;
 
 
 // Visplane related.

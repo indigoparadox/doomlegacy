@@ -1378,10 +1378,11 @@ void R_RenderSegLoop (void)
             if (bottom >= floorclip[rw_x])
                 bottom = floorclip[rw_x]-1;
             
+	    // visplane global parameter vsp_ceilingplane
             if (top <= bottom)
             {
-                ceilingplane->top[rw_x] = top;
-                ceilingplane->bottom[rw_x] = bottom;
+                vsp_ceilingplane->top[rw_x] = top;
+                vsp_ceilingplane->bottom[rw_x] = bottom;
             }
         }
 
@@ -1397,10 +1398,11 @@ void R_RenderSegLoop (void)
             bottom = floorclip[rw_x]-1;
             if (top <= ceilingclip[rw_x])
                 top = ceilingclip[rw_x]+1;
-            if (top <= bottom && floorplane)
+	    // visplane global parameter vsp_floorplane
+            if (top <= bottom && vsp_floorplane)
             {
-                floorplane->top[rw_x] = top;
-                floorplane->bottom[rw_x] = bottom;
+                vsp_floorplane->top[rw_x] = top;
+                vsp_floorplane->bottom[rw_x] = bottom;
             }
         }
 
@@ -2433,8 +2435,9 @@ void R_StoreWallRange( int   start, int   stop)
     // get a new or use the same visplane
     if (markceiling)
     {
-      if(ceilingplane) //SoM: 3/29/2000: Check for null ceiling planes
-        ceilingplane = R_CheckPlane (ceilingplane, rw_x, rw_stopx-1);
+      // visplane global parameter vsp_ceilingplane
+      if(vsp_ceilingplane) //SoM: 3/29/2000: Check for null ceiling planes
+        vsp_ceilingplane = R_CheckPlane (vsp_ceilingplane, rw_x, rw_stopx-1);
       else
         markceiling = 0;
     }
@@ -2442,8 +2445,9 @@ void R_StoreWallRange( int   start, int   stop)
     // get a new or use the same visplane
     if (markfloor)
     {
-      if(floorplane) //SoM: 3/29/2000: Check for null planes
-        floorplane = R_CheckPlane (floorplane, rw_x, rw_stopx-1);
+      // visplane global parameter vsp_floorplane
+      if(vsp_floorplane) //SoM: 3/29/2000: Check for null planes
+        vsp_floorplane = R_CheckPlane (vsp_floorplane, rw_x, rw_stopx-1);
       else
         markfloor = 0;
     }

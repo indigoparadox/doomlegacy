@@ -953,8 +953,8 @@ void R_Subsector (int num)
 	|| (frontsector->model > SM_fluid &&
             sectors[frontsector->modelsec].ceilingpic == skyflatnum))
     {
-        // visplane
-        floorplane = R_FindPlane (frontsector->floorheight,
+        // visplane global parameter
+        vsp_floorplane = R_FindPlane (frontsector->floorheight,
                                   frontsector->floorpic,
                                   floorlightlevel,
                                   frontsector->floor_xoffs,
@@ -963,7 +963,7 @@ void R_Subsector (int num)
                                   NULL);
     }
     else
-        floorplane = NULL;
+        vsp_floorplane = NULL;
 
     if ((frontsector->ceilingheight > viewz)
         || (frontsector->ceilingpic == skyflatnum)
@@ -971,8 +971,8 @@ void R_Subsector (int num)
         || (frontsector->model > SM_fluid &&
             sectors[frontsector->modelsec].floorpic == skyflatnum))
     {
-        // visplane
-        ceilingplane = R_FindPlane (frontsector->ceilingheight,
+        // visplane global parameter
+        vsp_ceilingplane = R_FindPlane (frontsector->ceilingheight,
                                     frontsector->ceilingpic,
                                     ceilinglightlevel,
                                     frontsector->ceiling_xoffs,
@@ -981,7 +981,7 @@ void R_Subsector (int num)
                                     NULL);
     }
     else
-        ceilingplane = NULL;
+        vsp_ceilingplane = NULL;
 
 
     numffloors = 0;
