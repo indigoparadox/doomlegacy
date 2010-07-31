@@ -305,13 +305,13 @@ static void R_DrawWallSplats ()
         if ((int)angle2<-(int)clipangle)
             angle2=-clipangle;
 #else
-        // BP: out of the viewangletox lut, TODO clip it to the screen
+        // BP: out of the viewangle_to_x lut, TODO clip it to the screen
         if( angle1 > FINEANGLES/2 || angle2 > FINEANGLES/2)
             continue;
 #endif
-        // viewangletox table is limited to (0..rdraw_viewwidth)
-        x1 = viewangletox[angle1];
-        x2 = viewangletox[angle2];
+        // viewangle_to_x table is limited to (0..rdraw_viewwidth)
+        x1 = viewangle_to_x[angle1];
+        x2 = viewangle_to_x[angle2];
 
         if (x1 >= x2)
             continue;                         // smaller than a pixel
@@ -407,7 +407,7 @@ static void R_DrawWallSplats ()
             dc_iscale = 0xffffffffu / (unsigned)dm_yscale;
 
             // find column of patch, from perspective
-            angle = (rw_centerangle + xtoviewangle[dc_x])>>ANGLETOFINESHIFT;
+            angle = (rw_centerangle + x_to_viewangle[dc_x])>>ANGLETOFINESHIFT;
             texturecolumn = rw_offset2 - splat->offset - FixedMul(finetangent[angle],rw_distance);
 
             //texturecolumn &= 7;
@@ -1445,11 +1445,11 @@ void R_RenderSegLoop (void)
               }
             }
           }
-        }
+        } // if numffloors
 
         //SoM: Calculate offsets for Thick fake floors.
         // calculate texture offset
-        angle = (rw_centerangle + xtoviewangle[rw_x])>>ANGLETOFINESHIFT;
+        angle = (rw_centerangle + x_to_viewangle[rw_x])>>ANGLETOFINESHIFT;
         texturecolumn = rw_offset-FixedMul(finetangent[angle],rw_distance);
         texturecolumn >>= FRACBITS;
 
@@ -1796,11 +1796,11 @@ void R_StoreWallRange( int   start, int   stop)
 
     // calculate scale at both ends and step
     ds_p->scale1 = rw_scale =
-        R_ScaleFromGlobalAngle (viewangle + xtoviewangle[start]);
+        R_ScaleFromGlobalAngle (viewangle + x_to_viewangle[start]);
 
     if (stop > start)
     {
-        ds_p->scale2 = R_ScaleFromGlobalAngle (viewangle + xtoviewangle[stop]);
+        ds_p->scale2 = R_ScaleFromGlobalAngle (viewangle + x_to_viewangle[stop]);
         ds_p->scalestep = rw_scalestep = (ds_p->scale2 - rw_scale) / (stop-start);
     }
     else

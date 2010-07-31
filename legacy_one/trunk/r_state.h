@@ -170,8 +170,8 @@ extern consvar_t        cv_allowmlook;
 // ?
 extern angle_t          clipangle;
 
-extern int              viewangletox[FINEANGLES/2];
-extern angle_t          xtoviewangle[MAXVIDWIDTH+1];
+extern int              viewangle_to_x[FINEANGLES/2];
+extern angle_t          x_to_viewangle[MAXVIDWIDTH+1];
 //extern fixed_t                finetangent[FINEANGLES/2];
 
 extern fixed_t          rw_distance;

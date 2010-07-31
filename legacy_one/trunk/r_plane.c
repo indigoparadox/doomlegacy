@@ -262,7 +262,7 @@ void R_MapPlane
         ds_ystep = cachedystep[y];
     }
     length = FixedMul (distance,distscale[x1]);
-    angle = (currentplane->viewangle + xtoviewangle[x1])>>ANGLETOFINESHIFT;
+    angle = (currentplane->viewangle + x_to_viewangle[x1])>>ANGLETOFINESHIFT;
     // SoM: Wouldn't it be faster just to add viewx and viewy to the plane's
     // x/yoffs anyway?? (Besides, it serves my purpose well for portals!)
     ds_xfrac = /*viewx +*/ FixedMul(finecosine[angle], length) + xoffs;
@@ -685,7 +685,7 @@ void R_DrawPlanes (void)
 		   //[WDJ] phobiata.wad has many views that need clipping
 		    if ( dc_yl < 0 )   dc_yl = 0;
 		    if ( dc_yh >= rdraw_viewheight )   dc_yh = rdraw_viewheight - 1;
-                    angle = (viewangle + xtoviewangle[x])>>ANGLETOSKYSHIFT;
+                    angle = (viewangle + x_to_viewangle[x])>>ANGLETOSKYSHIFT;
                     dc_x = x;
                     dc_source = R_GetColumn(skytexture, angle);
                     skycolfunc ();

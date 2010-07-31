@@ -675,8 +675,8 @@ void R_AddLine (seg_t*  line)
     // but not necessarily visible.
     angle1 = (angle1+ANG90)>>ANGLETOFINESHIFT;
     angle2 = (angle2+ANG90)>>ANGLETOFINESHIFT;
-    x1 = viewangletox[angle1];
-    x2 = viewangletox[angle2];
+    x1 = viewangle_to_x[angle1];
+    x2 = viewangle_to_x[angle2];
 
     // Does not cross a pixel?
     if (x1 == x2)  //SoM: 3/17/2000: Killough said to change the == to >= for... "robustness"?
@@ -853,8 +853,8 @@ boolean R_CheckBBox (fixed_t*   bspcoord)
     //  (adjacent pixels are touching).
     angle1 = (angle1+ANG90)>>ANGLETOFINESHIFT;
     angle2 = (angle2+ANG90)>>ANGLETOFINESHIFT;
-    sx1 = viewangletox[angle1];
-    sx2 = viewangletox[angle2];
+    sx1 = viewangle_to_x[angle1];
+    sx2 = viewangle_to_x[angle2];
 
     // Does not cross a pixel.
     if (sx1 == sx2)
@@ -953,6 +953,7 @@ void R_Subsector (int num)
 	|| (frontsector->model > SM_fluid &&
             sectors[frontsector->modelsec].ceilingpic == skyflatnum))
     {
+        // visplane
         floorplane = R_FindPlane (frontsector->floorheight,
                                   frontsector->floorpic,
                                   floorlightlevel,
@@ -970,6 +971,7 @@ void R_Subsector (int num)
         || (frontsector->model > SM_fluid &&
             sectors[frontsector->modelsec].floorpic == skyflatnum))
     {
+        // visplane
         ceilingplane = R_FindPlane (frontsector->ceilingheight,
                                     frontsector->ceilingpic,
                                     ceilinglightlevel,

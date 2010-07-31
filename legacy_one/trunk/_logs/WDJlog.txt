@@ -1060,3 +1060,10 @@ topscreen -> top_post_sc
 bottomscreen -> bottom_post_sc
 local light index -> dlit
 
+*** w58_viewangle
+patchfile = w58_viewangle.patch
+- committed revision 719   by wesley johnson
+Rename of viewangle arrays to make them readable.
+xtoviewangle -> x_to_viewangle
+viewangletox -> viewangle_to_x
+
