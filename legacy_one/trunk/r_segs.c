@@ -487,8 +487,8 @@ void  expand_openings( size_t  need )
 #define ADJUST(p) if (ds->p + ds->x1 >= openings && ds->p + ds->x1 <= lastopening)\
                         ds->p = ((void*) ds->p) + adjustdiff;
         ADJUST (maskedtexturecol);
-        ADJUST (sprtopclip);
-        ADJUST (sprbottomclip);
+        ADJUST (spr_topclip);
+        ADJUST (spr_bottomclip);
         ADJUST (thicksidecol);
     }
   #undef ADJUST
@@ -739,8 +739,8 @@ void R_RenderMaskedSegRange (drawseg_t* ds, int x1, int x2 )
 
     maskedtexturecol = ds->maskedtexturecol;
 
-    dm_floorclip = ds->sprbottomclip;
-    dm_ceilingclip = ds->sprtopclip;
+    dm_floorclip = ds->spr_bottomclip;
+    dm_ceilingclip = ds->spr_topclip;
 
     if (curline->linedef->flags & ML_DONTPEGBOTTOM)
     {
@@ -1051,8 +1051,8 @@ void R_RenderThickSideRange (drawseg_t* ds,
 
     maskedtexturecol = ds->thicksidecol;
 
-    dm_floorclip = ds->sprbottomclip;
-    dm_ceilingclip = ds->sprtopclip;
+    dm_floorclip = ds->spr_bottomclip;
+    dm_ceilingclip = ds->spr_topclip;
 
     dc_texheight = textureheight[texnum] >> FRACBITS;
 
@@ -1855,53 +1855,59 @@ void R_StoreWallRange( int   start, int   stop)
         }
         rw_midtexturemid += sidedef->rowoffset;
 
-        ds_p->silhouette = SIL_BOTH;
-        ds_p->sprtopclip = screenheightarray;
-        ds_p->sprbottomclip = negonearray;
-        ds_p->bsilheight = MAXINT;
-        ds_p->tsilheight = MININT;
+        ds_p->silhouette = SIL_TOP|SIL_BOTTOM; // BOTH
+        ds_p->spr_topclip = screenheightarray;
+        ds_p->spr_bottomclip = negonearray;
+        ds_p->sil_bottom_height = MAXINT;
+        ds_p->sil_top_height = MININT;
     }
     else
     {
         // two sided line
-        ds_p->sprtopclip = ds_p->sprbottomclip = NULL;
+        ds_p->spr_topclip = ds_p->spr_bottomclip = NULL;
         ds_p->silhouette = 0;
         
         if (frontsector->floorheight > backsector->floorheight)
         {
+	    // frontsector floor clips backsector floor and sprites
             ds_p->silhouette = SIL_BOTTOM;
-            ds_p->bsilheight = frontsector->floorheight;
+            ds_p->sil_bottom_height = frontsector->floorheight;
         }
         else if (backsector->floorheight > viewz)
         {
+	    // backsector floor not visible, clip sprites
             ds_p->silhouette = SIL_BOTTOM;
-            ds_p->bsilheight = MAXINT;
-            // ds_p->sprbottomclip = negonearray;
+            ds_p->sil_bottom_height = MAXINT;
+            // ds_p->spr_bottomclip = negonearray;
         }
         
         if (frontsector->ceilingheight < backsector->ceilingheight)
         {
+	    // frontsector ceiling clips backsector ceiling and sprites
             ds_p->silhouette |= SIL_TOP;
-            ds_p->tsilheight = frontsector->ceilingheight;
+            ds_p->sil_top_height = frontsector->ceilingheight;
         }
         else if (backsector->ceilingheight < viewz)
         {
+	    // backsector ceiling not visible, clip sprites
             ds_p->silhouette |= SIL_TOP;
-            ds_p->tsilheight = MININT;
-            // ds_p->sprtopclip = screenheightarray;
+            ds_p->sil_top_height = MININT;
+            // ds_p->spr_topclip = screenheightarray;
         }
         
         if (backsector->ceilingheight <= frontsector->floorheight)
         {
-            ds_p->sprbottomclip = negonearray;
-            ds_p->bsilheight = MAXINT;
+	    // backsector below frontsector
+            ds_p->spr_bottomclip = negonearray;
+            ds_p->sil_bottom_height = MAXINT;
             ds_p->silhouette |= SIL_BOTTOM;
         }
         
         if (backsector->floorheight >= frontsector->ceilingheight)
         {
-            ds_p->sprtopclip = screenheightarray;
-            ds_p->tsilheight = MININT;
+	    // backsector above frontsector
+            ds_p->spr_topclip = screenheightarray;
+            ds_p->sil_top_height = MININT;
             ds_p->silhouette |= SIL_TOP;
         }
 
@@ -1912,14 +1918,14 @@ void R_StoreWallRange( int   start, int   stop)
           extern int doorclosed;    // killough 1/17/98, 2/8/98, 4/7/98
           if (doorclosed || backsector->ceilingheight<=frontsector->floorheight)
           {
-              ds_p->sprbottomclip = negonearray;
-              ds_p->bsilheight = MAXINT;
+              ds_p->spr_bottomclip = negonearray;
+              ds_p->sil_bottom_height = MAXINT;
               ds_p->silhouette |= SIL_BOTTOM;
           }
           if (doorclosed || backsector->floorheight>=frontsector->ceilingheight)
           {                   // killough 1/17/98, 2/8/98
-              ds_p->sprtopclip = screenheightarray;
-              ds_p->tsilheight = MININT;
+              ds_p->spr_topclip = screenheightarray;
+              ds_p->sil_top_height = MININT;
               ds_p->silhouette |= SIL_TOP;
           }
         }
@@ -2459,8 +2465,8 @@ void R_StoreWallRange( int   start, int   stop)
     if (linedef->splats && cv_splats.value)
     {
         // SoM: Isn't a bit wasteful to copy the ENTIRE array for every drawseg?
-        memcpy(last_ceilingclip + ds_p->x1, ceilingclip + ds_p->x1, sizeof(short) * (ds_p->x2 - ds_p->x1 + 1));
-        memcpy(last_floorclip + ds_p->x1, floorclip + ds_p->x1, sizeof(short) * (ds_p->x2 - ds_p->x1 + 1));
+        memcpy(&last_ceilingclip[ds_p->x1], &ceilingclip[ds_p->x1], sizeof(short) * (ds_p->x2 - ds_p->x1 + 1));
+        memcpy(&last_floorclip[ds_p->x1], &floorclip[ds_p->x1], sizeof(short) * (ds_p->x2 - ds_p->x1 + 1));
         R_RenderSegLoop ();
         R_DrawWallSplats ();
     }
@@ -2480,18 +2486,18 @@ void R_StoreWallRange( int   start, int   stop)
 
     // save sprite clipping info
     if ( ((ds_p->silhouette & SIL_TOP) || maskedtexture)
-        && !ds_p->sprtopclip)
+        && !ds_p->spr_topclip)
     {
-        memcpy (lastopening, ceilingclip+start, 2*(rw_stopx-start));
-        ds_p->sprtopclip = lastopening - start;
+        memcpy (lastopening, &ceilingclip[start], 2*(rw_stopx-start));
+        ds_p->spr_topclip = lastopening - start;
         lastopening += rw_stopx - start;
     }
     
     if ( ((ds_p->silhouette & SIL_BOTTOM) || maskedtexture)
-        && !ds_p->sprbottomclip)
+        && !ds_p->spr_bottomclip)
     {
-        memcpy (lastopening, floorclip+start, 2*(rw_stopx-start));
-        ds_p->sprbottomclip = lastopening - start;
+        memcpy (lastopening, &floorclip[start], 2*(rw_stopx-start));
+        ds_p->spr_bottomclip = lastopening - start;
         lastopening += rw_stopx - start;
     }
     
@@ -2499,13 +2505,13 @@ void R_StoreWallRange( int   start, int   stop)
     {
         ds_p->silhouette |= SIL_TOP;
         // midtexture, 0=no-texture, otherwise valid
-        ds_p->tsilheight = sidedef->midtexture ? MININT: MAXINT;
+        ds_p->sil_top_height = sidedef->midtexture ? MININT: MAXINT;
     }
     if (maskedtexture && !(ds_p->silhouette&SIL_BOTTOM))
     {
         ds_p->silhouette |= SIL_BOTTOM;
         // midtexture, 0=no-texture, otherwise valid
-        ds_p->bsilheight = sidedef->midtexture ? MAXINT: MININT;
+        ds_p->sil_bottom_height = sidedef->midtexture ? MAXINT: MININT;
     }
     ds_p++;
 }

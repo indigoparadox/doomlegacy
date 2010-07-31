@@ -153,11 +153,11 @@
 
 // Silhouette, needed for clipping Segs (mainly)
 // and sprites representing things.
-#define SIL_NONE                0
-#define SIL_BOTTOM              1
-#define SIL_TOP                 2
-#define SIL_BOTH                3
-
+// OR bits for silhouette
+typedef enum {
+   SIL_BOTTOM  = 0x01,
+   SIL_TOP     = 0x02
+} Silhouette_e;
 
 //faB: was upped to 512, but still people come with levels that break the
 //     limits, so had to do an ugly re-alloc to get rid of the overflow.
@@ -753,34 +753,29 @@ typedef post_t  column_t;
 typedef struct drawseg_s
 {
     seg_t*              curline;
-    int                 x1;
-    int                 x2;
+    int                 x1, x2;  // x1..x2
 
-    fixed_t             scale1;
-    fixed_t             scale2;
+    fixed_t             scale1, scale2;  // scale x1..x2
     fixed_t             scalestep;
 
-    // 0=none, 1=bottom, 2=top, 3=both
-    int                 silhouette;
-
-    // do not clip sprites above this
-    fixed_t             bsilheight;
-
-    // do not clip sprites below this
-    fixed_t             tsilheight;
+    // silhouette is where a drawseg can overlap a sprite
+    int                 silhouette;	    // bit flags, Silhouette_e
+    fixed_t             sil_top_height;     // do not clip sprites below this
+    fixed_t             sil_bottom_height;  // do not clip sprites above this
 
     // Pointers to lists for sprite clipping,
     //  all three adjusted so [x1] is first value.
-    short*              sprtopclip;
-    short*              sprbottomclip;
-    short*              maskedtexturecol;
+    short*              spr_topclip;     // owned array [x1..x2]
+    short*              spr_bottomclip;  // owned array [x1..x2]
+    short*              maskedtexturecol;  // ref to array [x1..x2]
 
+    // 3D floors, only use what is needed, often none
     struct visplane_s*  ffloorplanes[MAXFFLOORS];
     int                 numffloorplanes;
     struct ffloor_s*    thicksides[MAXFFLOORS];
     short*              thicksidecol;
     int                 numthicksides;
-    fixed_t             frontscale[MAXVIDWIDTH];
+    fixed_t             frontscale[MAXVIDWIDTH]; // z check for sprite clipping
 } drawseg_t;
 
 

@@ -1024,17 +1024,27 @@ Rewrote some parts to use center of attention instead of corner of
 window, and cope with map edges better.
 
 *** w58_r_defs
-patchfile = w57_r_defs.patch
+patchfile = w58_r_defs.patch
 - committed revision 715   by wesley johnson
 Comments on many r_defs structure fields.
 Comment out unused ff_delta field.
 Comments where ff_delta was initialized.
 
 *** w58_attached_memory_leak
-patchfile = w57_attached_memory_leak.patch
+patchfile = w58_attached_memory_leak.patch
 - committed revision 716   by wesley johnson
 Free memory allocated to sector->attached before freeing sectors in
 ZMalloc purge.
 Init sectors list pointer, now that it no longer causes save game
 corruption.
+
+*** w58_silhouette
+patchfile = w58_silhouette.patch
+- committed revision 717   by wesley johnson
+Rename some silhouette fields and function variables so can understand
+how they are being used.
+tsilheight -> sil_top_height
+bsilheight -> sil_bottom_height
+sprtopclip -> spr_topclip
+sprbottomclip -> spr_bottomclip
 
