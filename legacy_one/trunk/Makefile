@@ -46,9 +46,6 @@ HAVE_MIXER=1
 # Until can find test for presence of svn, this is best that can be done.
 #SVN_ENABLE=1
 
-# Uncomment if you want to use the POLL_POINTER hack
-#POLL_POINTER=-DPOLL_POINTER
-
 # Subdirectories for objects and binaries
 O=../objs
 BIN=../bin
@@ -110,7 +107,7 @@ ifeq ($(SMIF), SDL)
     $(O)/r_opengl.o $(O)/ogl_sdl.o $(O)/hwsym_sdl.o
 
 
-  OPTS := -DLINUX -DHWRENDER -DSDL $(POLL_POINTER) $(shell sdl-config --cflags) -I.
+  OPTS := -DLINUX -DHWRENDER -DSDL $(shell sdl-config --cflags) -I.
   LDFLAGS=-L/usr/X11R6/lib
 
   LIBS := -lm -lpthread -lGL -lGLU $(shell sdl-config --libs)
@@ -137,7 +134,7 @@ ifeq ($(SMIF), SDL)
   SFLAGS := -g $(OPTS)
 
 # name of the exefile
-  EXENAME := lsdldoom
+  EXENAME := doomlegacy
 
 
 #=================================
@@ -148,8 +145,11 @@ ifeq ($(SMIF), LINUX_X11)
   MUSSERV=linux_x/musserv
   SNDSERV=linux_x/sndserv
 
-#use the x86 asm code
+  #use the x86 asm code
   #USEASM=1
+
+  # Uncomment if you want to use the POLL_POINTER hack
+  #POLL_POINTER=-DPOLL_POINTER
 
   OPTS=-DLINUX -DOLD_SOUND_DRIVER -DMUSSERV -DSNDSERV -DHWRENDER
   X=1
@@ -195,12 +195,14 @@ ifeq ($(SMIF), FREEBSD_X11)
   OSVERSION:=$(shell /sbin/sysctl -n kern.osreldate)
   OSMAJOR:=$(shell echo $(OSVERSION) | sed 's/.....$$//')
 
-#use the x86 asm code
+  #use the x86 asm code
   #USEASM=1
+
+  # Uncomment if you want to use the POLL_POINTER hack
+  #POLL_POINTER=-DPOLL_POINTER
 
   # this should be an #ifdef in the source file
   i_cdmus_o=$(O)/i_cdmus_fbsd.o
-
 
   OPTS=-DLINUX -DFREEBSD -DOLD_SOUND_DRIVER -DSNDSERV -DHWRENDER
   ifndef FBSD_GGI
@@ -253,7 +255,7 @@ ifeq ($(SMIF), OS2_NATIVE)
     $(O)/printf.o $(O)/I_pm.res
 
 # name of the exefile
-  EXENAME=Doom2.exe
+  EXENAME=legacy.exe
 
 
 #=================================
@@ -277,7 +279,7 @@ ifeq ($(SMIF), DJGPPDOS_NATIVE)
   OBJS=$(O)/i_video.o $(O)/vid_vesa.o
 
 # name of the exefile
-  EXENAME=DOOM3.exe
+  EXENAME=legacy.exe
 endif
 endif
 endif
@@ -425,7 +427,7 @@ OBJS :=  $(OBJS) \
 #=======================================================
 # rules
 #=======================================================
-.PHONY : all clean asm dll
+.PHONY : all clean asm dll wad
 
 
 ifeq ($(SMIF), LINUX_X11)
@@ -468,13 +470,27 @@ ifdef SVN_ENABLE
 endif
 
 
+wad	:
+ifdef WAD
+	@echo "Building a new legacy.wad using an old version $(WAD)..."
+	if test ! -d ../wad; then mkdir ../wad; fi
+	cd ../wad ; \
+	../bin/wadtool -x $(WAD) ; \
+	cp ../trunk/resources/* . ; \
+	../bin/wadtool -c legacy.wad legacy.wad.inventory ; \
+	mv legacy.wad ../bin/ ; \
+	rm *.txt *.h *.lmp
+	@echo "Finished building legacy.wad."
+else
+	@echo "Usage: make wad WAD=/path/to/old/legacy.wad"
+endif
 
-#make a big doom3.s that is the disasm of the exe (dos only ?)
-asm:
-	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -g $(O)/i_main.o \
-	-o $(O)/tmp.exe $(DEBUGLIBS)
-	objdump  -d $(O)/tmp.exe --no-show-raw-insn > doom3.s
-	del $(O)\tmp.exe
+
+
+
+#make a disasm of the exe
+asm: $(BIN)/$(EXENAME)
+	objdump -d $(BIN)/$(EXENAME) --no-show-raw-insn > $(BIN)/doomlegacy.s
 
 
 # executable
