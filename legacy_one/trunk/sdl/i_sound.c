@@ -91,7 +91,7 @@
 #include "SDL_version.h"
 
 #ifdef HAVE_MIXER
-#define  USE_RWOPS
+# define  USE_RWOPS
 # include "SDL_mixer.h"
 #endif
 
@@ -622,94 +622,6 @@ void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
     handle = vol = sep = pitch = 0;
 }
 
-void I_ShutdownSound(void)
-{
-
-    if (nosound)
-        return;
-
-    if (!soundStarted)
-        return;
-
-    CONS_Printf("I_ShutdownSound: ");
-#ifdef HAVE_MIXER
-    Mix_CloseAudio();
-#else
-    SDL_CloseAudio();
-#endif
-    CONS_Printf("shut down\n");
-    soundStarted = false;
-}
-
-static SDL_AudioSpec audspec;  // [WDJ] desc name, too many audio in this file
-
-void I_StartupSound()
-{
-    if (nosound)
-        return;
-
-    // Configure sound device
-    CONS_Printf("I_InitSound: ");
-
-    // Open the audio device
-    audspec.freq = SAMPLERATE;
-#if ( SDL_BYTEORDER == SDL_BIG_ENDIAN )
-    audspec.format = AUDIO_S16MSB;
-#else
-    audspec.format = AUDIO_S16LSB;
-#endif
-    audspec.channels = 2;
-    audspec.samples = samplecount;
-    audspec.callback = I_UpdateSound_sdl;
-    I_SetChannels();
-
-#ifndef HAVE_MIXER
-    // Open the audio device
-    if (SDL_OpenAudio(&audspec, NULL) < 0)
-    {
-        CONS_Printf("couldn't open audio with desired format\n");
-        SDL_CloseAudio();
-        nosound = true;
-        return;
-    }
-
-    samplecount = audspec.samples;
-    CONS_Printf(" configured audio device with %d samples/slice\n", samplecount);
-#endif
-
-    // Initialize external data (all sounds) at start, keep static.
-    CONS_Printf("I_InitSound: (%d sfx)", NUMSFX);
-
-    int i;
-    for (i = 1; i < NUMSFX; i++)
-    {
-        // Alias? Example is the chaingun sound linked to pistol.
-        if (S_sfx[i].name)
-        {
-            if (!S_sfx[i].link)
-            {
-                // Load data from WAD file.
-                S_sfx[i].data = getsfx(S_sfx[i].name, &lengths[i]);
-            }
-            else
-            {
-                // Previously loaded already?
-                S_sfx[i].data = S_sfx[i].link->data;
-                lengths[i] = lengths[(S_sfx[i].link - S_sfx) / sizeof(sfxinfo_t)];
-            }
-        }
-    }
-
-    CONS_Printf(" pre-cached all sound data\n");
-#ifndef HAVE_MIXER
-
-    // Finished initialization.
-    CONS_Printf("I_InitSound: sound module ready\n");
-    SDL_PauseAudio(0);
-    soundStarted = true;
-#endif
-}
-
 
 
 //
@@ -723,7 +635,6 @@ static struct music_channel_t
   Mix_Music *mus;
   SDL_RWops *rwop; ///< must not be freed before music is halted
 } music = { NULL, NULL };
-#endif
 
 
 #if ((SDL_MIXER_MAJOR_VERSION*100)+(SDL_MIXER_MINOR_VERSION*10)+SDL_MIXER_PATCHLEVEL) < 127
@@ -731,9 +642,9 @@ static struct music_channel_t
 #define OLD_SDL_MIXER
 
 #ifdef PC_DOS
-char * midiname = "DoomMUS.mid";
+static char * midiname = "DoomMUS.mid";
 #else
-char midiname[24] = "/tmp/DoomMUSXXXXXX";
+static char midiname[24] = "/tmp/DoomMUSXXXXXX";
 #endif
 FILE * midifile;
 
@@ -768,81 +679,8 @@ void Midifile_OLD_SDL_MIXER( byte* midibuf, unsigned long midilength )
     }
 }
 #endif
-
-
-void I_ShutdownMusic(void)
-{
-#ifdef HAVE_MIXER
-    if (nomusic)
-        return;
-
-    if (!musicStarted)
-        return;
-
-    Mix_CloseAudio();
-
-    CONS_Printf("I_ShutdownMusic: shut down\n");
-    musicStarted = false;
-#ifdef OLD_SDL_MIXER
-    Free_OLD_SDL_MIXER();
 #endif
-#endif
-}
 
-void I_InitMusic(void)
-{
-    if (nosound)
-    {
-        nomusic = true;
-        return;
-    }
-
-#ifndef HAVE_MIXER
-    nomusic = true;
-    musicStarted = false;	// also wards off compiler warnings
-#else
-#ifdef OLD_SDL_MIXER
-    Init_OLD_SDL_MIXER();
-#endif
-    // because we use SDL_mixer, audio is opened here.
-    if (Mix_OpenAudio(audspec.freq, audspec.format, audspec.channels, audspec.samples)
-	< 0)
-    {
-
-    // [WDJ] On sound cards without midi ports, opening audio will block music.
-    // When midi music is played through Timidity, it will also try to use the
-    // dsp port, which is already in use.  Need to use a mixer on sound
-    // effect and Timidity output.  Some sound cards have two dsp ports.
-
-        CONS_Printf(" Unable to open audio: %s\n", Mix_GetError());
-        nosound = nomusic = true;
-        return;
-    }
-
-    int number_channels;	// for QuerySpec
-    if (!Mix_QuerySpec(&audspec.freq, &audspec.format, &number_channels))
-    {
-      CONS_Printf(" Mix_QuerySpec: %s\n", Mix_GetError());
-      nosound = nomusic = true;
-      return;
-    }
-
-    Mix_SetPostMix(audspec.callback, NULL);  // after mixing music, add sound fx
-    CONS_Printf(" Audio device initialized: %d Hz, %d samples/slice.\n",
-	audspec.freq, audspec.samples);
-    Mix_Resume(-1); // start all sound channels (although they are not used)
-
-    soundStarted = true;
-
-    if (nomusic)
-        return;
-
-    Mix_ResumeMusic();  // start music playback
-    mus2mid_buffer = (byte *)Z_Malloc(MIDBUFFERSIZE, PU_STATIC, NULL);
-    CONS_Printf(" Music initialized.\n");
-    musicStarted = true;
-#endif
-}
 
 void I_PlaySong(int handle, int looping)
 {
@@ -963,7 +801,7 @@ void I_SetMusicVolume(int volume)
 #endif
 }
 
-//Hurdler: TODO
+// TODO remove
 void I_StartFMODSong()
 {
     CONS_Printf("I_StartFMODSong: Not yet supported under Linux.\n");
@@ -976,4 +814,150 @@ void I_StopFMODSong()
 void I_SetFMODVolume(int volume)
 {
     CONS_Printf("I_SetFMODVolume: Not yet supported under Linux.\n");
+}
+
+
+
+
+void I_StartupSound()
+{
+  static SDL_AudioSpec audspec;  // [WDJ] desc name, too many audio in this file
+
+  if (nosound)
+    {
+      nomusic = true;
+      return;
+    }
+
+  // Configure sound device
+  CONS_Printf("I_InitSound: ");
+
+  // Open the audio device
+  audspec.freq = SAMPLERATE;
+  audspec.format = AUDIO_S16SYS;
+  audspec.channels = 2;
+  audspec.samples = samplecount;
+  audspec.callback = I_UpdateSound_sdl;
+  I_SetChannels();
+
+#ifndef HAVE_MIXER
+  // no mixer, no music
+  nomusic = true;
+
+  // Open the audio device
+  if (SDL_OpenAudio(&audspec, NULL) < 0)
+    {
+      CONS_Printf("Couldn't open audio with desired format.\n");
+      SDL_CloseAudio();
+      nosound = nomusic = true;
+      return;
+    }
+
+  SDL_PauseAudio(0);
+#else
+  // use SDL_mixer for music
+
+  // because we use SDL_mixer, audio is opened here.
+  if (Mix_OpenAudio(audspec.freq, audspec.format, audspec.channels, audspec.samples) < 0)
+    {
+    // [WDJ] On sound cards without midi ports, opening audio will block music.
+    // When midi music is played through Timidity, it will also try to use the
+    // dsp port, which is already in use.  Need to use a mixer on sound
+    // effect and Timidity output.  Some sound cards have two dsp ports.
+
+        CONS_Printf("Unable to open audio: %s\n", Mix_GetError());
+        nosound = nomusic = true;
+        return;
+    }
+
+  int number_channels;	// for QuerySpec
+  if (!Mix_QuerySpec(&audspec.freq, &audspec.format, &number_channels))
+    {
+      CONS_Printf("Mix_QuerySpec: %s\n", Mix_GetError());
+      nosound = nomusic = true;
+      return;
+    }
+
+  Mix_SetPostMix(audspec.callback, NULL);  // after mixing music, add sound fx
+  Mix_Resume(-1); // start all sound channels (although they are not used)
+#endif
+
+  CONS_Printf("Audio device initialized: %d Hz, %d samples/slice.\n",
+	      audspec.freq, audspec.samples);
+
+#ifdef HAVE_MIXER
+  if (!nomusic)
+    {
+      Mix_ResumeMusic();  // start music playback
+      mus2mid_buffer = (byte *)Z_Malloc(MIDBUFFERSIZE, PU_STATIC, NULL);
+
+#ifdef OLD_SDL_MIXER
+  Init_OLD_SDL_MIXER();
+#endif
+
+      CONS_Printf(" Music initialized.\n");
+      musicStarted = true;
+    }
+#endif
+
+  // Finished initialization.
+  CONS_Printf("I_InitSound: sound module ready.\n");
+  soundStarted = true;
+
+
+  // TODO this does not belong to the audio interface
+  // Initialize external data (all sounds) at start, keep static.
+  CONS_Printf("Caching sound data (%d sfx)... ", NUMSFX);
+
+    int i;
+    for (i = 1; i < NUMSFX; i++)
+    {
+        // Alias? Example is the chaingun sound linked to pistol.
+        if (S_sfx[i].name)
+        {
+            if (!S_sfx[i].link)
+            {
+                // Load data from WAD file.
+                S_sfx[i].data = getsfx(S_sfx[i].name, &lengths[i]);
+            }
+            else
+            {
+                // Previously loaded already?
+                S_sfx[i].data = S_sfx[i].link->data;
+                lengths[i] = lengths[(S_sfx[i].link - S_sfx) / sizeof(sfxinfo_t)];
+            }
+        }
+    }
+
+  CONS_Printf(" done.\n");
+}
+
+
+void I_ShutdownSound()
+{
+  if (nosound || !soundStarted)
+    return;
+
+  CONS_Printf("I_ShutdownSound: ");
+
+#ifdef HAVE_MIXER
+  Mix_CloseAudio();
+#else
+  SDL_CloseAudio();
+#endif
+
+  CONS_Printf("shut down\n");
+  soundStarted = false;
+
+  // music
+  if (musicStarted)
+    {
+      Z_Free(mus2mid_buffer);
+
+#ifdef OLD_SDL_MIXER
+      Free_OLD_SDL_MIXER();
+#endif
+
+      musicStarted = false;
+    }
 }

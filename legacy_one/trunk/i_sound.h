@@ -106,8 +106,6 @@ void I_UpdateSoundParams ( int           handle,
 //
 //  MUSIC I/O
 //
-void I_InitMusic(void);
-void I_ShutdownMusic(void);
 // Volume.
 void I_SetMusicVolume(int volume);
 void I_SetFMODVolume(int volume); // SSNTails 12-13-2002
@@ -146,9 +144,7 @@ extern byte    cdaudio_started;
 
 void   I_InitCD (void);
 void   I_StopCD (void);
-#ifdef LINUX
 void   I_PauseCD (void);
-#endif
 void   I_ResumeCD (void);
 void   I_ShutdownCD (void);
 void   I_UpdateCD (void);

@@ -639,7 +639,6 @@ void I_Quit (void)
     if (demorecording)
         G_CheckDemoStatus();
     D_QuitNetGame ();
-    I_ShutdownMusic();
     I_ShutdownSound();
     I_ShutdownCD();
    // use this for 1.28 19990220 by Kin
@@ -682,7 +681,6 @@ void I_Error (const char *error, ...)
 
     D_QuitNetGame ();
     I_ShutdownJoystick();
-    I_ShutdownMusic();
     I_ShutdownSound();
     I_ShutdownGraphics();
     // shutdown everything else which was registered

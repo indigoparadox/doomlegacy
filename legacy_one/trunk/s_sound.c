@@ -743,11 +743,7 @@ void S_PauseSound(void)
     }
 
     // pause cd music
-#ifdef LINUX
     I_PauseCD();
-#else
-    I_StopCD();
-#endif
 }
 
 void S_ResumeSound(void)

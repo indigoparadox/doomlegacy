@@ -360,10 +360,10 @@ void I_InitCD (void)
     if (M_CheckParm ("-nocd"))
 	return ;
     
-    // Initialize SDL first
-    if (SDL_Init(SDL_INIT_CDROM) < 0) {
-	fprintf(stderr, "Couldn't initialize SDL: %s\n",SDL_GetError());
-	return;
+    // Initialize SDL cdrom subsystem
+    if (SDL_InitSubSystem(SDL_INIT_CDROM) < 0) {
+      fprintf(stderr, "Couldn't initialize SDL CD-ROM subsystem: %s\n", SDL_GetError());
+      return;
     }
 
     // Open drive
