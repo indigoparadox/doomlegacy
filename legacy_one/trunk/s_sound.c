@@ -181,7 +181,6 @@ consvar_t sndserver_arg = { "sndserver_arg", "-quiet", CV_SAVE };
 consvar_t play_mode = { "play_mode", "0", CV_SAVE, CV_Unsigned };
 #endif
 
-void I_StartFMODSong(char *musicname, int looping);
 
 // stereo reverse 1=true, 0=false
 consvar_t stereoreverse = { "stereoreverse", "0", CV_SAVE, CV_OnOff };
@@ -734,9 +733,7 @@ void S_StopSound(void *origin)
 //
 void S_PauseSound(void)
 {
-    if (digmusic)
-        I_PauseSong(0);
-    else if (mus_playing && !mus_paused)
+    if (mus_playing && !mus_paused)
     {
         I_PauseSong(mus_playing->handle);
         mus_paused = true;
@@ -748,9 +745,7 @@ void S_PauseSound(void)
 
 void S_ResumeSound(void)
 {
-    if (digmusic)
-        I_ResumeSong(0);
-    else if (mus_playing && mus_paused)
+    if (mus_playing && mus_paused)
     {
         I_ResumeSong(mus_playing->handle);
         mus_paused = false;
@@ -891,17 +886,15 @@ void S_SetMusicVolume(int volume)
     if (volume < 0 || volume > 31)
         CONS_Printf("musicvolume should be between 0-31\n");
 
-    CV_SetValue(&cv_musicvolume, volume & 31);
+    volume &= 31;
+
+    CV_SetValue(&cv_musicvolume, volume);
     actualmusicvolume = cv_musicvolume.value;   //check for change of var
 
-    if (digmusic)
-        I_SetFMODVolume(volume);
-    else
-        I_SetMusicVolume(volume & 31);
+    I_SetMusicVolume(volume);
 
 #ifdef __DJGPP__
     I_SetMusicVolume(31);       //faB: this is a trick for buggy dos drivers.. I think.
-    //     win32 midistream playbakc doesn't need this
 #endif
 }
 
@@ -961,24 +954,6 @@ void S_ChangeMusic(int music_num, int looping)
     if (dedicated)
         return;
 
-    if (digmusic)
-    {
-        if ((music_num <= mus_None) || (music_num >= NUMMUSIC))
-        {
-            CONS_Printf("ERROR: Bad music number %d\n", music_num);
-            return;
-        }
-        else
-            music = &S_music[music_num];
-
-        if (mus_playing == music)
-            return;
-
-        I_StartFMODSong(music->name, looping);
-        mus_playing = music;
-        return;
-    }
-
     if (nomusic)
         return;
 
@@ -1032,21 +1007,17 @@ void S_ChangeMusic(int music_num, int looping)
     mus_playing = music;
 }
 
-void I_StopFMODSong(void);
 
-void S_StopMusic(void)
+void S_StopMusic()
 {
     if (mus_playing)
     {
         if (mus_paused)
             I_ResumeSong(mus_playing->handle);
 
-        if (digmusic)
-            I_StopFMODSong();
         I_StopSong(mus_playing->handle);
         I_UnRegisterSong(mus_playing->handle);
-        if (!digmusic)
-            Z_ChangeTag(mus_playing->data, PU_CACHE);
+	Z_ChangeTag(mus_playing->data, PU_CACHE);
 
         mus_playing->data = 0;
         mus_playing = 0;

@@ -801,21 +801,6 @@ void I_SetMusicVolume(int volume)
 #endif
 }
 
-// TODO remove
-void I_StartFMODSong()
-{
-    CONS_Printf("I_StartFMODSong: Not yet supported under Linux.\n");
-}
-
-void I_StopFMODSong()
-{
-    CONS_Printf("I_StopFMODSong: Not yet supported under Linux.\n");
-}
-void I_SetFMODVolume(int volume)
-{
-    CONS_Printf("I_SetFMODVolume: Not yet supported under Linux.\n");
-}
-
 
 
 

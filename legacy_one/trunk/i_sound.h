@@ -108,7 +108,6 @@ void I_UpdateSoundParams ( int           handle,
 //
 // Volume.
 void I_SetMusicVolume(int volume);
-void I_SetFMODVolume(int volume); // SSNTails 12-13-2002
 void I_SetSfxVolume(int volume);
 // PAUSE game handling.
 void I_PauseSong(int handle);

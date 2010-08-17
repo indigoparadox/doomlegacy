@@ -366,7 +366,6 @@ boolean singletics = false;     // timedemo
 
 boolean nomusic;
 boolean nosound;
-boolean digmusic;               // OGG/MP3 Music SSNTails 12-13-2002
 
 
 // Background color fades for FS
@@ -2023,7 +2022,6 @@ void D_DoomMain()
     CONS_Printf(text[S_SETSOUND_NUM]);
     nosound = M_CheckParm("-nosound");
     nomusic = M_CheckParm("-nomusic");  // WARNING: DOS version initmusic in I_StartupSound
-    digmusic = M_CheckParm("-digmusic");        // SSNTails 12-13-2002
     I_StartupSound();
     S_Init(cv_soundvolume.value, cv_musicvolume.value);
 
