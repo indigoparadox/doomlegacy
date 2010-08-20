@@ -1098,3 +1098,8 @@ Simplified R_ExpandPlane, it was copied from CheckPlane and mostly
 irrelevant.
 Floor rover renamed to fff, and bff, which changes many lines, but makes
 it clearer which is which.
+
+*** w58_missed_stuff
+patchfile = w58_missed_stuff.patch
+- committed revision 726   by wesley johnson
+Some local renames and comments that belonged with w58 that were missed.

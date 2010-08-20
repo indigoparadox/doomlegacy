@@ -1637,7 +1637,7 @@ static void R_CreateDrawNodes( void )
             R_PlaneBounds(plane);  // set highest_top, lowest_bottom
 	         // in screen coord, where 0 is top (hi)
             if(plane->lowest_bottom < con_clipviewtop
-//	       || plane->high_top > vid.height  // [WDJ] FIXME rdraw_ ??
+//	       || plane->highest_top > vid.height  // [WDJ] FIXME rdraw_ ??
 	       || plane->highest_top > rdraw_viewheight  // [WDJ] rdraw window, not vid.height
 	       || plane->highest_top > plane->lowest_bottom)
             {

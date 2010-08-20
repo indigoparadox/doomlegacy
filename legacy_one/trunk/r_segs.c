@@ -844,7 +844,7 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
                 }
 
                 continue;  // next 3dfloor light
-              }  // if( windowbottom > realbot )
+              }  // if( dm_windowbottom >= realbot )
               colfunc_2s (col);
               dm_windowtop = dm_windowbottom + 1;
               dc_colormap = rlight->rcolormap;
