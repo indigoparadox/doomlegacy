@@ -69,6 +69,11 @@ p.new
   margin: 0 5em 0 0;
 }
 
+/* makes things readable on a wide screen */
+div.column
+{
+  width: 50em;
+}
 
 div.example
 {
@@ -169,6 +174,6 @@ div.floatbox li
   margin: 0;
   padding: 0;
   text-align: left;
-  background: url("images/triangle.gif") 10px no-repeat;
+  background: url("images/triangle.png") 10px no-repeat;
   padding-left: 25px;
 }
