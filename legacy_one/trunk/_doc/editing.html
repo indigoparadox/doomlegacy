@@ -13,12 +13,11 @@
 
 <div class="floatbox">
 <ul>
-<li><a href="index.html">Users Guide</a></li>
-<li><strong><span class="c8">Map Editing</span></strong></li>
-<li><a href="tutorial.htm">Getting Started</a></li>
-<li><a href="concept.htm">3d Floors Concept</a></li>
-<li><a href="3dfloors.htm">3d Floors Tutorial</a></li>
-<li><strong><span class="c8">FraggleScript</span></strong></li>
+<li><a href="index.html">User's Guide</a></li>
+<li><strong>Map Editing</strong></li>
+<li><a href="tutorial.html">Tutorial</a></li>
+<li><a href="3dfloors.html">3D Floors Tutorial</a></li>
+<li><strong>FraggleScript</strong></li>
 <li><a href="fsbasic.html">Getting started</a></li>
 <li><a href="fsfuncs.html">Reference manual</a></li>
 </ul>
@@ -26,12 +25,12 @@
 
 <div class="floatbox">
 <ul>
-<li><strong><span class="c8">Editing Specs</span></strong></li>
-<li><a href="#linedefs">Linedef types</a></li>
-<li><a href="#textures">Lumps and Textures</a></li>
+<li><strong>Editing Specs</strong></li>
+<li><a href="#linedefs">Linedef Types</a></li>
+<li><a href="#textures">Palettes, Colormaps and Textures</a></li>
 <li><a href="#sprites">Sprites and Skins</a></li>
-<li><a href="#voodoo">Voodoo dolls</a></li>
-<li><a href="#wadcontents">Legacy contents</a></li>
+<li><a href="#voodoo">Voodoo Dolls</a></li>
+<li><a href="#wadcontents">legacy.wad contents</a></li>
 <li><a href="#links">Editing Links</a></li>
 <li><a href="boomref.html">Boom Reference</a></li>
 </ul>
@@ -56,23 +55,88 @@ the <a href="http://legacywiki.net/index.php/Main_Page">Doom Legacy Wiki</a>.
 
 <h2 id="linedefs">Linedef Types</h2>
 
-<p>
-1 to 141 - Original Doom and Doom2 linedef types<br />
-142 to 260 - BOOM extension linedef types
-</p>
+<table class="def">
+<tr><th>Range</th><th>Use</th></tr>
+<tr><td>0 &ndash; 141</td><td>Original Doom and Doom2 linedef types</td></tr>
+<tr><td>142 &ndash; 269</td><td>Boom extensions</td></tr>
+<tr><td>272 &ndash; 306</td><td>Legacy extensions</td></tr>
+</table>
 
-<h3>Colormaps and Water</h3>
+<h3>Legacy Linedef extensions</h3>
 
 <table class="def">
 <tr>
 <th>LINEDEF type</th>
 <th>Effect</th>
 </tr>
+
+<tr><td class="note" colspan="2">
+FraggleScript triggers<br/>
+See
+<a href="fsbasic.html"> FS getting started</a> and
+<a href="fsfuncs.html">FS reference manual</a>.
+</td></tr>
 <tr>
-<td>281</td>
+<td>272</td>
+<td>Start FS script (tagnumber), WR</td>
+</tr>
+<tr>
+<td>273</td>
+<td>Start FS script (tagnumber), WR, 1-sided</td>
+</tr>
+<tr>
+<td>274</td>
+<td>Start FS script (tagnumber), W1</td>
+</tr>
+<tr>
+<td>275</td>
+<td>Start FS script (tagnumber), W1, 1-sided</td>
+</tr>
+<tr>
+<td>276</td>
+<td>Start FS script (tagnumber), SR</td>
+</tr>
+<tr>
+<td>277</td>
+<td>Start FS script (tagnumber), S1</td>
+</tr>
+<tr>
+<td>278</td>
+<td>Start FS script (tagnumber), GR</td>
+</tr>
+<tr>
+<td>279</td>
+<td>Start FS script (tagnumber), G1</td>
+</tr>
+
+
+<tr><td class="note" colspan="2" id="transmap">
+Translucency maps
+</td></tr>
+<tr><td>284 &ndash; 288</td>
 <td>
-<p>Water &mdash; Boom style</p>
-<p>Creates swimmable water in all tagged sectors, with colormap transfer like Boom 242.<br />
+<b>Software translucency</b><br/>
+These linedefs each apply a different translucency map to the middle
+texture. The corresponding <a href="#transmap">translucency maps</a> are
+stored in <a href="#legacy_transmaps">legacy.wad</a>.<br/>
+<br/>
+284 &mdash; TRANSMED: Brightens everything behind the line. Turns things kinda green though.<br/>
+285 &mdash; TRANSMOR: Less brightness with a lot less green.<br/>
+286 &mdash; TRANSHI: Darkens a little with no green tint.<br/>
+287 &mdash; TRANSFIR: Brightens but with no green tint.<br/>
+288 &mdash; TRANSFX1: Selective translucency. Only certain colors are translucent.<br/>
+</td></tr>
+
+
+<tr><td class="note" colspan="2">
+Colormaps and water
+</td></tr>
+<tr>
+<td>280</td>
+<td>
+<b>Water &mdash; Boom style</b>
+<p>
+  Creates swimmable water in all tagged sectors, with colormap transfer like Boom 242.<br />
   Similar to the Boom 242 deep water type but swimmable (using the
   Legacy swimming code). It operates more like water than 242 does,
   but does not have ripples like types 301 and 304. Unlike type 242,
@@ -100,7 +164,7 @@ the <a href="http://legacywiki.net/index.php/Main_Page">Doom Legacy Wiki</a>.
 <tr>
 <td>282</td>
 <td>
-<p>Generate Colormaps</p>
+<b>Generate colormaps</b>
 <p>This type sets the colormap of all tagged sectors like described below, without changing the floor/ceiling or light values. This is nice for putting colored lighting in many different sectors of different floor/ceiling heights:</p>
 <table>
 <tr>
@@ -132,30 +196,20 @@ the <a href="http://legacywiki.net/index.php/Main_Page">Doom Legacy Wiki</a>.
 
 <p>
 Hex color values can be found via paint program or web editor.<br/>
-There are (tons of colors to choose from) but here are some to get you started:
-<font color="#FF0000">#FF0000</font> 
-<font color="#009900">#009900</font> 
-<font color="#0099FF">#0099FF</font> 
-<font color="#FFFF00">#FFFF00</font> 
-<font color="#6600CC">#6600CC</font> 
-<font color="#FF6600">#FF6600</font>
+There are tons of colors to choose from but here are some to get you started:
+<span style="color: #FF0000">#FF0000</span> 
+<span style="color: #009900">#009900</span> 
+<span style="color: #0099FF">#0099FF</span> 
+<span style="color: #FFFF00">#FFFF00</span> 
+<span style="color: #6600CC">#6600CC</span> 
+<span style="color: #FF6600">#FF6600</span>
 </p>
 </td>
-</tr>
-</table>
-
-
-<h3>Translucent linedefs</h3>
-
-<table class="def">
-<tr>
-<th>LINEDEF type</th>
-<th>Effect</th>
 </tr>
 <tr>
 <td>283</td>
 <td>
-<p>Fog sheet</p>
+<b>Fog sheet</b>
 <p>
   Displays a 128 high transparent dark fog texture as the middle
   texture. This can be used to make a better fog effect by patching up
@@ -165,43 +219,11 @@ There are (tons of colors to choose from) but here are some to get you started:
 </p>
 </td>
 </tr>
-<tr><td class="note" colspan="2">
-The old linedef codes for line translucency have been taken by Boom support, so the types have been shifted.
+
+
+<tr><td id="3dfloors" class="note" colspan="2">
+3D floors
 </td></tr>
-<tr>
-<td>284</td>
-<td>Brightens everything behind the line. <em>Turns things kinda green though.</em></td>
-</tr>
-<tr>
-<td>285</td>
-<td>
-Less brightness with a lot less green.
-</td>
-</tr>
-<tr>
-<td>286</td>
-<td>Darkens a little with no green tint.</td>
-</tr>
-<tr>
-<td>287</td>
-<td>Brightens but with no green tint.</td>
-</tr>
-<tr>
-<td>288</td>
-<td>
-Selective translucency. <em>Only certain colors are translucent.</em>
-</td>
-</tr>
-</table>
-
-
-<h3 id="floors">3D floor types</h3>
-
-<table class="def">
-<tr>
-<th>LINEDEF type</th>
-<th>Effect</th>
-</tr>
 <tr>
 <td>281</td>
 <td>
@@ -295,68 +317,10 @@ Does the 3D light and colormap of a 3D floor, without the floor.</p>
   light nor colormaps.</p>
 </td>
 </tr>
-</table>
 
-
-<h3>FraggleScript Linedef types</h3>
-
-<p>
-These are Linedef types that activate/start a script.<br/>
-The tag number of the linedef is the script number which it will start.
-</p>
-<p>
-If you would like to know more about FraggleScript, please refer to
-<a href="fsbasic.html"> FS getting started</a> and
-<a href="fsfuncs.html">FS reference manual</a>.
-</p>
-
-<table class="def">
-<tr>
-<th>LINEDEF type</th>
-<th>Effect</th>
-</tr>
-<tr>
-<td>272</td>
-<td>Start FS script (tagnumber), WR</td>
-</tr>
-<tr>
-<td>273</td>
-<td>Start FS script (tagnumber), WR, 1-sided</td>
-</tr>
-<tr>
-<td>274</td>
-<td>Start FS script (tagnumber), W1</td>
-</tr>
-<tr>
-<td>275</td>
-<td>Start FS script (tagnumber), W1, 1-sided</td>
-</tr>
-<tr>
-<td>276</td>
-<td>Start FS script (tagnumber), SR</td>
-</tr>
-<tr>
-<td>277</td>
-<td>Start FS script (tagnumber), S1</td>
-</tr>
-<tr>
-<td>278</td>
-<td>Start FS script (tagnumber), GR</td>
-</tr>
-<tr>
-<td>279</td>
-<td>Start FS script (tagnumber), G1</td>
-</tr>
-</table>
-
-
-<h3>Movement</h3>
-
-<table class="def">
-<tr>
-<th>LINEDEF type</th>
-<th>Effect</th>
-</tr>
+<tr><td class="note" colspan="2">
+Instant z movement
+</td></tr>
 <tr>
 <td>290</td>
 <td>Instant lower floor</td>
@@ -400,7 +364,8 @@ Instant raise ceiling
 </tr>
 </table>
 
-<h2 id="textures">Lumps and Textures</h2>
+
+<h2 id="textures">Palettes, Colormaps and Textures</h2>
 
 <p>
 Doom Legacy consists of several new graphic and patch resources as well as
@@ -428,7 +393,7 @@ Please check the <a href="http://doomlegacy.sourceforge.net/">Doom Legacy Web Si
 Colormaps are used to create colored area effects.
 Such as in sector areas. Or a colored fog for the whole level.
 They can be created with a utility called Inkworks.
-Inkworks is a DOS based program which allows you to manipulate the color palette and save as .wad format which contain both PLAYPAL and COLORMAP lumps to merge or insert into your wad.
+Inkworks is a DOS based program which allows you to manipulate the color palette and save as .wad format which contain both PLAYPAL and COLORMAP lumps to merge or insert into your WAD.
 This old way of creating colormaps is somewhat deprecated due to the fact that they only would show up in Software Mode. - Yet, still an option.
 </p>
 <p>
@@ -436,92 +401,56 @@ However for Hardware and Software Modes, they are much easier to create just by 
 See <a href="#linedefs">Linedef types</a> for more info.
 </p>
 
-<h3>Section Markers Overview:</h3>
-<p>Some of the internal resource sections of an IWAD or PWAD contain what we call Section Markers and their corresponding lump types between them. Here's an example:</p>
-
+<h3>Section marker overview</h3>
+<p>
+Certain lump types in an IWAD or PWAD should be in continous blocks
+surrounded by the appropriate section markers. Here are the markers
+used by Doom Legacy:
+</p>
 
 <table class="def">
+<tr><th>Markers</th><th>Section contents</th></tr>
 <tr>
-<td>Marker and Lump type</td>
-<td>Sub Marker and Explaination</td>
+<td>C_START, C_END</td>
+<td>Software colormaps</td>
 </tr>
 <tr>
-<td></td>
-<td></td>
+<td>P_START, P_END</td>
+<td>Patch lumps (wall and sky textures)</td>
 </tr>
 <tr>
-<td>C_START</td>
-<td>
-C_START
-</td>
+<td>PP_START, PP_END</td>
+<td>alternative</td>
 </tr>
 <tr>
-<td>Colormap lumps</td>
-<td>New Software Colormaps</td>
+<td>F_START, F_END</td>
+<td>Flat lumps (floor and ceiling textures)</td>
 </tr>
 <tr>
-<td>C_END</td>
-<td>C_END</td>
+<td>FF_START, FF_END</td>
+<td>alternative</td>
 </tr>
 <tr>
-<td></td>
-<td></td>
+<td>S_START, S_END</td>
+<td>Sprite lumps (mapthings)</td>
 </tr>
 <tr>
-<td>P_START</td>
-<td>P - or sub marker PP_START</td>
-</tr>
-<tr>
-<td>Patch lumps</td>
-<td>New or Replacment Wall and Sky textures</td>
-</tr>
-<tr>
-<td>P_END</td>
-<td>P - or sub marker PP_END</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>F_START</td>
-<td>F - or sub marker FF_START</td>
-</tr>
-<tr>
-<td>Flat lumps</td>
-<td>New or Replacment Floor and Cieling textures</td>
-</tr>
-<tr>
-<td>F_END</td>
-<td>F - or sub marker FF_END</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>S_START</td>
-<td>S - or sub marker SS_START</td>
-</tr>
-<tr>
-<td>Sprite lumps</td>
-<td>Replacment Thing or Item Sprites</td>
-</tr>
-<tr>
-<td>S_END</td>
-<td>S - or sub marker SS_END</td>
+<td>SS_START, SS_END</td>
+<td>alternative</td>
 </tr>
 </table>
 
-<ul>
-<li>These paticular Lump types need to have Section Markers.</li>
-<li>Although, not all lump types need section markers, for example, graphics, sound, and music do not. Or if defined by a script.
-More about Section Markers and the Lumps that go between them will be found below, but we also encourage you to view your IWAD contents for more info.
-</li>
-</ul>
+<p>
+Not all lump types need section markers, for example graphics, sounds
+and music do not.
+More about section markers and the lumps that go between them will be
+found below, but we also encourage you to view your IWAD contents for
+more info.
+</p>
+
 
 <h3>Wall textures</h3>
-<h4>P_START and P_END markers:</h4>
+<h4>P_START and P_END markers</h4>
 <p>Legacy honors the section markers P_START and P_END when introduced as new Patch textures. As well as PP, P1, P2, and P3, just like Doom.</p>
 
 <ul>
@@ -549,429 +478,396 @@ However as of 1.41x, hardware video mode in Doom Legacy
 supports x2 large flats and wall textures
 </p>
 
-<h3>Sky textures</h3>
+<h3 id="rsky">Sky textures</h3>
 
 <p>
-The original sky texture size in Doom is 256x128, however
-Legacy also supports sky graphics the size of 256x240.
-This is because of freelook : you are able to look
+The original sky texture size in Doom is 256x128, however,
+Legacy also supports sky textures the size of 256x240.
+This is because of freelook: you are able to look
 higher, thus seeing a part of the sky you couldn't see
-in the original Doom. - A taller sky texture was needed.
+in the original Doom. A taller sky texture was needed.
 </p>
-
 <p>
-RSKY1 - Replacement Sky1 patch name
-RSKY2 - Replacement Sky2 patch name
-RSKY3 - Replacement Sky3 patch name
-</p>
-
-
 Using a taller graphic is better than scaling up the
 original skies, it looks better. However for compatibility,
 Legacy scales up the SKY textures if it finds that they
-are the 'old' small size 256x128.
+are the old small size 256x128.
+</p>
+<p>
+The bottom 40 lines are under the horizon and not
+normally seen. The lines 100 to 199 are the ones
+you see while looking straight ahead. The top lines
+0-99 are the lines of sky you see when looking up.
+</p>
+<p>
 There is a small utility called <a href="res/lumpy.zip">LUMPY</a> provided in this
 archive to create patches for the sky. Other editing
 utilities can be used to add the new sky patch to your
-wad, XWE for example, see <a href="#links">Editing Links</a>.
+WAD, XWE for example, see <a href="#links">Editing Links</a>.
+</p>
 
+<p>To convert the sky with LUMPY:
+<span class="example">LUMPY image.pcx -width 256 -height 240</span>
+</p>
 
-<em>To convert the sky with LUMPY:</em>
-<em>LUMPY image_name.pcx -width 256 -height 240</em>
-
-<p>To add the sky to your wad with XWE:<br/>
-Open Xwe, select the Patches Tab at the bottom. Select:
-  Entry&gt;Load. Load your image.</p>
+<p>
+To add the sky to your WAD with XWE:<br/>
+Open XWE, select the Patches Tab at the bottom. Select:
+Entry&gt;Load. Load your image.
+</p>
 
 
 
 <h3>Flat textures</h3>
 
+<p>
+Flats in a PWAD are supported by the 'addfile' console command
+(loading a PWAD file in the game world). This is useful for testing
+purposes.
+</p>
 
-<p>FLATS in a pwad _ARE_ supported by the 'addfile' console command (loading a pwad file in the game world). This is useful for testing purposes.</p>
-
-<h4>F_ and FF_ Markers</h4>
-<p>Flats in a pwad already worked with the original Doom, you had
+<h4>F_ and FF_ markers</h4>
+<p>
+Flats in a PWAD already worked with the original Doom, you had
 to put a 'F_END' after the last flat. However, it wasted
 memory because the engine took all resources from the F_START
-of the original game wad, up to the F_END in your pwad, as
-flats.</p>
-
-<p>Legacy honors the section markers F_START and F_END.
+of the original game WAD, up to the F_END in your PWAD, as
+flats.
+</p>
+<p>
+Legacy honors the section markers F_START and F_END.
 FF_START and FF_END are also honored. Flats are expected to
 be within these markers and these flat areas will be searched first.
-Separate flat sections within pwad files are supported, and they
-add flats to those found in the iwad.</p>
-
-<p>
+Separate flat sections within PWAD files are supported, and they
+add flats to those found in the IWAD.
 If a flat name is not found within the flat markers then Legacy
-will search the entire iwad and pwad for the flat.
+will search the entire IWAD and PWAD for the flat.
 </p>
 <p>
 Most ports and vanilla Doom engines expect F_START and F_END,
-so put them in. It makes your wad compatible with other ports, and speeds
+so use them. It makes your WAD compatible with other ports, and speeds
 up the name search in Legacy.
 </p>
 
-<ul>
-<li>
+<p>
 Unlike patch textures, Flats don't need a pname or texture lump.
-</li>
-<li>
-Just slap them in your pwad between the section markers F_START and F_END and your done..
-</li>
-</ul>
+Just slap them in your PWAD between the section markers F_START and
+F_END and your done.
+</p>
 
-<em>The standard Flat / floor and ceiling texture scale in Doom is: 64x64.</em>
+<p>
+The standard flat (floor / ceiling) texture size in Doom is 64x64 pixels.
 However as of 1.41x, hardware video mode in Doom Legacy
 supports x2 large flats and wall textures.
 More about x2 flats and wall textures
-can be found on the <a href="http://legacywiki.net/index.php/Large_flats_and_textures">Doom Legacy Wiki</a>.
-<p>Legacy texture flat loading supports any number of new flats (using new names), and it only animates (loads) those animated flats that are used in a level. YES, this is a feature, because soon you will be able to define as many animated flat sequences as you will.</p>
+can be found on the
+<a href="http://legacywiki.net/index.php/Large_flats_and_textures">Doom Legacy Wiki</a>.
+</p>
+
+<p>
+Legacy texture flat loading supports any number of new flats (using
+new names), and it only animates (loads) those animated flats that are
+used in a level.
+</p>
 
 
-
-<h3 id="animated">Animated textures:</h3>
+<h3 id="animated">Animated textures</h3>
 <p>
 Swantbl can be used to create new animations.
 Now you're probably wondering, what the heck is Swantbl?
 </p>
-<p><a href="res/swantbls.zip">Swantbl</a> is a utility that creates SWITCHES and ANIMATED lumps to put in your wad, used by BOOM and of course Doom Legacy. First you will need 2-4 image framesets for your animation - depending wheater its a flat, a wall, or a switch..They will need to be (named) and in your wad. And then, by editing the DEFSWANI.dat you add new image frame (names) from Last to First. Then compile it with Swantbl, which then outputs the 2 animation lumps to put in your wad. More info can be found on the <a href="http://legacywiki.net/index.php/ANIMATED_and_SWITCHES">Wiki</a> about animated textures. And of course the DEFSWANI.dat.</p>
+<p><a href="res/swantbls.zip">Swantbl</a> is a utility that creates SWITCHES and ANIMATED lumps to put in your WAD, used by BOOM and of course Doom Legacy. First you will need 2-4 image framesets for your animation - depending wheater its a flat, a wall, or a switch..They will need to be (named) and in your WAD. And then, by editing the DEFSWANI.dat you add new image frame (names) from Last to First. Then compile it with Swantbl, which then outputs the 2 animation lumps to put in your WAD. More info can be found on the <a href="http://legacywiki.net/index.php/ANIMATED_and_SWITCHES">Wiki</a> about animated textures. And of course the DEFSWANI.dat.</p>
+
+
+<h3 id="pic_t">pic_t graphics</h3>
+
+<p>
+For now, certain Legacy resources need to be in a format called pic_t.
+You can also use LUMPY or 
+<a href="http://www.sbsoftware.com/">Deepsea</a> to convert other
+image formats to pic_t.
+</p>
 
 
 <h2 id="sprites">Sprites and Skins</h2>
 
 
-<h3 >Using SPRITES in a pwad</h3>
+<h3 >Using SPRITES in a PWAD</h3>
 
 
 <p>S_START and S_END markers</p>
-<p>SPRITES in a pwad _ARE_ supported by the 'addfile' console command (loading a pwad file in the game world). This is useful for testing purposes.</p>
+<p>SPRITES in a PWAD _ARE_ supported by the 'addfile' console command
+(loading a PWAD file in the game world). This is useful for testing
+purposes.</p>
 
-It is not needed anymore to append the missing sprites in a pwad (using your faithful lump editor).
-&gt;&gt; You need only 'S_END' (or SS_END) added after the last sprite in your pwad.
-&gt;&gt; S_START (or SS_START) is not obligatory, but is advised : to clearly separate sprites from skin sprites, and other sections that might redefine the same sprite, but for other uses.
-It's good practice to place S_START and S_END in a pwad though when adding new sprite graphics.
+<p>
+It is not needed anymore to append the missing sprites in a PWAD
+(using your faithful lump editor).
+You need only S_END (or SS_END) added after the last sprite in your PWAD.
+S_START (or SS_START) is not obligatory, but is recommended to clearly
+separate sprites from skin sprites, and other sections that might
+redefine the same sprite, but for other uses.
+It's good practice to place both S_START and S_END in a PWAD when
+adding new sprite graphics.
+</p>
 
-<p>All sprite resources found in a pwad, will replace those loaded before, just like with any other resources. Thus, sprites in a pwad replaces the original sprites of Doom, Doom2 etc; since the original game wad is always the first one.</p>
+<p>
+All sprite resources found in a PWAD will replace those loaded
+before, just like with any other resources. Thus, sprites in a PWAD
+replace the original sprites of Doom, Doom2 etc. since the original
+game IWAD is always the first one loaded.
+</p>
 
-&gt;&gt; If you put S_END, but not S_START, sprites will be searched from the beginning of the pwad, up to the S_END.
+<p>
+If you put S_END, but not S_START, sprites will be searched from the
+beginning of the PWAD, up to the S_END.
 We could get rid of S_END, but the loading of sprites would be less efficient.
+</p>
 
-<p>!&gt; Another reason for section markers (S_START, S_END) : sprite resources are recognized by their first 4 letters. For example player sprites start with 'PLAY'. Suppose you replace the 'PLAYPAL' resource in a pwad, and use sprites in it, if you don't put the S_START, and 'PLAYPAL' is BEFORE the sprites, it will be taken as a sprite since it starts with 'PLAY'.<br />
-Solution: always put S_START/S_END, or put 'PLAYPAL' resource AFTER S_END.</p>
-<p>This is a reason why section markers are still useful.</p>
-<p>&gt;&gt; Even better: you can replace only some frames of a sprite in a pwad: example is replacing PUNGA0, but not PUNGB0, ..this DOES NOT work using sprite renaming with dehacked. So I really encourage you to use sprites in a pwad directly instead of dehacked sprite renaming. This is useful for the rocket for example, where you want to replace only the missile or only the explosion.</p>
+<p>
+Another reason for section markers (S_START, S_END): sprite resources
+are recognized by their first 4 letters. For example player sprites
+start with PLAY. Suppose you replace the PLAYPAL resource in a
+PWAD, and use sprites in it, if you don't put the S_START, and
+PLAYPAL is BEFORE the sprites, it will be taken as a sprite since it
+starts with PLAY.<br />
+Solution: always use S_START/S_END, or put the PLAYPAL resource after
+S_END.
+</p>
+
+
+<p>
+You can replace only some frames of a sprite in a PWAD,
+for example replacing PUNGA0, but not PUNGB0. this DOES NOT work
+using sprite renaming with DeHackEd. So I really encourage you to use
+sprites in a PWAD directly instead of DeHackEd sprite renaming. This
+is useful for the rocket for example, when you want to replace only
+the missile or only the explosion.</p>
 
 
 
 <h2>Creating Skins</h2>
 
-<p>
-Written by: Denis Fabrice
 
-If you have problems creating Skins wads for Doom Legacy,<br />
-and can't find the answer to your questions in this documentation
-e-mail: see the doomlegacy project at sourceforge.net
+<h3>OVERVIEW</h3>
+
+<p>
+In Doom Legacy, each sprite skin in a PWAD is defined by a lump named S_SKIN.
+It contains an ASCII text file which describes
+the name and properties of the skin.
 </p>
 
-<h3>Create Skins for Doom Legacy.</h3>
-<h3>OVERVIEW:</h3>
-<p>S_SKIN:<br />
--------<br />
-Each skin in a pwad is identified by a 'skin marker': this is<br />
-a resource by the name 'S_SKIN'. The resource contains data in<br />
-the form of a text file, which describes what is replaced by<br />
-the skin, and gives the name of the skin.</p>
-<p>Skin sprites:<br />
--------------<br />
-A skin is basically a sprite replacement for the player avatar.<br />
-ALL the frames of the player sprite must be replaced : this<br />
-includes the normal run, attack, hurt sequences, as well as the<br />
-'normal' death, and the 'explode' death sequences.</p>
-<p>Skin face:<br />
-----------<br />
-Though the status bar face is viewable only by the player who<br />
-uses the skin, it may be replaced in order to be consistent<br />
-with the player character appearance. As soon as we ran some<br />
-tests with a 'Leprechaun' skin, and saw the marine's head in<br />
-the status bar.. we added support for replacing the status bar<br />
-face. Like the sprites, _ALL_ the face graphics need to be<br />
-replaced, if some are not defined, the game will quit.</p>
-<p>Skin sounds:<br />
-------------<br />
-To make it more fun, a skin can have a set of up to 10 sounds<br />
-replaced, these are called the 'skin sounds'. Skin sounds are<br />
-replacements of a set of the original Doom sounds, which are<br />
-given out only by the skin that defines them. All the sounds<br />
-need not be replaced.</p>
-<hr />
-Getting Started:
+<p>
+If you put more than one skin into a WAD file, there are effectively
+multiple resources of the same name S_SKIN. If this is a problem
+you can add any characters after the S_SKIN letters, so that
+your WAD editor doesn't complain. Example: S_SKIN1, S_SKIN2, ...
+Legacy will search only for the first 6 letters.
+</p>
 
-<h4><br />
-S_SKIN resource format:<br />
------------------------</h4>
-<p>The content of S_SKIN is just a simple ASCII text file.</p>
-<p>If you put more than one skin into a wad file, there are effectively<br />
-multiple resources of the same 'S_SKIN' name. If this is a problem<br />
-you can add any characters after the 'S_SKIN' letters, so that<br />
-your wad editor doesn't complain. Example: S_SKIN1, S_SKIN2, ...<br />
-Legacy will search only for the first 6 letters.</p>
-<h4>Format of the text file:</h4>
-<p>// comments start with '//'</p>
+<h4>Skin sprites</h4>
+<p>
+A skin is basically a sprite replacement for the player avatar.
+ALL the frames of the player sprite must be replaced; this
+includes the normal run, attack and hurt sequences, as well as the
+normal death, and the explode death sequences.
+</p>
 
-name = &lt;- give the name of your skin max 16 chars<br />
-NO SPACES!
-sprite = XXXX &lt;- identify the sprites to use for this skin<br />
-4 characters, optional.
-face = XXX &lt;- identify the status bar face graphics to<br />
-use for this skin. MUST be 3 characters
+<h4>Skin face</h4>
+<p>
+Though the status bar face is viewable only by the player who
+uses the skin, it may be replaced in order to be consistent
+with the player character appearance. As soon as we ran some
+tests with a Leprechaun skin, and saw the marine's head in
+the status bar... we added support for replacing the status bar
+face. Like the sprites, _ALL_ the face graphics need to be
+replaced, if some are not defined, the game will quit.
+</p>
 
-<h3><br />
-EXAMPLE</h3>
+<h4>Skin sounds</h4>
+<p>
+To make it more fun, a skin can have a set of up to 10 sounds
+replaced, these are called the 'skin sounds'. Skin sounds are
+replacements of a set of the original Doom sounds, which are
+given out only by the skin that defines them. All the sounds
+need not be replaced.
+</p>
 
+
+<h3>S_SKIN resource format</h3>
+
+<div class="code">// comments start with '//'
+
+name = xxxxxxx &lt;- The name of your skin, max 16 chars, NO SPACES!
+sprite = XXXX &lt;- Identify the sprites to use for this skin, 4 characters, optional.
+face = XXX &lt;- Identify the status bar face graphics to use for this skin. MUST be 3 characters.
+dsORIGNL = dsNEWXXX &lt;- Replace one of the 10 customisable sounds with a new sound.</div>
+
+<h4>EXAMPLE</h4>
+<p>
 An example is better than 1000 words, so here we go.
-Here's a sample of a text file that you could have in the 'S_SKIN' resource:
+Here's a sample of a text file that you could have in the S_SKIN resource:
+</p>
+<div class="code">// Terminator skin by xxx mail me yyy@myhouse.com
+name = terminator
+sprite = TERM
+face = TER
+dsouch = dstmouch
+dsplpain = dstmpain
+dsslop = dstmexpl
+</div>
 
-<p>// Terminator skin by xxx mail me yyy@myhouse.com</p>
 
-
-<table>
-<tr>
-<td>name</td>
-<td>= terminator</td>
-</tr>
-<tr>
-<td>sprite</td>
-<td>= TERM</td>
-</tr>
-<tr>
-<td>face</td>
-<td>= TER</td>
-</tr>
-<tr>
-<td>dsouch</td>
-<td>= dstmouch</td>
-</tr>
-<tr>
-<td>dsplpain</td>
-<td>= dstmpain</td>
-</tr>
-<tr>
-<td>dsslop</td>
-<td>= dstmexpl</td>
-</tr>
-</table>
 <p>Let's study each line one by one:</p>
-<table>
-<tr>
-<th>
-// Terminator skin by xxx mail me yyy@myhouse.com
-</th>
-</tr>
-</table>
-<p>This is just a comment line. Comments start with '//'.<br />
-Use comments to put author information. The comments<br />
-are not displayed anywhere into the game, but they may<br />
-be useful if someone hacks your wad, he/she'll know<br />
+
+<div class="code">// Terminator skin by xxx mail me yyy@myhouse.com</div>
+
+<p>This is just a comment line. Comments start with '//'.
+Use comments to enter author information. The comments
+are not displayed anywhere into the game, but they may
+be useful if someone hacks your WAD, he/she'll know
 where it comes from and who did it.</p>
 
+<div class="code">name = terminator</div>
 
-<table>
-<tr>
-<th>name = terminator</th>
-</tr>
-</table>
-
-This tells that the skin name is 'terminator'.
+<p>
+This tells that the skin name is "terminator".
 The skin name is displayed in the multiplayer-&gt;setup menu.
-It is used by the 'skin' command, in the console. You would<br />
-type 'skin terminator' at the console to change the skin<br />
+It is used by the "skin" command, in the console. You would
+type "skin terminator" at the console to change the skin
 manually, of course it's easier to use the multiplayer menu.
-The skin name must be UNIQUE : if there are two skins in<br />
-a wad with the same name, however different the graphics maybe,
+The skin name must be UNIQUE : if there are two skins in
+a WAD with the same name, however different the graphics maybe,
 only the first skin will be used.
+</p>
 
-<p>The skin name is also displayed in the TEAMPLAY Rankings,<br />
-when using 'teamskins'. Since each team is identified by<br />
-a skin in 'teamskin' mode, the rankings would show like this:</p>
-<p>107 LEPRECHAUNS TEAM<br />
+<p>The skin name is also displayed in the teamplay rankings,
+when using "teamskins". Since each team is identified by
+a skin in teamskin mode, the rankings would show like this:</p>
+
+<p>107 LEPRECHAUNS TEAM<br/>
 98 TERMINATOR TEAM</p>
-<p>As you see, the name of the skin is used as the name of the<br />
-team.</p>
-<p>If you don't specify the name of the skin, it receives a<br />
-name like 'SKIN 1', 'SKIN 2', etc.. not fun.</p>
-<p>*The name can't have spaces in it... for example<br />
-a name like 'blues brothers' will make Legacy quit with<br />
-a message like "unknown 'brothers' keyword". We should fix<br />
+
+<p>As you see, the name of the skin is used as the name of the
+team. If you don't specify the name of the skin, it receives a
+name like SKIN 1, SKIN 2, etc.. not fun.</p>
+
+<p>The name can't have spaces in it... for example
+a name like "blues brothers" will make Legacy quit with
+a message like "unknown 'brothers' keyword". We should fix
 that later.</p>
-<table>
-<tr>
-<th>sprite = TERM</th>
-</tr>
-</table>
-<p>Tells the name of the sprite to use for the skin. Sprites in<br />
-Doom use only 4 letters, the original player graphics sprite<br />
-is 'PLAY'. The line above tells Legacy to look for TERMA1<br />
-instead of PLAYA1, TERMA2A8 instead of PLAYA2A8 etc...</p>
-<p>It is not needed to rename the player sprites like this.<br />
-It is usually much more easy to put all the sprites _JUST AFTER_<br />
+
+<div class="code">sprite = TERM</div>
+
+<p>Tells the name of the sprite to use for the skin. Sprites in
+Doom use only 4 letters, the original player graphics sprite
+is PLAY. The line above tells Legacy to look for TERMA1
+instead of PLAYA1, TERMA2A8 instead of PLAYA2A8 etc.</p>
+
+<p>
+It is usually easiest to put all the sprites right after
 the S_SKIN resource. Example:</p>
-<p>S_SKIN<br />
-TERMA1<br />
-TERMA2A8<br />
-TERMA3A7<br />
-TERMA4A6</p>
-<p>etc...</p>
-<p>Note that if you put the sprites just after S_SKIN, the sprite<br />
-name doesn't matter, Legacy looks for the first sprite name,<br />
-and continues to collect all the frames with the same sprite<br />
-name, until the name has changed, or the end of the wadfile.</p>
 
-You will want to rename the skin sprites only if your wad<br />
+<p>S_SKIN<br/>
+TERMA1<br/>
+TERMA2A8<br/>
+TERMA3A7<br/>
+TERMA4A6<br/>
+etc.</p>
+
+<p>If you put the sprites just after S_SKIN, the sprite
+name doesn't matter, Legacy looks for the first sprite name,
+and continues to collect all the frames with the same sprite
+name, until the name has changed, or the end of the wadfile.
+You will want to rename the skin sprites only if your WAD
 editor requests that all resources have a _unique_ name.
+</p>
 
-
-<p>Since you can use any name for the sprites, even without<br />
-using the 'sprite = xxxx' statement, you will probably need<br />
-this only if you really can't get the sprites ordered just<br />
+<p>Since you can use any name for the sprites, even without
+using the "sprite = XXXX" statement, you will probably need
+this only if you really can't get the sprites ordered just
 after the S_SKIN resource.</p>
 <p>Note: _ALL_ the frames of the player sprites must be replaced.</p>
-<table>
-<tr>
-<th>face = TER</th>
-</tr>
-</table>
 
-All the status bar face graphics resources in Doom wad have<br />
-the name start with 'STF' : STFST01, STFGOD0, STFDEAD, etc...
-This line simply tells _3 LETTERS_ to use in place of 'STF'.
-So in this example Legacy will look for 'TERGOD0' instead of<br />
-'STFGOD0', 'TERST01' instead of 'STFST01', etc...
-Attention : the STPB0-STPB3 resources are not used anymore.
-The STFB1,STFB2,STFB3 resources of the original<br />
-Doom are not used anymore.. Doom Legacy only uses<br />
-STFB0, and remaps the green color to the color<br />
+<div class="code">face = TER</div>
+
+<p>
+All the status bar face graphics resources in Doom WAD have
+a name that starts with STF: STFST01, STFGOD0, STFDEAD, etc.
+This line simply gives the three characters to use in place of STF.
+So in this example Legacy will look for TERGOD0 instead of
+STFGOD0, TERST01 instead of STFST01, etc.
+</p>
+<p>
+The STFB1, STFB2 and STFB3 resources of the original
+Doom are not used anymore. Doom Legacy only uses
+STFB0, and remaps the green color to the color
 of the player, as like it does for sprites.
-Note 1: contrary to the sprites renaming, you MUST use this<br />
+</p>
+<p>
+Contrary to the sprites renaming, you MUST use this
 line in order to change the status bar face graphics.
+You must replace _ALL_ of the status bar face
+graphics, that is, provide a replacement for all
+the resources that start with STF.</p>
 
-<p>Note 2: remember you must replace _ALL_ of the status bar face<br />
-graphics, that is: provide a replacement for all<br />
-the resources that start with 'STF'.</p>
-
-
-<table>
-<tr>
-<th>
-dsouch = dstmouch<br />
-dsplpain = dstmpain<br />
-dsslop = dstmexpl
+<div class="code">dsouch = dstmouch
+dsplpain = dstmpain
+dsslop = dstmexpl</div>
               
-</th>
-</tr>
-</table>
-<p>These lines tell Legacy to use new sounds for this skin in particular,<br />
+<p>These lines tell Legacy to use new sounds for this skin in particular,
 in place of the game's original sounds.</p>
-<table>
-<tr>
-<th>
-<p>Original Sound Name</p>
-</th>
-<th>New Sound Name</th>
-<th>
-<p>Up to 10 sounds can be replaced The sounds are related to the<br />
-player actions:</p>
-</th>
-</tr>
-<tr>
-<td>dsouch</td>
-<td>= dsXXXXXX</td>
-<td>&lt;- The new sound name MUST start with letters 'DS'</td>
-</tr>
-<tr>
-<td>dsplpain</td>
-<td>=</td>
-<td></td>
-</tr>
-<tr>
-<td>dspdiehi</td>
-<td>=</td>
-<td></td>
-</tr>
-<tr>
-<td>dsoof</td>
-<td>=</td>
-<td></td>
-</tr>
-<tr>
-<td>dsslop</td>
-<td>=</td>
-<td></td>
-</tr>
-<tr>
-<td>dspunch</td>
-<td>=</td>
-<td></td>
-</tr>
-<tr>
-<td>dsradio</td>
-<td>=</td>
-<td></td>
-</tr>
-<tr>
-<td>dspldeth</td>
-<td>=</td>
-<td></td>
-</tr>
-<tr>
-<td>dsjump</td>
-<td>=</td>
-<td></td>
-</tr>
-<tr>
-<td>dsouch</td>
-<td>=</td>
-<td></td>
-</tr>
-</table>
 
-
+<p>Up to 10 sounds related to the player actions can be replaced.
+The new sound names MUST start with letters DS.
 Any of the 10 sounds can be replaced, or all.
 The sounds that are not replaced will sound just like the original.
+</p>
 
-<p>For each sound to replace with a new one of course, use: =</p>
+<table class="def">
+<tr><th>Original sound name</th><th>Purpose</th></tr>
+<tr><td>dsplpain</td><td>pain sound</td></tr>
+<tr><td>dspldeth</td><td>death sound</td></tr>
+<tr><td>dspdiehi</td><td>extreme death sound</td></tr>
+<tr><td>dsslop</td><td>gibbing sound</td></tr>
+<tr><td>dsoof</td><td>hitting the ground / missing a key to a locked door</td></tr>
+<tr><td>dsouch</td><td>hitting head on ceiling</td></tr>
+<tr><td>dsnoway</td><td>failed using something</td></tr>
+<tr><td>dsjump</td><td>jumping sound</td></tr>
+<tr><td>dspunch</td><td>punch attack sound</td></tr>
+<tr><td>dsradio</td><td>message sound</td></tr>
+</table>
 
 
-<p>Note: the replacement sound doesn't have to be a new sound, you can<br />
-use any sound from the game. For example, if you create an<br />
-imp skin, you could replace the player sounds with the imp<br />
+<p>Note: the replacement sound doesn't have to be a new sound, you can
+use any sound from the game. For example, if you create an
+imp skin, you could replace the player sounds with the imp
 sounds.</p>
-<hr />
-TECHNICAL BLURB
-<h4>*Skins and sprites in the same pwad</h4>
-<p><br />
-If you have a wad with skins _AND_ other sprite replacements,<br />
-make sure you use S_START, S_END sprite section markers so<br />
-that the skin sprites are not replacing the default player<br />
-sprites, in case you use 'PLAY' for the skin sprites. If the<br />
-PLAYxxxx skin sprites are _outside_ of the sprite section<br />
-markers, they will not be mistaken as the default player<br />
+
+
+<h4>Skins and sprites in the same PWAD</h4>
+<p>
+If you have a WAD with skins _AND_ other sprite replacements,
+make sure you use S_START, S_END sprite section markers so
+that the skin sprites are not replacing the default player
+sprites, in case you use 'PLAY' for the skin sprites. If the
+PLAYxxxx skin sprites are _outside_ of the sprite section
+markers, they will not be mistaken as the default player
 sprites.</p>
-<h4><br />
-*Same resource name on different pwads</h4>
 
-<br />
-To make it clear : Legacy will add skins _WAD PER WAD_. Which<br />
-means it doesn't bother at all if there are resources with the<br />
-same name in different pwads.In fact, Legacy doesn't even bother if you put several markers<br />
-with the same name in a pwad (multiple 'S_SKIN' for example).
-We added support for 'S_SKINxx' where xx can be any character,<br />
-just because some wad utilities don't like multiple resources<br />
+<h4>Same resource name on different PWADs</h4>
+<p>
+To make it clear: Legacy will add skins _WAD PER WAD_. Which
+means it doesn't matter at all if there are resources with the
+same name in different PWADs. In fact, Legacy doesn't even bother if you put several markers
+with the same name in a PWAD (multiple S_SKINs for example).
+We added support for S_SKINxx where xx can be any character,
+just because some WAD utilities don't like multiple resources
 of the same name.
+</p>
 
-<p>You could for example use the same sprite name for several<br />
-skins into _one_ pwad, since they are delimited by skin<br />
+<p>You could for example use the same sprite name for several
+skins in a single PWAD, since they are delimited by skin
 markers (S_SKIN).</p>
 
 
@@ -980,8 +876,8 @@ markers (S_SKIN).</p>
 
 <p>Now in version 1.44 and up.</p>
 
-<p>Create Voodoo Dolls for extra player1 start positions.<br />
-This is necessary for many wads, which use the voodoo dolls for timers<br />
+<p>Create Voodoo Dolls for extra player1 start positions.
+This is necessary for many WADs, which use the voodoo dolls for timers
 and action activators.</p>
 <p>Simply place an (extra player 1 start) in your map.</p>
 <p>The trick is using it in an area where the player or item can be pushed, pulled or teleported into effected areas.</p>
@@ -990,9 +886,16 @@ and action activators.</p>
 <p>Even though similar effects can be done using Fraggle Script and <a href="fsfuncs.html#map_inter">spawning items</a>. The difference is, Voodoo dolls don't require a script and can be implemented via map creation. This makes it easier when you already plan on doing loads of work to your map.</p>
 
 
-<h2 id="wadcontents">Legacy.wad contents</h2>
+<h2 id="wadcontents">legacy.wad contents</h2>
 
-
+<p>
+legacy.wad is the main data file in the Doom Legacy distribution. It
+contains several resources used by the engine, any of which can be
+replaced using PWADs.
+</p>
+<p>
+All the graphics in legacy.wad are in patch format, unless stated otherwise.
+</p>
 
 <table class="def">
 <tr><th>lump</th><th>contents</th></tr>
@@ -1076,11 +979,6 @@ Water splash?
 Other graphics
 </td></tr>
 
-<tr><td>CORONA</td>
-<td>
-Corona luminosity map
-</td></tr>
-
 <tr><td>CREDIT</td>
 <td>
 Credits page
@@ -1120,20 +1018,8 @@ water flat textures, instead of the original 4.
 
 <tr><td>RSKY[1-3]</td>
 <td>
-The sky graphics are now 256x240, not 256x128.
-That's because of the freelook : you are able to look
-higher, thus seeing a part of the sky you couldn't see
-in the original Doom.
-
-Using a taller graphic is better than scaling up the
-original skies, it looks better. However for compatibility,
-Legacy scales up the SKY textures if it finds that they
-are the 'old' small size 256x128.
-
-The bottom 40 lines are under the horizon and not
-normally seen. The lines 100 to 199 are the ones
-you see while looking straight ahead. The top lines
-0-99 are the lines of sky you see when looking up.
+Replacement <a href="#rsky">sky textures</a>, 256x240 pixels (not
+256x128 like the original ones).
 </td></tr>
 
 
@@ -1163,12 +1049,12 @@ more menu patches
 
 
 <tr><td class="note" colspan="2">
-<p>Additional Pic_t graphics</p>
+Additional <a href="#pic_t">pic_t</a> graphics
+</td></tr>
 
-You can also use Lumpy to create pic_t resources, see <a href="res/lumpy.txt">lumpy.txt</a> for more<br />
-about using lumpy. - Update, you should also be able to use <a href="http://www.sbsoftware.com/">Deepsea</a> for pic_t.
-pic_t graphics are used for the following in Doom Legacy.
-
+<tr><td>CORONA</td>
+<td>
+Corona luminosity map
 </td></tr>
 
 <tr><td>CONSBACK</td>
@@ -1190,44 +1076,36 @@ Console rigth border, used with translucent console background MUST BE 200 lines
 </td></tr>
 
 <tr><td class="note" colspan="2">
-Status bar overlay icons
+Status bar overlay icons, <a href="#pic_t">pic_t</a>
 </td></tr>
 
 <tr><td>SBOHEALT</td><td>health (default shows a red cross)</td></tr>
 <tr><td>SBOFRAGS</td><td>frags (default shows a skull)</td></tr>
 <tr><td>SBOARMOR</td><td>armor (default shows a green armor)</td></tr>
-<tr>
-<td>SBOAMMO1</td><td>pistol ammo</td>
-</tr>
-<tr>
-<td>SBOAMMO2</td><td>shotgun ammo</td>
-</tr>
-<tr>
-<td>SBOAMMO3</td><td>chaingun ammo</td>
-</tr>
-<tr>
-<td>SBOAMMO4</td><td>rocket ammo</td>
-</tr>
-<tr>
-<td>SBOAMMO5</td><td>plasma ammo</td>
-</tr>
-<tr>
-<td>SBOAMMO6</td><td>BFG ammo</td>
-</tr>
-<tr>
-<td>SBOAMMO8</td><td>super shotgun ammo</td>
-</tr>
+<tr><td>SBOAMMO1</td><td>pistol ammo</td></tr>
+<tr><td>SBOAMMO2</td><td>shotgun ammo</td></tr>
+<tr><td>SBOAMMO3</td><td>chaingun ammo</td></tr>
+<tr><td>SBOAMMO4</td><td>rocket ammo</td></tr>
+<tr><td>SBOAMMO5</td><td>plasma ammo</td></tr>
+<tr><td>SBOAMMO6</td><td>BFG ammo</td></tr>
+<tr><td>SBOAMMO8</td><td>super shotgun ammo</td></tr>
 </table>
 
 
-<h2 id="links">Editing Links:</h2>
+<h2 id="links">Editing Links</h2>
 
-<p>Older common wad utility's are 'WinTex' version 4.3, by Olivier Montanuy.<br />
-And NWT 'New Wad Tools' version 1.3, by Denis Miller.<br />
-Both programs will allow you to insert new raw data resources into wads.</p>
-<p>Newer more modern graphic/sound Doom Lump editors known as XWE and SlumpED will also work for almost all lump editing variations covered in this documentary.</p>
+<p>
+Common older WAD utilities are WinTex version 4.3, by Olivier Montanuy
+and NWT (New Wad Tools) version 1.3, by Denis Miller.
+Both programs will allow you to insert new raw data resources into WADs.
+</p>
+<p>
+Newer Doom lump editors such as XWE and
+SlumpED will also work for almost all lump editing variations covered
+in this document.
+</p>
 
-<h4>Windows Map editing utilities:</h4>
+<h4>Windows map editing utilities</h4>
 
 <ul>
 <li>
@@ -1242,7 +1120,7 @@ Both programs will allow you to insert new raw data resources into wads.</p>
 <li><a href="http://www.sbsoftware.com/">Deepsea</a></li>
 </ul>
 
-<h4>Windows Lump editing utilities:</h4>
+<h4>Windows lump editing utilities</h4>
 
 <ul>
 <li class="c10">
@@ -1256,7 +1134,7 @@ Both programs will allow you to insert new raw data resources into wads.</p>
 </li>
 </ul>
 
-<h4>Linux/Unix Map and Lump editing utilities:</h4>
+<h4>Linux/Unix map and lump editing utilities</h4>
 
 <ul>
 <li>
@@ -1267,16 +1145,16 @@ Both programs will allow you to insert new raw data resources into wads.</p>
 </li>
 </ul>
 
-<h4>MacOS Map editing utilities:</h4>
+<h4>MacOS map editing utilities</h4>
 
 <ul>
 <li>
-<a href="http://www.teamhellspawn.com/utils/hellmaker12b2.hqx">Hellmaker1.2b2</a>
+<a href="http://www.teamhellspawn.com/utils/hellmaker12b2.hqx">Hellmaker 1.2b2</a>
 </li>
 </ul>
 
 
-<p>Node Builders:</p>
+<h4>Node builders</h4>
 
 <ul>
 <li>
