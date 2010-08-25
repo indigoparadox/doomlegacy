@@ -110,7 +110,7 @@ See
 </tr>
 
 
-<tr><td class="note" colspan="2" id="transmap">
+<tr><td class="note" colspan="2">
 Translucency maps
 </td></tr>
 <tr><td>284 &ndash; 288</td>
@@ -374,32 +374,84 @@ supporting different variations of modifying them, view the following:
 
 <h3>Doom Color Palette</h3>
 
-<p>As like most games Doom uses it's own unique Color Palette for almost all of the games graphics. But mainly for Textures and Sprites.</p>
 <p>
-So say if you make a few new textures in your paint program. They will need to be converted to the proper color index for Doom. Otherwise a 32bit color image will look bad, because its index color number wouldn't be the same.
-To convert the image in our paint program, we use <a href="res/doom.pal">doom.pal</a>, the Doom color palette. Right click to download.
-Heretic also has it's own color palette, for it we use <a href="res/heretic.pal">heretic.pal</a>.
-More modern lump editors such as <a href="http://www.doomworld.com/xwe/">XWE</a> will convert your image to the proper color palette automatically, but it's also suggested that the use of your paint program could be better.
+Like many other older games, Doom used originally 256 color
+paletted graphics. The graphics stored in a WAD do not have real
+color information but palette indices. The engine maps these indices
+to real RGB colors using the palettes defined by the
+<a href="http://doom.wikia.com/wiki/PLAYPAL">PLAYPAL</a>
+lump in the IWAD.
 </p>
 <p>
-Legacy 1.44 does not support hi-res textures or sprites.
-However, Legacy2.0 does!
+So say you want to make a few new textures in your paint program.
+You can either create paletted images using the
+<a href="res/doom.pal">Doom palette</a>, or use
+24/32 bit truecolor images and quantize them to the Doom palette when
+they are done.
+Heretic has its own color palette, available <a href="res/heretic.pal">here</a>.
+More modern lump editors such
+as <a href="http://www.doomworld.com/xwe/">XWE</a> will convert your
+image to the proper color palette automatically, but
+the results will generally be better if you use the correct palette to
+begin with.
+</p>
+<p>
+Legacy 1.44 does not support hi-res or hicolor textures or sprites.
+However, Legacy 2.0 does!
 Please check the <a href="http://doomlegacy.sourceforge.net/">Doom Legacy Web Site</a> for more info on Legacy 2.0.
 </p>
 
 <h3>Colormaps</h3>
 
 <p>
-Colormaps are used to create colored area effects.
-Such as in sector areas. Or a colored fog for the whole level.
-They can be created with a utility called Inkworks.
-Inkworks is a DOS based program which allows you to manipulate the color palette and save as .wad format which contain both PLAYPAL and COLORMAP lumps to merge or insert into your WAD.
-This old way of creating colormaps is somewhat deprecated due to the fact that they only would show up in Software Mode. - Yet, still an option.
+The Doom software renderer uses many different kinds of color mapping tables to
+simulate lighting and color blending effects.
+A <b>colormap</b> is a 256-byte array used to remap the colors inside a palette:
+<div class="code">new_index = colormap[old_index]</div><br/>
+They are used to create colored area effects,
+such as sectors with colored lighting, or a colored fog for the whole level.
 </p>
 <p>
-However for Hardware and Software Modes, they are much easier to create just by using Legacy's Colormap Linetype 282. - and setting a Hex color value in its texture field. When this is done, an actual Colormap lump is not needed.
+Colormaps can be created with a utility called Inkworks.
+Inkworks is a DOS based program which allows you to manipulate the
+color palette and save it in a WAD which contains both PLAYPAL and
+COLORMAP lumps to merge or insert into your WAD.
+This old way of creating colormaps is somewhat deprecated due to the
+fact that they only would show up in software mode. Yet, still an
+option.
+</p>
+<p>
+For both hardware and software modes, the easiest way to simulate
+colormaps is just by using Legacy's Colormap Linetype 282 and setting
+a hexadecimal RGB color value in its texture field.
+When this is done, an actual colormap lump is not needed.
 See <a href="#linedefs">Linedef types</a> for more info.
 </p>
+
+
+<h3 id="lightmap"><span class="keyword">[ADVANCED TOPIC]</span> Lightmaps</h3>
+<p>
+The Doom software renderer uses a set of 34 different colormaps (one
+for each light level plus 2 extra), called a
+<b>lightmap</b>, to simulate different visibility levels.
+The default lightmap is stored in the confusingly named
+<a href="http://doom.wikia.com/wiki/COLORMAP">COLORMAP</a> lump.
+One can also simulate colored lighting and fog using lightmaps.
+</p>
+
+
+<h3 id="transmap"><span class="keyword">[ADVANCED TOPIC]</span> Translucency maps</h3>
+<p>
+A <b>translucency map</b> is a 256-by-256 byte array used for
+selective software translucency, where a background color is seen
+through a translucent foreground:
+<div class="code">new_index = transmap[fg_index][bg_index]</div><br/>
+You can visualize it as a set of 256 colormaps, one for each
+foreground color. Boom (and hence Legacy) uses the lump TRANSMAP as
+the default translucency map.
+</p>
+
+
 
 <h3>Section marker overview</h3>
 <p>
@@ -576,7 +628,18 @@ used in a level.
 Swantbl can be used to create new animations.
 Now you're probably wondering, what the heck is Swantbl?
 </p>
-<p><a href="res/swantbls.zip">Swantbl</a> is a utility that creates SWITCHES and ANIMATED lumps to put in your WAD, used by BOOM and of course Doom Legacy. First you will need 2-4 image framesets for your animation - depending wheater its a flat, a wall, or a switch..They will need to be (named) and in your WAD. And then, by editing the DEFSWANI.dat you add new image frame (names) from Last to First. Then compile it with Swantbl, which then outputs the 2 animation lumps to put in your WAD. More info can be found on the <a href="http://legacywiki.net/index.php/ANIMATED_and_SWITCHES">Wiki</a> about animated textures. And of course the DEFSWANI.dat.</p>
+<p>
+<a href="res/swantbls.zip">Swantbl</a> is a utility that creates
+SWITCHES and ANIMATED lumps to put in your WAD, used by Boom and of
+course Doom Legacy. First you will need 2-4 image framesets for your
+animation - depending wheater its a flat, a wall, or a switch.
+They will need to be (named) and in your WAD. And then, by editing the
+DEFSWANI.dat you add new image frame (names) from Last to
+First. Then compile it with Swantbl, which then outputs the 2
+animation lumps to put in your WAD. More info can be found on
+the <a href="http://legacywiki.net/index.php/ANIMATED_and_SWITCHES">Wiki</a>
+about animated textures. And of course the DEFSWANI.dat.
+</p>
 
 
 <h3 id="pic_t">pic_t graphics</h3>
@@ -905,7 +968,7 @@ Text lumps
 </td></tr>
 <tr><td><a href="../resources/VERSION.txt">VERSION</a></td>
 <td>
-Legacy.wad version string
+legacy.wad version string, must match the engine version
 </td></tr>
 <tr><td><a href="../resources/FS_things.h">THINGS.H</a></td>
 <td>
@@ -920,12 +983,12 @@ End text
 </td></tr>
 
 <tr><td class="note" colspan="2">
-<a href="#fadetable">Fadetables</a> and <a href="#transmap">translucency maps</a>
+<a href="#lightmap">Lightmaps</a> and <a href="#transmap">translucency maps</a>
 </td></tr>
 
 <tr><td>WATERMAP</td>
 <td>
-Boom bluish underwater lightmap/fadetable.
+Boom bluish underwater lightmap.
 </td></tr>
 
 <tr><td>
@@ -946,7 +1009,7 @@ Sounds
 </td></tr>
 
 <tr><td>DSOUCH</td><td>Player hits the ground or a wall.</td></tr>
-<tr><td>DSJUMP</td><td>Player jump.</td></tr>
+<tr><td>DSJUMP</td><td>Player jumps.</td></tr>
 <tr><td>DSFLOUSH</td><td>Walking through water.</td></tr>
 <tr><td>DSGLOOP</td><td>Landing or jumping in water.</td></tr>
 <tr><td>DSSPLASH</td><td>Splash, or getting out of water.</td></tr>
@@ -972,7 +1035,7 @@ Water splash?
 
 <tr><td>TNT1A0</td>
 <td>
-?
+Invisible sprite for invisible mapthings.
 </td></tr>
 
 <tr><td class="note" colspan="2">
@@ -1072,7 +1135,7 @@ background MUST BE 200 lines high, any width (default is 8)
 
 <tr><td>CBRIGHT</td>
 <td>
-Console rigth border, used with translucent console background MUST BE 200 lines high, any width (default is 8)
+Console right border, used with translucent console background MUST BE 200 lines high, any width (default is 8)
 </td></tr>
 
 <tr><td class="note" colspan="2">
