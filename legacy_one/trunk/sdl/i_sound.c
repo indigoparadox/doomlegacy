@@ -113,23 +113,19 @@
 
 #include "qmus2mid.h"
 
-#define W_CacheLumpNum(num) (W_CacheLumpNum)((num),1)
-#define W_CacheLumpName(name) W_CacheLumpNum (W_GetNumForName(name))
-#define PIPE_CHECK(fh) if (broken_pipe) { fclose(fh); fh = NULL; broken_pipe = 0; }
+
 
 #define MIDBUFFERSIZE   128*1024
 
 // The number of internal mixing channels,
-//  the samples calculated for each mixing step,
-//  the size of the 16bit, 2 hardware channel (stereo)
 //  mixing buffer, and the samplerate of the raw data.
 
+#define DOOM_SAMPLERATE 11025 // Hz, Doom sound effects
+
 // Needed for calling the actual sound output.
-#define NUM_CHANNELS            8
-
-#define SAMPLERATE              11025   // Hz
-
-static int samplecount = 512;
+#define NUM_CHANNELS  8     // max. number of simultaneous sounds
+#define SAMPLERATE    22050 // Hz
+#define SAMPLECOUNT   512   // requested audio buffer size (512 means about 46 ms at 11 kHz)
 
 static int lengths[NUMSFX];     // The actual lengths of all sound effects.
 static unsigned int channelstep[NUM_CHANNELS];  // The channel step amount...
@@ -156,8 +152,8 @@ static int channelhandles[NUM_CHANNELS];
 // Used to catch duplicates (like chainsaw).
 static int channelids[NUM_CHANNELS];
 
-// Pitch to stepping lookup, unused.
-static int steptable[256];
+// Pitch to stepping lookup, 16.16 fixed point
+static Sint32 steptable[256];
 
 // Volume lookups.
 static int vol_lookup[128 * 256];
@@ -182,11 +178,6 @@ static boolean soundStarted = false;
 //
 static void *getsfx(const char *sfxname, int *len)
 {
-    unsigned char *sfx;
-    unsigned char *paddedsfx;
-    int i;
-    int size;
-    int paddedsize;
     char name[20] = "\0\0\0\0\0\0\0\0";  // do not leave this to chance [WDJ]
     int sfxlump;
 
@@ -219,21 +210,23 @@ static void *getsfx(const char *sfxname, int *len)
     else
         sfxlump = W_GetNumForName(name);
 
-    size = W_LumpLength(sfxlump);
+    int size = W_LumpLength(sfxlump);
+    byte *sfx = (byte *) W_CacheLumpNum(sfxlump, PU_SOUND);
 
-    sfx = (unsigned char *) W_CacheLumpNum(sfxlump);
-
+    /*
+      // [smite] this seems all unnecessary
     // Pads the sound effect out to the mixing buffer size.
     // The original realloc would interfere with zone memory.
-    paddedsize = ((size - 8 + (samplecount - 1)) / samplecount) * samplecount;
+    int paddedsize = ((size - 8 + (SAMPLECOUNT - 1)) / SAMPLECOUNT) * SAMPLECOUNT;
 
     // Allocate from zone memory.
-    paddedsfx = (unsigned char *) Z_Malloc(paddedsize + 8, PU_STATIC, 0);
+    byte *paddedsfx = (byte *) Z_Malloc(paddedsize + 8, PU_STATIC, 0);
     // This should interfere with zone memory handling,
     //  which does not kick in in the soundserver.
 
     // Now copy and pad.
     memcpy(paddedsfx, sfx, size);
+    int i;
     for (i = size; i < paddedsize + 8; i++)
         paddedsfx[i] = 128;
 
@@ -245,6 +238,10 @@ static void *getsfx(const char *sfxname, int *len)
 
     // Return allocated padded data.
     return (void *) (paddedsfx + 8);
+    */
+
+    *len = size - 8; // skip header
+    return sfx + 8;
 }
 
 //
@@ -322,9 +319,8 @@ static int addsfx(int sfxid, int volume, int step, int seperation)
     channelhandles[slot] = rc = handlenums++;
 
     // Set stepping???
-    // Kinda getting the impression this is never used.
     channelstep[slot] = step;
-    // ???
+    // 16.16 fixed point
     channelstepremainder[slot] = 0;
     // Should be gametic, I presume.
     channelstart[slot] = gametic;
@@ -378,7 +374,7 @@ static int addsfx(int sfxid, int volume, int step, int seperation)
 // Well... To keep compatibility with legacy doom, I have to call this in
 // I_InitSound since it is not called in S_Init... (emanne@absysteme.fr)
 
-void I_SetChannels()
+static void I_SetChannels(void)
 {
     // Init internal lookups (raw data, mixing buffer, channels).
     // This function sets up internal lookups used during
@@ -386,19 +382,17 @@ void I_SetChannels()
     int i;
     int j;
 
-    int *steptablemid = steptable + 128;
-
     if (nosound)
         return;
 
+    double base_step = (double)DOOM_SAMPLERATE / (double)SAMPLERATE;
+
     // This table provides step widths for pitch parameters.
-    // I fail to see that this is currently used.
-    for (i = -128; i < 128; i++)
-        steptablemid[i] = (int) (pow(2.0, (i / 64.0)) * 65536.0);
+    for (i = 0; i < 256; i++)
+      steptable[i] = (Sint32)(base_step * pow(2.0, ((i-128) / 64.0)) * 65536.0);
 
     // Generates volume lookup tables
-    //  which also turn the unsigned samples
-    //  into signed samples.
+    //  which also turn the u8 samples into s16 samples.
     for (i = 0; i < 128; i++)
         for (j = 0; j < 256; j++)
         {
@@ -507,7 +501,7 @@ void I_SubmitSound(void)
 //
 // This function currently supports only 16bit.
 //
-void I_UpdateSound()
+void I_UpdateSound(void)
 {
     /*
        Pour une raison que j'ignore, la version SDL n'appelle jamais
@@ -518,67 +512,54 @@ void I_UpdateSound()
     // Himmel, Arsch und Zwirn
 }
 
-void I_UpdateSound_sdl(void *unused, Uint8 * stream, int len)
+static void I_UpdateSound_sdl(void *unused, Uint8 *stream, int len)
 {
     // Mix current sound data.
     // Data, from raw sound, for right and left.
-    register unsigned int sample;
-    register int dl;
-    register int dr;
-
-    // Pointers in audio stream, left, right, end.
-    signed short *leftout;
-    signed short *rightout;
-    signed short *leftend;
-    // Step in stream, left and right, thus two.
-    int step;
-
-    // Mixing channel index.
-    int chan;
-
     if (nosound)
         return;
 
-    // Left and right channel
-    //  are in audio stream, alternating.
-    leftout = (signed short *) stream + 1;
-    rightout = ((signed short *) stream);
-    step = 2;
+    // Pointers in audio stream, left, right, end.
+    // Left and right channels are multiplexed in the audio stream, alternating.
+    Sint16 *leftout  = (Sint16 *)stream;
+    Sint16 *rightout = leftout + 1;
 
-    // Determine end, for left channel only
-    //  (right channel is implicit).
-    leftend = leftout + samplecount * step;
+    // Step in stream, left and right channels, thus two.
+    int step = 2;
+
+    // first Sint16 at least partially outside the buffer
+    Sint16 *buffer_end = ((Sint16 *)stream) +len/sizeof(Sint16);
 
     // Mix sounds into the mixing buffer.
-    // Loop over step*samplecount,
-    //  that is 512 values for two channels.
-    while (leftout != leftend)
+    while (rightout < buffer_end)
     {
-        // Reset left/right value.
-        dl = *leftout;
-        dr = *rightout;
+      // take the current audio output (incl. music) and mix (add) in our sfx
+      register int dl = *leftout;
+      register int dr = *rightout;
 
         // Love thy L2 chache - made this a loop.
         // Now more channels could be set at compile time
         //  as well. Thus loop those  channels.
+	// Mixing channel index.
+	int chan;
         for (chan = 0; chan < NUM_CHANNELS; chan++)
         {
             // Check channel, if active.
             if (channels[chan])
             {
-                // Get the raw data from the channel.
-                sample = *channels[chan];
+	      // Get the raw data from the channel.
+	      register unsigned int sample = *channels[chan];
                 // Add left and right part
                 //  for this channel (sound)
                 //  to the current data.
                 // Adjust volume accordingly.
                 dl += channelleftvol_lookup[chan][sample];
                 dr += channelrightvol_lookup[chan][sample];
-                // Increment index ???
+		// 16.16 fixed point step forward in the sound data
                 channelstepremainder[chan] += channelstep[chan];
-                // MSB is next sample???
+                // take full steps
                 channels[chan] += channelstepremainder[chan] >> 16;
-                // Limit to LSB???
+                // remainder, save for next round
                 channelstepremainder[chan] &= 65536 - 1;
 
                 // Check whether we are done.
@@ -804,7 +785,7 @@ void I_SetMusicVolume(int volume)
 
 
 
-void I_StartupSound()
+void I_StartupSound(void)
 {
   static SDL_AudioSpec audspec;  // [WDJ] desc name, too many audio in this file
 
@@ -821,7 +802,7 @@ void I_StartupSound()
   audspec.freq = SAMPLERATE;
   audspec.format = AUDIO_S16SYS;
   audspec.channels = 2;
-  audspec.samples = samplecount;
+  audspec.samples = SAMPLECOUNT;
   audspec.callback = I_UpdateSound_sdl;
   I_SetChannels();
 
@@ -890,7 +871,7 @@ void I_StartupSound()
   soundStarted = true;
 
 
-  // TODO this does not belong to the audio interface
+  // [smite] TODO this does not belong in the audio interface, except we need to fill the lengths array... should update S_sfx to include it
   // Initialize external data (all sounds) at start, keep static.
   CONS_Printf("Caching sound data (%d sfx)... ", NUMSFX);
 
@@ -918,7 +899,7 @@ void I_StartupSound()
 }
 
 
-void I_ShutdownSound()
+void I_ShutdownSound(void)
 {
   if (nosound || !soundStarted)
     return;
