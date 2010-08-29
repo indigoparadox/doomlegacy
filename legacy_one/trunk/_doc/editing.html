@@ -27,6 +27,7 @@
 <ul>
 <li><strong>Editing Specs</strong></li>
 <li><a href="#linedefs">Linedef Types</a></li>
+<li><a href="#things">Thing Types</a></li>
 <li><a href="#textures">Palettes, Colormaps and Textures</a></li>
 <li><a href="#sprites">Sprites and Skins</a></li>
 <li><a href="#voodoo">Voodoo Dolls</a></li>
@@ -35,6 +36,10 @@
 <li><a href="boomref.html">Boom Reference</a></li>
 </ul>
 </div>
+
+<!-- TODO
+fontbxxx bigfont menu graphics
+-->
 
 <div class="column">
 <p>
@@ -363,6 +368,53 @@ Instant raise ceiling
 </td>
 </tr>
 </table>
+
+
+<h2 id="things">Thing Types</h2>
+
+<p>
+ Legacy supports up to 64 deathmatch starts.
+ For compatibility with the existing maps, Legacy
+ will use the player starts if all the deathmatch starts
+ in a map are occupied. If all the player starts are
+ occupied (including extended ones), then a dm start
+ chosen randomly will be used.. and players might get
+ stuck together, but this will happen normally only
+ at the beginning of games with maps with few dm starts.
+<p>
+The Doom map format refers to different types of THINGs
+(a.k.a. mapthings, map objects, mobjs) by unsigned 16-bit codes,
+known as DoomEd numbers. Doom and Heretic use
+different numberings, with the number ranges overlapping in some
+places.
+The situation has been made even more complicated by the different
+Doom source ports introducing their own, often conflicting, special THING types.
+</p>
+<p>
+Legacy tries to honor the most common "new" thing types, especially
+those introduced by Boom and SMMU.
+<!-- TODO sound sequences  (ambient/local/sector action) 4000-7999 -->
+</p>
+
+<table class="def">
+<tr><th>THING type</th><th>description</th><th>origin</th></tr>
+<tr><td>4001-4028</td>
+<td>Playerstarts for players 5-32.</td><td>JDS group</td>
+</tr>
+
+<tr><td>5001, 5002</td>
+<td>Point push and pull effects</td><td>Boom</td>
+</tr>
+
+<tr><td>5003</td>
+<td>Camera location</td><td>SMMU</td>
+</tr>
+
+<tr><td>5004</td>
+<td>Path node</td><td>SMMU</td>
+</tr>
+</table>
+
 
 
 <h2 id="textures">Palettes, Colormaps and Textures</h2>
@@ -1226,6 +1278,24 @@ in this document.
 <li>
 <a href="http://glbsp.sourceforge.net/">BSP</a> - Most stable up to date node builder that we know.
 </li>
+</ul>
+
+
+<h4>Standard references</h4>
+
+<p>
+These documents are the current standard references to the inner
+workings of Doom, Boom, Heretic and Hexen.
+Although many of the limitations of the original games have been
+lifted and new features have been added, they are still very useful
+to a Legacy map editor.
+</p>
+
+<ul>
+<li>Matt Fell's <a href="http://www.gamers.org/dEngine/doom/spec/uds.1666.txt">Unofficial Doom specs v1.666</a></li>
+<li>Team TNT's <a href="boomref.html">Boom reference v1.3</a></li>
+<li>Dr Sleep's <a href="hereticspec10.txt">Unofficial Heretic specs v1.0</a></li>
+<li>Ben Morris's <a href="hexenspec09.txt">Hexen specs v0.9</a></li>
 </ul>
 
 <p>If you have questions regarding the WAD tools in particular, please
