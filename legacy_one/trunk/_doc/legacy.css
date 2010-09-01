@@ -140,6 +140,20 @@ table.def td.warning
 }
 
 
+/* definition list */
+dt
+{
+  margin: 0 0 1em 1em;
+  font-weight: bold;
+  color: #AAAAEE;
+}
+
+dd
+{
+  margin: 0 0 2em 2em;
+}
+
+
 /* horizontal list */
 ul.horizontal li
 {
@@ -169,7 +183,7 @@ div.floatbox ul
   position: relative;
 }
 
-div.floatbox li
+div.floatbox ul > li
 {
   margin: 0;
   padding: 0;
