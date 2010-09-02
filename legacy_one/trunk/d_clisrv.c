@@ -1063,7 +1063,7 @@ void CL_Reset (void)
     //D_StartTitle ();
 }
 
-void Command_GetPlayerNum(void)
+void Command_PlayerInfo(void)
 {
     int i;
 
@@ -1192,7 +1192,7 @@ void D_ClientServerInit (void)
     // for dedicated server
     dedicated=M_CheckParm("-dedicated")!=0;
     
-    COM_AddCommand("getplayernum",Command_GetPlayerNum);
+    COM_AddCommand("playerinfo",Command_PlayerInfo);
     COM_AddCommand("kick",Command_Kick);
     COM_AddCommand("connect",Command_connect);
 

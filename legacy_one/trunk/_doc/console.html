@@ -551,14 +551,10 @@ down (backward), and look down when moving mouse forward.
 Enable/disable mouse y-axis for forward/backward movement.
 </td></tr>
 
-<tr><td>mousesensx</td><td>int</td>
+<tr><td>mousesensx<br/>
+mousesensy</td><td>int</td>
 <td>
-Sets the mouse sensitivity in the x direction.
-</td></tr>
-
-<tr><td>mousesensy</td><td>int</td>
-<td>
-Sets the mouse sensitivity in the y direction.
+Sets the mouse sensitivity in the x and y directions.
 </td></tr>
 </table>
 
@@ -582,17 +578,6 @@ assignations.
 <td>
 Choose the port number of the secondary mouse for the
 splitscreenplayer between COM1 to COM4.
-</td></tr>
-
-<tr><td>use_joystick</td><td>bool</td>
-<td>
-Enable/disable joystick support.
-</td></tr>
-
-
-<tr><td>joystickfreelook</td><td>bool</td>
-<td>
-Enable/disable freelook with the joystick.
 </td></tr>
 </table>
 
@@ -633,6 +618,15 @@ Example:
 <tr><td>setcontrol2 &lt;control&gt; &lt;key1&gt; [&lt;key2&gt;]</td>
 <td>Same as setcontrol but for splitscreenplayer.
 </td></tr>
+
+<tr><td>
+bindjoyaxis [&lt;joynum&gt; &lt;axisnum&gt; [&lt;playernum&gt;
+&lt;control&gt; &lt;scale&gt;]]<br/></td>
+<td>
+Lists, releases or creates joystick axis bindings.
+</td></tr>
+
+
 </table>
 
 
@@ -652,9 +646,11 @@ itself. For obvious reasons, in a netgame only the server can change them.
 
 <tr><td>deathmatch &lt;0|1|2|3&gt;</td><td>int</td>
 <td>
-Set the game type
+Set the game type<br/>
 0: coop<br/>
-1,2,3: different kinds of dm
+1: dm,  placed weapons respawn immediately<br/>
+2: dm, items respawn<br/>
+3: dm, items respawn, placed weapons respawn immediately
 </td></tr>
 
 <tr><td>teamplay &lt;0|1|2&gt;</td><td>int</td>
@@ -684,18 +680,6 @@ not. Real players always have teamdamage on.
 Are the other players visible in the automap? Also determines if you
 can switch to their POV using the spy mode. Usually enabled in deathmatch.
 </td></tr>
-
-<tr><td>exitmode</td><td>int</td>
-<td>
-How do the map exits work?<br/>
-0: Map exits are disabled. This is useful in multiplayer
-so that the only way to exit the level is to reach the timelimit, fraglimit
-or the server giving the exitlevel command.<br/>
-1: Everyone exits the map when an exit is first activated.<br/>
-2: Only the player activating an exit exits the map, others keep playing.<br/>
-3: Nobody exits the map until EVERYONE has reached an exit.
-</td></tr>
-
 
 <tr><td>fraglimit</td><td>int</td>
 <td>
@@ -800,6 +784,12 @@ Choose the time of respawn for the monsters, in seconds.
 <p>The default is 12, from the original Doom.
 </p>
 </td></tr>
+
+<tr><td>playdemospeed</td><td>int</td>
+<td>
+Number of frames to skip for each frame rendered when playing back
+demos. Default is 0.
+</td></tr>
 </table>
 
 
@@ -808,12 +798,40 @@ Choose the time of respawn for the monsters, in seconds.
 
 <p>
 Here we describe the commands that can be used during the
-game. They are also the primary way a dedicated server interacts with
-the game.
+game.
 </p>
 
 <table class="def">
 <tr><th>command</th><th>definition</th></tr>
+
+<tr><td>
+addfile &lt;wadfile.wad&gt;
+</td>
+<td>
+Add a WAD file to the list of resource files used. Like the 
+<a href="legacy.html#file">-file</a> commandline option, but works
+in runtime.
+</td></tr>
+
+<tr><td>map &lt;mapname[.wad]&gt; [-skill &lt;1-5&gt;] [-monsters &lt;0|1&gt;] [-noresetplayers]</td>
+<td>
+Warps all the players to a new map.
+</td></tr>
+
+<tr><td>restartlevel</td>
+<td>
+Restart the current map.
+</td></tr>
+
+<tr><td>exitlevel</td>
+<td>
+Exit current map and go to the intermission screen.
+</td></tr>
+
+<tr><td>pause</td>
+<td>
+Pauses/unpauses the game (or requests a pause from the server).
+</td></tr>
 
 <tr><td>save &lt;slot_number&gt; &lt;description&gt;</td>
 <td>
@@ -825,32 +843,17 @@ Save the game in the given slot, with chosen description.
 Loads a previously saved game.
 </td></tr>
 
-<tr><td>exitlevel</td>
+<tr><td>
+exitgame
+</td>
 <td>
-Exits current level and go to the intermision screen.
-</td></tr>
-
-<tr><td>restartlevel</td>
-<td>
-Restart the current level.
-</td></tr>
-
-<tr><td>pause</td>
-<td>
-Pauses/unpauses the game (or requests a pause from the server).
+Closes the current game, goes back to the intro loop.
 </td></tr>
 
 <tr><td>quit</td>
 <td>
 Quits the game without further confirmation.
 </td></tr>
-
-
-<tr><td>version</td>
-<td>
-Shows the game version and build date.
-</td></tr>
-
 
 <tr><td>saveconfig &lt;filename&gt;</td>
 <td>
@@ -869,40 +872,130 @@ For the pro: this is a simple exec command with ".cfg" default.
 Do a 'savegame currentconfigfilename', then a 'loadconfig filename'.
 </td></tr>
 
+
 <tr><td>screenshot</td>
 <td>
 Take a screenshot (like the key F1 in devparm mode).
 </td></tr>
 
-<tr><td>meminfo</td>
+
+<tr><td>kill me | &lt;playername | playernum&gt;</td>
 <td>
-Show the amount of heap, virtual and physical memory
-available. The heap is the memory allocated for the game, and
-you can change it using the <a href="legacy.html#mb">-mb</a> command line parameter.
+Kills players. Everyone can suicide, only the server can kill others.
 </td></tr>
 
-<tr><td>gameinfo</td>
+<tr><td>
+playdemo &lt;demoname[.lmp]&gt;
+</td>
 <td>
-Prints information about the current game.
+Start demo playback. The demos are either lumps in a WAD or external files.
+If the demo name ends with .lmp, read it from an
+external file of that name.
 </td></tr>
 
-<tr><td>mapinfo</td>
+<tr><td>
+stopdemo
+</td>
 <td>
-Prints information about the current map.
+Stop the currently playing demo.
 </td></tr>
 
-<tr><td>players</td>
+<tr><td>
+timedemo &lt;demoname[.lmp]&gt;
+</td>
 <td>
-Prints information about the players.
+Time a demo.
 </td></tr>
 
-<tr><td>frags</td>
+
+<tr><td>
+turbo &lt;boost&gt;
+</td>
 <td>
-Shows the frags table, like in the original Doom intermission.
-It shows the frags count for each player, against each other
-player.
+Set the player movement speed to boost/100 times the original
+value. Boost needs to lie between 10 and 255.
 </td></tr>
 
+<tr><td>noclip</td>
+<td>
+Enables/disables clipping for the console player.
+Like the cheat code <b>idclip</b>.
+</td></tr>
+
+<!--
+<tr><td>fly</td>
+<td>
+Enables/disables fly mode for the console player.
+In the fly mode the player can fly using the <b>jump</b> control.
+</td></tr>
+-->
+
+<tr><td>god</td>
+<td>
+God mode. Just like the cheat <b>iddqd</b>.
+</td></tr>
+
+<tr><td>gimme health | ammo | weapons | armor | keys | map | almostanything...</td>
+<td>
+The cheat à la carte.
+</td></tr>
+
+<tr><td>
+cd on | off | remap | reset | open | 
+info | play &lt;track&gt; | loop &lt;track&gt; |
+stop | pause | resume
+</td>
+<td>
+Play audio CDs. Most of the subcommand should be self-explanatory.<br/>
+<p>
+  reset: Check for a new cd, read the track info. Use after changing
+  the CD.
+  <br/>
+  info: List the tracks on the CD. The track being played is printed
+  in white.
+  <br/>
+  remap: Remap CD tracks. Normally, the game plays the track xx in the
+  map MAPxx, and ExMy corresponds to track number 9*x+y.
+  This command is useful to adapt your favorite cd music
+  to Doom's levels, let's have an example:<br/>
+  <br/>
+  cd remap 5 3 1 4 2<br/>
+  <br/>
+  At map 1, the game will play track 5 etc. The same track number can
+  be also be repeated.
+</p>
+</td></tr>
+</table>
+
+
+<p>Network/multiplayer commands</p>
+
+<table class="def">
+<tr><th>command</th><th>definition</th></tr>
+
+<tr><td>connect &lt;server_ip | server_address&gt; | any | self</td>
+<td>
+Connects to a server to play a netgame. "connect any" starts searching
+for servers and connects to the first one it finds.
+</td></tr>
+
+<tr><td>disconnect</td>
+<td>
+Disconnects from the server.
+</td></tr>
+
+<tr><td id="kick">kick &lt;playername | playernum&gt;</td>
+<td>
+One of the rare pleasures of being the server: Kick somebody out
+of your game!
+</td></tr>
+
+<tr><td>
+addbot
+</td>
+<td>
+Adds a bot (AI player) to the game. You can remove bots from the game using <a href="#kick">kick</a>.
+</td></tr>
 
 <tr><td>say &lt;message&gt;</td>
 <td>
@@ -931,73 +1024,74 @@ Press the chat key, then ALT plus a number key from 0 to 9 to
 send one of the chat messages. Well, just like it has always
 been in Doom.
 </td></tr>
-
-
-
-
-<tr><td>connect &lt;server_ip | server_address&gt; | any</td>
-<td>
-Connects to a server to play a netgame. "connect any" starts searching
-for servers and connects to the first one it finds.
-</td></tr>
-
-<tr><td>disconnect</td>
-<td>
-Disconnects from the server.
-</td></tr>
-
-
-<tr><td>kick &lt;playername | playernum&gt;</td>
-<td>
-One of the rare pleasures of being a server: Kick somebody out
-of your game!
-</td></tr>
-
-<tr><td>kill me | &lt;playername | playernum&gt; | monsters</td>
-<td>
-Kills just about anything.
-</td></tr>
-
-<tr><td>map &lt;number | lumpname&gt; [&lt;ep&gt;]</td>
-<td>
-Warps all the players to a map.<br/>
-ep is the requested entrypoint within the map.
-</td></tr>
-
-
-<tr><td>addfile playdemo demospeed stopdemo recorddemo restartgame resetgame runacs
-t_dumpscript t_runscript t_running addbot</td>
-<td>
-</td></tr>
-
-
-<tr><td>noclip</td>
-<td>
-Enables/disables clipping for the console player.
-Like the cheat code <b>idclip</b>.
-</td></tr>
-
-
-<tr><td>fly</td>
-<td>
-Enables/disables fly mode for the console player.
-In the fly mode the player can fly using the <b>jump</b> control.
-</td></tr>
-
-
-<tr><td>god</td>
-<td>
-God mode. Just like the cheat <b>iddqd</b>.
-</td></tr>
-
-
-
-<tr><td>gimme health | ammo | weapons | armor | keys | map | almostanything...</td>
-<td>
-The cheat à la carte.
-</td></tr>
 </table>
 
+
+<p>
+Informative and debugging commands.
+</p>
+<table class="def">
+<tr><th>command</th><th>definition</th></tr>
+<tr><td>version</td>
+<td>
+Shows the game version and build date.
+</td></tr>
+
+<tr><td>gameinfo</td>
+<td>
+Prints information about the current game.
+</td></tr>
+
+<tr><td>mapinfo</td>
+<td>
+Prints information about the current map.
+</td></tr>
+
+<tr><td>playerinfo</td>
+<td>
+Prints information about the players.
+</td></tr>
+
+<tr><td>meminfo</td>
+<td>
+Show the amount of heap, virtual and physical memory
+available. The heap is the memory allocated for the game, and
+you can change it using the <a href="legacy.html#mb">-mb</a> command line parameter.
+</td></tr>
+
+<tr><td>frags</td>
+<td>
+Shows the frags table, like in the original Doom intermission.
+It shows the frags count for each player, against each other
+player.
+</td></tr>
+
+<tr><td>teamfrags</td>
+<td>
+Shows the frags table for teams.
+</td></tr>
+
+<tr><td>
+fs_dumpscript &lt;scriptnum&gt;
+</td>
+<td>
+Prints the given FS script on the console.
+</td></tr>
+
+<tr><td>
+fs_runscript &lt;scriptnum&gt;
+</td>
+<td>
+Runs the given FS script.
+</td></tr>
+
+<tr><td>
+fs_running
+</td>
+<td>
+Lists all the currently running FS scripts.
+</td></tr>
+</table>
 
 
 
@@ -1006,10 +1100,27 @@ The cheat à la carte.
 <table class="def">
 <tr><th>variable</th><th>type</th><th>definition</th></tr>
 
-<tr><td>servername</td><td>string</td>
+<tr><td>sv_name</td><td>string</td>
 <td>
 This is the name of your server.
 It is displayed on clients' screens when they are searching for servers.
+</td></tr>
+
+<tr><td>sv_public</td><td>bool</td>
+<td>
+If true, your server will announce itself to the master server so that
+it will be visible also outside the local network.
+</td></tr>
+
+<tr><td>sv_allownewplayers</td><td>bool</td>
+<td>
+Allows or disallows the joining of new players to the game.
+</td></tr>
+
+<tr><td>sv_maxplayers</td><td>int</td>
+<td>
+Maximum allowed number of players in the game. Default is 32 so don't
+worry about it.
 </td></tr>
 
 <tr><td>masterserver</td><td>string</td>
@@ -1018,27 +1129,9 @@ The masterserver address used during server search and when
 registering your server.
 </td></tr>
 
-<tr><td>publicserver</td><td>bool</td>
-<td>
-If true, your server will announce itself to the master server so that
-it will be visible also outside the local network.
-</td></tr>
-
-
-<tr><td>allownewplayers</td><td>bool</td>
-<td>
-Allows or disallows the joining of new players to the game.
-</td></tr>
-
-<tr><td>maxplayers</td><td>int</td>
-<td>
-Maximum allowed number of players for the game. Default is 32 so don't
-worry about it.
-</td></tr>
-
-
 <tr><td>netstat</td><td>bool</td>
 <td>
+Print network statistics on the HUD?
 </td></tr>
 </table>
 
@@ -1354,13 +1447,13 @@ CD music volume.
 
 <tr><td>snd_channels</td><td>int</td>
 <td>
-Choose how many sound channels will be used. Usually you will
+Number of sound channels used. Usually you will
 choose a value from 8 to 16, which is enough.
 </td></tr>
 
 <tr><td>stereoreverse</td><td>bool</td>
 <td>
-Reverse the roles of the right and left speakers?
+Reverse the roles of the left and right stereo channels?
 </td></tr>
 
 <tr><td>surround</td><td>bool</td>

@@ -309,7 +309,6 @@ void D_RegisterClientCommands(void)
     COM_AddCommand("setcontrol", Command_Setcontrol_f);
     COM_AddCommand("setcontrol2", Command_Setcontrol2_f);
     COM_AddCommand("bindjoyaxis", Command_BindJoyaxis_f);
-    COM_AddCommand("unbindjoyaxis", Command_UnbindJoyaxis_f);
 
     COM_AddCommand("frags", Command_Frags_f);
     COM_AddCommand("teamfrags", Command_TeamFrags_f);
@@ -872,7 +871,7 @@ void Command_TeamFrags_f(void)
 //
 void Command_Version_f(void)
 {
-  CONS_Printf("%s (" __TIME__ " " __DATE__ ")\n", VERSION_BANNER);
+  CONS_Printf("%s (" __DATE__ " " __TIME__ ")\n", VERSION_BANNER);
 }
 
 //  Quit the game immediately

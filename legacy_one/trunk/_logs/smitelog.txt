@@ -126,3 +126,10 @@ Also removed the -digmusic switch.
 rev 730
 Removed unnecessary code and unwarranted assumptions, fixed a possible
 buffer overflow. Now my sound works again :)
+
+
+*** Renamed consvars and commands
+rev 733
+Some of the console vars and commands have really confusing names
+right now, so a little renaming is in order. To be continued.
+

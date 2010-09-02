@@ -660,7 +660,7 @@ static void COM_Help_f (void)
         }
 
         // variable
-        CONS_Printf("\2\nVariable\n");
+        CONS_Printf("\2\nVariables\n");
         for (cvar=consvar_vars; cvar; cvar = cvar->next)
         {
             CONS_Printf("%s ",cvar->name);

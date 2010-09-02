@@ -566,7 +566,7 @@ void G_SaveKeySetting(FILE *f)
     {
       joybinding_t j = joybindings[i];
       fprintf(f, "bindjoyaxis %d %d %d %d %f\n",
-	      j.playnum, j.joynum, j.axisnum, (int)(j.action), j.scale);
+	      j.joynum, j.axisnum, j.playnum, (int)(j.action), j.scale);
     }
 }
 
@@ -646,7 +646,7 @@ void Command_Setcontrol2_f(void)
 
 
 
-//! Magically converts a console command to a joystick axis binding.
+//! Magically converts a console command to a joystick axis binding. Also releases bindings.
 void Command_BindJoyaxis_f()
 {
   joybinding_t j;
@@ -654,7 +654,9 @@ void Command_BindJoyaxis_f()
 
   int na = COM_Argc();
 
-  if(na == 1) { // Print bindings.
+  if(na == 1)
+  { // Print bindings.
+    CONS_Printf("%d joysticks found.\n", num_joysticks);
     if(num_joybindings == 0) {
       CONS_Printf("No joystick axis bindings defined.\n");
       return;
@@ -662,110 +664,97 @@ void Command_BindJoyaxis_f()
     CONS_Printf("Current axis bindings.\n");
     for(i=0; i<num_joybindings; i++) {
       j = joybindings[i];
-      CONS_Printf("%d %d %d %d %f\n", j.playnum, j.joynum, j.axisnum,
-		  (int)j.action, j.scale);
+      CONS_Printf("%d %d %d %d %f\n", j.joynum, j.axisnum,
+		  j.playnum, (int)j.action, j.scale);
     }
     return;
   }
 
-  if (na < 5)
-    {
-    CONS_Printf("bindjoyaxis [playnum] [joynum] [axisnum] [action] [scale]\n");
+  if (na == 4 || na > 6)
+  {
+    CONS_Printf("bindjoyaxis [joynum] [axisnum] [playnum] [action] [scale]  to bind\n"
+		"bindjoyaxis [joynum] [axisnum]  to unbind\n");
     return;
   }
 
-  j.playnum = atoi(COM_Argv(1));
-  j.joynum  = atoi(COM_Argv(2));
-  j.axisnum = atoi(COM_Argv(3));
-  j.action  = (joyactions_e)(atoi(COM_Argv(4)));
-  if (na == 6)
-    j.scale = atof(COM_Argv(5));
-  else
-    j.scale = 1.0f;
-
-  // Check the validity of the binding.
+  j.joynum  = atoi(COM_Argv(1));
   if(j.joynum < 0 || j.joynum >= num_joysticks) {
-    CONS_Printf("Attempting to bind non-existent joystick %d.\n", j.joynum);
-    return;
-  }
-  if(j.axisnum < 0 || j.axisnum >= I_JoystickNumAxes(j.joynum)) {
-    CONS_Printf("Attempting to bind non-existent axis %d.\n", j.axisnum);
-    return;
-  }
-  if(j.action < 0 || j.action >= num_joyactions) {
-    CONS_Printf("Attempting to bind non-existent action %d.\n", (int)(j.action));
+    CONS_Printf("Attempting to bind/release non-existent joystick %d.\n", j.joynum);
     return;
   }
 
-  // Overwrite existing binding, if any. Otherwise just append.
-  for(i=0; i<num_joybindings; i++) {
-    joybinding_t j2 = joybindings[i];
-    if(j2.joynum == j.joynum && j2.axisnum == j.axisnum) {
-      joybindings[i] = j;
-      CONS_Printf("Joystick binding modified.\n");
+  j.axisnum = (na >= 3) ? atoi(COM_Argv(2)) : -1;
+  if(j.axisnum < -1 || j.axisnum >= I_JoystickNumAxes(j.joynum)) {
+    CONS_Printf("Attempting to bind/release non-existent axis %d.\n", j.axisnum);
+    return;
+  }
+
+  if (na == 3)
+  { // release binding(s)
+    /* Takes one or two parameters. The first one is the joystick number
+       and the second is the axis number. If either is not specified, all
+       values are assumed to match.
+    */
+
+    int num_keep_bindings = 0;
+    joybinding_t keep_bindings[MAX_JOYBINDINGS];
+
+    if(num_joybindings == 0) {
+      CONS_Printf("No bindings to unset.\n");
       return;
     }
-  }
-  // new binding
-  if (num_joybindings < MAX_JOYBINDINGS)
-    {
-      joybindings[num_joybindings++] = j;
-      CONS_Printf("Joystick binding added.\n");
+
+    unsigned int i;
+    for(i=0; i<num_joybindings; i++) {
+      joybinding_t temp = joybindings[i];
+      if((j.joynum == temp.joynum) &&
+	 (j.axisnum == -1 || j.axisnum == temp.axisnum))
+	continue; // We have a binding to prune.
+
+      keep_bindings[num_keep_bindings++] = temp; // keep it
     }
+
+    // We have the new bindings.
+    if (num_keep_bindings == num_joybindings) {
+      CONS_Printf("No bindings matched the parameters.\n");
+      return;
+    }
+
+    // replace the bindings
+    num_joybindings = num_keep_bindings;
+    for(i=0; i<num_keep_bindings; i++)
+      joybindings[i] = keep_bindings[i];
+  }
   else
-    ;
-}
+  { // create a binding
+    j.playnum = atoi(COM_Argv(3));
+    j.action  = (joyactions_e)(atoi(COM_Argv(4)));
+    if (na == 6)
+      j.scale = atof(COM_Argv(5));
+    else
+      j.scale = 1.0f;
 
-//! Unbind the specified joystick axises.
-/*! Takes zero to two parameters. The first one is the joystick number
-  and the second is the axis number. If either is not specified, all
-  values are assumed to match. When called without parameters, all
-  bindings are removed.
-*/
+    if(j.action < 0 || j.action >= num_joyactions) {
+      CONS_Printf("Attempting to bind non-existent action %d.\n", (int)(j.action));
+      return;
+    }
 
-void Command_UnbindJoyaxis_f()
-{
-  int joynum  = -1;
-  int axisnum = -1;
-  int na = COM_Argc();
-
-  int num_keep_bindings = 0;
-  joybinding_t keep_bindings[MAX_JOYBINDINGS];
-
-  if(num_joybindings == 0) {
-    CONS_Printf("No bindings to unset.\n");
-    return;
+    // Overwrite existing binding, if any. Otherwise just append.
+    for(i=0; i<num_joybindings; i++) {
+      joybinding_t j2 = joybindings[i];
+      if(j2.joynum == j.joynum && j2.axisnum == j.axisnum) {
+	joybindings[i] = j;
+	CONS_Printf("Joystick binding modified.\n");
+	return;
+      }
+    }
+    // new binding
+    if (num_joybindings < MAX_JOYBINDINGS)
+      {
+	joybindings[num_joybindings++] = j;
+	CONS_Printf("Joystick binding added.\n");
+      }
+    else
+      CONS_Printf("Maximum number of joystick bindings reached.\n");
   }
-
-  if(na > 3) {
-    CONS_Printf("unbindjoyaxis [joynum] [axisnum]\n");
-    return;
-  }
-
-  // Does the user specify axis or joy number?
-  if(na > 2)
-    axisnum = atoi(COM_Argv(2));
-  if(na > 1)
-    joynum = atoi(COM_Argv(1));
-
-  unsigned int i;
-  for(i=0; i<num_joybindings; i++) {
-    joybinding_t j = joybindings[i];
-    if((joynum == -1 || joynum == j.joynum) &&
-       (axisnum == -1 || axisnum == j.axisnum))
-      continue; // We have a binding to prune.
-
-    keep_bindings[num_keep_bindings++] = j; // keep it
-  }
-
-  // We have the new bindings.
-  if (num_keep_bindings == num_joybindings) {
-    CONS_Printf("No bindings matched the parameters.\n");
-    return;
-  }
-
-  // replace the bindings
-  num_joybindings = num_keep_bindings;
-  for(i=0; i<num_keep_bindings; i++)
-    joybindings[i] = keep_bindings[i];
 }
