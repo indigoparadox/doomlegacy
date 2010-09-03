@@ -454,7 +454,7 @@ boolean HU_Responder (event_t *ev)
     }
   else
     {
-      char c = ev->data2; // character
+      byte c = ev->data2; // character
 
       // send a macro
       if (altdown)

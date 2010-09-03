@@ -667,7 +667,7 @@ static void COM_Help_f (void)
             i++;
         }
 
-        CONS_Printf("\2\nread console.txt for more or type help <command or variable>\n");
+        CONS_Printf("\2\nRead the console docs for more or type help <command or variable>\n");
 
         if( devparm )
             CONS_Printf("\2Total : %d\n",i);

@@ -462,7 +462,7 @@ void I_DoStartupMouse(void);    //win_sys.c
 // wipegamestate can be set to -1 to force a wipe on the next draw
 // added comment : there is a wipe each change of the gamestate
 gamestate_t wipegamestate = GS_DEMOSCREEN;
-CV_PossibleValue_t screenslink_cons_t[] = { {0, "None"}, {wipe_ColorXForm + 1, "Color"}, {wipe_Melt + 1, "Melt"}, {0, NULL} };
+CV_PossibleValue_t screenslink_cons_t[] = { {0, "None"}, {wipe_ColorXForm + 1, "Crossfade"}, {wipe_Melt + 1, "Melt"}, {0, NULL} };
 consvar_t cv_screenslink = { "screenlink", "2", CV_SAVE, screenslink_cons_t };
 
 void D_Display(void)

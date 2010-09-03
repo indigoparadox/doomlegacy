@@ -3740,7 +3740,7 @@ boolean M_Responder (event_t* ev)
 {
     int             ch;
     int             i;
-    static  tic_t   joywait = 0;
+    //static  tic_t   joywait = 0;
     static  tic_t   mousewait = 0;
     static  int     mousey = 0;
     static  int     lasty = 0;

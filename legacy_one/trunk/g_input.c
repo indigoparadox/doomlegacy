@@ -110,7 +110,7 @@ typedef struct {
     int clicks;
 } dclick_t;
 static  dclick_t  mousedclicks[MOUSEBUTTONS];
-static  dclick_t  joydclicks[JOYBUTTONS];
+//static  dclick_t  joydclicks[JOYBUTTONS];
 
 
 
