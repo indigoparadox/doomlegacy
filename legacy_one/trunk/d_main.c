@@ -330,8 +330,8 @@ const int  REVISION = 0;   // for bugfix releases, should not affect compatibili
 const char VERSIONSTRING[] = "alpha1 (rev " SVN_REV ")";
 char VERSION_BANNER[80];
 
-// [WDJ] change this if legacy.dat is changed
-// Legacy 144 still uses legacy.dat version 142
+// [WDJ] change this if legacy.wad is changed
+// Legacy 144 still uses legacy.wad version 142
 static int min_wadversion = 142;
 
 
@@ -391,9 +391,9 @@ int   legacyhome_len;
 
 #ifdef __MACH__
 //[segabor]: for Mac specific resources
-extern char mac_legacy_wad[FILENAME_SIZE];    //legacy.dat in Resources
-extern char mac_md2_wad[FILENAME_SIZE];		//md2.dat in Resources
-extern char mac_user_home[FILENAME_SIZE];		//for config and savegames
+extern char mac_legacy_wad[FILENAME_SIZE];  // legacy.wad in Resources
+extern char mac_md2_wad[FILENAME_SIZE];	    // md2.wad in Resources
+extern char mac_user_home[FILENAME_SIZE];   // for config and savegames
 #endif
 
 //
@@ -1318,11 +1318,11 @@ void IdentifyVersion()
     // and... Doom LEGACY !!! :)
     char *legacywad;
 #ifdef __MACH__
-    //[segabor]: on Mac OS X legacy.dat is within .app folder
+    //[segabor]: on Mac OS X legacy.wad is within .app folder
     legacywad = mac_legacy_wad;
 #else
     legacywad = malloc(strlen(doomwaddir) + 1 + 10 + 1);
-    sprintf(legacywad, "%s/legacy.dat", doomwaddir);
+    sprintf(legacywad, "%s/legacy.wad", doomwaddir);
 #endif
 
     /*
@@ -1500,9 +1500,9 @@ void IdentifyVersion()
     D_AddFile(legacywad);  // So can replace some graphics with Legacy ones.
     if( gamedesc.gameflags & GD_iwad_pref )
     {
-       // Because legacy.dat replaced some things it shouldn't, give the iwad
+       // Because legacy.wad replaced some things it shouldn't, give the iwad
        // preference from both search directions.
-       // Chexquest1: legacy.dat was replacing the green splats, with bloody ones.
+       // Chexquest1: legacy.wad was replacing the green splats, with bloody ones.
        D_AddFile(pathiwad);
     }
     if( gamedesc.support_wad )
@@ -1589,7 +1589,7 @@ void D_CheckWadVersion()
                 "Use -nocheckwadversion to remove this check,\n"
                 "but this can cause Legacy to hang\n",wadfiles[0]->filename,wadversion/100,wadversion%100);
 */
-    // check version, of legacy.dat using version lump
+    // check version, of legacy.wad using version lump
     lump = W_CheckNumForName("version");
     if (lump == -1)
         wadversion = 0; // or less
@@ -1602,14 +1602,18 @@ void D_CheckWadVersion()
         if (l < 128)
         {
             s[l] = '\0';
-            if (sscanf(s, "Doom Legacy WAD V%d.%d", &l, &wadversion) == 2)
+            if (sscanf(s, "Doom Legacy WAD v%d.%d", &l, &wadversion) == 2)
                 wadversion += l * 100;
         }
     }
     if (wadversion < min_wadversion || wadversion > max_wadversion)
     {
-        I_Error("Your legacy.dat file is version %d.%d, you need version %d.%d\n" "Use the legacy.dat that came in the same zip file as this executable.\n" "\n"
-                "Use -nocheckwadversion to remove this check,\n" "but this can cause Legacy to hang\n", wadversion / 100, wadversion % 100, min_wadversion / 100, min_wadversion % 100);
+        I_Error("Your legacy.wad file is version %d.%d, you need version %d.%d\n"
+		"Use the legacy.wad that came in the same archive as this executable.\n"
+		"\n"
+                "Use -nocheckwadversion to remove this check,\n"
+		"but this can cause Legacy to crash.\n",
+		wadversion / 100, wadversion % 100, min_wadversion / 100, min_wadversion % 100);
     }
 }
 

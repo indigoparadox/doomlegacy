@@ -2163,7 +2163,7 @@ boolean PTR_BloodTraverse(intercept_t * in)
 	}
         else
         {
-	    // BLUDC0 from wad or legacy.dat, green splat for chexquest
+	    // BLUDC0 from wad or legacy.wad, green splat for chexquest
             R_AddWallSplat(li, P_PointOnLineSide(bloodspawnpointx, bloodspawnpointy, li), "BLUDC0", z, frac, SPLATDRAWMODE_TRANS);
 	}
         return false;
