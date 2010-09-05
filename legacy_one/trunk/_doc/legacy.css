@@ -4,6 +4,7 @@
   {
     font-family: Helvetica, sans-serif;
     line-height: 1.3;
+    background: #000000 /* url("images/background.png"); */
   }
 }
 
@@ -28,7 +29,6 @@
 body
 {
   font-size: 12pt;
-  background: #000000;
   color: #CCCCCC;
   margin: 0 10% 0 5%;
 }
@@ -41,15 +41,15 @@ h1.tagline
   color: #AAAAAA;
   font-size: 150%;
 }
-
 h2 { color: #89d850; }
 
-
 hr { margin: 2em 0; }
+img { border: none; }
+
+
+/* span-like elements */
 
 b { color: #DDE0DD; }
-
-img { border: none; }
 
 span.keyword
 {
@@ -63,10 +63,24 @@ span.example
   padding: 0 1ex;
 }
 
+span.hilite
+{
+  color: #89d850;
+}
+
+
+/* division-like elements */
+
 p.new
 {
   background: #303070;
   margin: 0 5em 0 0;
+}
+
+div.caption
+{
+  font-style: italic;
+  font-size: 70%;
 }
 
 /* makes things readable on a wide screen */
@@ -153,6 +167,10 @@ dd
   margin: 0 0 2em 2em;
 }
 
+dl.quote dd
+{
+  font-style: italic;
+}
 
 /* horizontal list */
 ul.horizontal li
