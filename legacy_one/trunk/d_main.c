@@ -1654,7 +1654,7 @@ void D_DoomMain()
     if (M_CheckParm("--help") || M_CheckParm("-h"))
     {
       printf("%s\n", legacy);
-      printf("Usage: legacy [-opengl] [-iwad xxx.wad] [-file pwad.wad ...]\n");
+      printf("Usage: doomlegacy [-opengl] [-iwad xxx.wad] [-file pwad.wad ...]\n");
       exit(0);
     }
 

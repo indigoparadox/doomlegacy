@@ -470,15 +470,25 @@ ifdef SVN_ENABLE
 endif
 
 
-wad	:
+
+$(BIN)/wadtool: $(O)/wadtool.o $(O)/md5_cpp.o
+	g++ $(LDFLAGS) $^ -o $@
+
+$(O)/wadtool.o: common/tools/wadtool.cpp
+	g++ $(CFLAGS) -std=c++0x -c $< -o $@
+
+$(O)/md5_cpp.o: md5.c
+	g++ $(CFLAGS) -std=c++0x -c $< -o $@
+
+wad	: wadtool
 ifdef WAD
 	@echo "Building a new legacy.wad using an old version $(WAD)..."
 	if test ! -d ../wad; then mkdir ../wad; fi
 	cd ../wad ; \
-	../bin/wadtool -x $(WAD) ; \
+	$(BIN)/wadtool -x $(WAD) ; \
 	cp ../trunk/resources/* . ; \
-	../bin/wadtool -c legacy.wad legacy.wad.inventory ; \
-	mv legacy.wad ../bin/ ; \
+	$(BIN)/wadtool -c legacy.wad legacy.wad.inventory ; \
+	mv legacy.wad $(BIN) ; \
 	rm *.txt *.h *.lmp
 	@echo "Finished building legacy.wad."
 else

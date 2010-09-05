@@ -118,7 +118,7 @@ int32_t swap_int32( uint32_t x);
 # define LE_SWAP32(x)  (x)
 
 # define BE_SWAP16_FAST(x)  SWAP_INT16_FAST(x)
-# define BE_SWAP32_FAST(x)  SWAP_INT16_FAST(x)
+# define BE_SWAP32_FAST(x)  SWAP_INT32_FAST(x)
 //# define BE_SWAP16(x)  swap_int16(x)
 //# define BE_SWAP32(x)  swap_int32(x)
 
