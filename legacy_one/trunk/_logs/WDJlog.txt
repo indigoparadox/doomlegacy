@@ -1103,3 +1103,10 @@ it clearer which is which.
 patchfile = w58_missed_stuff.patch
 - committed revision 726   by wesley johnson
 Some local renames and comments that belonged with w58 that were missed.
+
+*** w59_whatsnew
+patchfile = w58_whatsnew.patch
+- committed revision 738   by wesley johnson
+Update whatsnew.html with new features, bug fixes, and known bugs from
+my notes.
+Update legacy.html with gamma table.
