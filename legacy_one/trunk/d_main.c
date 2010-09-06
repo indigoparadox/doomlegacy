@@ -331,8 +331,7 @@ const char VERSIONSTRING[] = "alpha1 (rev " SVN_REV ")";
 char VERSION_BANNER[80];
 
 // [WDJ] change this if legacy.wad is changed
-// Legacy 144 still uses legacy.wad version 142
-static int min_wadversion = 142;
+static int min_wadversion = 144;
 
 
 //
@@ -1602,7 +1601,7 @@ void D_CheckWadVersion()
         if (l < 128)
         {
             s[l] = '\0';
-            if (sscanf(s, "Doom Legacy WAD v%d.%d", &l, &wadversion) == 2)
+            if (sscanf(s, "Doom Legacy WAD V%d.%d", &l, &wadversion) == 2)
                 wadversion += l * 100;
         }
     }

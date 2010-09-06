@@ -480,7 +480,7 @@ $(O)/wadtool.o: common/tools/wadtool.cpp
 $(O)/md5_cpp.o: md5.c
 	g++ $(CFLAGS) -std=c++0x -c $< -o $@
 
-wad	: wadtool
+wad	: $(BIN)/wadtool
 ifdef WAD
 	@echo "Building a new legacy.wad using an old version $(WAD)..."
 	if test ! -d ../wad; then mkdir ../wad; fi
