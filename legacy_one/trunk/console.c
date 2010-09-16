@@ -607,7 +607,7 @@ boolean CON_Responder(event_t *ev)
 static char    completion[80];
 static int     comskips,varskips;
 
-    char   *cmd;
+    char *cmd = NULL;
 
     if(chat_on)
         return false; 
