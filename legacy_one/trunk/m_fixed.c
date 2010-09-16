@@ -41,9 +41,6 @@
 
 // Fixme. __USE_C_FIXED__ or something.
 #ifndef USEASM
-#ifdef __WIN32__
-#pragma warning (disable : 4244)
-#endif
 fixed_t FixedMul (fixed_t a, fixed_t b)
 {
     return ((INT64) a * (INT64) b) >> FRACBITS;

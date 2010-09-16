@@ -55,31 +55,15 @@
 #include "d_ticcmd.h"
 #include "d_event.h"
 
-#ifdef __GNUG__
-#pragma interface
-#endif
 
-// See Shutdown_xxx() routines.
 extern byte graphics_started;
-extern byte keyboard_started;
-extern byte sound_started;
-//extern byte music_installed;
-
-/* flag for 'win-friendly' mode used by interface code */
-extern int i_love_bill;
-extern volatile tic_t ticcount;
-
-#ifdef __WIN32__
-extern boolean winnt;
-extern BOOL   bDX0300;
-#endif
 
 
 // system initialization
 void I_SysInit();
 
 // return free and total physical memory in the system
-ULONG I_GetFreeMem(ULONG *total);
+uint64_t I_GetFreeMem(uint64_t *total);
 
 // Called by D_DoomLoop,
 // returns current time in tics.
@@ -139,7 +123,7 @@ void I_RemoveExitFunc (void (*func)());
 int  I_StartupSystem (void);
 void I_ShutdownSystem (void);
 
-void I_GetDiskFreeSpace(int64_t *freespace);
+void I_GetDiskFreeSpace(uint64_t *freespace);
 char *I_GetUserName(void);
 int  I_mkdir(const char *dirname, int unixright);
 

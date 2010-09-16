@@ -116,14 +116,7 @@
 #include "../z_zone.h"
 #include "../v_video.h"
 
-#ifndef LINUX // unix does not need this 19991024 by Kin
-#ifndef __MACOS__
-#include <io.h>
-#endif
-#else
-#define O_BINARY 0
 #include <unistd.h>
-#endif // normalunix
 #include <fcntl.h>
 #include "../i_video.h"  // for rendermode != render_glide
 

@@ -170,10 +170,6 @@
 
 #include "i_video.h"            //rendermode
 
-#ifdef LINUX
-int strupr(char *n); // from dosstr.c
-int strlwr(char *n); // from dosstr.c
-#endif
 
 static void R_InitSkins (void);
 

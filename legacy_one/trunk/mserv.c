@@ -128,8 +128,10 @@
 
 
 #ifdef WIN32
-#include <windows.h>     // socket(),...
+# include <winsock2.h>     // socket(),...
+# include <ws2tcpip.h>    // socklen_t
 #else
+
 #include <unistd.h>
 #ifdef __OS2__
 #include <sys/types.h>
@@ -614,8 +616,12 @@ static int MS_Connect(char *ip_addr, char *str_port, int async)
     if (async) // do asynchronous connection
     {
         int res = 1;
-
+#ifdef WIN32
+	u_long test = 1; // [smite] I have no idea what this type is supposed to be
+        ioctlsocket(socket_fd, FIONBIO, &test);
+#else
         ioctl(socket_fd, FIONBIO, &res);
+#endif
         res = connect(socket_fd, (struct sockaddr *) &addr, sizeof(addr));
         if (res < 0)
         {

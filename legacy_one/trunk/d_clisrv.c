@@ -170,9 +170,7 @@
 
 
 #include <time.h>
-#if defined (__DJGPP__) || defined (LINUX)
 #include <unistd.h>
-#endif
 
 #include "doomdef.h"
 #include "command.h"

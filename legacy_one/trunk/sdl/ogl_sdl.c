@@ -58,10 +58,6 @@
 #include "v_video.h"
 
 
-#ifdef DEBUG_TO_FILE
-HANDLE logstream = -1;
-#endif
-
 // [WDJ] appeared in 143beta_macosx without static, shared
 //   It may be the MAC version of gcc 3.3, so make it conditional on MACOS
 #ifdef __MACOS__

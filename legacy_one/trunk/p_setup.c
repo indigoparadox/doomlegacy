@@ -178,6 +178,8 @@
 //
 //-----------------------------------------------------------------------------
 
+#include <malloc.h>
+
 #include "doomdef.h"
 #include "d_main.h"
 #include "byteptr.h"
@@ -207,10 +209,7 @@
 #include "hu_stuff.h"
 #include "console.h"
 
-#ifdef __WIN32__
-#include "malloc.h"
-#include "math.h"
-#endif
+
 #ifdef HWRENDER
 #include "i_video.h"            //rendermode
 #include "hardware/hw_main.h"
@@ -219,9 +218,7 @@
 
 #include "b_game.h"	//added by AC for acbot
 
-#ifdef LINUX
-int strupr(char *n);
-#endif
+
 
 //
 // MAP related Lookup tables.

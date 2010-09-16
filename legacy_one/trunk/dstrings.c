@@ -84,11 +84,7 @@ char *text[NUMTEXT] = {
     "you can't end a netgame!\n\npress a key.",
     "are you sure you want to end the game?\n\npress y or n.",
 
-#ifdef LINUX
     "%s\n\n(press y to quit Doom Legacy)",
-#else
-    "%s\n\n(press y to quit to dos.)",
-#endif
 
     "High detail",
     "Low detail",
@@ -420,24 +416,15 @@ char *text[NUMTEXT] = {
     "are you sure you want to\nquit this great game?",
     "please don't leave, there's more\ndemons to toast!",
     "let's beat it -- this is turning\ninto a bloodbath!",
-#ifdef LINUX
-    "i wouldn't leave if i were you.\nyour window manager is much worse.",
-    "you're trying to say you like\nlinux better than me, right?",
-#else
-    "i wouldn't leave if i were you.\ndos is much worse.",
-    "you're trying to say you like dos\nbetter than me, right?",
-#endif
+    "i wouldn't leave if i were you.\nyour os is much worse.",
+    "you're trying to say you like your os\nbetter than me, right?",
     "don't leave yet -- there's a\ndemon around that corner!",
     "ya know, next time you come in here\ni'm gonna toast ya.",
     "go ahead and leave. see if i care.",
 
     // QuitDOOM II messages
     "you want to quit?\nthen, thou hast lost an eighth!",
-#ifdef LINUX
     "don't go now, there's a \ndimensional shambler waiting\nat the shell prompt!",
-#else
-    "don't go now, there's a \ndimensional shambler waiting\nat the dos prompt!",
-#endif
     "get outta here and go back\nto your boring programs.",
     "if i were your boss, i'd \n deathmatch ya in a minute!",
     "look, bud. you leave now\nand you forfeit your body count!",

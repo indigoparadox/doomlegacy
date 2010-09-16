@@ -608,7 +608,7 @@ ticcmd_t*       I_BaseTiccmd(void)
 // I_GetTime
 // returns time in 1/TICRATE second tics
 //
-ULONG  I_GetTime (void)
+tic_t I_GetTime(void)
 {
     Uint32        ticks;
     static Uint32 basetime=0;
@@ -747,7 +747,7 @@ void I_ShutdownSystem()
 
 }
 
-void I_GetDiskFreeSpace(int64_t *freespace) {
+void I_GetDiskFreeSpace(uint64_t *freespace) {
 
 #ifdef LINUX
 #ifdef SOLARIS
@@ -763,7 +763,7 @@ void I_GetDiskFreeSpace(int64_t *freespace) {
 #endif
 #endif
 
-#ifdef __WIN32__
+#ifdef WIN_NATIVE_PLACEHOLDER
 
     static MyFunc pfnGetDiskFreeSpaceEx=NULL;
     static boolean testwin95 = false;
@@ -795,7 +795,7 @@ void I_GetDiskFreeSpace(int64_t *freespace) {
 
 #endif
 
-#if !defined (LINUX) && !defined (__WIN32__)
+#if !defined (LINUX) && !defined (WIN_NATIVE_PLACEHOLDER)
     // Dummy for platform independent; 1GB should be enough
     *freespace = 1024*1024*1024;
 #endif
@@ -803,51 +803,35 @@ void I_GetDiskFreeSpace(int64_t *freespace) {
 
 char *I_GetUserName(void)
 {
-#ifdef LINUX
+  static char username[MAXPLAYERNAME];
+  char  *p;
 
-    static char username[MAXPLAYERNAME];
-    char  *p;
-    if((p=getenv("USER"))==NULL)
-        if((p=getenv("user"))==NULL)
-            if((p=getenv("USERNAME"))==NULL)
-                if((p=getenv("username"))==NULL)
-                    return NULL;
-    strncpy(username,p,MAXPLAYERNAME);
-    if( strcmp(username,"")==0 )
-        return NULL;
-    return username;
+#ifdef WIN_NATIVE_PLACEHOLDER
+  ULONG i=MAXPLAYERNAME;
 
-#endif
-
-#ifdef __WIN32__
-
-    static char username[MAXPLAYERNAME];
-    char  *p;
-    int   ret;
-    ULONG i=MAXPLAYERNAME;
-
-    ret = GetUserName(username,&i);
-    if(!ret)
+  int ret = GetUserName(username,&i);
+  if(!ret)
     {
-        if((p=getenv("USER"))==NULL)
-            if((p=getenv("user"))==NULL)
-                if((p=getenv("USERNAME"))==NULL)
-                    if((p=getenv("username"))==NULL)
-                        return NULL;
-        strncpy(username,p,MAXPLAYERNAME);
+#endif
+
+  if ((p = getenv("USER")) == NULL)
+    if ((p = getenv("user")) == NULL)
+      if ((p = getenv("USERNAME")) == NULL)
+	if ((p = getenv("username")) == NULL)
+	  return NULL;
+
+  strncpy(username, p, MAXPLAYERNAME);
+
+#ifdef WIN_NATIVE_PLACEHOLDER
     }
-    if( strcmp(username,"")==0 )
-        return NULL;
-    return username;
-
 #endif
 
-#if !defined (LINUX) && !defined (__WIN32__)
-
-    // dummy for platform independent version
+  if (strcmp(username, "") == 0)
     return NULL;
-#endif
+
+  return username;
 }
+
 
 int  I_mkdir(const char *dirname, int unixright)
 {
@@ -867,7 +851,7 @@ int  I_mkdir(const char *dirname, int unixright)
 #endif
 
 // quick fix for compil
-ULONG I_GetFreeMem(ULONG *total)
+uint64_t I_GetFreeMem(uint64_t *total)
 {
 #ifdef LINUX
     /* LINUX covers all the unix OS's.
@@ -910,8 +894,8 @@ ULONG I_GetFreeMem(ULONG *total)
     /* Linux */
     char buf[1024];    
     char *memTag;
-    ULONG freeKBytes;
-    ULONG totalKBytes;
+    uint64_t freeKBytes;
+    uint64_t totalKBytes;
     int n;
     int meminfo_fd = -1;
 

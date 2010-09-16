@@ -120,6 +120,8 @@
 //
 //-----------------------------------------------------------------------------
 
+#include <malloc.h>
+
 #include "doomdef.h"
 #include "g_game.h"
 #include "i_video.h"
@@ -132,9 +134,6 @@
 #include "p_setup.h" //levelflats
 #include "v_video.h" //pLocalPalette
 
-#ifdef __WIN32__
-#include "malloc.h"
-#endif
 
 // [WDJ] debug flat
 //#define DEBUG_FLAT

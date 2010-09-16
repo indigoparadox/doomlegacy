@@ -55,10 +55,8 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __WIN32__
-#include <unistd.h>
-#endif
 #include <fcntl.h>
+#include <unistd.h>
 
 #include "doomdef.h"
 #include "g_game.h"
@@ -83,9 +81,6 @@
 //
 // FIL_WriteFile
 //
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
 
 boolean FIL_WriteFile ( char const*   name,
                         void*         source,

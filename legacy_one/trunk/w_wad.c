@@ -129,20 +129,9 @@
 //-----------------------------------------------------------------------------
 
 
-// added for linux 19990220 by Kin
-#ifdef LINUX
-#define O_BINARY 0
-#endif
-
-#ifndef __APPLE_CC__
-#ifndef FREEBSD
 #include <malloc.h>
-#endif
-#endif
 #include <fcntl.h>
-#ifndef __WIN32__
 #include <unistd.h>
-#endif
 
 #include "doomdef.h"
 #include "doomtype.h"
@@ -161,10 +150,7 @@
 #include "hardware/hw_main.h"
 #endif
 
-#ifdef LINUX
-int strupr(char *n); // from dosstr.c
-int strlwr(char *n); // from dosstr.c
-#endif
+
 
 //===========================================================================
 //                                                                    GLOBALS

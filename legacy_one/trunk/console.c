@@ -109,12 +109,12 @@
 #include "i_system.h"
 #include "d_main.h"
 
-#ifdef __WIN32__
-#include "win32/win_main.h"
+#ifdef WIN_NATIVE_PLACEHOLDER
 void     I_LoadingScreen ( LPCSTR msg );
 #else
 #include <unistd.h>
 #endif
+
 #ifdef HWRENDER
 #include "hardware/hw_main.h"
 #endif
@@ -978,23 +978,17 @@ void CONS_Printf (const char *fmt, ...)
     vsnprintf(txt, BUF_SIZE, fmt, ap);
     va_end(ap);
 
-    // echo console prints to log file
 #ifdef LOGMESSAGES
-    if (logstream != INVALID_HANDLE_VALUE)
-#ifdef __WIN32__
-        FPrintf (logstream, "%s", txt);     // uses win_dbg.c FPrintf()
-#else
-        write(logstream, txt, strlen(txt));
-#endif
+    // echo console prints to log file
+    if (logstream)
+      fputs(txt, logstream);
 #endif
     DEBFILE(txt);
 
     if (!con_started/* || !graphics_started*/)
     {
-#if !defined( __WIN32__) && !defined( __OS2__)
-        I_OutputMsg ("%s",txt);
-#endif
-        return;
+      I_OutputMsg ("%s",txt);
+      return;
     }
     else
         // write message in con text buffer
@@ -1006,7 +1000,7 @@ void CONS_Printf (const char *fmt, ...)
     // if not in display loop, force screen update
     if (con_startup)
     {
-#if defined( __WIN32__) || defined( __OS2__) 
+#if defined(WIN_NATIVE_PLACEHOLDER) || defined( __OS2__) 
         // show startup screen and message using only 'software' graphics
         // (rendermode may be hardware accelerated, but the video mode is not set yet)
         CON_DrawBackpic (con_backpic, 0, vid.width);    // put console background
@@ -1026,7 +1020,7 @@ void CONS_Printf (const char *fmt, ...)
 //
 void CONS_Error (char *msg)
 {
-#ifdef WIN32
+#ifdef WIN_NATIVE_PLACEHOLDER
     extern  HWND    hWndMain;
     if(!graphics_started)
     {

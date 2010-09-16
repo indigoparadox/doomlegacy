@@ -228,7 +228,7 @@ boolean SendRequestFile(void)
 {
     int   i;
     ULONG totalfreespaceneeded=0;
-    INT64 availablefreespace;
+    uint64_t availablefreespace;
 
     if( M_CheckParm("-nodownload") )
     {
@@ -696,9 +696,6 @@ void nameonly(char *s)
       }
 }
 
-#if defined(LINUX) || defined(__MACOS__)
-#define O_BINARY 0
-#endif
 
 // UNUXED for now
 boolean fileexist(char *filename,time_t time)

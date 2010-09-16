@@ -80,8 +80,6 @@ static Display *dpy     = NULL;
 static Window win       = 0; // metzgermeister: No pointer!
 static XVisualInfo *vis = NULL;
 
-static char rendererString[256] = "Not Probed Yet";
-
 #define MAX_VIDEO_MODES   32
 static  vmode_t     video_modes[MAX_VIDEO_MODES];
 int     oglflags = 0; // FIXME: do we have to handle this under Linux as well?
@@ -267,11 +265,4 @@ EXPORT void HWRAPI( SetPalette ) ( RGBA_t *pal, RGBA_t *gamma )
     }
     // on a changé de palette, il faut recharger toutes les textures
     Flush();
-}
-
-EXPORT char *HWRAPI( GetRenderer ) (void)
-{
-    strcpy(rendererString, glGetString(GL_RENDERER));
-
-    return rendererString;
 }

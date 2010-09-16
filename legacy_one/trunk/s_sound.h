@@ -89,9 +89,6 @@ extern CV_PossibleValue_t soundvolume_cons_t[];
 //part of i_cdmus.c
 extern consvar_t cd_volume;
 extern consvar_t cdUpdate;
-#ifdef LINUX
-extern consvar_t cv_jigglecdvol;
-#endif
 
 #ifdef __MACOS__
 typedef enum

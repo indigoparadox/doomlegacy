@@ -80,9 +80,6 @@ void VID_Pause(int pause);
 
 int   VID_NumModes(void);
 char  *VID_GetModeName(int modenum);
-#ifdef LINUX
-void VID_PrepareModeList(void); // FIXME: hack, we should avoid those #ifdef LINUX
-#endif
 
 void I_UpdateNoBlit (void);
 void I_FinishUpdate (void);

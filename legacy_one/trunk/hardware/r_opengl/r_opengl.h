@@ -103,7 +103,7 @@
 #define DRIVER_STRING "HWRAPI Init(): DooM Legacy OpenGL renderer"
 #endif
 
-#ifndef __WIN32__
+#ifndef WIN32
 typedef unsigned int    DWORD;
 typedef char*           LPCTSTR;
 typedef int             HANDLE;
@@ -128,7 +128,6 @@ void SetStates(void);
 
 extern const GLubyte    *gl_extensions;
 extern RGBA_t           myPaletteData[];
-extern HANDLE           logstream;
 extern GLint            screen_width;
 extern GLint            screen_height;
 extern GLbyte           screen_depth;

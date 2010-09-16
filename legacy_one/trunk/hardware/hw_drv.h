@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2010 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -76,10 +76,6 @@
 #include "hw_md2.h"
 
 
-#if !defined(__WIN32__) && !defined(__MACOS__)
-# define VID_X11 // use GLX to get an OpenGL context   TODO [VB] SDL would probably be the best choice for all of these systems
-# include <GL/glx.h>
-#endif
 
 // Function declaration for exports from the DLL :
 // EXPORT <return-type> HWRAPI(<function-name>) ( <arguments> ) ;
@@ -88,29 +84,32 @@
 // If _CREATE_DLL_ is NOT DEFINED the above declaration translates to :
 // __declspec(dllexport) <return->type> (WINAPI *<function-name>) ( <arguments> ) ;
 
+
+// [smite] I replaced the __WIN32__ macro with WIN_NATIVE_PLACEHOLDER if we ever need such a version.
+// Windows SDL version does not require any of these.
 #ifdef _CREATE_DLL_
-#ifdef __WIN32__
+  #ifdef WIN_NATIVE_PLACEHOLDER
     #ifdef __cplusplus
-    #define EXPORT  extern "C" __declspec( dllexport )
+      #define EXPORT  extern "C" __declspec( dllexport )
     #else
-    #define EXPORT  __declspec( dllexport )
+      #define EXPORT  __declspec( dllexport )
     #endif
     #define HWRAPI(fn)  WINAPI fn
-#else
+  #else
     #ifdef __cplusplus
-    #define EXPORT  extern "C"
+      #define EXPORT  extern "C"
     #else
-    #define EXPORT
+      #define EXPORT
     #endif
     #define HWRAPI(fn)  fn
-#endif   
+  #endif   
 #else // _CREATE_DLL_
-    #define EXPORT      typedef
-#ifdef __WIN32__
+  #define EXPORT      typedef
+  #ifdef WIN_NATIVE_PLACEHOLDER
     #define HWRAPI(fn)  (WINAPI *fn)
-#else
+  #else
     #define HWRAPI(fn)  (*fn)
-#endif
+  #endif
 #endif
 
 
@@ -122,17 +121,21 @@ typedef void (*I_Error_t) (char *error, ...);
 
 EXPORT boolean HWRAPI( Init ) (I_Error_t ErrorFunction) ;
 EXPORT void HWRAPI( Shutdown ) (void) ;
-#ifdef __WIN32__
+
+#ifdef WIN_NATIVE_PLACEHOLDER
 EXPORT void    HWRAPI( GetModeList ) (vmode_t** pvidmodes, int* numvidmodes) ;
-EXPORT void    HWRAPI( SetPalette ) (RGBA_t* pal, RGBA_t *gamma) ;
 #endif
+
 #ifdef VID_X11
 EXPORT Window  HWRAPI( HookXwin ) (Display*,int,int,boolean) ;
-EXPORT void    HWRAPI( SetPalette ) (RGBA_t* pal, RGBA_t *gamma) ;
 #endif
+
 #ifdef __MACOS__
 EXPORT void HWRAPI( SetPalette ) (int*, RGBA_t *gamma);
+#else
+EXPORT void HWRAPI( SetPalette ) (RGBA_t* pal, RGBA_t *gamma);
 #endif
+
 EXPORT void HWRAPI( FinishUpdate ) ( int waitvbl ) ;
 
 EXPORT void HWRAPI( Draw2DLine ) ( F2DCoord * v1, F2DCoord * v2, RGBA_t Color );
@@ -161,11 +164,8 @@ EXPORT void HWRAPI( DrawMD2 ) (int *gl_cmd_buffer, md2_frame_t *frame, FTransfor
 EXPORT void HWRAPI( SetTransform ) (FTransform *transform);
 EXPORT int  HWRAPI( GetTextureUsed ) (void);
 EXPORT int  HWRAPI( GetRenderVersion ) (void);
-
-#ifdef VID_X11 // ifdef to be removed as soon as windoze supports that as well
-// metzgermeister: added for Voodoo detection
 EXPORT char *HWRAPI( GetRenderer ) (void);
-#endif
+
 
 // ==========================================================================
 //                                      HWR DRIVER OBJECT, FOR CLIENT PROGRAM
@@ -176,7 +176,7 @@ EXPORT char *HWRAPI( GetRenderer ) (void);
 struct hwdriver_s {
     Init                pfnInit;
     Shutdown            pfnShutdown;
-#ifdef __WIN32__
+#ifdef WIN_NATIVE_PLACEHOLDER
     GetModeList         pfnGetModeList;
 #endif
 #ifdef VID_X11
@@ -197,9 +197,7 @@ struct hwdriver_s {
     SetTransform        pfnSetTransform;
     GetTextureUsed      pfnGetTextureUsed;
     GetRenderVersion    pfnGetRenderVersion;
-#ifdef VID_X11
     GetRenderer         pfnGetRenderer;
-#endif
 };
 
 extern struct hwdriver_s hwdriver;

@@ -55,11 +55,10 @@
 #ifndef __M_FIXED__
 #define __M_FIXED__
 
+#include <stdlib.h>
+
 #include "doomtype.h"
 
-#ifdef LINUX
- #include <stdlib.h>
-#endif
 
 //
 // Fixed point, 32bit as 16.16.

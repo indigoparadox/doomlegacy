@@ -154,8 +154,9 @@
 #endif // __OS2__
 
 #ifdef __WIN32__
-#include <winsock.h>
-#include <wsipx.h>
+# include <winsock2.h>
+# include <ws2tcpip.h>
+# include <wsipx.h>
 #else
 #if !defined(SCOUW2) && !defined(SCOUW7) && !defined(__OS2__)
 #include <arpa/inet.h>
@@ -168,14 +169,13 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 #include <time.h>
-//#include "d_main.h"
+
 
 #define STD_STRING_LEN 256 // Just some standard length for a char string
 
 #ifdef __DJGPP__
 #include <lsck/lsck.h>
 //#define strerror  lsck_strerror
-
 // ipx not iet supported in libsocket (cut and pasted from wsipx.h (winsock)
 typedef struct sockaddr_ipx {
     short sa_family;
@@ -184,11 +184,10 @@ typedef struct sockaddr_ipx {
     unsigned short sa_socket;
 } SOCKADDR_IPX, *PSOCKADDR_IPX;
 #define NSPROTO_IPX      1000
-
 #endif // djgpp
 
-#ifdef __OS2__
 
+#ifdef __OS2__
 // ipx not iet supported in libsocket (cut and pasted from wsipx.h (winsock)
 #define AF_IPX          23              /* Novell Internet Protocol */
 typedef struct sockaddr_ipx {
@@ -198,8 +197,8 @@ typedef struct sockaddr_ipx {
     unsigned short sa_socket;
 } SOCKADDR_IPX, *PSOCKADDR_IPX;
 #define NSPROTO_IPX      1000
-
 #endif // os2
+
 
 #ifdef LINUX
     #include <sys/time.h>

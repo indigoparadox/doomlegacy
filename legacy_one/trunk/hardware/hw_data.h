@@ -54,9 +54,6 @@
 #ifndef _HWR_DATA_
 #define _HWR_DATA_
 
-#ifdef __WIN32__
-#include <windows.h>
-#endif
 
 #include "../doomdef.h"
 //THIS MUST DISAPPEAR!!!

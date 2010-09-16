@@ -70,11 +70,6 @@
 
 #include "command.h"
 
-#ifdef __WIN32__
-#include <windows.h>
-#else
-#define HWND    void*   //unused in DOS version
-#endif
 
 //added:26-01-98: quickhack for V_Init()... to be cleaned up
 #define NUMSCREENS    4
@@ -121,9 +116,6 @@ typedef struct viddef_s
     int         bpp;             // BYTES per pixel: 1=256color, 2=highcolor
 
     //int         baseratio;       // SoM: Used to get the correct value for lighting walls //Hurdler: not used anymore
-
-    // for Win32 version
-    HWND        WndParent;       // handle of the application's window
 } viddef_t;
 #define VIDWIDTH    vid.width
 #define VIDHEIGHT   vid.height

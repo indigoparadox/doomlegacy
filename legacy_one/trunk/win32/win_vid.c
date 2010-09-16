@@ -386,6 +386,11 @@ void I_FinishUpdate (void)
 }
 
 
+
+// for Win32 version
+static HWND        WndParent;       // handle of the application's window
+
+
 //
 // This is meant to be called only by CONS_Printf() while game startup
 //
@@ -632,6 +637,7 @@ static void WindowMode_Init(void)
     pvidmodes = &specialmodes[0];
     numvidmodes += NUMSPECIALMODES;
 }
+
 
 
 // *************************************************************************************

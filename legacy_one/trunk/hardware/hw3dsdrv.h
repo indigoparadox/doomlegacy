@@ -52,7 +52,7 @@ typedef struct snddev_s
     int     bps;
     
 // Windows specific data
-#ifdef __WIN32__
+#ifdef WIN_NATIVE_PLACEHOLDER
     int     cooplevel;
     HWND    hWnd;
 #endif

@@ -204,15 +204,6 @@
 //-----------------------------------------------------------------------------
 
 
-#ifdef __WIN32__
-#include <windows.h>
-#pragma warning (disable : 4244)
-#endif
-
-#ifdef LINUX
-#include <unistd.h>
-#endif
-
 #include <stdarg.h>
 #include <math.h>
 #include "r_opengl.h"
@@ -237,6 +228,7 @@ float   NEAR_CLIPPING_PLANE =   0.9f;
 //                                                                    GLOBALS
 // **************************************************************************
 
+static char rendererString[256] = "Not Probed Yet";
 
 static  GLuint      NextTexAvail    = FIRST_TEX_AVAIL;
 static  GLuint      tex_downloaded  = 0;
@@ -329,13 +321,13 @@ void DBG_Printf( LPCTSTR lpFmt, ... )
     vsnprintf(str, BUF_SIZE, lpFmt, ap);
     va_end(ap);
 
-#ifdef __WIN32__
+#ifdef WIN_NATIVE_PLACEHOLDER
     DWORD   bytesWritten;
     if( logstream != INVALID_HANDLE_VALUE )
         WriteFile( logstream, str, lstrlen(str), &bytesWritten, NULL );
 #else
-    if( logstream!=-1 )
-        write( logstream, str, strlen(str) );
+    if (logstream)
+      fputs(str, logstream);
 #endif
 
 #endif
@@ -741,14 +733,12 @@ EXPORT void HWRAPI( SetBlend ) ( FBITFIELD PolyFlags )
         }
         if( Xor&PF_Modulated )
         {
-#ifdef LINUX
             if (oglflags & GLF_NOTEXENV)
-            {
+            { // [smite] FIXME this was only for LINUX but why?
                 if ( !(PolyFlags & PF_Modulated) )
                     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
             }
             else
-#endif
             if( PolyFlags & PF_Modulated )
             {   // mix texture colour with Surface->FlatColor
                 glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
@@ -1307,4 +1297,12 @@ EXPORT int  HWRAPI( GetTextureUsed ) (void)
 EXPORT int  HWRAPI( GetRenderVersion ) (void)
 {
     return VERSION;
+}
+
+EXPORT char *HWRAPI( GetRenderer ) (void)
+{
+  strncpy(rendererString, (const char *)glGetString(GL_RENDERER), 255);
+  rendererString[255] = '\0';
+
+  return rendererString;
 }

@@ -3942,7 +3942,7 @@ static unsigned int atohex(char *s)
     char cCol;
     int i;
 
-    if (lstrlen(s) < 6)
+    if (strlen(s) < 6)
         return 0;
 
     iCol = 0;

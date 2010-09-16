@@ -199,9 +199,7 @@
 //
 //-----------------------------------------------------------------------------
 
-#ifndef __WIN32__
 #include <unistd.h>
-#endif
 #include <fcntl.h>
 
 #include "am_map.h"
@@ -2205,27 +2203,9 @@ void M_DrawVideoMode(void)
     // draw tittle
     M_DrawMenuTitle();
 
-#ifdef LINUX
-    VID_PrepareModeList(); // FIXME: hack
-#endif
     vidm_nummodes = 0;
-    nummodes = VID_NumModes ();
-
-#ifdef __WIN32__
-    //faB: clean that later : skip windowed mode 0, video modes menu only shows
-    //     FULL SCREEN modes
-    if (nummodes<1) {
-        // put the windowed mode so that there is at least one mode
-        modedescs[0].modenum = 0;
-        modedescs[0].desc = VID_GetModeName (0);
-        modedescs[0].iscur = 1;
-        vidm_nummodes = 1;
-    }
-    for (i=1 ; i<=nummodes && vidm_nummodes<MAXMODEDESCS ; i++)
-#else
-    // DOS does not skip mode 0, because mode 0 is ALWAYS present
+    nummodes = VID_NumModes();
     for (i=0 ; i<nummodes && vidm_nummodes<MAXMODEDESCS ; i++)
-#endif
     {
         desc = VID_GetModeName (i);
         if (desc)
@@ -2522,7 +2502,11 @@ void M_Dir_delete (int ch)
 }
 
 
-#define USE_FTW
+// [smite] MinGW compatibility
+#ifndef WIN32
+#define USE_FTW 
+#endif
+
 #ifdef USE_FTW
 #include <ftw.h>
 int  ftw_directory_entry( const char *file, const struct stat * sb, int flag )
@@ -2567,8 +2551,6 @@ void M_Get_SaveDir (int choice)
 
 #include <sys/types.h>
 #include <dirent.h>
-#define FILENAME_SIZE 256
-extern char legacyhome[FILENAME_SIZE];
 
 void M_Dir_scroll (int amount)
 {

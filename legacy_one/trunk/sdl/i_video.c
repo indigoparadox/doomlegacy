@@ -95,7 +95,6 @@
 #include "hwsym_sdl.h" // For dynamic referencing of HW rendering functions
 #include "ogl_sdl.h"
 
-void VID_PrepareModeList(void);
 
 // maximum number of windowed modes (see windowedModes[][])
 #define MAXWINMODES (8)
@@ -138,15 +137,13 @@ static       SDL_Surface *vidSurface=NULL;
 #endif
 
 static       SDL_Color    localPalette[256];
-static       SDL_Rect   **modeList=NULL;
+static       SDL_Rect   **modeList = NULL;  // fullscreen video modes
+static       int firstEntry = 0; // first entry in modeList which is not bigger than 1600x1200
 static       Uint8        BitsPerPixel;
 const static Uint32       surfaceFlags = SDL_HWSURFACE|SDL_HWPALETTE|SDL_DOUBLEBUF;
 
-// first entry in the modelist which is not bigger than 1600x1200
-static int firstEntry=0;
 
 // windowed video modes from which to choose from.
-
 static int windowedModes[MAXWINMODES][2] = {
     {MAXVIDWIDTH /*1600*/, MAXVIDHEIGHT/*1200*/},
     {1280, 1024},
@@ -324,15 +321,12 @@ int VID_GetModeForSize(int w, int h) {
     return matchMode;
 }
 
-
-void VID_PrepareModeList(void)
+// [smite] I see no reason to keep this function, should merge it with I_StartupGraphics
+static void VID_PrepareModeList(void)
 {
     int i;
 
-    if(cv_fullscreen.value) // only fullscreen needs preparation
-    {
-        if(-1 != numVidModes)
-        {
+    // only fullscreen needs preparation
             for(i=0; i<numVidModes; i++)
             {
                 if(modeList[i]->w <= MAXVIDWIDTH &&
@@ -342,8 +336,6 @@ void VID_PrepareModeList(void)
                     break;
                 }
             }
-        }
-    }
 
     allow_fullscreen = true;
     return;
@@ -469,6 +461,8 @@ void I_StartupGraphics()
         numVidModes = -1;
 
     //CONS_Printf("Found %d Video Modes\n", numVidModes);
+
+    VID_PrepareModeList();
 
     // default size for startup
     vid.width = BASEVIDWIDTH;
