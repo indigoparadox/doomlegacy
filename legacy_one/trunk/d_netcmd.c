@@ -429,6 +429,7 @@ void D_RegisterClientCommands(void)
     CV_RegisterVar(&cv_scr_depth);
     CV_RegisterVar(&cv_scr_width);
     CV_RegisterVar(&cv_scr_height);
+    CV_RegisterVar(&cv_fuzzymode);
     CV_RegisterVar(&cv_fragsweaponfalling);
 
     // add cheat commands, I'm bored of deh patches renaming the idclev ! :-)

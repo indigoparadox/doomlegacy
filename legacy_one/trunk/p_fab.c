@@ -216,7 +216,7 @@ void Translucency_OnChange(void)
 {
     if( cv_translucency.value==0 )
         reset_translucent = true;
-    if (!fuzzymode)
+    if (!cv_fuzzymode.value)
         P_SetTranslucencies();
     reset_translucent = false;
 }

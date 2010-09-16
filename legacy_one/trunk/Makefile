@@ -77,8 +77,7 @@ endif
   # std=c89, does not support // commments, no inline, no asm
 
 # gcc or g++
-#CC=gcc
-CC=i586-mingw32msvc-gcc
+CC=gcc
 
 # End of User tunable settings
 
