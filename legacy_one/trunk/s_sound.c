@@ -497,7 +497,7 @@ void S_Start(void)
 void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume)
 {
 
-    int sep;
+    int sep = 0;  // compiler
     int pitch;
     int priority;
     sfxinfo_t *sfx;

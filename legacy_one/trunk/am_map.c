@@ -993,7 +993,7 @@ boolean AM_clipMline ( mline_t* ml, fline_t* fl )
     register    int outcode2 = 0;
     register    int outside;
 
-    fpoint_t    tmp;
+    fpoint_t    tmp = {0,0};  // compiler
     int         dx, dy;
 
 #define DOOUTCODE(oc, mx, my) \

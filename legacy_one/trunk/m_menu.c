@@ -2517,7 +2517,7 @@ int  ftw_directory_entry( const char *file, const struct stat * sb, int flag )
         {
 	    // Only want the name after legacyhome
             strncpy( savegamedisp[slotindex].desc, &file[legacyhome_len], SAVESTRINGSIZE-1 );
-            savegamedisp[slotindex].desc[SAVESTRINGSIZE] = '\0';
+            savegamedisp[slotindex].desc[SAVESTRINGSIZE-1] = '\0';
 	}
         slotindex++;
     }
