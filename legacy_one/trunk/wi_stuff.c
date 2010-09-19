@@ -1203,11 +1203,11 @@ static void WI_drawTeamsStats(void)
     //  name is displayed white, when playback demo, you quickly see who's the
     //  view.
     if(cv_teamplay.value==1)
-        whiteplayer = demoplayback ? players[displayplayer].skincolor
-                                   : players[consoleplayer].skincolor;
+        whiteplayer = demoplayback ? displayplayer_ptr->skincolor
+                                   : consoleplayer_ptr->skincolor;
     else
-        whiteplayer = demoplayback ? players[displayplayer].skin
-                                   : players[consoleplayer].skin;
+        whiteplayer = demoplayback ? displayplayer_ptr->skin
+                                   : consoleplayer_ptr->skin;
 
     // count frags for each present player
     scorelines = HU_CreateTeamFragTbl(fragtab,dm_totals,dm_frags);

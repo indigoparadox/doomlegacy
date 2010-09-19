@@ -1193,11 +1193,11 @@ void P_MobjThinker(mobj_t * mobj)
             // cross special lines and pick up things
             if (!P_TryMove(mobj, mobj->player->cmd.x, mobj->player->cmd.y, true))
             {
-                // P_TryMove fail mean cannot change mobj position to requestied position
+                // P_TryMove fail mean cannot change mobj position to requested position
                 // the mobj is blocked by something
-                if (mobj->player - players == consoleplayer)
+                if (mobj->player == consoleplayer_ptr)
                 {
-                    // reset spirit possition
+                    // reset spirit position
                     CL_ResetSpiritPosition(mobj);
 
                     //if(devparm)
@@ -1742,7 +1742,7 @@ void P_SpawnPlayer(mapthing_t * mthing)
     mobj->angle = ANG45 * (mthing->angle / 45);
     if (playernum == consoleplayer)
         localangle = mobj->angle;
-    else if (playernum == secondarydisplayplayer)
+    else if (playernum == displayplayer2)  // player 2
         localangle2 = mobj->angle;
     else if (p->bot)    //added by AC for acbot
         B_SpawnBot(p->bot);

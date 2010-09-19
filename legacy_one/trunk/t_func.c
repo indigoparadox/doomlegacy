@@ -447,7 +447,7 @@ void SF_Tip()
     char *tempstr;
     int strsize = 0;
 
-    if (current_script->trigger->player != &players[displayplayer])
+    if (current_script->trigger->player != displayplayer_ptr)
         return;
 
     for (i = 0; i < t_argc; i++)
@@ -479,7 +479,7 @@ void SF_TimedTip()
 
     tiptime = (intvalue(t_argv[0]) * 35) / 100;
 
-    if (current_script->trigger->player != &players[displayplayer])
+    if (current_script->trigger->player != displayplayer_ptr)
         return;
 
     for (i = 0; i < t_argc; i++)
@@ -535,7 +535,7 @@ void SF_Message()
     char *tempstr;
     int strsize = 0;
 
-    if (current_script->trigger->player != &players[displayplayer])
+    if (current_script->trigger->player != displayplayer_ptr)
         return;
 
     for (i = 0; i < t_argc; i++)
@@ -1249,9 +1249,9 @@ void SF_PlayerProperty()
 
 		case 2:
 			if (intvalue(t_argv[1]))
-				players[consoleplayer].locked = true;
+				consoleplayer_ptr->locked = true;
 			else
-				players[consoleplayer].locked = false;
+				consoleplayer_ptr->locked = false;
 			return;
 
 		default:
@@ -1529,7 +1529,7 @@ void SF_ObjAngle()
 	if(t_argc > 1)
 	{
 		//iori: now able to change the player's angle, not just mobj's
-		if(mo == players[consoleplayer].mo)
+		if(mo == consoleplayer_ptr->mo)
 		{
 			localangle = FixedToAngle(fixedvalue(t_argv[1]));
 		}

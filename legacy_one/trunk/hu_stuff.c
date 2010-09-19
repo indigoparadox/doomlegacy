@@ -215,7 +215,7 @@ void HU_Start(void)
     if (headsupactive)
         HU_Stop();
 
-    plr = &players[consoleplayer];
+    plr = consoleplayer_ptr;
     chat_on = false;
 
     headsupactive = true;
@@ -333,7 +333,7 @@ void Got_Saycmd(char **p,int playernum)
     to=*(*p)++;
 
     if(to==0 || to==consoleplayer || consoleplayer==playernum
-       || (to<0 && ST_SameTeam(&players[consoleplayer],&players[-to])) )
+       || (to<0 && ST_SameTeam(consoleplayer_ptr,&players[-to])) )
          CONS_Printf("\3%s: %s\n", player_names[playernum], *p);
 
     *p+=strlen(*p)+1;
@@ -354,7 +354,7 @@ void HU_Ticker(void)
 
     // display message if necessary
     // (display the viewplayer's messages)
-    pl = &players[displayplayer];
+    pl = displayplayer_ptr;
 
     if (cv_showmessages.value && pl->message)
     {
@@ -363,9 +363,9 @@ void HU_Ticker(void)
     }
 
     // In splitscreen, display second player's messages
-    if (cv_splitscreen.value)
+    if (cv_splitscreen.value && displayplayer2_ptr )
     {
-        pl = &players[secondarydisplayplayer];
+        pl = displayplayer2_ptr;
         if (cv_showmessages.value && pl->message)
         {
             CONS_Printf ("\4%s\n",pl->message);
@@ -986,7 +986,7 @@ void HU_drawDeathmatchRankings (void)
     }
 
     //Fab:25-04-98: when you play, you quickly see your frags because your
-    //  name is displayed white, when playback demo, you quicly see who's the
+    //  name is displayed white, when playback demo, you quickly see who's the
     //  view.
     whiteplayer = demoplayback ? displayplayer : consoleplayer;
 

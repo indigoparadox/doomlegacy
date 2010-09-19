@@ -1030,12 +1030,12 @@ void ST_Drawer ( boolean refresh )
         {
             if( !playerdeadview || cv_splitscreen.value)
             {
-                plyr=&players[displayplayer];
+                plyr= displayplayer_ptr;
                 ST_overlayDrawer ();
             }
-            if( cv_splitscreen.value )
+            if( cv_splitscreen.value && displayplayer2_ptr )
             {
-                plyr=&players[secondarydisplayplayer];
+                plyr= displayplayer2_ptr;
                 ST_overlayDrawer ();
             }
         }

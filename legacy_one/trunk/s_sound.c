@@ -562,14 +562,15 @@ void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume)
     //  and if not, modify the params
 
     //added:16-01-98:changed consoleplayer to displayplayer
-    if (origin && origin != players[displayplayer].mo && !(cv_splitscreen.value && origin == players[secondarydisplayplayer].mo))
+    if (origin && origin != displayplayer_ptr->mo
+	&& !(cv_splitscreen.value && displayplayer2_ptr && origin == displayplayer2_ptr->mo))
     {
         int rc, rc2;
         int volume2 = volume, sep2 /*=sep*/ , pitch2 = pitch;
-        rc = S_AdjustSoundParams(players[displayplayer].mo, origin, &volume, &sep, &pitch);
-        if (cv_splitscreen.value)
+        rc = S_AdjustSoundParams(displayplayer_ptr->mo, origin, &volume, &sep, &pitch);
+        if (cv_splitscreen.value && displayplayer2_ptr)
         {
-            rc2 = S_AdjustSoundParams(players[secondarydisplayplayer].mo, origin, &volume2, &sep2, &pitch2);
+            rc2 = S_AdjustSoundParams(displayplayer2_ptr->mo, origin, &volume2, &sep2, &pitch2);
             if (!rc2)
             {
                 if (!rc)
@@ -580,7 +581,7 @@ void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume)
                 volume = volume2;
                 sep = sep2;
                 pitch = pitch2;
-                if (origin->x == players[secondarydisplayplayer].mo->x && origin->y == players[secondarydisplayplayer].mo->y)
+                if (origin->x == displayplayer2_ptr->mo->x && origin->y == displayplayer2_ptr->mo->y)
                 {
                     sep = NORM_SEP;
                 }
@@ -589,7 +590,7 @@ void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume)
         else if (!rc)
             return;
 
-        if (origin->x == players[displayplayer].mo->x && origin->y == players[displayplayer].mo->y)
+        if (origin->x == displayplayer_ptr->mo->x && origin->y == displayplayer_ptr->mo->y)
         {
             sep = NORM_SEP;
         }
@@ -769,7 +770,7 @@ void S_UpdateSounds(void)
     sfxinfo_t *sfx;
     channel_t *c;
 
-    mobj_t *listener = players[displayplayer].mo;
+    mobj_t *listener = displayplayer_ptr->mo;
 
     if (dedicated)
         return;
@@ -837,15 +838,16 @@ void S_UpdateSounds(void)
 
                 // check non-local sounds for distance clipping
                 //  or modify their params
-                if (c->origin && listener != c->origin && !(cv_splitscreen.value && c->origin == players[secondarydisplayplayer].mo))
+                if (c->origin && listener != c->origin
+		    && !(cv_splitscreen.value && displayplayer2_ptr && c->origin == displayplayer2_ptr->mo))
                 {
                     int audible2;
                     int volume2 = volume, sep2 = sep, pitch2 = pitch;
                     audible = S_AdjustSoundParams(listener, c->origin, &volume, &sep, &pitch);
 
-                    if (cv_splitscreen.value)
+                    if (cv_splitscreen.value && displayplayer2_ptr)
                     {
-                        audible2 = S_AdjustSoundParams(players[secondarydisplayplayer].mo, c->origin, &volume2, &sep2, &pitch2);
+                        audible2 = S_AdjustSoundParams(displayplayer2_ptr->mo, c->origin, &volume2, &sep2, &pitch2);
                         if (audible2 && (!audible || (audible && volume2 > volume)))
                         {
                             audible = true;

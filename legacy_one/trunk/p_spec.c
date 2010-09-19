@@ -2561,7 +2561,7 @@ void P_ProcessSpecialSector(player_t* player, sector_t* sector, boolean instantd
           sector->special = 0;
 
           //faB: useful only in single & coop.
-          if (!cv_deathmatch.value && players-player == displayplayer)
+          if (!cv_deathmatch.value && player == displayplayer_ptr)
               CONS_Printf ("\2You found a secret area!\n");
 
           break;
@@ -2611,7 +2611,7 @@ void P_ProcessSpecialSector(player_t* player, sector_t* sector, boolean instantd
        player->secretcount++;
        sector->special &= ~SECRET_MASK;
 
-       if (!cv_deathmatch.value && players-player == displayplayer)
+       if (!cv_deathmatch.value && player == displayplayer_ptr)
           CONS_Printf ("\2You found a secret area!\n");
 
        if (sector->special<32)

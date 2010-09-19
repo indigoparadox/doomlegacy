@@ -260,7 +260,12 @@ extern  int     viewangleoffset;
 // Player taking events, and displaying.
 extern  int     consoleplayer;
 extern  int     displayplayer;
-extern  int     secondarydisplayplayer; // for splitscreen
+extern  int     displayplayer2; // for splitscreen
+
+// [WDJ] Simplify every test against a player ptr, and splitscreen
+extern  player_t * consoleplayer_ptr;
+extern  player_t * displayplayer_ptr;
+extern  player_t * displayplayer2_ptr;  // NULL when not in use
 
 //added:16-01-98: player from which the statusbar displays the infos.
 extern  int     statusbarplayer;

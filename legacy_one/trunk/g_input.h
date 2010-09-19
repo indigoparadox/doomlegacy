@@ -120,7 +120,7 @@ extern  byte    gamekeydown[NUMINPUTS];
 
 // two key codes (or virtual key) per game control
 extern  int     gamecontrol[num_gamecontrols][2];
-extern  int     gamecontrolbis[num_gamecontrols][2];    // secondary splitscreen player
+extern  int     gamecontrol2[num_gamecontrols][2];    // secondary splitscreen player
 
 // peace to my little coder fingers!
 // check a gamecontrol being active or not

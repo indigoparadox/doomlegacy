@@ -115,14 +115,14 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle)
         if( !thing->player->powers[pw_weaponlevel2] )
             thing->reactiontime = 18;
         // added : absolute angle position
-        if(thing==players[consoleplayer].mo)
+        if(thing== consoleplayer_ptr->mo)
             localangle = angle;
-        if(thing==players[secondarydisplayplayer].mo)
+        if(displayplayer2_ptr && thing== displayplayer2_ptr->mo) // NULL when unused
             localangle2 = angle;
 #ifdef CLIENTPREDICTION2
-        if(thing==players[consoleplayer].mo)
+        if(thing== consoleplayer_ptr->mo)
         {
-            players[consoleplayer].spirit->reactiontime = thing->reactiontime;
+            consoleplayer_ptr->spirit->reactiontime = thing->reactiontime;
             CL_ResetSpiritPosition(thing);
         }
 #endif

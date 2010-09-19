@@ -225,7 +225,7 @@ void SB_Ticker(void)
         {
                 ChainWiggle = M_Random()&1;
         }
-        curHealth = players[consoleplayer].mo->health;
+        curHealth = consoleplayer_ptr->mo->health;
         if(curHealth < 0)
         {
                 curHealth = 0;
@@ -477,7 +477,7 @@ void SB_Drawer( boolean refresh )
         SB_state = -1;
 
 
-    CPlayer = &players[displayplayer];
+    CPlayer = displayplayer_ptr;
     if( !st_statusbar_on )
     {
         if( cv_viewsize.value == 11 )
@@ -494,7 +494,7 @@ void SB_Drawer( boolean refresh )
                 V_CopyRect(0, vid.height-stbarheight, BG, vid.width, stbarheight, 0, vid.height-stbarheight, FG);
             
             V_DrawScaledPatch(st_x, ST_Y, fgbuffer, PatchBARBACK);
-            if(players[consoleplayer].cheats&CF_GODMODE)
+            if(consoleplayer_ptr->cheats&CF_GODMODE)
             {
                 V_DrawScaledPatch_Name(st_x+16, ST_Y+9, fgbuffer, "GOD1");
                 V_DrawScaledPatch_Name(st_x+287, ST_Y+9, fgbuffer, "GOD2");
@@ -610,7 +610,7 @@ void SB_PaletteFlash(void)
         static int sb_palette = 0;
         int palette;
 
-        CPlayer = &players[consoleplayer];
+        CPlayer = consoleplayer_ptr;
 
         if(CPlayer->damagecount)
         {

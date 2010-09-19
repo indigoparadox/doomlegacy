@@ -1731,7 +1731,7 @@ void P_UnArchiveThinkers(void)
                     // added for angle prediction
                     if (consoleplayer == i)
                         localangle = mobj->angle;
-                    if (secondarydisplayplayer == i)
+                    if (displayplayer2 == i)  // player 2
                         localangle2 = mobj->angle;
                 }
                 if (diff & MD_MOVEDIR)
