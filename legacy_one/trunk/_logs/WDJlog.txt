@@ -1116,3 +1116,12 @@ Update console.html with gamma commands.
 patchfile = w60_gcc4.4.4_complaints.patch
 - committed revision 746   by wesley johnson
 Fix some valid gcc 4.4.4 compiler complaints.
+
+*** w60_automap_status
+patchfile = w60_automapstatus.patch
+- committed revision 747   by wesley johnson
+Automap is messed up for some screen sizes and splitscreen.
+Fix bug made in w57_automap_overflow, by restoring original draw sizes.
+Automap does not adapt to splitscreen, nor screen size, and has its own
+status bar adaptation.
+

@@ -624,10 +624,16 @@ void AM_LevelInit(void)
     leveljuststarted = 0;
 
     f_x = f_y = 0;
-    // [WDJ] correct for split screen and reduced screen
+#if 0
+    // [WDJ] Would be correct for split screen and reduced screen size,
+    // but automap does not obey split screen at this time, nor screen size.
     f_w = rdraw_viewwidth;   // was vid.width
     f_h = rdraw_viewheight;  // was vid.height - stbarheight;
-
+#else
+    // Full screen automap, with its own status bar setting.
+    f_w = vid.width;
+    f_h = vid.height - stbarheight;
+#endif
 
     if (rendermode == render_soft)
         AM_drawFline = AM_drawFline_soft;
