@@ -101,6 +101,8 @@ void I_OsPolling (void);
 // for normal input.
 ticcmd_t* I_BaseTiccmd (void);
 
+/// sleeps for the given amount of milliseconds
+void I_Sleep(unsigned int ms);
 
 // Called by M_Responder when quit is selected, return code 0.
 void I_Quit (void);

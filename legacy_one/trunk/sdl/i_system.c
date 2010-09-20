@@ -622,6 +622,11 @@ tic_t I_GetTime(void)
     return (ticks - basetime)*TICRATE/1000;
 }
 
+/// sleeps for a while, giving CPU time to other processes
+void I_Sleep(unsigned int ms)
+{
+  SDL_Delay(ms);
+}
 
 //
 // I_Quit
