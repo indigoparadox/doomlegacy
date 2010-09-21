@@ -112,9 +112,11 @@ ifeq ($(SMIF), SDL)
     OPTS := -DWIN32
     LIBS := -lopengl32 -lglu32 -lwsock32
   else
-    # default is Linux
+    # default is Linux, for all unix SDL
     OPTS := -DLINUX
-    LIBS := -lGL -lGLU
+    LIBS := -lGL -lGLU -L/usr/X11R6/lib
+    # -L/usr/X11R6/lib is needed by Linux 2.4 and others that still have
+    # the GLU libraries in an X11 directory.
   endif
 
   OPTS += -DHWRENDER -DSDL $(shell sdl-config --cflags) -I.
