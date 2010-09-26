@@ -228,7 +228,6 @@ boolean SendRequestFile(void)
 {
     int   i;
     ULONG totalfreespaceneeded=0;
-    uint64_t availablefreespace;
 
     if( M_CheckParm("-nodownload") )
     {
@@ -283,8 +282,8 @@ boolean SendRequestFile(void)
             fileneeded[i].status = FS_REQUESTED;
         }
     WRITECHAR(p,-1);
-    I_GetDiskFreeSpace(&availablefreespace);
-//    CONS_Printf("free byte %d\n",availablefreespace);
+    uint64_t availablefreespace = I_GetDiskFreeSpace();
+    // CONS_Printf("free byte %d\n",availablefreespace);
     if(totalfreespaceneeded>availablefreespace)
         I_Error("To play on this server you should download %dKb\n"
                 "but you have only %dKb freespace on this drive\n",

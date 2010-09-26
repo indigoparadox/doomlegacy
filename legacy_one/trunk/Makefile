@@ -98,6 +98,9 @@ endif
 ifeq ($(SMIF), SDL)
 # SDL is the default system media interface. This is what all modern systems should use.
 
+# name of the executable
+  EXENAME := doomlegacy
+
 # interface directory (where you put all i_*.c)
   INTERFACE=sdl
 
@@ -109,6 +112,7 @@ ifeq ($(SMIF), SDL)
 # platform
   ifdef WIN32
     # Windows (MinGW)
+    EXENAME := $(EXENAME).exe
     OPTS := -DWIN32
     LIBS := -lopengl32 -lglu32 -lwsock32
   else
@@ -127,8 +131,6 @@ ifeq ($(SMIF), SDL)
     LIBS += -lSDL_mixer 
   endif
 
-# name of the exefile
-  EXENAME := doomlegacy
 
 
 #=================================

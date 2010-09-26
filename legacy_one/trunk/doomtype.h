@@ -58,6 +58,7 @@
 
 
 #ifdef WIN32
+#define WINVER 0x0500  // require windows 2k or later
 #include <windows.h>
 #else
 // WIN32 standard headers already define these!

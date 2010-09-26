@@ -148,10 +148,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
 #ifdef __OS2__
-#include <sys/types.h>
-#include <sys/time.h>
+# include <sys/types.h>
+# include <sys/time.h>
 #endif // __OS2__
+
+#include "doomtype.h"
 
 #ifdef __WIN32__
 # include <winsock2.h>

@@ -752,58 +752,34 @@ void I_ShutdownSystem()
 
 }
 
-void I_GetDiskFreeSpace(uint64_t *freespace) {
-
+uint64_t I_GetDiskFreeSpace(void)
+{
 #ifdef LINUX
 #ifdef SOLARIS
-        *freespace = MAXINT;
-        return;
+  goto guess;
+
 #else
-    struct statfs stfs;
-    if(statfs(".",&stfs)==-1) {
-        *freespace = MAXINT;
-        return;
-    }
-    *freespace = stfs.f_bavail*stfs.f_bsize;
-#endif
+  struct statfs stfs;
+  if (statfs(".", &stfs) == -1)
+    goto guess;
+
+  return stfs.f_bavail * stfs.f_bsize;
 #endif
 
-#ifdef WIN_NATIVE_PLACEHOLDER
+#elif defined(WIN32)
+  ULARGE_INTEGER free;
+  if (!GetDiskFreeSpaceEx(NULL, &free, NULL, NULL))
+    goto guess;
 
-    static MyFunc pfnGetDiskFreeSpaceEx=NULL;
-    static boolean testwin95 = false;
+  return ((uint64_t)free.HighPart << 32) + free.LowPart;
 
-    INT64 usedbytes;
-
-    if(!testwin95)
-    {
-        HINSTANCE h = LoadLibraryA("kernel32.dll");
-
-        if (h) {
-            pfnGetDiskFreeSpaceEx = (MyFunc)GetProcAddress(h,"GetDiskFreeSpaceExA");
-            FreeLibrary(h);
-        }
-        testwin95 = true;
-    }
-    if (pfnGetDiskFreeSpaceEx) {
-        if (!pfnGetDiskFreeSpaceEx(NULL,(PULARGE_INTEGER)freespace,(PULARGE_INTEGER)&usedbytes,NULL))
-            *freespace = MAXINT;
-    }
-    else
-    {
-        ULONG SectorsPerCluster, BytesPerSector, NumberOfFreeClusters;
-        ULONG TotalNumberOfClusters;
-        GetDiskFreeSpace(NULL, &SectorsPerCluster, &BytesPerSector,
-                         &NumberOfFreeClusters, &TotalNumberOfClusters);
-        *freespace = BytesPerSector*SectorsPerCluster*NumberOfFreeClusters;
-    }
-
+#else
+  // unknown
+  goto guess;
 #endif
 
-#if !defined (LINUX) && !defined (WIN_NATIVE_PLACEHOLDER)
-    // Dummy for platform independent; 1GB should be enough
-    *freespace = 1024*1024*1024;
-#endif
+guess:
+  return MAXINT;
 }
 
 char *I_GetUserName(void)
@@ -811,10 +787,9 @@ char *I_GetUserName(void)
   static char username[MAXPLAYERNAME];
   char  *p;
 
-#ifdef WIN_NATIVE_PLACEHOLDER
-  ULONG i=MAXPLAYERNAME;
-
-  int ret = GetUserName(username,&i);
+#ifdef WIN32
+  DWORD i = MAXPLAYERNAME;
+  int ret = GetUserName(username, &i);
   if(!ret)
     {
 #endif
@@ -827,7 +802,7 @@ char *I_GetUserName(void)
 
   strncpy(username, p, MAXPLAYERNAME);
 
-#ifdef WIN_NATIVE_PLACEHOLDER
+#ifdef WIN32
     }
 #endif
 
@@ -849,18 +824,13 @@ int  I_mkdir(const char *dirname, int unixright)
 }
 
 
-#ifdef LINUX
-#define MEMINFO_FILE "/proc/meminfo"
-#define MEMTOTAL "MemTotal:"
-#define MEMFREE "MemFree:"
-#endif
 
-// quick fix for compil
+// return free and total system memory in bytes 
 uint64_t I_GetFreeMem(uint64_t *total)
 {
 #ifdef LINUX
-    /* LINUX covers all the unix OS's.
-     */
+  // LINUX covers all the unix-type OS's.
+
 #ifdef FREEBSD
     struct  vmmeter sum;
     kvm_t *kd;
@@ -870,79 +840,76 @@ uint64_t I_GetFreeMem(uint64_t *total)
 	{ NULL }
     };
     if ((kd = kvm_open(NULL, NULL, NULL, O_RDONLY, "kvm_open")) == NULL)
-    {
-	*total = 0L;
-	return 0;
-    }
+      goto guess;
+
     if (kvm_nlist(kd, namelist) != 0)
     {
 	kvm_close (kd);
-	*total = 0L;
-	return 0;
+	goto guess;
     }
     if (kvm_read(kd,namelist[X_SUM].n_value ,&sum, sizeof(sum)) != sizeof(sum))
     {
 	kvm_close (kd);
-	*total = 0L;
-	return 0;
+	goto guess;
     }
     kvm_close (kd);
 
     *total = sum.v_page_count * sum.v_page_size;
     return sum.v_free_count * sum.v_page_size;
+#elif defined(SOLARIS)
+    goto guess;
 #else
-#ifdef SOLARIS
-    /* Just guess */
-    *total = 32 << 20;
-    return   32 << 20;
-#else
-    /* Linux */
+    // Actual Linux
+
+#define MEMINFO_FILE "/proc/meminfo"
+#define MEMTOTAL "MemTotal:"
+#define MEMFREE "MemFree:"
+
     char buf[1024];    
     char *memTag;
     uint64_t freeKBytes;
     uint64_t totalKBytes;
-    int n;
-    int meminfo_fd = -1;
 
-    meminfo_fd = open(MEMINFO_FILE, O_RDONLY);
-    n = read(meminfo_fd, buf, 1023);
+    int meminfo_fd = open(MEMINFO_FILE, O_RDONLY);
+    int n = read(meminfo_fd, buf, 1023);
     close(meminfo_fd);
     
     if(n<0)
-    {
-        // Error
-        *total = 0L;
-        return 0;
-    }
+      goto guess;
     
     buf[n] = '\0';
     if(NULL == (memTag = strstr(buf, MEMTOTAL)))
-    {
-        // Error
-        *total = 0L;
-        return 0;
-    }
+      goto guess;
         
     memTag += sizeof(MEMTOTAL);
     totalKBytes = atoi(memTag);
     
     if(NULL == (memTag = strstr(buf, MEMFREE)))
-    {
-        // Error
-        *total = 0L;
-        return 0;
-    }
+      goto guess;
         
     memTag += sizeof(MEMFREE);
     freeKBytes = atoi(memTag);
     
     *total = totalKBytes << 10;
     return freeKBytes << 10;
-#endif /* SOLARIS */
-#endif /* FREEBSD */
+#endif // Unix flavors
+#elif defined(WIN32)
+  // windows
+
+  MEMORYSTATUSEX statex;
+  statex.dwLength = sizeof(statex);
+  GlobalMemoryStatusEx(&statex);
+
+  *total = statex.ullTotalPhys;
+  return statex.ullAvailPhys;
+
 #else
-    /*  Not Linux.
-     */
-    return 16<<20;
-#endif /* LINUX */
+  // unknown
+  goto guess;
+#endif
+
+ guess:
+  // make a conservative guess
+  *total = 32 << 20;
+  return   32 << 20;
 }

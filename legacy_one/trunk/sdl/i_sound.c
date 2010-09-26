@@ -117,6 +117,8 @@
 
 #define MIDBUFFERSIZE   128*1024
 
+#define MUSIC_FADE_TIME 400 // ms
+
 // The number of internal mixing channels,
 //  mixing buffer, and the samplerate of the raw data.
 
@@ -671,34 +673,38 @@ void I_PlaySong(int handle, int looping)
 
   if (music.mus)
   {
-      Mix_FadeInMusic(music.mus, looping ? -1 : 0, 500);
+      Mix_FadeInMusic(music.mus, looping ? -1 : 1, MUSIC_FADE_TIME);
   }
 #endif
 }
 
 void I_PauseSong(int handle)
 {
-    if (nomusic)
-        return;
+#ifdef HAVE_MIXER
+  if (nomusic)
+    return;
 
-    I_StopSong(handle);
+  Mix_PauseMusic();
+#endif
 }
 
 void I_ResumeSong(int handle)
 {
-    if (nomusic)
-        return;
+#ifdef HAVE_MIXER
+  if (nomusic)
+    return;
 
-    I_PlaySong(handle, true);
+  Mix_ResumeMusic();
+#endif
 }
 
 void I_StopSong(int handle)
 {
 #ifdef HAVE_MIXER
-    if (nomusic)
-        return;
+  if (nomusic)
+    return;
 
-    Mix_FadeOutMusic(500);
+  Mix_FadeOutMusic(MUSIC_FADE_TIME);
 #endif
 }
 
@@ -774,11 +780,12 @@ int I_RegisterSong(void* data, int len)
 
 void I_SetMusicVolume(int volume)
 {
+  // volume: 0--31
 #ifdef HAVE_MIXER
-    if (nomusic)
-        return;
+  if (nomusic)
+    return;
 
-    Mix_VolumeMusic(volume * 2);
+  Mix_VolumeMusic((MIX_MAX_VOLUME * volume) / 32);
 #endif
 }
 
