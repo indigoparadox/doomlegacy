@@ -1158,4 +1158,9 @@ patchfile = svn744_makefile.patch
 - committed revision 753   by wesley johnson
 Linux 2.4 and others still have GLU lib in /usr/X11R6/lib.
 
+*** w61_texture_combine
+patchfile = w61_texture_combine.patch
+- committed revision 755   by wesley johnson
+The wad caesar.wad causes a texture failure.  Making allocation slightly
+larger prevents this failure.
 
