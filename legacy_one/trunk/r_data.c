@@ -569,7 +569,8 @@ byte* R_GenerateTexture (int texnum)
 	        realpatch = cp->patch;
 	        uint32_t* pat_colofs = (uint32_t*)&(realpatch->columnofs); // to match size in wad
 	        cp->postptr = (post_t*)( (byte*)realpatch + pat_colofs[patch_x] );  // patch column
-	        if ( cp->postptr->topdelta == 0xFF )  goto patch_off;
+	        if ( cp->postptr->topdelta == 0xFF )
+		    goto patch_off;
 	        cp->nxt_y = cp->originy + cp->postptr->topdelta;
 	        cp->bot_y = cp->nxt_y + cp->postptr->length;
 	    }else{
@@ -631,12 +632,18 @@ byte* R_GenerateTexture (int texnum)
 	    // assert: segbot_y <= cp->bot_y+1  because it is set in loop
 	    if( segbot_y > texture->height )   segbot_y = texture->height;
 
-	    // Check if next patch does not append to bottom of current patch
-	    if( (segnxt_y > bottom) && (bottom > 0) && (postlength != 0))
+	    seglen = segbot_y - segnxt_y;
+
+	    if( postlength != 0 )
 	    {
-	        // does not append, start new post after existing post
-	        destpost = (post_t*)((byte*)destpost + destpost->length + 4);
-	        postlength = 0;
+	       // Check if next patch does not append to bottom of current patch
+	       if( ((segnxt_y > bottom) && (bottom > 0))
+		 || (postlength + seglen > 255) ) // if postlength would be too long
+	       {
+		   // does not append, start new post after existing post
+		   destpost = (post_t*)((byte*)destpost + destpost->length + 4);
+		   postlength = 0;
+	       }
 	    }
 	   
 	    // Only one patch is drawn last in this segment, copy that one
@@ -701,16 +708,16 @@ byte* R_GenerateTexture (int texnum)
     goto done;
    
  exceed_alloc_error:   
-    I_SoftError("R_GenerateTexture: %8s exceeds allocated block\n", texture->name );
+    I_SoftError("R_GenerateTexture: %8s exceeds allocated block, make picture\n", texture->name );
     goto error_redo_as_picture;
    
  exceed_topdelta:
-    I_SoftError("R_GenerateTexture: %8s topdelta= %i exceeds 254\n",
+    I_SoftError("R_GenerateTexture: %8s topdelta= %i exceeds 254, make picture\n",
 	    texture->name, segnxt_y );
     goto error_redo_as_picture;
    
  exceed_post_length:
-    I_SoftError("R_GenerateTexture: %8s post length= %i exceeds 255\n",
+    I_SoftError("R_GenerateTexture: %8s post length= %i exceeds 255, make picture\n",
 	    texture->name, postlength );
 
  error_redo_as_picture:
@@ -720,7 +727,7 @@ byte* R_GenerateTexture (int texnum)
     //
     // multi-patch textures (or 'composite')
     // These are stored in a picture format and use a different drawing routine,
-    // which is flagged by (patchcount > 1).
+    // which is flagged by TM_picture.
     // Format:
     //   array[ width ] of column offset
     //   array[ width ] of column ( array[ height ] pixels )
