@@ -225,16 +225,7 @@ void I_SoftError (char *error, ...);
 
 // [WDJ] 6/22/2009  Generate gamma table using two settings,
 // and a selected function.
-// Requires EFFECTS_MENU
 #define GAMMA_FUNCS
-
-// [WDJ] 6/23/2009  Add Effects menu because of too many menu items.
-#define EFFECTS_MENU
-
-
-#if defined( GAMMA_FUNCS ) && ! defined( EFFECTS_MENU )
-#  define EFFECTS_MENU
-#endif
 
 // [WDJ] 3/25/2010  Savegame slots 0..99
 #define SAVEGAME99

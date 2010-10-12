@@ -459,9 +459,7 @@ void M_OpenGLOption(int choice);
 menu_t MainDef,SinglePlayerDef,MultiPlayerDef,SetupMultiPlayerDef,
        EpiDef,NewDef,OptionsDef,VidModeDef,ControlDef,SoundDef,
        ReadDef2,ReadDef1,SaveDef,LoadDef,ControlDef2,GameOptionDef,
-#ifdef EFFECTS_MENU
        EffectsOptionsDef,
-#endif  
        NetOptionDef,VideoOptionsDef,MouseOptionsDef,ServerOptionsDef;
 
 const char *ALLREADYPLAYING="You are already playing\n\nLeave this game first\n";
@@ -1477,9 +1475,7 @@ menuitem_t OptionsMenu[]=
 
     {IT_SUBMENU | IT_WHITESTRING,0,"Server options...",&ServerOptionsDef  ,70},
     {IT_CALL    | IT_WHITESTRING,0,"Game Options..."  ,M_GameOption       ,0},
-#ifdef EFFECTS_MENU
     {IT_SUBMENU | IT_WHITESTRING,0,"Effects Options...",&EffectsOptionsDef ,0},
-#endif   
     {IT_SUBMENU | IT_WHITESTRING,0,"Sound Volume..."  ,&SoundDef          ,0},
     {IT_SUBMENU | IT_WHITESTRING,0,"Video Options..." ,&VideoOptionsDef   ,0},
     {IT_SUBMENU | IT_WHITESTRING,0,"Mouse Options..." ,&MouseOptionsDef   ,0},
@@ -1522,7 +1518,6 @@ void M_DrawSlider (int x, int y, int range)
                        "M_SLIDEC", whitemap );
 }
 
-#ifdef EFFECTS_MENU
 //===========================================================================
 //                        Effects OPTIONS MENU
 //===========================================================================
@@ -1546,7 +1541,6 @@ menu_t  EffectsOptionsDef =
     60,40,
     0
 };
-#endif
 
 //===========================================================================
 //                        Video OPTIONS MENU
@@ -1575,12 +1569,6 @@ menuitem_t VideoOptionsMenu[]=
     {IT_STRING | IT_CVAR
      | IT_CV_SLIDER     ,0,    "Screen Size"      , &cv_viewsize      , 0},
     {IT_STRING | IT_CVAR,0,    "Scale Status Bar" , &cv_scalestatusbar, 0},
-#ifndef EFFECTS_MENU   
-    {IT_STRING | IT_CVAR,0,    "Translucency"     , &cv_translucency  , 0},
-    {IT_STRING | IT_CVAR,0,    "Splats"           , &cv_splats        , 0},
-    {IT_STRING | IT_CVAR,0,    "Max splats"       , &cv_maxsplats     , 0},
-    {IT_STRING | IT_CVAR,0,    "Screens Link"     , &cv_screenslink   , 0},
-#endif   
     {IT_STRING | IT_CVAR,0,    "Wait Retrace"     , &cv_vidwait       , 0},
 #ifdef HWRENDER
     //17/10/99: added by Hurdler

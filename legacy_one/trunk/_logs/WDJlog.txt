@@ -1164,3 +1164,10 @@ patchfile = w61_texture_combine.patch
 The wad caesar.wad causes a texture failure.  Making allocation slightly
 larger prevents this failure.
 
+*** w61_effects_menu
+patchfile = w61_effects_menu.patch
+- committed revision 756   by wesley johnson
+Make Effects menu permanent.  Next changes will add to it and too
+difficult to cope with it being optional.
+
+
