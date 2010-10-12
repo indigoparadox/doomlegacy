@@ -1179,3 +1179,9 @@ Handle posts longer than 255 by creating a separate post, instead of error
 escape.
 Improve some messages, and comments.
 
+*** w62_PNG
+patchfile = w62_PNG.patch
+- committed revision 758   by wesley johnson
+Detect PNG patches, to prevent them from crashing the draw routines.
+Create a dummy patch to replace them.
+Test wad is longdays.wad, which has a PNG patch.
