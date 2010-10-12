@@ -68,7 +68,10 @@
 // Fab: this is a hack : should allocate the lookup tables per sprite
 #define     MAXSPRITELUMPS     4096
 
-#define MAXVISSPRITES   256 // added 2-2-98 was 128
+// MAXVISSPRITES was 128, then 256 (2-2-98)
+#define MAXVISSPRITES   16000
+ // [WDJ] Remove sprite limits. This is tuning not a hard limit.
+extern consvar_t  cv_spritelim;
 
 // Constant arrays used for psprite clipping
 //  and initializing clipping.

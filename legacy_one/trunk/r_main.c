@@ -1389,6 +1389,7 @@ void R_RegisterEngineStuff (void)
     CV_RegisterVar (&cv_psprites);
     CV_RegisterVar (&cv_splitscreen);
 //    CV_RegisterVar (&cv_fov);
+    CV_RegisterVar (&cv_spritelim);
 
     // Default viewheight is changeable,
     // initialized to standard rdraw_viewheight
