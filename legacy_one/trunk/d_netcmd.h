@@ -67,21 +67,9 @@
 // console vars
 extern consvar_t   cv_playername;
 extern consvar_t   cv_playercolor;
-extern consvar_t   cv_usemouse;
 extern consvar_t   cv_autoaim;
 extern consvar_t   cv_controlperkey;
 
-// splitscreen with seconde mouse
-extern consvar_t   cv_mouse2port;
-extern consvar_t   cv_usemouse2;
-#ifdef LMOUSE2
-extern consvar_t   cv_mouse2opt;
-#endif
-extern consvar_t   cv_invertmouse2;
-extern consvar_t   cv_alwaysfreelook2;
-extern consvar_t   cv_mousemove2;
-extern consvar_t   cv_mousesens2;
-extern consvar_t   cv_mlooksens2;
 
 // normaly in p_mobj but the .h in not read !
 extern consvar_t   cv_itemrespawntime;

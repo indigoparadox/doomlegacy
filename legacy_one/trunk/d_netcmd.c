@@ -376,9 +376,6 @@ void D_RegisterClientCommands(void)
     CV_RegisterVar(&cv_crosshair);
     //CV_RegisterVar (&cv_crosshairscale); // doesn't work for now
     CV_RegisterVar(&cv_autorun);
-    CV_RegisterVar(&cv_invertmouse);
-    CV_RegisterVar(&cv_alwaysfreelook);
-    CV_RegisterVar(&cv_mousemove);
     CV_RegisterVar(&cv_showmessages);
 
     //see m_menu.c
@@ -389,12 +386,19 @@ void D_RegisterClientCommands(void)
     //CV_RegisterVar (&cv_controlperkey2);
 
     //g_input.c
+    CV_RegisterVar(&cv_usemouse);
+    CV_RegisterVar(&cv_alwaysfreelook);
+    CV_RegisterVar(&cv_mouse_move);
+    CV_RegisterVar(&cv_mouse_invert);
+    CV_RegisterVar(&cv_mouse_sens_x);
+    CV_RegisterVar(&cv_mouse_sens_y);
+
     CV_RegisterVar(&cv_usemouse2);
-    CV_RegisterVar(&cv_invertmouse2);
     CV_RegisterVar(&cv_alwaysfreelook2);
-    CV_RegisterVar(&cv_mousemove2);
-    CV_RegisterVar(&cv_mousesens2);
-    CV_RegisterVar(&cv_mlooksens2);
+    CV_RegisterVar(&cv_mouse2_move);
+    CV_RegisterVar(&cv_mouse2_invert);
+    CV_RegisterVar(&cv_mouse2_sens_x);
+    CV_RegisterVar(&cv_mouse2_sens_y);
 
     // WARNING : the order is important when inititing mouse2 
     //           we need the mouse2port
@@ -402,11 +406,8 @@ void D_RegisterClientCommands(void)
 #ifdef LMOUSE2
     CV_RegisterVar(&cv_mouse2opt);
 #endif
-    CV_RegisterVar(&cv_mousesens);
-    CV_RegisterVar(&cv_mlooksens);
-    CV_RegisterVar(&cv_controlperkey);
 
-    CV_RegisterVar(&cv_usemouse);
+    CV_RegisterVar(&cv_controlperkey);
 
     CV_RegisterVar(&cv_allowjump);
     CV_RegisterVar(&cv_allowrocketjump);

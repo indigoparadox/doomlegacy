@@ -79,10 +79,10 @@ CV_PossibleValue_t mousesens_cons_t[]={{1,"MIN"},{MAXMOUSESENSITIVITY,"MAXCURSOR
 CV_PossibleValue_t onecontrolperkey_cons_t[]={{1,"One"},{2,"Several"},{0,NULL}};
 
 // mouse values are used once
-consvar_t  cv_mousesens    = {"mousesens","10",CV_SAVE,mousesens_cons_t};
-consvar_t  cv_mlooksens    = {"mlooksens","10",CV_SAVE,mousesens_cons_t};
-consvar_t  cv_mousesens2   = {"mousesens2","10",CV_SAVE,mousesens_cons_t};
-consvar_t  cv_mlooksens2   = {"mlooksens2","10",CV_SAVE,mousesens_cons_t};
+consvar_t  cv_mouse_sens_x    = {"mousesensx","10",CV_SAVE,mousesens_cons_t};
+consvar_t  cv_mouse_sens_y    = {"mousesensy","10",CV_SAVE,mousesens_cons_t};
+consvar_t  cv_mouse2_sens_x   = {"mouse2sensx","10",CV_SAVE,mousesens_cons_t};
+consvar_t  cv_mouse2_sens_y   = {"mouse2sensy","10",CV_SAVE,mousesens_cons_t};
 consvar_t  cv_allowjump    = {"allowjump","1",CV_NETVAR,CV_YesNo};
 consvar_t  cv_allowautoaim = {"allowautoaim","1",CV_NETVAR,CV_YesNo};
 consvar_t  cv_controlperkey = {"controlperkey","1",CV_SAVE,onecontrolperkey_cons_t};
@@ -142,14 +142,14 @@ void  G_MapEventsToControls (event_t *ev)
             gamekeydown[ev->data1] = 0;
         break;
 
-      case ev_mouse:           // buttons hare virtual keys
-        mousex = ev->data2*((cv_mousesens.value*cv_mousesens.value)/110.0f + 0.1);
-        mousey = ev->data3*((cv_mlooksens.value*cv_mlooksens.value)/110.0f + 0.1);
+      case ev_mouse:           // buttons are virtual keys
+        mousex = ev->data2*((cv_mouse_sens_x.value*cv_mouse_sens_x.value)/110.0f + 0.1);
+        mousey = ev->data3*((cv_mouse_sens_y.value*cv_mouse_sens_y.value)/110.0f + 0.1);
         break;
 
-      case ev_mouse2:           // buttons hare virtual keys
-        mouse2x = ev->data2*((cv_mousesens2.value*cv_mousesens2.value)/110.0f + 0.1);
-        mouse2y = ev->data3*((cv_mlooksens.value*cv_mlooksens.value)/110.0f + 0.1);
+      case ev_mouse2:           // buttons are virtual keys
+        mouse2x = ev->data2*((cv_mouse2_sens_x.value*cv_mouse2_sens_x.value)/110.0f + 0.1);
+        mouse2y = ev->data3*((cv_mouse2_sens_y.value*cv_mouse2_sens_y.value)/110.0f + 0.1);
         break;
 
       default:

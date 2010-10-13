@@ -100,11 +100,6 @@ extern  tic_t     levelstarttic;
 // used in game menu
 extern consvar_t  cv_crosshair;
 //extern consvar_t  cv_crosshairscale;
-extern consvar_t  cv_autorun;
-extern consvar_t  cv_autorun2;
-extern consvar_t  cv_invertmouse;
-extern consvar_t  cv_alwaysfreelook;
-extern consvar_t  cv_mousemove;
 extern consvar_t  cv_showmessages;
 extern consvar_t  cv_fastmonsters;
 extern consvar_t  cv_predictingmonsters;  //added by AC for predmonsters

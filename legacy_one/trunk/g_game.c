@@ -321,14 +321,15 @@ consvar_t cv_crosshair        = {"crosshair"   ,"0",CV_SAVE,crosshair_cons_t};
 //consvar_t cv_crosshairscale   = {"crosshairscale","0",CV_SAVE,CV_YesNo};
 consvar_t cv_autorun          = {"autorun"     ,"0",CV_SAVE,CV_OnOff};
 consvar_t cv_autorun2         = {"autorun2"    ,"0",CV_SAVE,CV_OnOff};
-consvar_t cv_invertmouse      = {"invertmouse" ,"0",CV_SAVE,CV_OnOff};
+consvar_t cv_mouse_invert     = {"invertmouse" ,"0",CV_SAVE,CV_OnOff};
+consvar_t cv_mouse_move       = {"mousemove"   ,"1",CV_SAVE,CV_OnOff};
 consvar_t cv_alwaysfreelook   = {"alwaysmlook" ,"0",CV_SAVE,CV_OnOff};
-consvar_t cv_invertmouse2     = {"invertmouse2","0",CV_SAVE,CV_OnOff};
+consvar_t cv_mouse2_invert    = {"invertmouse2","0",CV_SAVE,CV_OnOff};
+consvar_t cv_mouse2_move      = {"mousemove2"  ,"1",CV_SAVE,CV_OnOff};
 consvar_t cv_alwaysfreelook2  = {"alwaysmlook2","0",CV_SAVE,CV_OnOff};
+
 consvar_t cv_showmessages     = {"showmessages","1",CV_SAVE | CV_CALL | CV_NOINIT,showmessages_cons_t,ShowMessage_OnChange};
 consvar_t cv_allowturbo       = {"allowturbo"  ,"0",CV_NETVAR | CV_CALL, CV_YesNo, AllowTurbo_OnChange};
-consvar_t cv_mousemove        = {"mousemove"   ,"1",CV_SAVE,CV_OnOff};
-consvar_t cv_mousemove2       = {"mousemove2"  ,"1",CV_SAVE,CV_OnOff};
 
 #if MAXPLAYERS>32
 #error please update "player_name" table using the new value for MAXPLAYERS
@@ -792,12 +793,12 @@ void G_BuildTiccmd(ticcmd_t* cmd, int realtics, int which_player)
         keyboard_look[which_player] = false;
 
         // looking up/down
-        if (cv_invertmouse.value)
+        if (cv_mouse_invert.value)
             pitch -= mousey<<19;
         else
             pitch += mousey<<19;
       }
-      else if (cv_mousemove.value)
+      else if (cv_mouse_move.value)
 	forward += mousey;
 
       if (strafe)
@@ -814,12 +815,12 @@ void G_BuildTiccmd(ticcmd_t* cmd, int realtics, int which_player)
 	keyboard_look[which_player] = false;
 
         // looking up/down
-        if (cv_invertmouse2.value)
+        if (cv_mouse2_invert.value)
 	  pitch -= mouse2y<<19;
         else
           pitch += mouse2y<<19;
       }
-      else if (cv_mousemove2.value)
+      else if (cv_mouse2_move.value)
 	forward += mouse2y;
 
       if (strafe)
