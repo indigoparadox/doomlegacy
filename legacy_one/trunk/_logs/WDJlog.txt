@@ -1215,3 +1215,9 @@ and I have verified that cacodemons and heads get crushed now.
 It could use more testing for the strange special cases that I do not
 know about.
 
+*** w61_boom_demo
+patchfile = w61_boom_demo.patch
+- committed revision 762   by wesley johnson
+Fix demo player to understand Boom demo headers.
+This stops them from crashing the playback machine.
+This patch got lost, which is why it is out of order.
