@@ -160,10 +160,17 @@ void P_InitSwitchList(void)
   //SoM: 3/22/2000: No Switches lump? Use old table!
   if(W_CheckNumForName("SWITCHES") != -1)
   {
-    alphSwitchList = (switchlist_t *)W_CacheLumpName("SWITCHES",PU_STATIC);
-    // endian conversion only when loading from extra lump
-    for (i=0;alphSwitchList[i].episode!=0;i++)
+    alphSwitchList = (switchlist_t *)W_CacheLumpName("SWITCHES", PU_IN_USE);
+#ifdef __BIG_ENDIAN__
+    // [WDJ] Endian conversion, only when BIG_ENDIAN, when from wad,
+    // and not when cache hit.
+    if( lump_read )
+    {
+      // endian conversion only when loading from extra lump
+      for (i=0;alphSwitchList[i].episode!=0;i++)
         alphSwitchList[i].episode = LE_SWAP16(alphSwitchList[i].episode);
+    }
+#endif
   }
   else 
     alphSwitchList = oldalphSwitchList;
