@@ -1074,6 +1074,9 @@ void Z_ChangeTag2 ( void* ptr, memtag_e tag )
 	// tag = PU_DAVE;	// if need to debug
     }
 
+    // [WDJ] protect PU_LOCK_SB against casual change
+    if (block->tag == PU_LOCK_SB && tag != PU_UNLOCK_CACHE)  goto done;
+    
     // [WDJ] special tag changes which are conditional on existing tag
     switch( tag ) {
      case PU_CACHE_DEFAULT:

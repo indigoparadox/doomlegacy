@@ -313,7 +313,7 @@ void P_InitPicAnims (void)
 
   if(W_CheckNumForName("ANIMATED") != -1)
   {
-    animdefs = (animdef_t *)W_CacheLumpName("ANIMATED",PU_STATIC);
+    animdefs = (animdef_t *)W_CacheLumpName("ANIMATED", PU_IN_USE);
     // [WDJ] From wad, Do endian conversion on speed
 #ifdef __BIG_ENDIAN__
     // [WDJ] Endian conversion, only when BIG_ENDIAN, when from wad,

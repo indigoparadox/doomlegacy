@@ -81,6 +81,7 @@ typedef enum
   PU_DAVE,     // anything else Dave wants static
   PU_HWRPATCHINFO,      // Hardware GlidePatch_t struct for OpenGl/Glide texture cache
   PU_HWRPATCHCOLMIPMAP, // Hardware GlideMipmap_t struct colormap variation of patch
+  PU_LOCK_SB,  // static and protected against change, must use PU_UNLOCK_CACHE
 // Tags that convert to PU_CACHE at level exit.
 // Will not override more restrictive existing tag.
   PU_LUMP,      // Generic temp Lump.
@@ -97,7 +98,8 @@ typedef enum
   PU_HWRCACHE,   // 'second-level' cache for graphics stored in hardware format and downloaded as needed
   PU_CACHE,
   PU_STALE_CACHE,	// not referenced recently
-     
+  PU_UNLOCK_CACHE,	// set to PU_CACHE, including those PU_LOCK_STATIC
+
 // Tag param, conditional on existing tag
   PU_CACHE_DEFAULT	// set to PU_CACHE, but not when
      			// already < PU_PURGELEVEL

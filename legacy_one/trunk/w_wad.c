@@ -884,9 +884,9 @@ void* W_CachePatchNum ( int lump, int tag )
         // we need patch w,h,offset,...
         // well this code will be executed latter in GetPatch, anyway 
         // do it now ...
-        patch_t *ptr = W_CachePatchNum_Endian(grPatch->patchlump, PU_STATIC);
-        HWR_MakePatch ( ptr, grPatch, &grPatch->mipmap);
-        Z_Free (ptr); 
+        patch_t *tmp_patch = W_CachePatchNum_Endian(grPatch->patchlump, PU_LUMP); // temp use
+        HWR_MakePatch ( tmp_patch, grPatch, &grPatch->mipmap);
+        Z_Free (tmp_patch);
         //Hurdler: why not do a Z_ChangeTag (grPatch->mipmap.grInfo.data, tag) here?
         //BP: mmm, yes we can...
     }
