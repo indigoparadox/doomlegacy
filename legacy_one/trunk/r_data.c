@@ -373,9 +373,9 @@ byte* R_GenerateTexture (int texnum)
 #endif
 	    // make a dummy texture
 	    int head_size = colofs_size + 8;
-	    patchsize = head_size + 4 + texture->height + 4;
-            txcblock = Z_Malloc (patchsize,
-                          PU_STATIC,         // will change tag at end of this function
+	    txcblocksize = head_size + 4 + texture->height + 4;
+            txcblock = Z_Malloc (txcblocksize,
+                          PU_IN_USE,         // will change tag at end of this function
                           (void**)&texturecache[texnum]);
 	    patch_t * txcpatch = (patch_t*) txcblock;
 	    txcpatch->width = texture->width;
