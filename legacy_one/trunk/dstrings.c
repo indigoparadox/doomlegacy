@@ -477,10 +477,10 @@ char *text[NUMTEXT] = {
     "ST_Init: Init status bar.\n",
     "External statistics registered.\n",
 
-    "doom2.wad",
-    "doomu.wad",
-    "doom.wad",
-    "doom1.wad",
+    "doom2.wad",	// UNUSED
+    "doomu.wad",	// UNUSED
+    "doom.wad",		// UNUSED
+    "doom1.wad",	// UNUSED
 
     "c:\\doomdata",     //UNUSED
     "c:/doomdata/default.cfg",  //UNUSED

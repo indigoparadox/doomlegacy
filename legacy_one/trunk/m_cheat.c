@@ -998,7 +998,7 @@ static void CheatWeaponsFunc(player_t * player, Cheat_t * cheat)
         player->weaponowned[i] = true;
     }
     // [WDJ] Fix strange test of shareware enum
-    if (gamedesc_index == GDESC_heretic_shareware)
+    if (gamedesc_id == GDESC_heretic_shareware)
     {
         // heretic shareware does not have these
         player->weaponowned[wp_skullrod] = false;
@@ -1085,7 +1085,7 @@ static void CheatArtifact3Func(player_t * player, Cheat_t * cheat)
         for (i = arti_none + 1; i < NUMARTIFACTS; i++)
         {
 	    // [WDJ] Fix strange test of shareware enum
-	    if (gamedesc_index == GDESC_heretic_shareware)
+	    if (gamedesc_id == GDESC_heretic_shareware)
 	    {
 	        // heretic shareware does not have these
                 if (i == arti_superhealth || i == arti_teleport)
@@ -1101,7 +1101,7 @@ static void CheatArtifact3Func(player_t * player, Cheat_t * cheat)
     else if (type > arti_none && type < NUMARTIFACTS && count > 0 && count < 10)
     {
         // [WDJ] Fix strange test of shareware enum
-        if (gamedesc_index == GDESC_heretic_shareware)
+        if (gamedesc_id == GDESC_heretic_shareware)
         {
 	    // heretic shareware does not have these
 	    if (type == arti_superhealth || type == arti_teleport)

@@ -2625,7 +2625,7 @@ char * level_wad( void )
     return FIL_Filename_of( mapwad );  // ignore directories
 
  defname:
-    return gamedesc.iwad_filename;
+    return gamedesc.iwad_filename[0];  // first is default
 }
 
 // Check if the wad name is in the wadfiles
