@@ -898,7 +898,7 @@ void CON_Print (char *msg)
       else if (*msg=='\3')
       {
           mask = 128;                         // white text + sound
-          if ( gamemode == commercial )
+          if ( gamemode == doom2_commercial )
               S_StartSound(0, sfx_radio);
           else
               S_StartSound(0, sfx_tink);

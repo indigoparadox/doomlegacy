@@ -1498,12 +1498,13 @@ void ST_Init (void)
 
     // choose and cache the default border patch
     switch(gamemode) {
-        case commercial :
+        case doom2_commercial :
             // DOOM II border patch, original was GRNROCK
             st_borderpatchnum = W_GetNumForName ("GRNROCK");
             break;
         case heretic :
             if(W_CheckNumForName("e2m1")==-1)
+	        // GDESC_heretic_shareware
                 st_borderpatchnum = W_GetNumForName ("FLOOR04");
             else
                 st_borderpatchnum = W_GetNumForName ("FLAT513");

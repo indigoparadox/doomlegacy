@@ -88,14 +88,15 @@
 
 // Game mode handling - identify IWAD version,
 //  handle IWAD dependend animations etc.
+// [WDJ] modifed names to be self readable
 typedef enum
 {
-    shareware,    // DOOM 1 shareware, E1, M9
-    registered,   // DOOM 1 registered, E3, M27
-    commercial,   // DOOM 2 retail, E1 M34
+    doom_shareware,    // DOOM 1 shareware, E1, M9
+    doom_registered,   // DOOM 1 registered, E3, M27
+    doom2_commercial,  // DOOM 2 retail, E1 M34
     // FreeDoom is DOOM 2, can play as commercial or indetermined
     // DOOM 2 german edition not handled
-    retail,       // DOOM 1 retail, E4, M36
+    ultdoom_retail,    // DOOM 1 retail, E4, M36
     heretic,
     hexen,
     strife,

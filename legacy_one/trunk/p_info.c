@@ -290,7 +290,7 @@ void P_ClearLevelVars()
   info_creator = "unknown";
   info_partime = -1;
 
-  if(gamemode == commercial && isExMy(levelmapname))
+  if(gamemode == doom2_commercial && isExMy(levelmapname))
   {
     static char nextlevel[10];
     info_nextlevel = nextlevel;
@@ -618,11 +618,11 @@ char *P_LevelNameByNum( int episode, int map )
 {
     switch(gamemode) 
     {
-       case  shareware :
-       case  registered :
-       case  retail :
+       case  doom_shareware :
+       case  doom_registered :
+       case  ultdoom_retail :
                                 return text[HUSTR_E1M1_NUM + (episode-1)*9+map-1];
-       case  commercial :
+       case  doom2_commercial :
            switch(gamemission) {
                case pack_tnt  : return text[THUSTR_1_NUM + map-1];
                case pack_plut : return text[PHUSTR_1_NUM + map-1];

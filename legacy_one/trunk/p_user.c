@@ -1109,7 +1109,7 @@ void P_PlayerThink (player_t* player)
                 newweapon = wp_chainsaw;
             }
         
-            if ( (gamemode == commercial)
+            if ( (gamemode == doom2_commercial)
                 && newweapon == wp_shotgun
                 && player->weaponowned[wp_supershotgun]
                 && player->readyweapon != wp_supershotgun)
@@ -1122,7 +1122,7 @@ void P_PlayerThink (player_t* player)
             if(cmd->buttons&BT_EXTRAWEAPON)
                switch(newweapon) {
                   case wp_shotgun : 
-                       if( gamemode == commercial && player->weaponowned[wp_supershotgun])
+                       if( gamemode == doom2_commercial && player->weaponowned[wp_supershotgun])
                            newweapon = wp_supershotgun;
                        break;
                   case wp_fist :
@@ -1141,7 +1141,7 @@ void P_PlayerThink (player_t* player)
             //  even if cheated.
             if ((newweapon != wp_plasma
                  && newweapon != wp_bfg)
-                || (gamemode != shareware) )
+                || (gamemode != doom_shareware) )
             {
                 player->pendingweapon = newweapon;
             }

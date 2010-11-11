@@ -143,11 +143,11 @@ void P_InitSwitchList(void)
   switchlist_t   *alphSwitchList;
 
   switch (gamemode){
-      case registered :
-      case retail:
+      case doom_registered :
+      case ultdoom_retail:
           episode = 2;
           break;
-      case commercial :
+      case doom2_commercial :
           episode = 3;
           break;
       case heretic :

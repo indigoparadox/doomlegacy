@@ -1339,7 +1339,7 @@ int     epi;
 
 void M_Episode(int choice)
 {
-    if ( (gamemode == shareware)
+    if ( (gamemode == doom_shareware)
          && choice)
     {
         M_SetupNextMenu(&ReadDef1);
@@ -1348,7 +1348,7 @@ void M_Episode(int choice)
     }
 
     // Yet another hack...
-    if ( (gamemode == registered)
+    if ( (gamemode == doom_registered)
          && (choice > 2))
     {
         I_Error("M_Episode: 4th episode requires UltimateDOOM\n");
@@ -1422,7 +1422,7 @@ void M_NewGame(int choice)
         return;
     }
 
-    if ( gamemode == commercial
+    if ( gamemode == doom2_commercial
 	 || (gamemode == chexquest1 && !modifiedgame) //DarkWolf95: Support for Chex Quest
 	 )
         M_SetupNextMenu(&NewDef);
@@ -1792,12 +1792,12 @@ void M_DrawReadThis1(void)
 {
     switch ( gamemode )
     {
-      case commercial:
+      case doom2_commercial:
         V_DrawScaledPatch_Name (0,0,0,"HELP");
         break;
-      case shareware:
-      case registered:
-      case retail:
+      case doom_shareware:
+      case doom_registered:
+      case ultdoom_retail:
         V_DrawScaledPatch_Name (0,0,0,"HELP1");
         break;
       case heretic:
@@ -1844,13 +1844,13 @@ void M_DrawReadThis2(void)
 {
     switch ( gamemode )
     {
-      case retail:
-      case commercial:
+      case ultdoom_retail:
+      case doom2_commercial:
         // This hack keeps us from having to change menus.
         V_DrawScaledPatch_Name (0,0,0,"CREDIT");
         break;
-      case shareware:
-      case registered:
+      case doom_shareware:
+      case doom_registered:
         V_DrawScaledPatch_Name (0,0,0,"HELP2");
         break;
       case heretic :
@@ -3297,7 +3297,7 @@ void M_QuitResponse(int ch)
     if (!netgame)
     {
         //added:12-02-98: quitsounds are much more fun than quisounds2
-        //if (gamemode == commercial)
+        //if (gamemode == doom2_commercial)
         //    S_StartSound(NULL,quitsounds2[(gametic>>2)&7]);
         //else
             S_StartSound(NULL,quitsounds[(gametic>>2)&7]);
@@ -3854,7 +3854,7 @@ boolean M_Responder (event_t* ev)
           case KEY_F1:            // Help key
             M_StartControlPanel ();
 
-            if ( gamemode == retail )
+            if ( gamemode == ultdoom_retail )
               currentMenu = &ReadDef2;
             else
               currentMenu = &ReadDef1;
@@ -4385,7 +4385,7 @@ void M_Init (void)
 
     switch ( gamemode )
     {
-      case commercial:
+      case doom2_commercial:
         // This is used because DOOM 2 had only one HELP
         //  page. I use CREDIT as second page now, but
         //  kept this hack for educational purposes.
@@ -4398,13 +4398,13 @@ void M_Init (void)
         ReadDef1.y = 165;
         ReadMenu1[0].itemaction = &MainDef;
         break;
-      case shareware:
+      case doom_shareware:
         // Episode 2 and 3 are handled,
         //  branching to an ad screen.
-      case registered:
+      case doom_registered:
           // We need to remove the fourth episode.
           EpiDef.numitems--;
-      case retail:
+      case ultdoom_retail:
           // We are fine.
           cv_nextmap.PossibleValue = exmy_cons_t;
           cv_nextmap.defaultvalue = "11";

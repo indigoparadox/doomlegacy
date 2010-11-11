@@ -456,7 +456,7 @@ void S_Start(void)
     // start new music for the level
     mus_paused = 0;
 
-    if (gamemode == commercial)
+    if (gamemode == doom2_commercial)
         mnum = mus_runnin + gamemap - 1;
     else if (gamemode == heretic)
         mnum = mus_he1m1 + (gameepisode - 1) * 9 + gamemap - 1;
@@ -483,7 +483,7 @@ void S_Start(void)
     }
 
     // HACK FOR COMMERCIAL
-    //  if (commercial && mnum > mus_e3m9)
+    //  if (gamemode==doom2_commercial && mnum > mus_e3m9)
     //      mnum -= mus_e3m9;
 
     if (info_music && *info_music)
