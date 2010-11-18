@@ -60,6 +60,27 @@ boolean FIL_WriteFile ( char const*   name,
 int  FIL_ReadFile ( char const*   name,
                     byte**        buffer );
 
+
+// Extended Read and Write of buffers.
+typedef enum {
+   ERR_RW= -8,   // errors are negative
+   STAT_EOF=16, STAT_CLOSED, STAT_OPEN  // state
+} stat_err_e;
+
+typedef struct
+{
+    void*    buffer;
+    uint32_t bufcnt;	// bytes in buffer (last read)
+    int      handle;
+    int      stat_error;     // error and status
+} ExtFIL_t;
+
+int FIL_ExtFile_Open ( ExtFIL_t * ft, char const* name, boolean write_flag );
+int FIL_ExtWriteFile ( ExtFIL_t * ft, size_t length );
+int FIL_ExtReadFile ( ExtFIL_t * ft, size_t length );
+void FIL_ExtFile_Close ( ExtFIL_t * ft );
+
+
 void FIL_DefaultExtension (char *path, char *extension);
 
 // Point to start of the filename in longer string

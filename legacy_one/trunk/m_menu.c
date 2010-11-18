@@ -2709,7 +2709,7 @@ void M_ReadSaveStrings( boolean skip_unloadable, int scroll_direction )
     savegame_info_t  sginfo;
     char    name[256];
 
-    P_Alloc_savebuffer( 1, 0 );  // header only
+    P_Alloc_savebuffer( 0 );  // header only
     // savegamedisp is statically alloc
 
     if( scroll_direction < 0 )
@@ -2805,7 +2805,7 @@ void M_ReadSaveStrings(void)
     savegame_info_t  sginfo;
     char    name[256];
 
-    P_Alloc_savebuffer( 1, 0 );  // header only
+    P_Alloc_savebuffer( 0 );  // header only
     // savegamedisp is statically alloc
 
     for (i = 0; i < load_end; i++)
