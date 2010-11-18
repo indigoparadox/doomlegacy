@@ -471,7 +471,7 @@ void SendNameAndColor(void)
     p = buf;
     WRITEBYTE(p, cv_playercolor.value);
     WRITESTRINGN(p, cv_playername.string, MAXPLAYERNAME);
-    *(p - 1) = 0;       // finish teh string;
+    *(p - 1) = 0;       // finish the string;
 
     // check if player has the skin loaded (cv_skin may have
     //  the name of a skin that was available in the previous game)

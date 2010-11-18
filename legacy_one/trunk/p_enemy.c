@@ -1743,9 +1743,7 @@ void A_SkullAttack (mobj_t* actor)
 // Spawn a lost soul and launch it at the target
 //
 void
-A_PainShootSkull
-( mobj_t*       actor,
-  angle_t       angle )
+A_PainShootSkull( mobj_t* actor, angle_t angle )
 {
     fixed_t     x;
     fixed_t     y;
@@ -1756,7 +1754,8 @@ A_PainShootSkull
     int         prestep;
 
 
-/*  --------------- SKULL LIMITE CODE -----------------
+/*  --------------- SKULL LIMIT CODE -----------------
+//  Original Doom code that limits the number of skulls to 20
     int         count;
     thinker_t*  currentthinker;
 

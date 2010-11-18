@@ -224,6 +224,7 @@ void P_StartButton ( line_t*       line,
             buttonlist[i].where = w;
             buttonlist[i].btexture = texture;
             buttonlist[i].btimer = time;
+	    // Bug fix: Save button sound origin as sector
             buttonlist[i].soundorg = (mobj_t *)&line->frontsector->soundorg;
             return;
         }

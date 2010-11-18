@@ -1008,6 +1008,7 @@ void P_NightmareRespawn(mobj_t * mobj)
 
     if (!mthing)        // Hurdler: respawn FS spawned mobj at their last position (they have no mapthing)
     {
+        // Also fixes Nightmare respawn at (0,0) bug, as in Eternity Engine.
         x = mobj->x;
         y = mobj->y;
     }
