@@ -1302,3 +1302,9 @@ patchfile = w65_old_patch_rem.patch
 - committed revision 771   by wesley johnson
 Remove old unused patch remanant.
 Preliminary to fixing draw sprite vrs 3dfloor bug.
+
+*** w65_old_vissort_remove
+patchfile = w65_old_vissort.patch
+- committed revision 76x   by wesley johnson
+Remove old unused vissprite sort routine.
+Preliminary to fixing draw sprite vrs 3dfloor bug.
