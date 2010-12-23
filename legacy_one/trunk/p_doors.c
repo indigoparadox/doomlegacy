@@ -204,8 +204,6 @@ void T_VerticalDoor(vldoor_t * door)
                         break;
                 }
                 //SoM: 3/6/2000: Code to turn lighting off in tagged sectors.
-                // Hurdler: FIXME: there is a bug in map27 with door->line not being correct
-                //                 after a save game / load game
                 if (boomsupport && door->line && door->line->tag)
                 {
                     if (door->line->special > GenLockedBase && (door->line->special&6)==6)
