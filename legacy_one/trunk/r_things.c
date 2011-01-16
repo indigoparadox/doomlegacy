@@ -601,7 +601,7 @@ void vissprites_tablesize ( void )
     if ( request > (cv_spritelim.value * 2) )
         request = cv_spritelim.value * 2;
     
-    if ( request == vspr_max )
+    if ( request == (vspr_max+1) )
         return;		// same as existing allocation
 
     if( vspr_change_delay < MAXINT )
