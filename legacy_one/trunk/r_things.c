@@ -1703,8 +1703,8 @@ static void R_CreateDrawNodes( void )
 {
   drawnode_t*   entry;
   drawseg_t*    ds;
-  int           farthest, i, p, x1, x2;
-  fixed_t       farthest_delta, delta;
+  int           i, p, x1, x2;
+  fixed_t       delta;
   vissprite_t*  vsp;  // rover vissprite
   drawnode_t*   dnp;  // rover drawnode
   visplane_t*   plane;
@@ -1767,6 +1767,8 @@ static void R_CreateDrawNodes( void )
 	    entry->seg = ds;
 	}
 #else       
+	int      farthest;
+	fixed_t  farthest_delta;
 	// create drawnodes for the floorplanes with the closest last
         for(i = 0; i < ds->numffloorplanes; i++)
         {
