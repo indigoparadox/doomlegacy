@@ -880,7 +880,9 @@ void D_PageDrawer(char *lumpname)
 //
 void D_AdvanceDemo(void)
 {
-    advancedemo = true;
+    // [WDJ] do not start a demo when a menu is open
+    advancedemo = ! menuactive;
+//  advancedemo = true;
 }
 
 //
