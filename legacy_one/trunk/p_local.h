@@ -167,6 +167,16 @@ extern  consvar_t  cv_doordelay;
 // standard ticks per second
 #define adj_ticks_per_sec  35
 #endif
+#ifdef VOODOO_DOLL
+// [WDJ] 2/7/2011 Voodoo doll controls and support
+extern consvar_t  cv_instadeath;
+extern consvar_t  cv_voodoo_mode;
+typedef enum {
+   VM_vanilla, VM_multispawn, VM_target, VM_auto
+} voodoo_mode_e;
+voodoo_mode_e  voodoo_mode;
+extern player_t *  spechit_player; // last player to trigger switch or linedef
+#endif
 
 //
 // P_TICK

@@ -205,6 +205,12 @@ extern char VERSION_BANNER[];
 #define FRAGGLESCRIPT           // SoM: Activate FraggleScript
 #define FIXROVERBUGS // Fix some 3dfloor bugs. SSNTails 06-13-2002
 
+// [WDJ] Voodoo doll 4/30/2009
+// A voodoo doll is an accident of having multiple start points for a player.
+// It has been used in levels as a token to trip linedefs and create
+// sequenced actions, and thus are required to play some wads, like FreeDoom.
+#define VOODOO_DOLL
+
 // [WDJ] Heretic has missing sprites, SOFTERROR is needed to continue play
 // instead of fatal error message.
 #define SOFTERROR

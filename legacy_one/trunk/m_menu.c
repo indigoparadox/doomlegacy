@@ -1657,10 +1657,14 @@ menuitem_t GameOptionsMenu[]=
     {IT_STRING | IT_CVAR,0,"Gravity"             ,&cv_gravity            ,0},
     {IT_STRING | IT_CVAR,0,"Solid corpse"        ,&cv_solidcorpse        ,0},
     {IT_STRING | IT_CVAR,0,"BloodTime"           ,&cv_bloodtime          ,0},
+#ifdef VOODOO_DOLL
+    {IT_STRING | IT_CVAR,0,"Voodoo mode"         ,&cv_voodoo_mode        ,0},  // [WDJ]
+    {IT_STRING | IT_CVAR,0,"Insta-death"         ,&cv_instadeath         ,0},  // [WDJ]
+#endif
 #ifdef DOORDELAY_CONTROL
     {IT_STRING | IT_CVAR,0,"Door Delay"          ,&cv_doordelay          ,0},  // [WDJ]
 #endif
-    {IT_CALL   | IT_WHITESTRING,0,"Network Options..."  ,M_NetOption     ,110}
+    {IT_CALL   | IT_WHITESTRING,0,"Network Options..."  ,M_NetOption     ,130}
 };
 
 menu_t  GameOptionDef =

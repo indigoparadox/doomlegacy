@@ -1403,7 +1403,7 @@ still load.
 
 *** w67_voodoo_player
 patchfile = w67_voodoo_player.patch
-- committed revision 78?   by wesley johnson
+- committed revision 788   by wesley johnson
 Due to wads that use the voodoo player in strange ways, the voodoo
 player has appeared as the player in some function calls.  This will
 segfault when trying to get the player index [player - players].
