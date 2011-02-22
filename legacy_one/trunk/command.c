@@ -1082,7 +1082,8 @@ void CV_LoadNetVars( char **p )
     for (cvar=consvar_vars; cvar; cvar = cvar->next)
     {
         if (cvar->flags & CV_NETVAR)
-            Got_NetVar(p, 0);
+     
+	 Got_NetVar(p, 0);
     }
 }
 

@@ -150,7 +150,7 @@ typedef struct consvar_s
     void    (*func) (void);    // called on change, if CV_CALL set
     int     value;             // for int and fixed_t
     char    *string;           // value in string
-    unsigned short netid;      // used internaly : netid for send end receive
+    uint16_t netid;            // used internaly : netid for send end receive
                                // used only with CV_NETVAR
     struct  consvar_s *next;
 } consvar_t;
@@ -179,6 +179,7 @@ void  CV_SaveVariables (FILE *f);
 // load/save gamesate (load and save option and for network join in game)
 void CV_SaveNetVars( char **p );
 void CV_LoadNetVars( char **p );
+void Got_NetVar(char **p,int playernum);
 
 consvar_t *CV_FindVar (char *name);
 
