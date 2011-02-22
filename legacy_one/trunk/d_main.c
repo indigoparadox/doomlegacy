@@ -1091,7 +1091,7 @@ game_desc_t  game_desc_table[ NUM_GDESC ] =
 // GDESC_plutonia: FinalDoom : Plutonia, DoomII engine
    { "Plutonia", "DOOM 2: Plutonia Experiment", "plutonia",
 	{"plutonia.wad",NULL,NULL}, NULL,
-	{"CAM01", NULL}, LN_MAP01, LN_TITLE,
+	{"CAMO1", NULL}, LN_MAP01, LN_TITLE,
 	GD_idwad, GDESC_plutonia, doom2_commercial },
 // GDESC_tnt: FinalDoom : Tnt Evilution, DoomII engine
    { "Tnt Evilution", "DOOM 2: TNT - Evilution", "tnt",
