@@ -1370,9 +1370,8 @@ Fix bad colormap missing msg.
 
 *** w67_linedef
 patchfile = w66_linedef.patch
-- committed revision 7??   by wesley johnson
-Decode boom generalized linedef better, so to detect bad linedef
-numbers.
+- committed revision 783   by wesley johnson
+Decode boom generalized linedef better, so to detect bad linedef numbers.
 More efficient switch linedef executable.
 
 *** w67_plutonia

@@ -1449,7 +1449,9 @@ P_ActivateCrossedLine ( line_t*       line,
       int (*linefunc)(line_t *line)=NULL;
   
       // check each range of generalized linedefs
-      if ((unsigned)line->special >= GenFloorBase)
+      if ((unsigned)line->special >= (GenFloorBase+0x2000))
+      {}  // not Boom generalized
+      else if ((unsigned)line->special >= GenFloorBase)
       {
         if (!thing->player)
 	{
@@ -2337,7 +2339,9 @@ void P_ShootSpecialLine ( mobj_t*       thing,
       int (*linefunc)(line_t *line)=NULL;
 
       // check each range of generalized linedefs
-      if ((unsigned)line->special >= GenFloorBase)
+      if ((unsigned)line->special >= (GenFloorBase+0x2000))
+      {}  // not Boom generalized
+      else if ((unsigned)line->special >= GenFloorBase)
       {
         if (!thing->player)
 	{
