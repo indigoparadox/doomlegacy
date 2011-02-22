@@ -108,8 +108,6 @@ boolean         onground;
 int				extramovefactor = 0;
 
 
-
-
 //
 // P_Thrust
 // Moves the given origin along a given angle.
@@ -1000,12 +998,13 @@ void P_PlayerThink (player_t* player)
     }
 
     if (player->playerstate == PST_REBORN)
+    {
 #ifdef PARANOIA
-        I_Error("player %d is in PST_REBORN\n");
-#else
+        I_SoftError("player %d is in PST_REBORN\n");
+#endif
         // it is not "normal" but far to be critical
         return;
-#endif
+    }
 
     if (player->playerstate == PST_DEAD)
     {
@@ -1258,7 +1257,6 @@ void P_PlayerThink (player_t* player)
     }
     else
         player->fixedcolormap = 0;
-
 }
 
 //----------------------------------------------------------------------------

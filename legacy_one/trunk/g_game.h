@@ -73,13 +73,13 @@
 
 //added:11-02-98: yeah now you can change it!
 // changed to 2d array 19990220 by Kin
-extern char          player_names[MAXPLAYERS][MAXPLAYERNAME];
-extern char*                    team_names[];
+extern char       player_names[MAXPLAYERS][MAXPLAYERNAME];
+extern char*      team_names[];
 
 extern  boolean nomonsters;             // checkparm of -nomonsters
 extern  char      gamemapname[128];
 
-extern  player_t        players[MAXPLAYERS];
+extern  player_t  players[MAXPLAYERS];
 extern  boolean   playeringame[MAXPLAYERS];
 
 // ======================================
