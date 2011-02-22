@@ -1364,8 +1364,8 @@ patchfile = w66_buggy_wad.patch
 More checks against buggy wads.
 
 *** w67_colormap_msg
-patchfile = w66_buggy_wad.patch
-- committed revision 7??   by wesley johnson
+patchfile = w66_colormap.patch
+- committed revision 782   by wesley johnson
 Fix bad colormap missing msg.
 
 *** w67_linedef

@@ -1663,7 +1663,7 @@ int R_ColormapNumForName(char *name)
   // Check for existing colormap of same name
   lump = R_CheckNumForNameList(name, colormaplumps, numcolormaplumps);
   if(lump == -1)
-    I_Error("R_ColormapNumForName: Cannot find colormap lump %s\n", name);
+    I_Error("R_ColormapNumForName: Cannot find colormap lump %8s\n", name);
 
   for(i = 0; i < num_extra_colormaps; i++)
     if(lump == fnd_colormap_lump[i])
