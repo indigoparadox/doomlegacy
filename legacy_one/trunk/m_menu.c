@@ -4180,6 +4180,9 @@ boolean M_Responder (event_t* ev)
 	{
 	    M_ClearMenus (true);
 	    S_StartSound(NULL,sfx_swtchx);
+	    // Exit menus, return to demo or game
+	    if( ! Playing() )
+	        D_StartTitle();  // restart title screen and demo
 	}
         goto ret_true;
 
@@ -4280,12 +4283,15 @@ void M_StartControlPanel (void)
     if (menuactive)
         return;
 
-    if(demoplayback)  // menus without the demo interference
-        G_StopDemo();
-
     menuactive = 1;
     currentMenu = &MainDef;         // JDC
     itemOn = currentMenu->lastOn;   // JDC
+
+    if(demoplayback)  // menus without the demo interference
+    { 
+        G_StopDemo();
+        R_FillBackScreen ();
+    }
 
     CON_ToggleOff ();   // dirty hack : move away console
 }
@@ -4344,7 +4350,12 @@ void  M_Setup_prevMenu( void )
        if( currentMenu == &SaveDef )   M_SaveGame(0);
     }
     else
+    {
        M_ClearMenus (true);
+       // Exit menus, return to demo or game
+       if( ! Playing() )
+	   D_StartTitle();  // restart title screen and demo
+    }
 }
 
 
