@@ -2,6 +2,7 @@ The new wad selection mechanism
 By [WDJ]  March 23, 2010
 Revised   May 9, 2010
 Revised   Oct 30, 2010
+Revised   Fed 22, 2011
 
 The following command line switch will force the execution mode:
 Syntax:  -game <mode>
@@ -107,7 +108,7 @@ GDESC_plutonia: FinalDoom : Plutonia, DoomII engine
    title = "DOOM 2: Plutonia Experiment"
    idstr = "plutonia"
    file = "plutonia.wad"
-   lumps = require "CAM01" "MAP01" but cannot have "TITLE"
+   lumps = require "CAMO1" "MAP01" but cannot have "TITLE"
    gamemode = doom2_commercial
 
 GDESC_tnt: FinalDoom : Tnt Evilution, DoomII engine

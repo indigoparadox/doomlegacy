@@ -64,8 +64,8 @@ title: "DOOM 2: Plutonia Experiment"
 notes: Final Doom
 date: 1996
 file: plutonia.wad
-maps: MAP01- ??
-ZDoom check: MAP01 > CAM01
+maps: MAP01-MAP32
+ZDoom check: MAP01 > CAMO1
 
 
 ====
