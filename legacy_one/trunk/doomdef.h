@@ -193,8 +193,11 @@ extern const int  VERSION;
 extern const int  REVISION;
 extern char VERSION_BANNER[];
 
+// [WDJ] Machine speed limitations.
+// Leave undefined for netplay, or make sure all machines have same setting.
+//#define MACHINE_MHZ  1500
 
-// some tests, enable or desable it if it run or not
+// some tests, enable or disable it
 //#define HORIZONTALDRAW        // abandoned : too slow
 //#define TILTVIEW              // not finished
 //#define PERSPCORRECT          // not finished
