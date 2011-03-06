@@ -1860,8 +1860,7 @@ P_ActivateCrossedLine ( line_t*       line,
         if(side) break;
 
       case 272: //(2sided)
-        t_trigger = thing;
-        T_RunScript(line->tag);
+        T_RunScript(line->tag, thing);
         break;
 
       // once-only triggers
@@ -1869,8 +1868,7 @@ P_ActivateCrossedLine ( line_t*       line,
         if(side) break;
 
       case 274: //(2sided)
-        t_trigger = thing;
-        T_RunScript(line->tag);
+        T_RunScript(line->tag, thing);
         line->special = 0;        // clear trigger
         break;
 
@@ -2477,8 +2475,7 @@ void P_ShootSpecialLine ( mobj_t*       thing,
       //SoM: FraggleScript
       case 278:
       case 279:
-        t_trigger = thing;
-        T_RunScript(line->tag);
+        T_RunScript(line->tag, thing);
         if(line->special == 279) line->special = 0;       // clear if G1
         break;
 

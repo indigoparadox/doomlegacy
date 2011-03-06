@@ -665,8 +665,7 @@ boolean P_UseSpecialLine ( mobj_t*       thing,
       //SoM: FraggleScript!
       case 276:
       case 277:
-        t_trigger = thing;
-        T_RunScript(line->tag);
+        T_RunScript(line->tag, thing);
         if(line->special == 277)
         {
           line->special = 0;         // clear tag

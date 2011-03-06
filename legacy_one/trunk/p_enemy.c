@@ -946,8 +946,7 @@ void A_Chase (mobj_t*   actor)
 			// Execute possible FS script
 			if (actor->target->nodescript)
 			{
-				t_trigger = actor;
-				T_RunScript(actor->target->nodescript - 1);
+				T_RunScript((actor->target->nodescript - 1), actor);
 			}
 
 			// Do we wait here?
@@ -2501,8 +2500,7 @@ void A_StartFS(mobj_t *actor)
    // load script number from misc1
    int misc1 = actor->tics;
    actor->tics = 0;
-   t_trigger = actor;
-   T_RunScript(misc1);
+   T_RunScript(misc1, actor);
 }
 
 void A_StartWeaponFS(player_t *player, pspdef_t *psp)
@@ -2514,8 +2512,7 @@ void A_StartWeaponFS(player_t *player, pspdef_t *psp)
    {
 		misc1 = psp->tics;
 		psp->tics = 0;
-		t_trigger = player->mo;
-		T_RunScript(misc1);
+		T_RunScript(misc1, player->mo);
    }
 }
 
