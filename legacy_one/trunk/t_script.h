@@ -69,15 +69,16 @@ void T_RunScript(int n);
 void T_RunThingScript(int);
 void T_PreprocessScripts();
 void T_DelayedScripts();
-mobj_t *MobjForSvalue(svalue_t svalue);
+mobj_t * MobjForSvalue(svalue_t svalue);
 
-        // console commands
+// console commands
 void T_Dump();
 void T_ConsRun();
 
-extern script_t levelscript;
-//extern script_t *scripts[MAXSCRIPTS];       // the scripts
-extern mobj_t *t_trigger;
+extern script_t  fs_levelscript;  // the stored scripts for the level
+extern runningscript_t  fs_runningscripts;  // currently running
+extern mobj_t *  t_trigger;  // the trigger parameter on RunScript
+//extern mobj_t *  fs_run_trigger;  // the trigger parameter on RunScript
 
 void T_AddCommands();
 
