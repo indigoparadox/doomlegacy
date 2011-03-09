@@ -180,7 +180,6 @@ void T_PreprocessScripts( void )
   run_script(&fs_levelscript);
 
   // load and run the thing script
-
   T_LoadThingScript();
 }
 
@@ -273,7 +272,7 @@ void COM_T_RunScript_f (void)
       return;
   }
   
-  T_RunScript(sn, players[consoleplayer].mo );
+  T_RunScript(sn, consoleplayer_ptr->mo );
 }
 
 
@@ -284,7 +283,7 @@ void COM_T_RunScript_f (void)
 
 runningscript_t *freelist=NULL;      // maintain a freelist for speed
 
-runningscript_t *new_runningscript( void )
+runningscript_t * new_runningscript( void )
 {
   // check the freelist
   if(freelist)
@@ -313,8 +312,8 @@ static boolean wait_finished(runningscript_t *script)
 {
   switch(script->wait_type)
   {
-    case wt_none: return true;        // uh? hehe
-    case wt_scriptwait:               // waiting for script to finish
+    case WT_none: return true;        // uh? hehe
+    case WT_scriptwait:               // waiting for script to finish
       {
 	runningscript_t *current;
 	for(current = fs_runningscripts.next; current; current = current->next)
@@ -326,12 +325,12 @@ static boolean wait_finished(runningscript_t *script)
 	return true;        // can continue now
       }
 
-    case wt_delay:                          // just count down
+    case WT_delay:                          // just count down
       {
 	return --script->wait_data <= 0;
       }
     
-    case wt_tagwait:
+    case WT_tagwait:
       {
 	int secnum = -1;
 
@@ -394,7 +393,7 @@ void T_DelayedScripts( void )
 
 
 
-static runningscript_t *T_SaveCurrentScript( void )
+static runningscript_t * T_SaveCurrentScript( void )
 {
   runningscript_t *runscr;
   int i;
@@ -403,8 +402,8 @@ static runningscript_t *T_SaveCurrentScript( void )
   runscr->script = fs_current_script;
   runscr->savepoint = fs_src_cp;
 
-  // leave to other functions to set wait_type: default to wt_none
-  runscr->wait_type = wt_none;
+  // leave to other functions to set wait_type: default to WT_none
+  runscr->wait_type = WT_none;
 
   // hook into chain at start
   
@@ -452,11 +451,12 @@ void SF_Wait( void )
 
   runscr = T_SaveCurrentScript();
 
-  runscr->wait_type = wt_delay;
+  runscr->wait_type = WT_delay;
   runscr->wait_data = (intvalue(t_argv[0]) * 35) / 100;
 }
 
-void SF_WaitTic( void )  //if you want to wait on tics instead of "real" time
+//if you want to wait on tics instead of "real" time
+void SF_WaitTic( void )
 {
   runningscript_t *runscr;
 
@@ -468,7 +468,7 @@ void SF_WaitTic( void )  //if you want to wait on tics instead of "real" time
 
   runscr = T_SaveCurrentScript();
 
-  runscr->wait_type = wt_delay;
+  runscr->wait_type = WT_delay;
   runscr->wait_data = intvalue(t_argv[0]);
 }
 
@@ -485,7 +485,7 @@ void SF_TagWait( void )
 
   runscr = T_SaveCurrentScript();
 
-  runscr->wait_type = wt_tagwait;
+  runscr->wait_type = WT_tagwait;
   runscr->wait_data = intvalue(t_argv[0]);
 }
 
@@ -505,7 +505,7 @@ void SF_ScriptWait( void )
 
   runscr = T_SaveCurrentScript();
 
-  runscr->wait_type = wt_scriptwait;
+  runscr->wait_type = WT_scriptwait;
   runscr->wait_data = intvalue(t_argv[0]);
 }
 
@@ -538,7 +538,7 @@ void SF_StartScript( void )
   runscr = new_runningscript();
   runscr->script = script;
   runscr->savepoint = script->data; // start at beginning
-  runscr->wait_type = wt_none;      // start straight away
+  runscr->wait_type = WT_none;      // start straight away
 
   // hook into chain at start
   
@@ -618,16 +618,16 @@ void COM_T_Running_f (void)
       CONS_Printf("%i:", current->script->scriptnum);
       switch(current->wait_type)
       {
-	case wt_none:
+	case WT_none:
 	  CONS_Printf("waiting for nothing?\n");
 	  break;
-	case wt_delay:
+	case WT_delay:
 	  CONS_Printf("delay %i tics\n", current->wait_data);
 	  break;
-	case wt_tagwait:
+	case WT_tagwait:
 	  CONS_Printf("waiting for tag %i\n", current->wait_data);
 	  break;
-	case wt_scriptwait:
+	case WT_scriptwait:
 	  CONS_Printf("waiting for script %i\n", current->wait_data);
 	  break;
 	default:
@@ -658,9 +658,9 @@ void clear_runningscripts( void )
 }
 
 
-mobj_t *MobjForSvalue(svalue_t svalue)
+mobj_t * MobjForSvalue(svalue_t svalue)
 {
-  int intval ;
+  int intval;
   
   if(svalue.type == FSVT_mobj)
     return svalue.value.mobj;
@@ -754,7 +754,6 @@ void spec_script( void )
   
   // we dont want to run the script, only add it
   // jump past the script in parsing
-  
   fs_src_cp = fs_current_section->end + 1;
 }
 

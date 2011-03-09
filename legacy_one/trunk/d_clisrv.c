@@ -255,11 +255,6 @@ boolean         drone;
 // here it is for the secondary local player (splitscreen)
 static byte     mynode;        // my address pointofview server
 
-
-// Fade color alpha to reset :>
-extern int fadealpha;
-
-
 static byte     localtextcmd[MAXTEXTCMD];
 static byte     localtextcmd2[MAXTEXTCMD]; // splitscreen player2
 static tic_t    neededtic;
@@ -1057,10 +1052,9 @@ void CL_Reset (void)
     SV_StopServer();
     SV_ResetServer();
 
-	T_ClearHubScript();	//DarkWolf95: Originally implemented by Exl
-	fadealpha = 0;
-	HU_ClearFSPics();
-
+    T_ClearHubScript();	//DarkWolf95: Originally implemented by Exl
+    fadealpha = 0;
+    HU_ClearFSPics();
 
     // reset game engine
     //D_StartTitle ();

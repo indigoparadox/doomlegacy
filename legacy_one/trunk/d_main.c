@@ -636,8 +636,8 @@ void D_Display(void)
     vid.recalc = 0;
 
     // Exl: draw a faded background
-	if (fadealpha != 0 && rendermode != render_soft)
-		HWR_FadeScreenMenuBack(fadecolor, fadealpha, 0);
+    if (fadealpha != 0 && rendermode != render_soft)
+	HWR_FadeScreenMenuBack(fadecolor, fadealpha, 0);
 	
 	//FIXME: draw either console or menu, not the two
     CON_Drawer();

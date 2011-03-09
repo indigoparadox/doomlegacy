@@ -96,7 +96,7 @@ struct sfarray_s
 
 
 
-char *stringvalue(svalue_t v);
+char * stringvalue(svalue_t v);
 
 #include "t_vari.h"
 #include "t_prepro.h"
