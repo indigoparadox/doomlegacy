@@ -92,7 +92,7 @@ extern consvar_t   cv_teamplay;
 extern consvar_t   cv_teamdamage;
 extern consvar_t   cv_fraglimit;
 extern consvar_t   cv_timelimit;
-extern ULONG timelimitintics;
+extern ULONG timelimit_tics;
 extern consvar_t   cv_allowturbo ;
 extern consvar_t   cv_allowexitlevel;
 

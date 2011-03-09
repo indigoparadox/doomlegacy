@@ -891,17 +891,20 @@ void FragLimit_OnChange(void)
     }
 }
 
-ULONG timelimitintics = 0;
+ULONG timelimit_tics = 0;
 
 void TimeLimit_OnChange(void)
 {
     if (cv_timelimit.value)
     {
         CONS_Printf("Levels will end after %d minute(s).\n", cv_timelimit.value);
-        timelimitintics = cv_timelimit.value * 60 * TICRATE;
+        timelimit_tics = cv_timelimit.value * 60 * TICRATE;
     }
     else
+    {
         CONS_Printf("Time limit disabled\n");
+        timelimit_tics = 0;
+    }
 }
 
 void P_RespawnWeapons(void);

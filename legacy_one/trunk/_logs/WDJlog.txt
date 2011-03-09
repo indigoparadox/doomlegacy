@@ -1515,14 +1515,14 @@ Rename fragglescript var and value types.
 Rename array savelist and types.
 Rename Init of arrays.
 
-*** w69_docs
+*** w69_fs_docs
 patchfile = w69_docs.patch
 - committed revision 806   by wesley johnson
 Fix docs for latest patches.
 
 *** w70_timelimit
 patchfile = w70_timelimit.patch
-- committed revision 8??   by wesley johnson
+- committed revision 807   by wesley johnson
 Fix timelimit to use tics, fixing bug 989967.
 
 *** w70_savegame_spaces
