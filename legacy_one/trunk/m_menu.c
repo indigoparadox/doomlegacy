@@ -3930,7 +3930,8 @@ boolean M_Responder (event_t* ev)
 
           default:
             if (is_printable(ch) &&
-		ch != ' ' &&
+//		ch != ' ' &&  // [WDJ] I can only assume that this was not intentional
+//		              // It prevented spaces from appearing in savegame description.
                 edit_index < SAVESTRINGSIZE-1 &&
                 V_StringWidth(edit_buffer) < (SAVESTRINGSIZE-2)*8)
             {
