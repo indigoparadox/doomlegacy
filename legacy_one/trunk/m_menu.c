@@ -1640,13 +1640,13 @@ void MenuGammaFunc_dependencies( byte gamma_en,
 {
    VideoOptionsMenu[2].status = 
      ( gamma_en ) ? (IT_STRING | IT_CVAR | IT_CV_SLIDER )
-       : IT_STRING | IT_SPACE;
+       : IT_WHITESTRING | IT_SPACE;
    VideoOptionsMenu[3].status = 
      ( black_en ) ? (IT_STRING | IT_CVAR | IT_CV_SLIDER )
-       : IT_STRING | IT_SPACE;
+       : IT_WHITESTRING | IT_SPACE;
    VideoOptionsMenu[4].status = 
      ( bright_en ) ? (IT_STRING | IT_CVAR | IT_CV_SLIDER )
-       : IT_STRING | IT_SPACE;
+       : IT_WHITESTRING | IT_SPACE;
 }
 #endif
 
@@ -3930,8 +3930,6 @@ boolean M_Responder (event_t* ev)
 
           default:
             if (is_printable(ch) &&
-//		ch != ' ' &&  // [WDJ] I can only assume that this was not intentional
-//		              // It prevented spaces from appearing in savegame description.
                 edit_index < SAVESTRINGSIZE-1 &&
                 V_StringWidth(edit_buffer) < (SAVESTRINGSIZE-2)*8)
             {
@@ -3950,7 +3948,7 @@ boolean M_Responder (event_t* ev)
     }
 
 
-    // F-Keys
+    // when the menu is not open
     if (!menuactive)
     {
         switch(key)
@@ -4109,6 +4107,7 @@ boolean M_Responder (event_t* ev)
         else
             routine=M_ChangeCvar;
     }
+
     // Keys usable within menu
     switch (key)
     {
@@ -4267,6 +4266,10 @@ boolean M_Responder (event_t* ev)
         goto ret_true;
 
       default:
+	// any other key: if a letter, try to find the corresponding menuitem
+	if (!isalpha(ch))
+	  goto ret_true;
+
         for (i = itemOn+1;i < currentMenu->numitems;i++)
             if (currentMenu->menuitems[i].alphaKey == ch)
             {
