@@ -189,6 +189,10 @@ void VID_PrepareModeList(void);
 #define HIRES_HORIZ (640)
 #define HIRES_VERT  (400)
 
+// [WDJ] Submitted by pld-linux patch lib.  Handle larger number of vidmodes without crash.
+#define MAX_NUM_VIDMODES (100)
+
+
 static boolean haveVoodoo = false;
 
 extern consvar_t cv_fullscreen; // for fullscreen support under X and GLX
@@ -203,8 +207,9 @@ static int num_vidmodes = 0;
 static int lowest_vidmode;
 
 static XF86VidModeModeInfo **vidmodes;
-static char vidModeName[33][32]; // allow 33 different modes
-static int vidmap[33];
+// [WDJ] Submitted by pld-linux patch lib.  Handle larger number of vidmodes without crash.
+static char vidModeName[MAX_NUM_VIDMODES][32]; // allow MAX_NUM_VIDMODES different modes
+static int vidmap[MAX_NUM_VIDMODES];
 
 // added for 1.27 19990220 by Kin
 rendermode_t    rendermode=render_soft;
@@ -291,7 +296,9 @@ static void determineVidModes(void)
    if(vidmode_ext) {
        // get fullscreen modes
        XF86VidModeGetAllModeLines(X_display, X_screen, &num_fullvidmodes, &vidmodes);
-       num_vidmodes = num_fullvidmodes;
+       // [WDJ] Submitted by pld-linux patch lib.  Handle larger number of vidmodes without crash.
+       num_vidmodes = (num_fullvidmodes > MAX_NUM_VIDMODES)
+                        ? MAX_NUM_VIDMODES : num_fullvidmodes;
 
        // initialize mapping
        for(i=0; i<num_vidmodes; i++)
@@ -1623,17 +1630,28 @@ static int createWindow(boolean isWindowedMode, int modenum)
       // Move the viewport to top left
       XF86VidModeSetViewPort(X_display, X_screen, 0, 0);
    }
-    if(rendermode==render_soft) {
+   if(rendermode==render_soft) {
     // setup attributes for main window
     if (vidmode_active) {
+#if 1       
+       // [WDJ] Submitted by pld-linux: Do not force CWColormap, it may be a truecolor mode.
+       attribmask = CWSaveUnder | CWBackingStore |
+           CWEventMask | CWOverrideRedirect;
+#else       
        attribmask = CWColormap | CWSaveUnder | CWBackingStore |
           CWEventMask | CWOverrideRedirect;
+#endif
 
        attribs.override_redirect = True;
        attribs.backing_store = NotUseful;
        attribs.save_under = False;
     } else
+#if 1       
+       // [WDJ] Submitted by pld-linux: Do not force CWColormap, it may be a truecolor mode.
+       attribmask = CWBorderPixel | CWEventMask;
+#else      
        attribmask = CWBorderPixel | CWColormap | CWEventMask;
+#endif
 
     attribs.event_mask = KeyPressMask | KeyReleaseMask
 #ifndef POLL_POINTER
@@ -1641,7 +1659,16 @@ static int createWindow(boolean isWindowedMode, int modenum)
 #endif
        | ExposureMask | StructureNotifyMask;
 
+#if 1
+    // [WDJ] Submitted by pld-linux: Do not force CWColormap, it may be a truecolor mode.
+    // Only in x_pseudo does X handle the colormap, not in TrueColor where we do.
+    if (x_pseudo) {
+        attribmask |= CWColormap;
+        attribs.colormap = X_cmap;
+    }
+#else
     attribs.colormap = X_cmap;
+#endif      
     attribs.border_pixel = 0;
 
     // create the main window
@@ -1828,7 +1855,9 @@ void VID_PrepareModeList(void)
     if(haveVoodoo) // nothing to do
         return;
    if(vidmode_ext && cv_fullscreen.value) {
-      num_vidmodes = num_fullvidmodes;
+      // [WDJ] Submitted by pld-linux patch lib.  Handle larger number of vidmodes without crash.
+      num_vidmodes = (num_fullvidmodes > MAX_NUM_VIDMODES)
+                       ? MAX_NUM_VIDMODES : num_fullvidmodes;
 
       // initialize mapping
       for(i=0; i<num_vidmodes; i++)
