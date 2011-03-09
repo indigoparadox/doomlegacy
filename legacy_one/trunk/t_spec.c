@@ -85,7 +85,7 @@ void spec_brace( void )
 int spec_if( void )
 {
   int endtoken;
-  svalue_t eval;
+  fs_value_t eval;
   
   if( (endtoken = find_operator(0, num_tokens-1, ")")) == -1)
   {
@@ -119,7 +119,7 @@ int spec_if( void )
 int spec_elseif(boolean lastif)
 {
   int endtoken;
-  svalue_t eval;
+  fs_value_t eval;
 
   if( (endtoken = find_operator(0, num_tokens-1, ")")) == -1)
   {
@@ -169,7 +169,7 @@ void spec_else(boolean lastif)
 void spec_while( void )
 {
   int endtoken;
-  svalue_t eval;
+  fs_value_t eval;
 
   if(!fs_current_section)
   {
@@ -191,7 +191,7 @@ void spec_while( void )
 
 void spec_for( void )                 // for() loop
 {
-  svalue_t eval;
+  fs_value_t eval;
   int start;
   int comma1, comma2;     // token numbers of the seperating commas
   

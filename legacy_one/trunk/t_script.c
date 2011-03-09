@@ -658,7 +658,7 @@ void clear_runningscripts( void )
 }
 
 
-mobj_t * MobjForSvalue(svalue_t svalue)
+mobj_t * MobjForSvalue(fs_value_t svalue)
 {
   int intval;
   

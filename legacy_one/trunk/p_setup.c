@@ -1702,7 +1702,7 @@ boolean P_SetupLevel (int           episode,
 
 
 #ifdef FRAGGLESCRIPT
-    T_InitSaveList();             // Setup FS array list
+    T_Init_FSArrayList();         // Setup FS array list
     T_PreprocessScripts();        // preprocess FraggleScript scripts
 #endif
 

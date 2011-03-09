@@ -31,15 +31,15 @@
 
 #include "t_parse.h"
 
-void T_AddArray(sfarray_t *);
-void T_InitSaveList(void);
+void T_Add_FSArray(fs_array_t *);
+void T_Init_FSArrayList(void);
 
-//#define SAVELIST_STRUCTHEAD
+//#define FS_ARRAYLIST_STRUCTHEAD
 // The structure head seems to be unused, can just be a ptr.
-#ifdef SAVELIST_STRUCTHEAD
-extern sfarray_t sfsavelist;
+#ifdef FS_ARRAYLIST_STRUCTHEAD
+extern fs_array_t fs_arraylist;
 #else
-extern sfarray_t * sfsavelist;
+extern fs_array_t * fs_arraylist;
 #endif
 
 #endif

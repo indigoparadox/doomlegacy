@@ -49,7 +49,7 @@
 #endif
 #endif
 
-typedef struct section_s section_t;
+typedef struct fs_section_s fs_section_t;
 #if !defined(FREEBSD) && !defined(SOLARIS)
 typedef struct label_s label_t;
 #elif __FreeBSD__ > 4
@@ -65,10 +65,10 @@ void preprocess(script_t *script);
 
 /***** {} sections **********/
 
-section_t * find_section_start(char *brace);
-section_t * find_section_end(char *brace);
+fs_section_t * find_section_start(char *brace);
+fs_section_t * find_section_end(char *brace);
 
-struct section_s
+struct fs_section_s
 {
   char *start;    // offset of starting brace {
   char *end;      // offset of ending brace   }
@@ -82,7 +82,7 @@ struct section_s
     } data_loop;
   } data; // data for section
   
-  section_t *next;        // for hashing
+  fs_section_t *next;        // for hashing
 };
 
 enum    // section types
