@@ -423,7 +423,6 @@ void D_RegisterClientCommands(void)
 
     //i_cdmus.c
     CV_RegisterVar(&cd_volume);
-    CV_RegisterVar(&cdUpdate);
 
     // screen.c ?
     CV_RegisterVar(&cv_fullscreen);     // only for opengl so use differant name please and move it to differant place

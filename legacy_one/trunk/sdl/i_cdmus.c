@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2011 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -31,9 +31,7 @@
 //
 //-----------------------------------------------------------------------------
 
-
 #include <stdlib.h>
-
 #include "SDL.h"
 
 #include "doomtype.h"
@@ -43,59 +41,86 @@
 
 #define MAX_CD_TRACKS 256
 
-static boolean cdValid = false;
-static boolean playing = false;
-static boolean wasPlaying = false;
-static boolean initialized = false;
-static boolean enabled = false;
+#define CD_OK(cd) (CD_INDRIVE((cd)->status))
+
+static SDL_CD *cdrom = NULL;  // if non-NULL, the CD-ROM system is initialized
+
+static boolean cd_enabled = false; // do we want cd music? changed using the cd console command
 static boolean playLooping = false;
-static byte    playTrack;
-static byte    maxTrack;
-static byte    cdRemap[MAX_CD_TRACKS];
-static int     cdvolume = -1;
+static unsigned int playTrack; // track being played
+static unsigned int cdRemap[MAX_CD_TRACKS];
+
+static void cd_volume_onchange(void);
 
 CV_PossibleValue_t cd_volume_cons_t[]={{0,"MIN"},{31,"MAX"},{0,NULL}};
+consvar_t cd_volume = {"cd_volume", "31", CV_SAVE | CV_CALL, cd_volume_cons_t, cd_volume_onchange};
 
-consvar_t cd_volume = {"cd_volume","31",CV_SAVE, cd_volume_cons_t};
-consvar_t cdUpdate  = {"cd_update","1",CV_SAVE};
+static void cd_volume_onchange(void)
+{
+  // HACK: SDL does not support setting the CD volume.
+  // Use pause instead and toggle between full and no music.
 
-static SDL_CD *cdrom = NULL;
+  if (!cdrom)
+    return;
+
+  if (cd_volume.value > 0 && cdrom->status == CD_PAUSED)
+    I_ResumeCD();
+  else if (cd_volume.value == 0 && cdrom->status == CD_PLAYING)
+    I_PauseCD();
+}
+
+
 static Uint32 lastchk = 0;
-static CDstatus cdStatus;
 
 /**************************************************************************
  *
  * function: CDAudio_GetAudioDiskInfo
  *
  * description:
- * set number of tracks if CD is available
+ * update the SDL_CD status info behind the cdrom pointer
+ * returns true if there's a cd in the drive and it's ok
  *
  **************************************************************************/
-static int CDAudio_GetAudioDiskInfo(void)
+static boolean CDAudio_GetAudioDiskInfo(void)
 {
-    cdValid = false;
-    maxTrack = 0;
-    
-    cdStatus = SDL_CDStatus(cdrom);
+  if (!cdrom)
+    return false;
 
-    if(!CD_INDRIVE(cdStatus))
+  CDstatus cdStatus = SDL_CDStatus(cdrom);
+
+  if (cdStatus == CD_ERROR)
     {
-	CONS_Printf("No CD in drive\n");
-	return -1;
+      CONS_Printf("CD Error: %s\n", SDL_GetError());
+      return false;
+    }
+
+  if (!CD_INDRIVE(cdStatus))
+    {
+      CONS_Printf("No CD in drive\n");
+      return false;
     }
     
-    if(cdStatus == CD_ERROR)
-    {
-	CONS_Printf("CD Error: %s\n", SDL_GetError());
-	return -1;
-    }
-    
-    cdValid = true;
-    maxTrack = cdrom->numtracks;
-    
-    return 0;
+  return true;
 }
 
+/**************************************************************************
+ *
+ * function: StopCD
+ *
+ * description:
+ *
+ *
+ **************************************************************************/
+void I_StopCD(void)
+{
+  if (!cdrom)
+    return;
+    
+  if (SDL_CDStop(cdrom))
+    {
+      CONS_Printf("CD stop failed\n");
+    }
+}
 
 /**************************************************************************
  *
@@ -107,16 +132,15 @@ static int CDAudio_GetAudioDiskInfo(void)
  **************************************************************************/
 static void I_EjectCD(void)
 {
-    if (cdrom == NULL || !enabled)
-	return; // no cd init'd
+  if (!cdrom)
+    return; // no cd init'd
     
-    I_StopCD();
+  I_StopCD();
     
-    if(SDL_CDEject(cdrom))
+  if (SDL_CDEject(cdrom))
     {
-	CONS_Printf("cdrom eject failed\n");
+      CONS_Printf("CD eject failed\n");
     }
-    return;
 }
 
 /**************************************************************************
@@ -133,7 +157,7 @@ static void Command_Cd_f (void)
     int		ret;
     int		n;
 
-    if (!initialized)
+    if (!cdrom)
 	return;
 
     if (COM_Argc() < 2) {
@@ -146,31 +170,34 @@ static void Command_Cd_f (void)
     command = COM_Argv (1);
 
     if (!strncmp(command, "on", 2)) {
-	enabled = true;
+	cd_enabled = true;
 	return;
     }
 
     if (!strncmp(command, "off", 3)) {
 	I_StopCD();
-	enabled = false;
+	cd_enabled = false;
 	return;
     }
 	
     if (!strncmp(command, "remap", 5)) {
 	ret = COM_Argc() - 2;
 	if (ret <= 0) {
-	    for (n = 1; n < MAX_CD_TRACKS; n++)
+	  // list the mapping
+	    for (n = 0; n < MAX_CD_TRACKS; n++)
 		if (cdRemap[n] != n)
-		    CONS_Printf("  %u -> %u\n", n, cdRemap[n]);
+		    CONS_Printf("  %d -> %d\n", n, cdRemap[n]);
 	    return;
 	}
-	for (n = 1; n <= ret; n++)
-	    cdRemap[n] = atoi(COM_Argv (n+1));
+
+	// set a mapping
+	for (n = 0; n < ret; n++)
+	    cdRemap[n] = atoi(COM_Argv(n+2));
 	return;
     }
         
     if (!strncmp(command, "reset", 5)) {
-	enabled = true;
+	cd_enabled = true;
 	I_StopCD();
             
 	for (n = 0; n < MAX_CD_TRACKS; n++)
@@ -178,10 +205,11 @@ static void Command_Cd_f (void)
 	CDAudio_GetAudioDiskInfo();
 	return;
     }
-        
-    if (!cdValid) {
-	CDAudio_GetAudioDiskInfo();
-	if (!cdValid) {
+
+    // from this point on, make sure the cd is ok        
+    if (!CD_OK(cdrom)) {
+      if (!CDAudio_GetAudioDiskInfo()) // check if situation has changed
+	{
 	    CONS_Printf("No CD in player.\n");
 	    return;
 	}
@@ -189,27 +217,29 @@ static void Command_Cd_f (void)
 
     if (!strncmp(command, "open", 4)) {
 	I_EjectCD();
-	cdValid = false;
 	return;
     }
 
-    if (!strncmp(command, "info", 4)) {
-	CONS_Printf("%u tracks\n", maxTrack);
-	if (playing)
-	    CONS_Printf("Currently %s track %u\n", playLooping ? "looping" : "playing", playTrack);
-	else if (wasPlaying)
-	    CONS_Printf("Paused %s track %u\n", playLooping ? "looping" : "playing", playTrack);
-	CONS_Printf("Volume is %d\n", cdvolume);
+    if (!strncmp(command, "info", 4))
+    {
+        CONS_Printf("%d tracks\n", cdrom->numtracks);
+	if (cdrom->status == CD_PLAYING)
+	    CONS_Printf("Currently %s track %d\n", playLooping ? "looping" : "playing", playTrack);
+	else if (cdrom->status == CD_PAUSED)
+	    CONS_Printf("Paused %s track %d\n", playLooping ? "looping" : "playing", playTrack);
+	else
+	  CONS_Printf("Not playing\n");
+	CONS_Printf("Volume is %d\n", cd_volume.value);
 	return;
     }
 
     if (!strncmp(command, "play", 4)) {
-	I_PlayCD((byte)atoi(COM_Argv (2)), false);
+	I_PlayCD(atoi(COM_Argv (2)), false);
 	return;
     }
 
     if (!strncmp(command, "loop", 4)) {
-	I_PlayCD((byte)atoi(COM_Argv (2)), true);
+	I_PlayCD(atoi(COM_Argv (2)), true);
 	return;
     }
 
@@ -231,30 +261,6 @@ static void Command_Cd_f (void)
     CONS_Printf("Invalid command \"cd %s\"\n", COM_Argv (1));
 }
 
-/**************************************************************************
- *
- * function: StopCD
- *
- * description:
- *
- *
- **************************************************************************/
-void I_StopCD(void)
-{
-    if (cdrom == NULL || !enabled)
-	return;
-    
-    if (!(playing || wasPlaying))
-	return;
-    
-    if(SDL_CDStop(cdrom))
-    {
-	CONS_Printf("cdromstop failed\n");
-    }
-    
-    wasPlaying = false;
-    playing = false;
-}
 
 /**************************************************************************
  *
@@ -266,19 +272,13 @@ void I_StopCD(void)
  **************************************************************************/
 void I_PauseCD (void)
 {
-    if (cdrom == NULL || !enabled)
-	return;
+  if (!cdrom || !cd_enabled)
+    return;
     
-    if (!playing)
-	return;
-    
-    if(SDL_CDPause(cdrom))
+  if (SDL_CDPause(cdrom))
     {
-	CONS_Printf("cdrompause failed\n");
+      CONS_Printf("CD pause failed\n");
     }
-    
-    wasPlaying = playing;
-    playing = false;
 }
 
 /**************************************************************************
@@ -292,27 +292,13 @@ void I_PauseCD (void)
 // continue after a pause
 void I_ResumeCD (void)
 {
-    if (cdrom == NULL || !enabled)
-	return;
-    
-    if (!cdValid)
-	return;
-    
-    if (!wasPlaying)
-	return;
-	
-    if(cd_volume.value == 0)
-	return;
-    
-    if(SDL_CDResume(cdrom))
-    {
-	CONS_Printf("cdromresume failed\n");
-    }
-    
-    playing = true;
-    wasPlaying = false;
- 
+  if (!cdrom || !cd_enabled)
     return;
+
+  if (SDL_CDResume(cdrom))
+    {
+      CONS_Printf("CD resume failed\n");
+    }
 }
 
 
@@ -326,17 +312,13 @@ void I_ResumeCD (void)
  **************************************************************************/
 void I_ShutdownCD (void)
 {
-    if (!initialized)
-	return;
+  if (!cdrom)
+    return;
 
-    I_StopCD();
+  I_StopCD();
 
-    SDL_CDClose(cdrom);
-    
-    cdrom = NULL;
-
-    initialized = false;
-    enabled = false;
+  SDL_CDClose(cdrom);
+  cdrom = NULL;
 }
 
 /**************************************************************************
@@ -349,59 +331,52 @@ void I_ShutdownCD (void)
  **************************************************************************/
 void I_InitCD (void)
 {
-    int i;
-    const char *cdName;
-    
-    // Don't start music on a dedicated server
-    if (M_CheckParm("-dedicated"))
-	return ;
-    
-    // Has been checked in d_main.c, but doesn't hurt here
-    if (M_CheckParm ("-nocd"))
-	return ;
-    
-    // Initialize SDL cdrom subsystem
-    if (SDL_InitSubSystem(SDL_INIT_CDROM) < 0) {
-      fprintf(stderr, "Couldn't initialize SDL CD-ROM subsystem: %s\n", SDL_GetError());
+  int i;
+  cdrom = NULL;
+
+  // Initialize SDL cdrom subsystem
+  if (SDL_InitSubSystem(SDL_INIT_CDROM) < 0)
+    {
+      CONS_Printf(" Couldn't initialize SDL CD-ROM subsystem: %s\n", SDL_GetError());
       return;
     }
 
-    // Open drive
-    cdrom = SDL_CDOpen(0);
-    cdName = SDL_CDName(0);
+  if (SDL_CDNumDrives() < 1)
+    {
+      CONS_Printf(" No CD-ROM drives found.\n");
+      return;
+    }
+
+  // Open a drive
+  const char *cdName = SDL_CDName(0);
+  cdrom = SDL_CDOpen(0);
     
-    if (cdrom == NULL) {
-	if(cdName == NULL)
-	{
-	    
-	    CONS_Printf("Couldn't open default CD-ROM drive: %s\n",
-		    SDL_GetError());
-	}
-	else
-	{
-	    CONS_Printf("Couldn't open default CD-ROM drive %s: %s\n",
-			cdName, SDL_GetError());
-	}
+  if (!cdrom)
+    {
+      if (!cdName)
+	CONS_Printf("Couldn't open default CD-ROM drive: %s\n", SDL_GetError());
+      else
+	CONS_Printf("Couldn't open default CD-ROM drive %s: %s\n", cdName, SDL_GetError());
 	
-	return;
+      return;
     }
-    
-    for (i = 0; i < MAX_CD_TRACKS; i++)
-	cdRemap[i] = i;
-    
-    initialized = true;
-    enabled = true;
-
-    if (CDAudio_GetAudioDiskInfo()) {
-	CONS_Printf("I_InitCD: No CD in player.\n");
-	cdValid = false;
+  else
+    {
+      CONS_Printf("Default CD-ROM drive %s initialized.\n", cdName);
     }
 
-    COM_AddCommand ("cd", Command_Cd_f);
+  // init track mapping
+  for (i = 0; i < MAX_CD_TRACKS; i++)
+    cdRemap[i] = i;
     
-    CONS_Printf("CD Audio Initialized\n");
+  cd_enabled = true;
+
+  if (CDAudio_GetAudioDiskInfo())
+    CONS_Printf(" %d tracks found.\n", cdrom->numtracks);
+
+  COM_AddCommand ("cd", Command_Cd_f);
     
-    return ;
+  CONS_Printf("CD audio initialized.\n");
 }
 
 
@@ -412,36 +387,25 @@ void I_InitCD (void)
  * function: UpdateCD
  *
  * description:
- * sets CD volume (may have changed) and initiates play evey 2 seconds
- * in case the song has elapsed
+ * checks the cd status and re-initiates play evey 2 seconds in case the song has elapsed and we are looping
  *
  **************************************************************************/
 void I_UpdateCD (void)
 {
-    if (!enabled)
-	return;
-    
-    I_SetVolumeCD(cd_volume.value);
-	
-    if (playing && lastchk < SDL_GetTicks()) 
-    {
-	lastchk = SDL_GetTicks() + 2000; //two seconds between chks
-	
-	if(CDAudio_GetAudioDiskInfo())
-	{
-	    playing = false;
-	    return;
-	}
-
-	if(cdStatus != CD_PLAYING &&
-	   cdStatus != CD_PAUSED)
-	{
-	    playing = false;
-	    if (playLooping)
-		I_PlayCD(playTrack, true);
-	}
-    }
+  if (!cdrom || !cd_enabled)
     return;
+    
+  if (cdrom->status == CD_PLAYING && lastchk < SDL_GetTicks()) 
+    {
+      lastchk = SDL_GetTicks() + 2000; //two seconds between chks
+
+      // check the status
+      if (!CDAudio_GetAudioDiskInfo())
+	return; // no valid cd in drive
+
+      if (cdrom->status == CD_STOPPED && playLooping)
+	I_PlayCD(playTrack, true);
+    }
 }
 
 
@@ -456,88 +420,52 @@ void I_UpdateCD (void)
  * 
  **************************************************************************/
 
-void I_PlayCD (int track, boolean looping)
+void I_PlayCD (unsigned int track, boolean looping)
 {
-    if (cdrom == NULL || !enabled)
-	return;
+  if (!cdrom || !cd_enabled)
+    return;
     
-    if (!cdValid)
+  if (!CD_OK(cdrom))
     {
-	CDAudio_GetAudioDiskInfo();
-	if (!cdValid)
+      if (!CDAudio_GetAudioDiskInfo()) // check if situation has changed
+	{
+	    CONS_Printf("No CD in drive.\n");
 	    return;
+	}
+    }
+
+  track = cdRemap[track];
+    
+  if (track >= cdrom->numtracks)
+    {
+      CONS_Printf("I_PlayCD: Bad track number %d.\n", track);
+      return;
     }
     
-    track = cdRemap[track];
-    
-    if (track < 1 || track > maxTrack)
+  // don't try to play a non-audio track
+  if (cdrom->track[track].type == SDL_DATA_TRACK)
     {
-	CONS_Printf("I_PlayCD: Bad track number %u.\n", track);
-	return;
-    }
-    
-    // don't try to play a non-audio track
-    if(cdrom->track[track].type == SDL_DATA_TRACK)
-    {
-	CONS_Printf("I_PlayCD: track %i is not audio\n", track);
-	return;
+      CONS_Printf("I_PlayCD: track %d is not audio.\n", track);
+      return;
     }
 	
-    if (playing)
+  if (cdrom->status == CD_PLAYING)
     {
-	if (playTrack == track)
-	    return;
-	I_StopCD();
+      if (playTrack == track)
+	return; // already playing it
+
+      I_StopCD();
     }
     
-    if(SDL_CDPlayTracks(cdrom, track, 0, 1, 0))
+  if (SDL_CDPlayTracks(cdrom, track, 0, 1, 0))
     {
-	CONS_Printf("Error playing track %d: %s\n",
-		    track, SDL_GetError());
-	return;
+      CONS_Printf("Error playing track %d: %s\n", track, SDL_GetError());
+      return;
     }
     
-    playLooping = looping;
-    playTrack = track;
-    playing = true;
+  playLooping = looping;
+  playTrack = track;
 
-    if(cd_volume.value == 0)
-    {
-	I_PauseCD();
-    }
-    
-}
-
-
-/**************************************************************************
- *
- * function: SetVolumeCD
- *
- * description:
- * SDL does not support setting the CD volume
- * use pause instead and toggle between full and no music
- * 
- **************************************************************************/
-
-int I_SetVolumeCD (int volume)
-{
-    if(volume != cdvolume)
-    {
-	if(volume > 0 && volume < 16)
-	{
-	    CV_SetValue(&cd_volume, 31);
-	    cdvolume = 31;
-	    
-	    I_ResumeCD();
-	}
-	else if(volume > 15 && volume < 31)
-	{
-	    CV_SetValue(&cd_volume, 0);
-	    cdvolume = 0;
-	    
-	    I_PauseCD();
-	}
-    }
-    
-    return 0;
+  if (cd_volume.value == 0)
+    I_PauseCD(); // cd "volume" hack
 }

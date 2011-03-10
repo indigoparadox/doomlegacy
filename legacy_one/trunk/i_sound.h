@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2011 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -137,17 +137,13 @@ extern consvar_t user_songs[PLAYLIST_LENGTH];
 #endif
 
 
-// i_cdmus.h : cd music interface
-//
-extern byte    cdaudio_started;
+// cd music interface
 
 void   I_InitCD (void);
-void   I_StopCD (void);
 void   I_PauseCD (void);
 void   I_ResumeCD (void);
-void   I_ShutdownCD (void);
 void   I_UpdateCD (void);
-void   I_PlayCD (int track, boolean looping);
-int    I_SetVolumeCD (int volume);  // return 0 on failure
+void   I_PlayCD (unsigned int track, boolean looping);
+void   I_ShutdownCD (void);
 
 #endif

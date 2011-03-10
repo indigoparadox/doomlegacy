@@ -1962,15 +1962,15 @@ void D_DoomMain()
     wipegamestate = gamestate;
     //------------------------------------------------ COMMAND LINE PARAMS
 
-    // Initialize CD-Audio
-    if (!M_CheckParm("-nocd"))
-        I_InitCD();
+    // Initialize CD-Audio, no music on a dedicated server
+    if (!M_CheckParm("-nocd") && !M_CheckParm("-dedicated"))
+      I_InitCD();
     if (M_CheckParm("-respawn"))
-        COM_BufAddText("respawnmonsters 1\n");
-	if (M_CheckParm("-coopmonsters"))
-		COM_BufAddText("monsterbehavior 1\n");
-	if (M_CheckParm("-infight"))
-		COM_BufAddText("monsterbehavior 2\n");
+      COM_BufAddText("respawnmonsters 1\n");
+    if (M_CheckParm("-coopmonsters"))
+      COM_BufAddText("monsterbehavior 1\n");
+    if (M_CheckParm("-infight"))
+      COM_BufAddText("monsterbehavior 2\n");
     if (M_CheckParm("-teamplay"))
         COM_BufAddText("teamplay 1\n");
     if (M_CheckParm("-teamskin"))
