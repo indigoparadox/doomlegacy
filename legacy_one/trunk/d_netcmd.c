@@ -475,10 +475,8 @@ void SendNameAndColor(void)
     // check if player has the skin loaded (cv_skin may have
     //  the name of a skin that was available in the previous game)
     cv_skin.value = R_SkinAvailable(cv_skin.string);
-    if (!cv_skin.value)
-        WRITESTRINGN(p, DEFAULTSKIN, SKINNAMESIZE)
-    else
-        WRITESTRINGN(p, cv_skin.string, SKINNAMESIZE);
+    char * svstr = (cv_skin.value)? cv_skin.string : DEFAULTSKIN;
+    WRITESTRINGN(p, svstr, SKINNAMESIZE)
     *(p - 1) = 0;       // finish the string;
 
     SendNetXCmd(XD_NAMEANDCOLOR, buf, p - buf);
@@ -492,15 +490,13 @@ void SendNameAndColor2(void)
     p = buf;
     WRITEBYTE(p, cv_playercolor2.value);
     WRITESTRINGN(p, cv_playername2.string, MAXPLAYERNAME);
-    *(p - 1) = 0;       // finish teh string;
+    *(p - 1) = 0;       // finish the string;
 
     // check if player has the skin loaded (cv_skin may have
     //  the name of a skin that was available in the previous game)
     cv_skin2.value = R_SkinAvailable(cv_skin2.string);
-    if (!cv_skin2.value)
-        WRITESTRINGN(p, DEFAULTSKIN, SKINNAMESIZE)
-    else
-        WRITESTRINGN(p, cv_skin2.string, SKINNAMESIZE);
+    char * svstr = (cv_skin2.value)? cv_skin2.string : DEFAULTSKIN;
+    WRITESTRINGN(p, svstr, SKINNAMESIZE)
     *(p - 1) = 0;       // finish the string;
 
     SendNetXCmd2(XD_NAMEANDCOLOR, buf, p - buf);
