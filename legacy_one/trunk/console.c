@@ -237,7 +237,7 @@ static void CONS_Clear_f (void)
 }
 
 
-char *bindtable[NUMINPUTS];
+static char *bindtable[NUMINPUTS];
 
 void CONS_Bind_f(void)
 {

@@ -100,8 +100,8 @@ void VS_Alloc (vsbuf_t *buf, int initsize);
 void VS_Free  (vsbuf_t *buf);
 void VS_Clear (vsbuf_t *buf);
 void *VS_GetSpace (vsbuf_t *buf, int length);
-void VS_Write (vsbuf_t *buf, void *data, int length);
-void VS_Print (vsbuf_t *buf, char *data); // strcats onto the sizebuf
+boolean VS_Write (vsbuf_t *buf, void *data, int length);
+boolean VS_Print (vsbuf_t *buf, char *data); // strcats onto the sizebuf
 
 // ======================
 
