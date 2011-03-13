@@ -1098,7 +1098,7 @@ game_desc_t  game_desc_table[ NUM_GDESC ] =
 // GDESC_tnt: FinalDoom : Tnt Evilution, DoomII engine
    { "Tnt Evilution", "DOOM 2: TNT - Evilution", "tnt",
 	{"tnt.wad",NULL,NULL}, NULL,
-	{"REDTNT", NULL}, LN_MAP01, LN_TITLE,
+	{"REDTNT2", NULL}, LN_MAP01, LN_TITLE,
 	GD_idwad, GDESC_tnt, doom2_commercial },
 // GDESC_blasphemer: FreeDoom project, DoomII replacement
    { "Blasphemer", NULL, "blasphem",
