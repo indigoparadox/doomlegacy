@@ -1549,5 +1549,8 @@ patchfile = w70_netcmd_WRITESTRINGN.patch
 - committed revision 814   by wesley johnson
 Linux 2.6 compile warning messages squashed, and smaller code.
 
+*** w71_kin_progress
+- committed revision 815   by wesley johnson
+Move kin log file "progress.txt" from linux_x/ to _logs/.
 
 
