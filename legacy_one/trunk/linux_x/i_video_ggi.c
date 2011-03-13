@@ -57,8 +57,10 @@
 
 // it must be here 19990117 by Kin
 #include "doomdef.h"
+#ifdef USEASM
 // added 19990125 by Kin
 #include "../vid_copy.h"
+#endif
 
 #include "doomstat.h"
 #include "i_system.h"

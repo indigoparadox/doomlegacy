@@ -1558,3 +1558,14 @@ patchfile = w70_TNT.patch
 - committed revision 816   by wesley johnson
 Fix TNT recognition.
 
+*** w71_linux_x
+patchfile = w71_linux_x.patch
+- committed revision 817   by wesley johnson
+General repairs to linux_x directory.
+Update system calls to same changes as made recently to SDL.
+Fix prototype changes.
+Deactivate unused code and obsolete code.
+Fix keyboard translation and event posting.
+Add X error handler code.
+Fix X joystick code.
+Verified to run Linux X11 in software mode.

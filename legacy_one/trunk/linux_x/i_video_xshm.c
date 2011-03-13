@@ -181,6 +181,9 @@ int XShmGetEventBase( Display* dpy );
 
 void VID_PrepareModeList(void);
 
+// [WDJ] Call direct, because of Xlib typed parameters
+Window  HookXwin(Display *dsp,int width,int height, boolean vidmode_active);
+
 // maximum number of windowed modes for X11 (see windowedModes[][])
 #define MAXWINMODES (8)
 #define NUM_VOODOOMODES (3)
@@ -503,7 +506,18 @@ static void determineBPP(void)
    return;
 }
 
-static char *initDisplay(void)
+
+int X_error_handler( Display * d, XErrorEvent * ev )
+{
+#define ERRBUF_SIZE    1024
+    char errbuf[ERRBUF_SIZE+1];
+    XGetErrorText( d, ev->error_code, errbuf, ERRBUF_SIZE );
+    I_SoftError( "%s\n", errbuf );
+    return 0;
+}
+
+
+static char * initDisplay(void)
 {
     int pnum;
     char *displayname, *d, displaycopy[256];
@@ -574,40 +588,58 @@ static void createColorMap()
    return;
 }
 
-static int dirtyMapTable[256] =
-{0, 0, 0, 0, 0, 0, 0, 0, 0, 65307, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48,
- 45, 61, 65288, 65289, 113, 119, 101, 114, 116, 121, 117, 105, 111, 112, 91,
- 93, 65293, 65507, 97, 115, 100, 102, 103, 104, 106, 107, 108, 59, 39, 96,
- 65505, 92, 122, 120, 99, 118, 98, 110, 109, 44, 46, 47, 65506, 65450, 65511,
- 32, 65509, 65470, 65471, 65472, 65473, 65474, 65475, 65476, 65477, 65478,
- 65479, 65407, 65300, 65429, 65431, 65434, 65453, 65430, 65437, 65432, 65451,
- 65436, 65433, 65435, 65438, 65439, 0, 0, 0, 65480, 65481, 65360, 65362, 65365,
- 65361, 0, 65363, 65367, 65364, 65366, 65379, 65535, 65421, 65312, 65299, 65377,
- 65455, 65514, 0, 65515, 65516, 65518, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+#ifdef ALT_KEYMAPPING
+int con_keymap = 0;
+
+static int alt_keyboard_MapTable[256] =
+{0, 0, 0, 0, 0, 0, 0, 0, 0,
+ XK_Escape, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', XK_BackSpace,
+ XK_Tab, 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', XK_Return,
+ XK_Control_L, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', 39, 96,
+ XK_Shift_L, 92, 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', XK_Shift_R,
+ XK_KP_Multiply,
+ XK_Meta_L, 32,
+ XK_Caps_Lock,
+ XK_F1, XK_F2, XK_F3, XK_F4, XK_F5, XK_F6, XK_F7, XK_F8, XK_F9, XK_F10,
+ XK_Num_Lock, XK_Scroll_Lock, XK_KP_Home, XK_KP_Up, XK_KP_Prior, XK_KP_Subtract, XK_KP_Left, XK_KP_Begin, XK_KP_Right, XK_KP_Add,
+ XK_KP_End, XK_KP_Down, XK_KP_Page_Down, XK_KP_Insert, XK_KP_Delete, 0, 0, 0,
+ XK_F11, XK_F12, XK_Home, XK_Up, XK_Prior,
+ XK_Left, 0, XK_Right, XK_End, XK_Down, XK_Next, XK_Insert, XK_Delete,
+ XK_KP_Enter, XK_Multi_key, XK_Pause, XK_Print,
+ XK_KP_Divide, XK_Alt_R, 0, XK_Super_L, XK_Super_R, XK_Hyper_R,
+ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+#endif
 
 //
 //  Translates the key currently in X_event
 //
-static int xlatekey(void)
+static int xlatekey( boolean keydown )
 {
     KeyCode keycode;
     KeySym keysym;
     int rc;
 
     keycode = X_event.xkey.keycode;
-    keysym = XKeycodeToKeysym(X_display, keycode, 0);
 
-    if(con_keymap == english) {
-        rc = keysym;
+#ifdef ALT_KEYMAPPING
+    if( con_keymap ) {
+        rc = alt_keyboard_MapTable[keycode];
     }
     else {
-        rc = dirtyMapTable[keycode];
+        // X keymapping
+        keysym = XKeycodeToKeysym(X_display, keycode, 0);
+        rc = keysym;
     }
+#else
+    // X keymapping
+    keysym = XKeycodeToKeysym(X_display, keycode, 0);
+    rc = keysym;
+#endif
 
     switch(rc)
     {
@@ -631,41 +663,28 @@ static int xlatekey(void)
       case XK_F10:      rc = KEY_F10;           break;
       case XK_F11:      rc = KEY_F11;           break;
       case XK_F12:      rc = KEY_F12;           break;
-      // hey, it's not a sparc 19990128 by Kin
-      case XK_BackSpace: rc = KEY_BACKSPACE;    break;
-      case XK_Delete:   rc = KEY_DEL;   break;
 
       case XK_Pause:    rc = KEY_PAUSE;         break;
 
-      case XK_KP_Equal:
-      case XK_KP_Add:
-      case XK_equal:    rc = KEY_EQUALS;        break;
+//      case XK_equal:    rc = '=';  break;
+//      case XK_minus:    rc = '-';   break;
 
-      case XK_KP_Subtract:
-      case XK_minus:    rc = KEY_MINUS;         break;
+      // [WDJ] Most important that they have unique values because they
+      // are assigned game actions by the user (by keypress sample).
+      case XK_Caps_Lock: rc = KEY_CAPSLOCK;  break;
+      case XK_Num_Lock: rc = KEY_NUMLOCK;  break;
+      case XK_Scroll_Lock: rc = KEY_SCROLLLOCK;  break;
+      case XK_Multi_key: rc = KEY_MENU /* KEY_unused1 */;  break;
+      case XK_Mode_switch: rc = KEY_MODE;   break;
 
-      case XK_Shift_L:
-      case XK_Shift_R:
-        rc = KEY_SHIFT;
-        break;
-
-      case XK_Caps_Lock:
-        rc = KEY_CAPSLOCK;
-        break;
-
-      case XK_Multi_key:
-      case XK_Control_L:
-      case XK_Control_R:
-        rc = KEY_CTRL;
-        break;
-
-      case XK_Mode_switch:
-      case XK_Alt_L:
-      case XK_Meta_L:
-      case XK_Alt_R:
-      case XK_Meta_R:
-        rc = KEY_ALT;
-        break;
+      case XK_Shift_L:  rc = KEY_LSHIFT;  shiftdown = keydown;  break;
+      case XK_Shift_R:  rc = KEY_RSHIFT;  shiftdown = keydown;  break;
+      case XK_Control_L: rc = KEY_LCTRL;  break;
+      case XK_Control_R: rc = KEY_RCTRL;  break;
+      case XK_Alt_L: rc = KEY_LALT;  altdown = keydown;  break;
+      case XK_Alt_R: rc = KEY_RALT;  altdown = keydown;  break;
+      case XK_Meta_R: rc = KEY_RWIN;  break;
+      case XK_Meta_L: rc = KEY_LWIN;
 
       // I forgot them..... 19990128 by Kin
       case XK_Page_Up: rc = KEY_PGUP; break;
@@ -673,27 +692,48 @@ static int xlatekey(void)
       case XK_End: rc = KEY_END; break;
       case XK_Home: rc = KEY_HOME; break;
       case XK_Insert: rc = KEY_INS; break;
+      case XK_Delete:   rc = KEY_DELETE;   break;
+      // hey, it's not a sparc 19990128 by Kin
+      case XK_BackSpace: rc = KEY_BACKSPACE;    break;
 
       // metzgermeister: keypad layout as in g_input.c
+      case XK_KP_0 :
       case XK_KP_Insert    : rc = KEY_KEYPAD0;  break;
+      case XK_KP_1 :
       case XK_KP_End       : rc = KEY_KEYPAD1;  break;
+      case XK_KP_2 :
       case XK_KP_Down      : rc = KEY_KEYPAD2;  break;
+      case XK_KP_3 :
       case XK_KP_Page_Down : rc = KEY_KEYPAD3;  break;
+      case XK_KP_4 :
       case XK_KP_Left      : rc = KEY_KEYPAD4;  break;
+      case XK_KP_5 :
       case XK_KP_Begin     : rc = KEY_KEYPAD5;  break;
+      case XK_KP_6 :
       case XK_KP_Right     : rc = KEY_KEYPAD6;  break;
+      case XK_KP_7 :
       case XK_KP_Home      : rc = KEY_KEYPAD7;  break;
+      case XK_KP_8 :
       case XK_KP_Up        : rc = KEY_KEYPAD8;  break;
+      case XK_KP_9 :
       case XK_KP_Page_Up   : rc = KEY_KEYPAD9;  break;
-      case XK_KP_Delete    : rc = KEY_KPADDEL;  break;
+      case XK_KP_Decimal :
+      case XK_KP_Delete    : rc = KEY_KPADPERIOD;  break;
       case XK_KP_Divide    : rc = KEY_KPADSLASH; break;
+      case XK_KP_Multiply  : rc = KEY_KPADMULT; break;
+      case XK_KP_Subtract  : rc = KEY_MINUSPAD;  break;
+      case XK_KP_Add       : rc = KEY_PLUSPAD;  break;
       case XK_KP_Enter     : rc = KEY_ENTER;    break;
+      case XK_KP_Equal     : rc = KEY_KPADEQUALS;  break;
 
       default:
+#if XK_space != ' '       
         if (rc >= XK_space && rc <= XK_asciitilde)
             rc = rc - XK_space + ' ';
+#endif       
         if (rc >= 'A' && rc <= 'Z')
             rc = rc - 'A' + 'a';
+//        fprintf(stderr,"Key: %X -> %X -> %X\n", keycode, (unsigned int)keysym, (unsigned int)rc);
         break;
     }
 
@@ -704,6 +744,11 @@ static int xlatekey(void)
 
 }
 
+int to_ASCII( int kcch )
+{
+   // SDL does this by  -> Unicode -> ASCII
+   return  (kcch <= 0x7F) ? kcch : 0; // ASCII key
+}
 
 
 //
@@ -711,8 +756,9 @@ static int xlatekey(void)
 //
 void I_StartFrame(void)
 {
-        /* frame syncronous IO operations not needed for X11 */
+        /* frame synchronous IO operations not needed for X11 */
 }
+
 
 static int      lastmousex = 0;
 static int      lastmousey = 0;
@@ -746,13 +792,15 @@ void I_GetEvent(void)
     {
       case KeyPress:
         event.type = ev_keydown;
-        event.data1 = xlatekey();
+        event.data1 = xlatekey(1);
+        event.data2 = to_ASCII(event.data1);
         D_PostEvent(&event);
         break;
 
       case KeyRelease:
         event.type = ev_keyup;
-        event.data1 = xlatekey();
+        event.data1 = xlatekey(0);
+        event.data2 = to_ASCII(event.data1);
         D_PostEvent(&event);
         break;
 
@@ -998,7 +1046,7 @@ static void doGrabMouse(void)
     return;
 }
 
-static void doUngrabMouse(void)
+void doUngrabMouse(void)
 {
     if(!X_display)
         return;
@@ -1427,7 +1475,7 @@ static void grabsharedmemory(int size)
   {
     I_Error("Sorry, system too polluted with stale "
             "shared memory segments.\n");
-    }
+  }
 
   X_shminfo.shmid = id;
 
@@ -1631,8 +1679,8 @@ static int createWindow(boolean isWindowedMode, int modenum)
       XF86VidModeSetViewPort(X_display, X_screen, 0, 0);
    }
    if(rendermode==render_soft) {
-    // setup attributes for main window
-    if (vidmode_active) {
+     // setup attributes for main window
+     if (vidmode_active) {
 #if 1       
        // [WDJ] Submitted by pld-linux: Do not force CWColormap, it may be a truecolor mode.
        attribmask = CWSaveUnder | CWBackingStore |
@@ -1645,34 +1693,35 @@ static int createWindow(boolean isWindowedMode, int modenum)
        attribs.override_redirect = True;
        attribs.backing_store = NotUseful;
        attribs.save_under = False;
-    } else
+     } else {
 #if 1       
        // [WDJ] Submitted by pld-linux: Do not force CWColormap, it may be a truecolor mode.
        attribmask = CWBorderPixel | CWEventMask;
 #else      
        attribmask = CWBorderPixel | CWColormap | CWEventMask;
 #endif
+     }
 
-    attribs.event_mask = KeyPressMask | KeyReleaseMask
+     attribs.event_mask = KeyPressMask | KeyReleaseMask
 #ifndef POLL_POINTER
        | PointerMotionMask | ButtonPressMask | ButtonReleaseMask
 #endif
        | ExposureMask | StructureNotifyMask;
 
 #if 1
-    // [WDJ] Submitted by pld-linux: Do not force CWColormap, it may be a truecolor mode.
-    // Only in x_pseudo does X handle the colormap, not in TrueColor where we do.
-    if (x_pseudo) {
+     // [WDJ] Submitted by pld-linux: Do not force CWColormap, it may be a truecolor mode.
+     // Only in x_pseudo does X handle the colormap, not in TrueColor where we do.
+     if (x_pseudo) {
         attribmask |= CWColormap;
         attribs.colormap = X_cmap;
-    }
+     }
 #else
-    attribs.colormap = X_cmap;
+     attribs.colormap = X_cmap;
 #endif      
-    attribs.border_pixel = 0;
+     attribs.border_pixel = 0;
 
-    // create the main window
-    X_mainWindow = XCreateWindow(X_display,
+     // create the main window
+     X_mainWindow = XCreateWindow(X_display,
                                  RootWindow(X_display, X_screen),
                                  0, 0, // x, y,
                                  X_width, X_height,
@@ -1683,18 +1732,21 @@ static int createWindow(boolean isWindowedMode, int modenum)
                                  attribmask,
                                  &attribs);
 
-    if(!X_mainWindow)
+     if(!X_mainWindow)
         return 0;
 
-    // create the GC
-    valuemask = GCGraphicsExposures;
-    xgcvalues.graphics_exposures = False;
-    X_gc = XCreateGC(X_display,
+     // create the GC
+     valuemask = GCGraphicsExposures;
+     xgcvalues.graphics_exposures = False;
+     X_gc = XCreateGC(X_display,
                      X_mainWindow,
                      valuemask,
                      &xgcvalues );
     } else {
-      X_mainWindow = HWD.pfnHookXwin(X_display, X_width, X_height, vidmode_active);
+      // Hardware renderer
+//      X_mainWindow = HWD.pfnHookXwin(X_display, X_width, X_height, vidmode_active);
+      // [WDJ] Call direct
+      X_mainWindow = HookXwin(X_display, X_width, X_height, vidmode_active);
       if(X_mainWindow == 0) {
         return 0;
       }
@@ -1984,6 +2036,8 @@ void I_StartupGraphics(void)
     signal(SIGINT, (void (*)(int)) I_Quit);
     signal(SIGTERM, (void (*)(int)) I_Quit); // shutdown gracefully if terminated
 
+    XSetErrorHandler( X_error_handler );
+
     // setup vid 19990110 by Kin
     vid.bpp = 1; // not optimized yet...
 
@@ -2033,7 +2087,7 @@ void I_StartupGraphics(void)
        } else {
            HWD.pfnInit = dlsym(dlptr,"Init");
            HWD.pfnShutdown = dlsym(dlptr,"Shutdown");
-           HWD.pfnHookXwin = dlsym(dlptr,"HookXwin");
+//           HWD.pfnHookXwin = dlsym(dlptr,"HookXwin");
            HWD.pfnSetPalette = dlsym(dlptr,"SetPalette");
            HWD.pfnFinishUpdate = dlsym(dlptr,"FinishUpdate");
            HWD.pfnDraw2DLine = dlsym(dlptr,"Draw2DLine");

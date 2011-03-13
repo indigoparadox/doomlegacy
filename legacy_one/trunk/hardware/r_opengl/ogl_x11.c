@@ -71,17 +71,16 @@
 //                                                                    GLOBALS
 // **************************************************************************
 
-#ifdef DEBUG_TO_FILE
-HANDLE logstream = -1;
-#endif
-
 static GLXContext ctx   = NULL;
 static Display *dpy     = NULL;
 static Window win       = 0; // metzgermeister: No pointer!
 static XVisualInfo *vis = NULL;
 
+#if 0
+// [WDJ] Unused
 #define MAX_VIDEO_MODES   32
 static  vmode_t     video_modes[MAX_VIDEO_MODES];
+#endif
 int     oglflags = 0; // FIXME: do we have to handle this under Linux as well?
                       // Hurdler: now yes (due to that fullbright bug with g200/g400 card)
 
@@ -89,23 +88,33 @@ int     oglflags = 0; // FIXME: do we have to handle this under Linux as well?
 //                                                                  FUNCTIONS
 // **************************************************************************
 
+#if 0
+// [WDJ] This is already defined in i_main
+#ifdef DEBUG_TO_FILE
+FILE * logstream = NULL;
+#endif
+
+// [WDJ] These are already defined in glibc
 EXPORT void _init() {
 #ifdef DEBUG_TO_FILE
-  logstream = open("ogllog.txt", O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
+  logstream = fopen("ogllog.txt", O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
 #endif
 }
 
 EXPORT void _fini() {
 #ifdef DEBUG_TO_FILE
-   if(logstream!=-1) close(logstream);
+   if(logstream) fclose(logstream);
 #endif
 }
-
+#endif
 
 //
 // FAB --- SORRY, THIS SHOULD BE UPDATED LIKE ABOVE, PLUS THE LINUX ADDS
 //
-EXPORT Window HWRAPI( HookXwin ) (Display *dsp,int width,int height, boolean vidmode_active)
+//EXPORT Window HWRAPI( HookXwin ) (Display *dsp,int width,int height, boolean vidmode_active)
+
+//[WDJ] Call direct, has Xwindows specific parameters
+Window  HookXwin(Display *dsp,int width,int height, boolean vidmode_active)
 {
     char *renderer;
     int scrnum;

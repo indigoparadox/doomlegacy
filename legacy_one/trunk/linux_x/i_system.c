@@ -136,6 +136,11 @@
 
 extern void D_PostEvent(event_t*);
 
+// Common func defs that are disappearing from the include files.
+// From i_sound.c
+void I_InitMusic(void);
+void I_ShutdownMusic(void);
+
 extern event_t         events[MAXEVENTS];
 extern int             eventhead;
 extern int             eventtail;
@@ -151,12 +156,32 @@ extern int             eventtail;
 static char returnWadPath[256];
 
 #ifdef LJOYSTICK
-int joyfd = -1;
-int joyaxes = 0;
+
+#define MAX_JOYAXES 3
+typedef struct {
+  int fd = -1;
+  int numaxes = 0;
+  uint16_t axis[MAX_JOYAXES];
+} joystick_t;
+
+#define MAX_JOYSTICK 4
+joystick_t  joystk[ MAX_JOYSTICK ];
+
 int joystick_started = 0;
-int joy_scale = 1;
+
+#define NUM_JOYSTICKDEV 4
+const char * joystick_dev[NUM_JOYSTICKDEV] =
+{
+"/dev/input/js0",
+"/dev/input/js1",
+"/dev/input/js2",
+"/dev/input/js3",
+};
+
 #endif
-JoyType_t Joystick;
+//JoyType_t Joystick;
+// must exist, even when LJOYSTICK off
+int num_joysticks = 0;
 
 #ifdef LMOUSE2
 int fdmouse2 = -1;
@@ -165,6 +190,10 @@ int mouse2_started = 0;
 
 // dummy 19990119 by Kin
 byte keyboard_started = 0;
+// current modifier key status
+boolean shiftdown = false;
+boolean altdown = false;
+
 void I_StartupKeyboard (void) {}
 void I_StartupTimer (void) {}
 
@@ -198,18 +227,36 @@ int I_GetKey (void)
 }
 
 #ifdef LJOYSTICK
-void I_JoyScale() {
+
+#if 0
+// [WDJ] Old joystick code, scale is now handled in g_game.c
+int joy_scale = 1;
+void I_JoyScale()
+{
   joy_scale = (cv_joyscale.value==0)?1:cv_joyscale.value;
 }
+#endif
 
-void I_GetJoyEvent() {
+void I_GetJoyEvent()
+{
   struct js_event jdata;
   static event_t event = {0,0,0,0};
   static int buttons = 0;
+  int i;
   if(!joystick_started) return;
-  while(read(joyfd,&jdata,sizeof(jdata))!=-1) {
+  for(i=0; i<num_joysticks; i++)  // all joysticks found
+  {
+   while(read( joystk[i].fd, &jdata, sizeof(jdata)) != -1) {
     switch(jdata.type) {
     case JS_EVENT_AXIS:
+#if 1
+      // [WDJ] Polled joystick
+      // Save for later polling
+      if( jdata.number < joystk[i].numaxes ) {
+          joystk[i].axis[jdata.number] = jdata.value >> 5;
+      }
+#else       
+      // [WDJ] Old event driven joystick position, it now is polled
       event.type = ev_joystick;
       event.data1 = 0;
       switch(jdata.number) {
@@ -224,6 +271,7 @@ void I_GetJoyEvent() {
         break;
       }
       break;
+#endif       
     case JS_EVENT_BUTTON:
       if(jdata.number<JOYBUTTONS) {
         if(jdata.value) {
@@ -244,34 +292,59 @@ void I_GetJoyEvent() {
       }
       break;
     }
+   }
   }
 }
 
-void I_ShutdownJoystick() {
-  if(joyfd!=-1) {
-    close(joyfd);
-    joyfd = -1;
+void I_ShutdownJoystick()
+{
+  int i;
+  for( i=0; i<num_joysticks; i++ )
+  {
+      if(joystk[i].fd != -1) {
+	 close(joystk[i].fd);
+      joystk[i].fd = -1;
   }
-  joyaxes = 0;
+  num_joysticks = 0;
   joystick_started = 0;
 }
 
-int joy_open(char *fname) {
-  joyfd = open(fname,O_RDONLY|O_NONBLOCK);
+// open the next joystick
+boolean joy_open(char *fname)
+{
+#define JOYNAME_LEN 511
+  char * joyname[JOYNAME_LEN+1];
+  int joyaxes;
+  int joyfd = open(fname, O_RDONLY|O_NONBLOCK);
+   
   if(joyfd==-1) {
     CONS_Printf("Error opening %s!\n",fname);
     return 0;
   }
+  
+  // Get number of axes
   ioctl(joyfd,JSIOCGAXES,&joyaxes);
   if(joyaxes<2) {
     CONS_Printf("Not enought axes?\n");
-    joyaxes = 0;
-    joyfd = -1;
     close(joyfd);
     return 0;
   }
-  return joyaxes;
+  // Record the joystick
+  if( num_joysticks >= MAX_JOYSTICK )  return 0;
+  joystk[num_joysticks].fd = joyfd;
+  joystk[num_joysticks].numaxes = joyaxes;
+  CONS_Printf(" Properties of joystick %d:\n", num_joysticks);
+  ioctl(joyfd,JSIOCGNAME(JOYNAME_LEN), joyname)
+  CONS_Printf("    %s.\n", joyname );
+  CONS_Printf("    %d axes.\n", joyaxes);
+//  CONS_Printf("    %d buttons.\n", );
+//  CONS_Printf("    %d hats.\n", );
+//  CONS_Printf("    %d trackballs.\n", );
+  num_joysticks++;
+  joystick_started = 1;
+  return 1;
 }
+   
 /*int joy_waitb(int fd, int *xpos,int *ypos,int *hxpos,int *hypos) {
   int i,xps,yps,hxps,hyps;
   struct js_event jdata;
@@ -303,19 +376,50 @@ int joy_open(char *fname) {
   }*/
 #endif
 
-void I_InitJoystick (void) {
+void I_InitJoystick (void)
+{
 #ifdef LJOYSTICK
+  int i;
+   
   I_ShutdownJoystick();
   if(!strcmp(cv_usejoystick.string,"0"))
     return;
-  if(!joy_open(cv_joyport.string)) return;
-  joystick_started = 1;
+
+  joy_open(cv_joyport.string);  // primary port
+  for(i=0; i<NUM_JOYSTICKDEV; i++ )  // other js ports
+  {
+      joy_open( joystick_dev[i] );
+  }
   return;
 #endif
 }
 
+int I_JoystickNumAxes (int joynum)
+{
+#ifdef LJOYSTICK
+    if(joynum < num_joysticks )   return joystk[joynum].joyaxes;
+#endif
+    return 0;
+}
+
+// Polling by G_BuildTiccmd
+// Caller has individual scale conversion.   
+int I_JoystickGetAxis (int joynum, int axisnum )
+{
+#ifdef LJOYSTICK
+    if(joynum < num_joysticks ) {
+       if( axisnum < joystk[joynum].numaxes ) {
+	  return joystk[joynum].axis[axisnum];
+       }
+    }
+#endif
+    return 0;
+}
+
+
 #ifdef LMOUSE2
-void I_GetMouse2Event() {
+void I_GetMouse2Event()
+{
   static unsigned char mdata[5];
   static int i = 0,om2b = 0;
   int di,j,mlp,button;
@@ -367,14 +471,16 @@ void I_GetMouse2Event() {
   }
 }
 
-void I_ShutdownMouse2() {
+void I_ShutdownMouse2()
+{
   if(fdmouse2!=-1) close(fdmouse2);
   mouse2_started = 0;
 }
 
 #endif
 
-void I_StartupMouse2 (void) {
+void I_StartupMouse2 (void)
+{
 #ifdef LMOUSE2
   struct termios m2tio;
   int i,dtr,rts;
@@ -434,7 +540,7 @@ void I_StartupMouse2 (void) {
 #define MEMTOTAL "MemTotal:"
 #define MEMFREE "MemFree:"
 
-ULONG I_GetFreeMem(ULONG *total)
+uint64_t I_GetFreeMem(uint64_t *total)
 {
 #ifndef FREEBSD
     char buf[1024];    
@@ -511,7 +617,6 @@ ULONG I_GetFreeMem(ULONG *total)
 #endif /*FREEBSD*/
 }
 
-static int quiting=0; /* prevent recursive I_Quit() */
 
 void I_Tactile( int   on,
                 int   off,
@@ -559,7 +664,8 @@ again:
 }
 
 
-
+#if 0
+//[WDJ] Apparently abandoned
 //
 // I_Init
 //
@@ -570,15 +676,17 @@ void I_Init (void)
     quiting = 0;
     //  I_InitGraphics();
 }
+#endif
 
 //
 // I_Quit
 //
 void I_Quit (void)
 {
+    static int quitting=0; /* prevent recursive I_Quit() */
     /* prevent recursive I_Quit() */
-    if(quiting) return;
-    quiting = 1;
+    if(quitting) return;
+    quitting = 1;
   //added:16-02-98: when recording a demo, should exit using 'q' key,
   //        but sometimes we forget and use 'F10'.. so save here too.
     if (demorecording)
@@ -632,7 +740,7 @@ byte*   I_AllocLow(int length)
 //
 extern boolean demorecording;
 
-void I_Error (char *error, ...)
+void I_Error (const char *error, ...)
 {
     va_list     argptr;
 
@@ -718,13 +826,13 @@ void I_ShutdownSystem()
 
 }
 
-void I_GetDiskFreeSpace(long long *freespace) {
+uint64_t I_GetDiskFreeSpace(void)
+{
   struct statfs stfs;
   if(statfs(".",&stfs)==-1) {
-    *freespace = MAXINT;
-    return;
+    return MAXINT;
   }
-  *freespace = stfs.f_bavail*stfs.f_bsize;
+  return stfs.f_bavail*stfs.f_bsize;
 }
 
 char *I_GetUserName(void)
@@ -748,7 +856,8 @@ int  I_mkdir(const char *dirname, int unixright)
 }
 
 // check if legacy.dat exists in the given path
-static boolean isWadPathOk(char *path) {
+static boolean isWadPathOk(char *path)
+{
     char wad3path[256];
     
     sprintf(wad3path, "%s/%s", path, WADKEYWORD);
@@ -881,7 +990,8 @@ static char *locateWad(void)
     return NULL;
 }
 
-void I_LocateWad(void) {
+void I_LocateWad(void)
+{
     char *waddir;
 
     waddir = locateWad();
@@ -891,4 +1001,16 @@ void I_LocateWad(void) {
     }
 
     return;
+}
+
+
+
+void I_SysInit()
+{
+  CONS_Printf("Linux X11 system ...\n");
+
+  // Initialize the joystick subsystem.
+  I_InitJoystick();
+  
+  // d_main will next call I_StartupGraphics
 }

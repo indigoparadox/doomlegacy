@@ -43,10 +43,8 @@
 #include "d_main.h"
 
 #ifdef LOGMESSAGES
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-int logstream;
+#include <stdio.h>
+FILE *logstream = NULL;
 #endif
 
 int main(int argc, char **argv)
@@ -56,10 +54,10 @@ int main(int argc, char **argv)
 
 #ifdef LOGMESSAGES
     //Hurdler: only write log if we have the permission in the legacy executable directory
-    logstream = open("log.txt", O_CREAT | O_WRONLY);
-    if (logstream < 0)
+    logstream = fopen(".log/log.txt", "w");
+    if (!logstream)
     {
-        logstream = INVALID_HANDLE_VALUE; // so we haven't to change the current source code
+      // do something?
     }
 #endif
  

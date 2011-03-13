@@ -87,6 +87,9 @@ consvar_t cv_jigglecdvol = {"jigglecdvolume", "0", CV_SAVE};
 static int cdfile = -1;
 static char cd_dev[64] = "/dev/cdrom";
 
+void I_StopCD(void);
+int I_SetVolumeCD (int volume);
+
 
 static int CDAudio_GetAudioDiskInfo(void)
 {
@@ -419,7 +422,7 @@ void I_UpdateCD (void)
 
 
 // play the cd
-void I_PlayCD (int track, boolean looping)
+void I_PlayCD (unsigned int track, boolean looping)
 {
 	struct cdrom_tocentry entry;
         struct cdrom_msf msf;
