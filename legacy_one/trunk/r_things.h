@@ -64,10 +64,6 @@
 
 #include "sounds.h"
 
-// number of sprite lumps for spritewidth,offset,topoffset lookup tables
-// Fab: this is a hack : should allocate the lookup tables per sprite
-#define     MAXSPRITELUMPS     4096
-
 // MAXVISSPRITES was 128, then 256 (2-2-98)
 #define MAXVISSPRITES   16000
  // [WDJ] Remove sprite limits. This is tuning not a hard limit.

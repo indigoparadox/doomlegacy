@@ -912,14 +912,14 @@ typedef struct vissprite_s
 //
 typedef struct
 {
-    // If false use 0 for any position.
-    // Note: as eight entries are available,
-    //  we might as well insert the same name eight times.
+    // If rotate is false, use rot=0 for any position.
+    // Note: Then as all eight entries are always available,
+    //  we will fill them all with the same values.
     boolean     rotate;
 
     // Lump to use for view angles 0-7.
     int         lumppat[8];   // lump number 16:16 wad:lump
-    short       lumpid[8];    // id in the spriteoffset,spritewidth.. tables
+    short       spritelump_id[8]; // into spritelumps[]
 
     // Flip bit (1 = flip) to use for view angles 0-7.
     byte        flip[8];

@@ -3288,8 +3288,8 @@ static void HWR_ProjectSprite(mobj_t * thing)
         rot = 0;        //Fab: for vis->patch below
         flip = (boolean) sprframe->flip[0];
     }
-    //Fab: [WDJ] lumpid is the index for sprite lump
-    sprlump = &spritelumps[sprframe->lumpid[rot]];
+    //Fab: [WDJ] spritelump_id is the index for render tables
+    sprlump = &spritelumps[sprframe->spritelump_id[rot]];
 
     // calculate edges of the shape
     tx -= FIXED_TO_FLOAT( sprlump->offset );
@@ -3480,7 +3480,7 @@ void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
         I_Error("sprframes NULL for state %d\n", psp->state - states);
 #endif
 
-    sprlump = &spritelumps[sprframe->lumpid[0]];
+    sprlump = &spritelumps[sprframe->spritelump_id[0]];
     flip = (boolean) sprframe->flip[0];
 
     // calculate edges of the shape

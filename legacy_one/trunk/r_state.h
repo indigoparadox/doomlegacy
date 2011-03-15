@@ -91,6 +91,8 @@ typedef struct {
 } spritelump_t;
 
 extern spritelump_t*    spritelumps;  // array ptr
+// to get one
+int  R_Get_spritelump( void );  // get by id number
 
 // colormap lightmaps from wad COLORMAP lump
 extern lighttable_t*    reg_colormaps;
@@ -116,13 +118,6 @@ extern int              firstwaterflat; //added:18-02-98:WATER!
 // for global animation
 extern int*             flattranslation;
 extern int*             texturetranslation;
-
-
-// Sprite....
-extern int              firstspritelump;
-extern int              lastspritelump;
-extern int              numspritelumps;
-
 
 
 //

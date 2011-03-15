@@ -1574,3 +1574,9 @@ Verified to run Linux X11 in software mode.
 patchfile = w72_spritelump_type.patch
 - committed revision 818   by wesley johnson
 Combine sprite lump tables into one record and array.
+
+*** w72_spritelump_limits
+patchfile = w72_spritelump_limits.patch
+- committed revision 819   by wesley johnson
+Fix spritelump array to be dynamic expanded, thus removing spritelump
+limits.  This fixes the last issue of bug 3157859.

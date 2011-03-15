@@ -252,7 +252,7 @@ char*           spritename;
 //
 //
 void R_InstallSpriteLump ( int           lumppat,     // graphics patch
-                           int           lumpid,      // identifier
+                           short         spritelump_id, // spritelump_t
                            unsigned      frame,
                            unsigned      rotation,
                            boolean       flipped )
@@ -261,7 +261,7 @@ void R_InstallSpriteLump ( int           lumppat,     // graphics patch
 
     if (frame >= 29 || rotation > 8)
         I_Error("R_InstallSpriteLump: "
-                "Bad frame characters in lump %i", lumpid);
+                "Bad frame characters in lump %i", spritelump_id);
 
     if ((int)frame > maxframe)
         maxframe = frame;
@@ -281,7 +281,7 @@ void R_InstallSpriteLump ( int           lumppat,     // graphics patch
         for (r=0 ; r<8 ; r++)
         {
             sprtemp[frame].lumppat[r] = lumppat;
-            sprtemp[frame].lumpid[r]  = lumpid;
+            sprtemp[frame].spritelump_id[r]  = spritelump_id;
             sprtemp[frame].flip[r] = (byte)flipped;
         }
         return;
@@ -297,15 +297,17 @@ void R_InstallSpriteLump ( int           lumppat,     // graphics patch
     // make 0 based
     rotation--;
 
-    if (sprtemp[frame].lumpid[rotation] != -1 && devparm)
+    if (sprtemp[frame].spritelump_id[rotation] != -1 && devparm)
         CONS_Printf ("R_InitSprites: Sprite %s : %c : %c "
                      "has two lumps mapped to it\n",
                      spritename, 'A'+frame, '1'+rotation);
 
-    // lumppat & lumpid are the same for original Doom, but different
+    // lumppat & spritelump_id are the same for original Doom, but different
     // when using sprites in pwad : the lumppat points the new graphics
+    // [WDJ] Nope, lump patch and size data both come from the lump.
+    // This is the only func that changes them, and they are always both updated.
     sprtemp[frame].lumppat[rotation] = lumppat;
-    sprtemp[frame].lumpid[rotation] = lumpid;
+    sprtemp[frame].spritelump_id[rotation] = spritelump_id;
     sprtemp[frame].flip[rotation] = (byte)flipped;
 }
 
@@ -329,6 +331,7 @@ boolean R_AddSingleSpriteDef (char* sprname, spritedef_t* spritedef, int wadnum,
     int         intname;
     int         frame;
     int         rotation;
+    int         spritelump_id;
     lumpinfo_t* lumpinfo;
     patch_t     patch;	// temp for read header
 
@@ -369,7 +372,8 @@ boolean R_AddSingleSpriteDef (char* sprname, spritedef_t* spritedef, int wadnum,
             //FIXME:numspritelumps do not duplicate sprite replacements
             W_ReadLumpHeader (lumpnum, &patch, sizeof(patch_t)); // to temp
 	    // [WDJ] Do endian while translate temp to internal.
-	    spritelump_t * sl = &spritelumps[numspritelumps];
+	    spritelump_id = R_Get_spritelump();
+	    spritelump_t * sl = &spritelumps[spritelump_id];
             sl->width = LE_SWAP16(patch.width)<<FRACBITS;
             sl->offset = LE_SWAP16(patch.leftoffset)<<FRACBITS;
             sl->topoffset = LE_SWAP16(patch.topoffset)<<FRACBITS;
@@ -392,17 +396,14 @@ boolean R_AddSingleSpriteDef (char* sprname, spritedef_t* spritedef, int wadnum,
 
             //----------------------------------------------------
 
-            R_InstallSpriteLump (lumpnum, numspritelumps, frame, rotation, false);
+            R_InstallSpriteLump (lumpnum, spritelump_id, frame, rotation, false);
 
             if (lumpinfo[l].name[6])
             {
                 frame = lumpinfo[l].name[6] - 'A';
                 rotation = lumpinfo[l].name[7] - '0';
-                R_InstallSpriteLump (lumpnum, numspritelumps, frame, rotation, true);
+                R_InstallSpriteLump (lumpnum, spritelump_id, frame, rotation, true);
             }
-
-            if (++numspritelumps>=MAXSPRITELUMPS)
-                I_Error("R_AddSingleSpriteDef: too much sprite replacements (numspritelumps)\n");
         }
     }
 
@@ -1214,8 +1215,8 @@ static void R_ProjectSprite (mobj_t* thing)
         rot = 0;                        //Fab: for vis->patch below
         flip = (boolean)sprframe->flip[0];
     }
-    //Fab: [WDJ] lumpid is the index
-    sprlump = &spritelumps[sprframe->lumpid[rot]];
+    //Fab: [WDJ] spritelump_id is the index
+    sprlump = &spritelumps[sprframe->spritelump_id[rot]];
 
     // calculate edges of the shape
     tx -= sprlump->offset;
@@ -1352,7 +1353,8 @@ static void R_ProjectSprite (mobj_t* thing)
         vis->startfrac += vis->xiscale*(vis->x1-x1);
 
     //Fab: lumppat is the lump number of the patch to use, this is different
-    //     than lumpid for sprites-in-pwad : the graphics are patched
+    //     than spritelump_id for sprites-in-pwad : the graphics are patched
+    // [WDJ] Nope, both are updated from the lump together.
     vis->patch = sprframe->lumppat[rot];
 
 
@@ -1522,8 +1524,8 @@ void R_DrawPSprite (pspdef_t* psp)
     }
 #endif
 
-    //Fab: see the notes in R_ProjectSprite about lumpid,lumppat
-    sprlump = &spritelumps[sprframe->lumpid[0]];
+    //Fab: see the notes in R_ProjectSprite about spritelump_id,lumppat
+    sprlump = &spritelumps[sprframe->spritelump_id[0]];
     flip = (boolean)sprframe->flip[0];
 
     // calculate edges of the shape
@@ -1561,7 +1563,7 @@ void R_DrawPSprite (pspdef_t* psp)
 
     //vis->texturemid += FRACUNIT/2;
 
-    vis->x1 = x1 < 0 ? 0 : x1;
+    vis->x1 = (x1 < 0) ? 0 : x1;
     vis->x2 = (x2 >= rdraw_viewwidth) ? rdraw_viewwidth-1 : x2;
     vis->scale = pspriteyscale;  //<<detailshift;
 
@@ -1579,7 +1581,7 @@ void R_DrawPSprite (pspdef_t* psp)
     if (vis->x1 > x1)
         vis->startfrac += vis->xiscale*(vis->x1-x1);
 
-    //Fab: see above for more about lumpid,lumppat
+    //Fab: see above for more about spritelump_id,lumppat
     vis->patch = sprframe->lumppat[0];
     vis->translucentmap = NULL;
     if (viewplayer->mo->flags & MF_SHADOW)      // invisibility effect
