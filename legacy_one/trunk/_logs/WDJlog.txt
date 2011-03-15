@@ -1569,3 +1569,8 @@ Fix keyboard translation and event posting.
 Add X error handler code.
 Fix X joystick code.
 Verified to run Linux X11 in software mode.
+
+*** w72_spritelump_type
+patchfile = w72_spritelump_type.patch
+- committed revision 818   by wesley johnson
+Combine sprite lump tables into one record and array.

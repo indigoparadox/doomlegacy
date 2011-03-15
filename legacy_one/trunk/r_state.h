@@ -82,10 +82,15 @@
 extern fixed_t*         textureheight;
 
 // needed for pre rendering (fracs)
-extern fixed_t*         spritewidth;
-extern fixed_t*         spriteoffset;
-extern fixed_t*         spritetopoffset;
-extern fixed_t*         spriteheight;
+// [WDJ] Made into one record, sprite lump values, endian swapped.
+typedef struct {
+    fixed_t  width;
+    fixed_t  height;
+    fixed_t  offset;
+    fixed_t  topoffset;
+} spritelump_t;
+
+extern spritelump_t*    spritelumps;  // array ptr
 
 // colormap lightmaps from wad COLORMAP lump
 extern lighttable_t*    reg_colormaps;

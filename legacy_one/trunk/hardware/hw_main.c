@@ -3239,7 +3239,7 @@ static void HWR_ProjectSprite(mobj_t * thing)
 
     spritedef_t *sprdef;
     spriteframe_t *sprframe;
-    int lump;
+    spritelump_t * sprlump;
     unsigned rot;
     boolean flip;
     angle_t ang;
@@ -3280,20 +3280,19 @@ static void HWR_ProjectSprite(mobj_t * thing)
         // choose a different rotation based on player view
         ang = R_PointToAngle(thing->x, thing->y);       // uses viewx,viewy
         rot = (ang - thing->angle + (unsigned) (ANG45 / 2) * 9) >> 29;
-        //Fab: lumpid is the index for spritewidth,spriteoffset... tables
-        lump = sprframe->lumpid[rot];
         flip = (boolean) sprframe->flip[rot];
     }
     else
     {
         // use single rotation for all views
         rot = 0;        //Fab: for vis->patch below
-        lump = sprframe->lumpid[0];     //Fab: see note above
         flip = (boolean) sprframe->flip[0];
     }
+    //Fab: [WDJ] lumpid is the index for sprite lump
+    sprlump = &spritelumps[sprframe->lumpid[rot]];
 
     // calculate edges of the shape
-    tx -= FIXED_TO_FLOAT( spriteoffset[lump] );
+    tx -= FIXED_TO_FLOAT( sprlump->offset );
 
     // project x
     x1 = gr_windowcenterx + (tx * gr_centerx / tz);
@@ -3314,7 +3313,7 @@ static void HWR_ProjectSprite(mobj_t * thing)
 
     x1 = tx;
 
-    tx += FIXED_TO_FLOAT( spritewidth[lump] );
+    tx -= FIXED_TO_FLOAT( sprlump->width );
     x2 = gr_windowcenterx + (tx * gr_centerx / tz);
 
     // BP: FOV des sprites, ici aussi
@@ -3344,7 +3343,7 @@ static void HWR_ProjectSprite(mobj_t * thing)
     int                 thingmodelsec;
     boolean	        thing_has_model;  // has a model, such as water
     int light;
-    fixed_t  gz_top = thing->z + spritetopoffset[lump];
+    fixed_t  gz_top = thing->z + sprlump->topoffset;
     thingsector = thing->subsector->sector;	 // [WDJ] 11/14/2009
     if(thingsector->numlights)
     {
@@ -3426,7 +3425,7 @@ static void HWR_ProjectSprite(mobj_t * thing)
         vis->colormap = & reg_colormaps[0];
 
     // set top/bottom coords
-    vis->ty = FIXED_TO_FLOAT( thing->z + spritetopoffset[lump] ) - gr_viewz;
+    vis->ty = FIXED_TO_FLOAT( thing->z + sprlump->topoffset ) - gr_viewz;
 
     //CONS_Printf("------------------\nH: sprite  : %d\nH: frame   : %x\nH: type    : %d\nH: sname   : %s\n\n",
     //            thing->sprite, thing->frame, thing->type, sprnames[thing->sprite]);
@@ -3447,7 +3446,7 @@ void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
 {
     spritedef_t *sprdef;
     spriteframe_t *sprframe;
-    int lump;
+    spritelump_t * sprlump = NULL;
     boolean flip;
 
     wallVert3D wallVerts[4];
@@ -3481,18 +3480,18 @@ void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
         I_Error("sprframes NULL for state %d\n", psp->state - states);
 #endif
 
-    lump = sprframe->lumpid[0];
+    sprlump = &spritelumps[sprframe->lumpid[0]];
     flip = (boolean) sprframe->flip[0];
 
     // calculate edges of the shape
 
     tx = FIXED_TO_FLOAT( (psp->sx - ((BASEVIDWIDTH / 2) << FRACBITS)) );
-    tx -= FIXED_TO_FLOAT( spriteoffset[lump] );
+    tx -= FIXED_TO_FLOAT( sprlump->offset );
     x1 = gr_windowcenterx + (tx * gr_pspritexscale);
 
     wallVerts[3].x = wallVerts[0].x = tx;
 
-    tx += FIXED_TO_FLOAT( spritewidth[lump] );
+    tx -= FIXED_TO_FLOAT( sprlump->width );
     x2 = gr_windowcenterx + (tx * gr_pspritexscale) - 1;
 
     wallVerts[2].x = wallVerts[1].x = tx;
@@ -3509,7 +3508,7 @@ void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
     HWR_GetPatch(gpatch);
 
     // set top/bottom coords
-    ty = FIXED_TO_FLOAT( psp->sy - spritetopoffset[lump] );
+    ty = FIXED_TO_FLOAT( psp->sy - sprlump->topoffset );
     if (cv_splitscreen.value && (cv_grfov.value == 90))
         ty -= 20;       //Hurdler: so it's a bit higher
     if (raven) {

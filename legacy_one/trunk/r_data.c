@@ -188,10 +188,7 @@ int       *flattranslation;             // for global animation
 int       *texturetranslation;
 
 // needed for pre rendering
-fixed_t*        spritewidth;
-fixed_t*        spriteoffset;
-fixed_t*        spritetopoffset;
-fixed_t*        spriteheight; //SoM
+spritelump_t *  spritelumps;  // array of sprite lump values, endian swapped
 
 // colormap lightmaps from wad COLORMAP lump
 lighttable_t *  reg_colormaps;
@@ -1344,10 +1341,7 @@ void R_InitSpriteLumps (void)
     //Fab:FIXME: find a better solution for adding new sprites dynamically
     numspritelumps = 0;
 
-    spritewidth = Z_Malloc (MAXSPRITELUMPS*sizeof(fixed_t), PU_STATIC, 0);
-    spriteoffset = Z_Malloc (MAXSPRITELUMPS*sizeof(fixed_t), PU_STATIC, 0);
-    spritetopoffset = Z_Malloc (MAXSPRITELUMPS*sizeof(fixed_t), PU_STATIC, 0);
-    spriteheight = Z_Malloc (MAXSPRITELUMPS*sizeof(fixed_t), PU_STATIC, 0);
+    spritelumps = Z_Malloc (MAXSPRITELUMPS*sizeof(spritelump_t), PU_STATIC, 0);
 }
 
 

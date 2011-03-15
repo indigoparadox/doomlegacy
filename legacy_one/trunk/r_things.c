@@ -369,10 +369,11 @@ boolean R_AddSingleSpriteDef (char* sprname, spritedef_t* spritedef, int wadnum,
             //FIXME:numspritelumps do not duplicate sprite replacements
             W_ReadLumpHeader (lumpnum, &patch, sizeof(patch_t)); // to temp
 	    // [WDJ] Do endian while translate temp to internal.
-            spritewidth[numspritelumps] = LE_SWAP16(patch.width)<<FRACBITS;
-            spriteoffset[numspritelumps] = LE_SWAP16(patch.leftoffset)<<FRACBITS;
-            spritetopoffset[numspritelumps] = LE_SWAP16(patch.topoffset)<<FRACBITS;
-            spriteheight[numspritelumps] = LE_SWAP16(patch.height)<<FRACBITS;
+	    spritelump_t * sl = &spritelumps[numspritelumps];
+            sl->width = LE_SWAP16(patch.width)<<FRACBITS;
+            sl->offset = LE_SWAP16(patch.leftoffset)<<FRACBITS;
+            sl->topoffset = LE_SWAP16(patch.topoffset)<<FRACBITS;
+            sl->height = LE_SWAP16(patch.height)<<FRACBITS;
 
 #ifdef HWRENDER
             //BP: we cannot use special trick in hardware mode because feet in ground caused by z-buffer
@@ -383,11 +384,10 @@ boolean R_AddSingleSpriteDef (char* sprname, spritedef_t* spritedef, int wadnum,
 	        if( p_topoffset>0 && p_topoffset<p_height) // not for psprite
 	        {
 		    // perfect is patch.height but sometime it is too high
-		    spritetopoffset[numspritelumps] =
+		    sl->topoffset =
 		       min(p_topoffset+4, p_height)<<FRACBITS;
 		}
 	    }
-            
 #endif
 
             //----------------------------------------------------
@@ -1114,7 +1114,7 @@ static void R_ProjectSprite (mobj_t* thing)
    
     spritedef_t*        sprdef;
     spriteframe_t*      sprframe;
-    int                 lump;
+    spritelump_t *      sprlump;
 
     unsigned            rot;
     boolean             flip;
@@ -1131,6 +1131,7 @@ static void R_ProjectSprite (mobj_t* thing)
     int                 thingmodelsec;
     boolean	        thing_has_model;  // has a model, such as water
     int                 light = 0;
+
 
     // transform the origin point
     tr_x = thing->x - viewx;
@@ -1205,27 +1206,26 @@ static void R_ProjectSprite (mobj_t* thing)
         // choose a different rotation based on player view
         ang = R_PointToAngle (thing->x, thing->y);
         rot = (ang-thing->angle+(unsigned)(ANG45/2)*9)>>29;
-        //Fab: lumpid is the index for spritewidth,spriteoffset... tables
-        lump = sprframe->lumpid[rot];
         flip = (boolean)sprframe->flip[rot];
     }
     else
     {
         // use single rotation for all views
         rot = 0;                        //Fab: for vis->patch below
-        lump = sprframe->lumpid[0];     //Fab: see note above
         flip = (boolean)sprframe->flip[0];
     }
+    //Fab: [WDJ] lumpid is the index
+    sprlump = &spritelumps[sprframe->lumpid[rot]];
 
     // calculate edges of the shape
-    tx -= spriteoffset[lump];
+    tx -= sprlump->offset;
     x1 = (centerxfrac + FixedMul (tx,xscale) ) >>FRACBITS;
 
     // off the right side?
     if (x1 > rdraw_viewwidth)
         return;
 
-    tx +=  spritewidth[lump];
+    tx += sprlump->width;
     x2 = ((centerxfrac + FixedMul (tx,xscale) ) >>FRACBITS) - 1;
 
     // off the left side
@@ -1233,7 +1233,7 @@ static void R_ProjectSprite (mobj_t* thing)
         return;
 
     //SoM: 3/17/2000: Disregard sprites that are out of view..
-    gz_top = thing->z + spritetopoffset[lump];
+    gz_top = thing->z + sprlump->topoffset;
 
 
     thingsector = thing->subsector->sector;	 // [WDJ] 11/14/2009
@@ -1311,7 +1311,7 @@ static void R_ProjectSprite (mobj_t* thing)
     vis->scale = yscale;           //<<detailshift;
     vis->gx = thing->x;
     vis->gy = thing->y;
-    vis->gz_bot = gz_top - spriteheight[lump];
+    vis->gz_bot = gz_top - sprlump->height;
     vis->gz_top = gz_top;
     vis->thingheight = thing->height;
     vis->pz_bot = thing->z;
@@ -1339,7 +1339,7 @@ static void R_ProjectSprite (mobj_t* thing)
 
     if (flip)
     {
-        vis->startfrac = spritewidth[lump]-1;
+        vis->startfrac = sprlump->width - 1;
         vis->xiscale = -iscale;
     }
     else
@@ -1478,7 +1478,7 @@ void R_DrawPSprite (pspdef_t* psp)
     int                 x2;
     spritedef_t*        sprdef;
     spriteframe_t*      sprframe;
-    int                 lump;
+    spritelump_t*       sprlump;
     boolean             flip;
     vissprite_t*        vis;
     vissprite_t         avis;
@@ -1523,7 +1523,7 @@ void R_DrawPSprite (pspdef_t* psp)
 #endif
 
     //Fab: see the notes in R_ProjectSprite about lumpid,lumppat
-    lump = sprframe->lumpid[0];
+    sprlump = &spritelumps[sprframe->lumpid[0]];
     flip = (boolean)sprframe->flip[0];
 
     // calculate edges of the shape
@@ -1533,14 +1533,14 @@ void R_DrawPSprite (pspdef_t* psp)
 
     //added:02-02-98:spriteoffset should be abs coords for psprites, based on
     //               320x200
-    tx -= spriteoffset[lump];
+    tx -= sprlump->offset;
     x1 = (centerxfrac + FixedMul (tx,pspritescale) ) >>FRACBITS;
 
     // off the right side
     if (x1 > rdraw_viewwidth)
         return;
 
-    tx +=  spritewidth[lump];
+    tx += sprlump->width;
     x2 = ((centerxfrac + FixedMul (tx, pspritescale) ) >>FRACBITS) - 1;
 
     // off the left side
@@ -1551,8 +1551,8 @@ void R_DrawPSprite (pspdef_t* psp)
     vis = &avis;
     vis->mobjflags = 0;
     vis->texturemid = (cv_splitscreen.value) ?
-        (120<<(FRACBITS))+FRACUNIT/2-(psp->sy-spritetopoffset[lump])
-        : (BASEYCENTER<<FRACBITS)+FRACUNIT/2-(psp->sy-spritetopoffset[lump]);
+        (120<<(FRACBITS)) + FRACUNIT/2 - (psp->sy - sprlump->topoffset)
+        : (BASEYCENTER<<FRACBITS) + FRACUNIT/2 - (psp->sy - sprlump->topoffset);
 
     if( raven ) {
         if( rdraw_viewheight == vid.height || (!cv_scalestatusbar.value && vid.dupy>1))
@@ -1568,7 +1568,7 @@ void R_DrawPSprite (pspdef_t* psp)
     if (flip)
     {
         vis->xiscale = -pspriteiscale;
-        vis->startfrac = spritewidth[lump]-1;
+        vis->startfrac = sprlump->width - 1;
     }
     else
     {

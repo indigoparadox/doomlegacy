@@ -969,7 +969,7 @@ void R_ExecuteSetViewSize (void)
 void R_Init (void)
 {
     if(dedicated)
-    return;
+        return;
 
     //added:24-01-98: screensize independent
     if(devparm)
