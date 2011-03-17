@@ -3313,7 +3313,7 @@ static void HWR_ProjectSprite(mobj_t * thing)
 
     x1 = tx;
 
-    tx -= FIXED_TO_FLOAT( sprlump->width );
+    tx += FIXED_TO_FLOAT( sprlump->width );
     x2 = gr_windowcenterx + (tx * gr_centerx / tz);
 
     // BP: FOV des sprites, ici aussi
@@ -3491,7 +3491,7 @@ void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
 
     wallVerts[3].x = wallVerts[0].x = tx;
 
-    tx -= FIXED_TO_FLOAT( sprlump->width );
+    tx += FIXED_TO_FLOAT( sprlump->width );
     x2 = gr_windowcenterx + (tx * gr_pspritexscale) - 1;
 
     wallVerts[2].x = wallVerts[1].x = tx;
