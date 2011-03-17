@@ -613,7 +613,7 @@ EV_VerticalDoor ( line_t* line, mobj_t* thing )
     }
     //SoM: 3/6/2000
     // if the wrong side of door is pushed, give oof sound
-    if (line->sidenum[1] == -1) // killough
+    if (line->sidenum[1] == NULL_INDEX) // killough
     {
         S_StartScreamSound(player->mo, sfx_oof);        // killough 3/20/98
         return 0;

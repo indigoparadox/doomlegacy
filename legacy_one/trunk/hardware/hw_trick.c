@@ -939,7 +939,7 @@ void HWR_CorrectSWTricks(void)
     {
 	ld = &lines[i];
 	sdr = &sides[ld->sidenum[0]];
-	if(ld->sidenum[1] >= 0)
+	if (ld->sidenum[1] != NULL_INDEX)
 	{
 	    sdl = &sides[ld->sidenum[1]];
 	}

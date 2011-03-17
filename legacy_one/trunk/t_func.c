@@ -3388,15 +3388,15 @@ void SF_SetLineTexture()
       short picnum = R_TextureNumForName(t_argv[1].value.s);
         // returns 0=no-texture, or default texture, otherwise valid
 
-      side = intvalue(t_argv[2]);
+      side = intvalue(t_argv[2]); // FIXME [smite] 0,1 only
       sections = intvalue(t_argv[3]);
 
       // set all sectors with tag
       while ((i = P_FindLineFromTag(tagnum, i)) >= 0)
       {
-	  if(&lines[i].sidenum[1] < 0) // [WDJ]  ?? addr < 0 ??
+	  if (lines[i].sidenum[side] == NULL_INDEX)
 	  {
-	      script_error("line 1-sided\n");
+	      script_error("nonexistant side\n");
 	      return;
 	  }
 	  else

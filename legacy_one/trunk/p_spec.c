@@ -492,7 +492,7 @@ sector_t*  getSector ( int currentSector, int linelisti, int side )
 int  twoSided ( int sector, int linelisti )
 {
   return boomsupport?
-    ((sectors[sector].linelist[linelisti])->sidenum[1] != -1)
+    ((sectors[sector].linelist[linelisti])->sidenum[1] != NULL_INDEX)
     :
     ((sectors[sector].linelist[linelisti])->flags & ML_TWOSIDED);
 }
@@ -3025,7 +3025,7 @@ void P_SpawnSpecials (void)
         int model_secnum = -1; // model sector number for effline
        
         // Not all specials use nor require this, so no error messages
-        if( effline->sidenum[0] >= 0 )
+        if( effline->sidenum[0] != NULL_INDEX )
         {
 	    // get model sector and sector number from side 0
 	    model_secp = sides[ effline->sidenum[0] ].sector;  // frontsector

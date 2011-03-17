@@ -943,7 +943,7 @@ void P_ArchiveWorld(void)
         if (li->special != LE_SWAP16(mld->special))
             diff |= LD_SPECIAL;
 
-        if (li->sidenum[0] != -1)
+        if (li->sidenum[0] != NULL_INDEX)
         {
 	    mapsidedef_t * msd0 = &msd[li->sidenum[0]];
             si = &sides[li->sidenum[0]];
@@ -960,7 +960,7 @@ void P_ArchiveWorld(void)
                 if (si->midtexture != R_TextureNumForName(msd0->midtexture))
                     diff |= LD_S1MIDTEX;
         }
-        if (li->sidenum[1] != -1)
+        if (li->sidenum[1] != NULL_INDEX)
         {
 	    mapsidedef_t * msd1 = &msd[li->sidenum[1]];
             si = &sides[li->sidenum[1]];

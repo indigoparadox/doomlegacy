@@ -317,7 +317,7 @@ void P_LineOpening (line_t* linedef)
     // tm_thing, tm_* are global var to TryMove and P_CheckPosition,
     // whose sub-functions may call here.
 
-    if (linedef->sidenum[1] == -1)
+    if (linedef->sidenum[1] == NULL_INDEX)
     {
         // single sided line
         openrange = 0;

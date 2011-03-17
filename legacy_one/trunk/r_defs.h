@@ -151,6 +151,9 @@
 #include "screen.h"     //added:26-01-98:MAXVIDWIDTH, MAXVIDHEIGHT
 
 
+#define NULL_INDEX 0xFFFF  // or -1. Used in line_t::sidenum and maplinedef_t::sidenum.
+
+
 // Silhouette, needed for clipping Segs (mainly)
 // and sprites representing things.
 // OR bits for silhouette
@@ -532,8 +535,8 @@ typedef struct line_s
     short       tag;
 
     // Visual appearance: SideDefs.
-    //  sidenum[1] will be -1 if one sided
-    short       sidenum[2];
+    uint16_t    sidenum[2]; //  sidenum[1] will be NULL_INDEX if one sided
+    // [smite] TODO actually they should be side_t pointers...
 
     // Neat. Another bounding box, for the extent
     //  of the LineDef.

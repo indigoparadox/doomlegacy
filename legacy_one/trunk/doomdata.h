@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2011 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -99,7 +99,7 @@ typedef struct
   char          bottomtexture[8];	// 8 char name
   char          midtexture[8];		// 8 char name
   // Front sector, towards viewer.
-  int16_t       sector;
+  uint16_t       sector;
 } mapsidedef_t;
 
 
@@ -109,13 +109,11 @@ typedef struct
 // WAD lump structure
 typedef struct
 {
-  int16_t       v1;
-  int16_t       v2;
+  uint16_t      v1, v2;
   int16_t       flags;
   int16_t       special;
   int16_t       tag;
-  // sidenum[1] will be -1 if one sided
-  int16_t       sidenum[2];             
+  uint16_t      sidenum[2]; // sidenum[1] will be NULL_INDEX if one sided
 } maplinedef_t;
 
 
@@ -196,12 +194,11 @@ typedef struct
 // WAD lump structure
 typedef struct
 {
-  uint16_t      v1;
-  uint16_t      v2;
+  uint16_t      v1, v2;
   uint16_t      angle;          
-  int16_t       linedef;
+  uint16_t      linedef;
   int16_t       side;
-  uint16_t      offset;
+  int16_t      offset;
 } mapseg_t;
 
 

@@ -177,7 +177,7 @@ void R_AddWallSplat (line_t*    wallline,
     // set the splat
     splat->patch = W_GetNumForName (patchname);
     sectorside^=1;
-    if( wallline->sidenum[sectorside]!=-1 )
+    if( wallline->sidenum[sectorside] != NULL_INDEX )
     {
         backsector = sides[wallline->sidenum[sectorside]].sector;
 

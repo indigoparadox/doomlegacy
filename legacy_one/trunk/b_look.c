@@ -182,7 +182,7 @@ boolean B_LookForSpecialLine(player_t* p, fixed_t* x, fixed_t* y)
 
 				return true;
 			}
-			else if (edge->sidenum[1] >= 0)	//if its a double sided sector
+			else if (edge->sidenum[1] != NULL_INDEX) //if its a double sided sector
 			{
 				 if (edge->frontsector == insector)
 					 sector = edge->backsector;
