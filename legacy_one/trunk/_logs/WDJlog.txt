@@ -1600,6 +1600,12 @@ This fixes bug 3194389.
 
 *** w72_spritelump_type_fix
 patchfile = w72_spritelump_type2.patch
-- committed revision 822   by wesley johnson
+- committed revision 824   by wesley johnson
 Fix bug in spritelump_type patch where the signs of two hardware
 render lines got changed.  (Late night, copying too much)
+
+*** w73_missile_prep
+patchfile = w72_missile_prep.patch
+- committed revision 825   by wesley johnson
+Cleanup of code around missile movement.
+Prep for mancubus missile bug fix.
