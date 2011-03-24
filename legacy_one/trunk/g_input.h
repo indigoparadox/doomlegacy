@@ -135,8 +135,7 @@ extern consvar_t       cv_allowjump;
 extern consvar_t       cv_allowrocketjump;
 extern consvar_t       cv_allowautoaim;
 
-// current state of the keys : true if pushed
-extern  byte    gamekeydown[NUMINPUTS];
+extern boolean gamekeydown[NUMINPUTS];
 
 // two key codes (or virtual key) per game control
 extern  int     gamecontrol[num_gamecontrols][2];

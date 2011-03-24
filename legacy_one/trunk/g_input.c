@@ -95,9 +95,9 @@ int             mousey;
 int             mouse2x;
 int             mouse2y;
 
+boolean   gamekeydown[NUMINPUTS]; // Current state of the keys: true if the key is currently down.
+boolean gamekeytapped[NUMINPUTS]; // True if the key has been pressed since the last G_BuildTiccmd. Useful for impulse-style controls.
 
-// current state of the keys : true if pushed
-byte    gamekeydown[NUMINPUTS];
 
 // two key codes (or virtual key) per game control
 int     gamecontrol[num_gamecontrols][2];
@@ -106,79 +106,16 @@ int     gamecontrol2[num_gamecontrols][2];        // secondary splitscreen playe
 
 typedef struct {
     int time;
-    int state;
+    boolean state;
     int clicks;
 } dclick_t;
 static  dclick_t  mousedclicks[MOUSEBUTTONS];
 //static  dclick_t  joydclicks[JOYBUTTONS];
 
-
-
-// protos
-static boolean G_CheckDoubleClick (int state, dclick_t *dt);
-
-
-//
-//  Remaps the inputs to game controls.
-//
-//  A game control can be triggered by one or more keys/buttons.
-//
-//  Each key/mousebutton/joybutton triggers ONLY ONE game control.
-//
-//
-void  G_MapEventsToControls (event_t *ev)
-{
-    int    i,flag;
-
-    switch (ev->type)
-    {
-      case ev_keydown:
-        if (ev->data1 <NUMINPUTS)
-            gamekeydown[ev->data1] = 1;
-        break;
-
-      case ev_keyup:
-        if (ev->data1 <NUMINPUTS)
-            gamekeydown[ev->data1] = 0;
-        break;
-
-      case ev_mouse:           // buttons are virtual keys
-        mousex = ev->data2*((cv_mouse_sens_x.value*cv_mouse_sens_x.value)/110.0f + 0.1);
-        mousey = ev->data3*((cv_mouse_sens_y.value*cv_mouse_sens_y.value)/110.0f + 0.1);
-        break;
-
-      case ev_mouse2:           // buttons are virtual keys
-        mouse2x = ev->data2*((cv_mouse2_sens_x.value*cv_mouse2_sens_x.value)/110.0f + 0.1);
-        mouse2y = ev->data3*((cv_mouse2_sens_y.value*cv_mouse2_sens_y.value)/110.0f + 0.1);
-        break;
-
-      default:
-        break;
-
-    }
-
-    // ALWAYS check for mouse & joystick double-clicks
-    // even if no mouse event
-    for (i=0;i<MOUSEBUTTONS;i++)
-    {
-        flag = G_CheckDoubleClick (gamekeydown[KEY_MOUSE1+i], &mousedclicks[i]);
-        gamekeydown[KEY_DBLMOUSE1+i] = flag;
-    }
-
-    /* TODO ignore joystick doubleclicks for now
-    for (i=0;i<JOYBUTTONS;i++)
-    {
-        flag = G_CheckDoubleClick (gamekeydown[KEY_JOY1+i], &joydclicks[i]);
-        gamekeydown[KEY_DBLJOY1+i] = flag;
-    }
-    */
-}
-
-
 //
 //  General double-click detection routine for any kind of input.
 //
-static boolean G_CheckDoubleClick (int state, dclick_t *dt)
+static boolean G_CheckDoubleClick(boolean state, dclick_t *dt)
 {
     if (state != dt->state && dt->time > 1 )
     {
@@ -199,16 +136,72 @@ static boolean G_CheckDoubleClick (int state, dclick_t *dt)
         if (dt->time > 20)
         {
             dt->clicks = 0;
-            dt->state = 0;
+            dt->state = false;
         }
     }
     return false;
 }
 
 
+
+//
+//  Remaps the inputs to game controls.
+//
+//  A game control can be triggered by one or more keys/buttons.
+//
+//  Each key/mousebutton/joybutton triggers ONLY ONE game control.
+//
+//
+void  G_MapEventsToControls (event_t *ev)
+{
+  int i;
+
+    switch (ev->type)
+      {
+      case ev_keydown:
+        if (ev->data1 < NUMINPUTS)
+	  {
+	    gamekeydown[ev->data1] = true;
+	    gamekeytapped[ev->data1] = true; // reset in G_BuildTiccmd
+	  }
+        break;
+
+      case ev_keyup:
+        if (ev->data1 < NUMINPUTS)
+	  gamekeydown[ev->data1] = false;
+        break;
+
+      case ev_mouse:           // buttons are virtual keys
+        mousex = ev->data2*((cv_mouse_sens_x.value*cv_mouse_sens_x.value)/110.0f + 0.1);
+        mousey = ev->data3*((cv_mouse_sens_y.value*cv_mouse_sens_y.value)/110.0f + 0.1);
+        break;
+
+      case ev_mouse2:           // buttons are virtual keys
+        mouse2x = ev->data2*((cv_mouse2_sens_x.value*cv_mouse2_sens_x.value)/110.0f + 0.1);
+        mouse2y = ev->data3*((cv_mouse2_sens_y.value*cv_mouse2_sens_y.value)/110.0f + 0.1);
+        break;
+
+      default:
+        break;
+      }
+
+    // ALWAYS check for mouse & joystick double-clicks
+    // even if no mouse event
+    for (i=0;i<MOUSEBUTTONS;i++)
+      gamekeydown[KEY_DBLMOUSE1+i] = G_CheckDoubleClick(gamekeydown[KEY_MOUSE1+i], &mousedclicks[i]);
+
+    /* TODO ignore joystick doubleclicks for now
+    for (i=0;i<JOYBUTTONS;i++)
+      gamekeydown[KEY_DBLJOY1+i] = G_CheckDoubleClick(gamekeydown[KEY_JOY1+i], &joydclicks[i]);
+    */
+}
+
+
+
+
 typedef struct {
     int  keynum;
-    char name[15];
+    char name[16];
 } keyname_t;
 
 static keyname_t keynames[] =

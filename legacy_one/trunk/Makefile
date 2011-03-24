@@ -3,7 +3,7 @@
 # $Id$
 # GNU Make makefile for Doom Legacy (legacy@newdoom.com)
 #
-# Copyright (C) 1998-2010 by DooM Legacy Team.
+# Copyright (C) 1998-2011 by Doom Legacy Team.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -18,7 +18,6 @@
 #
 #  The preferred system media interface is SDL.
 #     Compile the generic SDL version with 'make' (default)
-#     Add 'HAVE_MIXER=1' for SDL_mixer music.
 #     Add 'DEBUG=1' for debugging information.
 #
 #  Other options (possibly outdated):
@@ -41,7 +40,7 @@
 # SDL Mixer, to get music
 HAVE_MIXER=1
 
-# Developers with svn can enable this to have svn number in executable.
+# Developers with svn can enable this to have svn revision number in executable.
 # Causes compile error message otherwise.
 # Until can find test for presence of svn, this is best that can be done.
 #SVN_ENABLE=1
@@ -469,24 +468,14 @@ ifdef SVN_ENABLE
 endif
 
 
-
-$(BIN)/wadtool: $(O)/wadtool.o $(O)/md5_cpp.o
-	g++ $(LDFLAGS) $^ -o $@
-
-$(O)/wadtool.o: common/tools/wadtool.cpp
-	g++ $(CFLAGS) -std=c++0x -c $< -o $@
-
-$(O)/md5_cpp.o: md5.c
-	g++ $(CFLAGS) -std=c++0x -c $< -o $@
-
-wad	: $(BIN)/wadtool
+wad	:
 ifdef WAD
 	@echo "Building a new legacy.wad using an old version $(WAD)..."
 	if test ! -d ../wad; then mkdir ../wad; fi
 	cd ../wad ; \
-	$(BIN)/wadtool -x $(WAD) ; \
+	../../common/bin/wadtool -x $(WAD) ; \
 	cp ../trunk/resources/* . ; \
-	$(BIN)/wadtool -c legacy.wad legacy.wad.inventory ; \
+	../../common/bin/wadtool -c legacy.wad legacy.wad.inventory ; \
 	mv legacy.wad $(BIN) ; \
 	rm *.txt *.h *.lmp
 	@echo "Finished building legacy.wad."

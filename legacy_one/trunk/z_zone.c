@@ -293,7 +293,7 @@ void Z_ZoneInit ( int mb_zonesize )
     // make the allocation of the huge memory block
     mainzone = (memzone_t *) malloc(zonesize);
     if( !mainzone ) {
-         I_Error("Could not allocate %d megabytes.\n"
+         I_Error("Could not allocate %d MiB.\n"
                  "Please use -mb parameter and specify a lower value,\n"
 		 "use a smaller video size, and/or a smaller wad.",
 		 mb_zonesize);
@@ -395,7 +395,7 @@ void Z_Init (void)
         if( M_IsNextParm() )
             mb_wanted = atoi (M_GetNextParm());
         else
-            I_Error("usage : -mb <numbers of megabyte for the heap>");
+            I_Error("usage : -mb <number of mebibytes for the heap>");
     }
     else
     {
@@ -422,7 +422,7 @@ void Z_Init (void)
     }
     // [WDJ] mem limited to 2047 MB by 32bit int
     if( mb_wanted > 2047 )   mb_wanted = 2047;	// [WDJ]
-    CONS_Printf ("%d megabytes requested for Z_Init.\n", mb_wanted);
+    CONS_Printf ("%d MiB requested for Z_Init.\n", mb_wanted);
     Z_ZoneInit( mb_wanted );
 #endif
 

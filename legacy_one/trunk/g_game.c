@@ -234,6 +234,10 @@
 #include "b_game.h"	//added by AC for acbot
 
 
+
+extern boolean gamekeytapped[NUMINPUTS];
+
+
 boolean G_CheckDemoStatus (void);
 void    G_ReadDemoTiccmd (ticcmd_t* cmd,int playernum);
 void    G_WriteDemoTiccmd (ticcmd_t* cmd,int playernum);
@@ -640,6 +644,8 @@ boolean G_InventoryResponder(player_t *ply, int gc[num_gamecontrols][2], event_t
   return false;
 }
 
+
+
 void G_BuildTiccmd(ticcmd_t* cmd, int realtics, int which_player)
 {
     int         i;
@@ -650,6 +656,9 @@ void G_BuildTiccmd(ticcmd_t* cmd, int realtics, int which_player)
     
     player_t *this_player;
     int (*gcc)[2];
+
+#define G_KEY_DOWN(k) (gamekeydown[gcc[(k)][0]] || gamekeydown[gcc[(k)][1]])
+#define G_KEY_PRESSED(k) (G_KEY_DOWN(k) || gamekeytapped[gcc[(k)][0]] || gamekeytapped[gcc[(k)][1]])
 
     angle_t pitch;
 
@@ -665,18 +674,16 @@ void G_BuildTiccmd(ticcmd_t* cmd, int realtics, int which_player)
     }
 
     // Exit now if locked
-    if (this_player->locked == true)
-      return;
+    if (this_player->locked)
+      goto done;
 
     // a little clumsy, but then the g_input.c became a lot simpler!
-    boolean strafe = gamekeydown[gcc[gc_strafe][0]] || gamekeydown[gcc[gc_strafe][1]];
-    int speed  = (gamekeydown[gcc[gc_speed][0]] || gamekeydown[gcc[gc_speed][1]]) ^
-      (which_player == 0 ? cv_autorun.value : cv_autorun2.value);
+    boolean strafe = G_KEY_DOWN(gc_strafe);
+    int speed  = G_KEY_DOWN(gc_speed) ^ (which_player == 0 ? cv_autorun.value : cv_autorun2.value);
 
-    boolean turnright = gamekeydown[gcc[gc_turnright][0]] || gamekeydown[gcc[gc_turnright][1]];
-    boolean turnleft  = gamekeydown[gcc[gc_turnleft][0]] || gamekeydown[gcc[gc_turnleft][1]];
-    boolean mouseaiming = (gamekeydown[gcc[gc_mouseaiming][0]] || gamekeydown[gcc[gc_mouseaiming][1]])
-      ^ (which_player == 0 ? cv_alwaysfreelook.value : cv_alwaysfreelook2.value);
+    boolean turnright = G_KEY_DOWN(gc_turnright);
+    boolean turnleft  = G_KEY_DOWN(gc_turnleft);
+    boolean mouseaiming = G_KEY_DOWN(gc_mouseaiming) ^ (which_player == 0 ? cv_alwaysfreelook.value : cv_alwaysfreelook2.value);
 
 
     int forward = 0, side = 0; // these must not wrap around, so we need bigger ranges than chars
@@ -709,44 +716,40 @@ void G_BuildTiccmd(ticcmd_t* cmd, int realtics, int which_player)
     }
 
     // forwards/backwards, strafing
-    if (gamekeydown[gcc[gc_forward][0]] || gamekeydown[gcc[gc_forward][1]])
+    if (G_KEY_DOWN(gc_forward))
         forward += forwardmove[speed];
-    if (gamekeydown[gcc[gc_backward][0]] || gamekeydown[gcc[gc_backward][1]])
+    if (G_KEY_DOWN(gc_backward))
         forward -= forwardmove[speed];
     //added:07-02-98: some people strafe left & right with mouse buttons
-    if (gamekeydown[gcc[gc_straferight][0]] || gamekeydown[gcc[gc_straferight][1]])
+    if (G_KEY_DOWN(gc_straferight))
         side += sidemove[speed];
-    if (gamekeydown[gcc[gc_strafeleft][0]] || gamekeydown[gcc[gc_strafeleft][1]])
+    if (G_KEY_DOWN(gc_strafeleft))
         side -= sidemove[speed];
 
     //added:07-02-98: fire with any button/key
-    if (gamekeydown[gcc[gc_fire][0]] || gamekeydown[gcc[gc_fire][1]])
+    if (G_KEY_DOWN(gc_fire))
         cmd->buttons |= BT_ATTACK;
 
     //added:07-02-98: use with any button/key
-    if (gamekeydown[gcc[gc_use][0]] || gamekeydown[gcc[gc_use][1]])
+    if (G_KEY_DOWN(gc_use))
         cmd->buttons |= BT_USE;
 
     //added:22-02-98: jump button
-    if (cv_allowjump.value &&
-	(gamekeydown[gcc[gc_jump][0]] || gamekeydown[gcc[gc_jump][1]]))
+    if (cv_allowjump.value && G_KEY_DOWN(gc_jump))
         cmd->buttons |= BT_JUMP;
 
 
     //added:07-02-98: any key / button can trigger a weapon
     // chainsaw overrides
-    if (gamekeydown[gcc[gc_nextweapon][0]] || gamekeydown[gcc[gc_nextweapon][1]])
-        cmd->buttons |= NextWeapon(this_player,1);
-    else
-    if (gamekeydown[gcc[gc_prevweapon][0]] || gamekeydown[gcc[gc_prevweapon][1]])
-        cmd->buttons |= NextWeapon(this_player,-1);
-    else
-    if (gamekeydown[gcc[gc_bestweapon][0]] || gamekeydown[gcc[gc_bestweapon][1]])
-        cmd->buttons |= BestWeapon(this_player);
+    if (G_KEY_PRESSED(gc_nextweapon))
+      cmd->buttons |= NextWeapon(this_player,1);
+    else if (G_KEY_PRESSED(gc_prevweapon))
+      cmd->buttons |= NextWeapon(this_player,-1);
+    else if (G_KEY_PRESSED(gc_bestweapon))
+      cmd->buttons |= BestWeapon(this_player);
     else
     for (i=gc_weapon1; i<gc_weapon1+NUMWEAPONS-1; i++)
-        if (gamekeydown[gcc[i][0]] ||
-            gamekeydown[gcc[i][1]])
+      if (G_KEY_PRESSED(i))
         {
             cmd->buttons |= BT_CHANGE | BT_EXTRAWEAPON; // extra by default
             cmd->buttons |= (i-gc_weapon1)<<BT_WEAPONSHIFT;
@@ -765,19 +768,19 @@ void G_BuildTiccmd(ticcmd_t* cmd, int realtics, int which_player)
     if (!keyboard_look[which_player] && !mouseaiming)
         pitch = 0;
 
-    if (gamekeydown[gcc[gc_lookup][0]] || gamekeydown[gcc[gc_lookup][1]])
+    if (G_KEY_DOWN(gc_lookup))
     {
         pitch += KB_LOOKSPEED;
         keyboard_look[which_player] = true;
     }
     else
-    if (gamekeydown[gcc[gc_lookdown][0]] || gamekeydown[gcc[gc_lookdown][1]])
+    if (G_KEY_DOWN(gc_lookdown))
     {
         pitch -= KB_LOOKSPEED;
         keyboard_look[which_player] = true;
     }
     else
-    if (gamekeydown[gcc[gc_centerview][0]] || gamekeydown[gcc[gc_centerview][1]])
+    if (G_KEY_PRESSED(gc_centerview))
       {
         pitch = 0;
         keyboard_look[which_player] = false;
@@ -868,7 +871,8 @@ void G_BuildTiccmd(ticcmd_t* cmd, int realtics, int which_player)
     if (!cv_allowmlook.value)
         pitch = 0;
 
-    cmd->aiming = G_ClipAimingPitch(pitch) >> 16; // to short
+    pitch = G_ClipAimingPitch(pitch); // clip pitch to a reasonable sector
+    cmd->aiming = pitch >> 16; // to short
 
     if (which_player == 0)
     {
@@ -887,11 +891,14 @@ void G_BuildTiccmd(ticcmd_t* cmd, int realtics, int which_player)
 
     if( gamemode == heretic )
     {
-        if (gamekeydown[gcc[gc_flydown][0]] || gamekeydown[gcc[gc_flydown][1]])
+        if (G_KEY_DOWN(gc_flydown))
             cmd->angleturn |= BT_FLYDOWN;
         else
             cmd->angleturn &= ~BT_FLYDOWN;
     }
+
+ done:
+    memset(gamekeytapped, 0, sizeof(gamekeytapped)); // we're done, reset key-tapping status
 }
 
 
@@ -1000,13 +1007,13 @@ void G_DoLoadLevel (boolean resetplayer)
         P_ResetCamera ( displayplayer_ptr );
 
     // clear cmd building stuff
-    memset (gamekeydown, 0, sizeof(gamekeydown));
-    mousex = mousey = 0;
+    memset(gamekeydown, 0, sizeof(gamekeydown));
+    memset(gamekeytapped, 0, sizeof(gamekeytapped));
+    mousex = mousey = mouse2x = mouse2y = 0;
 
     // clear hud messages remains (usually from game startup)
     HU_ClearFSPics();
     CON_ClearHUD ();
-
 }
 
 //

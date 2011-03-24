@@ -201,3 +201,11 @@ rev 827
 Bug 653278: Netvars loaded from config file have no effect.
 Solution: Do not try to change cvars through the XCmd interface unless
 we are in a netgame, do it directly instead.
+
+
+*** Input bugfixes, cleanup
+rev 828
+Restored localaiming pitch angle clipping.
+Fixed mousewheel functionality by adding the gamekeytapped array
+ (mouse wheel events are virtual keys which are depressed and immediately released).
+Cleaned up some game messages, Makefile.
