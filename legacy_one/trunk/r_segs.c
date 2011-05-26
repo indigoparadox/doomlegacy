@@ -1345,7 +1345,6 @@ unsigned long   nombre = 100000;
 #endif
 //profile stuff ---------------------------------------------------------
 
-extern sector_t * fakeflat_sec;  // [WDJ] DEBUG
 
 void R_RenderSegLoop (void)
 {

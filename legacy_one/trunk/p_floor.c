@@ -667,8 +667,7 @@ int EV_DoFloor ( line_t* line, floor_e floortype )
             mfloor->direction = -1;
             mfloor->sector = sec;
             mfloor->speed = MAXINT/2; // Go too fast and you'll cause problems...
-            mfloor->floordestheight =
-            P_FindLowestFloorSurrounding(sec);
+            mfloor->floordestheight = P_FindLowestFloorSurrounding(sec);
             break;
           default:
             break;

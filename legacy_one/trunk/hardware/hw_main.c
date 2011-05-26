@@ -1400,6 +1400,7 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
         fixed_t texturehpeg = gr_sidedef->textureoffset + gr_curline->offset;
 
         // clip texture s start/end coords with solidsegs
+	// [WDJ] FIXME, Cannot have int startfrac >0 and <1 ???
         if (startfrac > 0 && startfrac < 1)
             cliplow = texturehpeg + gr_curline->length * startfrac;
         else

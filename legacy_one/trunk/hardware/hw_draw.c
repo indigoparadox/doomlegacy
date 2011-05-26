@@ -661,11 +661,11 @@ boolean HWR_Screenshot (char *lbmname)
 
     if (cv_screenshotdir.string[0]) // Hurdler: Jive's request (save file in other directory)
     {
-        #ifdef WIN32
+#ifdef WIN32
         char sep = '\\';
-        #else
+#else
         char sep = '/';
-        #endif
+#endif
         int i;
         char wadname[MAX_WADPATH];
         char *shortwadname = NULL;
