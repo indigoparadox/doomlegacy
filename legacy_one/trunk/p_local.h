@@ -389,6 +389,11 @@ extern fixed_t  see_bottomslope;
 extern int boomsupport;
 extern int variable_friction;
 extern int allow_pushers;
+extern byte  monster_friction;  // MBF demo flag
+extern byte  mbf_support;  // [WDJ] MBF enable
+			   // similar to prboom mbf_features, but as a flag
+
+void  DemoAdapt_p_user( void );
 
 
 // heretic specific

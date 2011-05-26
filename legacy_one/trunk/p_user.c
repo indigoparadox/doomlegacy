@@ -248,6 +248,19 @@ void P_CalcHeight (player_t* player)
 
 
 extern int ticruned,ticmiss;
+#ifdef ABSOLUTEANGLE
+byte  EN_cmd_abs_angle = 1;  // legacy absolute angle commands
+#endif
+
+// local version control
+void DemoAdapt_p_user( void )
+{
+#ifdef ABSOLUTEANGLE
+    // abs angle in legacy demos only
+    EN_cmd_abs_angle = (demoversion >= 125) && (demoversion < 200);
+#endif
+}
+
 
 //
 // P_MovePlayer
@@ -258,15 +271,13 @@ void P_MovePlayer (player_t* player)
     ticcmd_t*  cmd = &player->cmd;
     int                 movefactor = 2048; //For Boom friction
 
-    cmd = &player->cmd;
-
-#ifndef ABSOLUTEANGLE
-    pmo->angle += (cmd->angleturn<<16);
-#else
-    if(demoversion<125)
-        pmo->angle += (cmd->angleturn<<16);
-    else
+#ifdef ABSOLUTEANGLE
+    if(EN_cmd_abs_angle)
         pmo->angle = (cmd->angleturn<<16);
+    else
+        pmo->angle += (cmd->angleturn<<16);
+#else
+    pmo->angle += (cmd->angleturn<<16);
 #endif
 
     ticruned++;

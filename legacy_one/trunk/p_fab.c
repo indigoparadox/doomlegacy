@@ -283,3 +283,18 @@ void D_RegisterMiscCommands (void)
     CV_RegisterVar (&cv_voodoo_mode);
 #endif
 }
+
+void  DemoAdapt_p_fab(void)  // local enables of p_fab
+{
+    if( ! demoplayback )
+    {
+        // restore player settings
+#ifdef DOORDELAY_CONTROL
+        DoorDelay_OnChange();
+#endif
+#ifdef VOODOO_DOLL
+        // cv_instadeath not covered here
+        VoodooMode_OnChange();
+#endif
+    }
+}

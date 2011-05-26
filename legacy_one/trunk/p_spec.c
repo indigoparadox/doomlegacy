@@ -184,7 +184,9 @@
 int boomsupport = 1;
 int variable_friction = 1;
 int allow_pushers = 1;
-
+byte  monster_friction = 1;  // MBF demo flag
+byte  mbf_support = 1;  // [WDJ] MBF enable
+			// similar to prboom mbf_features, but as a flag
 
 
 //SoM: 3/7/2000
