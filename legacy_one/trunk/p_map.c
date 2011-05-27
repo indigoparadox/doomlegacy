@@ -1488,6 +1488,31 @@ void P_SlideMove (mobj_t* mo)
     mo->momx = tsm_xmove;
     mo->momy = tsm_ymove;
 
+#ifdef BOB_MOM
+    // [WDJ] bobfactor from killough, via prboom, adapted to legacy.
+    // killough 10/98: affect the bobbing the same way (but not voodoo dolls)
+    if (mo->player && mo->player->mo == mo)
+    {
+        // [WDJ] Slide is an impact with a static object where only world mom applies.
+        // The impact effect upon bob_mom depends upon that will force the bob_mom
+	// to 
+        player_t * pl = mo->player;
+#if 0
+	// [WDJ] Because this is impact with fixed wall, it should
+        // affect bob_mom the same way.
+        pl->bob_momx = FixedMul (pl->bob_momx, tsm_bestslidefrac);
+        pl->bob_momy = FixedMul (pl->bob_momy, tsm_bestslidefrac);
+#else       
+        // killough 10/98:
+	// [WDJ] Should not transfer world mom to bob_mom.
+        if( abs(pl->bob_momx) > abs(tsm_xmove) )
+	    pl->bob_momx = tsm_xmove;
+        if( abs(pl->bob_momy) > abs(tsm_ymove) )
+	    pl->bob_momy = tsm_ymove;
+#endif
+    }
+#endif
+
     if (!P_TryMove (mo, mo->x+tsm_xmove, mo->y+tsm_ymove, true))
     {
         goto retry;

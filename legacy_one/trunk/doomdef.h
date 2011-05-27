@@ -211,8 +211,8 @@ extern char VERSION_BANNER[];
 // For Boom demo compatibility, spawns friction thinkers
 #define FRICTIONTHINKER
 
-
-
+// Select type of bob code
+#define BOB_MOM
 
 // [WDJ] Voodoo doll 4/30/2009
 // A voodoo doll is an accident of having multiple start points for a player.

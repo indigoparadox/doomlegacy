@@ -127,8 +127,12 @@ typedef struct player_s
     fixed_t             viewheight;
     // Bob/squat speed.
     fixed_t             deltaviewheight;
-    // bounded/scaled total momentum.
+    // bob effect
     fixed_t             bob;
+#ifdef BOB_MOM
+    // bob momentum, adjusted for friction
+    fixed_t		bob_momx, bob_momy;
+#endif
 
     //added:16-02-98: mouse aiming, where the guy is looking at!
     //                 It is updated with cmd->aiming.
@@ -157,11 +161,11 @@ typedef struct player_s
     boolean             weaponowned[NUMWEAPONS];
     int                 ammo[NUMAMMO];
     int                 maxammo[NUMAMMO];
-     // added by Boris : preferred weapons order stuff
-     char                favoritweapon[NUMWEAPONS];
-     boolean             originalweaponswitch;
-     //added:28-02-98:
-     boolean             autoaim_toggle;
+    // added by Boris : preferred weapons order stuff
+    char                favoritweapon[NUMWEAPONS];
+    boolean             originalweaponswitch;
+    //added:28-02-98:
+    boolean             autoaim_toggle;
 
     // True if button down last tic.
     boolean             attackdown;
@@ -213,25 +217,25 @@ typedef struct player_s
     boolean             didsecret;
 
     // heretic
-        int              chickenTics;                    // player is a chicken if > 0
-        int              chickenPeck;                    // chicken peck countdown
-        mobj_t          *rain1;                          // active rain maker 1
-        mobj_t          *rain2;                          // active rain maker 2
-        int              flamecount;
-        int              flyheight;
-        inventory_t     inventory[NUMINVENTORYSLOTS];
-        int             inventorySlotNum;
+    int             chickenTics;      // player is a chicken if > 0
+    int             chickenPeck;      // chicken peck countdown
+    mobj_t          *rain1;           // active rain maker 1
+    mobj_t          *rain2;           // active rain maker 2
+    int             flamecount;
+    int             flyheight;
+    inventory_t     inventory[NUMINVENTORYSLOTS];
+    int             inventorySlotNum;
 
-        int             inv_ptr;
-        int             st_curpos;        // position of inventory scroll
-        int             st_inventoryTics; // when >0 show inventory in status bar
+    int             inv_ptr;
+    int             st_curpos;        // position of inventory scroll
+    int             st_inventoryTics; // when >0 show inventory in status bar
 
-        weaponinfo_t    *weaponinfo; // can be changed when use level2 weapons (heretic)
+    weaponinfo_t    *weaponinfo; // can be changed when use level2 weapons (heretic)
 
-    bot_t*			bot;	//added by AC for acbot
+    bot_t*          bot;	//added by AC for acbot
 
-		// True if the player cannot use game controls (moving, shooting, aiming)
-		boolean locked;
+    // True if the player cannot use game controls (moving, shooting, aiming)
+    boolean locked;
 
 } player_t;
 
