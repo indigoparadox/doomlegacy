@@ -656,6 +656,8 @@ void P_LoadSectors (int lump)
         ss->modelsec = -1; //SoM: 3/17/2000: This causes some real problems
        			   // [WDJ] Is now dependent upon model
         ss->model = SM_normal; //SoM: 3/20/2000, [WDJ] 11/14/2009
+        ss->friction = ORIG_FRICTION;  // normal friction
+        ss->movefactor = ORIG_FRICTION_FACTOR;
         ss->floorlightsec = -1;
         ss->ceilinglightsec = -1;
         ss->ffloors = NULL;

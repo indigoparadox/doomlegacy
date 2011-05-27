@@ -2214,6 +2214,19 @@ boolean G_Downgrade(int version)
         monster_friction = (version >= 144);
     }
 
+    friction_model =
+       (gamemode == heretic)? FR_heretic
+     : (gamemode == hexen)? FR_hexen
+     : (version <= 132)? FR_orig  // older legacy demos, and doom demos
+     : (version <= 143)? FR_boom  // old legacy demos
+     : (version > 200) ?
+       (
+	  (version <= 202)? FR_boom  // boom 200, 201, 202
+	: (version == 203)? FR_mbf
+	: FR_prboom  // prboom
+       )
+     : FR_legacy;  // new model, default
+
     // always true now, might be false in the future, if couldn't
     // go backward and disable all the features...
     demoversion = version;

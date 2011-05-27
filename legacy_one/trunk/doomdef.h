@@ -208,6 +208,12 @@ extern char VERSION_BANNER[];
 #define FRAGGLESCRIPT           // SoM: Activate FraggleScript
 #define FIXROVERBUGS // Fix some 3dfloor bugs. SSNTails 06-13-2002
 
+// For Boom demo compatibility, spawns friction thinkers
+#define FRICTIONTHINKER
+
+
+
+
 // [WDJ] Voodoo doll 4/30/2009
 // A voodoo doll is an accident of having multiple start points for a player.
 // It has been used in levels as a token to trip linedefs and create
