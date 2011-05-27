@@ -282,6 +282,7 @@ void D_RegisterMiscCommands (void)
     CV_RegisterVar (&cv_instadeath);
     CV_RegisterVar (&cv_voodoo_mode);
 #endif
+    CV_RegisterVar (&cv_monsterfriction);
 }
 
 void  DemoAdapt_p_fab(void)  // local enables of p_fab

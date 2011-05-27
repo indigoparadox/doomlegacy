@@ -2245,6 +2245,7 @@ boolean G_Downgrade(int version)
 #endif   
 
     DemoAdapt_p_user();  // local enables of p_user
+    DemoAdapt_p_enemy(); // local enables of p_enemy
     DemoAdapt_p_fab();   // local enables of p_fab
     return true;
 }
