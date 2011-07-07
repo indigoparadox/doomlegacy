@@ -258,7 +258,7 @@ int W_LoadWadFile (char *filename)
         lumpinfo = Z_Malloc (sizeof(lumpinfo_t),PU_STATIC,NULL);
         lumpinfo->position = 0;
         lumpinfo->size = bufstat.st_size;
-        strcpy(lumpinfo->name,"DEHACKED");
+        strncpy(lumpinfo->name, "DEHACKED", 8);
     }
     else 
     {   // assume wad file

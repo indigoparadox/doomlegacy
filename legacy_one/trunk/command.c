@@ -1120,20 +1120,23 @@ void CV_Set (consvar_t *var, char *value)
 
     if (netgame)
     {
+      // in a netgame, certain cvars are handled differently
       if (var->flags & CV_NETVAR)
       {
-        // send the value of the variable
-	const int BUFSIZE = 128;
-        byte buf[BUFSIZE], *p; // macros want byte*
         if (!server)
         {
             CONS_Printf("Only the server can change this variable.\n");
             return;
         }
-        p = buf;
+
+	// send the value of the variable
+	const int BUFSIZE = 128;
+	byte buf[BUFSIZE], *p; // macros want byte*
+	p = buf;
         WRITEU16(p, var->netid);
         WRITESTRINGN(p, value, BUFSIZE-2-1); *p = '\0'; // [smite] WRITESTRINGN _should_ make sure the NUL gets there in all cases, but alas
         SendNetXCmd(XD_NETVAR, buf, p-buf);
+	return;
       }
       else if (var->flags & CV_NOTINNET)
       {
@@ -1141,8 +1144,8 @@ void CV_Set (consvar_t *var, char *value)
 	return;
       }
     }
-    else
-      Setvalue(var, value);
+
+    Setvalue(var, value);
 }
 
 
