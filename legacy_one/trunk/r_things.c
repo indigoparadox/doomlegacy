@@ -1219,7 +1219,16 @@ static void R_ProjectSprite (mobj_t* thing)
     sprlump = &spritelumps[sprframe->spritelump_id[rot]];
 
     // calculate edges of the shape
-    tx -= sprlump->offset;
+    if( flip )
+    {
+        // [WDJ] Flip offset, as suggested by Fraggle (seen in prboom 2003)
+        tx -= sprlump->width - sprlump->offset;
+    }
+    else
+    {
+        // apply offset from sprite lump normally
+        tx -= sprlump->offset;
+    }
     x1 = (centerxfrac + FixedMul (tx,xscale) ) >>FRACBITS;
 
     // off the right side?
