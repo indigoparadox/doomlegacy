@@ -301,7 +301,7 @@ void SG_Writebuf( void )
         savebuffer = newbuf;
         savebuffer_size = newsize;
         // [WDJ] Uncomment the following line to see buffer increases
-        fprintf(stderr, "Savegame buffer realloc of %i bytes.\n", newsize);
+        fprintf(stderr, "Savegame buffer realloc of %zu bytes.\n", newsize);
         goto done;
     }
 			     
