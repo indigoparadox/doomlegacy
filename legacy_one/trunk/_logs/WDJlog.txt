@@ -1725,3 +1725,11 @@ Fix monster momentum friction to help stuck monsters.
 Must have full speed impulse for stopped monsters because some wads,
 like TNT, have overlapped monster positions, and it depends upon that
 vanilla behavior to get them unstuck from each other.
+
+*** w76_z_test_notes
+patchfile = w75_z_test_notes.patch
+- committed revision 848   by wesley johnson
+Part of the code for z_testing of monsters is disabled and it is not a
+mistake.  The code existed previous to heretic code inclusion, and
+heretic has similar behavior.  This documents the variables and code
+that belong to the old code.
