@@ -75,7 +75,7 @@ void M_StartControlPanel (void);
 // Draws a box with a texture inside as background for messages
 void M_DrawTextBox (int x, int y, int width, int lines);
 // show or hide the setup for player 2 (called at splitscreen change)
-void M_SwitchSplitscreen(void);
+void M_Player2_MenuEnable( boolean player2_enable );
 
 // the function to show a message box typing with the string inside
 // string must be static (not in the stack)

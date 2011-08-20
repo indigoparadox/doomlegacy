@@ -259,7 +259,7 @@ void SplitScreen_OnChange(void)
     R_ExecuteSetViewSize();
 
     // change the menu
-    M_SwitchSplitscreen();
+    M_Player2_MenuEnable( cv_splitscreen.value );
 
     if( !demoplayback)
     {
