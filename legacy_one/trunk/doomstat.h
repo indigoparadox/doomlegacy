@@ -106,6 +106,8 @@ typedef enum
 } gamemode_e;
 
 
+#if 0
+// [WDJ] 8/26/2011 Replaced by gamedesc_id, GDESC_
 // Mission packs - might be useful for TC stuff?
 typedef enum
 {
@@ -116,6 +118,9 @@ typedef enum
     mission_none
 
 } gamemission_t;
+
+extern gamemission_t   gamemission;
+#endif
 
 
 // Identify language to use, software localization.
@@ -187,7 +192,6 @@ typedef struct
 extern game_desc_e     gamedesc_id; // unique game id
 extern game_desc_t     gamedesc;    // active desc used by most of legacy
 extern gamemode_e      gamemode;
-extern gamemission_t   gamemission;
 extern boolean         inventory;   // true with heretic and hexen
 extern boolean         raven;       // true with heretic and hexen
 

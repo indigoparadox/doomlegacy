@@ -269,7 +269,10 @@ char            gamemapname[MAX_WADPATH];      // an external wad filename
 
 
 gamemode_e      gamemode = indetermined;       // Game Mode - identify IWAD as shareware, retail etc.
+#if 0
+// [WDJ] Replaced by gamedesc_id, GDESC_
 gamemission_t   gamemission = doom;
+#endif
 boolean         raven = false;
 language_t      language = english;          // Language.
 boolean         modifiedgame;                  // Set if homebrew PWAD stuff has been added.
