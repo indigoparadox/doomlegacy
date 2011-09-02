@@ -405,6 +405,7 @@ extern friction_model_e  friction_model;
 
 void  DemoAdapt_p_user( void );
 void  DemoAdapt_p_enemy( void );
+void  DemoAdapt_p_floor( void );
 
 
 // heretic specific

@@ -2250,6 +2250,7 @@ boolean G_Downgrade(int version)
     DemoAdapt_p_user();  // local enables of p_user
     DemoAdapt_p_enemy(); // local enables of p_enemy
     DemoAdapt_p_fab();   // local enables of p_fab
+    DemoAdapt_p_floor(); // local enables of p_floor, TNT MAP30 fix
     return true;
 }
 

@@ -72,9 +72,24 @@
 #include "z_zone.h"
 
 
+
 // ==========================================================================
 //                              FLOORS
 // ==========================================================================
+
+// local enables of p_floor, TNT MAP30 fix
+byte EN_boom_stairbuild_fix = 1;
+
+void DemoAdapt_p_floor( void )
+{
+    // [WDJ] 8/29/2011  Boom fixed the stair building bug, where some
+    // steps would get double height.
+    // TNT MAP30 relies upon the bug to get the height right on the stairs
+    // at the red key card, and the stairs in the final room, where the
+    // player must fire from the 2nd step from the top to hit the Boss.
+    EN_boom_stairbuild_fix = boomsupport && (gamedesc_id != GDESC_tnt);
+}
+
 
 //
 // Move a plane (floor or ceiling) and check for crushing
@@ -833,14 +848,16 @@ int EV_BuildStairs ( line_t*  line, stair_e type )
         if (tsec->floorpic != texture)
           continue;
 
-        if (!boomsupport) // jff 6/19/98 prevent double stepsize
+	// Boom moves stair incr, but cannot use on TNT MAP30
+        if (!EN_boom_stairbuild_fix) // jff 6/19/98 prevent double stepsize
           height += stairsize; // jff 6/28/98 change demo compatibility
 
         // if sector's floor already moving, look for another
         if (P_SectorActive(floor_special,tsec)) //jff 2/22/98
           continue;
-                                  
-        if (boomsupport) // jff 6/19/98 increase height AFTER continue
+
+ 	// Boom stairbuild fix
+        if (EN_boom_stairbuild_fix) // jff 6/19/98 increase height AFTER continue
           height += stairsize; // jff 6/28/98 change demo compatibility
 
         sec = tsec;
