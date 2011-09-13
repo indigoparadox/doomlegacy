@@ -777,6 +777,14 @@ void P_LoadThings (int lump)
         mt->options = LE_SWAP16(dmt->flags);
         mt->mobj = NULL; //SoM:
 
+        if( gamedesc_id == GDESC_tnt && gamemap == 31)
+        {
+	    // Fix TNT MAP31 bug: yellow keycard is multiplayer only
+	    // Released a fixed copy of TNT later, but CDROM have this bug.
+	    if( mt->type == 6 )  // Yellow keycard
+	       mt->options &= ~MTF_MPSPAWN;  // Remove multiplayer only flag
+	}
+
         P_SpawnMapThing (mt);
     }
 
