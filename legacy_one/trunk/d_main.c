@@ -1729,11 +1729,13 @@ void D_DoomMain()
         legacyhome_len = strlen(legacyhome);
 #ifdef SAVEGAMEDIR
         // default savegame file name, example: "/home/user/.legacy/%s/doomsav%i.dsg"
-        sprintf(savegamename, "%s%%s" SLASH "%s", legacyhome, text[NORM_SAVEI_NUM]);
+//        sprintf(savegamename, "%s%%s" SLASH "%s", legacyhome, text[NORM_SAVEI_NUM]);
+        sprintf(savegamename, "%s%%s" SLASH "%s%s", legacyhome, SAVEGAMENAME, "%d.dsg");
         // so can extract legacyhome from savegamename later
 #else    
         // default savegame file name, example: "/home/user/.legacy/doomsav%i.dsg"
-        sprintf(savegamename, "%s%s", legacyhome, text[NORM_SAVEI_NUM]);
+//        sprintf(savegamename, "%s%s", legacyhome, text[NORM_SAVEI_NUM]);
+        sprintf(savegamename, "%s%s%s", legacyhome, SAVEGAMENAME, "%d.dsg");
 #endif
 #endif
     }
@@ -1745,7 +1747,8 @@ void D_DoomMain()
         // [WDJ] These names only work on DOS
         I_mkdir("c:\\doomdata", 0700); // octal permissions
         strcpy(configfile, "c:/doomdata/" CONFIGFILENAME);
-        strcpy(savegamename, text[CDROM_SAVEI_NUM]);  // DOS name
+//        strcpy(savegamename, text[CDROM_SAVEI_NUM]);  // DOS name
+        sprintf(savegamename, "c:\\doomdata\\%s%s", SAVEGAMENAME, "%d.dsg");  // DOS name
 #else
         // userhome already has situation covered
 #endif
