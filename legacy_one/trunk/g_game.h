@@ -179,4 +179,8 @@ void G_AddPlayer( int playernum );
 
 void CheckSaveGame(size_t size);
 
+// [WDJ] 8/2011 Par times can now be modified.
+extern int pars[4][10];
+extern int cpars[32];
+
 #endif

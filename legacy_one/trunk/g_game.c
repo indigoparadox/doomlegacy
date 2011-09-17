@@ -1597,8 +1597,9 @@ void G_AddPlayer( int playernum )
         p->weaponinfo = doomweaponinfo;
 }
 
+// [WDJ] Par times can now be modified.
 // DOOM Par Times
-static const int pars[4][10] =
+int pars[4][10] =
 {
     {0},
     {0,30,75,120,90,165,180,180,30,165},
@@ -1607,7 +1608,7 @@ static const int pars[4][10] =
 };
 
 // DOOM II Par Times
-static const int cpars[32] =
+int cpars[32] =
 {
     30,90,120,120,90,150,120,120,270,90,        //  1-10
     210,150,150,150,210,150,420,150,210,150,    // 11-20

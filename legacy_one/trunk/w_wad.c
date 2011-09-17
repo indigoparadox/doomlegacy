@@ -246,8 +246,10 @@ int W_LoadWadFile (char *filename)
         }
     }
 
-    // detect dehacked file with the "deh" extension
-    if( stricmp(&filename[strlen(filename)-3],"deh")==0 )
+    // detect dehacked file with the "deh" extension, or bex files
+    char * extension = &filename[strlen(filename)-3];
+    if( strcasecmp( extension,"deh")==0
+       || strcasecmp( extension,"bex")==0 )
     {
         // this code emulate a wadfile with one lump name "DEHACKED" 
         // at position 0 and size of the whole file

@@ -42,10 +42,12 @@
 #define DEHACKED_H
 
 void DEH_Init(void);
-void DEH_LoadDehackedFile(char *filename);
+// permission: 0=game, 1=adv, 2=language
+void DEH_LoadDehackedFile(char *filename, byte bex_permission);
 void DEH_LoadDehackedLump(int lump);
 
 extern boolean  deh_loaded;
 extern byte  flags_valid_deh;  // flags altered flags (from DEH), boolean
+extern byte  pars_valid_bex;  // have valid PAR values (from BEX), boolean
 
 #endif

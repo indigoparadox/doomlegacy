@@ -255,6 +255,11 @@ void I_SoftError (char *error, ...);
 #define DEH_RECOVER_STRINGS
 #endif
 
+// [WDJ] 9/5/2011
+// Enable to allow BEX to change SAVEGAMENAME
+// This is a security risk, trojan wads could use it to corrupt arbitrary files.
+//#define BEX_SAVEGAMENAME
+
 // =========================================================================
 
 

@@ -1842,5 +1842,9 @@ patchfile = w77_action.patch
 Separated action function declares from info.c into new file action.h, so
 they can be used in dehacked.c too.
 
-
+*** w77_BEX_file
+patchfile = w77_BEX_file.patch
+- committed revision 862   by wesley johnson
+Main body of BEX text, pointer, processing.
+Recognizes [STRINGS], [POINTER], [PARS], and BEX include.
 
