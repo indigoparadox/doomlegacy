@@ -45,6 +45,9 @@ void DEH_Init(void);
 // permission: 0=game, 1=adv, 2=language
 void DEH_LoadDehackedFile(char *filename, byte bex_permission);
 void DEH_LoadDehackedLump(int lump);
+#ifdef BEX_LANGUAGE
+void BEX_load_language( char * langname, byte bex_permission );
+#endif
 
 extern boolean  deh_loaded;
 extern byte  flags_valid_deh;  // flags altered flags (from DEH), boolean

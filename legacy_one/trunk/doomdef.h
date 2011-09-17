@@ -267,6 +267,13 @@ void I_SoftError (char *error, ...);
 #define FRENCH_INLINE
 #endif
 
+// [WDJ] 9/2/2011  BEX language controls
+// Load language BEX file
+//#define BEX_LANGUAGE
+// Automatic loading of lang.bex file.
+//#define BEX_LANG_AUTO_LOAD
+
+
 // =========================================================================
 
 

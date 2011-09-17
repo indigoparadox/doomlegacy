@@ -1877,6 +1877,20 @@ void D_DoomMain()
         french_chexquest();
 #endif
    
+#ifdef BEX_LANGUAGE
+    if ( M_CheckParm("-lang") )
+    {
+        // will check for NULL parameter
+        BEX_load_language( M_GetNextParm(), 2 );  // language name
+    }
+#ifdef BEX_LANG_AUTO_LOAD
+    else
+    {
+        BEX_load_language( NULL, 2 );  // default language name
+    }
+#endif
+#endif
+   
     // load wad, including the main wad file
     if (!W_InitMultipleFiles(startupwadfiles))
         CONS_Error("A WAD file was not found\n");
