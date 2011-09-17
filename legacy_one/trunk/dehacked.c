@@ -85,6 +85,7 @@
 
 #include "sounds.h"
 #include "info.h"
+#include "action.h"
 
 #include "m_cheat.h"
 #include "d_think.h"
