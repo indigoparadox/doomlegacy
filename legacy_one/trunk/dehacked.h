@@ -38,9 +38,14 @@
 //
 //-----------------------------------------------------------------------------
 
+#ifndef DEHACKED_H
+#define DEHACKED_H
 
 void DEH_Init(void);
 void DEH_LoadDehackedFile(char *filename);
 void DEH_LoadDehackedLump(int lump);
 
 extern boolean  deh_loaded;
+extern byte  flags_valid_deh;  // flags altered flags (from DEH), boolean
+
+#endif

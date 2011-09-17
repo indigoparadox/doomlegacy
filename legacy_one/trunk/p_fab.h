@@ -44,6 +44,8 @@ void  DemoAdapt_p_fab(void);  // local enables of p_fab
 // spawn smoke trails behind rockets and skull head attacks
 void A_SmokeTrailer (mobj_t* actor);
 
+void Translucency_OnChange(void);  // update translucent info
+
 // hack the states table to set Doom Legacy's default translucency on sprites
 void P_SetTranslucencies (void);
 

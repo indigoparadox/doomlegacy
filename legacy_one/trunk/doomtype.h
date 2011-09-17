@@ -87,6 +87,12 @@ typedef uint8_t    byte;
 typedef uint32_t  tic_t;
 
 
+#ifdef __GNUC__
+#define PACKED_ATTR  __attribute__((packed))
+#else
+#define PACKED_ATTR
+#endif
+
 #ifdef WIN32
 # define ASMCALL __cdecl
 #else

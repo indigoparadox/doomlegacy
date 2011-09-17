@@ -233,7 +233,7 @@ typedef enum
     // for chase camera, don't be blocked by things (partial clipping)
     MF_NOCLIPTHING      = 0x40000000,
 
-    MF_FLOORHUGGER      = 0x80000000
+    MF_TRANSLUCENT      = 0x80000000,  // from boomdeh.txt, previously was FLOORHUGGER
 
 } mobjflag_e;
 
@@ -266,7 +266,8 @@ typedef enum {
                                               // damaging        
     MF2_TELESTOMP      =     0x00040000,      // mobj can stomp another
     MF2_FLOATBOB       =     0x00080000,      // use float bobbing z movement
-    MF2_DONTDRAW       =     0X00100000,      // don't generate a vissprite
+    MF2_DONTDRAW       =     0x00100000,      // don't generate a vissprite
+    MF2_FLOORHUGGER    =     0x00200000,      // stays on the floor
         
 } mobjflag2_t;
 

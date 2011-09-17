@@ -1459,9 +1459,9 @@ void P_MobjThinker(mobj_t * mobj)
     else
         mobj->eflags &= ~MF_JUSTHITFLOOR;
 
-    // SoM: Floorhuggers stay on the floor allways...
+    // SoM: Floorhuggers stay on the floor always...
     // BP: tested here but never set ?!
-    if (mobj->info->flags & MF_FLOORHUGGER)
+    if (mobj->info->flags2 & MF2_FLOORHUGGER)
     {
         mobj->z = mobj->floorz;
     }
