@@ -1856,6 +1856,10 @@ void D_DoomMain()
         Chex1PatchEngine();
 
     CONS_Printf(text[W_INIT_NUM]);
+   
+    // save Doom, Heretic, Chex strings for DEH
+    DEH_Init();  // Init DEH before files and lumps loaded
+
     // load wad, including the main wad file
     if (!W_InitMultipleFiles(startupwadfiles))
         CONS_Error("A WAD file was not found\n");

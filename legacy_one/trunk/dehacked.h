@@ -39,6 +39,7 @@
 //-----------------------------------------------------------------------------
 
 
+void DEH_Init(void);
 void DEH_LoadDehackedFile(char *filename);
 void DEH_LoadDehackedLump(int lump);
 
