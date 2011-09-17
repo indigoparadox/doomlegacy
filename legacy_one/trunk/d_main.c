@@ -311,6 +311,9 @@
 
 #include "b_game.h"     //added by AC for acbot
 
+#ifdef FRENCH_INLINE
+#include "d_french.h"
+#endif
 
 // Versioning
 #ifndef SVN_REV
@@ -1629,6 +1632,10 @@ void D_DoomMain()
     int startmap;
     boolean autostart;
 
+#ifdef FRENCH_INLINE
+    french_early_text();
+#endif
+
     // print version banner just once here, use it anywhere
     sprintf(VERSION_BANNER, "Doom Legacy %d.%d.%d %s", VERSION/100, VERSION%100, REVISION, VERSIONSTRING);
     demoversion = VERSION;
@@ -1862,6 +1869,14 @@ void D_DoomMain()
     // save Doom, Heretic, Chex strings for DEH
     DEH_Init();  // Init DEH before files and lumps loaded
 
+#ifdef FRENCH_INLINE
+    french_text();
+    if (gamemode == heretic)
+        french_heretic();
+    if (gamemode == chexquest1)
+        french_chexquest();
+#endif
+   
     // load wad, including the main wad file
     if (!W_InitMultipleFiles(startupwadfiles))
         CONS_Error("A WAD file was not found\n");

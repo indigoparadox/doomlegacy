@@ -260,6 +260,13 @@ void I_SoftError (char *error, ...);
 // This is a security risk, trojan wads could use it to corrupt arbitrary files.
 //#define BEX_SAVEGAMENAME
 
+// [WDJ] 9/2/2011  French language controls
+// Put french strings inline (from d_french.h)
+// #define FRENCH_INLINE
+#ifdef FRENCH
+#define FRENCH_INLINE
+#endif
+
 // =========================================================================
 
 

@@ -123,15 +123,6 @@ extern gamemission_t   gamemission;
 #endif
 
 
-// Identify language to use, software localization.
-typedef enum
-{
-    english,
-    french,
-    german,
-    lang_unknown
-
-} language_t;
 
 // [WDJ] Structure some of the scattered game differences.
 
@@ -203,6 +194,17 @@ extern  boolean	       modifiedgame;
 // Language.
 // =========
 //
+
+// Identify language to use, software localization.
+typedef enum
+{
+    english,
+    french,
+    german,
+    lang_unknown
+
+} language_t;
+
 extern  language_t   language;
 
 

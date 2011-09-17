@@ -330,7 +330,7 @@ void deh_replace_string( char ** oldstring, char * newstring, DRS_type_e drstype
 	    // check value against tests
 	}
         // reject special character attacks
-#ifdef FRENCH
+#ifdef FRENCH_INLINE
         // place checks for allowed foreign lang chars here
 	// reported dangerous escape chars
 	if( ch == 133 ) goto bad_char;
