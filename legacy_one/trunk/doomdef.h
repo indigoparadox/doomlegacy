@@ -246,6 +246,15 @@ void I_SoftError (char *error, ...);
 #define SAVEGAME99
 #define SAVEGAMEDIR
 
+// [WDJ] 8/26/2011  recover DEH string memory
+// Otherwise will just abandon replaced DEH/BEX strings.
+// Enable if you are short on memory, or just like clean execution.
+// Disable if it gives you trouble.
+#define DEH_RECOVER_STRINGS
+#if defined PCDOS && ! defined DEH_RECOVER_STRINGS
+#define DEH_RECOVER_STRINGS
+#endif
+
 // =========================================================================
 
 
