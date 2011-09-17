@@ -1884,3 +1884,7 @@ and attempt to process it.  If <name> is blank, or if
 BEX_LANGUAGE==AUTO, is selected, it will use the default, "lang.bex".
 Changed BEX to also accept strings with double quotes.
 The french.bex file has many new strings that need translation.
+
+*** w77_action_french_files
+- committed revision 867   by wesley johnson
+Add action.h and lang_bex/french.bex to the svn system.
