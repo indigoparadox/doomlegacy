@@ -1347,6 +1347,8 @@ void IdentifyVersion()
     if ( devparm || M_CheckParm("-game") )
     {
         char *temp = M_GetNextParm();
+        if( temp == NULL )
+	    I_Error( "Switch  -game <name> or -devgame <name>\n" );
 	for( gmi=0; gmi<GDESC_other; gmi++ )
         {
 	    // compare to recognized game mode names
