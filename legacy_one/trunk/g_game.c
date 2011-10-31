@@ -2514,9 +2514,8 @@ void playdemo_restore_settings( void )
 
 void G_DeferedPlayDemo (char* name)
 {
-    COM_BufAddText("playdemo \"");
-    COM_BufAddText(name);
-    COM_BufAddText("\"\n");
+    // [WDJ] All as one string, or else it executes partial string
+    COM_BufAddText(va("playdemo \"%s\"\n", name));
 }
 
 

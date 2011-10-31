@@ -505,9 +505,10 @@ void SendNameAndColor2(void)
 void Got_NameAndcolor(char **cp, int playernum)
 {
     player_t *p = &players[playernum];
+    char * lcp = *cp; // local cp
 
     // color
-    p->skincolor = READBYTE(*cp) % MAXSKINCOLORS;
+    p->skincolor = READBYTE(lcp) % MAXSKINCOLORS;
 
     // a copy of color
     if (p->mo)
@@ -516,14 +517,22 @@ void Got_NameAndcolor(char **cp, int playernum)
     // name
     if (demoversion >= 128)
     {
-        if (stricmp(player_names[playernum], *cp))
-            CONS_Printf("%s renamed to %s\n", player_names[playernum], *cp);
-        READSTRING(*cp, player_names[playernum]);
+        if (strcasecmp(player_names[playernum], lcp))
+            CONS_Printf("%s renamed to %s\n", player_names[playernum], lcp);
+        // READSTRING(lcp, player_names[playernum]);  // overflow unsafe
+	// [WDJ] String overflow safe
+        {
+	    int pn_len = strlen( lcp ) + 1;
+            int read_len = min( pn_len, MAXPLAYERNAME-1 );  // length safe
+            memcpy(player_names[playernum], lcp, read_len);
+	    player_names[playernum][MAXPLAYERNAME-1] = '\0';
+            lcp += pn_len;  // whole
+	}
     }
     else
     {
-        memcpy(player_names[playernum], *cp, MAXPLAYERNAME);
-        *cp += MAXPLAYERNAME;
+        memcpy(player_names[playernum], lcp, MAXPLAYERNAME);
+        lcp += MAXPLAYERNAME;
     }
 
     // skin
@@ -531,15 +540,16 @@ void Got_NameAndcolor(char **cp, int playernum)
     {
         if (demoversion >= 128)
         {
-            SetPlayerSkin(playernum, *cp);
-            SKIPSTRING(*cp);
+            SetPlayerSkin(playernum, lcp);
+            SKIPSTRING(lcp);
         }
         else
         {
-            SetPlayerSkin(playernum, *cp);
-            *cp += (SKINNAMESIZE + 1);
+            SetPlayerSkin(playernum, lcp);
+            lcp += (SKINNAMESIZE + 1);
         }
     }
+    *cp = lcp;  // OUT once
 }
 
 void SendWeaponPref(void)
