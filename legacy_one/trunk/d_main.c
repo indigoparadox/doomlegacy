@@ -250,6 +250,12 @@
 #include <direct.h>
 #endif
 
+// using MAX_WADPATH as buffer limit, so _MAX_PATH must be as long
+#if _MAX_PATH < MAX_WADPATH
+#undef _MAX_PATH
+#define _MAX_PATH   MAX_WADPATH
+#endif
+
 
 #include "doomdef.h"
 
@@ -377,7 +383,7 @@ boolean advancedemo;
 # define  SLASH  "/"
 #endif
 
-// to make savegamename and directories
+// to make savegamename and directories, in m_menu.c
 char *legacyhome;
 int   legacyhome_len;
 
@@ -1280,8 +1286,7 @@ boolean  Check_wad_filenames( int gmi, char * doomwaddir, char * pathiwad )
     {
         if( gmtp->iwad_filename[w] == NULL ) break;
         // form a full filename
-        snprintf(pathiwad, MAX_WADPATH, "%s/%s", doomwaddir, gmtp->iwad_filename[w]);
-        pathiwad[MAX_WADPATH-1] = 0;
+        cat_filename( pathiwad, doomwaddir, gmtp->iwad_filename[w] );
         // if it exists then use it
         if( access(pathiwad, R_OK) == 0 )
         {
@@ -1298,6 +1303,7 @@ void IdentifyVersion()
 {
     char pathtemp[_MAX_PATH];
     char pathiwad[_MAX_PATH + 16];
+    // fprintf(stderr, "MAX_PATH: %i\n", _MAX_PATH);
 
     boolean  other_names = 0;	// indicates -iwad other names
 
@@ -1346,7 +1352,7 @@ void IdentifyVersion()
      */
 
     // will be overwrite in case of -cdrom or linux home
-    sprintf(configfile, "%s/" CONFIGFILENAME, doomwaddir);
+    cat_filename( configfile, doomwaddir, CONFIGFILENAME );
 
     // [WDJ] were too many chained ELSE. Figured it out once and used direct goto.
 
@@ -1714,7 +1720,8 @@ void D_DoomMain()
 
 #ifdef __MACH__
 	//[segabor] ... ([WDJ] MAC port has vars handy)
-	sprintf(configfile, "%s/DooMLegacy.cfg", mac_user_home);
+//	sprintf(configfile, "%s/DooMLegacy.cfg", mac_user_home);
+	cat_filename( configfile, max_user_home, "DooMLegacy.cfg" );
 	sprintf(savegamename, "%s/Saved games/Game %%d.doomSaveGame", mac_user_home);
         legacyhome = mac_user_home;
 #else
@@ -1739,7 +1746,7 @@ void D_DoomMain()
 	        // example: /home/user/.legacy/config.cfg
                 cfgstr = CONFIGFILENAME;
             }
-	    sprintf(configfile, "%s%s", legacyhome, cfgstr);
+	    cat_filename( configfile, legacyhome, cfgstr );
 
             // can't use sprintf since there is %d in savegamename
 	    // default savegame file name, example: "/home/user/.legacy/doomsav%i.dsg"
@@ -1754,21 +1761,24 @@ void D_DoomMain()
 #ifdef SAVEGAMEDIR
         // default savegame file name, example: "/home/user/.legacy/%s/doomsav%i.dsg"
 //        sprintf(savegamename, "%s%%s" SLASH "%s", legacyhome, text[NORM_SAVEI_NUM]);
-        sprintf(savegamename, "%s%%s" SLASH "%s%s", legacyhome, SAVEGAMENAME, "%d.dsg");
+        snprintf(savegamename, MAX_WADPATH-1, "%s%%s" SLASH "%s%s", legacyhome, SAVEGAMENAME, "%d.dsg");
         // so can extract legacyhome from savegamename later
 #else    
         // default savegame file name, example: "/home/user/.legacy/doomsav%i.dsg"
 //        sprintf(savegamename, "%s%s", legacyhome, text[NORM_SAVEI_NUM]);
-        sprintf(savegamename, "%s%s%s", legacyhome, SAVEGAMENAME, "%d.dsg");
+        snprintf(savegamename, MAX_WADPATH-1, "%s%s%s", legacyhome, SAVEGAMENAME, "%d.dsg");
 #endif
+        savegamename[MAX_WADPATH-1] = '\0';
 #endif
     }
 
     if (M_CheckParm("-cdrom"))
     {
+        // [WDJ] We cannot execute DoomLegacy off CDROM ??
         CONS_Printf(D_CDROM);
 #ifdef PC_DOS
         // [WDJ] These names only work on DOS
+	// No -opengl on DOS
         I_mkdir("c:\\doomdata", 0700); // octal permissions
         strcpy(configfile, "c:/doomdata/" CONFIGFILENAME);
 //        strcpy(savegamename, text[CDROM_SAVEI_NUM]);  // DOS name
@@ -2118,29 +2128,36 @@ void D_DoomMain()
         p = M_CheckParm("-timedemo");
     if (p && M_IsNextParm())
     {
-        char tmp[MAX_WADPATH];
+        char demo_name[MAX_WADPATH];  // filename
         // add .lmp to identify the EXTERNAL demo file
         // it is NOT possible to play an internal demo using -playdemo,
         // rather push a playdemo command.. to do.
 
-        strcpy(tmp, M_GetNextParm());
+        strncpy(demo_name, M_GetNextParm(), MAX_WADPATH-1);
+        demo_name[MAX_WADPATH-1] = '\0';
         // get spaced filename or directory
         while (M_IsNextParm())
         {
-            strcat(tmp, " ");
-            strcat(tmp, M_GetNextParm());
+	    // [WDJ] Protect against long demo name on command line
+	    int dn_free = MAX_WADPATH - 2 - strlen(demo_name);
+	    if( dn_free > 1 )
+	    {
+                strcat(demo_name, " ");
+                strncat(demo_name, M_GetNextParm(), dn_free );
+                demo_name[MAX_WADPATH-1] = '\0';
+	    }
         }
-        FIL_DefaultExtension(tmp, ".lmp");
+        FIL_DefaultExtension(demo_name, ".lmp");
 
-        CONS_Printf("Playing demo %s.\n", tmp);
+        CONS_Printf("Playing demo %s.\n", demo_name);
 
         if ((p = M_CheckParm("-playdemo")))
         {
             singledemo = true;  // quit after one demo
-            G_DeferedPlayDemo(tmp);
+            G_DeferedPlayDemo(demo_name);
         }
         else
-            G_TimeDemo(tmp);
+            G_TimeDemo(demo_name);
         gamestate = wipegamestate = GS_NULL;
 
         return;

@@ -225,7 +225,8 @@ int W_LoadWadFile (char *filename)
         return -1;
     }
 
-    strncpy(filenamebuf, filename, MAX_WADPATH);
+    strncpy(filenamebuf, filename, MAX_WADPATH-1);
+    filenamebuf[MAX_WADPATH-1] = '\0';
     filename = filenamebuf;
     // open wad file
     if ( (handle = open (filename,O_RDONLY|O_BINARY,0666)) == -1)

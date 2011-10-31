@@ -585,7 +585,7 @@ void D_SendPlayerConfig(void)
 
 void Command_Playdemo_f(void)
 {
-    char name[256];
+    char name[MAX_WADPATH];  // MAX_WADPATH for length checking
 
     if (COM_Argc() != 2)
     {
@@ -603,7 +603,8 @@ void Command_Playdemo_f(void)
     }
 
     // open the demo file
-    strcpy(name, COM_Argv(1));
+    strncpy(name, COM_Argv(1), MAX_WADPATH-1);
+    name[MAX_WADPATH-1] = '\0';
     // dont add .lmp so internal game demos can be played
     //FIL_DefaultExtension (name, ".lmp");
 
@@ -614,7 +615,7 @@ void Command_Playdemo_f(void)
 
 void Command_Timedemo_f(void)
 {
-    char name[256];
+    char name[MAX_WADPATH];  // MAX_WADPATH for length checking
 
     if (COM_Argc() != 2)
     {
@@ -632,7 +633,8 @@ void Command_Timedemo_f(void)
     }
 
     // open the demo file
-    strcpy(name, COM_Argv(1));
+    strncpy(name, COM_Argv(1), MAX_WADPATH-1);
+    name[MAX_WADPATH-1] = '\0';
     // dont add .lmp so internal game demos can be played
     //FIL_DefaultExtension (name, ".lmp");
 
@@ -655,7 +657,7 @@ void Command_Stopdemo_f(void)
 void Command_Map_f(void)
 {
     char buf[MAX_WADPATH + 3];
-#define MAPNAME &buf[2]
+#define MAPNAME (&buf[2])
     int i;
 
     if (COM_Argc() < 2 || COM_Argc() > 7)
@@ -670,7 +672,8 @@ void Command_Map_f(void)
         return;
     }
 
-    strncpy(MAPNAME, COM_Argv(1), MAX_WADPATH);
+    strncpy(MAPNAME, COM_Argv(1), MAX_WADPATH-1);
+    MAPNAME[MAX_WADPATH-1] = '\0';
 
     if (FIL_CheckExtension(MAPNAME))
     {
@@ -708,7 +711,7 @@ void Command_Map_f(void)
     if (COM_CheckParm("-noresetplayers"))
         buf[1] |= 2;
 
-    // spaw the server if needed
+    // spawn the server if needed
     // reset players if there is a new one
     if (SV_SpawnServer())
         buf[1] &= ~2;
@@ -730,7 +733,8 @@ void Got_Mapcmd(char **cp, int playernum)
         resetplayer = ((nomonsters & 2) == 0);
         nomonsters &= 1;
     }
-    strcpy(mapname, *cp);
+    strncpy(mapname, *cp, MAX_WADPATH-1);
+    mapname[MAX_WADPATH-1] = '\0';
     *cp += strlen(mapname) + 1;
 
     CONS_Printf("Warping to map...\n");
@@ -991,8 +995,10 @@ void Command_Save_f(void)
         return;
     }
 
-    p[0] = atoi(COM_Argv(1));
-    strcpy(&p[1], COM_Argv(2));
+    p[0] = atoi(COM_Argv(1));  // slot num 0..99
+    // save description string at [1]
+    strncpy(&p[1], COM_Argv(2), SAVESTRINGSIZE-1);
+    p[SAVESTRINGSIZE] = '\0';
     SendNetXCmd(XD_SAVEGAME, &p, strlen(&p[1]) + 2);
 }
 
@@ -1002,7 +1008,9 @@ void Got_SaveGamecmd(char **cp, int playernum)
     char description[SAVESTRINGSIZE];
 
     slot = *(*cp)++;
-    strcpy(description, *cp);
+    // transmitted as SAVESTRINGSIZE, but protect against net error or attack
+    strncpy(description, *cp, SAVESTRINGSIZE-1);
+    description[SAVESTRINGSIZE-1] = '\0';
     *cp += strlen(description) + 1;
 
     // Write the save game file

@@ -294,6 +294,14 @@ extern byte     demoversion;
 
 #define SAVESTRINGSIZE          24
 
+// Used for many file path buffer sizes
+#ifdef PC_DOS
+#define MAX_WADPATH   128
+#else
+// was too short for network systems
+#define MAX_WADPATH   256
+#endif
+
 // State updates, number of tics / second.
 // NOTE: used to setup the timer rate, see I_StartupTimer().
 #define OLDTICRATE       35

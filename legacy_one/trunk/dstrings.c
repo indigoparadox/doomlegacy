@@ -806,5 +806,3 @@ char *text[NUMTEXT] = {
     "c:\\doomdata\\" SAVEGAMENAME "%d.dsg",
     SAVEGAMENAME "%d.dsg",
 #endif
-
-char savegamename[256];

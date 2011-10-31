@@ -77,7 +77,7 @@ extern char       player_names[MAXPLAYERS][MAXPLAYERNAME];
 extern char*      team_names[];
 
 extern  boolean nomonsters;             // checkparm of -nomonsters
-extern  char      gamemapname[128];
+extern  char      gamemapname[MAX_WADPATH];
 
 extern  player_t  players[MAXPLAYERS];
 extern  boolean   playeringame[MAXPLAYERS];
@@ -147,6 +147,8 @@ void G_DoLoadGame (int slot);
 void G_LoadGame (int slot);
 void G_DoLoadGame (int slot);
 #endif
+
+extern char savegamename[MAX_WADPATH];
 
 void G_Savegame_Name( /*OUT*/ char * namebuf, /*IN*/ int slot );
 

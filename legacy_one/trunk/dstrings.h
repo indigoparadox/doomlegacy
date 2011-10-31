@@ -55,8 +55,6 @@
 #define SAVEGAMENAME    "doomsav"
 #endif
 
-extern char savegamename[256];
-
 //
 // File locations,
 //  relative to current position.

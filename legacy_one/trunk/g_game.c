@@ -1859,6 +1859,7 @@ void compose_message( char * str1, char * str2 )
 
 
 extern char  savegamedir[SAVESTRINGSIZE];
+char  savegamename[MAX_WADPATH];
 
 // Must be able to handle 99 savegame slots, even when
 // not SAVEGAME99, so net game saves are universally accepted.

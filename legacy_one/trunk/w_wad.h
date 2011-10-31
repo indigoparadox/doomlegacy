@@ -128,7 +128,7 @@ typedef struct
 #define WADFILENUM(lump)       (lump>>16)   // wad file number in upper word
 #define LUMPNUM(lump)          (lump&0xffff)    // lump number for this pwad
 
-#define MAX_WADPATH   128
+// MAX_WADPATH moved to doomdef.h, for other users
 #define MAX_WADFILES  32       // maximum of wad files used at the same time
                                // (there is a max of simultaneous open files
                                // anyway, and this should be plenty)
