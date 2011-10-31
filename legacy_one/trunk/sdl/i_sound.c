@@ -200,7 +200,8 @@ static void *getsfx(const char *sfxname, int *len)
 
     if (W_CheckNumForName(name) == -1)
     {
-//	fprintf(stderr,"Sound missing: %s, Using default sound\n",name);  // [WDJ] debug
+        if( verbose > 1 )
+	    fprintf(stderr,"Sound missing: %s, Using default sound\n",name);  // [WDJ] debug
 	// Heretic shareware: get many missing sound names at sound init,
 	// but not after game starts.  These come from list of sounds
 	// in sounds.c, but not all those are in the game.
@@ -654,7 +655,8 @@ void Midifile_OLD_SDL_MIXER( byte* midibuf, unsigned long midilength )
     {
 	  fwrite( midibuf, midilength, 1, midifile );
 	  fclose( midifile );
-          fprintf( stderr, "Midifile written: %s size=%li\n", midiname, midilength );
+          if(verbose)
+              fprintf( stderr, "Midifile written: %s size=%li\n", midiname, midilength );
 	 
 	  music.mus = Mix_LoadMUS( midiname );
           if( music.mus == NULL )

@@ -327,6 +327,8 @@ char *Z_StrDup (const char *in);
 // g_game.h
 extern  boolean devparm;                // development mode (-devparm)
 
+extern  byte    verbose;   // 1, 2
+
 // =======================
 // Misc stuff for later...
 // =======================
