@@ -596,8 +596,11 @@ void D_SendPlayerConfig(void)
 void Command_Playdemo_f(void)
 {
     char name[MAX_WADPATH];  // MAX_WADPATH for length checking
+    COM_args_t  carg;
+    
+    COM_Args( &carg );
 
-    if (COM_Argc() != 2)
+    if (carg.num != 2)
     {
         CONS_Printf("playdemo <demoname> : playback a demo\n");
         return;
@@ -613,7 +616,7 @@ void Command_Playdemo_f(void)
     }
 
     // open the demo file
-    strncpy(name, COM_Argv(1), MAX_WADPATH-1);
+    strncpy(name, carg.arg[1], MAX_WADPATH-1);
     name[MAX_WADPATH-1] = '\0';
     // dont add .lmp so internal game demos can be played
     //FIL_DefaultExtension (name, ".lmp");
@@ -626,8 +629,11 @@ void Command_Playdemo_f(void)
 void Command_Timedemo_f(void)
 {
     char name[MAX_WADPATH];  // MAX_WADPATH for length checking
+    COM_args_t  carg;
+    
+    COM_Args( &carg );
 
-    if (COM_Argc() != 2)
+    if (carg.num != 2)
     {
         CONS_Printf("timedemo <demoname> : time a demo\n");
         return;
@@ -643,7 +649,7 @@ void Command_Timedemo_f(void)
     }
 
     // open the demo file
-    strncpy(name, COM_Argv(1), MAX_WADPATH-1);
+    strncpy(name, carg.arg[1], MAX_WADPATH-1);
     name[MAX_WADPATH-1] = '\0';
     // dont add .lmp so internal game demos can be played
     //FIL_DefaultExtension (name, ".lmp");
@@ -669,8 +675,11 @@ void Command_Map_f(void)
     char buf[MAX_WADPATH + 3];
 #define MAPNAME (&buf[2])
     int i;
+    COM_args_t  carg;
+    
+    COM_Args( &carg );
 
-    if (COM_Argc() < 2 || COM_Argc() > 7)
+    if (carg.num < 2 || carg.num > 7)
     {
         CONS_Printf("map <mapname[.wad]> [-skill <1..5>] [-monsters <0/1>] [-noresetplayers]: warp to map\n");
         return;
@@ -682,7 +691,7 @@ void Command_Map_f(void)
         return;
     }
 
-    strncpy(MAPNAME, COM_Argv(1), MAX_WADPATH-1);
+    strncpy(MAPNAME, carg.arg[1], MAX_WADPATH-1);
     MAPNAME[MAX_WADPATH-1] = '\0';
 
     if (FIL_CheckExtension(MAPNAME))

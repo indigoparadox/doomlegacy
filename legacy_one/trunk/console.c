@@ -241,27 +241,30 @@ static char *bindtable[NUMINPUTS];
 
 void CONS_Bind_f(void)
 {
-    int  na,key;
+    int  key;
+    COM_args_t  carg;
+    
+    COM_Args( &carg );
 
-    na=COM_Argc();
-
-    if ( na!= 2 && na!=3)
+    if ( carg.num!=2 && carg.num!=3 )
     {
+        int nb = 0;
         CONS_Printf ("bind <keyname> [<command>]\n");
         CONS_Printf("\2bind table :\n");
-        na=0;
         for(key=0;key<NUMINPUTS;key++)
+        {
             if(bindtable[key])
             {
                 CONS_Printf("%s : \"%s\"\n",G_KeynumToString (key),bindtable[key]);
-                na=1;
+                nb=1;
             }
-        if(!na)
+	}
+        if(!nb)
             CONS_Printf("Empty\n");
         return;
     }
 
-    key=G_KeyStringtoNum(COM_Argv(1));
+    key=G_KeyStringtoNum( carg.arg[1] );
     if(!key)
     {
         CONS_Printf("Invalid key name\n");
@@ -274,8 +277,8 @@ void CONS_Bind_f(void)
         bindtable[key]=NULL;
     }
 
-    if( na==3 )
-        bindtable[key]=Z_StrDup(COM_Argv(2));
+    if( carg.num==3 )
+        bindtable[key]=Z_StrDup( carg.arg[2] );
 }
 
 

@@ -582,59 +582,48 @@ void G_CheckDoubleUsage(int keynum)
     }
 }
 
-void setcontrol(int (*gc)[2],int na)
+void setcontrol(int (*gc)[2], char * cstr)
 {
     int numctrl;
     char *namectrl;
     int keynum;
+    COM_args_t  carg;
+    
+    COM_Args( &carg );
+   
+    if ( carg.num!= 3 && carg.num!=4 )
+    {
+        CONS_Printf ("setcontrol%s <controlname> <keyname> [<2nd keyname>]\n", cstr);
+        return;
+    }
 
-    namectrl=COM_Argv(1);
+    namectrl=carg.arg[1];
     for(numctrl=0;numctrl<num_gamecontrols
-                  && stricmp(namectrl,gamecontrolname[numctrl])
+                  && strcasecmp(namectrl,gamecontrolname[numctrl])
                  ;numctrl++);
     if(numctrl==num_gamecontrols)
     {
         CONS_Printf("Control '%s' unknown\n",namectrl);
         return;
     }
-    keynum=G_KeyStringtoNum(COM_Argv(2));
+    keynum=G_KeyStringtoNum(carg.arg[2]);
     G_CheckDoubleUsage(keynum);
     gc[numctrl][0]=keynum;
 
-    if(na==4)
-        gc[numctrl][1]=G_KeyStringtoNum(COM_Argv(3));
+    if(carg.num==4)
+        gc[numctrl][1]=G_KeyStringtoNum(carg.arg[3]);
     else
         gc[numctrl][1]=0;
 }
 
 void Command_Setcontrol_f(void)
 {
-    int na;
-
-    na= COM_Argc();
-
-    if ( na!= 3 && na!=4)
-    {
-        CONS_Printf ("setcontrol <controlname> <keyname> [<2nd keyname>]\n");
-        return;
-    }
-
-    setcontrol(gamecontrol,na);
+    setcontrol(gamecontrol, "");
 }
 
 void Command_Setcontrol2_f(void)
 {
-    int na;
-
-    na= COM_Argc();
-
-    if ( na!= 3 && na!=4)
-    {
-        CONS_Printf ("setcontrol2 <controlname> <keyname> [<2nd keyname>]\n");
-        return;
-    }
-
-    setcontrol(gamecontrol2,na);
+    setcontrol(gamecontrol2, "2");
 }
 
 
@@ -644,10 +633,11 @@ void Command_BindJoyaxis_f()
 {
   joybinding_t j;
   unsigned int i;
+  COM_args_t  carg;
+    
+  COM_Args( &carg );
 
-  int na = COM_Argc();
-
-  if(na == 1)
+  if(carg.num == 1)
   { // Print bindings.
     CONS_Printf("%d joysticks found.\n", num_joysticks);
     if(num_joybindings == 0) {
@@ -663,26 +653,26 @@ void Command_BindJoyaxis_f()
     return;
   }
 
-  if (na == 4 || na > 6)
+  if (carg.num == 4 || carg.num > 6)
   {
     CONS_Printf("bindjoyaxis [joynum] [axisnum] [playnum] [action] [scale]  to bind\n"
 		"bindjoyaxis [joynum] [axisnum]  to unbind\n");
     return;
   }
 
-  j.joynum  = atoi(COM_Argv(1));
+  j.joynum  = atoi( carg.arg[1] );
   if(j.joynum < 0 || j.joynum >= num_joysticks) {
     CONS_Printf("Attempting to bind/release non-existent joystick %d.\n", j.joynum);
     return;
   }
 
-  j.axisnum = (na >= 3) ? atoi(COM_Argv(2)) : -1;
+  j.axisnum = (carg.num >= 3) ? atoi( carg.arg[2] ) : -1;
   if(j.axisnum < -1 || j.axisnum >= I_JoystickNumAxes(j.joynum)) {
     CONS_Printf("Attempting to bind/release non-existent axis %d.\n", j.axisnum);
     return;
   }
 
-  if (na == 3)
+  if (carg.num == 3)
   { // release binding(s)
     /* Takes one or two parameters. The first one is the joystick number
        and the second is the axis number. If either is not specified, all
@@ -720,9 +710,10 @@ void Command_BindJoyaxis_f()
   }
   else
   { // create a binding
-    j.playnum = atoi(COM_Argv(3));
+    j.playnum = atoi( carg.arg[3] );
+    // carg.arg[0..3] only, use COM_Argv for others
     j.action  = (joyactions_e)(atoi(COM_Argv(4)));
-    if (na == 6)
+    if (carg.num == 6)
       j.scale = atof(COM_Argv(5));
     else
       j.scale = 1.0f;
