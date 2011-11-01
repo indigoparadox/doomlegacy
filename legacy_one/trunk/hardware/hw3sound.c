@@ -338,7 +338,7 @@ int HW3S_I_StartSound(const void *origin_p, source3D_data_t *source_parm, channe
     int             s_num;
     source_t        *source;
   
-    if(nosound || (origin && origin->type == MT_SPIRIT))
+    if(nosoundfx || (origin && origin->type == MT_SPIRIT))
         return -1;
 
     sfx = &S_sfx[sfx_id];

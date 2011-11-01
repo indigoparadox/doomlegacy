@@ -363,7 +363,7 @@ boolean infight = false;	//DarkWolf95:November 21, 2003: Monsters Infight!
 boolean singletics = false;     // timedemo
 
 boolean nomusic;
-boolean nosound;
+boolean nosoundfx; // had clash with WATCOM i86.h nosound() function
 
 byte    verbose = 0;
 
@@ -2126,7 +2126,7 @@ void D_DoomMain()
     // setting up sound
     //
     CONS_Printf(text[S_SETSOUND_NUM]);
-    nosound = M_CheckParm("-nosound");
+    nosoundfx = M_CheckParm("-nosound");
     nomusic = M_CheckParm("-nomusic");  // WARNING: DOS version initmusic in I_StartupSound
     I_StartupSound();
     S_Init(cv_soundvolume.value, cv_musicvolume.value);

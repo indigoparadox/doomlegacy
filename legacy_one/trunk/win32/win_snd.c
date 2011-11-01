@@ -184,9 +184,9 @@ StackSound_t    StackSounds[MAXSTACKSOUNDS];
 
 // --------------------------------------------------------------------------
 // Fill the DirectSoundBuffer with data from a sample, made separate so that
-// sound data cna be reloaded if a sound buffer was lost.
+// sound data can be reloaded if a sound buffer was lost.
 // --------------------------------------------------------------------------
-// win9x version olny
+// win9x version only
 static boolean CopySoundData_win95 (LPDIRECTSOUNDBUFFER dsbuffer, byte* data)
 {
     LPVOID  lpvAudio1;              // receives address of lock start
@@ -209,15 +209,15 @@ static boolean CopySoundData_win95 (LPDIRECTSOUNDBUFFER dsbuffer, byte* data)
             I_Error("Lock fail(2) on %x, %s\n",dsbuffer,DXErrorToString(hr));
     }
     else
+    {
         if( FAILED (hr) )
             I_Error("Lock fail(1) on %x, %s\n",dsbuffer,DXErrorToString(hr));
+    }
 
-
-
-        // copy wave data into the buffer (note: dwBytes1 should equal to dsbdesc->dwBufferBytes ...)
-        CopyMemory (lpvAudio1, data, dwBytes1);
+    // copy wave data into the buffer (note: dwBytes1 should equal to dsbdesc->dwBufferBytes ...)
+    CopyMemory (lpvAudio1, data, dwBytes1);
     
-        // finally, unlock the buffer
+    // finally, unlock the buffer
     hr = dsbuffer->lpVtbl->Unlock (dsbuffer, lpvAudio1, dwBytes1, lpvAudio2, dwBytes2);
 
     if( FAILED (hr) )
@@ -249,8 +249,10 @@ static boolean CopySoundData (LPDIRECTSOUNDBUFFER dsbuffer, byte* data, int leng
             I_Error("Lock fail(2) on %x, %s\n",dsbuffer,DXErrorToString(hr));
     }
     else
+    {
         if( FAILED (hr) )
             I_Error("Lock fail(1) on %x, %s\n",dsbuffer,DXErrorToString(hr));
+    }
 
     // copy wave data into the buffer (note: dwBytes1 should equal to dsbdesc->dwBufferBytes ...)
     CopyMemory (lpvAudio1, data, dwBytes1);
@@ -314,8 +316,12 @@ static boolean CopyAndInvertSoundData(LPDIRECTSOUNDBUFFER dsbuffer, byte* data, 
         hr = dsbuffer->lpVtbl->Lock (dsbuffer, 0, length, &lpvAudio1, &dwBytes1, NULL, NULL, 0);
         if( FAILED (hr) )
             I_Error("CopyAndInvert: Lock fail(2) on %x, %s\n",dsbuffer,DXErrorToString(hr));
-    } else if( FAILED (hr) )
-              I_Error("CopyAndInvetrt: Lock fail(1) on %x, %s\n",dsbuffer,DXErrorToString(hr));
+    }
+    else
+    {
+        if( FAILED (hr) )
+              I_Error("CopyAndInvert: Lock fail(1) on %x, %s\n",dsbuffer,DXErrorToString(hr));
+    }
     
     
     // copy wave data into the buffer (note: dwBytes1 should equal to dsbdesc->dwBufferBytes ...)
@@ -492,7 +498,7 @@ void I_SetSfxVolume(int volume)
     int     vol;
     HRESULT hr;
 
-    if (nosound || !sound_started)
+    if (nosoundfx || !sound_started)
         return;
         
     // use the last quarter of volume range
@@ -554,6 +560,7 @@ static int GetFreeStackNum(int  newpriority)
             return i;
         }
         else
+        {
             // check for sounds that finished playing, and can be freed
             if( !I_SoundIsPlaying(i) )
             {
@@ -569,19 +576,20 @@ static int GetFreeStackNum(int  newpriority)
                 lowestpri = StackSounds[i].priority;
                 lowestprihandle = i;
             }
-
+	}
     }
     
     // the maximum of sounds playing at the same time is reached, if we have at least
     // one sound playing with a lower priority, stop it and replace it with the new one
 
     //CONS_Printf ("\t\tall slots occupied..");
-    if (newpriority >= lowestpri) {
+    if (newpriority >= lowestpri)
+    {
         I_StopSound (lowestprihandle);
         return lowestprihandle;
             //CONS_Printf (" kicking out lowest priority slot: %d pri: %d, my priority: %d\n",
             //             handle, lowestpri, priority);
-        }
+    }
 
     return -1;
 }
@@ -634,7 +642,7 @@ int I_StartSound (int            id,
     LPDIRECTSOUNDBUFFER     dssurround;
 #endif
 
-    if (nosound)
+    if (nosoundfx)
         return -1;
 
     //CONS_Printf ("I_StartSound:\n\t\tS_sfx[%d]\n", id);
@@ -659,11 +667,13 @@ int I_StartSound (int            id,
             dsbuffer = (LPDIRECTSOUNDBUFFER) S_sfx[id].data;
             // clean up stacksounds info
             for (i=0; i<MAXSTACKSOUNDS; i++)
+	    {
                 if (handle != i &&
                     StackSounds[i].lpSndBuf == dsbuffer)
                 {
                     StackSounds[i].lpSndBuf = NULL;
                 }
+	    }
         }
         // stop the duplicate or the re-used original
         dsbuffer->lpVtbl->Stop (dsbuffer);
@@ -715,7 +725,7 @@ int I_StartSound (int            id,
         I_UpdateSoundPanning(dsbuffer, 0);
         dssurround->lpVtbl->SetCurrentPosition(dssurround, 0);
     }
-        else
+    else
     // Perform normal operation
 #endif
 
@@ -791,7 +801,7 @@ void I_StopSound (int handle)
     LPDIRECTSOUNDBUFFER dsbuffer;
     HRESULT hr;
 
-    if (nosound || handle<0)
+    if (nosoundfx || handle<0)
         return;
 
     //CONS_Printf ("I_StopSound (%d)\n", handle);
@@ -828,7 +838,7 @@ int I_SoundIsPlaying(int handle)
     LPDIRECTSOUNDBUFFER dsbuffer;
     DWORD   dwStatus;
     
-    if (nosound || handle == -1)
+    if (nosoundfx || handle == -1)
         return FALSE;
 
     dsbuffer = StackSounds[handle].lpSndBuf;
@@ -858,7 +868,7 @@ void I_UpdateSoundParams(int    handle,
     boolean                 surround_inuse = FALSE;
 #endif
 
-    if (nosound)
+    if (nosoundfx)
         return;
 
     dsbuffer = StackSounds[handle].lpSndBuf;
@@ -884,6 +894,7 @@ void I_UpdateSoundParams(int    handle,
         }
     }
     else 
+    {
         // Just update volumes and start the surround if need
         if (!surround_inuse)
         {
@@ -897,6 +908,7 @@ void I_UpdateSoundParams(int    handle,
         }
         else
             I_UpdateSoundVolume(dssurround, vol);
+    }
     I_UpdateSoundVolume(dsbuffer, vol);
 
     if (!surround_inuse)
@@ -931,9 +943,11 @@ void I_ShutdownSound(void)
 #endif
     // release any temporary 'duplicated' secondary buffers
     for (i=0; i<MAXSTACKSOUNDS; i++)
+    {
         if (StackSounds[i].lpSndBuf)
             // stops the sound and release it if it is a duplicate
             I_StopSound (i);
+    }
     
     if (DSnd)
     {
@@ -963,7 +977,7 @@ void I_StartupSound()
 
     sound_started = false;
     
-    if (nosound)
+    if (nosoundfx)
         return;
 
     // Secure and configure sound device first.
@@ -1007,7 +1021,7 @@ void I_StartupSound()
     {
         if (Init3DSDriver(sdrv_name))
         {
-            //nosound = true;
+            //nosoundfx = true;
             I_AddExitFunc(I_ShutdownSound);
             snddev.cooplevel = cooplevel;
             snddev.bps = 16;
@@ -1032,7 +1046,7 @@ void I_StartupSound()
         CONS_Printf (" DirectSoundCreate FAILED\n"
                      " there is no sound device or the sound device is under\n"
                      " the control of another application\n" );
-        nosound = true;
+        nosoundfx = true;
         return;
     }
 
@@ -1042,7 +1056,7 @@ void I_StartupSound()
     hr = DSnd->lpVtbl->SetCooperativeLevel (DSnd, hWndMain, cooplevel);
     if ( FAILED( hr ) ) {
         CONS_Printf (" SetCooperativeLevel FAILED\n");
-        nosound = true;
+        nosoundfx = true;
         return;
     }
 
@@ -1067,7 +1081,7 @@ void I_StartupSound()
     hr = DSnd->lpVtbl->CreateSoundBuffer (DSnd, &dsbdesc, &lpDsb, NULL);
     if ( FAILED( hr ) ) {
         CONS_Printf ("CreateSoundBuffer FAILED: %s (ErrNo %d)\n", DXErrorToString(hr), hr);
-        nosound = true;
+        nosoundfx = true;
         return;
     }
 
@@ -1229,9 +1243,9 @@ void I_InitMusic(void)
     bMusicStarted = false;
     
     CONS_Printf("I_InitMusic()\n");
-    
-	if(digmusic)
-	{
+
+    if(digmusic)
+    {
 		// SSNTails 12-13-2002
 		if (FSOUND_GetVersion() < FMOD_VERSION)
 		{
@@ -1246,7 +1260,7 @@ void I_InitMusic(void)
 			I_Error("%s\n", FMOD_ErrorString(FSOUND_GetError()));
 		}
 		nomusic = true; // Disable MIDI
-	}
+    }
 
     if (nomusic)
         return;
@@ -1356,15 +1370,15 @@ void I_ShutdownMusic(void)
     DWORD       idx;
     MMRESULT    mmrRetVal;
 
-	if(digmusic)
-	{
+    if(digmusic)
+    {
 		FSOUND_Stream_Stop(fmus);
 		FSOUND_Stream_Close(fmus);
 		FSOUND_Close();
 		remove("mus.tmp"); // Delete the temp file
 		return;
-	}
-	else if(nomusic)
+     }
+     else if(nomusic)
 		return;
 
     if (!bMusicStarted)
@@ -1510,14 +1524,14 @@ void I_PlaySong(int handle, int bLooping)
 // -----------
 void I_PauseSong (int handle)
 {
-	if(digmusic)
-	{
+    if(digmusic)
+    {
 		if(FSOUND_IsPlaying(0)) // FMOD's so easy you almost lose brain
 			FSOUND_SetPaused(0, true); // cells programming for it!
 
 		return;
-	}
-	else if (nomusic)
+    }
+    else if (nomusic)
         return;
 
 #ifdef DEBUGMIDISTREAM
@@ -1537,12 +1551,12 @@ void I_PauseSong (int handle)
 // ------------
 void I_ResumeSong (int handle)
 {
-	if(digmusic)
-	{
+    if(digmusic)
+    {
 		if(FSOUND_GetPaused(0))
 			FSOUND_SetPaused(0, false);
 		return;
-	}
+    }
     else if (nomusic)
         return;
 
@@ -1965,7 +1979,7 @@ static void CALLBACK MidiStreamCallback (HMIDIIN hMidi, UINT uMsg, DWORD dwInsta
 
 
     switch( uMsg )
-        {
+    {
         case MOM_DONE:
             //faB:  dwParam1 is LPMIDIHDR
 
@@ -2096,7 +2110,7 @@ static void CALLBACK MidiStreamCallback (HMIDIIN hMidi, UINT uMsg, DWORD dwInsta
 
         default:
             break;
-        }
+    }
 
     return;
 }
@@ -2125,7 +2139,7 @@ static void Mid2StreamFreeBuffers( void )
                 }
         }
         bBuffersPrepared = FALSE;
-        }
+    }
 
     //faB: I don't free the stream buffers here, but rather allocate them
     //      once at startup, and free'em at shutdown

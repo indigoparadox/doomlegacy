@@ -235,8 +235,8 @@ extern  consvar_t       cv_deathmatch;
 // Internal parameters for sound rendering.
 // ========================================
 
-extern boolean         nomusic; //defined in d_main.c
-extern boolean         nosound; // clash with WATCOM i86.h nosound() function
+extern boolean         nomusic; // defined in d_main.c
+extern boolean         nosoundfx; // had clash with WATCOM i86.h nosound() function
 
 // =========================
 // Status flags for refresh.

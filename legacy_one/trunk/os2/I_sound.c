@@ -489,7 +489,7 @@ I_StartSound
   int        priority )
 {
 
-    if (nosound)
+    if (nosoundfx)
         return -1;
 
     // Debug.
@@ -722,7 +722,7 @@ void I_StartupSound()
 {
    int i;
 
-   if (nosound)
+   if (nosoundfx)
       return;
 
       // init dart audio

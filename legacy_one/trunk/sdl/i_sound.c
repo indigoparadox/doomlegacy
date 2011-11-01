@@ -168,7 +168,7 @@ static int *channelrightvol_lookup[NUM_CHANNELS];
 static byte *mus2mid_buffer;
 
 // Flags for the -nosound and -nomusic options
-extern boolean nosound;
+extern boolean nosoundfx;
 extern boolean nomusic;
 
 static boolean musicStarted = false;
@@ -385,7 +385,7 @@ static void I_SetChannels(void)
     int i;
     int j;
 
-    if (nosound)
+    if (nosoundfx)
         return;
 
     double base_step = (double)DOOM_SAMPLERATE / (double)SAMPLERATE;
@@ -455,7 +455,7 @@ int I_StartSound(int id, int vol, int sep, int pitch, int priority)
     // UNUSED
     priority = 0;
 
-    if (nosound)
+    if (nosoundfx)
         return 0;
 
     // Returns a handle (not used).
@@ -519,7 +519,7 @@ static void I_UpdateSound_sdl(void *unused, Uint8 *stream, int len)
 {
     // Mix current sound data.
     // Data, from raw sound, for right and left.
-    if (nosound)
+    if (nosoundfx)
         return;
 
     // Pointers in audio stream, left, right, end.
@@ -798,11 +798,11 @@ void I_StartupSound(void)
 {
   static SDL_AudioSpec audspec;  // [WDJ] desc name, too many audio in this file
 
-  if (nosound)
-    {
+  if (nosoundfx)
+  {
       nomusic = true;
       return;
-    }
+  }
 
   // Configure sound device
   CONS_Printf("I_InitSound: ");
@@ -821,12 +821,12 @@ void I_StartupSound(void)
 
   // Open the audio device
   if (SDL_OpenAudio(&audspec, NULL) < 0)
-    {
+  {
       CONS_Printf("Couldn't open audio with desired format.\n");
       SDL_CloseAudio();
-      nosound = nomusic = true;
+      nosoundfx = nomusic = true;
       return;
-    }
+  }
 
   SDL_PauseAudio(0);
 #else
@@ -834,24 +834,24 @@ void I_StartupSound(void)
 
   // because we use SDL_mixer, audio is opened here.
   if (Mix_OpenAudio(audspec.freq, audspec.format, audspec.channels, audspec.samples) < 0)
-    {
+  {
     // [WDJ] On sound cards without midi ports, opening audio will block music.
     // When midi music is played through Timidity, it will also try to use the
     // dsp port, which is already in use.  Need to use a mixer on sound
     // effect and Timidity output.  Some sound cards have two dsp ports.
 
         CONS_Printf("Unable to open audio: %s\n", Mix_GetError());
-        nosound = nomusic = true;
+        nosoundfx = nomusic = true;
         return;
-    }
+  }
 
   int number_channels;	// for QuerySpec
   if (!Mix_QuerySpec(&audspec.freq, &audspec.format, &number_channels))
-    {
+  {
       CONS_Printf("Mix_QuerySpec: %s\n", Mix_GetError());
-      nosound = nomusic = true;
+      nosoundfx = nomusic = true;
       return;
-    }
+  }
 
   Mix_SetPostMix(audspec.callback, NULL);  // after mixing music, add sound fx
   Mix_Resume(-1); // start all sound channels (although they are not used)
@@ -862,7 +862,7 @@ void I_StartupSound(void)
 
 #ifdef HAVE_MIXER
   if (!nomusic)
-    {
+  {
       Mix_ResumeMusic();  // start music playback
       mus2mid_buffer = (byte *)Z_Malloc(MIDBUFFERSIZE, PU_STATIC, NULL);
 
@@ -872,7 +872,7 @@ void I_StartupSound(void)
 
       CONS_Printf(" Music initialized.\n");
       musicStarted = true;
-    }
+  }
 #endif
 
   // Finished initialization.
@@ -884,6 +884,7 @@ void I_StartupSound(void)
   // Initialize external data (all sounds) at start, keep static.
   CONS_Printf("Caching sound data (%d sfx)... ", NUMSFX);
 
+  {
     int i;
     for (i = 1; i < NUMSFX; i++)
     {
@@ -903,14 +904,14 @@ void I_StartupSound(void)
             }
         }
     }
-
+  }
   CONS_Printf(" done.\n");
 }
 
 
 void I_ShutdownSound(void)
 {
-  if (nosound || !soundStarted)
+  if (nosoundfx || !soundStarted)
     return;
 
   CONS_Printf("I_ShutdownSound: ");
@@ -926,7 +927,7 @@ void I_ShutdownSound(void)
 
   // music
   if (musicStarted)
-    {
+  {
       Z_Free(mus2mid_buffer);
 
 #ifdef OLD_SDL_MIXER
@@ -934,5 +935,5 @@ void I_ShutdownSound(void)
 #endif
 
       musicStarted = false;
-    }
+  }
 }

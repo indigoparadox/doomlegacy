@@ -134,7 +134,7 @@ int		channelstart[NUM_CHANNELS];
 int		channelids[NUM_CHANNELS];			
 
 // Flags for the -nosound and -nomusic options
-extern boolean nosound;
+extern boolean nosoundfx;
 extern boolean nomusic;
 
 //start of mac stuff
@@ -351,7 +351,7 @@ int I_StartSound(int id,int vol,int sep,int pitch,int priority)
     // UNUSED
     priority = 0;
 
-    if(nosound)
+    if(nosoundfx)
 	return 0;
 	
 	id = addsfx( id, vol, pitch, sep );
@@ -394,7 +394,7 @@ void I_UpdateSoundParams(int handle,int vol,int sep,int pitch)
     SndCommand theCmd;
 	int lvol, rvol;
 	
-	if(nosound)
+	if(nosoundfx)
 	return;
 
 	lvol = vol - ((vol*sep*sep) >> 16);
@@ -413,7 +413,7 @@ void I_ShutdownSound(void)
 {    
 	int i;
 	
-    if(nosound)
+    if(nosoundfx)
 	return;
 	
 	CONS_Printf("I_ShutdownSound:\n");
@@ -432,7 +432,7 @@ void I_StartupSound()
     int i;
     int err;
   
-    if(nosound)
+    if(nosoundfx)
 	return;
     
     // Configure sound device

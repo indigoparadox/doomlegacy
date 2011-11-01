@@ -182,7 +182,7 @@ int msg_id = -1;
 #endif
 
 // Flags for the -nosound and -nomusic options
-extern boolean nosound;
+extern boolean nosoundfx;
 extern boolean nomusic;
 
 // Flag to signal CD audio support to not play a title
@@ -570,7 +570,7 @@ int I_StartSound(int id, int vol, int sep, int pitch, int priority)
     priority = 0;
     vol = vol >> 4;     // xdoom only accept 0-15 19990124 by Kin
 
-    if (nosound)
+    if (nosoundfx)
         return 0;
 
 #ifdef SNDSERV
@@ -842,7 +842,7 @@ void I_ShutdownSound(void)
     int done = 0;
     int i;
 
-    if (nosound)
+    if (nosoundfx)
         return;
 
 #ifdef SNDINTR
@@ -879,7 +879,7 @@ void I_StartupSound()
     if (dedicated)
         return;
 
-    if (nosound)
+    if (nosoundfx)
         return;
 
     fn_snd = searchpath(sndserver_cmd.string);
@@ -896,7 +896,7 @@ void I_StartupSound()
 
     int i, j;
 
-    if (nosound)
+    if (nosoundfx)
         return;
 
     // Secure and configure sound device first.
@@ -906,7 +906,7 @@ void I_StartupSound()
     if (audio_fd < 0)
     {
         fprintf(stderr, "Could not open /dev/dsp\n");
-        nosound++;
+        nosoundfx++;
         return;
     }
 

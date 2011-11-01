@@ -3552,7 +3552,7 @@ void M_QuitResponse(int ch)
             S_StartSound(NULL,quitsounds[(gametic>>2)&7]);
 
         //added:12-02-98: do that instead of I_WaitVbl which does not work
-        if(!nosound)
+        if(!nosoundfx)
         {
             time = I_GetTime() + TICRATE*2;
             while (time > I_GetTime()) ;
