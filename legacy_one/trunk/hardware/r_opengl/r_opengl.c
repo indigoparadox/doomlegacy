@@ -1081,7 +1081,7 @@ EXPORT void HWRAPI( SetSpecialState ) (hwdspecialstate_t IdState, int Value)
 {
     switch (IdState)
     {
-        case 77: {
+        case HWD_MIRROR_77: {
             //08/01/00: Hurdler this is a test for mirror
             if (!Value)
                 ClearBuffer( false, true, 0 ); // clear depth buffer

@@ -29,6 +29,9 @@
 
 # User tunable settings.  Edit here or set by command line SMIF=LINUX_X11
 # Most can just uncomment an appropriate selection for your system.
+# WIN32=1
+# CC_MINGW=1
+# CC_WATCOM=1
 
 # SMIF - System Media Interface (default=SDL)
 #SMIF=SDL
@@ -62,8 +65,8 @@ OPTLEV = -O3
 # Customize to your debugging environment.
 ifdef DEBUG
 # Normal debug (-g), MACRO info (-g3), stabs or gdb debug info
-#  DEBUGFLAGS:= -g3 -DDEBUG_WITH_VIDEO_OFF
-  DEBUGFLAGS:= -ggdb -DDEBUG_WITH_VIDEO_OFF
+#  DEBUGFLAGS:= -g3 -DDEBUG_WINDOWED
+  DEBUGFLAGS:= -ggdb -DDEBUG_WINDOWED
   # Debuggers do not cope with optimization well, so DEBUG ignores OPTLEV.
   # To debug with optimization, include it here, (-O0, -O1, or $(OPTLEV)).
 #  DEBUGFLAGS+= $(OPTLEV)
@@ -77,6 +80,9 @@ endif
 
 # gcc or g++
 CC=gcc
+ifdef CC_WATCOM
+  CC=WATCOMC
+endif
 
 # End of User tunable settings
 
@@ -87,6 +93,9 @@ RM=rm
 NASMFORMAT=elf -DLINUX
 i_cdmus_o=$(O)/i_cdmus.o
 
+ifdef WIN32
+  RM=del
+endif
 
 # default system media interface
 ifndef SMIF
@@ -113,6 +122,8 @@ ifeq ($(SMIF), SDL)
     # Windows (MinGW)
     EXENAME := $(EXENAME).exe
     OPTS := -DWIN32
+    # if have windows >= WinNT, and want large memory reports
+#    OPTS += -DWIN_LARGE_MEM
     LIBS := -lopengl32 -lglu32 -lwsock32 -lm
   else
     # default is Linux, for all unix SDL
@@ -122,10 +133,34 @@ ifeq ($(SMIF), SDL)
     # -L/usr/X11R6/lib is needed by Linux 2.4 and others that still have
     # the GLU libraries in an X11 directory.
     # -lm is needed for pow, powf, and other MATH1 functions.
+    SDL_CONFIG=1
   endif
 
-  OPTS += -DHWRENDER -DSDL $(shell sdl-config --cflags) -I.
-  LIBS += $(shell sdl-config --libs)
+  ifdef SDL_CONFIG
+    OPTS += $(shell sdl-config --cflags)
+    LIBS += $(shell sdl-config --libs)
+  else
+    # Extracted from sdl-config script
+    ifdef CC_MINGW
+      OPTS += -I\SDL\include\SDL
+#      OPTS += -I/mingw/include/SDL
+      LIBS += -L/SDL/lib
+#      LIBS += -L/mingw/lib
+#      LIBS += -L/windows/system32
+      LIBS += -lsdl -lmingw32 -mwindows
+    endif
+    ifdef CC_WATCOM
+      OPTS += -I/SDL/include/SDL
+#     OPTS += -I/watcom/h/SDL
+      LIBS += -L/SDL/lib
+#     LIBS += -L/windows/system32
+      LIBS += -lsdl -lwatcom -mwindows
+    endif
+    OPTS += -D_GNU_SOURCE=1 -Dmain=SDL_main
+    LIBS += -lSDLmain -lSDL
+  endif
+
+  OPTS += -DHWRENDER -DSDL -I.
 
   ifdef HAVE_MIXER
     OPTS += -DHAVE_MIXER
@@ -258,6 +293,28 @@ ifeq ($(SMIF), OS2_NATIVE)
 
 #=================================
 else
+ifeq ($(SMIF), WIN32_NATIVE)
+  INTERFACE=djgppdos
+  NASMFORMAT=coff
+
+#use the x86 asm code
+  #USEASM=1
+
+# options
+  OPTS=-DPC_DOS -g
+
+  DEBUGLIBS=-lalleg -lbcd -lsocket
+  LIBS=-lalleg -lbcd -lsocket
+
+  SFLAGS=
+
+  OBJS=$(O)/i_video.o $(O)/vid_vesa.o
+
+# name of the exefile
+  EXENAME=legacy.exe
+
+#=================================
+else
 ifeq ($(SMIF), DJGPPDOS_NATIVE)
   RM=del
   INTERFACE=djgppdos
@@ -278,6 +335,7 @@ ifeq ($(SMIF), DJGPPDOS_NATIVE)
 
 # name of the exefile
   EXENAME=legacy.exe
+endif
 endif
 endif
 endif
@@ -552,35 +610,53 @@ endif
 #[WDJ] Dependencies, replaces makedep.mak, which was unmaintained.
 
 # This PHONY disables automatic dep file generation when a file changes.
-# Comment it out for automtic dep file generation.
-.PHONY : *.dep
+# Comment it out for automatic dep file generation.
+.PHONY : ../dep/*.dep
 
 .PHONY : depend
-depend: main.dep $(INTERFACE).dep
+depend: ../dep/main1.dep ../dep/$(INTERFACE).dep
 
-main.dep : *.c
-hardware.dep : hardware/*.c hardware/*/*.c
+../dep/main1.dep : a*.c b*.c d*.c f*.c g*.c h*.c
+../dep/main2.dep : i*.c m*.c p*.c
+../dep/main3.dep : q*.c r*.c s*.c t*.c v*.c z*.c
+# none: e*.c j*.c k*.c l*.c n*.c o*.c
+../dep/hardware.dep : hardware/*.c hardware/*/*.c
 # $(INTERFACE).dep : $(INTERFACE)/*.c
-djgppdos.dep : djgppdos/*.c
-linux_x.dep : linux_x/*.c linux_x/musserv/*.c linux_x/sndserv/*.c
-os_2.dep : os2/*.c
-macos.dep : macos/*.c
-sdl.dep : sdl/*.c
-win32.dep : win32/*.c
+../dep/djgppdos.dep : djgppdos/*.c
+../dep/linux_x.dep : linux_x/*.c linux_x/musserv/*.c linux_x/sndserv/*.c
+../dep/os_2.dep : os2/*.c
+../dep/macos.dep : macos/*.c
+../dep/sdl.dep : sdl/*.c
+../dep/win32.dep : win32/*.c
 
 vpath %.o $(O)
 
+ifdef WIN32
+../dep :
+	@mkdir ..\dep;
+
 %.dep :
 	@echo "Making dependencies $(@F)"
-	$(CC) $(CFLAGS) -MM $^ > $(@F)
-	sed --separate -e "s@^[a-zA-Z0-9_]*.o:@\$$(O)/&@" $(@F) > sed.dep
-	mv sed.dep $(@F)
+	$(CC) $(CFLAGS) -MM $^ > ..\dep\$(@F)
+else
+../dep :
+	@mkdir ../dep;
+
+%.dep :
+	@echo "Making dependencies $(@F)"
+	if test ! -d ../dep; then mkdir ../dep; fi
+	$(CC) $(CFLAGS) -MM $^ > ../dep/$(@F)
+	sed --separate -e "s@^[a-zA-Z0-9_]*.o:@\$$(O)/&@" ../dep/$(@F) > sed.dep
+	mv sed.dep ../dep/$(@F)
+endif
 
 $(O)/*.o : doomdef.h
 
-include main.dep
-include hardware.dep
-include $(INTERFACE).dep
+include ../dep/main1.dep
+include ../dep/main2.dep
+include ../dep/main3.dep
+include ../dep/hardware.dep
+include ../dep/$(INTERFACE).dep
 
 #=======================================================
 # If you have a really old make or want these old dependencies.

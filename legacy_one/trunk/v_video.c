@@ -415,6 +415,8 @@ static void LoadPalette(char *lumpname)
 // V_SetPalette : Set the current palette to use for palettized graphics
 //              : (that is, most if not all of Doom's original graphics)
 // -------------+
+// Called by D_Display, SCR_Startup, SCR_SetMode, SB_PaletteFlash
+// Called by ST_doPaletteStuff, ST_Stop, CV_usegamma_OnChange, CV_Gammaxxx_ONChange
 void V_SetPalette(int palettenum)
 {
     if (!pLocalPalette)

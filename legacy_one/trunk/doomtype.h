@@ -56,6 +56,15 @@
 
 #include <stdint.h>
 
+#if defined( __WATCOMC__) && defined( _M_I386)
+// _M_I386  means 32bit Intel
+#ifndef WIN32
+# define WIN32
+#endif
+#ifndef __WIN32__
+#define __WIN32__
+#endif
+#endif
 
 #ifdef WIN32
 #define WINVER 0x0500  // require windows 2k or later
@@ -127,7 +136,7 @@ typedef uint32_t  tic_t;
 #define strnicmp(x,y,n) strncasecmp(x,y,n)
 
 
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__WINDOWS__)
 #define min(x,y) ( ((x)<(y)) ? (x) : (y) )
 #define max(x,y) ( ((x)>(y)) ? (x) : (y) )
 

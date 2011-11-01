@@ -265,7 +265,10 @@ enum hwdsetspecialstate {
     HWD_SET_POLYGON_SMOOTH,
     HWD_SET_PALETTECOLOR,
     HWD_SET_TEXTUREFILTERMODE,
-    HWD_NUMSTATE
+    HWD_NUMSTATE,
+    // [WDJ] Stifle compiler complaints
+    // Unknown where this value is ever set
+    HWD_MIRROR_77 = 77  // see SetSpecialState where it does ClearBuffer
 };
 typedef enum hwdsetspecialstate hwdspecialstate_t;
 

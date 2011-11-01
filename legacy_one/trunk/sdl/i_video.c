@@ -115,7 +115,7 @@ rendermode_t    rendermode=render_soft;
 boolean highcolor = false;
 
 // synchronize page flipping with screen refresh
-// unused and for compatibilityy reason
+// unused and for compatibility reason
 consvar_t       cv_vidwait = {"vid_wait","1",CV_SAVE,CV_OnOff};
 
 byte graphics_started = 0; // Is used in console.c and screen.c
@@ -238,6 +238,13 @@ void I_SetPalette(RGBA_t* palette)
         localPalette[i].g = palette[i].s.green;
         localPalette[i].b = palette[i].s.blue;
     }
+#if ( defined(DEBUG_WINDOWED) && defined(WIN32) )
+    // Palette fix during debug, otherwise black text on black background
+    if( palette[6].s.red < 96 )
+	    localPalette[6].r = 96;  // at least get red text on black
+    if( palette[7].s.green < 96 )
+	    localPalette[7].g = 96;  // at least get green text on black
+#endif
 
     SDL_SetColors(vidSurface, localPalette, 0, 256);
 
@@ -356,7 +363,8 @@ int VID_SetMode(int modeNum)
 
         if(render_soft == rendermode)
         {
-            SDL_FreeSurface(vidSurface);
+	    if(vidSurface)
+                SDL_FreeSurface(vidSurface);
             free(vid.buffer);
 
             vidSurface = SDL_SetVideoMode(vid.width, vid.height, BitsPerPixel, surfaceFlags|SDL_FULLSCREEN);
@@ -388,7 +396,8 @@ int VID_SetMode(int modeNum)
 
         if(render_soft == rendermode)
         {
-            SDL_FreeSurface(vidSurface);
+	    if(vidSurface)
+                SDL_FreeSurface(vidSurface);
             free(vid.buffer);
 
             vidSurface = SDL_SetVideoMode(vid.width, vid.height, BitsPerPixel, surfaceFlags);

@@ -892,24 +892,34 @@ uint64_t I_GetFreeMem(uint64_t *total)
     
     *total = totalKBytes << 10;
     return freeKBytes << 10;
-#endif // Unix flavors
-#elif defined(WIN32)
-  // windows
-
-  MEMORYSTATUSEX statex;
-  statex.dwLength = sizeof(statex);
-  GlobalMemoryStatusEx(&statex);
-
-  *total = statex.ullTotalPhys;
-  return statex.ullAvailPhys;
-
-#else
-  // unknown
-  goto guess;
-#endif
-
  guess:
   // make a conservative guess
   *total = 32 << 20;
   return   32 << 20;
+#endif // Unix flavors
+#elif defined(WIN32)
+  // windows
+#if defined(WIN_LARGE_MEM) && defined( _WIN32_WINNT ) && (_WIN32_WINNT >= 0x0500)
+  // large memory status, only in newer libraries
+  MEMORYSTATUSEX statex;
+  statex.dwLength = sizeof(statex);
+  GlobalMemoryStatusEx(&statex);
+  *total = statex.ullTotalPhys;
+  return statex.ullAvailPhys;
+#else
+  // older memory status
+  MEMORYSTATUS statex;
+  statex.dwLength = sizeof(statex);
+  GlobalMemoryStatus(&statex);
+  *total = statex.dwTotalPhys;
+  return statex.dwAvailPhys;
+#endif
+
+#else
+  // unknown
+  // make a conservative guess
+  *total = 32 << 20;
+  return   32 << 20;
+#endif
+
 }

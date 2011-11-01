@@ -236,7 +236,7 @@ extern  consvar_t       cv_deathmatch;
 // ========================================
 
 extern boolean         nomusic; //defined in d_main.c
-extern boolean         nosound;
+extern boolean         nosound; // clash with WATCOM i86.h nosound() function
 
 // =========================
 // Status flags for refresh.
@@ -325,7 +325,6 @@ extern  int             maxammo[NUMAMMO];
 //
 
 // File handling stuff.
-extern  char            basedefault[1024];
 #define DEBUGFILE
 #ifdef DEBUGFILE
 #define DEBFILE(msg) { if(debugfile) fputs(msg,debugfile); }

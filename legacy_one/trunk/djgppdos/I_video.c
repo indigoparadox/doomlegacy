@@ -225,7 +225,12 @@ void I_SetPalette (RGBA_t* palette)
     int i;
 
     outportb(0x3c8,0);
+#if ( defined(DEBUG_WINDOWED) && defined(WIN32) )
+    // Palette disable during debug, otherwise black text on black background
+    for (i=17;i<256;i++,palette++)
+#else
     for (i=0;i<256;i++,palette++)
+#endif
     {
         outportb(0x3c9,palette->s.red>>2);
         outportb(0x3c9,palette->s.green>>2);

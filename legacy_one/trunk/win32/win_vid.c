@@ -471,12 +471,19 @@ void I_SetPalette (RGBA_t *palette)
             mainpal[i].peGreen = palette->s.green;
             mainpal[i].peBlue = palette->s.blue;
         }
+#if ( defined(DEBUG_WINDOWED) && defined(WIN32) )
+        // Palette fix during debug, otherwise black text on black background
+        if( palette[6].s.red < 96 )
+	    mainpal[6].peRed = 96;  // at least get red text on black
+        if( palette[7].s.green < 96 )
+	    mainpal[i].peGreen = 96;  // at least get green text on black
+#endif
         SetDDPalette (mainpal);         // set DirectDraw palette
     }
 }
 
 
-// for fuck'n debuging
+// for debuging
 void IO_Color( byte color, byte r, byte g, byte b )
 {
 /*
