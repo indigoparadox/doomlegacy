@@ -2546,9 +2546,7 @@ void M_HandleVideoMode (int key)
 	M_Setup_prevMenu();
         return;
 
-    default:
-      switch (tolower(input_char))
-	{
+      case 'T':
       case 't':
         S_StartSound(NULL,sfx_swtchx);
         vidm_testingmode = TICRATE*5;
@@ -2557,6 +2555,7 @@ void M_HandleVideoMode (int key)
             setmodeneeded = modedescs[vidm_current].modenum+1;
         return;
 
+      case 'D':
       case 'd':
         // current active mode becomes the default mode.
         S_StartSound(NULL,sfx_swtchx);
@@ -2565,10 +2564,7 @@ void M_HandleVideoMode (int key)
 
       default:
         break;
-	}
-      break;
     }
-
 }
 
 #ifdef SAVEGAMEDIR

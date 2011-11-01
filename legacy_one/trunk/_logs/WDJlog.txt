@@ -1969,3 +1969,9 @@ Add checks for the missing blockmap, and overruns of the blockmap
 allocation.
 Add more complete ZONEID checking (some as PARANOID) and better reports to the
 Zone memory functions.
+
+*** w78_video_misc
+patchfile = w78_video_misc.patch
+- committed revision 878   by wesley johnson
+Comment video setup functions, so they are more understandable.
+Straighten video menu switch, unnecessarily complicated.

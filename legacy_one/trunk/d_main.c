@@ -495,7 +495,7 @@ void D_Display(void)
     // change the view size if needed
     if (setsizeneeded)
     {
-        R_ExecuteSetViewSize();
+        R_ExecuteSetViewSize();  // set rdraw, view scale, limits, projection
         oldgamestate = -1;      // force background redraw
         borderdrawcount = 3;
         redrawsbar = true;

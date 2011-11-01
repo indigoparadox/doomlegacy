@@ -788,6 +788,8 @@ void R_InitLightTables (void)
 //
 boolean         setsizeneeded;
 
+// Called by R_Init, SCR_Recalc
+// Called by cv_viewsize, cv_detaillevel, cv_scalestatusbar, cv_grtranslucenthud
 void R_SetViewSize (void)
 {
     setsizeneeded = true;
@@ -801,6 +803,10 @@ void R_SetViewSize (void)
 
 // now uses screen variables cv_viewsize, cv_detaillevel
 //
+// Called by D_Display when setsizeneeded
+// Called by G_DoLoadGame when setsizeneeded
+// Called by SplitScreen_OnChange
+// Called by cv_fov (disabled)
 void R_ExecuteSetViewSize (void)
 {
     fixed_t     cosadj;
