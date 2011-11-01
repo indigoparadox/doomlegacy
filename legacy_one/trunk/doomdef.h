@@ -178,6 +178,8 @@
 
 #include "doomtype.h"
 
+// =========================================================================
+// Compile settings, configuration, tuning, and options
 
 // Uncheck this to compile debugging code
 //#define RANGECHECK
@@ -186,12 +188,6 @@
 #ifdef LOGMESSAGES
 extern FILE *logstream;
 #endif
-
-
-// version numbering
-extern const int  VERSION;
-extern const int  REVISION;
-extern char VERSION_BANNER[];
 
 // [WDJ] Machine speed limitations.
 // Leave undefined for netplay, or make sure all machines have same setting.
@@ -251,6 +247,7 @@ void I_SoftError (char *error, ...);
 // Enable if you are short on memory, or just like clean execution.
 // Disable if it gives you trouble.
 #define DEH_RECOVER_STRINGS
+
 #if defined PCDOS && ! defined DEH_RECOVER_STRINGS
 #define DEH_RECOVER_STRINGS
 #endif
@@ -263,6 +260,7 @@ void I_SoftError (char *error, ...);
 // [WDJ] 9/2/2011  French language controls
 // Put french strings inline (from d_french.h)
 // #define FRENCH_INLINE
+
 #ifdef FRENCH
 #define FRENCH_INLINE
 #endif
@@ -273,15 +271,26 @@ void I_SoftError (char *error, ...);
 // Automatic loading of lang.bex file.
 //#define BEX_LANG_AUTO_LOAD
 
-
 // =========================================================================
 
+// Name of local directory for config files and savegames
+#ifdef LINUX
+#define DEFAULTDIR ".legacy"
+#else
+#define DEFAULTDIR "legacy"
+#endif
 
-// demo version when playback demo, or the current VERSION
-// used to enable/disable selected features for backward compatibility
-// (where possible)
-extern byte     demoversion;
+#if defined PC_DOS || defined WIN32
+#define DEFWADS1  "\\doomwads"
+#define DEFWADS2  "\\games\\doomwads"
+#define DEFHOME   "\\legacyhome"
+#else
+#define DEFWADS1  "/usr/local/share/games/doomwads"
+#define DEFWADS2  "/usr/local/games/doomwads"
+#define DEFHOME   "/usr/local/games/legacyhome"
+#endif
 
+// =========================================================================
 
 // The maximum number of players, multiplayer/networking.
 // NOTE: it needs more than this to increase the number of players...
@@ -302,19 +311,14 @@ extern byte     demoversion;
 #define MAX_WADPATH   256
 #endif
 
+// =========================================================================
+
 // State updates, number of tics / second.
 // NOTE: used to setup the timer rate, see I_StartupTimer().
 #define OLDTICRATE       35
 #define NEWTICRATERATIO   1  // try 4 for 140 fps :)
 #define TICRATE         (OLDTICRATE*NEWTICRATERATIO)
 
-
-// Name of local directory for config files and savegames
-#ifdef LINUX
-#define DEFAULTDIR ".legacy"
-#else
-#define DEFAULTDIR "legacy"
-#endif
 
 #include "g_state.h"
 
@@ -336,6 +340,16 @@ char *Z_StrDup (const char *in);
 extern  boolean devparm;                // development mode (-devparm)
 
 extern  byte    verbose;   // 1, 2
+
+// demo version when playback demo, or the current VERSION
+// used to enable/disable selected features for backward compatibility
+// (where possible)
+extern byte     demoversion;
+
+// version numbering
+extern const int  VERSION;
+extern const int  REVISION;
+extern char VERSION_BANNER[];
 
 // =======================
 // Misc stuff for later...
