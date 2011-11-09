@@ -1962,7 +1962,7 @@ Watcom compilation still has other problems.
 
 *** w78_blockmap_mem_corrupt
 patchfile = w78_blockmap_mem_corrupt.patch
-- committed revision 877   by wesley johnson
+- committed revision 876   by wesley johnson
 With a missing or bad blockmap in the wad, the code will corrupt
 Zone memory block headers.
 Add checks for the missing blockmap, and overruns of the blockmap
@@ -1972,6 +1972,11 @@ Zone memory functions.
 
 *** w78_video_misc
 patchfile = w78_video_misc.patch
-- committed revision 878   by wesley johnson
+- committed revision 877   by wesley johnson
 Comment video setup functions, so they are more understandable.
 Straighten video menu switch, unnecessarily complicated.
+
+*** w78_whatsnew
+patchfile = w78_whatsnew.patch
+- committed revision 878   by wesley johnson
+Update legacy.html and whatsnew.html docs to svn877.
