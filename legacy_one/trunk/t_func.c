@@ -1195,7 +1195,7 @@ void SF_PlayerProperty()
 			return;
 
 		case 1:
-			JUMPGRAVITY = intvalue(t_argv[1]) * FRACUNIT / NEWTICRATERATIO;
+			jumpgravity = intvalue(t_argv[1]) * FRACUNIT / NEWTICRATERATIO;
 			return;
 
 		case 2:

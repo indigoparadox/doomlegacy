@@ -102,7 +102,7 @@
 #define MAXBOB  0x100000
 
 //added:22-02-98: initial momz when player jumps (moves up)
-fixed_t JUMPGRAVITY = (6*FRACUNIT/NEWTICRATERATIO);
+fixed_t jumpgravity = (6*FRACUNIT/NEWTICRATERATIO); // variable by fragglescript
 
 boolean  onground;
 int	 extramovefactor = 0;
@@ -471,12 +471,12 @@ void P_MovePlayer (player_t* player)
         else 
         if(pmo->eflags & MF_UNDERWATER)
             //TODO: goub gloub when push up in water
-            pmo->momz = JUMPGRAVITY/2;
+            pmo->momz = jumpgravity/2;
         else 
         // can't jump while in air, can't jump while jumping
         if( onground && !(player->jumpdown & 1))
         {
-            pmo->momz = JUMPGRAVITY;
+            pmo->momz = jumpgravity;
             if( !(player->cheats & CF_FLYAROUND) )
             {
                 S_StartScreamSound (pmo, sfx_jump);
@@ -1007,9 +1007,9 @@ void P_ProcessCmdSpirit (player_t* player,ticcmd_t *cmd)
              (onground || (player->spirit->eflags & MF_UNDERWATER)) )
         {
             if (onground)
-                player->spirit->momz = JUMPGRAVITY;
+                player->spirit->momz = jumpgravity;
             else //water content
-                player->spirit->momz = JUMPGRAVITY/2;
+                player->spirit->momz = jumpgravity/2;
 
             //TODO: goub gloub when push up in water
             

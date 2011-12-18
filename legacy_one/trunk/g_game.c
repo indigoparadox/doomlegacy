@@ -976,7 +976,7 @@ void G_DoLoadLevel (boolean resetplayer)
     // (should be in resetplayer 'if'?)
     fadealpha = 0;
     extramovefactor = 0;
-    JUMPGRAVITY = (6*FRACUNIT/NEWTICRATERATIO);
+    jumpgravity = (6*FRACUNIT/NEWTICRATERATIO);  // re-init
     consoleplayer_ptr->locked = false;
 
     if (wipegamestate == GS_LEVEL)

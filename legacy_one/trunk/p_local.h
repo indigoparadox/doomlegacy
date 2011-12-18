@@ -222,7 +222,7 @@ extern consvar_t cv_cam_dist;
 extern consvar_t cv_cam_height;
 extern consvar_t cv_cam_speed;
 
-extern fixed_t JUMPGRAVITY;
+extern fixed_t jumpgravity;  // variable by fragglescipt
 
 
 void   P_ResetCamera (player_t* player);
