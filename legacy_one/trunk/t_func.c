@@ -3320,6 +3320,8 @@ void SF_PlayDemo()
     }
 
     G_DoPlayDemo(t_argv[0].value.s);
+    // if name is lump, then play lump,
+    // otherwise it adds ".lmp" and reads demo file
 }
 
 // run console cmd

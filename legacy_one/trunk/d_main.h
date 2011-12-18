@@ -73,7 +73,7 @@ void D_DoomLoop (void);
 // D_DoomMain()
 // Not a globally visible function, just included for source reference,
 // calls all startup code, parses command line options.
-// If not overrided by user input, calls N_AdvanceDemo.
+// If not overrided by user input, calls D_AdvanceDemo.
 //
 void D_DoomMain (void);
 
@@ -91,6 +91,11 @@ void D_PageTicker (void);
 // pagename is lumpname of a 320x200 patch to fill the screen
 void D_PageDrawer (char* pagename);
 void D_AdvanceDemo (void);
+void D_DisableDemo (void);
 void D_StartTitle (void);
+
+// demo seq controls
+enum { DEMO_seq_advance = 1, DEMO_seq_playdemo = 2, DEMO_seq_disabled = 8 };  // bits
+extern byte demo_ctrl;
 
 #endif //__D_MAIN__

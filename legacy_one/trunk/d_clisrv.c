@@ -1486,8 +1486,7 @@ boolean Playing( void )
 
 boolean SV_SpawnServer( void )
 {
-    if( demoplayback )
-        G_StopDemo(); // reset engine parameter
+    D_DisableDemo();
 
     if( serverrunning == false )
     {
@@ -2236,7 +2235,6 @@ void SV_Maketic(void)
     maketic++;
 }
 
-extern  boolean advancedemo;
 static  int     load;
 
 void TryRunTics (tic_t realtics)
@@ -2287,7 +2285,7 @@ void TryRunTics (tic_t realtics)
 
     if (neededtic > gametic)
     {
-        if (advancedemo)
+        if (demo_ctrl == DEMO_seq_advance)  // and not disabled
             D_DoAdvanceDemo ();
         else
         // run the count * tics

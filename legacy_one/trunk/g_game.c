@@ -1909,8 +1909,7 @@ void G_DoLoadGame (int slot)
     if( ! sginfo.have_game )  goto wrong_game;
     if( ! sginfo.have_wad )  goto wrong_wad;
 
-    if(demoplayback)  // reset game engine
-        G_StopDemo();
+    D_DisableDemo();  // turn off demos and keeps them off
 
     //added:27-02-98: reset the game version
     G_Downgrade(VERSION);
@@ -2024,12 +2023,15 @@ void G_DoSaveGame (int   savegameslot, char* savedescription)
 //  consoleplayer, displayplayer, playeringame[] should be set.
 //
 // Boris comment : single player start game
+// Called by SF_StartSkill, M_ChooseSkill, M_VerifyNightmare
+// Called by cht_Responder on clev, CheatWarpFunc
 void G_DeferedInitNew (skill_t skill, char* mapname, boolean StartSplitScreenGame)
 {
     paused = false;
     
     if( demoplayback )
         COM_BufAddText ("stopdemo\n");  // invokes G_CheckDemoStatus
+    D_DisableDemo();  // turn off demos and keeps them off
 
     G_Downgrade(VERSION); // [WDJ] should be after demo is stopped
 
@@ -2511,7 +2513,9 @@ void playdemo_restore_settings( void )
 //
 // G_PlayDemo
 //
-
+// Called by D_DoAdvanceDemo to start a demo
+// Called by D_DoomMain to play a command line demo
+// Called by G_TimeDemo to play and time a demo
 void G_DeferedPlayDemo (char* name)
 {
     // [WDJ] All as one string, or else it executes partial string
@@ -2522,6 +2526,8 @@ void G_DeferedPlayDemo (char* name)
 //
 //  Start a demo from a .LMP file or from a wad resource (eg: DEMO1)
 //
+// Called from SF_PlayDemo, fragglescript plays a demo lump
+// Called from Command_Playdemo_f, command play demo file or lump
 void G_DoPlayDemo (char *defdemoname)
 {
     skill_t skill;
@@ -2529,7 +2535,6 @@ void G_DoPlayDemo (char *defdemoname)
     boolean boomdemo = 0;
     byte  demo144_format = 0;
 
-  
     playdemo_save_settings();  // [WDJ] save user settings
 
 //
