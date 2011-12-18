@@ -309,7 +309,7 @@ static void    (*edit_done_callback)(void) = NULL;  // call upon edit done
 typedef struct
 {
 #ifdef SAVEGAME99
-    byte  savegameid;	// 0..99
+    byte  savegameid;	// 0..99, else invalid
 #endif
     char  desc[SAVESTRINGSIZE];
     char  levtime[SAVEGAME_MTLEN];
@@ -3106,7 +3106,7 @@ void M_Savegame_scroll (int amount)
 // delete_callback
 void M_Savegame_delete (int ch)
 {
-    if( ch=='y' && (savegamedisp[slotindex].savegameid < 99) )
+    if( ch=='y' && (savegamedisp[slotindex].savegameid <= 99) )
     {
         char savename[256];
         G_Savegame_Name( savename, savegamedisp[slotindex].savegameid );
@@ -3278,6 +3278,8 @@ void M_DrawSave(void)
 // slti = savegame index 0..5, or quicksave 6
 void M_DoSave(int slti)
 {
+    if( savegamedisp[slti].savegameid > 99 )
+        return;
     // Issue command to save game
     G_SaveGame (savegamedisp[slti].savegameid, savegamedisp[slti].desc);
     M_ClearMenus (true);
@@ -3324,6 +3326,8 @@ void M_SaveSelect(int choice)
 #else   
     slotindex = choice;  // line being edited  0..5
 #endif
+    if( savegamedisp[slotindex].savegameid > 99 )
+        return;
     // clear out EMPTY STRING and other err msgs
     if ( LoadGameMenu[slotindex].status != 1 )  // invalid name
         savegamedisp[slotindex].desc[0] = 0;
