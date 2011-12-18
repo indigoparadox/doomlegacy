@@ -300,6 +300,7 @@ void I_SoftError (char *error, ...);
 #define PLAYERSMASK             (MAXPLAYERS-1)
 #define MAXPLAYERNAME           21
 #define MAXSKINCOLORS           11
+#define MAXTEAMS		32
 
 #define SAVESTRINGSIZE          24
 

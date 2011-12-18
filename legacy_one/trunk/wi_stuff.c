@@ -1231,7 +1231,7 @@ static void WI_drawTeamsStats(void)
 
             fragtab[scorelines].num   = i;
             fragtab[scorelines].color = i;
-            fragtab[scorelines].name  = team_names[i];
+            fragtab[scorelines].name  = get_team_name(i);
             scorelines++;
         }
     }
@@ -1256,7 +1256,7 @@ static void WI_drawTeamsStats(void)
 
             fragtab[scorelines].num = i;
             fragtab[scorelines].color = i;
-            fragtab[scorelines].name  = team_names[i];
+            fragtab[scorelines].name  = get_team_name(i);
             scorelines++;
         }
     }
@@ -1274,7 +1274,7 @@ static void WI_drawTeamsStats(void)
                      fragtab[scorelines].count+=dm_frags[j][i];
             fragtab[scorelines].num   = i;
             fragtab[scorelines].color = i;
-            fragtab[scorelines].name  = team_names[i];
+            fragtab[scorelines].name  = get_team_name(i);
 
             scorelines++;
         }

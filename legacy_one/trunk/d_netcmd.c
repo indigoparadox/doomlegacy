@@ -883,7 +883,7 @@ void Command_TeamFrags_f(void)
     {
         if (teamingame(i))
         {
-            CONS_Printf("%-8s", team_names[i]);
+            CONS_Printf("%-8s", get_team_name(i));
             for (j = 0; j < 11; j++)
                 if (teamingame(j))
                     CONS_Printf(" %3d", fragtbl[i][j]);
