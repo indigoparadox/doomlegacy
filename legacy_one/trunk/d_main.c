@@ -329,7 +329,7 @@
 // Version number: major.minor.revision
 const int  VERSION  = 144; // major*100 + minor
 const int  REVISION = 0;   // for bugfix releases, should not affect compatibility. has nothing to do with svn revisions.
-const char VERSIONSTRING[] = "alpha3 (rev " SVN_REV ")";
+static const char VERSIONSTRING[] = "alpha3 (rev " SVN_REV ")";
 char VERSION_BANNER[80];
 
 // [WDJ] change this if legacy.wad is changed
@@ -341,7 +341,7 @@ static int min_wadversion = 144;
 //
 int demosequence;
 int pagetic;
-char * pagename = "TITLEPIC";
+static char * pagename = "TITLEPIC";
 
 //  PROTOS
 void Help(void);
@@ -367,11 +367,6 @@ boolean nosoundfx; // had clash with WATCOM i86.h nosound() function
 
 byte    verbose = 0;
 
-// Background color fades for FS
-unsigned long fadecolor;
-int fadealpha;
-
-
 boolean advancedemo;
 
 // name buffer sizes including directory and everything
@@ -386,7 +381,7 @@ boolean advancedemo;
 // to make savegamename and directories, in m_menu.c
 char *legacyhome;
 int   legacyhome_len;
-char *doomwaddir;
+static char *doomwaddir;
 
 
 #ifdef __MACH__

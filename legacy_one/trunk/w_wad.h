@@ -81,7 +81,7 @@ typedef void GlidePatch_t;
 
 
 // [WDJ] Indicates cache miss, new lump read requires endian fixing.
-boolean lump_read;
+extern boolean lump_read;
 
 // ==============================================================
 //               WAD FILE STRUCTURE DEFINITIONS

@@ -1984,3 +1984,13 @@ Update legacy.html and whatsnew.html docs to svn877.
 *** w78_Make_win32
 - committed revision 879   by wesley johnson
 Doc file on how to make DoomLegacy on Win32 system.
+
+*** w79_duplicate_symbols
+patchfile = w79_duplicate_symbols.patch
+- committed revision 881   by wesley johnson
+Working on Mac has revealed that our linker is not showing us duplicate
+symbols and is combining them.
+Added linker flag to give warning when duplicate symbol.
+Fixed some vars that should be static.
+Fixed some header variable declares that were not extern.
+

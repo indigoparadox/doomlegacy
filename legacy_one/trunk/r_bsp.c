@@ -151,6 +151,7 @@ drawseg_t*      firstnewseg = NULL;
 
 //SoM:3/25/2000: indicates doors closed wrt automap bugfix:
 int      doorclosed;
+  // used r_segs.c
 
 //
 // R_ClearDrawSegs
@@ -178,9 +179,9 @@ typedef struct
 //SoM: 3/28/2000: Fix from boom.
 #define MAXSEGS         MAXVIDWIDTH/2+1
 
-// newend is one past the last valid seg
-cliprange_t*    newend;
-cliprange_t     solidsegs[MAXSEGS];
+// new_seg_end is one past the last valid seg
+static cliprange_t*    new_seg_end;
+static cliprange_t     solidsegs[MAXSEGS];
 
 
 //
@@ -208,10 +209,10 @@ void R_ClipSolidWallSegment( int first, int last )
             // Post is entirely visible (above start),
             //  so insert a new clippost.
             R_StoreWallRange (first, last);
-            next = newend;
-            newend++;
+            next = new_seg_end;
+            new_seg_end++;
             //SoM: 3/28/2000: NO MORE CRASHING!
-            if(newend - solidsegs > MAXSEGS)
+            if(new_seg_end - solidsegs > MAXSEGS)
               I_Error("R_ClipSolidWallSegment: Solid Segs overflow!\n");
 
             while (next != start)
@@ -265,16 +266,16 @@ void R_ClipSolidWallSegment( int first, int last )
     }
 
 
-    while (next++ != newend)
+    while (next++ != new_seg_end)
     {
         // Remove a post.
         *++start = *next;
     }
 
-    newend = start+1;
+    new_seg_end = start+1;
 
     //SoM: 3/28/2000: NO MORE CRASHING!
-    if(newend - solidsegs > MAXSEGS)
+    if(new_seg_end - solidsegs > MAXSEGS)
       I_Error("R_ClipSolidWallSegment: Solid Segs overflow!\n");
 }
 
@@ -338,7 +339,7 @@ void R_ClearClipSegs (void)
     solidsegs[0].last = -1;
     solidsegs[1].first = rdraw_viewwidth;
     solidsegs[1].last = 0x7fffffff;
-    newend = solidsegs+2;
+    new_seg_end = solidsegs+2;
 }
 
 

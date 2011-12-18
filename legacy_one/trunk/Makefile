@@ -373,7 +373,10 @@ endif
 
 CFLAGS += -ffast-math -fno-strict-aliasing $(OPTS)
 
-
+ifdef MAC
+else
+  LDFLAGS += -Xlinker --warn-common
+endif
 
 SNDSERV_EXTRAFLAGS:=
 ifdef HAVE_ESD
@@ -555,7 +558,6 @@ $(BIN)/$(EXENAME): $(O) $(OBJS) $(O)/i_main.o versionstring
 	@echo Linking...
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(O)/i_main.o \
 	-o $(BIN)/$(EXENAME) $(LIBS)
-
 
 
 
