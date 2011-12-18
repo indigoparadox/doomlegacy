@@ -249,7 +249,7 @@ void P_SetTranslucencies (void)
         {
 	 case TE_off:  // reset translucent
 	    break;
-	 case TE_all:  // independent of info MF_TRANSPARENT
+	 case TE_all:  // independent of info MF_TRANSLUCENT
 	    tr_enable = true;
 	    break;
 	 case TE_boom: // ignore DoomLegacy extensions
