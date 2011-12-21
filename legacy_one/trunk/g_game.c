@@ -1410,18 +1410,19 @@ void G_PlayerReborn (int player)
 boolean G_CheckSpot ( int           playernum,
                       mapthing_t*   mthing )
 {
-    fixed_t             x;
-    fixed_t             y;
-    subsector_t*        ss;
-    unsigned            an;
-    mobj_t*             mo;
-    int                 i;
+    fixed_t       x, y;
+    subsector_t*  ss;
+    unsigned      an;
+    mobj_t*       mo;
+    player_t *    player = & players[playernum];
+    boolean       br;
+    int           flags_save, i;
 
     // added 25-4-98 : maybe there is no player start
-    if(!mthing || mthing->type<0)
-        return false;
+    if(!mthing || mthing->type<0)   goto failexit;
+    if( ! player )   goto failexit;
 
-    if (!players[playernum].mo)
+    if (!player->mo)
     {
         // first spawn of level, before corpses
         for (i=0 ; i<playernum ; i++)
@@ -1430,7 +1431,7 @@ boolean G_CheckSpot ( int           playernum,
             if (playeringame[i]
                 && players[i].mo->x == mthing->x << FRACBITS
                 && players[i].mo->y == mthing->y << FRACBITS)
-                return false;
+	        goto failexit;
 	}
         return true;
     }
@@ -1445,25 +1446,36 @@ boolean G_CheckSpot ( int           playernum,
         if(cv_teamplay.value==1)
         {
             // color
-            if(players[playernum].skincolor!=(ss->sector->teamstartsec-1)) // -1 because wanted to know when it is set
-                return false;
+            if(player->skincolor!=(ss->sector->teamstartsec-1)) // -1 because wanted to know when it is set
+	        goto failexit;
         }
         else
         if(cv_teamplay.value==2)
         {
             // skins
-            if(players[playernum].skin!=(ss->sector->teamstartsec-1)) // -1 because wanted to know when it is set
-                return false;
+            if(player->skin!=(ss->sector->teamstartsec-1)) // -1 because wanted to know when it is set
+	        goto failexit;
         }
     }
-    
-    if (!P_CheckPosition (players[playernum].mo, x, y) )
-        return false;
+   
+#ifdef BOB_MOM
+    // [WDJ] kill bob momentum or player will keep bobbing at spawn spot
+    player->bob_momx = player->bob_momy = 0;
+#endif
+    // [WDJ] This uses the corpse mobj to do the collision check.
+    // MF_SOLID is required for CheckPosition, and corpse might not be solid
+    // Least amount of hassle is to temp change and restore.
+    flags_save = player->mo->flags;
+    player->mo->flags |= MF_SOLID;
+    br = P_CheckPosition (player->mo, x, y);
+    player->mo->flags = flags_save;
+    if (! br )
+        goto failexit;
 
     // flush an old corpse if needed
     if (bodyqueslot >= BODYQUESIZE)
         P_RemoveMobj (bodyque[bodyqueslot%BODYQUESIZE]);
-    bodyque[bodyqueslot%BODYQUESIZE] = players[playernum].mo;
+    bodyque[bodyqueslot%BODYQUESIZE] = player->mo;
     bodyqueslot++;
 
     // spawn a teleport fog
@@ -1479,6 +1491,9 @@ boolean G_CheckSpot ( int           playernum,
         S_StartSound (mo, sfx_telept);  // don't start sound on first frame
 
     return true;
+
+failexit:
+    return false;
 }
 
 
@@ -1489,7 +1504,7 @@ boolean G_CheckSpot ( int           playernum,
 //
 boolean G_DeathMatchSpawnPlayer (int playernum)
 {
-    int             i,j,n;
+    int  i,j,n;
 
     if( !numdmstarts )
         I_Error("No deathmatch start in this map !");

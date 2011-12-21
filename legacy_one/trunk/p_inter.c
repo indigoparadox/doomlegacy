@@ -1771,7 +1771,8 @@ void P_KillMobj ( mobj_t*       target,
         if (!source)
             target->player->frags[target->player-players]++;
 
-        target->flags &= ~MF_SOLID;                     // does not block
+        if (!cv_solidcorpse.value)
+            target->flags &= ~MF_SOLID;                     // does not block
         target->flags2 &= ~MF2_FLY;
         target->player->powers[pw_flight] = 0;
         target->player->powers[pw_weaponlevel2] = 0;
