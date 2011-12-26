@@ -232,7 +232,7 @@ int EV_StartLightStrobing(line_t*      line)
     while ((secnum = P_FindSectorFromLineTag(line,secnum)) >= 0)
     {
         sec = &sectors[secnum];
-        if (P_SectorActive(lighting_special,sec)) //SoM: 3/7/2000: New way to check thinker
+        if (P_SectorActive( S_lighting_special, sec)) //SoM: 3/7/2000: New way to check thinker
           continue;
 
         P_SpawnStrobeFlash (sec,SLOWDARK, 0);

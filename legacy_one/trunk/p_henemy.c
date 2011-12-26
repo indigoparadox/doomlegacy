@@ -1681,7 +1681,7 @@ void A_HBossDeath(mobj_t *actor)
         }
         // lowerFloor all sectors tagged 666
         dummyLine.tag = 666;
-        EV_DoFloor(&dummyLine, lowerFloor);
+        EV_DoFloor( &dummyLine, FT_lowerFloor);
 }
 
 //----------------------------------------------------------------------------
