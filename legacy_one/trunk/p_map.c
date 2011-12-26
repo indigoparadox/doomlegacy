@@ -296,7 +296,7 @@ fixed_t  P_GetFriction( const mobj_t * mo )
         const msecnode_t * msnp = mo->touching_sectorlist;
         const sector_t * secp;
         const ffloor_t * fff;
-        got_friction = MAXINT;  // init search
+        got_friction = FIXED_MAX;  // init search
         // traverse the list of sectors touching this thing
         while( msnp )
         {
@@ -326,7 +326,7 @@ fixed_t  P_GetFriction( const mobj_t * mo )
 	    }
 	    msnp = msnp->m_tnext;
 	}
-        if( got_friction == MAXINT )
+        if( got_friction == FIXED_MAX )
         {
 	    got_friction = 0xFFF0;  // must not be touching floor, air friction
 	}

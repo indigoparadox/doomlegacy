@@ -324,7 +324,7 @@ int  EV_DoCeiling ( line_t* line, ceiling_e type )
           case instantRaise:
             ceiling->topheight = P_FindHighestCeilingSurrounding(sec);
             ceiling->direction = 1;
-            ceiling->speed = MAXINT/2; // Go too fast and you'll cause problems...
+            ceiling->speed = FIXED_MAX/2; // Go too fast and you'll cause problems...
             break;
 
           default:

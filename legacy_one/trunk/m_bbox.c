@@ -37,8 +37,8 @@
 
 void M_ClearBox (fixed_t *box)
 {
-    box[BOXTOP] = box[BOXRIGHT] = MININT;
-    box[BOXBOTTOM] = box[BOXLEFT] = MAXINT;
+    box[BOXTOP] = box[BOXRIGHT] = FIXED_MIN;
+    box[BOXBOTTOM] = box[BOXLEFT] = FIXED_MAX;
 }
 
 void M_AddToBox ( fixed_t*      box,

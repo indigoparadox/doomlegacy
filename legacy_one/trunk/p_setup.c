@@ -1548,7 +1548,7 @@ boolean P_SetupLevel (int           episode,
 #if 0 // UNUSED
     if (debugfile)
     {
-        Z_FreeTags (PU_LEVEL, MAXINT);
+        Z_FreeTags (PU_LEVEL, 255);  // all purge tags
         Z_FileDumpHeap (debugfile);
     }
 #endif

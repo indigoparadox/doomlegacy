@@ -118,7 +118,8 @@ const angle_t ANGLE_60  = 0x80000000 / 3;
 
 // The finetangentgent[angle+FINEANGLES/4] table
 // holds the fixed_t tangent values for view angles,
-// ranging from MININT to 0 to MAXINT.
+// ranging from -FIXED_MAX to 0 to FIXED_MAX
+// ([WDJ] actually more like -FIXED_MAX/12.56 to FIXED_MAX/12.56).
 // fixed_t              finetangent[FINEANGLES/2];
 
 

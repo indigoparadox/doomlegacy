@@ -610,7 +610,7 @@ int EV_DoFloor ( line_t* line, floor_e floortype )
 
           case raiseToTexture:
           {
-              int       minsize = MAXINT;
+              fixed_t   minsize = FIXED_MAX;
               side_t*   side;
 
               if (boomsupport) minsize = 32000<<FRACBITS; //SoM: 3/6/2000: ???
@@ -681,7 +681,7 @@ int EV_DoFloor ( line_t* line, floor_e floortype )
           case instantLower:
             mfloor->direction = -1;
             mfloor->sector = sec;
-            mfloor->speed = MAXINT/2; // Go too fast and you'll cause problems...
+            mfloor->speed = FIXED_MAX/2; // Go too fast and you'll cause problems...
             mfloor->floordestheight = P_FindLowestFloorSurrounding(sec);
             break;
           default:
