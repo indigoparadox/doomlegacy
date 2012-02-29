@@ -500,7 +500,7 @@ void D_Display(void)
     if (gamestate != wipegamestate && rendermode == render_soft)
     {
         wipe = true;
-        wipe_StartScreen(0, 0, vid.width, vid.height);
+        wipe_StartScreen();
     }
     else
         wipe = false;
@@ -700,7 +700,7 @@ void D_Display(void)
     if (!cv_screenslink.value)
         return;
 
-    wipe_EndScreen(0, 0, vid.width, vid.height);
+    wipe_EndScreen();
 
     wipestart = I_GetTime() - 1;
     y = wipestart + 2 * TICRATE;        // init a timeout
@@ -712,7 +712,7 @@ void D_Display(void)
             tics = nowtime - wipestart;
         } while (!tics);
         wipestart = nowtime;
-        done = wipe_ScreenWipe(cv_screenslink.value - 1, 0, 0, vid.width, vid.height, tics);
+        done = wipe_ScreenWipe(cv_screenslink.value - 1, tics);
         I_OsPolling();
         I_UpdateNoBlit();
         M_Drawer();     // menu is drawn even on top of wipes
