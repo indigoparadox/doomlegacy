@@ -543,9 +543,24 @@ void M_ScreenShot (void)
     else
 #endif
     {
+// FIXME: 8 bit palette only       
         // munge planar buffer to linear
         linear = screens[2];
         I_ReadScreen (linear);
+       
+        if( vid.ybytes != vid.width )
+        {
+	    // eliminate padding in the buffer
+	    byte *dest, *src;
+	    dest = src = &linear[0];
+	    for( i=1; i<vid.height; i++ )
+	    {
+	        src += vid.ybytes;
+	        dest += vid.widthbytes;
+	        // overlapping copy
+	        memmove(dest, src, vid.width);
+	    }
+        }
 
         // find a file name to save it to
         strcpy(lbmname,"DOOM0000.pcx");

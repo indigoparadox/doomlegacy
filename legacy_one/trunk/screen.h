@@ -122,10 +122,10 @@ typedef struct viddef_s
  // [WDJ] signed width, height for easy math, (draw errors if unsigned)
     int         width;          // PIXELS per scanline
     int         height;
+    int         bytepp;          // BYTES per pixel: 1=256color, 2, 4
     int         modenum;         // vidmode num indexes videomodes list
     byte        drawmode;        // drawing mode, optimized for tables and switch stmts
     byte        bitpp;		 // BITS per pixel: 8, 15, 16, 24, 32
-    byte        bytepp;          // BYTES per pixel: 1=256color, 2, 4
     byte        numpages;        // always 1, PAGE FLIPPING TODO!!!
 //    byte        windowed;        // windowed or fullscreen mode ?
     byte        fullscreen;      // windowed or fullscreen mode ?
