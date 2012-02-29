@@ -765,7 +765,7 @@ void R_DrawSinglePlane(visplane_t* pl)
   {
     if(pl->ffloor->flags & FF_TRANSLUCENT)
     {
-      spanfunc = R_DrawTranslucentSpan_8;
+      spanfunc = transspanfunc; // R_DrawTranslucentSpan_8 16 ..
 
       // Hacked up support for alpha value in software mode SSNTails 09-24-2002
       if(pl->ffloor->alpha < 64)
@@ -782,7 +782,7 @@ void R_DrawSinglePlane(visplane_t* pl)
     }
     else if(pl->ffloor->flags & FF_FOG)
     {
-      spanfunc = R_DrawFogSpan_8;
+      spanfunc = fogspanfunc; // R_DrawFogSpan_8 16 ..
       light = (pl->lightlevel >> LIGHTSEGSHIFT);
     }
     else if(pl->extra_colormap && pl->extra_colormap->fog)

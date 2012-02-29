@@ -879,6 +879,7 @@ typedef struct vissprite_s
 
     //Fab:29-04-98: for MF_SHADOW sprites, which translucency table to use
     byte*               translucentmap;
+    byte		translucent_index;
 
     int                 mobjflags;
 

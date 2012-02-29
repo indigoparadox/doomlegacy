@@ -2240,3 +2240,14 @@ the extended bpp draw modes, when matching hardware is not available.
 This code is conditional on the TESTBPP macro, and only exists in
 sdl/i_video.c at this time.
 
+*** w80_draw16_ext
+patchfile = w80_draw16_ext.patch
+- committed revision 905   by wesley johnson
+Moved common draw routine from r_draw8.c to r_draw.c.
+Fixed r_draw8.c to use ybytes instead of width.
+Added translucent_index variable and field because translucentmap ptr
+only worked for palette based drawing.
+Fix r_draw16.c so that 15 and 16 bpp draw functions work.
+Create new draw functions for those that were missing.
+Create transparent and fog effects using shift and add of 15 and 16 bpp pixels.
+Has many alternative code sections for further experimentation.
