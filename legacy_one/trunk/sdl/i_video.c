@@ -99,14 +99,8 @@
 // maximum number of windowed modes (see windowedModes[][])
 #define MAXWINMODES (8)
 
-static boolean highcolor = 0;  // local
-
 //Hudler: 16/10/99: added for OpenGL gamma correction
 RGBA_t  gamma_correction = {0x7F7F7F7F};
-
-static int numVidModes= 0;
-
-static char vidModeName[33][32]; // allow 33 different modes
 
 // SDL vars
 
@@ -115,16 +109,31 @@ static char vidModeName[33][32]; // allow 33 different modes
 #ifdef __MACOS__
 //[segabor] !!! I had problem compiling this source with gcc 3.3
 // maybe gcc 3.2 does it better
-	     SDL_Surface *vidSurface=NULL;
+	 SDL_Surface *vidSurface=NULL;
 #else
-static       SDL_Surface *vidSurface=NULL;
+static   SDL_Surface *vidSurface=NULL;
 #endif
 
-static       SDL_Color    localPalette[256];
-static       SDL_Rect   **modeList = NULL;  // fullscreen video modes
-static       int firstEntry = 0; // first entry in modeList which is not bigger than 1600x1200
-static       Uint8        BitsPerPixel;
-const static Uint32       surfaceFlags = SDL_HWSURFACE|SDL_HWPALETTE|SDL_DOUBLEBUF;
+static  SDL_Color    localPalette[256];
+
+// Video mode list
+static  int   numVidModes= 0;
+static  char  vidModeName[33][32]; // allow 33 different modes
+// Fullscreen modelist
+static  SDL_Rect   **modeList = NULL;  // fullscreen video modes
+static  int        firstEntry = 0; // first entry in modeList which is not bigger than 1600x1200
+static  byte       request_bitpp = 0;  // with modelist
+static  byte       request_NULL = 0;  // with modelist
+
+#if 1
+// NO DOUBLEBUF, as we already draw to buffer
+const static Uint32  surfaceFlags = SDL_HWSURFACE|SDL_HWPALETTE;
+const static Uint32  surfaceFlags_fullscreen = SDL_HWSURFACE|SDL_HWPALETTE|SDL_FULLSCREEN;
+#else
+// DOUBLEBUF
+const static Uint32  surfaceFlags = SDL_HWSURFACE|SDL_HWPALETTE|SDL_DOUBLEBUF;
+const static Uint32  surfaceFlags_fullscreen = SDL_HWSURFACE|SDL_HWPALETTE|SDL_DOUBLEBUF|SDL_FULLSCREEN;
+#endif
 
 
 // windowed video modes from which to choose from.
@@ -136,7 +145,8 @@ static int windowedModes[MAXWINMODES][2] = {
     {640, 480},
     {512, 384},
     {400, 300},
-    {320, 200}};
+    {320, 200}
+};
 
 
 //
@@ -144,6 +154,8 @@ static int windowedModes[MAXWINMODES][2] = {
 //
 void I_StartFrame(void)
 {
+    // no longer lock, no more assumed direct access
+#if 0 
     if(render_soft == rendermode)
     {
         if(SDL_MUSTLOCK(vidSurface))
@@ -152,6 +164,7 @@ void I_StartFrame(void)
                 return;
         }
     }
+#endif
 
     return;
 }
@@ -171,19 +184,50 @@ void I_FinishUpdate(void)
 {
     if(render_soft == rendermode)
     {
-        if(screens[0] != vid.direct)
-        {
-            memcpy(vid.direct, screens[0], vid.direct_size);
-            //screens[0] = vid.direct; //FIXME: we MUST render directly into the surface
-        }
+        // [WDJ] Only lock during transfer itself.  The only access
+        // to vid.direct is in this routine.
+        if(SDL_MUSTLOCK(vidSurface))
+            if(SDL_LockSurface(vidSurface) < 0)
+                return;
 
-        //SDL_Flip(vidSurface);
-        SDL_UpdateRect(vidSurface, 0, 0, 0, 0);
+	// [WDJ] SDL Spec says that you can directly read and write the surface
+	// while it is locked.
+        if(vid.display != vid.direct)
+        {
+#if 0	   
+	    VID_BlitLinearScreen( vid.display, vid.direct, vid.widthbytes, vid.height, vid.ybytes, vid.direct_rowbytes);
+#else
+	    if( (vid.widthbytes == vid.direct_rowbytes) && (vid.ybytes == vid.direct_rowbytes))
+	    {
+	        // fast, copy entire buffer at once
+	        memcpy(vid.direct, vid.display, vid.direct_size);
+	        //screens[0] = vid.direct; //FIXME: we MUST render directly into the surface
+	    }
+	    else
+	    {
+	        // [WDJ] padded video buffer (Mac)
+	        // Some cards use the padded space, so DO NOT STOMP ON IT.
+	        int h = vid.height;
+	        byte * vidmem = vid.direct;
+	        byte * src = vid.display;
+	        while( h-- )
+	        {
+		    memcpy(vidmem, src, vid.widthbytes);  // width limited
+		    vidmem += vid.direct_rowbytes;
+		    src += vid.ybytes;
+		}
+	    }
+#endif
+        }
 
         if(SDL_MUSTLOCK(vidSurface))
         {
             SDL_UnlockSurface(vidSurface);
         }
+        // If page flip involves changing vid.display, then must change screens[0] too
+        // [WDJ] SDL spec says to not call UpdateRect while vidSurface is locked
+        //SDL_Flip(vidSurface);
+        SDL_UpdateRect(vidSurface, 0, 0, 0, 0);
     }
     else
     {
@@ -199,12 +243,33 @@ void I_FinishUpdate(void)
 //
 // I_ReadScreen
 //
+// Screen to screen copy
 void I_ReadScreen(byte* scr)
 {
     if (rendermode != render_soft)
         I_Error ("I_ReadScreen: called while in non-software mode");
 
-    memcpy (scr, screens[0], vid.screen_size);
+#if 0	   
+    VID_BlitLinearScreen( src, vid.display, vid.widthbytes, vid.height, vid.ybytes, vid.direct_rowbytes);
+#else
+    if( vid.widthbytes == vid.ybytes )
+    {
+        // fast, copy entire buffer at once
+        memcpy (scr, vid.display, vid.screen_size);
+    }
+    else
+    {
+        // [WDJ] padded video buffer (Mac)
+        int h = vid.height;
+        byte * vidmem = vid.display;
+        while( h-- )
+        {
+	    memcpy(scr, vidmem, vid.widthbytes);
+	    vidmem += vid.ybytes;
+	    scr += vid.ybytes;
+	}
+    }
+#endif
 }
 
 
@@ -267,12 +332,13 @@ char  *VID_GetModeName(int modeNum)
     return &vidModeName[modeNum][0];
 }
 
-int VID_GetModeForSize(int w, int h) {
+int VID_GetModeForSize(int w, int h)
+{
     int matchMode, i;
 
     if(cv_fullscreen.value)
     {
-        matchMode=-1;
+        matchMode = numVidModes-1;  // default is smallest mode
 
         for(i=firstEntry; i<numVidModes; i++)
         {
@@ -283,15 +349,11 @@ int VID_GetModeForSize(int w, int h) {
                 break;
             }
         }
-        if(-1 == matchMode) // use smallest mode
-        {
-            matchMode = numVidModes-1;
-        }
         matchMode -= firstEntry;
     }
     else
     {
-        matchMode=-1;
+        matchMode = MAXWINMODES-1;  // default is smallest mode
 
         for(i=0; i<MAXWINMODES; i++)
         {
@@ -302,190 +364,305 @@ int VID_GetModeForSize(int w, int h) {
                 break;
             }
         }
-
-        if(-1 == matchMode) // use smallest mode
-        {
-            matchMode = MAXWINMODES-1;
-        }
     }
 
     return matchMode;
 }
 
-// [smite] I see no reason to keep this function, should merge it with I_StartupGraphics
-static void VID_PrepareModeList(void)
+
+// Set video mode and vidSurface, with verbose
+static void  VID_SetMode_vid( int req_width, int req_height, int reqflags )
 {
-    int i;
+    int cbpp = SDL_VideoModeOK(req_width, req_height, request_bitpp, reqflags);
+    if( cbpp == 0 )
+        return; // SetMode would have failed, keep current buffers
 
-    // only fullscreen needs preparation
-            for(i=0; i<numVidModes; i++)
-            {
-                if(modeList[i]->w <= MAXVIDWIDTH &&
-                   modeList[i]->h <= MAXVIDHEIGHT)
-                {
-                    firstEntry = i;
-                    break;
-                }
-            }
+    if(vidSurface)
+    {
+        SDL_FreeSurface(vidSurface);
+        vidSurface = NULL;
+    }
+    free(vid.buffer);
+    vid.display = NULL;
+    vid.buffer = NULL;
+    vid.direct = NULL;
+    vid.width = req_width;
+    vid.height = req_height;
+   
+    if( verbose>1 )
+        fprintf(stderr,"SDL_SetVideoMode(%i,%i,%i,0x%X)  %s\n",
+		vid.width, vid.height, request_bitpp, reqflags,
+		(reqflags&SDL_FULLSCREEN)?"Fullscreen":"Window");
 
-    allow_fullscreen = true;
-    return;
+    vidSurface = SDL_SetVideoMode(vid.width, vid.height, request_bitpp, reqflags);
+    if(vidSurface == NULL)
+        return;  // Modes were prechecked, SDL should not fail.
+ 
+    if( verbose )
+    {
+        int32_t vflags = vidSurface->flags;
+        fprintf(stderr,"  Got %ix%i, %i bpp, %i bytes\n",
+		vidSurface->w, vidSurface->h,
+		vidSurface->format->BitsPerPixel, vidSurface->format->BytesPerPixel );
+        fprintf(stderr,"  HW-surface= %x, HW-palette= %x, HW-accel= %x, Doublebuf= %x, Async= %x \n",
+		vflags&SDL_HWSURFACE, vflags&SDL_HWPALETTE, vflags&SDL_HWACCEL, vflags&SDL_DOUBLEBUF, vflags&SDL_ASYNCBLIT );
+        if(SDL_MUSTLOCK(vidSurface))
+	    fprintf(stderr,"  Notice: MUSTLOCK video surface\n" );
+    }
+    if( vidSurface->w != vid.width || vidSurface->h != vid.height )
+    {
+        fprintf(stderr,"  Adapting to VideoMode: requested %ix%i, got %ix%i\n",
+		vid.width, vid.height,
+		vidSurface->w, vidSurface->h );
+        vid.width = vidSurface->w;
+        vid.height = vidSurface->h;
+    }
+    if( vidSurface->format->BitsPerPixel != request_bitpp )
+    {
+        fprintf(stderr,"  Notice: requested %i bpp, got %i bpp\n",
+		request_bitpp, vidSurface->format->BitsPerPixel );
+    }
+
+    vid.bitpp = vidSurface->format->BitsPerPixel;
+    vid.bytepp = vidSurface->format->BytesPerPixel;
+
+    // The video buffer might be padded to power of 2, for some modes (Mac)
+    vid.direct_rowbytes = vidSurface->pitch; // correct, even on Mac
+    vid.direct_size = vidSurface->pitch * vid.height; // correct, even on Mac
+    vid.direct = vidSurface->pixels;
+#if 1
+ // normal
+    // Because we have to copy by row anyway, buffer can be normal
+    // Have option to change this for special cases,
+    // most code uses vid.ybytes now, and is padded video safe.
+    vid.ybytes = vid.width * vid.bytepp;
+    vid.screen_size = vid.ybytes * vid.height;
+#else
+ // DEBUG padded video buffer code
+    vid.ybytes = vid.width * vid.bytepp + 8;  // force odd size
+    vid.screen_size = vid.ybytes * vid.height;
+#endif
+    // display is buffer
+    vid.buffer = malloc(vid.screen_size * NUMSCREENS);
+    vid.display = vid.buffer;
+    vid.screen1 = vid.buffer + vid.screen_size;
 }
+ 
 
+// SDL version of VID_SetMode
 int VID_SetMode(int modeNum)
 {
+    int req_width, req_height;
+    CONS_Printf("VID_SetMode(%i)\n",modeNum);
+
     doUngrabMouse();
 
-    vid.bitpp = BitsPerPixel;
-    vid.fullscreen = cv_fullscreen.value;
+    vid.recalc = true;
+
     if(cv_fullscreen.value)
     {
         modeNum += firstEntry;
 
-        vid.width = modeList[modeNum]->w;
-        vid.height = modeList[modeNum]->h;
-        vid.widthbytes = vid.width * vid.bytepp;
-        vid.direct_rowbytes = vid.widthbytes;  // no padding
-        vid.direct_size = vid.height * vid.direct_rowbytes;
-        vid.ybytes = vid.direct_rowbytes;  // same as direct
-        vid.screen_size = vid.direct_size;
-        vid.recalc = true;
+        req_width = modeList[modeNum]->w;
+        req_height = modeList[modeNum]->h;
 
         if(render_soft == rendermode)
         {
-	    if(vidSurface)
-                SDL_FreeSurface(vidSurface);
-            free(vid.buffer);
-
-            vidSurface = SDL_SetVideoMode(vid.width, vid.height, BitsPerPixel, surfaceFlags|SDL_FULLSCREEN);
-            if(NULL == vidSurface)
-            {
-                I_Error("Could not set vidmode\n");
-            }
-
-            // display is buffer
-            vid.buffer = malloc(vid.screen_size * NUMSCREENS);
-            vid.display = vid.buffer;
-            vid.screen1 = vid.buffer + vid.screen_size;
-
-            vid.direct = vidSurface->pixels; // FIXME
+	    VID_SetMode_vid(req_width, req_height, surfaceFlags_fullscreen);  // fullscreen
+	    if( vidSurface == NULL )  goto fail;
         }
         else // (render_soft == rendermode)
         {
             if(!OglSdlSurface(vid.width, vid.height, cv_fullscreen.value))
-            {
-                I_Error("Could not set vidmode\n");
-            }
-
+	        goto fail;
         }
         vid.modenum = modeNum-firstEntry;
     }
     else //(cv_fullscreen.value)
     {
-        vid.width = windowedModes[modeNum][0];
-        vid.height = windowedModes[modeNum][1];
-        vid.widthbytes = vid.width * vid.bytepp;
-        vid.direct_rowbytes = vid.widthbytes;  // no padding
-        vid.direct_size = vid.height * vid.direct_rowbytes;
-        vid.ybytes = vid.direct_rowbytes;  // same as direct
-        vid.screen_size = vid.direct_size;
-        vid.recalc = true;
+        // not fullscreen
+        req_width = windowedModes[modeNum][0];
+        req_height = windowedModes[modeNum][1];
 
         if(render_soft == rendermode)
         {
-	    if(vidSurface)
-                SDL_FreeSurface(vidSurface);
-            free(vid.buffer);
-
-            vidSurface = SDL_SetVideoMode(vid.width, vid.height, BitsPerPixel, surfaceFlags);
-
-            if(NULL == vidSurface)
-            {
-                I_Error("Could not set vidmode\n");
-            }
-
-            // display is buffer
-            vid.buffer = malloc(vid.screen_size * NUMSCREENS);
-            vid.display = vid.buffer;
-            vid.screen1 = vid.buffer + vid.screen_size;
-
-            vid.direct = vidSurface->pixels; // FIXME
+	    VID_SetMode_vid( req_width, req_height, surfaceFlags );  // window
+            if(vidSurface == NULL)  goto fail;
         }
         else //(render_soft == rendermode)
         {
             if(!OglSdlSurface(vid.width, vid.height, cv_fullscreen.value))
-            {
-                I_Error("Could not set vidmode\n");
-            }
+	        goto fail;
         }
         vid.modenum = modeNum;
     }
-    vid.drawmode = (vid.bytepp==1)? DRAW8PAL:DRAW15;
+    vid.fullscreen = cv_fullscreen.value;
+    vid.widthbytes = vid.width * vid.bytepp;
 
     I_StartupMouse();
 
     return 1;
+
+fail:
+    I_Error("VID_SetMode failed to provide display\n");
+    return 0;   // dummy
 }
 
 void I_StartupGraphics()
 {
+    SDL_PixelFormat    req_format;
+    char * req_errmsg = NULL;
+    byte  alt_request_bitpp = 0;
+     
     if(graphics_started)
         return;
 
     // Get video info for screen resolutions
-#ifdef __MACH__
-    //[segabor]: it's ok on Mac OS X with SDL
-    SDL_VideoInfo *videoInfo = SDL_GetVideoInfo();
-    BitsPerPixel	= videoInfo->vfmt->BitsPerPixel;
-    vid.bytepp		= videoInfo->vfmt->BytesPerPixel;
-    highcolor		= (vid.bytepp == 2) ? true:false;
-#else
-    //videoInfo = SDL_GetVideoInfo();
     // even if I set vid.bytepp and highscreen properly it does seem to
     // support only 8 bit  ...  strange
-    // so lets force 8 bit
-    BitsPerPixel = 8;
-
+    // so lets force 8 bit, default
+    req_format.BitsPerPixel = 8;
+    req_format.BytesPerPixel = 0;
+    vid.bitpp = 8;
     // Set color depth; either 1=256pseudocolor or 2=hicolor
-    vid.bytepp = 1 /*videoInfo->vfmt->BytesPerPixel*/;
-    highcolor = (vid.bytepp == 2) ? true:false;
-#endif
-#if 0
-    if(req_drawmode == REQ_highcolor)  highcolor = 1;
-#endif
-    vid.drawmode = (highcolor)? DRAW15:DRAW8PAL;
+    vid.bytepp = 1;
 
     modeList = SDL_ListModes(NULL, SDL_FULLSCREEN|surfaceFlags);
 
-    if(NULL == modeList)
+    // Get and report video info
+    const SDL_VideoInfo * videoInfo = (const SDL_VideoInfo *) SDL_GetVideoInfo();
+    if( videoInfo )
     {
-        CONS_Printf("No video modes present\n");
+        if( verbose )
+        {
+	    fprintf(stderr,"SDL video info = { %i bits, %i bytes }\n",
+		videoInfo->vfmt->BitsPerPixel, videoInfo->vfmt->BytesPerPixel );
+	    if( verbose > 1 )
+            {
+	      fprintf(stderr," HW_surfaces= %i, blit_hw= %i, blit_sw = %i\n",
+		videoInfo->hw_available, videoInfo->blit_hw, videoInfo->blit_sw );
+	      fprintf(stderr," video_mem= %i K\n",
+		videoInfo->video_mem );
+	    }
+	}
+        if( req_drawmode == REQ_native )
+        {
+	    vid.bitpp  = videoInfo->vfmt->BitsPerPixel;
+	    vid.bytepp = videoInfo->vfmt->BytesPerPixel;
+	    if( V_CanDraw( vid.bitpp ))
+	    {
+	        request_bitpp = vid.bitpp;
+	        goto get_modelist;
+	    }
+	    // Use 8 bit and let SDL do the palette lookup.
+	    if( verbose )
+	        fprintf(stderr,"Native %i bpp rejected\n", vid.bitpp );
+	}
+    }
+    else
+    {
+        fprintf(stderr,"No SDL video info, use default\n" );
+    }
+
+    switch(req_drawmode)
+    {
+     case REQ_specific:
+       request_bitpp = req_bitpp;
+       break;
+     case REQ_highcolor:
+       req_errmsg = "highcolor";
+       request_bitpp = 15;
+       alt_request_bitpp = 16;
+       if( vid.bitpp == 16 )  request_bitpp = 16;  // native preference
+       break;
+     case REQ_truecolor:
+       req_errmsg = "truecolor";
+       request_bitpp = 24;
+       alt_request_bitpp = 32;
+       if( vid.bitpp == 32 )  request_bitpp = 32;  // native preference
+       break;
+     default:
+       request_bitpp = 8;
+       break;
+    }
+
+get_modelist:
+    // try the requested bpp, then alt, then 8bpp
+    while(request_bitpp)
+    {
+        req_format.BitsPerPixel = request_bitpp;
+        modeList = SDL_ListModes(&req_format, surfaceFlags_fullscreen);
+        if( modeList )  goto found_modes;
+
+        if(req_drawmode == REQ_specific)
+        {
+	   fprintf(stderr,"No %i bpp modes\n", req_bitpp );
+	   return;
+        }
+        if( request_bitpp == 8 )  break;
+        if( alt_request_bitpp )
+        {
+	    if(request_bitpp != alt_request_bitpp)
+	    {
+	       request_bitpp = alt_request_bitpp;
+	       continue;
+	    }
+	    fprintf(stderr,"No %s modes\n", req_errmsg );
+	}
+        request_bitpp = 8;  // default last attempt
+    }
+    // requested modes failed, and 8bpp failed
+    fprintf(stderr,"Draw 8bpp using palette, SDL must convert to %i bpp video modes\n", videoInfo->vfmt->BitsPerPixel );
+    request_NULL = 1;
+    modeList = SDL_ListModes(NULL, surfaceFlags_fullscreen);
+    if(modeList==NULL)
+    {
+        // should not happen with fullscreen modes
+        CONS_Printf("No usable fullscreen video modes.\n");
         return;
     }
 
-    numVidModes=0;
-    if(NULL != modeList)
-    {
-        while(NULL != modeList[numVidModes])
-            numVidModes++;
-    }
-    else
-        // should not happen with fullscreen modes
-        numVidModes = -1;
+found_modes:
+    // Have some requested video modes in modeList
+    vid.bitpp = request_bitpp;
 
+    numVidModes=0;
+    firstEntry = -1;
+    // Prepare Mode List
+    while(modeList[numVidModes])
+    {
+        if( verbose )
+        {
+	    // list the modes
+	    fprintf( stderr, "%s %ix%i",
+		     (((numVidModes&0x03)==0)?(numVidModes)?"\nModes ":"Modes ":""),
+		     modeList[numVidModes]->w, modeList[numVidModes]->h );
+	}
+        if( firstEntry < 0 )
+        {
+	    if(modeList[numVidModes]->w <= MAXVIDWIDTH &&
+	       modeList[numVidModes]->h <= MAXVIDHEIGHT)
+	    {
+	        firstEntry = numVidModes;
+	    }
+	}
+        numVidModes++;
+    }
+    // Mode List has been prepared
+
+    if( verbose )
+       fprintf(stderr, "\nFound %d Video Modes at %i bpp\n", numVidModes, vid.bitpp);
     //CONS_Printf("Found %d Video Modes\n", numVidModes);
 
-    VID_PrepareModeList();
+    allow_fullscreen = true;
 
     // default size for startup
     vid.width = BASEVIDWIDTH;
     vid.height = BASEVIDHEIGHT;
-    vid.widthbytes = vid.width * vid.bytepp;
-    vid.direct_rowbytes = vid.widthbytes;  // no padding
-    vid.direct_size = vid.height * vid.direct_rowbytes;
-    vid.ybytes = vid.direct_rowbytes;  // same as direct
-    vid.screen_size = vid.direct_size;
     vid.recalc = true;
+    vid.display = NULL;
+    vid.screen1 = NULL;
+    vid.buffer = NULL;
 
 // [WDJ] To be safe, make it conditional on MACOS
 #ifdef __MACOS__
@@ -522,25 +699,23 @@ void I_StartupGraphics()
 
        vid.width = 640; // hack to make voodoo cards work in 640x480
        vid.height = 480;
+       vid.fullscreen = cv_fullscreen.value;
 
+       if( verbose>1 )
+	  fprintf(stderr,"OglSdlSurface(%i,%i,%i)\n", vid.width, vid.height, cv_fullscreen.value);
        if(!OglSdlSurface(vid.width, vid.height, cv_fullscreen.value))
            rendermode = render_soft;
     }
 
     if(render_soft == rendermode)
     {
-        vidSurface = SDL_SetVideoMode(vid.width, vid.height, BitsPerPixel, surfaceFlags);
-
-        if(NULL == vidSurface)
+        vid.fullscreen = 0;
+        VID_SetMode_vid( vid.width, vid.height, surfaceFlags ); // window
+        if(vidSurface == NULL)
         {
             CONS_Printf("Could not set vidmode\n");
             return;
         }
-        vid.buffer = malloc(vid.screen_size * NUMSCREENS);
-        vid.display = vid.buffer;
-        vid.screen1 = vid.buffer + vid.screen_size;
-
-        vid.direct = vidSurface->pixels; // FIXME
     }
 
     SDL_ShowCursor(0);

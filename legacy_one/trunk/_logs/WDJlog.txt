@@ -2215,3 +2215,17 @@ patchfile = w80_draw16_minimal.patch
 - committed revision 902   by wesley johnson
 Fixed draw16 routines to give minimal functionality.
 Fixed translucent draw using proportional addition of pixels.
+
+*** w80_sdl_port
+patchfile = w80_sdl_port.patch
+- committed revision 903   by wesley johnson
+Extensive rewrite of mode code in sdl port driver.
+It now handles all bpp mode requests.
+I_StartFrame no longer locks the video buffer, because that needs to be
+kept to a minimal time, during I_FinishUpdate.  This is dictated by
+SDL specs.
+VID_PrepareModeList merged into I_StartupGraphics.
+Use of SDL_GetVideoInfo made useful (instead of bypassed).
+Created VID_SetMode_vid to do actual mode setting, to reduce
+duplicated effort.
+Extensive video reporting using verbose switches "-v" and "-v2".
