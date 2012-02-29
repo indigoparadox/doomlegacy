@@ -189,7 +189,7 @@ void I_FinishUpdate(void)
     {
         if(screens[0] != vid.direct)
         {
-            memcpy(vid.direct, screens[0], vid.width*vid.height*vid.bytepp);
+            memcpy(vid.direct, screens[0], vid.direct_size);
             //screens[0] = vid.direct; //FIXME: we MUST render directly into the surface
         }
 
@@ -220,7 +220,7 @@ void I_ReadScreen(byte* scr)
     if (rendermode != render_soft)
         I_Error ("I_ReadScreen: called while in non-software mode");
 
-    memcpy (scr, screens[0], vid.width*vid.height*vid.bytepp);
+    memcpy (scr, screens[0], vid.screen_size);
 }
 
 
@@ -436,6 +436,7 @@ int VID_SetMode(int modeNum)
         }
         vid.modenum = modeNum;
     }
+    vid.drawmode = (vid.bytepp==1)? DRAW8PAL:DRAW15;
 
     I_StartupMouse();
 
@@ -467,6 +468,7 @@ void I_StartupGraphics()
     vid.bytepp = 1 /*videoInfo->vfmt->BytesPerPixel*/;
     highcolor = (vid.bytepp == 2) ? true:false;
 #endif    
+    vid.drawmode = (highcolor)? DRAW15:DRAW8PAL;
 
     modeList = SDL_ListModes(NULL, SDL_FULLSCREEN|surfaceFlags);
 

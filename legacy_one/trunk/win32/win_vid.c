@@ -116,7 +116,7 @@ rendermode_t    rendermode=render_soft;
 // synchronize page flipping with screen refresh
 consvar_t       cv_vidwait = {"vid_wait","1",CV_SAVE,CV_OnOff};
 
-boolean         highcolor;
+boolean         highcolor = 0;
 
 static  BOOL        bDIBMode;           // means we are using DIB instead of DirectDraw surfaces
 static  BITMAPINFO* bmiMain = NULL;
@@ -433,7 +433,7 @@ void I_ReadScreen (byte* scr)
     // DEBUGGING
     if (rendermode != render_soft)
         I_Error ("I_ReadScreen: called while in non-software mode");
-    CopyMemory (scr, vid.buffer, vid.screen_size);
+    CopyMemory (scr, vid.display, vid.screen_size);
 }
 
 
@@ -915,8 +915,9 @@ int VID_SetMode (int modenum)  //, unsigned char *palette)
     vid.height = pcurrentmode->height;
     //vid.aspect = pcurrentmode->aspect;                // aspect ratio might be needed later for 3dfx version..
     vid.direct_rowbytes = pcurrentmode->rowbytes;
-    vid.bytepp   = pcurrentmode->bytesperpixel;
-    vid.bitpp = vid.bytepp * 8;  // misses 15 bpp
+    vid.bytepp = pcurrentmode->bytesperpixel;
+    vid.bitpp = (vid.bytepp==1)? 8:15;
+    vid.drawmode = (vid.bytepp==1)? DRAW8PAL:DRAW15;
     //hurdler: 15/10/99: added
     if (modenum) { // if not 320x200 windowed mode
         // it's actually a hack
@@ -998,7 +999,7 @@ BOOL    VID_FreeAndAllocVidbuffer (viddef_t *lvid)
 {
     int  vidbuffersize;
 
-    // Determined by FinishUpdate, which uses VID_BlitLinearScreen
+    // Must agree with FinishUpdate, which uses VID_BlitLinearScreen
 #if 1 
     // screen size same as video buffer, simple copy
     lvid->ybytes = lvid->direct_rowbytes;
@@ -1015,14 +1016,13 @@ BOOL    VID_FreeAndAllocVidbuffer (viddef_t *lvid)
         GlobalFree (lvid->buffer);
 
     // allocate & clear the new screen buffer
-    if ((lvid->buffer = GlobalAlloc (GPTR, vidbuffersize))==NULL)
+    lvid->buffer = GlobalAlloc (GPTR, vidbuffersize);
+    lvid->display = lvid->buffer;  // display = buffer, screen[0]
+    if( lvid->buffer == NULL )
     {
-        lvid->display = NULL;
         lvid->screen1 = NULL;
         return FALSE;
     }
-
-    lvid->display = lvid->buffer;  // display = buffer, screen[0]
     lvid->screen1 = lvid->buffer + lvid->screen_size;
 
 #ifdef DEBUG

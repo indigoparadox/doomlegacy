@@ -235,19 +235,28 @@ int VID_SetMode(int modeNum)
 
     if (!graphics_started)
         cv_scr_depth.value = 16;            // quick hack as config hasn't been parsed
-                                                                                        // (don't want to assume 32 bit available)
-        if (cv_scr_depth.value<16)
-                CV_Set(&cv_scr_depth,"16");                     // dont want 8-bit (?)
+                                            // (don't want to assume 32 bit available)
+    if (cv_scr_depth.value<16)
+        CV_Set(&cv_scr_depth,"16");         // dont want 8-bit (?)
 
-        vid.bpp = 4;
+    vid.bytepp = 4;
     highcolor = true;
-        vid.width = modeList[modeNum].w;
-        vid.height = modeList[modeNum].h;
-        vid.rowbytes = vid.width * vid.bpp;
-        vid.recalc = true;
-        vid.modenum = modeNum;
+    vid.width = modeList[modeNum].w;
+    vid.height = modeList[modeNum].h;
+    // OpenGL only
+    vid.widthbytes = 0;
+    vid.direct_rowbytes = 0;
+    vid.direct_size = 0;
+    vid.ybytes = 0;
+    vid.screen_size = 0;
+    vid.display = NULL;
+    vid.screen1 = NULL;
 
-        SetDSpMode(modeList[modeNum].w, modeList[modeNum].h, cv_fullscreen.value);
+    vid.recalc = true;
+    vid.modenum = modeNum;
+    vid.fullscreen = cv_fullscreen.value;
+
+    SetDSpMode(modeList[modeNum].w, modeList[modeNum].h, cv_fullscreen.value);
 
     OglMacSurface(&mainWindow, vid.width, vid.height, cv_fullscreen.value);
 
@@ -272,7 +281,7 @@ void I_StartupGraphics(void)
 
     VID_PrepareModeList();
 
-        menu_height = GetMBarHeight();
+    menu_height = GetMBarHeight();
 
     HWD.pfnInit             = hwSym("Init");
     HWD.pfnFinishUpdate     = hwSym("FinishUpdate");
@@ -290,11 +299,11 @@ void I_StartupGraphics(void)
     HWD.pfnSetPalette           = OglMacSetPalette;
     HWD.pfnGetTextureUsed   = GetTextureMemoryUsed;
 
-        VID_SetMode(3);
+    VID_SetMode(3);
 
     textureformatGL = GL_RGBA;
     graphics_started = 1;
-        rendermode = render_opengl;
+    rendermode = render_opengl;
 
     CV_RegisterVar (&cv_vidwait);
     CONS_Printf("\tI_StartupGraphics done\n");

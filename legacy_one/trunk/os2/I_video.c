@@ -125,7 +125,7 @@ void I_FinishUpdate (void)
         int k,j,l;
         #define FPSPOINTS  35
         #define SCALE      4
-        #define PUTDOT(xx,yy,cc) screens[0][((yy)*vid.width+(xx))*vid.bpp]=(cc)
+        #define PUTDOT(xx,yy,cc) screens[0][((yy)*vid.width+(xx))*vid.bytepp]=(cc)
         int fpsgraph[FPSPOINTS];
 
         i = I_GetTime();
@@ -140,7 +140,7 @@ void I_FinishUpdate (void)
             // draw dots
             for(j=0;j<=20*SCALE*vid.dupy;j+=2*SCALE*vid.dupy)
             {
-                l=(vid.height-1-j)*vid.width*vid.bpp;
+                l=(vid.height-1-j)*vid.width*vid.bytepp;
                 for (i=0;i<FPSPOINTS*SCALE*vid.dupx;i+=2*SCALE*vid.dupx)
                     screens[0][l+i]=0xff;
             }
@@ -167,7 +167,7 @@ void I_FinishUpdate (void)
       return; // no, try again
 
       // data is ready for blitting
-   memcpy( pmData->pbBuffer2, pmData->pbBuffer, vid.width * vid.height * vid.bpp);
+   memcpy( pmData->pbBuffer2, pmData->pbBuffer, vid.direct_size);
    pmData->fBlitReady = TRUE;
 */
 }
@@ -197,7 +197,7 @@ void I_LoadingScreen ( PSZ msg )
 //
 void I_ReadScreen (byte* scr)
 {
-    memcpy (scr, vid.buffer, vid.width*vid.height*vid.bpp);
+    memcpy (scr, vid.display, vid.screen_size);
 }
 
 //
@@ -341,9 +341,15 @@ int VID_SetMode (int modenum)  //, unsigned char *palette)
 
    //added:20-01-98: recalc all tables and realloc buffers based on
    //                vid values.
-   vid.rowbytes = vid.width;
-   vid.bpp      = 1;
    vid.recalc   = 1;
+   vid.bytepp = 1;
+   vid.bitpp = 8;
+   vid.drawmode = DRAW8PAL;
+   vid.widthbytes = vid.width;
+   vid.ybytes = vid.direct_rowbytes = vid.width;
+   vid.screen_size = vid.direct_size = vid.width * vid.height;
+   vid.display = vid.buffer;
+   vid.screen1 = vid.buffer + vid.screen_size;
    vid.modenum  = modenum;
 
    printf("VID_SetMode(%d) DONE\n", modenum);

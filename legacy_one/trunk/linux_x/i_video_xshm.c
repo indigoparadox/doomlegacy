@@ -202,7 +202,6 @@ extern consvar_t cv_fullscreen; // for fullscreen support under X and GLX
 
 extern short color8to16[];
 static boolean showkey=false; // force to no 19990118 by Kin
-static boolean verbose=false; // enable/disable some printouts
 static boolean vidmode_ext; // Are videmode extensions available?
 static boolean vidmode_active;
 static int num_fullvidmodes;
@@ -260,7 +259,7 @@ event_t event;
 
 // X visual mode
 static int      x_depth=1;
-static int      x_bpp=1;
+static int      x_bytepp=1;
 static int      x_pseudo=1;
 static unsigned short* x_colormap2 = 0;
 static unsigned char* x_colormap3 = 0;
@@ -492,13 +491,13 @@ static void determineBPP(void)
 
    if (X_pixmapformats) {
       int i;
-      x_bpp=0;
+      x_bytepp=0;
       for (i=0;i<count;i++) {
          if (X_pixmapformats[i].depth == x_depth*8) {
-            x_bpp = X_pixmapformats[i].bits_per_pixel/8; break;
+            x_bytepp = X_pixmapformats[i].bits_per_pixel/8; break;
          }
       }
-      if (x_bpp==0)
+      if (x_bytepp==0)
          I_Error("Could not determine bits_per_pixel");
       XFree(X_pixmapformats);
    } else
@@ -579,11 +578,11 @@ static void createColorMap()
    if (x_pseudo)
       X_cmap = XCreateColormap(X_display, RootWindow(X_display, X_screen),
                                X_visual, AllocAll);
-   else if (x_bpp==2)
+   else if (x_bytepp==2)
       x_colormap2 = &color8to16[0]; // cheat...19990119 by Kin
-   else if (x_bpp==3)
+   else if (x_bytepp==3)
       x_colormap3 = malloc(3*256);
-   else if (x_bpp==4)
+   else if (x_bytepp==4)
       x_colormap4 = malloc(4*256);
    return;
 }
@@ -1193,14 +1192,14 @@ void I_FinishUpdate(void)
     }
 
     // colormap transformation dependend on X server color depth
-    if (x_bpp == 2) {
+    if (x_bytepp == 2) {
        int x,y;
        int xstart = vid.width-1;
        unsigned char* ilineptr;
        unsigned short* olineptr;
        y = vid.height;
        while (y--) {
-          olineptr =  (unsigned short *) &(image->data[y*X_width*x_bpp]);
+          olineptr =  (unsigned short *) &(image->data[y*X_width*x_bytepp]);
           ilineptr = (unsigned char*) (screens[0]+y*X_width);
           x = xstart;
           do {
@@ -1208,14 +1207,14 @@ void I_FinishUpdate(void)
           } while (x--);
        }
     }
-    else if (x_bpp == 3) {
+    else if (x_bytepp == 3) {
        int x,y;
        int xstart = vid.width-1;
        unsigned char* ilineptr;
        unsigned char* olineptr;
        y = vid.height;
        while (y--) {
-          olineptr =  (unsigned char *) &image->data[y*X_width*x_bpp];
+          olineptr =  (unsigned char *) &image->data[y*X_width*x_bytepp];
           ilineptr = (unsigned char*) (screens[0]+y*X_width);
           x = xstart;
          do {
@@ -1223,25 +1222,25 @@ void I_FinishUpdate(void)
          } while (x--);
        }
     }
-    else if (x_bpp == 4) {
+    else if (x_bytepp == 4) {
        int x,y;
        int xstart = vid.width-1;
        unsigned char* ilineptr;
        unsigned int* olineptr;
        y = vid.height;
        while (y--) {
-          olineptr =  (unsigned int *) &(image->data[y*X_width*x_bpp]);
+          olineptr =  (unsigned int *) &(image->data[y*X_width*x_bytepp]);
           ilineptr = (unsigned char*) (screens[0]+y*X_width);
           x = xstart;
           do {
              olineptr[x] = x_colormap4[ilineptr[x]];
           } while (x--);
        }
-    } else { // bpp = 1, multiply = 1 19990125 by Kin
+    } else { // bpp = 8, bytepp = 1, multiply = 1 19990125 by Kin
       // VID_BlitLinearScreen does not work????
       //VID_BlitLinearScreen ( screens[0], image->data,vid.width,
       //  vid.height, vid.width, vid.width );
-      memcpy(image->data,screens[0],vid.width*vid.height);
+      memcpy(image->data, screens[0], vid.direct_size);
     }
 
     if (doShm)
@@ -1292,7 +1291,7 @@ void I_FinishUpdate(void)
 //
 void I_ReadScreen(byte* scr)
 {
-    memcpy (scr, screens[0], vid.width*vid.height);
+    memcpy (scr, screens[0], vid.screen_size);
 }
 
 
@@ -1348,7 +1347,7 @@ static void EmulateNewPalette(RGBA_t *palette)
 
     for (i=0 ; i<256 ; i++,palette++)
     {
-        switch(x_bpp) {
+        switch(x_bytepp) {
         case 2: x_colormap2[i] =
                    ((palette->s.red>>x_red_mask)<<x_red_offset) |
                    ((palette->s.green>>x_green_mask)<<x_green_offset) |
@@ -1616,6 +1615,8 @@ static void destroyWindow(void)
        {
            free(vid.buffer);
            vid.buffer = vid.direct = screens[0] = NULL; // I want to have an access violation if something goes wrong
+	   vid.display = NULL;
+	   vid.screen1 = NULL;
        }
 
        if(doShm) {
@@ -1859,7 +1860,7 @@ static int createWindow(boolean isWindowedMode, int modenum)
                              (char*)malloc(X_width * X_height * x_depth),
                              X_width, X_height,
                              8*x_depth,
-                             X_width*x_bpp );
+                             X_width*x_bytepp );
 
     }
 
@@ -1868,8 +1869,20 @@ static int createWindow(boolean isWindowedMode, int modenum)
     //        (unsigned char *) (image->data);
     //    else
     // forced to use this in legacy 19990125 by Kin
+    // [WDJ] Draw 8pp and translate to other bpp in FinishUpdate
+    vid.drawmode = DRAW8PAL;
+    vid.widthbytes = vid.width; // always 8bpp, 1 byte per pixel
+    vid.ybytes = vid.widthbytes;
+    vid.screen_size = vid.ybytes * vid.height;
     vid.buffer = vid.direct = screens[0] =
-       (unsigned char *) malloc (vid.width * vid.height * NUMSCREENS);
+       (unsigned char *) malloc (vid.screen_size * NUMSCREENS);
+    vid.display = vid.buffer;
+    vid.screen1 = vid.buffer + vid.screen_size;
+    // Direct is buffer (for now), FIXME: external access to direct is not allowed
+    vid.direct_rowbytes = vid.ybytes;
+    vid.direct_size = vid.screen_size;
+    vid.fullscreen = ! isWindowedMode;
+
 
     // added for 1.27 19990220 by Kin
     graphics_started = 1;
@@ -1998,7 +2011,7 @@ int VID_SetMode(int modenum) {
         vid.height = windowedModes[modenum][1];
     }
 
-    vid.rowbytes = vid.width;
+    vid.direct_rowbytes = vid.width;
     vid.recalc = 1;
     X_width = vid.width; // FIXME: shall we clean up X_[width,height]?
     X_height = vid.height; // they are identical to vid.[width,height]!!!
@@ -2039,7 +2052,9 @@ void I_StartupGraphics(void)
     XSetErrorHandler( X_error_handler );
 
     // setup vid 19990110 by Kin
-    vid.bpp = 1; // not optimized yet...
+    vid.bytepp = 1; // not optimized yet...
+    vid.bitpp = 8;
+    vid.drawmode = DRAW8PAL;
 
     // default size for startup
     vid.width = X_width = 320;

@@ -344,7 +344,7 @@ void I_FinishUpdate (void)
 
   // Blit it
   ggiPutBox(screen, 0, 0, ggi_screenwidth,
-            ggi_screenheight, vid.buffer);
+            ggi_screenheight, vid.display);
 
 }
 
@@ -353,7 +353,7 @@ void I_FinishUpdate (void)
 //
 void I_ReadScreen (byte* scr)
 {
-  memcpy(scr, vid.buffer, vid.width*vid.height*vid.bpp);
+  memcpy(scr, vid.display, vid.screen_size);
 }
 
 void I_SetPalette(RGBA_t* palette)
@@ -516,6 +516,8 @@ void I_StartupGraphics(void)
     return;
   }
   vid.buffer = NULL;
+  vid.display = NULL;
+  vid.screen1 = NULL;
   VID_SetMode(0);
   // Go asynchronous
   ggiAddFlags(screen, GGIFLAG_ASYNC);
@@ -534,10 +536,17 @@ int VID_SetMode(int modenum) {
   //  if(out_buffer) free(out_buffer);
   //}
 
-  vid.bpp = (highcolor?2:1);
+  vid.bytepp = (highcolor?2:1);
+  vid.bitpp = (highcolor?15:8);  // see highcolor above
+  vid.drawmode = (highcolor? DRAW15:DRAW8PAL);
   ggi_screenwidth = vid.width = real_res[modenum].x;
   ggi_screenheight = vid.height = real_res[modenum].y;
-  vid.rowbytes = vid.width*vid.bpp;
+  vid.widthbytes = vid.width * vid.bytepp;
+  vid.direct_rowbytes = vid.width * vid.bytepp;
+  vid.direct_size = vid.direct_rowbytes * vid.height;
+  vid.ybytes = vid.width * vid.bytepp;
+  vid.screen_size = vid.ybytes * vid.height;
+  vid.fullscreen = 1; // usually, it does not know
   vid.recalc = 1;
 
   if (ggiSetMode(screen,&vidmodes[modenum])) {
@@ -546,11 +555,13 @@ int VID_SetMode(int modenum) {
   }
 
   vid.buffer = vid.direct =
-    (unsigned char *) malloc (vid.width * vid.height * NUMSCREENS * vid.bpp);
+    (unsigned char *) malloc (vid.screen_size * NUMSCREENS);
+  vid.display = vid.buffer;
+  vid.screen1 = vid.buffer + vid.screen_size;
 
   // Allocate enlarement buffer if needed
   //if (expand_buffer)
-  //  out_buffer = malloc(ggi_screenheight*ggi_screenwidth*vid.bpp);
+  //  out_buffer = malloc(ggi_screenheight*ggi_screenwidth*vid.bytepp);
   //else
   //out_buffer = (byte*)screens[0];
 
