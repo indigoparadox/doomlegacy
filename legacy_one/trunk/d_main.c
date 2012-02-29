@@ -2062,6 +2062,30 @@ void D_DoomMain()
     dedicated = M_CheckParm("-dedicated") != 0;
 
     I_SysInit();
+   
+    if( M_CheckParm("-highcolor") )
+    {
+        req_drawmode = REQ_highcolor;  // 15 or 16 bpp
+    }
+    if( M_CheckParm("-truecolor") )
+    {
+        req_drawmode = REQ_truecolor;  // 24 or 32 bpp
+    }
+    if( M_CheckParm("-native") )
+    {
+        req_drawmode = REQ_native;  // bpp of the default screen
+    }
+    p = M_CheckParm("-bpp");  // specific bit per pixel color
+    if( p )
+    {
+        // binding, should fail if cannot find a mode
+        req_bitpp = atoi(myargv[p + 1]);
+        if( V_CanDraw( req_bitpp ) )
+	    req_drawmode = REQ_specific;
+        else
+	    I_Error( "-bpp invalid\n");
+    }
+    V_Init_VideoControl();
 
     CONS_Printf("I_StartupGraphics...\n");
     I_StartupGraphics();

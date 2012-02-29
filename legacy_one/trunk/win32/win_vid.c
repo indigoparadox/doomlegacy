@@ -110,12 +110,6 @@
 // Globals
 // -------
 
-// this is the CURRENT rendermode!! very important : used by w_wad, and many other code
-rendermode_t    rendermode=render_soft;
-
-// synchronize page flipping with screen refresh
-consvar_t       cv_vidwait = {"vid_wait","1",CV_SAVE,CV_OnOff};
-
 boolean         highcolor = 0;
 
 static  BOOL        bDIBMode;           // means we are using DIB instead of DirectDraw surfaces
@@ -183,7 +177,7 @@ void I_StartupGraphics(void)
         return;
 
     // 0 for 256 color, else use highcolor modes
-    //highcolor = M_CheckParm ("-highcolor");
+    highcolor = (req_drawmode == REQ_highcolor);
 
     if (M_CheckParm ("-3dfx"))
         rendermode = render_glide;

@@ -66,6 +66,8 @@
 #include "doomdef.h"
 #include "doomtype.h"
 #include "r_defs.h"
+#include "command.h"
+  // consvar
 
 
 //
@@ -97,6 +99,8 @@ extern  consvar_t cv_black;	// input to gammafunc
 extern  consvar_t cv_bright;	// input to gammafunc
 #endif
 
+// Early setup of video controls, register cv_ vars
+void V_Init_VideoControl( void );
 
 // Allocates buffer screens, call before R_Init.
 void V_Init (void);

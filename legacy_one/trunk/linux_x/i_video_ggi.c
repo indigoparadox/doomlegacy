@@ -481,7 +481,7 @@ void I_StartupGraphics(void)
     }
   }
 
-  highcolor = M_CheckParm("-highcolor");
+  highcolor = (req_drawmode == REQ_highcolor);
 
   for(i=0,rescount=0;i<MAX_GGIMODES;i++) {
     if(!ggiCheckSimpleMode(screen,temp_res[i].x,temp_res[i].y,2,

@@ -64,15 +64,12 @@ rcsid[] = "$Id$";
 #include "doomstat.h"
 #include "i_system.h"
 #include "i_video.h"
+  // cv_fullscreen etc.
 #include "v_video.h"
 #include "m_argv.h"
 #include "d_main.h"
 
 #include "doomdef.h"
-
-boolean         highcolor;
-rendermode_t    rendermode=render_soft;
-consvar_t       cv_vidwait = {"vid_wait","1",CV_SAVE,CV_OnOff};
 
 #define MAXWINMODES (8)
 static char vidModeName[MAXWINMODES][32];

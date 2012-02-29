@@ -300,14 +300,6 @@ void SCR_Startup (void)
 #endif
 
     V_Init();
-    CV_RegisterVar (&cv_ticrate);
-    // Needs be done for config loading
-    CV_RegisterVar(&cv_usegamma);
-#ifdef GAMMA_FUNCS
-    CV_RegisterVar(&cv_black);
-    CV_RegisterVar(&cv_bright);
-    CV_RegisterVar(&cv_gammafunc);
-#endif   
 
     V_SetPalette (0);
 }
@@ -445,7 +437,6 @@ void SCR_SetDefaultMode (void)
 
 void SCR_ChangeFullscreen (void)
 {
-  extern boolean allow_fullscreen;  // controlled by i_video
   // used to prevent switching to fullscreen during startup
   if (!allow_fullscreen)
     return;

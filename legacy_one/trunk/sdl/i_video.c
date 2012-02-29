@@ -80,6 +80,7 @@
 #include "doomstat.h"
 #include "i_system.h"
 #include "v_video.h"
+  // cv_fullscreen, etc
 #include "m_argv.h"
 #include "m_menu.h"
 #include "d_main.h"
@@ -91,7 +92,6 @@
 #include "hardware/hw_main.h"
 #include "hardware/hw_drv.h"
 #include "console.h"
-#include "command.h"
 #include "hwsym_sdl.h" // For dynamic referencing of HW rendering functions
 #include "ogl_sdl.h"
 
@@ -99,30 +99,14 @@
 // maximum number of windowed modes (see windowedModes[][])
 #define MAXWINMODES (8)
 
+static boolean highcolor = 0;  // local
+
 //Hudler: 16/10/99: added for OpenGL gamma correction
 RGBA_t  gamma_correction = {0x7F7F7F7F};
-extern consvar_t cv_grgammared;
-extern consvar_t cv_grgammagreen;
-extern consvar_t cv_grgammablue;
-
-extern consvar_t cv_fullscreen; // for fullscreen support
 
 static int numVidModes= 0;
 
 static char vidModeName[33][32]; // allow 33 different modes
-
-rendermode_t    rendermode=render_soft;
-boolean highcolor = false;
-
-// synchronize page flipping with screen refresh
-// unused and for compatibility reason
-consvar_t       cv_vidwait = {"vid_wait","1",CV_SAVE,CV_OnOff};
-
-byte graphics_started = 0; // Is used in console.c and screen.c
-
-// To disable fullscreen at startup; is set in VID_PrepareModeList
-boolean allow_fullscreen = false;
-
 
 // SDL vars
 
@@ -448,8 +432,6 @@ void I_StartupGraphics()
     if(graphics_started)
         return;
 
-    CV_RegisterVar (&cv_vidwait);
-
     // Get video info for screen resolutions
 #ifdef __MACH__
     //[segabor]: it's ok on Mac OS X with SDL
@@ -467,7 +449,10 @@ void I_StartupGraphics()
     // Set color depth; either 1=256pseudocolor or 2=hicolor
     vid.bytepp = 1 /*videoInfo->vfmt->BytesPerPixel*/;
     highcolor = (vid.bytepp == 2) ? true:false;
-#endif    
+#endif
+#if 0
+    if(req_drawmode == REQ_highcolor)  highcolor = 1;
+#endif
     vid.drawmode = (highcolor)? DRAW15:DRAW8PAL;
 
     modeList = SDL_ListModes(NULL, SDL_FULLSCREEN|surfaceFlags);

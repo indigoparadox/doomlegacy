@@ -29,7 +29,6 @@
 //
 // Revision 1.29  2001/12/31 16:56:39  metzgermeister
 // see Dec 31 log
-// .
 //
 // Revision 1.28  2001/08/20 20:40:42  metzgermeister
 // *** empty log message ***
@@ -172,6 +171,7 @@ int XShmGetEventBase( Display* dpy );
 #include "st_stuff.h"
 #include "g_game.h"
 #include "i_video.h"
+  // cv_fullscreen, etc
 #include "hardware/hw_main.h"
 #include "hardware/hw_drv.h"
 #include "hardware/hw_glob.h"
@@ -200,8 +200,6 @@ Window  HookXwin(Display *dsp,int width,int height, boolean vidmode_active);
 
 static boolean haveVoodoo = false;
 
-extern consvar_t cv_fullscreen; // for fullscreen support under X and GLX
-
 static boolean showkey=false; // force to no 19990118 by Kin
 static boolean vidmode_ext; // Are videmode extensions available?
 static boolean vidmode_active;
@@ -213,18 +211,6 @@ static XF86VidModeModeInfo **vidmodes;
 // [WDJ] Submitted by pld-linux patch lib.  Handle larger number of vidmodes without crash.
 static char vidModeName[MAX_NUM_VIDMODES][32]; // allow MAX_NUM_VIDMODES different modes
 static int vidmap[MAX_NUM_VIDMODES];
-
-// added for 1.27 19990220 by Kin
-rendermode_t    rendermode=render_soft;
-boolean highcolor = false;
-
-// synchronize page flipping with screen refresh
-// unused and for compatibilityy reason
-consvar_t       cv_vidwait = {"vid_wait","1",CV_SAVE,CV_OnOff};
-
-byte graphics_started = 0;
-// To disable fullscreen at startup; is set in VID_PrepareModeList
-boolean allow_fullscreen = false;
 
 static Display*        X_display=NULL;
 static Window          X_mainWindow=0;
@@ -2064,8 +2050,6 @@ void I_StartupGraphics(void)
     // default size for startup
     vid.width = X_width = 320;
     vid.height = X_height = 200;
-
-    CV_RegisterVar (&cv_vidwait);
 
     displayname = initDisplay();
 

@@ -94,7 +94,7 @@ extern int stbarheight;     // when scaled
 
 // WDJ 2012-2-6, provide structure to complete the draw capability
 typedef enum {
-  DRAW8PAL, DRAW15, DRAW16, DRAW24, DRAW32   
+  DRAW8PAL, DRAW15, DRAW16, DRAW24, DRAW32
 } drawmode_t;
 
 
@@ -223,8 +223,6 @@ extern consvar_t cv_scr_width;
 extern consvar_t cv_scr_height;
 extern consvar_t cv_scr_depth;
 extern consvar_t cv_fullscreen;
-// wait for page flipping to end or not
-extern consvar_t cv_vidwait;
 
 extern consvar_t cv_fuzzymode;
 

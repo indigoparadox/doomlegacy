@@ -38,6 +38,7 @@
 #include "st_stuff.h"
 #include "g_game.h"
 #include "i_video.h"
+  // cv_fullscreen, cv_gamma etc.
 #include "z_zone.h"
 #include "hw_main.h"
 #include "hw_drv.h"
@@ -57,21 +58,11 @@ struct modeDescription
 };
 
 RGBA_t                          gamma_correction = {0x7F7F7F7F};
-extern consvar_t        cv_grgammared;
-extern consvar_t        cv_grgammagreen;
-extern consvar_t        cv_grgammablue;
-
-extern consvar_t        cv_fullscreen; // for fullscreen support
 
 char                    vidModeName[33][32]; // allow 33 different modes
 
-rendermode_t            rendermode=render_opengl;
-boolean                         highcolor = false;
-byte                            graphics_started = 0; // Is used in console.c and screen.c
 // To disable fullscreen at startup; is set in VID_PrepareModeList
-boolean                         allow_fullscreen = true;
 int menu_height;
-consvar_t       cv_vidwait = {"vid_wait","1",CV_SAVE,CV_OnOff};
 
 WindowRef mainWindow = NULL;
 
@@ -240,7 +231,6 @@ int VID_SetMode(int modeNum)
         CV_Set(&cv_scr_depth,"16");         // dont want 8-bit (?)
 
     vid.bytepp = 4;
-    highcolor = true;
     vid.width = modeList[modeNum].w;
     vid.height = modeList[modeNum].h;
     // OpenGL only

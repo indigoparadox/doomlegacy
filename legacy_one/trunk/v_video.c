@@ -148,13 +148,32 @@
 #include "hardware/hw_glob.h"
 #endif
 
+#if defined( ENABLE_DRAW15 ) || defined( ENABLE_DRAW16 ) || defined( ENABLE_DRAW24 ) || defined( ENABLE_DRAW32 )
+#define ENABLE_DRAWEXT
+#endif
+
+// [WDJ] Interfaces to port video drivers, common to all
+
+rendermode_t    rendermode=render_soft;
+
+byte  req_bitpp = 8;  // set by d_main checks on command line
+byte  req_drawmode = REQ_default;  // reqdrawmode_t
+
+byte  graphics_started = 0; // Is used in console.c and screen.c
+
+// To disable fullscreen at startup; is set in VID_PrepareModeList
+boolean allow_fullscreen = false;
+
+consvar_t cv_ticrate = { "vid_ticrate", "0", 0, CV_OnOff, NULL };
+// synchronize page flipping with screen refresh
+// unused and for compatibility reason
+consvar_t cv_vidwait = {"vid_wait", "1", CV_SAVE, CV_OnOff};
 
 // Each screen is vid.screen_size (which may be larger than width * height)
 // width*height is wrong for the Mac, which pads buffer to power of 2
 // someone stuck in an extra screen ptr
 byte *screens[NUMSCREENS+1];
 
-consvar_t cv_ticrate = { "vid_ticrate", "0", 0, CV_OnOff, NULL };
 
 void CV_usegamma_OnChange();
 
@@ -488,6 +507,24 @@ void CV_gammafunc_OnChange(void)
 }
 #endif
 
+// [WDJ] Init before calling port video driver
+// Common init to all port video drivers
+// Register video interface controls
+void V_Init_VideoControl( void )
+{
+    CV_RegisterVar(&cv_vidwait);
+    CV_RegisterVar(&cv_ticrate);
+    // Needs be done for config loading
+    CV_RegisterVar(&cv_usegamma);
+#ifdef GAMMA_FUNCS
+    CV_RegisterVar(&cv_black);
+    CV_RegisterVar(&cv_bright);
+    CV_RegisterVar(&cv_gammafunc);
+#endif   
+}
+
+
+
 //added:18-02-98: this is an offset added to the destination address,
 //                for all SCALED graphics. When the menu is displayed,
 //                it is TEMPORARILY set to vid.centerofs, the rest of
@@ -514,13 +551,33 @@ void V_MarkRect(int x, int y, int width, int height)
 
 // [WDJ] 2012-02-06 Draw functions for all bpp, bytepp, and padded lines.
 
+// Return true if engine can draw the using bitpp
+boolean V_CanDraw( byte bitpp )
+{
+    if( bitpp==8
+#ifdef ENABLE_DRAW15
+	|| (bitpp==15)
+#endif
+#ifdef ENABLE_DRAW16
+	|| (bitpp==16)
+#endif
+#ifdef ENABLE_DRAW24
+	|| (bitpp==24)
+#endif
+#ifdef ENABLE_DRAW32
+	|| (bitpp==32)
+#endif
+       ) return 1;
+    return 0;
+}
+
 // [WDJ] Common calc of the display buffer address for an x and y
 byte * V_GetDrawAddr( int x, int y )
 {
     return  vid.display + (y * vid.ybytes) + (x * vid.bytepp);
 }
 
-#if defined( ENABLE_DRAW15 ) || defined( ENABLE_DRAW16 ) || defined( ENABLE_DRAW24 ) || defined( ENABLE_DRAW32 )
+#ifdef ENABLE_DRAWEXT
 // [WDJ] Draw a palette color to a single pixel
 void V_DrawPixel(byte * line, int x, byte color)
 {
@@ -563,13 +620,12 @@ void V_DrawPixel(byte * line, int x, byte color)
 }
 #else
 // [WDJ] Draw a palette color to a single pixel
-inline
 void V_DrawPixel(byte * line, int x, byte color)
 {
    line[x] = color;
 }
 // Degenerate case when only have DRAW8PAL, and want to save calls locally
-//#define  V_DrawPixel( line, x, color)     (line)[(x)]=(color)
+# define  V_DrawPixel( line, x, color)     (line)[(x)]=(color)
 #endif
 
 // [WDJ] Draw a palette src to a screen line
@@ -586,8 +642,8 @@ void V_DrawPixels(byte * line, int x, int count, byte* src)
      case DRAW16:
         while(count--)
         {
-            register uint16_t * s16 = (uint16_t*) line;
-            s16[x++] = color8.to16[ *(src++) ];
+            *(uint16_t*)line = color8.to16[ *(src++) ];
+	    line += 2;
         }
         break;
 #endif
@@ -608,8 +664,8 @@ void V_DrawPixels(byte * line, int x, int count, byte* src)
      case DRAW32:
         while(count--)
         {
-            register uint32_t * s32 = (uint32_t*) line;
-            s32[x++] = color8.to32[ *(src++) ];
+            *(uint32_t*)line = color8.to32[ *(src++) ];
+	    line += 4;
         }
         break;
 #endif
@@ -759,7 +815,7 @@ void V_DrawMappedPatch(int x, int y, int scrn, patch_t * patch, byte * colormap)
             count = column->length * dupy;
 
             ofs = 0;
-#if defined( ENABLE_DRAW15 ) || defined( ENABLE_DRAW16 ) || defined( ENABLE_DRAW24 ) || defined( ENABLE_DRAW32 )
+#ifdef ENABLE_DRAWEXT
 	    if(vid.drawmode != DRAW8PAL)
 	    {
 	        while (count--)
@@ -879,7 +935,7 @@ void V_DrawScaledPatch(int x, int y, int scrn,  // hacked flags in it...
             count = column->length * dupy;
 
             ofs = 0;
-#if defined( ENABLE_DRAW15 ) || defined( ENABLE_DRAW16 ) || defined( ENABLE_DRAW24 ) || defined( ENABLE_DRAW32 )
+#ifdef ENABLE_DRAWEXT
 	    if(vid.drawmode != DRAW8PAL)
 	    {
 	        while (count--)
@@ -1075,7 +1131,7 @@ void V_DrawTranslucentPatch(int x, int y, int scrn,     // hacked flag on it
             count = column->length * dupy;
 
             ofs = 0;
-#if defined( ENABLE_DRAW15 ) || defined( ENABLE_DRAW16 ) || defined( ENABLE_DRAW24 ) || defined( ENABLE_DRAW32 )
+#ifdef ENABLE_DRAWEXT
 	    switch(vid.drawmode)
 	    {
 	     default:
@@ -1488,7 +1544,7 @@ void V_DrawFadeScreen(void)
     int x, y, w4;
     uint32_t *buf;  // within video buffer
     uint32_t quad;
-#if defined( ENABLE_DRAW15 ) || defined( ENABLE_DRAW16 ) || defined( ENABLE_DRAW24 ) || defined( ENABLE_DRAW32 )
+#ifdef ENABLE_DRAWEXT
     uint32_t mask;
 #endif
     byte p1, p2, p3, p4;
@@ -1502,7 +1558,7 @@ void V_DrawFadeScreen(void)
     }
 #endif
 
-    w4 = vid.width >> 2;  // 4 bytes at a time
+    w4 = (vid.widthbytes >> 2);  // 4 bytes at a time
     switch(vid.drawmode)
     {
      case DRAW8PAL:
@@ -1541,7 +1597,7 @@ void V_DrawFadeScreen(void)
      case DRAW32:
         mask = 0xFF7F7F7F;  // alpha unchanged
 #endif
-#if defined( ENABLE_DRAW15 ) || defined( ENABLE_DRAW16 ) || defined( ENABLE_DRAW24 ) || defined( ENABLE_DRAW32 )
+#ifdef ENABLE_DRAWEXT
      fade_loop:
         for (y = 0; y < vid.height; y++)
         {
@@ -1565,7 +1621,7 @@ void V_DrawFadeScreen(void)
 //added:20-03-98: console test
 void V_DrawFadeConsBack(int x1, int y1, int x2, int y2)
 {
-#if defined( ENABLE_DRAW15 ) || defined( ENABLE_DRAW16 ) || defined( ENABLE_DRAW24 ) || defined( ENABLE_DRAW32 )
+#ifdef ENABLE_DRAWEXT
     int w4 = x2 - x1;
     uint32_t mask, green_tint, alpha=0;
 #endif
@@ -1629,7 +1685,7 @@ void V_DrawFadeConsBack(int x1, int y1, int x2, int y2)
 //        green_tint = 0x00003F00; // 00111111
         green_tint = 0x00003800;   // 00111000
 #endif
-#if defined( ENABLE_DRAW15 ) || defined( ENABLE_DRAW16 ) || defined( ENABLE_DRAW24 ) || defined( ENABLE_DRAW32 )
+#ifdef ENABLE_DRAWEXT
      fade_loop:
         for (y = y1; y < y2; y++)
         {
@@ -2096,7 +2152,7 @@ void V_DrawPerspView(byte * viewbuffer, int aiming)
         xfrac = (20 << FRACBITS) + ((!x1) & 0xFFFF);
         xfracstep = FixedDiv((vid.width << FRACBITS) - (xfrac << 1), scale);
         w = scale >> 16;
-#if defined( ENABLE_DRAW15 ) || defined( ENABLE_DRAW16 ) || defined( ENABLE_DRAW24 ) || defined( ENABLE_DRAW32 )
+#ifdef ENABLE_DRAWEXT
         if( vid.bytepp > 1 )
         {
           while (w--)
