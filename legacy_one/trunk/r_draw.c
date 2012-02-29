@@ -454,7 +454,7 @@ void R_InitViewBuffer ( int   width,
                         int   height )
 {
     int         i;
-    int         bytesperpixel = vid.bpp;
+    int         bytesperpixel = vid.bytepp;
 
     if (bytesperpixel<1 || bytesperpixel>4)
         I_Error ("R_InitViewBuffer : wrong bytesperpixel value %d\n",

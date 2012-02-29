@@ -1641,8 +1641,6 @@ int V_TextBHeight(char *text)
 void V_Init(void)
 {
     int i;
-    byte *base;
-    int screensize;
 
     LoadPalette("PLAYPAL");
     FontBBaseLump = W_CheckNumForName("FONTB_S") + 1;
@@ -1657,16 +1655,23 @@ void V_Init(void)
     }
 #endif
 
-    //added:26-01-98:start address of NUMSCREENS * width*height vidbuffers
-    base = vid.buffer;
+    if( vid.display == NULL ) return;  // allocation failed
 
-    screensize = vid.width * vid.height * vid.bpp;
+    // [WDJ] screens usage
+    // [0] = display or direct video
+    // [1] = background, status bar
+    // [2] = wipe start screen, screenshot, (? Horz. draw)
+    // [3] = wipe end screen
+    screens[0] = vid.display;  // buffer or direct video
+    // buffers allocated by video driver, 0..(NUMSCREENS-1)
+    for (i = 1; i < NUMSCREENS; i++)
+        screens[i] = vid.screen1 + ((i-1) * vid.screen_size);
 
-    for (i = 0; i < NUMSCREENS; i++)
-        screens[i] = base + i * screensize;
-
+    // [WDJ] statusbar buffer was not within driver allocated memory
+    // and is not used.
     //added:26-01-98: statusbar buffer
-    screens[4] = base + NUMSCREENS * screensize;
+//    screens[4] = base + NUMSCREENS * screensize;
+    screens[4] = NULL;
 
     //!debug
 #ifdef DEBUG
@@ -1737,7 +1742,7 @@ void V_DrawTiltView(byte * viewbuffer)
     xstep = ((vertex[3].px - vertex[0].px) << FRACBITS) / vid.height;
     ystep = ((vertex[3].py - vertex[0].py) << FRACBITS) / vid.height;
 
-    ds_y = (int) vid.direct;
+    ds_y = (int) vid.direct;  // FIXME, direct draw not allowed
     ds_x1 = 0;
     ds_x2 = vid.width - 1;
     ds_xstep = ((vertex[1].px - vertex[0].px) << FRACBITS) / vid.width;
@@ -1755,7 +1760,7 @@ void V_DrawTiltView(byte * viewbuffer)
         ds_xfrac = leftxfrac;
         ds_yfrac = leftyfrac;
         R_DrawSpanNoWrap();
-        ds_y += vid.rowbytes;
+        ds_y += vid.direct_rowbytes;  // FIXME, direct draw not allowed
 
         // move along the left and right edges of the polygon
         leftxfrac += xstep;
@@ -1803,7 +1808,7 @@ void V_DrawPerspView(byte * viewbuffer, int aiming)
     for (y = 0; y < vid.height; y++)
     {
         x1 = ((vid.width << 16) - scale) >> 17;
-        dest = ((byte *) vid.direct) + (vid.rowbytes * y) + x1;
+        dest = ((byte *) vid.direct) + (vid.direct_rowbytes * y) + x1;  // FIXME, direct access not allowed
 
         xfrac = (20 << FRACBITS) + ((!x1) & 0xFFFF);
         xfracstep = FixedDiv((vid.width << FRACBITS) - (xfrac << 1), scale);

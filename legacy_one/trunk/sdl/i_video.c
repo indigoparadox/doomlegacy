@@ -189,7 +189,7 @@ void I_FinishUpdate(void)
     {
         if(screens[0] != vid.direct)
         {
-            memcpy(vid.direct, screens[0], vid.width*vid.height*vid.bpp);
+            memcpy(vid.direct, screens[0], vid.width*vid.height*vid.bytepp);
             //screens[0] = vid.direct; //FIXME: we MUST render directly into the surface
         }
 
@@ -220,7 +220,7 @@ void I_ReadScreen(byte* scr)
     if (rendermode != render_soft)
         I_Error ("I_ReadScreen: called while in non-software mode");
 
-    memcpy (scr, screens[0], vid.width*vid.height*vid.bpp);
+    memcpy (scr, screens[0], vid.width*vid.height*vid.bytepp);
 }
 
 
@@ -352,13 +352,19 @@ int VID_SetMode(int modeNum)
 {
     doUngrabMouse();
 
+    vid.bitpp = BitsPerPixel;
+    vid.fullscreen = cv_fullscreen.value;
     if(cv_fullscreen.value)
     {
         modeNum += firstEntry;
 
         vid.width = modeList[modeNum]->w;
         vid.height = modeList[modeNum]->h;
-        vid.rowbytes = vid.width * vid.bpp;
+        vid.widthbytes = vid.width * vid.bytepp;
+        vid.direct_rowbytes = vid.widthbytes;  // no padding
+        vid.direct_size = vid.height * vid.direct_rowbytes;
+        vid.ybytes = vid.direct_rowbytes;  // same as direct
+        vid.screen_size = vid.direct_size;
         vid.recalc = true;
 
         if(render_soft == rendermode)
@@ -373,7 +379,10 @@ int VID_SetMode(int modeNum)
                 I_Error("Could not set vidmode\n");
             }
 
-            vid.buffer = malloc(vid.width * vid.height * vid.bpp * NUMSCREENS);
+            // display is buffer
+            vid.buffer = malloc(vid.screen_size * NUMSCREENS);
+            vid.display = vid.buffer;
+            vid.screen1 = vid.buffer + vid.screen_size;
 
             vid.direct = vidSurface->pixels; // FIXME
         }
@@ -391,7 +400,11 @@ int VID_SetMode(int modeNum)
     {
         vid.width = windowedModes[modeNum][0];
         vid.height = windowedModes[modeNum][1];
-        vid.rowbytes = vid.width * vid.bpp;
+        vid.widthbytes = vid.width * vid.bytepp;
+        vid.direct_rowbytes = vid.widthbytes;  // no padding
+        vid.direct_size = vid.height * vid.direct_rowbytes;
+        vid.ybytes = vid.direct_rowbytes;  // same as direct
+        vid.screen_size = vid.direct_size;
         vid.recalc = true;
 
         if(render_soft == rendermode)
@@ -407,7 +420,11 @@ int VID_SetMode(int modeNum)
                 I_Error("Could not set vidmode\n");
             }
 
-            vid.buffer = malloc(vid.width * vid.height * vid.bpp * NUMSCREENS);
+            // display is buffer
+            vid.buffer = malloc(vid.screen_size * NUMSCREENS);
+            vid.display = vid.buffer;
+            vid.screen1 = vid.buffer + vid.screen_size;
+
             vid.direct = vidSurface->pixels; // FIXME
         }
         else //(render_soft == rendermode)
@@ -437,18 +454,18 @@ void I_StartupGraphics()
     //[segabor]: it's ok on Mac OS X with SDL
     SDL_VideoInfo *videoInfo = SDL_GetVideoInfo();
     BitsPerPixel	= videoInfo->vfmt->BitsPerPixel;
-    vid.bpp		= videoInfo->vfmt->BytesPerPixel;
-    highcolor		= (vid.bpp == 2) ? true:false;
+    vid.bytepp		= videoInfo->vfmt->BytesPerPixel;
+    highcolor		= (vid.bytepp == 2) ? true:false;
 #else
     //videoInfo = SDL_GetVideoInfo();
-    // even if I set vid.bpp and highscreen properly it does seem to
+    // even if I set vid.bytepp and highscreen properly it does seem to
     // support only 8 bit  ...  strange
     // so lets force 8 bit
     BitsPerPixel = 8;
 
     // Set color depth; either 1=256pseudocolor or 2=hicolor
-    vid.bpp = 1 /*videoInfo->vfmt->BytesPerPixel*/;
-    highcolor = (vid.bpp == 2) ? true:false;
+    vid.bytepp = 1 /*videoInfo->vfmt->BytesPerPixel*/;
+    highcolor = (vid.bytepp == 2) ? true:false;
 #endif    
 
     modeList = SDL_ListModes(NULL, SDL_FULLSCREEN|surfaceFlags);
@@ -476,7 +493,11 @@ void I_StartupGraphics()
     // default size for startup
     vid.width = BASEVIDWIDTH;
     vid.height = BASEVIDHEIGHT;
-    vid.rowbytes = vid.width * vid.bpp;
+    vid.widthbytes = vid.width * vid.bytepp;
+    vid.direct_rowbytes = vid.widthbytes;  // no padding
+    vid.direct_size = vid.height * vid.direct_rowbytes;
+    vid.ybytes = vid.direct_rowbytes;  // same as direct
+    vid.screen_size = vid.direct_size;
     vid.recalc = true;
 
 // [WDJ] To be safe, make it conditional on MACOS
@@ -528,7 +549,10 @@ void I_StartupGraphics()
             CONS_Printf("Could not set vidmode\n");
             return;
         }
-        vid.buffer = malloc(vid.width * vid.height * vid.bpp * NUMSCREENS);
+        vid.buffer = malloc(vid.screen_size * NUMSCREENS);
+        vid.display = vid.buffer;
+        vid.screen1 = vid.buffer + vid.screen_size;
+
         vid.direct = vidSurface->pixels; // FIXME
     }
 

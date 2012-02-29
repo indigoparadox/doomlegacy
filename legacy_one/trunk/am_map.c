@@ -916,7 +916,7 @@ void AM_clearFB(int color)
 
     if( !maplump )
     {
-        memset(fb, color, f_w*f_h*vid.bpp);
+        memset(fb, color, f_w*f_h*vid.bytepp);  // FIXME for padded scanline
     }
     else
     {

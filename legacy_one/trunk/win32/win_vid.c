@@ -241,6 +241,7 @@ void I_ShutdownGraphics (void)
     if (vid.buffer) {
         GlobalFree (vid.buffer);
         vid.buffer = NULL;
+        vid.display = NULL;
     }
 
     if ( rendermode == render_soft )
@@ -274,7 +275,7 @@ void I_UpdateNoBlit (void)
 
 #define FPSPOINTS  35
 #define SCALE      4
-#define PUTDOT(xx,yy,cc) screens[0][((yy)*vid.width+(xx))*vid.bpp]=(cc)
+#define PUTDOT(xx,yy,cc) screens[0][((yy)*vid.width+(xx))*vid.bytepp]=(cc)
 
 static int fpsgraph[FPSPOINTS];
 
@@ -309,7 +310,7 @@ void I_FinishUpdate (void)
             // draw dots
             for(j=0;j<=20*SCALE*vid.dupy;j+=2*SCALE*vid.dupy)
             {
-                l=(vid.height-1-j)*vid.width*vid.bpp;
+                l=(vid.height-1-j)*vid.width*vid.bytepp;
                 for (i=0;i<FPSPOINTS*SCALE*vid.dupx;i+=2*SCALE*vid.dupx)
                     screens[0][l+i]=0xff;
             }
@@ -373,9 +374,9 @@ void I_FinishUpdate (void)
             //faB: TODO: use directX blit here!!? a blit might use hardware with access
             //     to main memory on recent hardware, and software blit of directX may be
             //  optimized for p2 or mmx??
-            VID_BlitLinearScreen (vid.buffer, ScreenPtr,
-                                  vid.width*vid.bpp, vid.height,
-                                  vid.width*vid.bpp, ScreenPitch );
+            VID_BlitLinearScreen (vid.display, ScreenPtr,
+                                  vid.widthbytes, vid.height, // copy area
+                                  vid.ybytes, ScreenPitch ); // scanline inc
 
             UnlockScreen();
 
@@ -432,7 +433,7 @@ void I_ReadScreen (byte* scr)
     // DEBUGGING
     if (rendermode != render_soft)
         I_Error ("I_ReadScreen: called while in non-software mode");
-    CopyMemory (scr, vid.buffer, vid.width*vid.height*vid.bpp);
+    CopyMemory (scr, vid.buffer, vid.screen_size);
 }
 
 
@@ -913,8 +914,9 @@ int VID_SetMode (int modenum)  //, unsigned char *palette)
     vid.width  = pcurrentmode->width;
     vid.height = pcurrentmode->height;
     //vid.aspect = pcurrentmode->aspect;                // aspect ratio might be needed later for 3dfx version..
-    vid.rowbytes = pcurrentmode->rowbytes;
-    vid.bpp      = pcurrentmode->bytesperpixel;
+    vid.direct_rowbytes = pcurrentmode->rowbytes;
+    vid.bytepp   = pcurrentmode->bytesperpixel;
+    vid.bitpp = vid.bytepp * 8;  // misses 15 bpp
     //hurdler: 15/10/99: added
     if (modenum) { // if not 320x200 windowed mode
         // it's actually a hack
@@ -922,12 +924,15 @@ int VID_SetMode (int modenum)  //, unsigned char *palette)
             // don't accept depth < 16 for OpenGL mode (too much ugly)
             if (cv_scr_depth.value<16)
                 CV_SetValue (&cv_scr_depth,  16);
-            vid.bpp = cv_scr_depth.value/8;
-            vid.u.windowed = !cv_fullscreen.value;
-            pcurrentmode->bytesperpixel = vid.bpp;
-            pcurrentmode->windowed = vid.u.windowed;
+            vid.bitpp = cv_scr_depth.value;
+            vid.bytepp = cv_scr_depth.value/8;
+            vid.fullscreen = cv_fullscreen.value;
+            pcurrentmode->bytesperpixel = vid.bytepp;
+            pcurrentmode->windowed = ! vid.fullscreen;
         }
     }
+    vid.widthbytes = vid.width * vid.bytepp;
+    vid.direct_size = vid.direct_rowbytes * vid.height;
 
     stat = (*pcurrentmode->setmode) (&vid, pcurrentmode);
 
@@ -938,7 +943,7 @@ int VID_SetMode (int modenum)  //, unsigned char *palette)
             // harware could not setup mode
             //if (!VID_SetMode (vid.modenum))
             //        I_Error ("VID_SetMode: couldn't set video mode (hard failure)");
-            I_Error ("Couldn't set video mode %d (%dx%d %d bits)\n", modenum, vid.width, vid.height, (vid.bpp*8));
+            I_Error ("Couldn't set video mode %d (%dx%d %d bits)\n", modenum, vid.width, vid.height, (vid.bytepp*8));
         }
         else
             if (stat == -1)
@@ -950,7 +955,7 @@ int VID_SetMode (int modenum)  //, unsigned char *palette)
                 vid.width = pcurrentmode->width;
                 vid.height = pcurrentmode->height;
                 vid.rowbytes = pcurrentmode->rowbytes;
-                vid.bpp  = pcurrentmode->bytesperpixel;
+                vid.bytepp  = pcurrentmode->bytesperpixel;
                 return 0;*/
             }
     }
@@ -993,7 +998,17 @@ BOOL    VID_FreeAndAllocVidbuffer (viddef_t *lvid)
 {
     int  vidbuffersize;
 
-    vidbuffersize = (lvid->width * lvid->height * lvid->bpp * NUMSCREENS);
+    // Determined by FinishUpdate, which uses VID_BlitLinearScreen
+#if 1 
+    // screen size same as video buffer, simple copy
+    lvid->ybytes = lvid->direct_rowbytes;
+    lvid->screen_size = lvid->direct_size;
+#else
+    // minimal screen buffer, must copy by line (VID_BlitLinearScreen)
+    lvid->ybytes = lvid->widthbytes;
+    lvid->screen_size = lvid->ybytes * lvid->height;
+#endif
+    vidbuffersize = (lvid->screen_size * NUMSCREENS);
 
     // free allocated buffer for previous video mode
     if (lvid->buffer)
@@ -1001,7 +1016,14 @@ BOOL    VID_FreeAndAllocVidbuffer (viddef_t *lvid)
 
     // allocate & clear the new screen buffer
     if ((lvid->buffer = GlobalAlloc (GPTR, vidbuffersize))==NULL)
+    {
+        lvid->display = NULL;
+        lvid->screen1 = NULL;
         return FALSE;
+    }
+
+    lvid->display = lvid->buffer;  // display = buffer, screen[0]
+    lvid->screen1 = lvid->buffer + lvid->screen_size;
 
 #ifdef DEBUG
     CONS_Printf("VID_FreeAndAllocVidbuffer done, vidbuffersize: %x\n",vidbuffersize);
