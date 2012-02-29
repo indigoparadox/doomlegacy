@@ -2229,3 +2229,14 @@ Use of SDL_GetVideoInfo made useful (instead of bypassed).
 Created VID_SetMode_vid to do actual mode setting, to reduce
 duplicated effort.
 Extensive video reporting using verbose switches "-v" and "-v2".
+
+*** w80_testbpp
+patchfile = w80_testbpp.patch
+- committed revision 904   by wesley johnson
+Adds a command line switch "-testbpp", that forces the bpp requested to
+succeed.  The hardware actually uses the native bpp and converts the
+drawn bpp in I_FinishUpdate.  This is meant for test and development of
+the extended bpp draw modes, when matching hardware is not available.
+This code is conditional on the TESTBPP macro, and only exists in
+sdl/i_video.c at this time.
+

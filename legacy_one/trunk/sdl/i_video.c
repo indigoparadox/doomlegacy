@@ -69,6 +69,11 @@
 //      DOOM graphics stuff for SDL
 //
 //-----------------------------------------------------------------------------
+#define TESTBPP
+#ifdef TESTBPP
+// [WDJ] Test drawing in a testbpp mode, using native mode conversion.
+static int testbpp = 0;
+#endif
 
 #include <stdlib.h>
 
@@ -190,6 +195,58 @@ void I_FinishUpdate(void)
             if(SDL_LockSurface(vidSurface) < 0)
                 return;
 
+#ifdef TESTBPP
+        // [WDJ] To test drawing in 15bpp, 16bpp, 24bpp, convert the
+	// screen drawn in the testbpp mode to the native bpp mode.
+        if( testbpp )
+        {
+	    byte * vidmem = vid.direct;
+	    byte * src = vid.display;
+	    int h = vid.height;
+	    while( h-- )
+	    {
+	        int w=vid.width;
+	        if( testbpp == 15 )
+	        {
+		    uint32_t * v32 = (uint32_t*) vidmem;
+		    uint16_t * s16 = (uint16_t*) src;
+		    while( w--)
+		    {
+		        *v32 = ((*s16&0x7C00)<<9)|((*s16&0x03E0)<<6)|((*s16&0x001F)<<3);
+		        v32++;
+		        s16++;
+		    }
+		}
+		else if( testbpp == 16 )
+	        {
+		    uint32_t * v32 = (uint32_t*) vidmem;
+		    uint16_t * s16 = (uint16_t*) src;
+		    while( w--)
+		    {
+		        *v32 = ((*s16&0xF800)<<8)|((*s16&0x07E0)<<5)|((*s16&0x001F)<<3);
+		        v32++;
+		        s16++;
+		    }
+		}
+		else if( testbpp == 24 )
+	        {
+		    byte* v = vidmem;
+		    byte* s = src;
+		    while( w--)
+		    {
+		        *(uint16_t*)v = *(uint16_t*)s;  // g, b
+		        v[2] = s[2];  // r
+		        v+=4;
+		        s+=3;
+		    }
+		}
+	        src += vid.ybytes;
+	        vidmem += vid.direct_rowbytes;
+	    }
+	}
+        else
+#endif
+       
 	// [WDJ] SDL Spec says that you can directly read and write the surface
 	// while it is locked.
         if(vid.display != vid.direct)
@@ -430,6 +487,15 @@ static void  VID_SetMode_vid( int req_width, int req_height, int reqflags )
     vid.direct_rowbytes = vidSurface->pitch; // correct, even on Mac
     vid.direct_size = vidSurface->pitch * vid.height; // correct, even on Mac
     vid.direct = vidSurface->pixels;
+#ifdef TESTBPP
+    if( testbpp )
+    {
+        // [WDJ] Force the testbpp drawing mode
+        vid.bitpp = testbpp;
+        vid.bytepp = 2;
+        if( testbpp == 24 )  vid.bytepp = 3;
+    }
+#endif
 #if 1
  // normal
     // Because we have to copy by row anyway, buffer can be normal
@@ -585,6 +651,20 @@ void I_StartupGraphics()
        request_bitpp = 8;
        break;
     }
+
+#ifdef TESTBPP
+    // [WDJ] Detect testbpp flag
+    // Requested bpp will succeed, driver will convert drawn screen to native bpp.
+    testbpp = 0;
+    if( M_CheckParm( "-testbpp" ))
+    {
+        if( request_bitpp > 8 )
+        {
+	    testbpp = request_bitpp;
+	    request_bitpp = 32;  // native mode
+	}
+    }
+#endif
 
 get_modelist:
     // try the requested bpp, then alt, then 8bpp
