@@ -1477,7 +1477,7 @@ void AM_drawCrosshair(int color)
         return;
     }
     
-    if( scr_bpp==1 )
+    if( vid.drawmode==DRAW8PAL )
         fb[(f_w*(f_h+1))/2] = color; // single point for now
     else
         *( (short *)fb + (f_w*(f_h+1))/2) = color;

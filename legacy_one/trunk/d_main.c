@@ -480,7 +480,7 @@ void D_Display(void)
     redrawsbar = false;
 
     //added:21-01-98: check for change of screen size (video mode)
-    if (setmodeneeded)
+    if (setmodeneeded >= 0)
         SCR_SetMode();  // change video mode
 
     if (vid.recalc)
@@ -846,7 +846,7 @@ void D_PageDrawer(char *lumpname)
     {
         if ((vid.width > BASEVIDWIDTH) || (vid.height > BASEVIDHEIGHT))
         {
-            src = scr_borderpatch;
+            src = scr_borderflat;
             dest = screens[0];
 
             for (y = 0; y < vid.height; y++)

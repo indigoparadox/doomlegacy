@@ -444,7 +444,6 @@ void HWR_FadeScreenMenuBack( unsigned long color, long alpha, int height )
 // 'clearlines' is useful to clear the heads up messages, when the view
 // window is reduced, it doesn't refresh all the view borders.
 // ------------------
-extern int st_borderpatchnum;
 void HWR_DrawViewBorder (int clearlines)
 {
     int         x,y;
@@ -470,25 +469,25 @@ extern float gr_baseviewwindowy,gr_viewwindowx,gr_viewheight,gr_viewwidth;
     // top
     HWR_DrawFlatFill (0, 0,
                      BASEVIDWIDTH, (top<clearlines ? top : clearlines),
-                     st_borderpatchnum);
+                     st_borderflat_num);
 
     // left
     if (top<clearlines)
         HWR_DrawFlatFill (0, top,
                          side, (clearlines-top < baseviewheight ? clearlines-top : baseviewheight),
-                         st_borderpatchnum);
+                         st_borderflat_num);
 
     // right
     if (top<clearlines)
         HWR_DrawFlatFill (side + baseviewwidth, top,
                          side, (clearlines-top < baseviewheight ? clearlines-top : baseviewheight),
-                         st_borderpatchnum);
+                         st_borderflat_num);
 
     // bottom
     if (top+baseviewheight<clearlines)
         HWR_DrawFlatFill (0, top+baseviewheight,
                          BASEVIDWIDTH, BASEVIDHEIGHT,
-                         st_borderpatchnum);
+                         st_borderflat_num);
 
     //
     // draw the view borders

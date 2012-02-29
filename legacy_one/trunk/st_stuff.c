@@ -1484,7 +1484,7 @@ void ST_Start (void)
 //
 
 //faB: used by Glide mode, holds lumpnum of flat used to fill space around the viewwindow
-int  st_borderpatchnum;
+int  st_borderflat_num;  // extern in r_draw.h
 
 void ST_Init (void)
 {
@@ -1500,24 +1500,24 @@ void ST_Init (void)
     switch(gamemode) {
         case doom2_commercial :
             // DOOM II border patch, original was GRNROCK
-            st_borderpatchnum = W_GetNumForName ("GRNROCK");
+            st_borderflat_num = W_GetNumForName ("GRNROCK");
             break;
         case heretic :
             if(W_CheckNumForName("e2m1")==-1)
 	        // GDESC_heretic_shareware
-                st_borderpatchnum = W_GetNumForName ("FLOOR04");
+                st_borderflat_num = W_GetNumForName ("FLOOR04");
             else
-                st_borderpatchnum = W_GetNumForName ("FLAT513");
+                st_borderflat_num = W_GetNumForName ("FLAT513");
             break;
         case hexen :
-            st_borderpatchnum = W_GetNumForName ("F_022");
+            st_borderflat_num = W_GetNumForName ("F_022");
             break;
         default :
             // DOOM border patch.
-            st_borderpatchnum = W_GetNumForName ("FLOOR7_2");
+            st_borderflat_num = W_GetNumForName ("FLOOR7_2");
     }
     // [WDJ] Lock against other users of same patch releasing it!.
-    scr_borderpatch = W_CacheLumpNum (st_borderpatchnum, PU_LOCK_SB);
+    scr_borderflat = W_CacheLumpNum (st_borderflat_num, PU_LOCK_SB);
     if( gamemode == heretic )
     {
         SB_Init();

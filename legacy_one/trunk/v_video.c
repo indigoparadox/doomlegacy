@@ -1345,7 +1345,7 @@ void V_DrawFadeConsBack(int x1, int y1, int x2, int y2)
     }
 #endif
 
-    if (scr_bpp == 1)
+    if (vid.drawmode == DRAW8PAL)
     {
         x1 >>= 2;
         x2 >>= 2;

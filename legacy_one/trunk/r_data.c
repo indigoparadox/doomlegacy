@@ -903,7 +903,7 @@ byte* R_GetFlat (int  flatlumpnum)
 
     flatlumpnum -= firstflat;
 
-    if (scr_bpp==1)
+    if (vid.drawmode==DRAW8PAL)
     {
                 flatcache[flatlumpnum] = data;
                 return data;

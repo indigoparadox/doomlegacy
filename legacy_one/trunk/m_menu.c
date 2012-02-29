@@ -2364,7 +2364,7 @@ menu_t  VidModeDef =
 #define MAXMODEDESCS     (MAXCOLUMNMODES*3)
 
 // shhh... what am I doing... nooooo!
-static int vidm_testingmode=0;
+static int vidm_testing_cnt=0;
 static int vidm_previousmode;
 static int vidm_current=0;
 static int vidm_nummodes;
@@ -2389,7 +2389,7 @@ void M_DrawVideoMode(void)
     char    *desc;
     char    temp[80];
 
-    // draw tittle
+    // draw title
     M_DrawMenuTitle();
 
     vidm_nummodes = 0;
@@ -2456,7 +2456,7 @@ void M_DrawVideoMode(void)
         }
     }
 
-    if (vidm_testingmode>0)
+    if (vidm_testing_cnt>0)
     {
         sprintf(temp, "TESTING MODE %s", modedescs[vidm_current].desc );
         M_CentreText(VidModeDef.y+80+24, temp );
@@ -2490,13 +2490,13 @@ void M_DrawVideoMode(void)
 //added:30-01-98: special menuitem key handler for video mode list
 void M_HandleVideoMode (int key)
 {
-    if (vidm_testingmode>0)
+    if (vidm_testing_cnt>0)
     {
        // change back to the previous mode quickly
        if (key==KEY_ESCAPE)
        {
-           setmodeneeded = vidm_previousmode+1;
-           vidm_testingmode = 0;
+           setmodeneeded = vidm_previousmode;
+           vidm_testing_cnt = 0;
        }
        return;
     }
@@ -2537,8 +2537,8 @@ void M_HandleVideoMode (int key)
 
       case KEY_ENTER:
         S_StartSound(NULL,sfx_pstop);
-        if (!setmodeneeded) //in case the previous setmode was not finished
-            setmodeneeded = modedescs[vidm_current].modenum+1;
+        if (setmodeneeded<0) //in case the previous setmode was not finished
+            setmodeneeded = modedescs[vidm_current].modenum;
         break;
 
       case KEY_ESCAPE:      //this one same as M_Responder
@@ -2549,10 +2549,10 @@ void M_HandleVideoMode (int key)
       case 'T':
       case 't':
         S_StartSound(NULL,sfx_swtchx);
-        vidm_testingmode = TICRATE*5;
+        vidm_testing_cnt = TICRATE*5;
         vidm_previousmode = vid.modenum;
-        if (!setmodeneeded) //in case the previous setmode was not finished
-            setmodeneeded = modedescs[vidm_current].modenum+1;
+        if (setmodeneeded<0) //in case the previous setmode was not finished
+            setmodeneeded = modedescs[vidm_current].modenum;
         return;
 
       case 'D':
@@ -3649,7 +3649,6 @@ void M_DrawSelCell ( menu_t*       menu,
 //  to read the text with all the stuff in the background...
 //
 //added:06-02-98:
-extern int st_borderpatchnum;   //st_stuff.c (for Glide)
 void M_DrawTextBox (int x, int y, int width, int lines)
 {
     patch_t  *p;
@@ -3690,7 +3689,7 @@ void M_DrawTextBox (int x, int y, int width, int lines)
     V_DrawScaledPatch_Num (cx, cy, 0, viewborderlump[BRDR_BL] );
 
     // draw middle
-    V_DrawFlatFill (x+boff, y+boff ,width*step,lines*step,st_borderpatchnum);
+    V_DrawFlatFill (x+boff, y+boff ,width*step, lines*step, st_borderflat_num);
 
     // draw top and bottom
     cx += boff;
@@ -4593,11 +4592,11 @@ void M_Ticker (void)
     }
 
     //added:30-01-98:test mode for five seconds
-    if( vidm_testingmode>0 )
+    if( vidm_testing_cnt>0 )
     {
         // restore the previous video mode
-        if (--vidm_testingmode==0)
-            setmodeneeded = vidm_previousmode+1;
+        if (--vidm_testing_cnt==0)
+            setmodeneeded = vidm_previousmode;
     }
 }
 

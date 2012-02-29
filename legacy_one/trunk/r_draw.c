@@ -553,7 +553,7 @@ void R_FillBackScreen (void)
         return;
 
     // draw pattern around the status bar
-    src  = scr_borderpatch;
+    src  = scr_borderflat;
     dest = screens[1];
 
     for (y=0 ; y<vid.height ; y++)

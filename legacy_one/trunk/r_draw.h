@@ -144,6 +144,7 @@ extern byte*            ds_translucentmap; // ptr to one translucent map
 #define BRDR_BR     7
 
 extern int viewborderlump[8];
+extern int st_borderflat_num;  // st_stuff.c
 
 // ------------------------------------------------
 // r_draw.c COMMON ROUTINES FOR BOTH 8bpp and 16bpp
