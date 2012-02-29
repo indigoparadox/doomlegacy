@@ -71,9 +71,6 @@
 #include "command.h"
 
 
-//added:26-01-98: quickhack for V_Init()... to be cleaned up
-#define NUMSCREENS    4
-
 // Size of statusbar.
 #define ST_HEIGHT    32
 #define ST_WIDTH     320
@@ -173,6 +170,26 @@ typedef struct vmode_s {
     int          (*setmode)(viddef_t *lvid, struct vmode_s *pcurrentmode);
     int          misc;              //misc for display driver (r_glide.dll etc)
 } vmode_t;
+
+
+// [WDJ] definitions for 15bpp, 16bpp, 24bpp, 32bpp
+
+typedef struct {
+   byte r, g, b;
+} pixel24_t;
+
+typedef struct {
+   byte alpha, r, g, b;
+} pixel32_t;
+
+typedef union {
+   uint32_t      uint32;
+   struct {
+      byte unused;
+      pixel24_t  pix24;
+   } s24;
+   pixel32_t     pix32;
+} pixelunion32_t;
 
 extern uint16_t mask_01111, mask_11110;  // hicolor masks  15 bit / 16 bit
 

@@ -1507,5 +1507,7 @@ void AM_Drawer (void)
         V_DrawString( 20, y - V_StringHeight(P_LevelName()), 0, P_LevelName());
     }
 
+#ifdef DIRTY_RECT
     V_MarkRect(f_x, f_y, f_w, f_h);
+#endif
 }

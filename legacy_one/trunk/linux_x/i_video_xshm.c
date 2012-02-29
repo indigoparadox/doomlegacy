@@ -178,6 +178,8 @@ int XShmGetEventBase( Display* dpy );
 #include "console.h"
 #include "command.h"
 #include "d_clisrv.h" // for dedicated
+#include "r_data.h"
+  // R_Init_color8_translate, color8
 
 void VID_PrepareModeList(void);
 
@@ -200,7 +202,6 @@ static boolean haveVoodoo = false;
 
 extern consvar_t cv_fullscreen; // for fullscreen support under X and GLX
 
-extern short color8to16[];
 static boolean showkey=false; // force to no 19990118 by Kin
 static boolean vidmode_ext; // Are videmode extensions available?
 static boolean vidmode_active;
@@ -579,7 +580,11 @@ static void createColorMap()
       X_cmap = XCreateColormap(X_display, RootWindow(X_display, X_screen),
                                X_visual, AllocAll);
    else if (x_bytepp==2)
-      x_colormap2 = &color8to16[0]; // cheat...19990119 by Kin
+#if defined( ENABLE_DRAW15 ) || defined( ENABLE_DRAW16 )
+      x_colormap2 = &color8.to16[0]; // cheat...19990119 by Kin
+#else
+      x_colormap2 = malloc(2*256);
+#endif
    else if (x_bytepp==3)
       x_colormap3 = malloc(3*256);
    else if (x_bytepp==4)

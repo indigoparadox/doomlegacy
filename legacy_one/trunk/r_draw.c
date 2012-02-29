@@ -701,8 +701,10 @@ void R_DrawViewBorder (void)
     VID_BlitLinearScreen(screens[1]+ofs, screens[0]+ofs,
                          side, rdraw_viewheight-1, vid.width, vid.width);
 
+#ifdef DIRTY_RECT
     // useless, old dirty rectangle stuff
     //V_MarkRect (0,0,vid.width, vid.height-stbarheight);
+#endif
 }
 
 

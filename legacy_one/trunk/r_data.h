@@ -230,4 +230,20 @@ int R_ColormapNumForName(char *name);
 int R_CreateColormap(char *colorstr, char *ctrlstr, char *fadestr);
 
 char *R_ColormapNameForNum(int num);
+
+// [WDJ] 2012-02-06 shared for DRAW15, DRAW16, DRAW24, DRAW32
+// hicolor tables, vid dependent
+union color8_u {
+#if defined( ENABLE_DRAW15 ) || defined( ENABLE_DRAW16 )
+  uint16_t  to16[256];
+#endif
+#if defined( ENABLE_DRAW24 ) || defined( ENABLE_DRAW32 )
+  uint32_t  to32[256];
+#endif
+  byte      dummy;  // prevent errors when only 8bpp
+};
+extern union color8_u  color8;
+extern uint16_t*  hicolormaps;
+void R_Init_color8_translate ( boolean himap );
+
 #endif

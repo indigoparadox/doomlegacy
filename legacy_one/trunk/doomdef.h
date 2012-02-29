@@ -271,6 +271,16 @@ void I_SoftError (char *error, ...);
 // Automatic loading of lang.bex file.
 //#define BEX_LANG_AUTO_LOAD
 
+
+// [WDJ] 2/6/2012 Drawing enables
+// To save code size, can turn off some drawing bpp that you cannot use.
+#define ENABLE_DRAW15
+#define ENABLE_DRAW16
+#ifndef PC_DOS
+# define ENABLE_DRAW24
+# define ENABLE_DRAW32
+#endif
+
 // =========================================================================
 
 // Name of local directory for config files and savegames
