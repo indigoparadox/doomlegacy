@@ -580,6 +580,7 @@ fail:
     return 0;   // dummy
 }
 
+
 void I_StartupGraphics()
 {
     SDL_PixelFormat    req_format;
@@ -679,12 +680,12 @@ get_modelist:
         modeList = SDL_ListModes(&req_format, surfaceFlags_fullscreen);
         if( modeList )  goto found_modes;
 
+        if( request_bitpp == 8 )  break;
         if(req_drawmode == REQ_specific)
         {
 	   fprintf(stderr,"No %i bpp modes\n", req_bitpp );
-	   return;
+	   goto abort_error;
         }
-        if( request_bitpp == 8 )  break;
         if( alt_request_bitpp )
         {
 	    if(request_bitpp != alt_request_bitpp)
@@ -700,11 +701,11 @@ get_modelist:
     fprintf(stderr,"Draw 8bpp using palette, SDL must convert to %i bpp video modes\n", videoInfo->vfmt->BitsPerPixel );
     request_NULL = 1;
     modeList = SDL_ListModes(NULL, surfaceFlags_fullscreen);
-    if(modeList==NULL)
+    if(modeList == NULL)
     {
         // should not happen with fullscreen modes
-        CONS_Printf("No usable fullscreen video modes.\n");
-        return;
+        fprintf(stderr, "No usable fullscreen video modes.\n");
+        goto abort_error;
     }
 
 found_modes:
@@ -798,8 +799,8 @@ found_modes:
         VID_SetMode_vid( vid.width, vid.height, surfaceFlags ); // window
         if(vidSurface == NULL)
         {
-            CONS_Printf("Could not set vidmode\n");
-            return;
+            fprintf(stderr,"Could not set vidmode\n");
+            goto abort_error;
         }
     }
 
@@ -808,7 +809,11 @@ found_modes:
 
     graphics_started = 1;
 
-    return;
+    return;  // have video mode
+
+abort_error:
+    // cannot return without a display screen
+    I_Error("StartupGraphics Abort\n");
 }
 
 
