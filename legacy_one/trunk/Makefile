@@ -654,6 +654,8 @@ endif
 
 $(O)/*.o : doomdef.h
 
+$(O)/r_draw.o : r_draw.c r_draw8.c r_draw16.c r_draw24.c r_draw32.c
+
 include ../dep/main1.dep
 include ../dep/main2.dep
 include ../dep/main3.dep
