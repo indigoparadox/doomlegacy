@@ -285,7 +285,22 @@ void SCR_SetMode (void)
      case 32:
         vid.drawmode = DRAW32;
 #ifdef ENABLE_DRAW32
-        goto bpp_err;
+        colfunc = basecolfunc = R_DrawColumn_32;
+        skincolfunc = R_DrawTranslatedColumn_32;
+        transcolfunc = R_DrawTranslucentColumn_32;
+	shadecolfunc = R_DrawShadeColumn_32;
+        fogcolfunc = R_DrawFogColumn_32;
+
+        spanfunc = basespanfunc = R_DrawSpan_32;
+        fogspanfunc = R_DrawFogSpan_32;
+        transspanfunc = R_DrawTranslucentSpan_32;
+
+        skintranscolfunc = R_DrawTranslatedTranslucentColumn_32;
+
+        // FIXME: quick fix to think more..
+        skydrawerfunc[0] = R_DrawColumn_32;
+        skydrawerfunc[1] = R_DrawSkyColumn_32;
+        break;
 #else
         goto bpp_err;
 #endif
@@ -324,6 +339,9 @@ void CV_Fuzzymode_OnChange()
      break;
    case DRAW24:
      fuzzcolfunc = (cv_fuzzymode.value) ? R_DrawFuzzColumn_24 : R_DrawTranslucentColumn_24;
+     break;
+   case DRAW32:
+     fuzzcolfunc = (cv_fuzzymode.value) ? R_DrawFuzzColumn_32 : R_DrawTranslucentColumn_32;
      break;
   }
 }

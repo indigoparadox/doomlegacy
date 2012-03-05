@@ -245,6 +245,9 @@ void I_FinishUpdate(void)
 		    }
 		  }
 		  break;
+		 case 32:
+		  memcpy( vidmem, src, vid.widthbytes );
+		  break;
 		}
 	        src += vid.ybytes;
 	        vidmem += vid.direct_rowbytes;
@@ -498,8 +501,19 @@ static void  VID_SetMode_vid( int req_width, int req_height, int reqflags )
     {
         // [WDJ] Force the testbpp drawing mode
         vid.bitpp = testbpp;
-        vid.bytepp = 2;
-        if( testbpp == 24 )  vid.bytepp = 3;
+        switch( testbpp )
+        {
+	 case 15:
+	 case 16:
+	   vid.bytepp = 2;
+	   break;
+	 case 24:
+	   vid.bytepp = 3;
+	   break;
+	 case 32:
+	   vid.bytepp = 4;
+	   break;
+	}
     }
 #endif
 #if 1

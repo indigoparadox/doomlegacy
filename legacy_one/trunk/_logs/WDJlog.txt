@@ -2289,3 +2289,10 @@ Create functions for DRAW24 mode.
 Fill in functions in r_draw24.c and other support.
 Improved fog.
 Not fully optimized.
+
+*** w80_draw_32bpp_create
+patchfile = w80_draw32_create.patch
+- committed revision 912   by wesley johnson
+Create functions for DRAW32 mode.
+Fill in functions in r_draw32.c and other support.
+Not fully optimized.
