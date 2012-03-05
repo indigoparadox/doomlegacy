@@ -142,7 +142,7 @@ int wipe_doColorXForm ( int ticks )
     int y;
 #ifdef ENABLE_DRAWEXT
     int fade1 = 0, fade2 = 0;
-    uint16_t  mask1_shftd = 0, mask2_shftd = 0;
+    unsigned int  mask1_shftd = 0, mask2_shftd = 0;
 #endif
     
     byte* wend;
