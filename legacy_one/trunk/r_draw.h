@@ -218,5 +218,22 @@ void    R_DrawFogSpan_16(void);
 void    R_DrawFogColumn_16(void);
 
 
+// ------------------
+// 24bpp DRAWING CODE
+// ------------------
+
+void    R_DrawColumn_24 (void);
+void    R_DrawSkyColumn_24 (void);
+void    R_DrawFuzzColumn_24 (void);
+void    R_DrawTranslucentColumn_24 (void);
+void    R_DrawTranslatedColumn_24 (void);  // skin
+void    R_DrawSpan_24 (void);
+
+void    R_DrawTranslatedTranslucentColumn_24 (void);  // skin translucent
+void    R_DrawShadeColumn_24(void);
+void    R_DrawTranslucentSpan_24(void);
+void    R_DrawFogSpan_24(void);
+void    R_DrawFogColumn_24(void);
+
 // =========================================================================
 #endif  // __R_DRAW__
