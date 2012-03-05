@@ -206,8 +206,10 @@ void I_FinishUpdate(void)
 	    while( h-- )
 	    {
 	        int w=vid.width;
-	        if( testbpp == 15 )
+	        switch( testbpp )
 	        {
+		 case 15:
+	          {
 		    uint32_t * v32 = (uint32_t*) vidmem;
 		    uint16_t * s16 = (uint16_t*) src;
 		    while( w--)
@@ -216,9 +218,10 @@ void I_FinishUpdate(void)
 		        v32++;
 		        s16++;
 		    }
-		}
-		else if( testbpp == 16 )
-	        {
+		  }
+		  break;
+		 case 16:
+	          {
 		    uint32_t * v32 = (uint32_t*) vidmem;
 		    uint16_t * s16 = (uint16_t*) src;
 		    while( w--)
@@ -227,9 +230,10 @@ void I_FinishUpdate(void)
 		        v32++;
 		        s16++;
 		    }
-		}
-		else if( testbpp == 24 )
-	        {
+		  }
+		  break;
+		 case 24:
+	          {
 		    byte* v = vidmem;
 		    byte* s = src;
 		    while( w--)
@@ -239,6 +243,8 @@ void I_FinishUpdate(void)
 		        v+=4;
 		        s+=3;
 		    }
+		  }
+		  break;
 		}
 	        src += vid.ybytes;
 	        vidmem += vid.direct_rowbytes;
@@ -658,11 +664,10 @@ void I_StartupGraphics()
     testbpp = 0;
     if( M_CheckParm( "-testbpp" ))
     {
-        if( request_bitpp > 8 )
-        {
-	    testbpp = request_bitpp;
-	    request_bitpp = 32;  // native mode
-	}
+        if( request_bitpp == 8 )
+	   I_Error( "Invalid for SDL port driver: -bpp 8 -testbpp" );
+        testbpp = request_bitpp;
+        request_bitpp = 32;  // native mode
     }
 #endif
 

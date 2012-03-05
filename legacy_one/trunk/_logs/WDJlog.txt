@@ -2256,3 +2256,9 @@ Has many alternative code sections for further experimentation.
 patchfile = w80_fade16.patch
 - committed revision 906   by wesley johnson
 Fix screen fade effects for 15/16 bpp drawing.
+
+*** w80_testbpp_8
+patchfile = w80_testbpp_8.patch
+- committed revision 907   by wesley johnson
+Explicit reject of -bpp 8 -testbpp.
+
