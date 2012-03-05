@@ -2079,8 +2079,19 @@ void R_Init_color8_translate ( boolean himap )
 	       color8.to16[i] = (((r >> 3) << 11) | ((g >> 2) << 5) | ((b >> 3)));
 	       break;
 #endif
-#if defined( ENABLE_DRAW24 ) || defined( ENABLE_DRAW32 )
+#ifdef ENABLE_DRAW24
 	     case DRAW24:
+	       {
+		   // different alignment from DRAW32, for speed
+		   pixelunion32_t c32;
+		   c32.pix24.r = r;
+		   c32.pix24.g = g;
+		   c32.pix24.b = b;
+		   color8.to32[i] = c32.ui32;
+	       }
+	       break;
+#endif
+#ifdef ENABLE_DRAW32
 	     case DRAW32:
 	       {
 		   pixelunion32_t c32;
@@ -2088,7 +2099,7 @@ void R_Init_color8_translate ( boolean himap )
 		   c32.pix32.g = g;
 		   c32.pix32.b = b;
 		   c32.pix32.alpha = 0xFF;
-		   color8.to32[i] = c32.uint32;
+		   color8.to32[i] = c32.ui32;
 	       }
 	       break;
 #endif
