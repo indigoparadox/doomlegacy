@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
+// Portions Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -224,8 +224,6 @@ static XSizeHints      X_size;
 static XWMHints        X_wm;
 static XClassHint      X_class;
 static Atom            X_wm_delwin;
-static int             X_width;
-static int             X_height;
 static XImage*         image = NULL;
 
 static Window   dummy;
@@ -245,10 +243,11 @@ boolean         Mousegrabbed = false;
 event_t event;
 
 // X visual mode
-static int      x_depth=1;
+static byte     x_drawmode=DRAW8PAL;
+static int      x_bitpp=8;
 static int      x_bytepp=1;
 static int      x_pseudo=1;
-static unsigned short* x_colormap2 = 0;
+static uint16_t* x_colormap2 = 0;
 static unsigned char* x_colormap3 = 0;
 static unsigned long* x_colormap4 = 0;
 static unsigned long x_red_mask = 0;
@@ -361,16 +360,22 @@ static void checkVidModeExtension(void)
 
 static void findVisual(void)
 {
-
-   X_screen = DefaultScreen(X_display);
+   // classes of interest are PseudoColor (dynamic colormap), TrueColor (static colormap)
+   X_screen = DefaultScreen(X_display); // screen number, usually 0
    if (XMatchVisualInfo(X_display, X_screen, 8, PseudoColor, &X_visualinfo))
-      { x_depth = 1; x_pseudo = 1; }
+      { x_drawmode = DRAW8PAL; x_pseudo = 1; }
+   else if
+      (XMatchVisualInfo(X_display, X_screen, 15, TrueColor, &X_visualinfo))
+      { x_drawmode = DRAW15; x_pseudo = 0; }
    else if
       (XMatchVisualInfo(X_display, X_screen, 16, TrueColor, &X_visualinfo))
-      { x_depth = 2; x_pseudo = 0; }
+      { x_drawmode = DRAW16; x_pseudo = 0; }
    else if
       (XMatchVisualInfo(X_display, X_screen, 24, TrueColor, &X_visualinfo))
-      { x_depth = 3; x_pseudo = 0; }
+      { x_drawmode = DRAW24; x_pseudo = 0; }
+   else if
+      (XMatchVisualInfo(X_display, X_screen, 32, TrueColor, &X_visualinfo))
+      { x_drawmode = DRAW32; x_pseudo = 0; }
    else
       I_Error("no supported visual found");
    X_visual = X_visualinfo.visual;
@@ -385,7 +390,7 @@ static void determineColorMask(void)
    x_green_mask = X_visual->green_mask;
    x_blue_mask = X_visual->blue_mask;
 
-   if (x_depth==3) {
+   if (x_drawmode==DRAW24 || x_drawmode==DRAW32) {
       switch (x_red_mask) {
 #ifdef BIGEND
       case 0x000000ff: x_red_offset = 3; break;
@@ -426,7 +431,7 @@ static void determineColorMask(void)
 #endif
       }
    }
-   if (x_depth==2) {
+   if (x_drawmode==DRAW15 || x_drawmode==DRAW16) {
       // for 16bpp, x_*_offset specifies the number of bits to shift
       unsigned long mask;
 
@@ -476,19 +481,24 @@ static void determineBPP(void)
 
    X_pixmapformats = XListPixmapFormats(X_display,&count);
 
+   // valid depth are 1, 4, 8, 15, 16, 24, 32
    if (X_pixmapformats) {
       int i;
-      x_bytepp=0;
+      x_bitpp=0;
       for (i=0;i<count;i++) {
-         if (X_pixmapformats[i].depth == x_depth*8) {
-            x_bytepp = X_pixmapformats[i].bits_per_pixel/8; break;
+         if (X_pixmapformats[i].depth == X_visualinfo.depth) {
+            x_bitpp = X_pixmapformats[i].bits_per_pixel;
+	    break;
          }
       }
-      if (x_bytepp==0)
+      if (x_bitpp==0)
          I_Error("Could not determine bits_per_pixel");
       XFree(X_pixmapformats);
    } else
       I_Error("Could not get list of pixmap formats");
+   x_bytepp = (x_bitpp+7)/8;
+   if( verbose )
+      fprintf(stderr,"Video depth %i, x_bitpp %i, x_bytepp %i\n", X_visualinfo.depth, x_bitpp, x_bytepp );
    return;
 }
 
@@ -566,11 +576,18 @@ static void createColorMap()
       X_cmap = XCreateColormap(X_display, RootWindow(X_display, X_screen),
                                X_visual, AllocAll);
    else if (x_bytepp==2)
+   {
 #if defined( ENABLE_DRAW15 ) || defined( ENABLE_DRAW16 )
+      // [WDJ] Cannot work unless table is init too
+      vid.drawmode = (x_bitpp==15)? DRAW15 : DRAW16;
+      vid.bitpp = x_bitpp;
+      R_Init_color8_translate ( 0 );
+      vid.bitpp = 8; // all draw is 8 bpp
       x_colormap2 = &color8.to16[0]; // cheat...19990119 by Kin
 #else
       x_colormap2 = malloc(2*256);
 #endif
+   }
    else if (x_bytepp==3)
       x_colormap3 = malloc(3*256);
    else if (x_bytepp==4)
@@ -892,8 +909,8 @@ void I_GetEvent(void)
 #else
           // If the event is from warping the pointer back to middle
           // of the screen then ignore it.
-          if ((X_event.xmotion.x == X_width/2) &&
-            (X_event.xmotion.y == X_height/2)) {
+          if ((X_event.xmotion.x == (vid.width>>1)) &&
+            (X_event.xmotion.y == (vid.height>>1))) {
             lastmousex = X_event.xmotion.x;
             lastmousey = X_event.xmotion.y;
             break;
@@ -912,15 +929,15 @@ void I_GetEvent(void)
           // Warp the pointer back to the middle of the window
           //  or we cannot move any further if it's at a border.
           if ((X_event.xmotion.x < 1) || (X_event.xmotion.y < 1)
-            || (X_event.xmotion.x > X_width-2)
-            || (X_event.xmotion.y > X_height-2))
+            || (X_event.xmotion.x > vid.width-2)
+            || (X_event.xmotion.y > vid.height-2))
           {
                 XWarpPointer(X_display,
                           None,
                           X_mainWindow,
                           0, 0,
                           0, 0,
-                          X_width/2, X_height/2);
+                          (vid.width>>1), (vid.height>>1) );
           }
 #endif // #WITH_DGA
         }
@@ -1122,17 +1139,17 @@ void I_OsPolling(void)
         event.data3 = -((newmousey - lastmousey) << 2);
         D_PostEvent(&event);
         if ((newmousex < 1) || (newmousey < 1)
-            || (newmousex > X_width-2)
-            || (newmousey > X_height-2)) {
+            || (newmousex > vid.width-2)
+            || (newmousey > vid.height-2)) {
 
             XWarpPointer(X_display,
                          None,
                          X_mainWindow,
                          0, 0,
                          0, 0,
-                         X_width/2, X_height/2);
-            lastmousex = X_width/2;
-            lastmousey = X_height/2;
+                         vid.width/2, vid.height/2);
+            lastmousex = vid.width/2;
+            lastmousey = vid.height/2;
         } else {
             lastmousex = newmousex;
             lastmousey = newmousey;
@@ -1162,76 +1179,95 @@ void I_UpdateNoBlit(void)
 //
 void I_FinishUpdate(void)
 {
-    static int  lasttic;
-    int         tics;
-    int         i;
-   if(rendermode==render_soft) {
+
+  if(rendermode==render_soft) {
     // draws little dots on the bottom of the screen
     if (devparm)
     {
+        static int  lasttic;
+        byte * dest = V_GetDrawAddr( 3, (vid.height-2) );
+        int tics;
+        int i;
 
         i = I_GetTime();
         tics = i - lasttic;
         lasttic = i;
         if (tics > 20) tics = 20;
-
+      
         for (i=0 ; i<tics*2 ; i+=2)
-            screens[0][ (vid.height-2)*vid.width + i + 3] = 0xff;
+	    V_DrawPixel( dest, i * vid.dupy, 0x04 ); // white
         for ( ; i<20*2 ; i+=2)
-            screens[0][ (vid.height-2)*vid.width + i + 3] = 0x0;
-
+	    V_DrawPixel( dest, i * vid.dupy, 0x00 );
     }
 
-    // colormap transformation dependend on X server color depth
-    if (x_bytepp == 2) {
+    if( x_bytepp == vid.bytepp ) {
+        // no translation
+        // draw is same bpp as video
+        // bpp = 8, bytepp = 1, multiply = 1 19990125 by Kin
+        if( vid.direct_rowbytes == vid.widthbytes )
+        {
+	    // if direct draw, then no copy needed
+	    if( vid.display != (byte*)image->data ) {
+	        memcpy(image->data, vid.display, vid.direct_size);
+	    }
+	}
+        else
+	    VID_BlitLinearScreen ( vid.display, image->data, vid.widthbytes,
+				   vid.height, vid.ybytes, vid.direct_rowbytes );
+    }
+    // colormap transformation dependent upon X server color depth
+    else if (x_bytepp == 2) { // 15 bpp, 16 bpp
        int x,y;
        int xstart = vid.width-1;
        unsigned char* ilineptr;
-       unsigned short* olineptr;
+       uint16_t* olineptr;
        y = vid.height;
        while (y--) {
-          olineptr =  (unsigned short *) &(image->data[y*X_width*x_bytepp]);
-          ilineptr = (unsigned char*) (screens[0]+y*X_width);
+          olineptr = (uint16_t *) &(image->data[y*vid.width*x_bytepp]);
+          ilineptr = (unsigned char*) (vid.display+(y*vid.width));
           x = xstart;
           do {
              olineptr[x] = x_colormap2[ilineptr[x]];
           } while (x--);
        }
     }
-    else if (x_bytepp == 3) {
+    else if (x_bytepp == 3) {  // 24 bpp
        int x,y;
        int xstart = vid.width-1;
        unsigned char* ilineptr;
        unsigned char* olineptr;
        y = vid.height;
        while (y--) {
-          olineptr =  (unsigned char *) &image->data[y*X_width*x_bytepp];
-          ilineptr = (unsigned char*) (screens[0]+y*X_width);
+#ifdef TILTVIEW
+          olineptr = (unsigned char *) &image->data[y*vid.width*3];
+#else
+          olineptr = (unsigned char *) &image->data[y*vid.direct_rowbytes];
+#endif
+          ilineptr = (unsigned char*) (vid.display+(y*vid.width));
           x = xstart;
          do {
             memcpy(olineptr+3*x,x_colormap3+3*ilineptr[x],3);
          } while (x--);
        }
     }
-    else if (x_bytepp == 4) {
+    else if (x_bytepp == 4) {  // 32 bpp
        int x,y;
        int xstart = vid.width-1;
        unsigned char* ilineptr;
-       unsigned int* olineptr;
+       uint32_t * olineptr;
        y = vid.height;
        while (y--) {
-          olineptr =  (unsigned int *) &(image->data[y*X_width*x_bytepp]);
-          ilineptr = (unsigned char*) (screens[0]+y*X_width);
+#ifdef TILTVIEW
+          olineptr = (unsigned char *) &image->data[y*vid.width<<2]; // *4
+#else
+          olineptr = (unsigned int *) &(image->data[y*vid.direct_rowbytes]);
+#endif
+          ilineptr = (unsigned char*) (vid.display+(y*vid.width));
           x = xstart;
           do {
              olineptr[x] = x_colormap4[ilineptr[x]];
           } while (x--);
        }
-    } else { // bpp = 8, bytepp = 1, multiply = 1 19990125 by Kin
-      // VID_BlitLinearScreen does not work????
-      //VID_BlitLinearScreen ( screens[0], image->data,vid.width,
-      //  vid.height, vid.width, vid.width );
-      memcpy(image->data, screens[0], vid.direct_size);
     }
 
     if (doShm)
@@ -1243,7 +1279,7 @@ void I_FinishUpdate(void)
                           image,
                           0, 0,
                           0, 0,
-                          X_width, X_height,
+                          vid.width, vid.height,
                           True ))
             I_Error("XShmPutImage() failed\n");
 
@@ -1268,12 +1304,12 @@ void I_FinishUpdate(void)
                         image,
                         0, 0,
                         0, 0,
-                        X_width, X_height );
+                        vid.width, vid.height );
 
     }
-   } else {
+  } else {
        HWD.pfnFinishUpdate(cv_vidwait.value);
-   }
+  }
 }
 
 
@@ -1282,7 +1318,7 @@ void I_FinishUpdate(void)
 //
 void I_ReadScreen(byte* scr)
 {
-    memcpy (scr, screens[0], vid.screen_size);
+    memcpy (scr, vid.display, vid.screen_size);
 }
 
 
@@ -1605,7 +1641,7 @@ static void destroyWindow(void)
        if( vid.buffer )
        {
            free(vid.buffer);
-           vid.buffer = vid.direct = screens[0] = NULL; // I want to have an access violation if something goes wrong
+           vid.buffer = vid.direct = NULL; // I want to have an access violation if something goes wrong
 	   vid.display = NULL;
 	   vid.screen1 = NULL;
        }
@@ -1647,101 +1683,101 @@ static void destroyWindow(void)
 
 static int createWindow(boolean isWindowedMode, int modenum)
 {
-   int                  oktodraw;
-   unsigned long        attribmask;
-   XSetWindowAttributes attribs;
-   XGCValues            xgcvalues;
-   XTextProperty        windowName, iconName;
-   int                  valuemask;
-   char                 *window_name = "Legacy";
-   char                 *icon_name = window_name;
+    int                  oktodraw;
+    unsigned long        attribmask;
+    XSetWindowAttributes attribs;
+    XGCValues            xgcvalues;
+    XTextProperty        windowName, iconName;
+    int                  valuemask;
+    char                 *window_name = "Legacy";
+    char                 *icon_name = window_name;
 
-   // change to the mode
-   if(isWindowedMode && vidmode_ext) {
-      XF86VidModeSwitchToMode(X_display, X_screen, vidmodes[0]);
-      vidmode_active = false;
-   }
-   else if(isWindowedMode && !vidmode_ext) { // probably not necessary
-      vidmode_active = false;
-   }
-   else {
-      XF86VidModeSwitchToMode(X_display, X_screen, vidmodes[vidmap[modenum]]);
-      vidmode_active = true;
-      // Move the viewport to top left
-      XF86VidModeSetViewPort(X_display, X_screen, 0, 0);
-   }
-   if(rendermode==render_soft) {
-     // setup attributes for main window
-     if (vidmode_active) {
+    // change to the mode
+    if(isWindowedMode && vidmode_ext) {
+        XF86VidModeSwitchToMode(X_display, X_screen, vidmodes[0]);
+        vidmode_active = false;
+    }
+    else if(isWindowedMode && !vidmode_ext) { // probably not necessary
+        vidmode_active = false;
+    }
+    else {
+        XF86VidModeSwitchToMode(X_display, X_screen, vidmodes[vidmap[modenum]]);
+        vidmode_active = true;
+        // Move the viewport to top left
+        XF86VidModeSetViewPort(X_display, X_screen, 0, 0);
+    }
+    if(rendermode==render_soft) {
+        // setup attributes for main window
+        if (vidmode_active) {
 #if 1       
-       // [WDJ] Submitted by pld-linux: Do not force CWColormap, it may be a truecolor mode.
-       attribmask = CWSaveUnder | CWBackingStore |
-           CWEventMask | CWOverrideRedirect;
+            // [WDJ] Submitted by pld-linux: Do not force CWColormap, it may be a truecolor mode.
+	    attribmask = CWSaveUnder | CWBackingStore |
+	         CWEventMask | CWOverrideRedirect;
 #else       
-       attribmask = CWColormap | CWSaveUnder | CWBackingStore |
-          CWEventMask | CWOverrideRedirect;
+	    attribmask = CWColormap | CWSaveUnder | CWBackingStore |
+	         CWEventMask | CWOverrideRedirect;
 #endif
 
-       attribs.override_redirect = True;
-       attribs.backing_store = NotUseful;
-       attribs.save_under = False;
-     } else {
+	    attribs.override_redirect = True;
+	    attribs.backing_store = NotUseful;
+	    attribs.save_under = False;
+	} else {
 #if 1       
-       // [WDJ] Submitted by pld-linux: Do not force CWColormap, it may be a truecolor mode.
-       attribmask = CWBorderPixel | CWEventMask;
+	    // [WDJ] Submitted by pld-linux: Do not force CWColormap, it may be a truecolor mode.
+	    attribmask = CWBorderPixel | CWEventMask;
 #else      
-       attribmask = CWBorderPixel | CWColormap | CWEventMask;
+	    attribmask = CWBorderPixel | CWColormap | CWEventMask;
 #endif
-     }
+	}
 
-     attribs.event_mask = KeyPressMask | KeyReleaseMask
+        attribs.event_mask = KeyPressMask | KeyReleaseMask
 #ifndef POLL_POINTER
-       | PointerMotionMask | ButtonPressMask | ButtonReleaseMask
+	    | PointerMotionMask | ButtonPressMask | ButtonReleaseMask
 #endif
-       | ExposureMask | StructureNotifyMask;
+	    | ExposureMask | StructureNotifyMask;
 
 #if 1
-     // [WDJ] Submitted by pld-linux: Do not force CWColormap, it may be a truecolor mode.
-     // Only in x_pseudo does X handle the colormap, not in TrueColor where we do.
-     if (x_pseudo) {
-        attribmask |= CWColormap;
-        attribs.colormap = X_cmap;
-     }
+        // [WDJ] Submitted by pld-linux: Do not force CWColormap, it may be a truecolor mode.
+        // Only in x_pseudo does X handle the colormap, not in TrueColor where we do.
+        if (x_pseudo) {
+	    attribmask |= CWColormap;
+	    attribs.colormap = X_cmap;
+	}
 #else
-     attribs.colormap = X_cmap;
+        attribs.colormap = X_cmap;
 #endif      
-     attribs.border_pixel = 0;
+        attribs.border_pixel = 0;
 
-     // create the main window
-     X_mainWindow = XCreateWindow(X_display,
+        // create the main window
+        X_mainWindow = XCreateWindow(X_display,
                                  RootWindow(X_display, X_screen),
                                  0, 0, // x, y,
-                                 X_width, X_height,
+                                 vid.width, vid.height,
                                  0, // borderwidth
-                                 8*x_depth, // depth
+                                 X_visualinfo.depth, // depth
                                  InputOutput,
                                  X_visual,
                                  attribmask,
                                  &attribs);
 
-     if(!X_mainWindow)
-        return 0;
+        if(!X_mainWindow)
+	    return 0;
 
-     // create the GC
-     valuemask = GCGraphicsExposures;
-     xgcvalues.graphics_exposures = False;
-     X_gc = XCreateGC(X_display,
+        // create the GC
+        valuemask = GCGraphicsExposures;
+        xgcvalues.graphics_exposures = False;
+        X_gc = XCreateGC(X_display,
                      X_mainWindow,
                      valuemask,
                      &xgcvalues );
     } else {
       // Hardware renderer
-//      X_mainWindow = HWD.pfnHookXwin(X_display, X_width, X_height, vidmode_active);
-      // [WDJ] Call direct
-      X_mainWindow = HookXwin(X_display, X_width, X_height, vidmode_active);
-      if(X_mainWindow == 0) {
-        return 0;
-      }
+//      X_mainWindow = HWD.pfnHookXwin(X_display, vid.width, vid.height, vidmode_active);
+        // [WDJ] Call direct
+        X_mainWindow = HookXwin(X_display, vid.width, vid.height, vidmode_active);
+        if(X_mainWindow == 0) {
+	    return 0;
+	}
     }
 
     // moved here
@@ -1750,10 +1786,10 @@ static int createWindow(boolean isWindowedMode, int modenum)
 
     // set size hints for window manager, so that resizing isn't possible
     X_size.flags = USPosition | PSize | PMinSize | PMaxSize;
-    X_size.min_width = X_width;
-    X_size.min_height = X_height;
-    X_size.max_width = X_width;
-    X_size.max_height = X_height;
+    X_size.min_width = vid.width;
+    X_size.min_height = vid.height;
+    X_size.max_width = vid.width;
+    X_size.max_height = vid.height;
 
     // window and icon name for the window manager
     XStringListToTextProperty(&window_name, 1, &windowName);
@@ -1810,21 +1846,27 @@ static int createWindow(boolean isWindowedMode, int modenum)
                   &dont_care, &dont_care,
                   &lastmousex, &lastmousey,
                   &dont_care);
-  if(rendermode==render_soft) {
-    if (doShm)
-    {
+
+    vid.widthbytes = vid.width * vid.bytepp;
+    vid.ybytes = vid.widthbytes;
+    vid.screen_size = vid.ybytes * vid.height;
+
+    if(rendermode==render_soft) {
+
+      if (doShm)
+      {
 
         X_shmeventtype = XShmGetEventBase(X_display) + ShmCompletion;
 
         // create the image
         image = XShmCreateImage(X_display,
                                 X_visual,
-                                8*x_depth,
+                                X_visualinfo.depth,
                                 ZPixmap,
                                 0,
                                 &X_shminfo,
-                                X_width,
-                                X_height );
+                                vid.width,
+                                vid.height );
 
         grabsharedmemory(image->bytes_per_line * image->height);
 
@@ -1840,48 +1882,58 @@ static int createWindow(boolean isWindowedMode, int modenum)
         if (!XShmAttach(X_display, &X_shminfo))
             I_Error("XShmAttach() failed in InitGraphics()");
 
-    }
-    else
-    {
-        image = XCreateImage(X_display,
+      }
+      else
+      {
+	image = XCreateImage(X_display,
                              X_visual,
-                             8*x_depth,
+                             X_visualinfo.depth,
                              ZPixmap,
                              0,
-                             (char*)malloc(X_width * X_height * x_depth),
-                             X_width, X_height,
-                             8*x_depth,
-                             X_width*x_bytepp );
+                             (char*)malloc(vid.width * vid.height * x_bytepp),
+                             vid.width, vid.height,
+                             8*x_bytepp,
+                             vid.width*x_bytepp );
 
+      }
+
+      // [WDJ] Draw 8pp and translate to other bpp in FinishUpdate
+      // unless -bpp or -native
+      vid.buffer = (unsigned char *) malloc (vid.screen_size * NUMSCREENS);
+      vid.display = vid.buffer;
+      vid.screen1 = vid.buffer + vid.screen_size;
+#ifdef TILTVIEW
+      // FIXME: TILTVIEW must not access image, it may be different bpp
+      // FIXME: external access to direct is not allowed
+      // Forces Direct to be buffer
+      vid.direct = vid.buffer;
+      vid.direct_rowbytes = vid.ybytes;
+      vid.direct_size = vid.screen_size;
+#else
+      // Direct is video
+      vid.direct = image->data;
+      vid.direct_rowbytes = vid.width * x_bytepp;
+      vid.direct_size = vid.direct_rowbytes * vid.height;
+      if( x_bytepp == vid.bytepp && vid.direct_rowbytes == vid.widthbytes )
+      {
+	  // can draw direct into image
+	  vid.display = vid.direct;
+	  fprintf(stderr, "Draw direct\n");
+      }
+#endif
+      if( verbose )
+      {
+	  fprintf(stderr, "Drawing %i bpp,  video at % i bpp\n", vid.bitpp, x_bitpp );
+      }
+      vid.fullscreen = ! isWindowedMode;
+
+      // added for 1.27 19990220 by Kin
+      graphics_started = 1;
+    } else {
+      HWR_Startup();
+      graphics_started = ((X_mainWindow==0)?0:1);
     }
-
-    //    if (multiply == 1 && x_depth == 1)
-    //  vid.buffer = vid.direct = screens[0] =
-    //        (unsigned char *) (image->data);
-    //    else
-    // forced to use this in legacy 19990125 by Kin
-    // [WDJ] Draw 8pp and translate to other bpp in FinishUpdate
-    vid.drawmode = DRAW8PAL;
-    vid.widthbytes = vid.width; // always 8bpp, 1 byte per pixel
-    vid.ybytes = vid.widthbytes;
-    vid.screen_size = vid.ybytes * vid.height;
-    vid.buffer = vid.direct = screens[0] =
-       (unsigned char *) malloc (vid.screen_size * NUMSCREENS);
-    vid.display = vid.buffer;
-    vid.screen1 = vid.buffer + vid.screen_size;
-    // Direct is buffer (for now), FIXME: external access to direct is not allowed
-    vid.direct_rowbytes = vid.ybytes;
-    vid.direct_size = vid.screen_size;
-    vid.fullscreen = ! isWindowedMode;
-
-
-    // added for 1.27 19990220 by Kin
-    graphics_started = 1;
-  } else {
-    HWR_Startup();
-    graphics_started = ((X_mainWindow==0)?0:1);
-  }
-   return 1;
+    return 1;
 }
 
 void VID_PrepareModeList(void)
@@ -2002,10 +2054,7 @@ int VID_SetMode(int modenum) {
         vid.height = windowedModes[modenum][1];
     }
 
-    vid.direct_rowbytes = vid.width;
     vid.recalc = 1;
-    X_width = vid.width; // FIXME: shall we clean up X_[width,height]?
-    X_height = vid.height; // they are identical to vid.[width,height]!!!
     CONS_Printf("Setting mode: %dx%d\n", vid.width, vid.height);
 
     if(!createWindow(isWindowedMode, modenum))
@@ -2020,21 +2069,17 @@ int VID_SetMode(int modenum) {
 
 void I_StartupGraphics(void)
 {
-
     char      *displayname;
-    //int        pnum;
     void      *dlptr;
-    static int firsttime = 1; // dirty
+
+    if(graphics_started)
+        return;
 
     if(dedicated)
     {
         rendermode = render_none;
         return;
     }
-
-    if (!firsttime)
-       return;
-    firsttime = 0;
 
    // FIXME: catch other signals as well?
     signal(SIGINT, (void (*)(int)) I_Quit);
@@ -2045,11 +2090,10 @@ void I_StartupGraphics(void)
     // setup vid 19990110 by Kin
     vid.bytepp = 1; // not optimized yet...
     vid.bitpp = 8;
-    vid.drawmode = DRAW8PAL;
 
     // default size for startup
-    vid.width = X_width = 320;
-    vid.height = X_height = 200;
+    vid.width = 320;
+    vid.height = 200;
 
     displayname = initDisplay();
 
@@ -2125,11 +2169,46 @@ void I_StartupGraphics(void)
 
     findVisual();
 
-    determineColorMask();
-
     determineBPP();
 
     checkForShm(displayname);
+
+    switch(req_drawmode)
+    {
+     case REQ_specific:
+       if( x_bitpp != req_bitpp )
+       {
+	   fprintf(stderr,"Not in %i bpp mode\n", req_bitpp );
+	   goto abort_error;
+       }
+       break;
+     case REQ_highcolor:
+       if( x_bitpp == 15 || x_bitpp == 16 ) goto accept_bitpp;
+       fprintf(stderr,"Do not have highcolor mode, use 8bpp\n");
+       break;
+     case REQ_truecolor:
+       if( x_bitpp == 24 || x_bitpp == 32 ) goto accept_bitpp;
+       fprintf(stderr,"Do not have truecolor mode, use 8bpp\n");
+       break;
+     case REQ_native:
+      
+     accept_bitpp: 
+       if( V_CanDraw( x_bitpp ))
+       {
+	   vid.bitpp = x_bitpp;
+	   vid.bytepp = x_bytepp;
+	   fprintf(stderr, "Video %i bpp (%i bytes)\n", vid.bitpp, vid.bytepp);
+       }
+       else if( verbose )
+       {
+	   // Use 8 bit and do the palette translation.
+	   fprintf(stderr,"%i bpp rejected\n", vid.bitpp );
+       }
+     default:
+       break;
+    }
+
+    determineColorMask();
 
     createColorMap();
 
@@ -2139,9 +2218,14 @@ void I_StartupGraphics(void)
     // startupscreen does not need a grabbed mouse
     doUngrabMouse();
 
+    vid.recalc = true;
     graphics_started = 1;
 
     return;
+
+abort_error:
+    // cannot return without a display screen
+    I_Error("StartupGraphics Abort\n");
 }
 
 void I_ShutdownGraphics(void)

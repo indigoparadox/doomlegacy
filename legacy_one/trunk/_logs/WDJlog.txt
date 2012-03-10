@@ -2325,3 +2325,14 @@ patchfile = w80_video_init.patch
 Change V_Init to V_Init_Draw, and make it responsible for setup of
 draw variables for DrawPixel and other v_video draw routines.
 Have it make needed palette (palette was missing during intro screens).
+
+*** w80_linux_xshm
+patchfile = w80_linux_xshm.patch
+- committed revision 918   by wesley johnson
+Update linux xshm to latest interface and improve code.
+Can handle drawing in -native bpp mode, -highcolor, -truecolor modes, and
+using -bpp.
+It will setup direct draw to the image buffer using native bpp (-native).
+This does not change the hardware bpp, nor the previous method of leaving the
+hardware bpp at the system setting, and converting our 8bpp draw buffers to it.
+Changing hardware bpp is possible, I just cannot find the docs at this time.
