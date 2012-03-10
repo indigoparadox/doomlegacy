@@ -481,11 +481,11 @@ void D_Display(void)
 
     //added:21-01-98: check for change of screen size (video mode)
     if (setmodeneeded >= 0)
+    {
         SCR_SetMode();  // change video mode
-
-    if (vid.recalc)
         //added:26-01-98: NOTE! setsizeneeded is set by SCR_Recalc()
         SCR_Recalc();
+    }
 
     // change the view size if needed
     if (setsizeneeded)
@@ -2102,6 +2102,8 @@ void D_DoomMain()
     CON_Init();
 
     D_RegisterClientCommands(); //Hurdler: be sure that this is called before D_CheckNetGame
+
+    // [WDJ] This triggers the first draw to the screen
     D_RegisterMiscCommands();	//[WDJ] more than just DeathMatch
     ST_AddCommands();
     T_AddCommands();
@@ -2396,6 +2398,10 @@ void Help( void )
 	"-mb num         Pre-allocate num MiB of memory\n"
 	"-width num      Video mode width\n"
 	"-height num     Video mode height\n"
+	"-highcolor      Request 15bpp or 16bpp\n"
+	"-truecolor      Request 24bpp ro 32bpp\n"
+	"-native         Video mode in native bpp\n"
+	"-bpp num        Video mode in (8,15,16,24,32) bpp\n"
 	"-nocheckwadversion   Ignore legacy.wad version\n"
 #ifdef BEX_LANGUAGE
 	"-lang name      Load BEX language file name.bex\n"

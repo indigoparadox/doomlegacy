@@ -197,6 +197,8 @@ void SCR_SetMode (void)
     //  setup the right draw routines for either 8bpp or 16bpp
     //
     //CONS_Printf ("SCR_SetMode : vid.bitpp is %d\n", vid.bitpp);
+    // set the apprpriate drawer for the sky (tall or short)
+    // vid.bitpp is already protected by V_Init_Draw
     switch( vid.bitpp )
     {
      case 8:
@@ -221,6 +223,7 @@ void SCR_SetMode (void)
         skydrawerfunc[0] = R_DrawColumn_8;      //old skies
         skydrawerfunc[1] = R_DrawSkyColumn_8;   //tall sky
         break;
+#ifdef ENABLE_DRAW15
      case 15:
         vid.drawmode = DRAW15;
         mask_01111 = 0x3DEF;  // 0 01111 01111 01111 mask out the upper bit of R,G,B
@@ -229,6 +232,8 @@ void SCR_SetMode (void)
         mask_11100 = 0x739C;  // 0 11100 11100 11100 mask out the lowest bits of R,G,B
         mask_11000 = 0x6318;  // 0 11000 11000 11000 mask out the lowest bits of R,G,B
         goto highcolor_common;
+#endif
+#ifdef ENABLE_DRAW16
      case 16:
         vid.drawmode = DRAW16;
         mask_01111 = 0x7BEF;  // 01111 011111 01111 mask out the upper bit of R,G,B
@@ -236,9 +241,11 @@ void SCR_SetMode (void)
         mask_11110 = 0xF7DE;  // 11110 111110 11110 mask out the lowest bit of R,G,B
         mask_11110 = 0xE79C;  // 11100 111100 11100 mask out the lowest bits of R,G,B
         mask_11100 = 0xC718;  // 11000 111000 11000 mask out the lowest bits of R,G,B
+        goto highcolor_common;
+#endif
 
-     highcolor_common:
 #if defined( ENABLE_DRAW15 ) || defined( ENABLE_DRAW16 )
+     highcolor_common:
         CONS_Printf ("using highcolor mode\n");
 
         colfunc = basecolfunc = R_DrawColumn_16;
@@ -257,12 +264,10 @@ void SCR_SetMode (void)
         skydrawerfunc[0] = R_DrawColumn_16;
         skydrawerfunc[1] = R_DrawSkyColumn_16;
         break;
-#else
-        goto bpp_err;
 #endif
+#ifdef ENABLE_DRAW24
      case 24:
         vid.drawmode = DRAW24;
-#ifdef ENABLE_DRAW24
         colfunc = basecolfunc = R_DrawColumn_24;
         skincolfunc = R_DrawTranslatedColumn_24;
         transcolfunc = R_DrawTranslucentColumn_24;
@@ -279,12 +284,10 @@ void SCR_SetMode (void)
         skydrawerfunc[0] = R_DrawColumn_24;
         skydrawerfunc[1] = R_DrawSkyColumn_24;
         break;
-#else
-         goto bpp_err;
 #endif
+#ifdef ENABLE_DRAW32
      case 32:
         vid.drawmode = DRAW32;
-#ifdef ENABLE_DRAW32
         colfunc = basecolfunc = R_DrawColumn_32;
         skincolfunc = R_DrawTranslatedColumn_32;
         transcolfunc = R_DrawTranslucentColumn_32;
@@ -301,8 +304,6 @@ void SCR_SetMode (void)
         skydrawerfunc[0] = R_DrawColumn_32;
         skydrawerfunc[1] = R_DrawSkyColumn_32;
         break;
-#else
-        goto bpp_err;
 #endif
      default:
         goto bpp_err;
@@ -314,13 +315,11 @@ void SCR_SetMode (void)
     // set fuzzcolfunc
     CV_Fuzzymode_OnChange();
 
-    // set the apprpriate drawer for the sky (tall or short)
-
     setmodeneeded = -1;
     return;
 
  bpp_err:
-    I_Error ("unknown bits per pixel mode %d\n", vid.bitpp);
+    I_Error ("SetMode: cannot draw %i bits per pixel\n", vid.bitpp);
 }
 
 
@@ -333,16 +332,22 @@ void CV_Fuzzymode_OnChange()
      fuzzcolfunc = (cv_fuzzymode.value) ? R_DrawFuzzColumn_8 : R_DrawTranslucentColumn_8;
      break;
    default:
+#if defined(ENABLE_DRAW15) || defined(ENABLE_DRAW16)
    case DRAW15:
    case DRAW16:
      fuzzcolfunc = (cv_fuzzymode.value) ? R_DrawFuzzColumn_16 : R_DrawTranslucentColumn_16;
      break;
+#endif
+#ifdef ENABLE_DRAW24
    case DRAW24:
      fuzzcolfunc = (cv_fuzzymode.value) ? R_DrawFuzzColumn_24 : R_DrawTranslucentColumn_24;
      break;
+#endif
+#ifdef ENABLE_DRAW32
    case DRAW32:
      fuzzcolfunc = (cv_fuzzymode.value) ? R_DrawFuzzColumn_32 : R_DrawTranslucentColumn_32;
      break;
+#endif
   }
 }
 
@@ -371,7 +376,7 @@ void SCR_Startup (void)
     ASM_PatchRowBytes(vid.width);
 #endif
 
-    V_Init();
+    V_Init_Draw();
 
     V_SetPalette (0);
 }
@@ -379,11 +384,13 @@ void SCR_Startup (void)
 
 //added:24-01-98:
 //
+// Recalc settings for game drawing, trigger updates to view size and status bar.
 // Called at new frame, if the video mode has changed
-// Called from D_Display, when vid.recalc (set by VID_SetMode in i_video.c)
+// Called from D_DoomLoop upon entry, after SCR_SetMode.
+// Called from D_Display upon video mode change, after SCR_SetMode.
 void SCR_Recalc (void)
 {
-    if(dedicated)
+    if(dedicated || ! vid.recalc)
         return;
 
     //added:18-02-98: scale 1,2,3 times in x and y the patches for the
@@ -428,16 +435,8 @@ void SCR_Recalc (void)
     // r_things : negonearray, screenheightarray allocated max. size.
 
     // set the screen[x] ptrs on the new vidbuffers
-    V_Init();
+    V_Init_Draw();
 
-#ifdef ENABLE_DRAWEXT
-    //fab highcolor
-    if ( vid.bytepp > 1 )  // highcolor, truecolor
-    {
-        R_Init_color8_translate( 1 );
-    }
-#endif
-    
     // scr_viewsize doesn't change, neither detailLevel, but the pixels
     // per screenblock is different now, since we've changed resolution.
     R_SetViewSize ();   //just set setsizeneeded true now ..

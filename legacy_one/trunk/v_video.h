@@ -103,7 +103,7 @@ extern  consvar_t cv_bright;	// input to gammafunc
 void V_Init_VideoControl( void );
 
 // Allocates buffer screens, call before R_Init.
-void V_Init (void);
+void V_Init_Draw (void);
 
 // Set the current RGB palette lookup to use for palettized graphics
 void V_SetPalette( int palettenum );

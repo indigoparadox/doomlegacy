@@ -2112,6 +2112,7 @@ void R_Init_color8_translate ( boolean himap )
 	color8_done = vid.bitpp;
     }
 
+#ifdef HIGHCOLORMAPS
 #if defined( ENABLE_DRAW15 ) || defined( ENABLE_DRAW16 )
     if( himap && (hicolormaps == NULL))
     {
@@ -2120,6 +2121,7 @@ void R_Init_color8_translate ( boolean himap )
         for (i=0;i<16384;i++)
 	    hicolormaps[i] = i<<1;
      }
+#endif
 #endif
 }
 #endif
