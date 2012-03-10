@@ -2336,3 +2336,12 @@ It will setup direct draw to the image buffer using native bpp (-native).
 This does not change the hardware bpp, nor the previous method of leaving the
 hardware bpp at the system setting, and converting our 8bpp draw buffers to it.
 Changing hardware bpp is possible, I just cannot find the docs at this time.
+
+*** w80_linux_ggi
+patchfile = w80_linux_ggi.patch
+- committed revision 919   by wesley johnson
+Update linux ggi to latest interface and improve code.
+Can handle drawing in -highcolor, -truecolor modes, and using -bpp.
+Will change hardware bpp.
+Does not detect native bpp.
+This has not been test compiled as I do not have ggi libraries.

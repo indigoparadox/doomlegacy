@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -77,27 +77,31 @@
 
 boolean showkey=0; // force to no 19990118 by Kin
 int vid_modenum = 0; // index for vid mode list 19990119 by Kin
-// added for 1.27 19990220 by Kin
-rendermode_t    rendermode=render_soft;
-byte graphics_started = 0;
-boolean highcolor = false;
 
+#ifdef EXPAND_BUFFER_ENABLE
+// incomplete and unused
 boolean expand_buffer = false;
+//static byte* out_buffer;
+#endif
+
 static ggi_visual_t screen;
 static const ggi_pixelformat* pixelformat;
-static int multiply = 1;
-//static byte* out_buffer;
 
-static int ggi_screenwidth, ggi_screenheight;
+#ifdef MULTIPLY_ENABLE
+// incomplete and unused
+static int multiply = 1;
+#endif
 
 // Mask of events that we are interested in
 static const ggi_event_mask ev_mask = \
 emKeyPress | emKeyRelease | emPtrRelative | emPtrButtonPress | \
 emPtrButtonRelease;
 
+#if 0
 // Unused vars to preserve in config file
 int leds_always_off;
 int use_vsync;
+#endif
 
 ////////////////////////////////////////////////////////////////
 // Input handling utility functions
@@ -211,7 +215,9 @@ void I_StartFrame (void)
 {
   // If we reuse the blitting buffer in the next rendering,
   // make sure it is reusable now
+#ifdef EXPAND_BUFFER_ENABLE
   if (!expand_buffer)
+#endif
     ggiFlush(screen);
 }
 
@@ -319,12 +325,12 @@ void I_UpdateNoBlit (void)
 void I_FinishUpdate (void)
 {
 
-  int           i;
-
   // draws little dots on the bottom of the screen
   if (devparm) {
     static int  lasttic;
-    int         tics;
+    int  tics;
+    int  i;
+    byte * dest = V_GetDrawAddr( 3, (vid.height-2) );
 
     i = I_GetTime();
     tics = i - lasttic;
@@ -332,19 +338,20 @@ void I_FinishUpdate (void)
     if (tics > 20) tics = 20;
 
     for (i=0 ; i<tics*2 ; i+=2)
-      screens[0][ (vid.height-1)*vid.width + i] = 0xff;
+      V_DrawPixel( dest, i * vid.dupy, 0x04 ); // white
     for ( ; i<20*2 ; i+=2)
-      screens[0][ (vid.height-1)*vid.width + i] = 0x0;
+      V_DrawPixel( dest, i * vid.dupy, 0x00 );
   }
 
+#ifdef EXPAND_BUFFER_ENABLE
   // scales the screen size before blitting it
   // disabled for now 19990221 by Kin
   //  if (expand_buffer)
   //  (*I_ExpandImage)(out_buffer, screens[0]);
+#endif
 
   // Blit it
-  ggiPutBox(screen, 0, 0, ggi_screenwidth,
-            ggi_screenheight, vid.display);
+  ggiPutBox(screen, 0, 0, vid.width, vid.height, vid.display);
 
 }
 
@@ -359,7 +366,7 @@ void I_ReadScreen (byte* scr)
 void I_SetPalette(RGBA_t* palette)
 {
 
-  if (!highcolor) {
+  if (vid.bitpp == 8) {
     ggi_color ggi_pal[256];
     ggi_color* p;
     int i;
@@ -461,6 +468,9 @@ int VID_GetModeForSize( int w, int h) {
 
 void I_StartupGraphics(void)
 {
+  char * req_errmsg = NULL;
+  byte  request_bitpp = 0;
+  byte  alt_request_bitpp = 0;
   int i;
 
   fprintf(stderr, "I_StartupGraphics:");
@@ -471,6 +481,7 @@ void I_StartupGraphics(void)
   if (!(screen = ggiOpen(NULL))) // Open default visual
     I_Error("Failed to get default visual\n");
 
+#ifdef MULTIPLY_ENABLE
   { // Check for screen enlargement
     char str[3] = { '-', 0, 0 };
     int n;
@@ -480,14 +491,62 @@ void I_StartupGraphics(void)
       if (M_CheckParm(str)) multiply = n;
     }
   }
+#endif
 
-  highcolor = (req_drawmode == REQ_highcolor);
+#if 0
+  // detect native bpp
+  vid.bitpp == screen.bpp; // default bpp  FIXME
+#endif
 
-  for(i=0,rescount=0;i<MAX_GGIMODES;i++) {
-    if(!ggiCheckSimpleMode(screen,temp_res[i].x,temp_res[i].y,2,
-                           (highcolor?GT_15BIT:GT_8BIT),&vidmodes[rescount]))
+  switch(req_drawmode)
+  {
+#if 0
+   case REQ_native:
+     if( V_CanDraw( vid.bitpp )) {
+         request_bitpp = vid.bitpp;
+     }else{
+	 // Use 8 bit and do the palette lookup.
+	 if( verbose )
+	     fprintf(stderr,"Native %i bpp rejected\n", vid.bitpp );
+	 request_bitpp = 8;
+     }
+     break;
+#endif
+   case REQ_specific:
+     request_bpp = req_bitpp;
+     break;
+   case REQ_highcolor:
+     req_errmsg = "highcolor";
+     request_bitpp = 15;
+     alt_request_bitpp = 16;
+//     if( vid.bitpp == 16 )  request_bitpp = 16;  // native preference
+     break;
+   case REQ_truecolor:
+     req_errmsg = "truecolor";
+     request_bitpp = 24;
+     alt_request_bitpp = 32;
+//     if( vid.bitpp == 32 )  request_bitpp = 32;  // native preference
+     break;
+   default:
+     request_bitpp = 8;
+     break;
+  }
+   
+  // try the requested bpp, then alt, then 8bpp
+  for(;;)
+  {
+    int gt_parm = (request_bpp==8)? GT_8BIT
+       : (request_bpp==15)? GT_15BIT
+       : (request_bpp==16)? GT_16BIT
+       : (request_bpp==24)? GT_24BIT
+       : (request_bpp==32)? GT_32BIT ;
+    // check available modes
+    rescount=0;
+    for(i=0;i<MAX_GGIMODES;i++) {
+      if(!ggiCheckSimpleMode(screen,temp_res[i].x,temp_res[i].y,2,
+			     gt_parm, &vidmodes[rescount]))
       {
-        memcpy(&real_res[rescount],&temp_res[i],sizeof(ggi_coord));
+	memcpy(&real_res[rescount],&temp_res[i],sizeof(ggi_coord));
         sprintf(vidname[rescount],"%4dx%4d",temp_res[i].x,temp_res[i].y);
         fprintf(stderr,"mode %s\n",vidname[rescount]);
         rescount++;
@@ -510,11 +569,32 @@ void I_StartupGraphics(void)
           }
         }
       }
+    }
+    if( rescount )  goto found_modes;
+    if( request_bitpp == 8 )  break;
+    if(req_drawmode == REQ_specific)
+    {
+      fprintf(stderr,"No %i bpp modes\n", req_bitpp );
+      goto abort_error;
+    }
+    if( alt_request_bitpp )
+    {
+      if(request_bitpp != alt_request_bitpp)
+      {
+	request_bitpp = alt_request_bitpp;
+	continue;
+      }
+      fprintf(stderr,"No %s modes\n", req_errmsg );
+    }
+    request_bitpp = 8;  // default last attempt
   }
   if(!rescount) {
     I_Error("No video modes available!");
-    return;
   }
+
+found_modes:
+  vid.bitpp = request_bpp;
+  vid.bytepp = (request_bpp + 7) >> 3;
   vid.buffer = NULL;
   vid.display = NULL;
   vid.screen1 = NULL;
@@ -526,45 +606,49 @@ void I_StartupGraphics(void)
   ggiSetEventMask(screen, ev_mask);
   // added for 1.27 19990220 by Kin
   graphics_started = 1;
+  return;
 
+abort_error:
+    // cannot return without a display screen
+    I_Error("StartupGraphics Abort\n");
 }
 
 int VID_SetMode(int modenum) {
 
-  if(vid.buffer) free(vid.buffer);
-  //if(expand_buffer) {
-  //  if(out_buffer) free(out_buffer);
-  //}
+  if (ggiSetMode(screen,&vidmodes[modenum])) {
+    I_Error("Failed to set mode");
+//    return 0;
+  }
+   
+  // Commit to the new mode
 
-  vid.bytepp = (highcolor?2:1);
-  vid.bitpp = (highcolor?15:8);  // see highcolor above
-  vid.drawmode = (highcolor? DRAW15:DRAW8PAL);
-  ggi_screenwidth = vid.width = real_res[modenum].x;
-  ggi_screenheight = vid.height = real_res[modenum].y;
+  vid.width = real_res[modenum].x;
+  vid.height = real_res[modenum].y;
   vid.widthbytes = vid.width * vid.bytepp;
-  vid.direct_rowbytes = vid.width * vid.bytepp;
-  vid.direct_size = vid.direct_rowbytes * vid.height;
   vid.ybytes = vid.width * vid.bytepp;
   vid.screen_size = vid.ybytes * vid.height;
+
+  if(vid.buffer) free(vid.buffer);
+  vid.buffer = (unsigned char *) malloc (vid.screen_size * NUMSCREENS);
+  vid.display = vid.buffer;
+  vid.screen1 = vid.buffer + vid.screen_size;
+  // direct buffer drawing
+  vid.direct = vid.buffer;
+  vid.direct_rowbytes = vid.width * vid.bytepp;
+  vid.direct_size = vid.direct_rowbytes * vid.height;
+
   vid.fullscreen = 1; // usually, it does not know
   vid.recalc = 1;
 
-  if (ggiSetMode(screen,&vidmodes[modenum])) {
-    I_Error("Failed to set mode");
-    return 0;
-  }
-
-  vid.buffer = vid.direct =
-    (unsigned char *) malloc (vid.screen_size * NUMSCREENS);
-  vid.display = vid.buffer;
-  vid.screen1 = vid.buffer + vid.screen_size;
-
+#ifdef EXPAND_BUFFER_ENABLE
+  //if(expand_buffer) {
+  //  if(out_buffer) free(out_buffer);
+  //}
   // Allocate enlarement buffer if needed
   //if (expand_buffer)
-  //  out_buffer = malloc(ggi_screenheight*ggi_screenwidth*vid.bytepp);
+  //  out_buffer = malloc(vid.screen_size);
   //else
   //out_buffer = (byte*)screens[0];
-
+#endif
   return 1;
-
 }
