@@ -567,7 +567,6 @@ void R_Render2sidedMultiPatchColumn (column_t* column)
     }
 
     // [WDJ] Draws only within borders
-//    if (dc_yl >= vid.height || dc_yh < 0)
     if (dc_yl >= rdraw_viewheight || dc_yh < 0)
       return;
 
@@ -644,9 +643,6 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
         // world coord, relative to viewer
         windowclip_top = frontsector->ceilingheight - viewz;
 	windowclip_bottom = frontsector->floorheight - viewz;
-// [WDJ] original failed, not screen coord, no perspective, it blocked display entirely 
-//        dm_windowtop = frontsector->ceilingheight;
-//        dm_windowbottom = frontsector->floorheight;
     }
     else
         colfunc = basecolfunc;

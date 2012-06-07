@@ -2345,3 +2345,17 @@ Can handle drawing in -highcolor, -truecolor modes, and using -bpp.
 Will change hardware bpp.
 Does not detect native bpp.
 This has not been test compiled as I do not have ggi libraries.
+
+*** w81_cleaning
+patchfile = w81_cleaning.patch
+- committed revision 920   by wesley johnson
+Fix comments, add {}, remove dead code and obsolete commented out lines.
+Align code.
+Cleanup some messy code arrangements to cleaner equivalent.
+Rename enum items cl_ to CLM_.
+Rename SendRam to SendData.
+Rename enum freemethode_t with SF_ to enum TAH_e with TAH_,
+because of confusion with other enums, and gave the enum more descriptive names.
+Make KICK defines into an enum kick_msg_e.
+Rename enum filestatus_t to filestatus_e.
+Rename fwriteshort to fwrite16, fwritelong to fwrite32.

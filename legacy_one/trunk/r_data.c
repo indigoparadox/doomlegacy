@@ -470,7 +470,6 @@ byte* R_GenerateTexture (int texnum)
 
         // Interface for texture picture format
         // use the single patch's, single column lookup
-//        colofs = (unsigned int*)(txcblock + 8);
         colofs = (uint32_t*)&(((patch_t*)txcblock)->columnofs);
         // colofs from patch are relative to start of table
         for (i=0; i<texture->width; i++)

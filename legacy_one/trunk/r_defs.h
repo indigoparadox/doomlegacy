@@ -252,9 +252,9 @@ typedef enum
   FF_RENDERALL         = 0xC,    //Render everything?
   FF_SWIMMABLE         = 0x10,   //Can we swim?
   FF_NOSHADE           = 0x20,   //Does it mess with the lighting?
-  FF_CUTSOLIDS         = 0x40,   //Does it cut out hidden solid pixles?
-  FF_CUTEXTRA          = 0x80,   //Does it cut out hidden translucent pixles?
-  FF_CUTLEVEL          = 0xC0,   //Does it cut out all hidden pixles?
+  FF_CUTSOLIDS         = 0x40,   //Does it cut out hidden solid pixels?
+  FF_CUTEXTRA          = 0x80,   //Does it cut out hidden translucent pixels?
+  FF_CUTLEVEL          = 0xC0,   //Does it cut out all hidden pixels?
   FF_CUTSPRITES        = 0x100,  //Final Step in 3D water
   FF_BOTHPLANES        = 0x200,  //Render both planes all the time?
   FF_EXTRA             = 0x400,  //Does it get cut by FF_CUTEXTRAS?

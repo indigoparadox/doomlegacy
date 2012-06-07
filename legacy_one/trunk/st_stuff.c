@@ -479,13 +479,9 @@ static void ST_refreshBackground(void)
         V_DrawScaledPatch(st_x, ST_Y, flags, sbar);
 
         // draw the faceback for the statusbarplayer
-        if (plyr->skincolor==0)
-            colormap = & reg_colormaps[0]; // [0]
-        else
-        {
-//            colormap = translationtables - 256 + (plyr->skincolor<<8);
-            colormap = SKIN_TO_SKINMAP( plyr->skincolor );
-	}
+        colormap = (plyr->skincolor) ?
+	     SKIN_TO_SKINMAP( plyr->skincolor )
+	   : & reg_colormaps[0]; // default green skin
 
         V_DrawMappedPatch (st_x+ST_FX, ST_Y, flags, faceback, colormap);
 

@@ -524,11 +524,15 @@ static void AM_initVariables(void)
     m_w = FTOM(f_w);
     m_h = FTOM(f_h);
 
-    // find player to center on initially
+    // find player to center-on initially
     if (!playeringame[pnum = consoleplayer])
+    {
         for (pnum=0;pnum<MAXPLAYERS;pnum++)
+        {
             if (playeringame[pnum])
                 break;
+	}
+    }
 
     plr = &players[pnum];
     m_curpos.x = plr->mo->x;
@@ -1419,13 +1423,9 @@ void AM_drawPlayers(void)
             color = 246; // *close* to black
         else
         {
-            if(p->skincolor==0)
-                color = GREENS;
-            else
-	    {
-//                color = *(translationtables + ((p->skincolor-1)<<8) +GREENS+8);
-                color = SKIN_TO_SKINMAP(p->skincolor)[GREENS+8];
-	    }
+            color = (p->skincolor) ?
+	       SKIN_TO_SKINMAP(p->skincolor)[GREENS+8]
+	     : GREENS ;  // default
         }
 
         AM_drawLineCharacter (
