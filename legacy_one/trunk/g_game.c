@@ -1704,6 +1704,7 @@ void G_DoCompleted (void)
                 F_StartFinale();
                 return;
             }
+	    break; // [WDJ] 4/11/2012  map 8 is not secret level, and prboom and boom do not fall thru here.
           case 9:
             for (i=0 ; i<MAXPLAYERS ; i++)
                 players[i].didsecret = true;
