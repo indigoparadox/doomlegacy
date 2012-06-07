@@ -1552,6 +1552,9 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
     // BP: SoM right ? if not ajust in p_saveg line 625 and 979
     mobj->movefactor = ORIG_FRICTION_FACTOR;
 
+    mobj->target = NULL;
+    mobj->tracer = NULL;
+
     // set subsector and/or block links
     P_SetThingPosition(mobj);
 
