@@ -368,7 +368,7 @@
 //
 //
 // DESCRIPTION:
-//      hardware renderer, using the standard HardWareRender driver DLL for Doom Legacy
+//      hardware renderer, using the standard HardwareRender driver DLL for Doom Legacy
 //
 //-----------------------------------------------------------------------------
 
@@ -1042,23 +1042,52 @@ typedef struct
 static  translucent_lookup_t  translucent_lookup[] =
 {
    {0, 0},  // not translucent
-   {PF_Translucent, 0x80}, // TRANSLU_med
+   {PF_Translucent, 0x78}, // TRANSLU_med
    {PF_Translucent, 0x40}, // TRANSLU_more
    {PF_Translucent, 0x30}, // TRANSLU_hi
    {PF_Additive,    0x80}, // TRANSLU_fire
-   {PF_Translucent, 0xff}  // TRANSLU_fx1
+   {PF_Translucent, 0xff}, // TRANSLU_fx1
+   {PF_Translucent, 0xB8}, // TRANSLU_75
 };
   
 // Called from HWR_StoreWallRange, HWR_DrawSprite
 int HWR_TranstableToAlpha(int transtablenum, FSurfaceInfo * pSurf)
 {
-    if( transtablenum <= TRANSLU_fx1 )
+    int pfop = PF_Translucent;  // default
+    if( transtablenum >= TRANSLU_ext )
+    {
+        // [WDJ] get substitute map from translu_store
+        translucent_map_t * tm = & translu_store[ transtablenum - TRANSLU_ext ];
+#if 1
+        if( tm->substitute_error < 30 && tm->substitute_std_translucent <= TRANSLU_fx1 )
+        {
+	    // use a std translucent tuned operation
+	    transtablenum = tm->substitute_std_translucent;
+	}
+        else
+        {
+	    // use the analyzed alpha
+	    // OpenGL alpha tends to be too strong compared to translucent tables
+            pSurf->FlatColor.s.alpha = (((int)tm->alpha) * 220) >> 8;
+            if( tm->opaque > 50 )
+	       pfop = PF_Additive;
+	    goto done;
+	}
+#else
+        // simple substitution, for testing
+	// OpenGL drawing order is an issue for translucents
+	// for instance in hell ground wad and BOOMEDIT.WAD
+        transtablenum = tm->substitute_std_translucent;
+#endif       
+    }
+    if( transtablenum <= TRANSLU_75 )
     {
         translucent_lookup_t *  tlup = & translucent_lookup[ transtablenum ];
         pSurf->FlatColor.s.alpha = tlup->alpha_equiv;
-        return tlup->PF_op;
+        pfop = tlup->PF_op;
     }
-    return PF_Translucent;
+done:   
+    return pfop;
 }
 #else
 // Old code, before 6/1/2010
@@ -1549,7 +1578,7 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
         midtexnum = texturetranslation[gr_sidedef->midtexture];
         if (midtexnum)
         {
-            int blendmode;
+            int blendmode = PF_Masked;
             fixed_t opentop, openbottom, polytop, polybottom;
 
             // SoM: a little note: This code re-arranging will
@@ -1602,11 +1631,18 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
             wallVerts[2].y = wallVerts[3].y = FIXED_TO_FLOAT( h );
             wallVerts[0].y = wallVerts[1].y = FIXED_TO_FLOAT( l );
 
+            if(gr_linedef->translu_eff)  // Boom 260: make translucent
+            {
+	        blendmode = HWR_TranstableToAlpha(gr_linedef->translu_eff, &Surf);
+	    }
             // set alpha for transparent walls (new boom and legacy linedef types)
-            // ooops ! this do not work at all because render order we should render it in backtofront order
+	    // [WDJ] 6/2012 render order is wrong, only one transparency is seen
             switch (gr_linedef->special)
             {
                 case 260:  // Boom make translucent
+	              // see test on translu_eff
+//                    blendmode = HWR_TranstableToAlpha(gr_linedef->translu_eff, &Surf);
+	            break;
 	                   // Legacy translucent  284 to 288
                 case 284:  // Legacy translucent, brighten (greenish)
                     blendmode = HWR_TranstableToAlpha(TRANSLU_med, &Surf);

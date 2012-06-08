@@ -192,6 +192,7 @@ extern consvar_t cv_viewsize;
 extern consvar_t cv_detaillevel;
 extern consvar_t cv_scalestatusbar;
 extern consvar_t cv_grtranslucenthud;
+extern consvar_t cv_boom_colormap;
 
 // Called by startup code.
 void R_Init (void);

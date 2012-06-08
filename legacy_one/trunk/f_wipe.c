@@ -38,8 +38,10 @@
 #include "i_system.h"
 #include "i_video.h"
 #include "v_video.h"
-#include "r_draw.h" // transtable
-#include "p_pspr.h" // tr_transxxx
+#include "r_data.h"
+   // TRANSLU_TABLE
+#include "r_draw.h"
+   // translucenttables
 #include "z_zone.h"
 
 //--------------------------------------------------------------------------

@@ -384,6 +384,19 @@ void R_DrawTranslucentColumn_16 (void)
 	    frac += fracstep;
 	} while (count--);
         break;
+     case TRANSLU_75: // 75 25
+        do
+        {
+	    // 75/25 translucent
+	    register uint16_t dc = *(uint16_t*)dest;
+	    register uint16_t nc = (color8.to16[dc_source[frac>>FRACBITS]] & mask_11110)>>1;
+	    *(uint16_t*)dest=
+	     (nc + ((nc & mask_11110)>>1)) // 75%
+	     + ((dc & mask_11100)>>2); // 25%
+	    dest += vid.ybytes;
+	    frac += fracstep;
+	} while (count--);
+        break;
     }
 #if 0
 	// original

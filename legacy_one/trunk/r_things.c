@@ -866,6 +866,7 @@ void R_DrawMaskedColumn (column_t* column)
         // [WDJ] limit to split screen area above status bar,
         // instead of whole screen,
         if (dc_yl <= dc_yh && dc_yl < rdraw_viewheight && dc_yh > 0)  // [WDJ] exclude status bar
+//        if (dc_yl <= dc_yh && dc_yl < vid.height && dc_yh > 0)
         {
 	    //[WDJ] phobiata.wad has many views that need clipping
 	    if ( dc_yl < 0 )   dc_yl = 0;

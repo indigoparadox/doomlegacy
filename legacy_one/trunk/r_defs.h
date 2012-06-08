@@ -206,6 +206,7 @@ typedef struct
   lighttable_t*   colormap; // colormap tables [32][256]
 } extracolormap_t;
 
+
 //
 // INTERNAL MAP TYPES
 //  used by play and refresh
@@ -500,7 +501,7 @@ typedef struct
     sector_t*   sector;
 
     //SoM: 3/6/2000: This is the special of the linedef this side belongs to.
-    int special;
+    int         special;
 
 } side_t;
 
@@ -564,8 +565,8 @@ typedef struct line_s
     void*       splats;
     
     //SoM: 3/6/2000
-//    int tranlump;          // translucency filter, -1 == none 
-                           // (Will have to fix to use with Legacy's Translucency?)
+    int translu_eff;       // translucency effect table, 0 == none 
+   			   // TRANSLU_med or (TRANSLU_ext + lumpnum)
     int firsttag,nexttag;  // improves searches for tags.
 
 //    int ecolormap;         // SoM: Used for 282 linedefs
