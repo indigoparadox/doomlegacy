@@ -83,6 +83,13 @@ extern int              loopcount;
 
 extern int      framecount;
 
+// fog render
+extern uint16_t	fog_col_length;
+extern uint16_t fog_tic;    // 0..0xFFF
+extern byte	fog_bltic;  // 0..32, blur/blend between tics
+extern byte     fog_index;  // 0.. column or texture height
+extern byte	fog_init;
+
 //
 // Lighting LUT.
 // Used for z-depth cuing per column/row,

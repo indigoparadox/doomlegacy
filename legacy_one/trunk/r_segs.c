@@ -639,6 +639,9 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
         // Display fog sheet (128 high) as transparent middle texture.
 	// Only where there is a middle texture (in place of it).
         colfunc = fogcolfunc; // R_DrawFogColumn_8 16 ..
+        fog_col_length = (textures[texnum]->texture_model == TM_masked)? 2: textures[texnum]->height;
+        fog_index = fog_tic % fog_col_length;  // pixel selection
+        fog_init = 1;
         // [WDJ] clip at ceiling and floor, unlike other transparent texture
         // world coord, relative to viewer
         windowclip_top = frontsector->ceilingheight - viewz;
