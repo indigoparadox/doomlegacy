@@ -148,8 +148,8 @@ boolean  save_game_abort = 0;
 // [WDJ] Variable savebuffer size
 #define SAVEBUF_SIZE    (128*1024)
 #define SAVEBUF_SIZEINC (128*1024)
-#define SAVEBUF_HEADERSIZE   (64 + 80 + 128 + 32 + 32)
-#define SAVEBUF_FREE_TRIGGER  2048
+#define SAVEBUF_HEADERSIZE   (64 + (80*5) + 1024 + 256)
+#define SAVEBUF_FREE_TRIGGER  4096
 // [WDJ] Uncomment the following to see how close to overrunning the buffer.
 //#define SAVEBUF_REPORT_MIN_FREE 1
 #ifdef SAVEBUF_REPORT_MIN_FREE
