@@ -112,6 +112,13 @@ extern lighttable_t*    zlight[LIGHTLEVELS][MAXLIGHTZ];
 
 extern int              extralight;
 extern lighttable_t*    fixedcolormap;
+#ifdef BOOM_GLOBAL_COLORMAP
+// Boom colormap, and global viewer coloring
+extern lighttable_t*    view_colormap;  // full lightlevel range colormaps
+
+extern byte EN_boom_colormap;  // compatibility, user preference
+void BoomColormap_detect( void );
+#endif
 
 // Number of diminishing brightness levels.
 // There a 0-31, i.e. 32 LUT in the COLORMAP lump.

@@ -404,6 +404,9 @@ typedef enum {
 } friction_model_e;
 extern friction_model_e  friction_model;
 
+extern byte  boom_detect;
+extern byte  legacy_detect;
+
 void  DemoAdapt_p_user( void );
 void  DemoAdapt_p_enemy( void );
 void  DemoAdapt_p_floor( void );

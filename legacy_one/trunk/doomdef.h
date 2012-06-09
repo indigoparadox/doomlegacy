@@ -281,6 +281,10 @@ void I_SoftError (char *error, ...);
 # define ENABLE_DRAW32
 #endif
 
+// [WDJ] 6/5/2012 Boom global colormap
+// Optional for now
+#define BOOM_GLOBAL_COLORMAP
+
 // =========================================================================
 
 // Name of local directory for config files and savegames
