@@ -1131,7 +1131,7 @@ typedef struct {
   int x_mag, y_mag;    // X Strength
   int magnitude;       // Vector strength for point pusher
   int radius;          // Effective radius for point pusher
-  int x_src, y_src;    // X,Y of point source if point pusher
+  fixed_t  x_src, y_src;    // X,Y of point source if point pusher
 } pusher_t;
 
 //SoM: 3/9/2000: Prototype functions for pushers
