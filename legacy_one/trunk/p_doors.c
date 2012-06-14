@@ -622,8 +622,14 @@ EV_VerticalDoor ( line_t* line, mobj_t* thing )
     if (sec->ceilingdata)       //SoM: 3/6/2000
     {
         door = sec->ceilingdata;        //SoM: 3/6/2000
-        switch (line->special)
+        // [WDJ] From prboom fixes doc (cph 2001/04/05).
+        // Doom bug: Door will not raise when already have ceiling action.
+        // Cannot assume door thinker, as there is also a ceiling thinker.
+	// All thinkers must have this thinker field first.
+        if( door->thinker.function.acp1 == (actionf_p1)T_VerticalDoor )
         {
+          switch (line->special)
+          {
             case 1:    // ONLY FOR "RAISE" DOORS, NOT "OPEN"s
             case 26:
             case 27:
@@ -639,6 +645,7 @@ EV_VerticalDoor ( line_t* line, mobj_t* thing )
                     door->direction = -1;       // start going down immediately
                 }
                 return 1;
+	  }
         }
     }
 
