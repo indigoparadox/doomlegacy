@@ -238,7 +238,7 @@ typedef struct
     int16_t             x;
     int16_t             y;
     int16_t             z; // Z support for objects SSNTails 07-24-2002
-    int16_t             angle;
+    int16_t             angle;  // normally (0,90,180,270), reported neg sometimes
     int16_t             type;
     int16_t             options;
     struct mobj_s*      mobj;

@@ -1475,7 +1475,7 @@ void P_ArtiTele(player_t *player)
     }
     destX = mtp->x<<FRACBITS;
     destY = mtp->y<<FRACBITS;
-    destAngle = ANG45*(mtp->angle/45);
+    destAngle = wad_to_angle(mtp->angle);
     P_Teleport(player->mo, destX, destY, destAngle);
     S_StartSound(NULL, sfx_wpnup); // Full volume laugh
 }
