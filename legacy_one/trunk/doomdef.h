@@ -345,6 +345,7 @@ void I_Error (const char *error, ...);
 
 // console.h
 void    CONS_Printf (const char *fmt, ...);
+void    CONS_Printf_va (const char *fmt, va_list ap );
 
 #include "m_swap.h"
 

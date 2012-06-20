@@ -595,19 +595,23 @@ void M_ScreenShot (void)
 // ==========================================================================
 
 
-//  Temporary varargs CONS_Printf
+//  Temporary varargs for COM_Buf and CONS_Printf usage
+//  COM_BufAddText( va( "format", args ) )
+//
+// Buffer returned by va(), for every caller
+#define VA_BUF_SIZE 1024
+static char  va_buffer[VA_BUF_SIZE];
 //
 char*   va(char *format, ...)
 {
-#define BUF_SIZE 1024
     va_list      argptr;
-    static char  buffer[BUF_SIZE];
 
     va_start(argptr, format);
-    vsnprintf(buffer, BUF_SIZE, format, argptr);
+    vsnprintf(va_buffer, VA_BUF_SIZE, format, argptr);
+    va_buffer[VA_BUF_SIZE-1] = '\0'; // term, when length limited
     va_end(argptr);
 
-    return buffer;
+    return va_buffer;
 }
 
 

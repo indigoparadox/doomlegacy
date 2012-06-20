@@ -154,7 +154,7 @@ void run_script(script_t *script);
 void continue_script(script_t *script, char *continue_point);
 void parse_include(char *lumpname);
 void run_statement( void );
-void script_error(char *s, ...);
+void script_error(const char *fmt, ...);
 
 fs_value_t evaluate_expression(int start, int stop);
 int find_operator(int start, int stop, char *value);

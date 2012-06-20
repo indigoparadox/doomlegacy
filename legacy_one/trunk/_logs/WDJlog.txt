@@ -2494,3 +2494,10 @@ Create DBG_Print_lines() function to print extension strings on multiple
 lines, and prevent buffer overrun.
 Change SDL, Win32, X11 opengl port drivers, to use these functions.
 In DBG_Printf(), when verbose, print to stderr too;
+
+*** w82_CONS_Printf_va
+patchfile = w82_cons_printf_va.patch
+- committed revision 936   by wesley johnson
+Fix buffer overruns caused by vsnprintf to buffer without string termination.
+Create function CONS_printf_va() to handle va_list printing to console.
+This replaces multiple copies of print buffers and vsnprintf.
