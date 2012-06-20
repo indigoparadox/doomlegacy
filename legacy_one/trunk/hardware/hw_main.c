@@ -701,10 +701,19 @@ static void InitLumLut()
 // [WDJ] Handle the extra_colormap, transforming into GL surface info.
 // Smaller when inline, but easier to alter in this function.
 // This function is only going to get more complicated.
+static
 void Extracolormap_to_Surf( /*IN*/ extracolormap_t * extracmap, int light,
 			    /*OUT*/ FSurfaceInfo * surfp )
 {
     RGBA_t temp;
+   
+#ifdef BOOM_GLOBAL_COLORMAP
+    if( view_extracolormap )
+    {
+        // Boom global colormap override
+        extracmap = view_extracolormap;
+    }
+#endif
 
     // [WDJ] the rgba color can change according to light level
     // This accomodates the fade in CreateColormap, and Colormap_Analyze.
@@ -849,7 +858,11 @@ void HWR_RenderPlane(extrasubsector_t * xsub, fixed_t fixedheight,
             caster = gr_frontsector->lightlist[R_GetPlaneLight(gr_frontsector, fixedheight)].caster;
             sector = caster ? &sectors[caster->model_secnum] : gr_frontsector;
         }
+#ifdef BOOM_GLOBAL_COLORMAP
+        if ((sector && sector->extra_colormap) || view_colormap)
+#else
         if (sector && sector->extra_colormap)
+#endif
         {
 	    Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, LightLevelToLum(lightlevel),
 				   /*OUT*/ & Surf );
@@ -1276,7 +1289,11 @@ static void HWR_SplitWall(sector_t * sector, wallVert3D * wallVerts, int texnum,
 
             //Hurdler: colormap test
             sector = (ffl_list[i - 1].caster)? &sectors[ ffl_list[i - 1].caster->model_secnum] : gr_frontsector;
+#ifdef BOOM_GLOBAL_COLORMAP
+            if (sector->extra_colormap || view_colormap)
+#else
             if (sector->extra_colormap)
+#endif
             {
 	        Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, lightnum,
 				       /*OUT*/ Surfp );
@@ -1316,7 +1333,11 @@ static void HWR_SplitWall(sector_t * sector, wallVert3D * wallVerts, int texnum,
         Surfp->FlatColor.s.red = Surfp->FlatColor.s.green = Surfp->FlatColor.s.blue = lightnum;
 
         sector = ffl_list[i - 1].caster ? &sectors[ffl_list[i - 1].caster->model_secnum] : gr_frontsector;
+#ifdef BOOM_GLOBAL_COLORMAP
+        if (sector->extra_colormap || view_colormap)
+#else
         if (sector->extra_colormap)
+#endif
         {
 	    Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, lightnum,
 				   /*OUT*/ Surfp );
@@ -1477,7 +1498,11 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
                 caster = sector->lightlist[R_GetPlaneLight(sector, sector->floorheight)].caster;
                 sector = caster ? &sectors[caster->model_secnum] : sector;
             }
+#ifdef BOOM_GLOBAL_COLORMAP
+            if (sector->extra_colormap || view_colormap)
+#else
             if (sector->extra_colormap)
+#endif
             {
 	        Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, lightnum,
 				       /*OUT*/ & Surf );
@@ -3077,7 +3102,11 @@ static void HWR_DrawSprite(gr_vissprite_t * spr)
             caster = sector->lightlist[R_GetPlaneLight(sector, spr->mobj->z)].caster;
 	    sector = caster ? &sectors[caster->model_secnum] : sector;
         }
+#ifdef BOOM_GLOBAL_COLORMAP
+        if (sector->extra_colormap || view_colormap)
+#else
         if (sector->extra_colormap)
+#endif
         {
 	    Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, spr->sectorlight,
 				       /*OUT*/ & Surf );
@@ -3619,7 +3648,11 @@ void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
                 caster = sector->lightlist[R_GetPlaneLight(sector, dup_viewz)].caster;
                 sector = caster ? &sectors[caster->model_secnum] : sector;
             }
+#ifdef BOOM_GLOBAL_COLORMAP
+            if (sector->extra_colormap || view_colormap)
+#else
             if (sector->extra_colormap)
+#endif
             {
 	        Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, lightlevel,
 				       /*OUT*/ & Surf );

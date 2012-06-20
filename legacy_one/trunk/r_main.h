@@ -115,6 +115,7 @@ extern lighttable_t*    fixedcolormap;
 #ifdef BOOM_GLOBAL_COLORMAP
 // Boom colormap, and global viewer coloring
 extern lighttable_t*    view_colormap;  // full lightlevel range colormaps
+extern extracolormap_t *  view_extracolormap;
 
 extern byte EN_boom_colormap;  // compatibility, user preference
 void BoomColormap_detect( void );

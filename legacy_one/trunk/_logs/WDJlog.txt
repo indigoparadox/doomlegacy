@@ -2476,3 +2476,9 @@ patchfile = w82_hw_translucent_order.patch
 - committed revision 933   by wesley johnson
 Fix hardware render to draw translucent in distance order.
 This fixes BOOMEDIT.WAD.
+
+*** w82_hw_Boom_colormap
+patchfile = w82_hw_Boom_colormap
+- committed revision 934   by wesley johnson
+Boom deepwater colormap fixed in hardware renderer.
+Extend view_colormap to affect hardware render too.
