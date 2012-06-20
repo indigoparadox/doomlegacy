@@ -55,6 +55,8 @@
 #endif
 
 #include "../hardware/r_opengl/r_opengl.h"
+#include "../hardware/hw_main.h"
+  // HWR_Startup()
 #include "v_video.h"
 
 
@@ -67,9 +69,6 @@ extern SDL_Surface *vidSurface; // use the one from sdl/i_video.c
 static SDL_Surface *vidSurface = NULL; //use the one from i_video_sdl.c instead?
 #endif
 
-int     oglflags = 0;
-
-void HWR_Startup(void);
 
 boolean OglSdlSurface(int w, int h, int isFullscreen)
 {
@@ -118,6 +117,9 @@ boolean OglSdlSurface(int w, int h, int isFullscreen)
     HWR_Startup();
     textureformatGL = (cbpp > 16)?GL_RGBA:GL_RGB5_A1;
 
+#if 1
+    Query_GL_info( -1 ); // all tests
+#endif
     return true;
 }
 

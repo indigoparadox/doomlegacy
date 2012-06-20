@@ -188,6 +188,7 @@
 #ifdef LOGMESSAGES
 extern FILE *logstream;
 #endif
+#define LOGLINELEN  80
 
 // [WDJ] Machine speed limitations.
 // Leave undefined for netplay, or make sure all machines have same setting.

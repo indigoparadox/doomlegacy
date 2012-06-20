@@ -126,7 +126,6 @@ static  BOOL    WasFullScreen = FALSE;
 
 #define MAX_VIDEO_MODES   32
 static  vmode_t     video_modes[MAX_VIDEO_MODES];
-int     oglflags = 0;
 
 // **************************************************************************
 //                                                                  FUNCTIONS
@@ -217,7 +216,7 @@ int SetupPixelFormat( int WantColorBits, int WantStencilBits, int WantDepthBits 
 
     if( iLastPFD )
     {
-        DBG_Printf( "WARNING : SetPixelFormat() called twise not supported by all drivers !\n" );
+        DBG_Printf( "WARNING : SetPixelFormat() called twice, not supported by all drivers !\n" );
     }
 
     // set the pixel format only if different than the current
@@ -251,7 +250,6 @@ int SetupPixelFormat( int WantColorBits, int WantStencilBits, int WantDepthBits 
 // -----------------+
 int SetRes( viddef_t *lvid, vmode_t *pcurrentmode )
 {
-    char *renderer;
     BOOL WantFullScreen = !(lvid->u.windowed);  //(lvid->u.windowed ? 0 : CDS_FULLSCREEN );
 
     DBG_Printf ("SetMode(): %dx%d %d bits (%s)\n",
@@ -329,21 +327,10 @@ int SetRes( viddef_t *lvid, vmode_t *pcurrentmode )
         }
     }
 
-    gl_extensions = glGetString(GL_EXTENSIONS);
     // Get info and extensions.
-    //BP: why don't we make it earlier ?
     //Hurdler: we cannot do that before intialising gl context
-    renderer = strdup(glGetString(GL_RENDERER));
-    DBG_Printf("Vendor     : %s\n", glGetString(GL_VENDOR) );
-    DBG_Printf("Renderer   : %s\n", renderer );
-    DBG_Printf("Version    : %s\n", glGetString(GL_VERSION) );
-    DBG_Printf("Extensions : %s\n", gl_extensions );
-
-    // BP: disable advenced feature that don't work on somes hardware
     // Hurdler: Now works on G400 with bios 1.6 and certified drivers 6.04
-    if( strstr(renderer, "810" ) )   oglflags |= GLF_NOZBUFREAD;
-    free(renderer);
-    DBG_Printf("oglflags   : 0x%X\n", oglflags );
+    Query_GL_info( GLF_NOZBUFREAD );
 
 #ifdef USE_PALETTED_TEXTURE
     usePalettedTexture = isExtAvailable("GL_EXT_paletted_texture");

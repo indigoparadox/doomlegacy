@@ -114,6 +114,9 @@ typedef int             HANDLE;
 // ==========================================================================
 
 void DBG_Printf(LPCTSTR lpFmt, ...);                                          
+// [WDJ] Print a long string as multiple lines of LOGLINELEN
+void DBG_Print_lines( const char * longstr );
+
 void Flush(void);
 int  isExtAvailable(char *extension);
 int  SetRes(viddef_t *lvid, vmode_t *pcurrentmode);
@@ -121,6 +124,11 @@ void UnSetRes(void);
 boolean SetupPixelFormat(int WantColorBits, int WantStencilBits, int WantDepthBits);
 void SetModelView(GLint w, GLint h);
 void SetStates(void);
+
+// [WDJ] Query the GL hardware strings
+// sets oglflags and gl_extensions
+// Do not call before initializing GL
+void Query_GL_info( int ogltest );
 
 // ==========================================================================
 //                                                                     GLOBAL

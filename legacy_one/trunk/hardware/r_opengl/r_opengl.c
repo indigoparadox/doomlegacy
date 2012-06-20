@@ -250,6 +250,7 @@ GLint min_filter = GL_LINEAR;
 GLint mag_filter = GL_LINEAR;
 
 const   GLubyte     *gl_extensions;
+int     oglflags = 0;
 
 //Hurdler: 04/10/2000: added for the kick ass coronas as Boris wanted ;-)
 #ifndef MINI_GL_COMPATIBILITY
@@ -312,25 +313,98 @@ static I_Error_t I_Error_GL = NULL;
 // -----------------+
 void DBG_Printf( LPCTSTR lpFmt, ... )
 {
-#ifdef DEBUG_TO_FILE
-#define BUF_SIZE 4096
     va_list ap;
-    char    str[BUF_SIZE];
+
+#define DBG_BUF_SIZE 4096
+#if (LOGLINELEN + 32) > DBG_BUF_SIZE
+#undef DBG_BUF_SIZE  
+#define DBG_BUF_SIZE  (LOGLINELEN*2 + 32)
+#endif
+
+#ifdef DEBUG_TO_FILE
+    char    dbgbuf[DBG_BUF_SIZE];
 
     va_start(ap, lpFmt);
-    vsnprintf(str, BUF_SIZE, lpFmt, ap);
+    vsnprintf(dbgbuf, DBG_BUF_SIZE, lpFmt, ap);
+    dbgbuf[DBG_BUF_SIZE-1] = '\0'; // term, when length limited
     va_end(ap);
 
 #ifdef WIN_NATIVE_PLACEHOLDER
     DWORD   bytesWritten;
     if( logstream != INVALID_HANDLE_VALUE )
-        WriteFile( logstream, str, lstrlen(str), &bytesWritten, NULL );
+        WriteFile( logstream, dbgbuf, lstrlen(dbgbuf), &bytesWritten, NULL );
 #else
     if (logstream)
-      fputs(str, logstream);
+      fputs(dbgbuf, logstream);
 #endif
 
 #endif
+
+    if(verbose > 1)
+    {
+      va_start(ap, lpFmt);
+      vprintf( lpFmt, ap );
+      va_end(ap);
+    }
+}
+
+// [WDJ] Print a long string as multiple lines of LOGLINELEN
+// To Fix overrun of DBG_Printf buffer by long GL_EXTENSION string
+void  DBG_Print_lines( const char * longstr )
+{
+    char lbf[ LOGLINELEN+1 ];
+    while( longstr )
+    {
+        lbf[LOGLINELEN] = 0;
+        strncpy( lbf, longstr, LOGLINELEN+1 );  // get some or all
+        if( lbf[LOGLINELEN] )  // too long, partial copy
+        {
+	    lbf[LOGLINELEN] = 0;
+	    char * lsp = strrchr( lbf, ' ' );  // find last space
+	    if( lsp == NULL )
+	        lsp = & lbf[LOGLINELEN];  // should not happen
+	    *lsp = '\0';  // term string at space
+	    longstr += ( lsp - lbf + 1 );
+	}
+        else
+        {
+	    longstr = NULL;  // end
+	}
+        DBG_Printf("  %s\n", lbf);
+    }
+}
+
+// [WDJ] Query the GL hardware strings
+// set oglflags and gl_extensions
+// Do not call before initializing GL
+void Query_GL_info( int ogltest )
+{
+    DBG_Printf("Vendor     : %s\n", glGetString(GL_VENDOR) );
+//#define DUP_RENDERER_STR
+#ifdef DUP_RENDERER_STR
+    // unnecessary dup
+    char * renderer = strdup(glGetString(GL_RENDERER));
+#else
+    const char * renderer = glGetString(GL_RENDERER);
+#endif
+    DBG_Printf("Renderer   : %s\n", renderer );
+    // BP: disable advanced features that don't work on some hardware
+    if( strstr(renderer, "810" ) )   oglflags |= GLF_NOZBUFREAD;
+    // Win: Hurdler: Now works on G400 with bios 1.6 and certified drivers 6.04
+    // X11: Hurdler: now yes (due to that fullbright bug with g200/g400 card)
+    if( strstr(renderer, "G200" ) )  oglflags |= GLF_NOTEXENV;
+    if( strstr(renderer, "G400" ) )  oglflags |= GLF_NOTEXENV;
+    oglflags &= ogltest;  // port specific
+#ifdef DUP_RENDERER_STR
+    free(renderer);
+#endif
+    DBG_Printf("Version    : %s\n", glGetString(GL_VERSION) );
+    // [WDJ] Extensions string is indefinite long
+    DBG_Printf("Extensions : \n" );
+    gl_extensions = glGetString(GL_EXTENSIONS);  // passed to isExtAvailable
+    DBG_Print_lines( gl_extensions );
+
+    DBG_Printf("oglflags   : 0x%X\n", oglflags );
 }
 
 
@@ -1299,6 +1373,8 @@ EXPORT int  HWRAPI( GetRenderVersion ) (void)
     return VERSION;
 }
 
+// Only i_video_xshm is using this API,
+// all the other ports call glGetString, and set oglflags accordingly
 EXPORT char *HWRAPI( GetRenderer ) (void)
 {
   strncpy(rendererString, (const char *)glGetString(GL_RENDERER), 255);

@@ -81,8 +81,6 @@ static XVisualInfo *vis = NULL;
 #define MAX_VIDEO_MODES   32
 static  vmode_t     video_modes[MAX_VIDEO_MODES];
 #endif
-int     oglflags = 0; // FIXME: do we have to handle this under Linux as well?
-                      // Hurdler: now yes (due to that fullbright bug with g200/g400 card)
 
 // **************************************************************************
 //                                                                  FUNCTIONS
@@ -116,7 +114,6 @@ EXPORT void _fini() {
 //[WDJ] Call direct, has Xwindows specific parameters
 Window  HookXwin(Display *dsp,int width,int height, boolean vidmode_active)
 {
-    char *renderer;
     int scrnum;
     int attrib[] = { GLX_RGBA,
         GLX_RED_SIZE, 1,
@@ -195,17 +192,7 @@ Window  HookXwin(Display *dsp,int width,int height, boolean vidmode_active)
         return 0;
     }
 
-    renderer = strdup(glGetString(GL_RENDERER));
-    DBG_Printf("Vendor     : %s\n", glGetString(GL_VENDOR));
-    DBG_Printf("Renderer   : %s\n", renderer);
-    DBG_Printf("Version    : %s\n", glGetString(GL_VERSION));
-    DBG_Printf("Extensions : %s\n", glGetString(GL_EXTENSIONS));
-
-    // disable advanced features not working on somes hardware
-    if( strstr(renderer, "G200" ) )   oglflags |= GLF_NOTEXENV;
-    if( strstr(renderer, "G400" ) )   oglflags |= GLF_NOTEXENV;
-    free(renderer);
-    DBG_Printf("oglflags   : 0x%X\n", oglflags );
+    Query_GL_info( GLF_NOTEXENV ); // Linux specific test
 
     screen_depth = vis->depth;
     if( screen_depth > 16)

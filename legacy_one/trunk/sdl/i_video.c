@@ -316,7 +316,7 @@ void I_ReadScreen(byte* scr)
         I_Error ("I_ReadScreen: called while in non-software mode");
 
 #if 0	   
-    VID_BlitLinearScreen( src, vid.display, vid.widthbytes, vid.height, vid.ybytes, vid.direct_rowbytes);
+    VID_BlitLinearScreen( src, vid.display, vid.widthbytes, vid.height, vid.ybytes, vid.ybytes);
 #else
     if( vid.widthbytes == vid.ybytes )
     {
