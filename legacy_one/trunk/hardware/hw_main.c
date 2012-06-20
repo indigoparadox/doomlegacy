@@ -4291,33 +4291,99 @@ typedef struct
     FSurfaceInfo Surf;
     int texnum;
     int blend;
+    int next_nearer;
+    float dist1, dist2;
 } late_wallinfo_t;
 
 static late_wallinfo_t * late_wallinfo = NULL;
 static int late_wallinfo_size = 0;
+static int late_wall_farthest = -1;
 
-
-void  expand_late_wallinfo( void )
+// return index of next free
+int  expand_late_wallinfo( void )
 {
-    late_wallinfo_size += LATE_WALLINFO_INC;
-    late_wallinfo =
-     (late_wallinfo_t *) realloc(late_wallinfo, late_wallinfo_size * sizeof(late_wallinfo_t));
-    if( late_wallinfo == NULL )
+    int lw_size = late_wallinfo_size + LATE_WALLINFO_INC;
+    late_wallinfo_t * lw_p =
+     (late_wallinfo_t *) realloc(late_wallinfo, lw_size * sizeof(late_wallinfo_t));
+    if( lw_p )  // normal
     {
-        // failure
-	I_Error( "Late wallinfo realloc failed, %i\n", late_wallinfo_size );
+        late_wallinfo = lw_p;
+        late_wallinfo_size = lw_size;
+        return num_late_walls;  // next free
     }
+    // failure
+    if( num_late_walls <= 0 )
+       I_Error( "Late wallinfo alloc failed\n" );  // no alloc
+    I_SoftError( "Late wallinfo realloc failed, %i\n", lw_size );
+    num_late_walls -= 1;
+    return late_wall_farthest;  // reuse farthest, but keep running
+}
+
+// [WDJ] To sort transparent walls
+static void  late_wall_dist( wallVert3D * wVs, late_wallinfo_t * lw_p )
+{
+    float tr_x = wVs[0].x - gr_viewx;
+    float tr_y = wVs[0].z - gr_viewy;
+    float tr_z = wVs[0].y - gr_viewz;
+    lw_p->dist1 = (tr_x * world_trans_x_to_z )
+        + (tr_y * world_trans_y_to_z )
+        + (tr_z * world_trans_z_to_z );
+    tr_x = wVs[2].x - gr_viewx;
+    tr_y = wVs[2].z - gr_viewy;
+    tr_z = wVs[2].y - gr_viewz;
+    lw_p->dist2 = (tr_x * world_trans_x_to_z )
+        + (tr_y * world_trans_y_to_z )
+        + (tr_z * world_trans_z_to_z );
 }
 
 // Called from HWR_SplitWall, HWR_StoreWallRange
 void HWR_AddTransparentWall(wallVert3D * wallVerts, FSurfaceInfo * pSurf, int texnum, int blend)
 {
-    if( num_late_walls >= late_wallinfo_size )  expand_late_wallinfo();
+    late_wallinfo_t *  lw_p;
+    int lwi, prev_lwi;
+    int new_lwi = num_late_walls;
+    if( new_lwi >= late_wallinfo_size )
+    {
+        new_lwi = expand_late_wallinfo();  // may have to reuse farthest
+    }
 
-    memcpy(late_wallinfo[num_late_walls].wallVerts, wallVerts, sizeof(late_wallinfo[num_late_walls].wallVerts));
-    memcpy(&late_wallinfo[num_late_walls].Surf, pSurf, sizeof(FSurfaceInfo));
-    late_wallinfo[num_late_walls].texnum = texnum;
-    late_wallinfo[num_late_walls].blend = blend;
+    lw_p = & late_wallinfo[new_lwi];
+    memcpy( lw_p->wallVerts, wallVerts, sizeof(lw_p->wallVerts));
+    memcpy( & lw_p->Surf, pSurf, sizeof(FSurfaceInfo));
+    lw_p->texnum = texnum;
+    lw_p->blend = blend;
+    
+    // [WDJ] merge sort into the late_wallinfo
+    late_wall_dist( wallVerts, lw_p );  // set dist1, dist2
+    prev_lwi = -1;
+    lwi = late_wall_farthest;
+    while( lwi >= 0 )  // from farthest to nearest
+    {
+        register late_wallinfo_t * wp = & late_wallinfo[lwi];
+        // they may share a vertex or two
+        if( wp->dist1 < lw_p->dist1 )
+	    break;  // new wall is farther
+        else if( wp->dist1 == lw_p->dist1 ) {
+	    if( wp->dist2 < lw_p->dist2 )
+	        break;  // new wall is farther
+	    else if( wp->dist2 == lw_p->dist2 ) {
+	        break; // no longer matters, they must overlap
+	    }
+	}
+        prev_lwi = lwi;
+        lwi = late_wallinfo[lwi].next_nearer;
+    }
+    lw_p->next_nearer = lwi;
+    if( prev_lwi >= 0 )
+    {
+        // link in before nearer
+        late_wallinfo[prev_lwi].next_nearer = new_lwi;
+    }
+    else
+    {
+        // new is farthest
+	late_wall_farthest = new_lwi;
+    }
     num_late_walls++;
 }
 
@@ -4325,35 +4391,18 @@ void HWR_RenderWall(wallVert3D * wallVerts, FSurfaceInfo * pSurf, int blend);
 
 void HWR_RenderTransparentWalls()
 {
-    int i;
+    int lwi = late_wall_farthest;
+    late_wallinfo_t *  lw_p;
 
-    /*
-       { // sorting is disable for now, do it!
-       int permut = 1;
-       while (permut)
-       {
-       int j;
-       for (j=0, permut=0; j<num_late_walls-1; j++)
-       {
-       if (ABS(late_wallinfo[j].fixedheight-dup_viewz) < ABS(late_wallinfo[j+1].fixedheight-dup_viewz))
-       {
-       late_wallinfo_t temp;
-       memcpy(&temp, &late_wallinfo[j+1], sizeof(late_wallinfo_t));
-       memcpy(&late_wallinfo[j+1], &late_wallinfo[j], sizeof(late_wallinfo_t));
-       memcpy(&late_wallinfo[j], &temp, sizeof(late_wallinfo_t));
-       permut = 1;
-       }
-       }
-       }
-       }
-     */
-
-    for (i = 0; i < num_late_walls; i++)
+    while( lwi >= 0 )
     {
-        HWR_GetTexture(late_wallinfo[i].texnum);
-        HWR_RenderWall(late_wallinfo[i].wallVerts, &late_wallinfo[i].Surf, late_wallinfo[i].blend);
+        lw_p = & late_wallinfo[lwi];
+        HWR_GetTexture(lw_p->texnum);
+        HWR_RenderWall(lw_p->wallVerts, &lw_p->Surf, lw_p->blend);
+        lwi = lw_p->next_nearer;
     }
     num_late_walls = 0;
+    late_wall_farthest = -1;
 }
 
 void HWR_RenderWall(wallVert3D * wallVerts, FSurfaceInfo * pSurf, int blend)

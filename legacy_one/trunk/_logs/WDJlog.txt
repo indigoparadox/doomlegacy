@@ -2471,3 +2471,8 @@ patchfile = w82_bex_frame.patch
 Fix strcmp error in BEX parsing of FRAME and PARS.
 Fixes hg.wad, eye shooting missiles.
 
+*** w82_hw_translucent_order
+patchfile = w82_hw_translucent_order.patch
+- committed revision 933   by wesley johnson
+Fix hardware render to draw translucent in distance order.
+This fixes BOOMEDIT.WAD.
