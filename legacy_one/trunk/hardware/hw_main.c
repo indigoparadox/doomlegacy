@@ -740,8 +740,10 @@ static FOutVector planeVerts[MAXPLANEVERTICES];
 // HWR_RenderPlane  : Render a floor or ceiling convex polygon
 // -----------------+
 // Called from HWR_Subsector, HWR_Render3DWater
+static
 void HWR_RenderPlane(extrasubsector_t * xsub, fixed_t fixedheight,
-		     FBITFIELD PolyFlags, int lightlevel, int lumpnum)    // SoM: 3D floors ect.
+		     FBITFIELD PolyFlags, extracolormap_t* planecolormap,
+		     int lightlevel, int lumpnum)    // SoM: 3D floors ect.
 {
     polyvertex_t *pv;
     float height;               //constant y for all points on the convex flat polygon
@@ -858,13 +860,15 @@ void HWR_RenderPlane(extrasubsector_t * xsub, fixed_t fixedheight,
             caster = gr_frontsector->lightlist[R_GetPlaneLight(gr_frontsector, fixedheight)].caster;
             sector = caster ? &sectors[caster->model_secnum] : gr_frontsector;
         }
+        if (sector && sector->extra_colormap && planecolormap == NULL)
+	    planecolormap = sector->extra_colormap;
 #ifdef BOOM_GLOBAL_COLORMAP
-        if ((sector && sector->extra_colormap) || view_colormap)
+        if (planecolormap || view_colormap)
 #else
-        if (sector && sector->extra_colormap)
+        if (planecolormap)
 #endif
         {
-	    Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, LightLevelToLum(lightlevel),
+	    Extracolormap_to_Surf( /*IN*/ planecolormap, LightLevelToLum(lightlevel),
 				   /*OUT*/ & Surf );
         }
     }
@@ -2498,6 +2502,7 @@ static void HWR_Subsector(int num)
     int ceilinglightlevel;
     int locFloorHeight, locCeilingHeight;
     int light;
+    extracolormap_t * floorcolormap = NULL, * ceilingcolormap = NULL;
     fixed_t wh;
 
 //no risk while developing, enough debugging nights!
@@ -2593,20 +2598,22 @@ static void HWR_Subsector(int num)
         if(gr_frontsector->floorlightsec == -1)
         {
 	  floorlightlevel = *gr_frontsector->lightlist[light].lightlevel;
-//        floorcolormap = gr_frontsector->lightlist[light].extra_colormap;
+          floorcolormap = gr_frontsector->lightlist[light].extra_colormap;
         }
 //        light = R_GetPlaneLight(gr_frontsector, gr_frontsector->ceilingheight);
         light = R_GetPlaneLight(gr_frontsector, locCeilingHeight);
         if(gr_frontsector->ceilinglightsec == -1)
         {
 	  ceilinglightlevel = *gr_frontsector->lightlist[light].lightlevel;
-//        ceilingcolormap = gr_frontsector->lightlist[light].extra_colormap;
+          ceilingcolormap = gr_frontsector->lightlist[light].extra_colormap;
 	}
 #else
         floorlightlevel = *gr_frontsector->lightlist[R_GetPlaneLight(gr_frontsector, locFloorHeight)].lightlevel;
         ceilinglightlevel = *gr_frontsector->lightlist[R_GetPlaneLight(gr_frontsector, locCeilingHeight)].lightlevel;
 #endif
     }
+   
+    sub->sector->extra_colormap = gr_frontsector->extra_colormap;
 
     // render floor ?
 #ifdef DOPLANES
@@ -2619,7 +2626,8 @@ static void HWR_Subsector(int num)
             {
                 HWR_GetFlat(levelflats[gr_frontsector->floorpic].lumpnum);
                 HWR_RenderPlane(&extrasubsectors[num], locFloorHeight, PF_Occlude,
-				floorlightlevel, levelflats[gr_frontsector->floorpic].lumpnum);
+				floorcolormap, floorlightlevel,
+				levelflats[gr_frontsector->floorpic].lumpnum);
             }
         }
         else
@@ -2639,7 +2647,8 @@ static void HWR_Subsector(int num)
             {
                 HWR_GetFlat(levelflats[gr_frontsector->ceilingpic].lumpnum);
                 HWR_RenderPlane(&extrasubsectors[num], locCeilingHeight, PF_Occlude,
-				ceilinglightlevel, levelflats[gr_frontsector->ceilingpic].lumpnum);
+				ceilingcolormap, ceilinglightlevel,
+				levelflats[gr_frontsector->ceilingpic].lumpnum);
             }
         }
         else
@@ -2683,7 +2692,8 @@ static void HWR_Subsector(int num)
                     HWR_GetFlat(levelflats[*rover->bottompic].lumpnum);
                     light = R_GetPlaneLight_viewz(gr_frontsector, *rover->bottomheight);
                     HWR_RenderPlane(&extrasubsectors[num], *rover->bottomheight, PF_Occlude,
-				    *gr_frontsector->lightlist[light].lightlevel, levelflats[*rover->bottompic].lumpnum);
+				    NULL, *gr_frontsector->lightlist[light].lightlevel,
+				    levelflats[*rover->bottompic].lumpnum);
                 }
             }
             if (*rover->topheight >= gr_frontsector->floorheight
@@ -2703,7 +2713,8 @@ static void HWR_Subsector(int num)
                     HWR_GetFlat(levelflats[*rover->toppic].lumpnum);
                     light = R_GetPlaneLight_viewz(gr_frontsector, *rover->topheight);
                     HWR_RenderPlane(&extrasubsectors[num], *rover->topheight, PF_Occlude,
-				    *gr_frontsector->lightlist[light].lightlevel, levelflats[*rover->toppic].lumpnum);
+				    NULL, *gr_frontsector->lightlist[light].lightlevel,
+				    levelflats[*rover->toppic].lumpnum);
                 }
             }
 
@@ -2752,7 +2763,8 @@ static void HWR_Subsector(int num)
         if (wh > gr_frontsector->floorheight && wh < gr_frontsector->ceilingheight)
         {
             HWR_GetFlat(doomwaterflat);
-            HWR_RenderPlane(&extrasubsectors[num], wh, PF_Translucent, gr_frontsector->lightlevel, doomwaterflat);
+            HWR_RenderPlane(&extrasubsectors[num], wh, PF_Translucent,
+			    NULL, gr_frontsector->lightlevel, doomwaterflat);
         }
     }
     // -------------------- WATER IN DEV. TEST ------------------------
@@ -4309,7 +4321,8 @@ void HWR_Render3DWater()
         FBITFIELD PolyFlags = PF_Translucent | (planeinfo[i].alpha << 24);
 
         HWR_GetFlat(planeinfo[i].lumpnum);
-        HWR_RenderPlane(planeinfo[i].xsub, planeinfo[i].fixedheight, PolyFlags, planeinfo[i].lightlevel, planeinfo[i].lumpnum);
+        HWR_RenderPlane(planeinfo[i].xsub, planeinfo[i].fixedheight, PolyFlags,
+			NULL, planeinfo[i].lightlevel, planeinfo[i].lumpnum);
     }
     numplanes = 0;
 }

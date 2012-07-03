@@ -2501,3 +2501,10 @@ patchfile = w82_cons_printf_va.patch
 Fix buffer overruns caused by vsnprintf to buffer without string termination.
 Create function CONS_printf_va() to handle va_list printing to console.
 This replaces multiple copies of print buffers and vsnprintf.
+
+*** w82_hw_obj_colormap
+patchfile = w82_hw_obj_colormap.patch
+- committed revision 937   by wesley johnson
+Fix hardware render so that colormaps affect objects too.
+Fixed HWR_RenderPlane to have colormap parameter, so can pass in floor
+and ceiling colormaps, same as in software renderer.
