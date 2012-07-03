@@ -2508,3 +2508,12 @@ patchfile = w82_hw_obj_colormap.patch
 Fix hardware render so that colormaps affect objects too.
 Fixed HWR_RenderPlane to have colormap parameter, so can pass in floor
 and ceiling colormaps, same as in software renderer.
+
+*** w82_hw_StoreWall_float
+patchfile = w82_hw_StoreWall_float.patch
+- committed revision 938   by wesley johnson
+Change HWR_StoreWallRange to have float operands.  Part of the code
+treated them as 0.0 to 1.0, and part was integer like the software
+renderer.
+General spelling fixes, replace some stub decl with proper include.
+

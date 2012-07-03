@@ -114,8 +114,8 @@ extrasubsector_t*   extrasubsectors = NULL;
 
 // newsubsectors are subsectors without segs, added for the plane polygons
 #define NEWSUBSECTORS       50
-int                 totsubsectors;
-int                 addsubsector;
+int  totsubsectors;
+int  addsubsector;
 
 typedef struct { 
     float x;
@@ -204,8 +204,10 @@ static poly_t* HWR_AllocPoly (int numpts)
 #endif
 
     if (gr_ppfree < size)
+    {
         I_Error ("allocpoly() : no more memory %d bytes left, %d bytes needed\n\n%s\n", 
                   gr_ppfree, size, "You can try the param -polypoolsize 2048 (or higher if needed)");
+    }
 
     p = (poly_t*)gr_ppcurrent;
     gr_ppcurrent += size;
@@ -218,7 +220,7 @@ static poly_t* HWR_AllocPoly (int numpts)
 static polyvertex_t* HWR_AllocVertex (void)
 {
     polyvertex_t* p;
-    int          size;
+    int  size;
 
     size =  sizeof(polyvertex_t);
 #ifdef ZPLANALLOC
@@ -243,7 +245,7 @@ static void HWR_FreePoly (poly_t* poly)
 #ifdef ZPLANALLOC
     Z_Free(poly);
 #else
-    int         size;
+    int  size;
     
     size = sizeof(poly_t) + sizeof(polyvertex_t) * poly->numpts;
     memset(poly,0,size);
@@ -256,9 +258,10 @@ static void HWR_FreePoly (poly_t* poly)
 // with the polygon segment
 //
 static float  bspfrac;
+
 static polyvertex_t* fracdivline (fdivline_t* bsp, polyvertex_t* v1, polyvertex_t* v2)
 {
-static polyvertex_t  pt;
+  static polyvertex_t  pt;
     double      frac;
     double      num;
     double      den;
@@ -292,7 +295,7 @@ static polyvertex_t  pt;
     // which is useful to determine what is left, what is right
     num = (v2x - v1x)*v1dy + (v1y - v2y)*v1dx;
     frac = num / den;
-  bspfrac = frac;
+    bspfrac = frac;
 
 
     // find the interception point along the partition line
@@ -651,7 +654,7 @@ static void HWR_SubsecPoly (int num, poly_t* poly)
     }
 }
 
-// the bsp divline have not enouth presition 
+// the bsp divline does not have enough precision 
 // search for the segs source of this divline
 void SearchDivline(node_t* bsp,fdivline_t *divline)
 {
@@ -777,7 +780,7 @@ void HWR_FreeExtraSubsectors (void)
 }
 
 #define MAXDIST   (1.5f)
-// BP: can't move vertex : DON'T change polygone geometry ! (convex)
+// BP: can't move vertex : DON'T change polygon geometry ! (convex)
 //#define MOVEVERTEX
 boolean PointInSeg(polyvertex_t* a,polyvertex_t* v1,polyvertex_t* v2)
 {
@@ -803,7 +806,7 @@ boolean PointInSeg(polyvertex_t* a,polyvertex_t* v1,polyvertex_t* v2)
     if(a->y<v1->y-MAXDIST || a->y>v2->y+MAXDIST)
         return false;
 
-    // v1 = origine
+    // v1 = origin
     ax= v2->x-v1->x;
     ay= v2->y-v1->y;
     norm = sqrt(ax*ax+ay*ay);
@@ -822,10 +825,10 @@ boolean PointInSeg(polyvertex_t* a,polyvertex_t* v1,polyvertex_t* v2)
 #ifdef MOVEVERTEX
     if(cx*cx+cy*cy<=MAXDIST*MAXDIST)
     {
-        // ajust a little the point position
+        // adjust a little the point position
         a->x=ax*d+v1->x;
         a->y=ay*d+v1->y;
-        // anyway the correction is not enouth
+        // anyway the correction is not enough
         return true;
     }
     return false;
@@ -891,10 +894,10 @@ void SearchSegInBSP(int bspnum,polyvertex_t *p,poly_t *poly)
 }
 
 // search for T-intersection problem
-// BP : It can be mush more faster doing this at the same time of the splitpoly
-// but we must use a different structure : polygone pointing on segs 
-// segs pointing on polygone and on vertex (too mush complicated, well not 
-// realy but i am soo lasy), the methode discibed is also better for segs presition
+// BP : It can be much more faster doing this at the same time of the splitpoly
+// but we must use a different structure : polygon pointing on segs 
+// segs pointing on polygon and on vertex (too much complicated, well not 
+// really but I am soo lazy), the method described is also better for segs precision
 extern consvar_t cv_grsolvetjoin;
 int SolveTProblem (void)
 {
@@ -924,12 +927,12 @@ int SolveTProblem (void)
 #define NEARDIST (0.75f) 
 #define MYMAX    (10000000000000.0f)
 
-/*  Ajust true segs (from the segs lump) to be exactely the same as 
- *  plane polygone segs
- *  This also convert fixed_t point of segs in float (in moste case 
- *  it share the same vertice
+/*  Adjust true segs (from the segs lump) to be exactly the same as 
+ *  plane polygon segs
+ *  This also convert fixed_t point of segs in float (in most cases 
+ *  it shares the same vertice
  */
-void AjustSegs(void)
+void AdjustSegs(void)
 {
     int i,j,count;
     seg_t* lseg;
@@ -974,7 +977,7 @@ void AjustSegs(void)
             else
             {
                 // BP: here we can do better, using PointInSeg and compute
-                // the right point position also split a polygone side to
+                // the right point position also split a polygon side to
                 // solve a T-intersection, but too much work
 
                 // convert fixed vertex to float vertex
@@ -1073,8 +1076,8 @@ void HWR_CreatePlanePolygons (int bspnum)
     WalkBSPNode (bspnum, rootp, NULL,rootbbox);
 
     i=SolveTProblem ();
-    //CONS_Printf("%d point div a polygone line\n",i);
-    AjustSegs();
+    //CONS_Printf("%d point div a polygon line\n",i);
+    AdjustSegs();
 
     //debug debug..
     //if (nobackpoly)

@@ -1369,7 +1369,7 @@ static void HWR_SplitWall(sector_t * sector, wallVert3D * wallVerts, int texnum,
 // Anything between means the wall segment has been clipped with solidsegs,
 //  reducing wall overdraw to a minimum
 //
-static void HWR_StoreWallRange(int startfrac, int endfrac)
+static void HWR_StoreWallRange(float startfrac, float endfrac)
 {
     wallVert3D wallVerts[4];
     v2d_t vs, ve;               // start, end vertices of 2d line (view from above)
@@ -1455,12 +1455,12 @@ static void HWR_StoreWallRange(int startfrac, int endfrac)
 
         // clip texture s start/end coords with solidsegs
 	// [WDJ] FIXME, Cannot have int startfrac >0 and <1 ???
-        if (startfrac > 0 && startfrac < 1)
+        if (startfrac > 0.0 && startfrac < 1.0)
             cliplow = texturehpeg + gr_curline->length * startfrac;
         else
             cliplow = texturehpeg;
 
-        if (endfrac > 0 && endfrac < 1)
+        if (endfrac > 0.0 && endfrac < 1.0)
             cliphigh = texturehpeg + gr_curline->length * endfrac;
         else
             cliphigh = texturehpeg + gr_curline->length;
@@ -1951,7 +1951,8 @@ static void HWR_ClipSolidWallSegment(int first, int last)
         {
             // Post is entirely visible (above start),
             //  so insert a new clippost.
-            HWR_StoreWallRange(first, last);
+//            HWR_StoreWallRange(first, last);
+            HWR_StoreWallRange(0.0, 1.0);
 
             next = newend;
             newend++;
@@ -1971,13 +1972,14 @@ static void HWR_ClipSolidWallSegment(int first, int last)
         if (!cv_grclipwalls.value)
         {
             if (!clipwalls_fragment)
-                HWR_StoreWallRange(first, last);
+//                HWR_StoreWallRange(first, last);
+                HWR_StoreWallRange(0.0, 1.0);
             clipwalls_fragment = true;
         }
         else
         {
             highfrac = HWR_ClipViewSegment(start->first + 1, (polyvertex_t *) gr_curline->v1, (polyvertex_t *) gr_curline->v2);
-            HWR_StoreWallRange(0, highfrac);
+            HWR_StoreWallRange(0.0, highfrac);
         }
         // Now adjust the clip size.
         start->first = first;
@@ -1996,7 +1998,8 @@ static void HWR_ClipSolidWallSegment(int first, int last)
         if (!cv_grclipwalls.value)
         {
             if (!clipwalls_fragment)
-                HWR_StoreWallRange(first, last);
+//                HWR_StoreWallRange(first, last);
+                HWR_StoreWallRange(0.0, 1.0);
             clipwalls_fragment = true;
         }
         else
@@ -2021,11 +2024,12 @@ static void HWR_ClipSolidWallSegment(int first, int last)
         if (!cv_grclipwalls.value)
         {
             if (!clipwalls_fragment)
-                HWR_StoreWallRange(first, last);
+//                HWR_StoreWallRange(first, last);
+                HWR_StoreWallRange(0.0, 1.0);
             clipwalls_fragment = true;
         }
         else
-            HWR_StoreWallRange(0, 1);
+            HWR_StoreWallRange(0.0, 1.0);
     }
     else
     {
@@ -2033,7 +2037,8 @@ static void HWR_ClipSolidWallSegment(int first, int last)
         if (!cv_grclipwalls.value)
         {
             if (!clipwalls_fragment)
-                HWR_StoreWallRange(first, last);
+//                HWR_StoreWallRange(first, last);
+                HWR_StoreWallRange(0.0, 1.0);
             clipwalls_fragment = true;
         }
         else
@@ -2087,7 +2092,7 @@ static void HWR_ClipPassWallSegment(int first, int last)
         if (last < start->first - 1)
         {
             // Post is entirely visible (above start).
-            HWR_StoreWallRange(0, 1);
+            HWR_StoreWallRange(0.0, 1.0);
             return;
         }
 
@@ -2096,13 +2101,13 @@ static void HWR_ClipPassWallSegment(int first, int last)
         {
             //20/08/99: Changed by Hurdler (taken from faB's code)
             if (!clipwalls_fragment)
-                HWR_StoreWallRange(0, 1);
+                HWR_StoreWallRange(0.0, 1.0);
             clipwalls_fragment = true;
         }
         else
         {
             highfrac = HWR_ClipViewSegment(min(start->first + 1, start->last), (polyvertex_t *) gr_curline->v1, (polyvertex_t *) gr_curline->v2);
-            HWR_StoreWallRange(0, highfrac);
+            HWR_StoreWallRange(0.0, highfrac);
         }
     }
 
@@ -2116,7 +2121,7 @@ static void HWR_ClipPassWallSegment(int first, int last)
         if (!cv_grclipwalls.value)
         {
             if (!clipwalls_fragment)
-                HWR_StoreWallRange(0, 1);
+                HWR_StoreWallRange(0.0, 1.0);
             clipwalls_fragment = true;
         }
         else
@@ -2136,11 +2141,11 @@ static void HWR_ClipPassWallSegment(int first, int last)
         if (!cv_grclipwalls.value)
         {
             if (!clipwalls_fragment)
-                HWR_StoreWallRange(0, 1);
+                HWR_StoreWallRange(0.0, 1.0);
             clipwalls_fragment = true;
         }
         else
-            HWR_StoreWallRange(0, 1);
+	    HWR_StoreWallRange(0.0, 1.0);
     }
     else
     {
@@ -2148,13 +2153,13 @@ static void HWR_ClipPassWallSegment(int first, int last)
         if (!cv_grclipwalls.value)
         {
             if (!clipwalls_fragment)
-                HWR_StoreWallRange(0, 1);
+                HWR_StoreWallRange(0.0, 1.0);
             clipwalls_fragment = true;
         }
         else
         {
             lowfrac = HWR_ClipViewSegment(max(start->last - 1, start->first), (polyvertex_t *) gr_curline->v1, (polyvertex_t *) gr_curline->v2);
-            HWR_StoreWallRange(lowfrac, 1);
+            HWR_StoreWallRange(lowfrac, 1.0);
         }
     }
 }
@@ -2482,7 +2487,6 @@ static boolean HWR_CheckBBox(fixed_t * bspcoord)
     return HWR_ClipToSolidSegs(sx1, sx2 - 1);
 }
 
-sector_t *R_FakeFlat(sector_t *, sector_t *, int *, int *, boolean);
 
 // -----------------+
 // HWR_Subsector    : Determine floor/ceiling planes.
