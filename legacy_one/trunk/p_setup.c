@@ -420,12 +420,12 @@ void P_LoadSegs (int lump)
 	}
         ldef = &lines[linedef];
         li->linedef = ldef;
-        li->side = side = LE_SWAP16(ml->side);
+        side = LE_SWAP16(ml->side);
         if( side != 0 && side != 1 )
         {
 	    // [WDJ] buggy wad
 	    I_SoftError( "P_LoadSegs, bad side index\n");
-	    side = 0;  // assume was using wrong side FIXME [smite] li->side?
+	    side = 0;  // assume was using wrong side
         }
         // side1 required to have sidenum != NULL_INDEX
         if( ldef->sidenum[side] == NULL_INDEX )
@@ -434,6 +434,7 @@ void P_LoadSegs (int lump)
 	    I_SoftError( "P_LoadSegs, using missing sidedef\n");
 	    side = 0;  // assume was using wrong side
 	}
+        li->side = side;
         li->sidedef = &sides[ldef->sidenum[side]];
         li->frontsector = sides[ldef->sidenum[side]].sector;
         if (ldef-> flags & ML_TWOSIDED)
