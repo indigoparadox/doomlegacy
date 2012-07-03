@@ -2521,3 +2521,9 @@ General spelling fixes, replace some stub decl with proper include.
 patchfile = w83_filestatus_e.patch
 - committed revision 939   by wesley johnson
 Fix filestatus_t stragglers to be filestatus_e.
+
+*** w83_gl_info_char
+patchfile = w83_gl_info_char.patch
+- committed revision 940   by wesley johnson
+Fix get_gl_info for (char*) type warnings on newer compilers.
+

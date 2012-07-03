@@ -383,9 +383,9 @@ void Query_GL_info( int ogltest )
 //#define DUP_RENDERER_STR
 #ifdef DUP_RENDERER_STR
     // unnecessary dup
-    char * renderer = strdup(glGetString(GL_RENDERER));
+    char * renderer = strdup( (char*) glGetString(GL_RENDERER));
 #else
-    const char * renderer = glGetString(GL_RENDERER);
+    const char * renderer = (char*) glGetString(GL_RENDERER);
 #endif
     DBG_Printf("Renderer   : %s\n", renderer );
     // BP: disable advanced features that don't work on some hardware
@@ -402,7 +402,7 @@ void Query_GL_info( int ogltest )
     // [WDJ] Extensions string is indefinite long
     DBG_Printf("Extensions : \n" );
     gl_extensions = glGetString(GL_EXTENSIONS);  // passed to isExtAvailable
-    DBG_Print_lines( gl_extensions );
+    DBG_Print_lines( (char*)gl_extensions );
 
     DBG_Printf("oglflags   : 0x%X\n", oglflags );
 }
