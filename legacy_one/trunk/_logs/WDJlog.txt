@@ -2583,5 +2583,16 @@ patchfile = w83_fs_func_old.patch
 - committed revision 947   by wesley johnson
 Remove OLDBEHAVIOR code in fragglescript functions.
 
+*** w83_makefile
+patchfile = w83_makefile.patch
+- committed revision 948   by wesley johnson
+Move OBJ of an interface to that interface makefile section.
+Made WIN32 interface compilable (which uses different names than the
+others).
+Removed strange i_cdmus_o var.
+Created MAINOBJ var.
+Moved linux_x common OBJ (in xshm and ggi) to a common OBJ assign,
+leaving only the video.
+
 
 
