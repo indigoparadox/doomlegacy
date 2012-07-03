@@ -110,11 +110,11 @@
 // Globals
 // -------
 
-boolean         highcolor = 0;
-
 static  BOOL        bDIBMode;           // means we are using DIB instead of DirectDraw surfaces
 static  BITMAPINFO* bmiMain = NULL;
 static  HDC         hDCMain = NULL;
+
+static  byte  request_bitpp = 0;  // to select modes
 
 
 // -----------------
@@ -651,6 +651,8 @@ void VID_Init (void)
     vmode_t*    pv;
     int         iMode;
     BOOL        bWinParm;
+    char * req_errmsg = NULL;
+    byte  alt_request_bitpp = 0;
 
     // if '-win' is specified on the command line, do not add DirectDraw modes
     bWinParm = M_CheckParm ("-win");
@@ -663,6 +665,57 @@ void VID_Init (void)
     COM_AddCommand ("vid_mode", VID_Command_Mode_f);
 
     CV_RegisterVar (&cv_vidwait);
+
+#if 0   
+    if( req_drawmode == REQ_native )
+    {
+        vid.bitpp  = videoInfo->BitsPerPixel; // FIXME
+        vid.bytepp = videoInfo->BytesPerPixel; // FIXME
+        if( V_CanDraw( vid.bitpp ))
+        {
+	    request_bitpp = vid.bitpp;
+	    goto get_modelist;
+	}
+        // Use 8 bit and do the palette lookup.
+        if( verbose )
+	    fprintf(stderr,"Native %i bpp rejected\n", vid.bitpp );
+	}
+    }
+#endif
+
+    switch(req_drawmode)
+    {
+#if 0
+     case REQ_native:
+       if( V_CanDraw( vid.bitpp )) {
+	   request_bitpp = vid.bitpp;
+       }else{
+	   // Use 8 bit and do the palette lookup.
+	   if( verbose )
+	       fprintf(stderr,"Native %i bpp rejected\n", vid.bitpp );
+	   request_bitpp = 8;
+       }
+       break;
+#endif
+     case REQ_specific:
+       request_bitpp = req_bitpp;
+       break;
+     case REQ_highcolor:
+       req_errmsg = "highcolor";
+       request_bitpp = 15;
+       alt_request_bitpp = 16;
+//       if( vid.bitpp == 16 )  request_bitpp = 16;  // native preference
+       break;
+     case REQ_truecolor:
+       req_errmsg = "truecolor";
+       request_bitpp = 24;
+       alt_request_bitpp = 32;
+//       if( vid.bitpp == 32 )  request_bitpp = 32;  // native preference
+       break;
+     default:
+       request_bitpp = 8;
+       break;
+    }
 
     //setup the videmodes list,
     // note that mode 0 must always be VGA mode 0x13
@@ -742,14 +795,44 @@ void VID_Init (void)
     {
         if (!CreateDirectDrawInstance ())
             I_Error ("Error initializing DirectDraw");
-        // get available display modes for the device
-        VID_GetExtraModes ();
+
+        // try the requested bpp, then alt, then 8bpp
+        for(;;)
+        {
+	    // get available display modes for the device
+	    VID_GetExtraModes ();
+	    if(numvidmodes) goto found_modes;
+
+	    if( request_bitpp == 8 )  break;
+	    if(req_drawmode == REQ_specific)
+	    {
+	        fprintf(stderr,"No %i bpp modes\n", req_bitpp );
+	        goto abort_error;
+	    }
+	    if( alt_request_bitpp )
+	    {
+	        if(request_bitpp != alt_request_bitpp)
+	        {
+		    request_bitpp = alt_request_bitpp;
+		    continue;
+		}
+	        fprintf(stderr,"No %s modes\n", req_errmsg );
+	        // win32 had -highcolor as binding, so do not change that behavior
+	        goto abort_error;
+	    }
+	    request_bitpp = 8;  // default last attempt
+	}
     }
+    // assumes there is always a default 8bpp mode
 
     // the game boots in 320x200 standard VGA, but
     // we need a highcolor mode to run the game in highcolor
-    if (highcolor && numvidmodes==0)
-        I_Error ("No 15bit highcolor VESA2 video mode found, cannot run in highcolor.\n");
+    if (request_bpp>8 && numvidmodes==0)
+        I_Error ("No highcolor/truecolor VESA2 video mode found, cannot run in highcolor/truecolor.\n");
+
+found_modes:
+    vid.bitpp = request_bpp;
+    vid.bytepp = (request_bpp + 7) >> 3;
 
     // add windowed mode at the start of the list, very important!
     WindowMode_Init();
@@ -766,6 +849,11 @@ void VID_Init (void)
 
     // set the startup screen in a window
     VID_SetMode (0);
+    return;
+
+abort_error:
+    // cannot return without a display screen
+    I_Error("StartupGraphics/VID_Init Abort\n");
 }
 
 
