@@ -1086,7 +1086,7 @@ boolean G_Responder (event_t* ev)
         if (devparm && ev->type == ev_keydown && ev->data1 == ';')
         {
             // added Boris : test different player colors
-            consoleplayer_ptr->skincolor = (consoleplayer_ptr->skincolor+1) %MAXSKINCOLORS;
+            consoleplayer_ptr->skincolor = (consoleplayer_ptr->skincolor+1) % NUMSKINCOLORS;
             consoleplayer_ptr->mo->flags |= (consoleplayer_ptr->skincolor)<<MF_TRANSSHIFT;
             G_DeathMatchSpawnPlayer (0);
             return true;
@@ -2216,7 +2216,7 @@ boolean G_Downgrade(int version)
         //         also disable the new preferred weapons order.
         for(i=0;i<4;i++)
         {
-            players[i].skincolor = i % MAXSKINCOLORS;
+            players[i].skincolor = i % NUMSKINCOLORS;
             players[i].originalweaponswitch=true;
         }//eof Boris
     }

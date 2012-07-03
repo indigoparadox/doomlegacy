@@ -97,7 +97,8 @@ extern int flatsubtract;
 
 // translation stuff here
 
-// [WDJ] player skin translation, skintrans[MAXSKINCOLORS][256]
+// [WDJ] player skin translation, skintranstables[NUMSKINCOLORS-1][256]
+// Does not translate color 0
 // Boom calls these TRANSLATION, but that confuses with translucent.
 extern byte*            skintranstables;  // player skin translation tables
 extern byte*            dc_skintran;  // ptr to selected skin table

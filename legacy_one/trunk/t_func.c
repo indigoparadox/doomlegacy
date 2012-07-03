@@ -704,7 +704,7 @@ void SF_SkinColor()
     {
 		colour = intvalue(t_argv[1]);
 		
-		if(colour > MAXSKINCOLORS)
+		if(colour > NUMSKINCOLORS)
 		{
 			script_error("skin colour %i is out of range\n", colour);
 		}

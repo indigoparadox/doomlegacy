@@ -300,11 +300,8 @@ typedef enum
 } mobjeflag_t;
 
 
-#if MAXSKINCOLOR > 16
-
-MAXSKINCOLOR have changed
-Change MF_TRANSLATION to take effect of the change
-
+#if NUMSKINCOLOR > 16
+#error MF_TRANSLATION can only handle NUMSKINCOLORS <= 16
 #endif
 
 // Map Object definition.

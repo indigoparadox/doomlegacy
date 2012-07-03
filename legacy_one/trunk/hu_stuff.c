@@ -235,7 +235,7 @@ void TeamPlay_OnChange(void)
     if(cv_teamplay.value==1)
     {
         // color
-        for(i=0; i<MAXSKINCOLORS; i++)
+        for(i=0; i<NUMSKINCOLORS; i++)
 	    set_team_name( i, Color_Names[i]);
     }
     else

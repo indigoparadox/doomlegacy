@@ -277,7 +277,7 @@ void D_RegisterClientCommands(void)
 {
     int i;
 
-    for (i = 0; i < MAXSKINCOLORS; i++)
+    for (i = 0; i < NUMSKINCOLORS; i++)
         Color_cons_t[i].strvalue = Color_Names[i];
 
     //
@@ -508,7 +508,7 @@ void Got_NameAndcolor(char **cp, int playernum)
     char * lcp = *cp; // local cp
 
     // color
-    p->skincolor = READBYTE(lcp) % MAXSKINCOLORS;
+    p->skincolor = READBYTE(lcp) % NUMSKINCOLORS;
 
     // a copy of color
     if (p->mo)

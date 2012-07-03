@@ -245,7 +245,7 @@ typedef struct
 } mapthing_t;
 
 
-extern char *Color_Names[MAXSKINCOLORS];
+extern char *Color_Names[NUMSKINCOLORS];
 
 
 #endif                  // __DOOMDATA__

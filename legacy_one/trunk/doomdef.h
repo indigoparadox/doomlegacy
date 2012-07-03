@@ -314,8 +314,10 @@ void I_SoftError (char *error, ...);
 #define MAXSKINS                MAXPLAYERS
 #define PLAYERSMASK             (MAXPLAYERS-1)
 #define MAXPLAYERNAME           21
-#define MAXSKINCOLORS           11
 #define MAXTEAMS		32
+
+// Determined by skin color tables
+#define NUMSKINCOLORS           11
 
 #define SAVESTRINGSIZE          24
 
