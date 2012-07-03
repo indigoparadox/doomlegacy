@@ -740,8 +740,10 @@ void S_PauseSound(void)
         mus_paused = true;
     }
 
+#ifdef CDMUS
     // pause cd music
     I_PauseCD();
+#endif
 }
 
 void S_ResumeSound(void)
@@ -752,8 +754,10 @@ void S_ResumeSound(void)
         mus_paused = false;
     }
 
+#ifdef CDMUS
     // resume cd music
     I_ResumeCD();
+#endif
 }
 
 //

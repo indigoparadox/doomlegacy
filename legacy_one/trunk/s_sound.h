@@ -86,9 +86,11 @@ extern consvar_t musserver_arg;
 #endif
 
 extern CV_PossibleValue_t soundvolume_cons_t[];
+#ifdef CDMUS
 //part of i_cdmus.c
 extern consvar_t cd_volume;
 extern consvar_t cdUpdate;
+#endif
 
 #ifdef __MACOS__
 typedef enum

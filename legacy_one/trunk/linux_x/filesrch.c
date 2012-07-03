@@ -11,7 +11,7 @@
 //
 // filesearch:
 //
-// ATTENTION : make sure there is enouth space in filename to put a full path (255 or 512)
+// ATTENTION : make sure there is enough space in filename to put a full path (255 or 512)
 // if needmd5check==0 there is no md5 check
 // if changestring then filename will be change with the full path and name
 // maxsearchdepth==0 only search given directory, no subdirs

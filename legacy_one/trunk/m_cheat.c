@@ -332,6 +332,7 @@ boolean cht_Responder(event_t * ev)
             }
         }
 
+#ifdef CDMUS
         // 'cd' for changing cd track quickly
         //NOTE: the cheat uses the REAL track numbers, not remapped ones
         else if (cht_CheckCheat(&cheat_cd, ch))
@@ -343,6 +344,7 @@ boolean cht_Responder(event_t * ev)
             plyr->message = "Changing cd track...\n";
             I_PlayCD((buf[0] - '0') * 10 + (buf[1] - '0'), true);
         }
+#endif
 
         // Simplified, accepting both "noclip" and "idspispopd".
         // no clipping mode cheat

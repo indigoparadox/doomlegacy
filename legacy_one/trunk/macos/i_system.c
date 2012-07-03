@@ -319,7 +319,9 @@ void I_Quit (void)
     D_QuitNetGame ();
     I_ShutdownMusic();
     I_ShutdownSound();
+#ifdef CDMUS
     I_ShutdownCD();
+#endif
     M_SaveConfig (NULL);
     I_ShutdownGraphics();
     I_ShutdownInput();

@@ -421,8 +421,10 @@ void D_RegisterClientCommands(void)
     CV_RegisterVar(&cv_numChannels);
     CV_RegisterVar(&cv_rndsoundpitch);
 
+#ifdef CDMUS
     //i_cdmus.c
     CV_RegisterVar(&cd_volume);
+#endif
 
     // screen.c ?
     CV_RegisterVar(&cv_fullscreen);     // only for opengl so use differant name please and move it to differant place

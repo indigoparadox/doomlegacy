@@ -645,7 +645,9 @@ void I_Quit (void)
         G_CheckDemoStatus();
     D_QuitNetGame ();
     I_ShutdownSound();
+#ifdef CDMUS
     I_ShutdownCD();
+#endif
    // use this for 1.28 19990220 by Kin
     M_SaveConfig (NULL);
     I_ShutdownJoystick();

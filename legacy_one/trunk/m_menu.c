@@ -2047,8 +2047,10 @@ menuitem_t SoundMenu[]=
     {IT_BIGSLIDER | IT_SPACE ,NULL      ,NULL          ,&cv_soundvolume      },
     {IT_CVARMAX   | IT_PATCH ,"M_MUSVOL","Music Volume",&cv_musicvolume  ,'m'},
     {IT_BIGSLIDER | IT_SPACE ,NULL      ,NULL          ,&cv_musicvolume      },
+#ifdef CDMUS
     {IT_CVARMAX   | IT_PATCH ,"M_CDVOL" ,"CD Volume"   ,&cd_volume       ,'c'}, // in legacy.wad
     {IT_BIGSLIDER | IT_SPACE ,NULL      ,NULL          ,&cd_volume           },
+#endif
 };
 
 menu_t  SoundDef =

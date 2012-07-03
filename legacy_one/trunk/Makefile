@@ -43,6 +43,11 @@
 # SDL Mixer, to get music
 HAVE_MIXER=1
 
+# CD-Music enable/disable, if you don't have the special libraries, etc.
+#ifndef NOCDMUS
+CDMUS=1
+#endif
+
 # Developers with svn can enable this to have svn revision number in executable.
 # Causes compile error message otherwise.
 # Until can find test for presence of svn, this is best that can be done.
@@ -113,7 +118,8 @@ ifeq ($(SMIF), SDL)
   INTERFACE=sdl
 
   MAINOBJ := $(O)/i_main.o
-  OBJS := $(O)/i_system.o $(O)/i_video.o $(O)/i_sound.o $(O)/i_net.o $(O)/i_cdmus.o \
+  CDMUSOBJ := $(O)/i_cdmus.o
+  OBJS := $(O)/i_system.o $(O)/i_video.o $(O)/i_sound.o $(O)/i_net.o \
     $(O)/filesrch.o $(O)/dosstr.o $(O)/endtxt.o \
     $(O)/hw_bsp.o $(O)/hw_draw.o $(O)/hw_light.o $(O)/hw_main.o \
     $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o \
@@ -186,10 +192,14 @@ ifeq ($(SMIF), LINUX_X11)
   # Uncomment if you want to use the POLL_POINTER hack
   #POLL_POINTER=-DPOLL_POINTER
 
-  OPTS=-DLINUX -DOLD_SOUND_DRIVER -DMUSSERV -DSNDSERV -DHWRENDER
+  OPTS=-DLINUX -DOLD_SOUND_DRIVER -DSNDSERV -DHWRENDER
+  ifdef CDMUS
+    OPTS += -DMUSSERV
+  endif
   # objs common to xshm and ggi, video is added later
   MAINOBJ := $(O)/i_main.o
-  OBJS=$(O)/i_system.o $(O)/i_sound.o $(O)/i_net.o $(O)/i_cdmus.o \
+  CDMUSOBJ := $(O)/i_cdmus.o
+  OBJS=$(O)/i_system.o $(O)/i_sound.o $(O)/i_net.o \
     $(O)/searchp.o $(O)/filesrch.o $(O)/dosstr.o $(O)/endtxt.o \
     $(O)/hw_bsp.o $(O)/hw_draw.o $(O)/hw_light.o $(O)/hw_main.o \
     $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o \
@@ -244,7 +254,8 @@ ifeq ($(SMIF), FREEBSD_X11)
   # objs common to xshm and ggi, video is added later
   # Note: free-bsd version of cdmus
   MAINOBJ := $(O)/i_main.o
-  OBJS=$(O)/i_system.o $(O)/i_sound.o $(O)/i_net.o $(O)/i_cdmus_fbsd.o \
+  CDMUSOBJ := $(O)/i_cdmus_fbsd.o
+  OBJS=$(O)/i_system.o $(O)/i_sound.o $(O)/i_net.o \
     $(O)/searchp.o $(O)/filesrch.o $(O)/dosstr.o $(O)/endtxt.o \
     $(O)/hw_bsp.o $(O)/hw_draw.o $(O)/hw_light.o $(O)/hw_main.o \
     $(O)/hw_md2.o $(O)/hw_cache.o $(O)/hw_trick.o
@@ -276,6 +287,7 @@ ifeq ($(SMIF), FREEBSD_X11)
 else
 ifeq ($(SMIF), OS2_NATIVE)
   #Requires OS2 libs, os2.h, os2me.h, fourcc.h, DIVE libs, and mmpm2 libs
+  #Does not have cdmusic support
   INTERFACE=os2
   NASMFORMAT=coff
 
@@ -292,7 +304,8 @@ ifeq ($(SMIF), OS2_NATIVE)
   SFLAGS=-g $(OPTS)
 
   MAINOBJ := $(O)/main.o
-  OBJS=$(O)/i_system.o $(O)/i_video.o $(O)/i_sound.o $(O)/i_net.o $(O)/i_cdmus.o \
+  CDMUSOBJ := $(O)/i_cdmus.o
+  OBJS=$(O)/i_system.o $(O)/i_video.o $(O)/i_sound.o $(O)/i_net.o \
     $(O)/i_dart.o $(O)/i_dive.o $(O)/I_pm.o \
     $(O)/printf.o $(O)/I_pm.res $(O)/filesrch.o
 
@@ -328,7 +341,7 @@ ifeq ($(SMIF), WIN32_NATIVE)
 #=================================
 else
 ifeq ($(SMIF), DJGPPDOS_NATIVE)
-  # Requires allegro libs, bcd lib (cd-music)
+  # Requires allegro libs, bcd libs (cd-music)
   RM=del
   INTERFACE=djgppdos
   NASMFORMAT=coff
@@ -340,13 +353,17 @@ ifeq ($(SMIF), DJGPPDOS_NATIVE)
   OPTS=-DPC_DOS -g
 
   DEBUGLIBS=-lalleg -lbcd -lsocket
-  LIBS=-lalleg -lbcd -lsocket
+  LIBS=-lalleg -lsocket
+  ifdef CDMUS
+     LIBS+=-lbcd
+  endif
 
   SFLAGS=
 
   MAINOBJ := $(O)/i_main.o
+  CDMUSOBJ := $(O)/i_cdmus.o
   OBJS=$(O)/i_system.o $(O)/i_video.o $(O)/vid_vesa.o \
-    $(O)/i_sound.o $(O)/i_cdmus.o $(O)/i_net.o \
+    $(O)/i_sound.o $(O)/i_net.o \
     $(O)/filesrch.o
 
 # name of the exefile
@@ -368,6 +385,11 @@ ifdef USEASM
    OPTS:= $(OPTS) -DUSEASM
 endif
 
+# CD-Music
+ifdef CDMUS
+   OBJS += $(CDMUSOBJ)
+   OPTS += -DCDMUS
+endif
 
 # compiler and linker flags
 CFLAGS = $(WFLAGS)

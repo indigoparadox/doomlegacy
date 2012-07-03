@@ -804,8 +804,10 @@ void D_DoomLoop(void)
         I_SubmitSound();
 #endif
 
+#ifdef CDMUS
         // check for media change, loop music..
         I_UpdateCD();
+#endif
 
 #ifdef HW3SOUND
         HW3S_EndFrameUpdate();
@@ -2126,9 +2128,11 @@ void D_DoomMain()
     wipegamestate = gamestate;
     //------------------------------------------------ COMMAND LINE PARAMS
 
+#ifdef CDMUS
     // Initialize CD-Audio, no music on a dedicated server
     if (!M_CheckParm("-nocd") && !M_CheckParm("-dedicated"))
       I_InitCD();
+#endif
     if (M_CheckParm("-respawn"))
       COM_BufAddText("respawnmonsters 1\n");
     if (M_CheckParm("-coopmonsters"))
@@ -2392,7 +2396,9 @@ void Help( void )
 	"-config file    Config file\n"
 	"-opengl         OpenGL Hardware render\n"
 	"-nosound        No sound effects\n"
+#ifdef CDMUS
 	"-nocd           No CD music\n"
+#endif
 	"-nomusic        No music\n"
 	"-precachesound  Preload sound effects\n"
 	"-mb num         Pre-allocate num MiB of memory\n"
