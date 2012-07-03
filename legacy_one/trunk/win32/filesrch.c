@@ -23,7 +23,7 @@
 //        FS_MD5SUMBAD;
 //        FS_FOUND
 
-filestatus_t filesearch(char *filename, char *startpath, unsigned char *wantedmd5sum, 
+filestatus_e filesearch(char *filename, char *startpath, unsigned char *wantedmd5sum, 
                         boolean changestring, int maxsearchdepth)
 {
     struct _finddata_t dta;

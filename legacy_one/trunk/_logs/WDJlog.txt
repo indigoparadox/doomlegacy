@@ -2517,3 +2517,7 @@ treated them as 0.0 to 1.0, and part was integer like the software
 renderer.
 General spelling fixes, replace some stub decl with proper include.
 
+*** w83_filestatus_e
+patchfile = w83_filestatus_e.patch
+- committed revision 939   by wesley johnson
+Fix filestatus_t stragglers to be filestatus_e.
