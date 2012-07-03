@@ -147,7 +147,7 @@ typedef struct player_s
 
     // Power ups. invinc and invis are tic counters.
     int                 powers[NUMPOWERS];
-    byte                cards; // bit field see declration of card_t
+    byte                cards; // bit field see declaration of card_t
     boolean             backpack;
 
     // Frags, kills of other players.

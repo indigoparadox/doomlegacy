@@ -974,6 +974,7 @@ sector_t *P_FindModelCeilingSector(fixed_t ceildestheight,int secnum)
 // RETURN NEXT SECTOR # THAT LINE TAG REFERS TO
 //
 //SoM: 3/7/2000: Killough wrote this to improve the process.
+// Return -1 when not found
 int  P_FindSectorFromLineTag ( line_t* line, int start )
 {
   start = (start >= 0) ?
@@ -989,6 +990,7 @@ int  P_FindSectorFromLineTag ( line_t* line, int start )
 //
 // P_FindSectorFromTag
 // Used by FraggleScript
+// Return -1 when not found
 int  P_FindSectorFromTag( int tag, int start )
 {
   start = (start >= 0) ?
@@ -1000,6 +1002,7 @@ int  P_FindSectorFromTag( int tag, int start )
 }
 
 //DarkWolf95:July 23, 2003: Needed for SF_SetLineTexture
+// Return -1 when not found
 int P_FindLineFromTag(int tag, int start)
 {
   start = (start >= 0) ?
@@ -1012,7 +1015,7 @@ int P_FindLineFromTag(int tag, int start)
 
 //SoM: 3/7/2000: More boom specific stuff...
 // killough 4/16/98: Same thing, only for linedefs
-
+//Return -1 when not found
 int P_FindLineFromLineTag(const line_t *line, int start)
 {
   start = (start >= 0) ?

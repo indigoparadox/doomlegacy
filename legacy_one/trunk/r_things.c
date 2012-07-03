@@ -2396,7 +2396,7 @@ int W_CheckForSkinMarkerInPwad (int wadid, int startlump)
 
     union {
                 char    s[4];
-                int             x;
+                int     x;
     } name4;
 
     strncpy (name4.s, "S_SK", 4);

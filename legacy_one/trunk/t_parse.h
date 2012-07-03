@@ -88,11 +88,20 @@ struct fs_array_s
     (v).type == FSVT_mobj ? -1 : \
     (v).type == FSVT_array ? -1 : (v).value.i )
 
+#if 1
+// [WDJ] handle FSVT_int directly, not by including duplicate code
+#define fixedvalue(v)                                         \
+  ( (v).type == FSVT_fixed ? (v).value.f :                     \
+    (v).type == FSVT_string ? (fixed_t)(atof((v).value.s) * FRACUNIT) : \
+    (v).type == FSVT_mobj ? -1*FRACUNIT : \
+    (v).type == FSVT_array ? -1*FRACUNIT : (v).value.i * FRACUNIT )
+#else
 #define fixedvalue(v)                                         \
   ( (v).type == FSVT_fixed ? (v).value.f :                     \
     (v).type == FSVT_string ? (fixed_t)(atof((v).value.s) * FRACUNIT) : \
     (v).type == FSVT_mobj ? -1*FRACUNIT : \
     (v).type == FSVT_array ? -1*FRACUNIT : intvalue(v) * FRACUNIT )
+#endif
 
 
 
