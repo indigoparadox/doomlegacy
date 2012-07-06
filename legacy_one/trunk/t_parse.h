@@ -164,6 +164,9 @@ void continue_script(script_t *script, char *continue_point);
 void parse_include(char *lumpname);
 void run_statement( void );
 void script_error(const char *fmt, ...);
+void wrong_num_arg( const char * funcname, int num_args );
+void missing_arg( const char * funcname, int min_num_args );
+void missing_arg_str( const char * funcname, const char * argstr );
 
 fs_value_t evaluate_expression(int start, int stop);
 int find_operator(int start, int stop, char *value);
