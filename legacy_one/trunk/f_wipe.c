@@ -265,7 +265,6 @@ int wipe_doMelt ( int ticks )
     int  height = vid.height;
     int  i, j;
     int  dy;
-    int  idx;
 
     byte *s, *e, *d;
 
@@ -283,10 +282,11 @@ int wipe_doMelt ( int ticks )
                 dy = (melty[i] < 16) ? melty[i]+1 : 8;
                 dy *= vid.dupy;
                 if (melty[i]+dy >= height) dy = height - melty[i];  // bottom
-		idx = (melty[i]*vid.ybytes)+((i+i)*vid.bytepp);
+	        int idx = ((i+i)*vid.bytepp);  // x offset only
+                s = &wipe_scr_start[idx];
+	        idx += (melty[i]*vid.ybytes);  // with melty offset
                 d = &wipe_scr[idx];
                 e = &wipe_scr_end[idx];
-                s = &wipe_scr_start[i+i];
                 melty[i] += dy;
 #ifdef ENABLE_DRAWEXT
 	        if( vid.drawmode != DRAW8PAL )
