@@ -244,7 +244,7 @@ union color8_u {
 };
 extern union color8_u  color8;
 extern uint16_t*  hicolormaps;
-void R_Init_color8_translate ( boolean himap );
+void R_Init_color8_translate ( RGBA_t * palette );
 
 
 // translucency tables
