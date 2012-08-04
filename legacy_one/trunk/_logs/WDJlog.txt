@@ -2674,3 +2674,8 @@ Enabled by default for those that have IPX headers.
 This fixes bug in OpenBSD that does not have IPX, but where a specific
 test is not in place.
 
+*** w84_whatsnew
+patchfile = w84_whatsnew.patch
+- committed revision 959   by wesley johnson
+Update whatsnew doc to current patch level.
+
