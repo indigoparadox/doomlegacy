@@ -1955,6 +1955,10 @@ void P_SpawnPlayer(mapthing_t * mthing, int playernum )
 
     p->flamecount = 0;
     p->flyheight = 0;
+#ifdef BOB_MOM
+    p->bob_momx = 0;
+    p->bob_momy = 0;
+#endif
 
     // setup gun psprite
     P_SetupPsprites(p);

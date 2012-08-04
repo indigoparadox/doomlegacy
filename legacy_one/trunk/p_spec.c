@@ -2662,7 +2662,6 @@ void P_PlayerOnSpecial3DFloor(player_t* player)
 
       if ((demoversion >= 125)
         && (player->mo->eflags & MF_JUSTHITFLOOR)
-//      &&  (sector->modelsec == -1)
 	&& (sector->model < SM_fluid) // not water
 	&& (leveltime % (2*NEWTICRATERATIO))) //SoM: penalize jumping less.
       {
@@ -2716,7 +2715,6 @@ void P_PlayerInSpecialSector (player_t* player)
 
     // Falling, not all the way down yet?
     //SoM: 3/17/2000: Damage if in slimey water!
-//    if (sector->modelsec != -1)
     if (sector->model > SM_fluid)  // check for water
     {
         // check if in water
@@ -2729,7 +2727,6 @@ void P_PlayerInSpecialSector (player_t* player)
     //Fab: jumping in lava/slime does instant damage (no jump cheat)
     if ((demoversion >= 125)
 	&& (player->mo->eflags & MF_JUSTHITFLOOR)
-//      && (sector->modelsec == -1)  // thus lava/slime was not instant
         && (sector->model < SM_fluid)  // not in water
 	&& (leveltime % (2*NEWTICRATERATIO))) //SoM: penalize jumping less.
     {
