@@ -2426,7 +2426,9 @@ void Help( void )
 	"-nofiles        Download all from server\n"
 	"-clientport x   Use port x for client\n"
 	"-udpport x      Use udp port x for client\n"
+#ifdef USE_IPX
 	"-ipx            Use IPX\n"
+#endif
 	"-extratic       Send extra tics ??\n"
 	"-debugfile file Log to debug file\n"
 	"-left           Left slaved view\n"

@@ -286,6 +286,10 @@ void I_SoftError (char *error, ...);
 // Optional for now
 #define BOOM_GLOBAL_COLORMAP
 
+// If IPX network code is to be included
+// This may be overridden for some ports.
+#define USE_IPX
+
 // =========================================================================
 
 // Name of local directory for config files and savegames
