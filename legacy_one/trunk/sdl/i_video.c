@@ -818,8 +818,9 @@ found_modes:
         }
     }
 
-    SDL_ShowCursor(0);
-    doUngrabMouse();
+    SDL_ShowCursor(SDL_DISABLE);
+    I_StartupMouse();
+//    doUngrabMouse();
 
     graphics_started = 1;
 

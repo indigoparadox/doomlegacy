@@ -99,6 +99,8 @@ typedef enum
 extern consvar_t  cv_autorun;
 extern consvar_t  cv_autorun2;
 
+extern consvar_t   cv_grabinput;
+
 // mouse
 extern consvar_t   cv_usemouse;
 extern consvar_t   cv_alwaysfreelook;
@@ -106,6 +108,9 @@ extern consvar_t   cv_mouse_move;
 extern consvar_t   cv_mouse_invert;
 extern consvar_t   cv_mouse_sens_x;
 extern consvar_t   cv_mouse_sens_y;
+#ifdef SDL
+extern consvar_t   cv_mouse_motion;
+#endif
 
 // splitscreen with second mouse
 extern consvar_t   cv_usemouse2;

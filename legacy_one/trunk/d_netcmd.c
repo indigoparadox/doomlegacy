@@ -345,7 +345,7 @@ void D_RegisterClientCommands(void)
     //register these so it is saved to config
     cv_playername.defaultvalue = I_GetUserName();
     if (cv_playername.defaultvalue == NULL)
-        cv_playername.defaultvalue = "gi joe";
+        cv_playername.defaultvalue = "gi john";
     CV_RegisterVar(&cv_playername);
     CV_RegisterVar(&cv_playercolor);
     CV_RegisterVar(&cv_weaponpref);
@@ -386,6 +386,10 @@ void D_RegisterClientCommands(void)
     //CV_RegisterVar (&cv_controlperkey2);
 
     //g_input.c
+    CV_RegisterVar(&cv_grabinput);
+#ifdef SDL
+    CV_RegisterVar(&cv_mouse_motion);
+#endif
     CV_RegisterVar(&cv_usemouse);
     CV_RegisterVar(&cv_alwaysfreelook);
     CV_RegisterVar(&cv_mouse_move);
@@ -820,6 +824,7 @@ void Got_Pause(char **cp, int playernum)
         }
         else
             S_ResumeSound();
+        I_StartupMouse();  // pause updates mouse, grab
     }
 }
 

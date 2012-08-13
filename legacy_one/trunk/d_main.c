@@ -421,6 +421,13 @@ void D_PostEvent_end(void)
 };
 #endif
 
+// Clear the input events before re-enabling play
+void D_ClearEvents( void )
+{
+   eventhead = eventtail = 0;
+   mousex = mousey = 0;  // clear accumulated motion
+}
+
 //
 // D_ProcessEvents
 // Send all the events of the given timestamp down the responder chain
@@ -749,6 +756,9 @@ void D_DoomLoop(void)
     // make sure to do a d_display to init mode _before_ load a level
     SCR_SetMode();      // change video mode
     SCR_Recalc();
+
+    D_ClearEvents();  // clear input events to prevent startup jerks,
+   		      // motion during screen wipe still gets through
 
     while (1)
     {

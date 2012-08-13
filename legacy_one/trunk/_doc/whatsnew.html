@@ -15,7 +15,7 @@
 
 <h2>1.44 (2012-7-??)</h2>
 
-<h3>FEATURES 1.44, recent at svn955</h3>
+<h3>FEATURES 1.44, recent at svn961</h3>
 <ul>
 <li>BEX files supported, with BEX flags, [STRINGS], [POINTER], [PARS],
 and include file.</li>
@@ -88,6 +88,12 @@ implementation.
 <li>IPX network code is compile-time optional using the USE_IPX define in
 doomdef.h.
 </li>
+<li>Grabinput option provided.  When enabled prevents mouse escape
+from the window and stops the most window manager intercept of key
+combinations.</li>
+<li>SDL Mouse motion option to select between absolute and relative mouse
+motion.
+</li>
 </ul>
 
 <h3>FEATURES 1.44 alpha3</h3>
@@ -120,7 +126,7 @@ Did not preserve perfect demo compatibility with Boom and prboom.</li>
 MBF and prboom, with fixes and adaptations.
 Compile-time conditional on BOB_MOM.
 Fixes many problems of previous bobbing, such as bobbing while riding
-conveyor, and interaction with friction.<li>
+conveyor, and interaction with friction.</li>
 <li>Monsters use same sector friction as players.
 Selection mechanism for monster friction (none, MBF, momentum).
 The MBF monster friction only gives the monster momentum on ice, 
@@ -224,7 +230,7 @@ blood splats and Doom episode names.  Chexquest splats are less violent.</li>
 </ul>
 
 
-<h3>BUG FIXES 1.44, recent at svn955</h3>
+<h3>BUG FIXES 1.44, recent at svn961</h3>
 <ul>
 <li>Stuck monsters, in wads like TNT, was fixed.  In TNT, some monsters start
 positions are overlapped, and full speed impulse was needed to get them unstuck.</li>
@@ -418,6 +424,8 @@ using picture format instead.
 This fixes the elevator railings (SW1COMM) in Requiem.wad MAP08,
 which use compressed patches.
 </li>
+<li>Fix mouse event handling to add mouse motion, and rewrite of mouse
+handling.  This fixes OpenBSD mouse problems.</li>
 </ul>
 
 <h3>BUG FIXES 1.44 alpha3</h3>

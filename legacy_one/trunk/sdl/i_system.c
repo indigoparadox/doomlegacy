@@ -65,7 +65,8 @@
 //
 //-----------------------------------------------------------------------------
 
-
+//#define DEBUG_MOUSEMOTION
+  
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -200,6 +201,12 @@ int I_JoystickGetAxis(int joynum, int axisnum)
     return 0;
 }
 
+static int vid_center_x = 100;
+static int vid_center_y = 100;
+static int mouse_x_min = 25;
+static int mouse_x_max = 175;
+static int mouse_y_min = 25;
+static int mouse_y_max = 175;
 static int lastmousex = 0;
 static int lastmousey = 0;
 
@@ -225,9 +232,9 @@ void I_GetEvent()
 #endif
 
   while (SDL_PollEvent(&inputEvent))
-    {
+  {
       switch (inputEvent.type)
-        {
+      {
         case SDL_KEYDOWN:
 	  event.type = ev_keydown;
 	  sym = inputEvent.key.keysym.sym;
@@ -264,45 +271,96 @@ void I_GetEvent()
 	  break;
 
         case SDL_MOUSEMOTION:
-            if(cv_usemouse.value)
-            {
-                // If the event is from warping the pointer back to middle
-                // of the screen then ignore it.
-                if ((inputEvent.motion.x == vid.width/2) &&
-                    (inputEvent.motion.y == vid.height/2))
-                {
-                    lastmousex = inputEvent.motion.x;
-                    lastmousey = inputEvent.motion.y;
-                    break;
-                }
-                else
-                {
-                    event.data2 = (inputEvent.motion.x - lastmousex) << 2;
-                    lastmousex = inputEvent.motion.x;
-                    event.data3 = (lastmousey - inputEvent.motion.y) << 2;
-                    lastmousey = inputEvent.motion.y;
-                }
-                event.type = ev_mouse;
-                event.data1 = 0;
-
-                D_PostEvent(&event);
-
-                // Warp the pointer back to the middle of the window
-                //  or we cannot move any further if it's at a border.
-                if ((inputEvent.motion.x < (vid.width/2)-(vid.width/4)) ||
-                    (inputEvent.motion.y < (vid.height/2)-(vid.height/4)) ||
-                    (inputEvent.motion.x > (vid.width/2)+(vid.width/4)) ||
-                    (inputEvent.motion.y > (vid.height/2)+(vid.height/4)))
-                {
-                    SDL_WarpMouse(vid.width/2, vid.height/2);
-                }
-            }
-            break;
+	  if(cv_usemouse.value)
+	  {
+	      event.type = ev_mouse;
+	      event.data1 = 0;
+	      // [WDJ] 8/2012 Some problems with Absolute mouse motion in OpenBSD.
+	      // Could not predict which would work best for a particular port,
+	      // so both are here, selected from mouse menu.
+	      if( cv_mouse_motion.value )
+	      {
+		  // Relative mouse motion interface.
+		  // Seems to be used by prboom and some other SDL Doom ports.
+		  // SDL 2001 docs: Windows and Linux, otherwise don't know.
+		  // Requires that SDL xrel and yrel report motion even when
+		  // abs mouse position is limited at window border by grabinput.
+		  // Linux: rel motion continues even when abs motion stopped by grabinput.
+		  // OpenBSD: seems to work except when grabinput=0.
+#ifdef DEBUG_MOUSEMOTION
+		  fprintf(stderr, "Mouse %i,%i, rel %i,%i\n",
+		      inputEvent.motion.x, inputEvent.motion.y,
+		      inputEvent.motion.xrel, inputEvent.motion.yrel);
+#endif
+		  // y is negated because screen + is down, but map + is up.
+		  event.data2 = inputEvent.motion.xrel << 2;
+		  event.data3 = - (inputEvent.motion.yrel << 2);
+	      }
+	      else
+	      {
+	          // Absolute mouse motion interface.  Default.
+		  // Linux: works in all combinations.
+		  // Windows: works, untested on newer
+		  // OpenBSD: works, except that when grabinput=0 mouse
+		  // cannot escape window.
+#ifdef DEBUG_MOUSEMOTION
+		  fprintf(stderr, "Mouse %i,%i,  old %i,%i,  rel %i,%i\n",
+		      inputEvent.motion.x, inputEvent.motion.y,
+		      lastmousex, lastmousey,
+		      inputEvent.motion.x - lastmousex, inputEvent.motion.y - lastmousey);
+#endif
+		  // First calc relative motion using lastmouse,
+		  // so can save lastmouse before WarpMouse test
+		  event.data2 = (inputEvent.motion.x - lastmousex) << 2;
+		  lastmousex = inputEvent.motion.x;
+		  // y is negated because screen + is down, but map + is up. 
+		  event.data3 = (lastmousey - inputEvent.motion.y) << 2;
+		  lastmousey = inputEvent.motion.y;
+	      }
+#ifdef DEBUG_WINDOWED
+	      // DEBUG_WINDOWED blocks grabinput effects to get easy access to
+	      // debugging window, so it always needs WarpMouse.
+#else
+	      // With Relative mouse motion and input grabbed,
+	      // SDL will limit range with (xrel, yrel) still working
+	      // Known to work on Linux, OpenBSD, and Windows.
+	      // Absolute mouse motion requires WarpMouse centering always.
+	      // Keyboard will be affected by grabinput, independently of this.
+	      if( (cv_mouse_motion.value==0) || ! cv_grabinput.value )
+#endif
+	      {
+		  static byte lastmouse_warp = 0;
+		  // If the event is from warping the pointer back to middle
+		  // of the screen then ignore it.  Not often, 45 degree turn.
+		  if (lastmouse_warp
+		      && (inputEvent.motion.x == vid_center_x)
+		      && (inputEvent.motion.y == vid_center_y) )
+		  {
+		      lastmouse_warp = 0;
+		      break;  // skip PostEvent
+		  }
+		  // Warp the pointer back to the middle of the window
+		  //  or we cannot move any further when it reaches a border.
+		  if ((inputEvent.motion.x < mouse_x_min) ||
+		      (inputEvent.motion.y < mouse_y_min) ||
+		      (inputEvent.motion.x > mouse_x_max) ||
+		      (inputEvent.motion.y > mouse_y_max)   )
+		  {
+		      // Warp the pointer back to the middle of the window
+		      SDL_WarpMouse(vid_center_x, vid_center_y);
+		      // this issues a mouse event that needs to be ignored
+		      lastmouse_warp = 1;
+		  }
+	      }
+	      // issue mouse event
+	      D_PostEvent(&event);
+	  }
+	  break;
 
         case SDL_MOUSEBUTTONDOWN:
         case SDL_MOUSEBUTTONUP:
 	  if(cv_usemouse.value)
-            {
+	  {
 	      if (inputEvent.type == SDL_MOUSEBUTTONDOWN)
                 event.type = ev_keydown;
 	      else
@@ -311,7 +369,7 @@ void I_GetEvent()
 	      event.data1 = KEY_MOUSE1 + inputEvent.button.button - SDL_BUTTON_LEFT;
 	      event.data2 = 0; // does not correspond to any character
 	      D_PostEvent(&event);
-            }
+	  }
 	  break;
 
 	case SDL_JOYBUTTONDOWN: 
@@ -335,49 +393,62 @@ void I_GetEvent()
 
         default:
 	  break;
-        }
-    }
-}
-
-#ifdef HAS_SDL_BEEN_FIXED
-static void doGrabMouse()
-{
-  if(SDL_GRAB_OFF == SDL_WM_GrabInput(SDL_GRAB_QUERY))
-  {
-    SDL_WM_GrabInput(SDL_GRAB_ON);
+      }
   }
 }
+
+// [WDJ] 8/2012 Grab mouse re-enabled as option menu item.
+
+static void doGrabMouse()
+{
+  if( cv_grabinput.value && !devparm )
+  {
+      if(SDL_GRAB_OFF == SDL_WM_GrabInput(SDL_GRAB_QUERY))
+      {
+#ifdef DEBUG_WINDOWED
+	 // do not grab so can use debugger
+#else
+	 SDL_WM_GrabInput(SDL_GRAB_ON);
 #endif
+      }
+  }
+}
 
 void doUngrabMouse()
 {
   if(SDL_GRAB_ON == SDL_WM_GrabInput(SDL_GRAB_QUERY))
   {
-    SDL_WM_GrabInput(SDL_GRAB_OFF);
+      SDL_WM_GrabInput(SDL_GRAB_OFF);
   }
 }
 
+// Called on video mode change, usemouse change, mousemotion change,
+// and game paused
 void I_StartupMouse(void)
 {
-    SDL_Event inputEvent;
-
-    // warp to center
-    SDL_WarpMouse(vid.width/2, vid.height/2);
-    lastmousex = vid.width/2;
-    lastmousey = vid.height/2;
-    // remove the mouse event by reading the queue
-    SDL_PollEvent(&inputEvent);
-
-#ifdef HAS_SDL_BEEN_FIXED // FIXME
-  if(cv_usemouse.value)
+    vid_center_x = vid.width >> 1;
+    vid_center_y = vid.height >> 1;
+    // Guard band at window border: 20%=51, 25%=64, 30%=76
+    mouse_x_min = (vid.width * 64) >> 8;
+    mouse_x_max = vid.width - mouse_x_min;
+    mouse_y_min = (vid.height * 64) >> 8;
+    mouse_y_max = vid.height - mouse_y_min;
+    lastmousex = vid_center_x;
+    lastmousey = vid_center_y;
+    if(cv_usemouse.value && ! paused)
     {
-      doGrabMouse();
+        SDL_Event inputEvent;
+        // warp to center
+        SDL_WarpMouse(vid_center_x, vid_center_y);
+        // remove the mouse event by reading the queue
+        SDL_PollEvent(&inputEvent);
+
+        doGrabMouse();
     }
-  else
+    else
     {
-      doUngrabMouse();
+        doUngrabMouse();
     }
-#endif
     return;
 }
 
@@ -396,19 +467,19 @@ void I_JoystickInit()
 
   int i;
   for (i=0; i < num_joysticks; i++)
-    {
+  {
       SDL_Joystick *joy = SDL_JoystickOpen(i);
       joysticks[i] = joy;
       if (devparm)
-	{
+      {
 	  CONS_Printf(" Properties of joystick %d:\n", i);
 	  CONS_Printf("    %s.\n", SDL_JoystickName(i));
 	  CONS_Printf("    %d axes.\n", SDL_JoystickNumAxes(joy));
 	  CONS_Printf("    %d buttons.\n", SDL_JoystickNumButtons(joy));
 	  CONS_Printf("    %d hats.\n", SDL_JoystickNumHats(joy));
 	  CONS_Printf("    %d trackballs.\n", SDL_JoystickNumBalls(joy));
-	}
-    }
+      }
+  }
 }
 
 
@@ -435,10 +506,10 @@ void I_SysInit()
 
   // Initialize Audio as well, otherwise DirectX can not use audio
   if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0)
-    {
+  {
       CONS_Printf(" Couldn't initialize SDL: %s\n", SDL_GetError());
       I_Quit();
-    }
+  }
 
   // Window title
   SDL_WM_SetCaption(VERSION_BANNER, "Doom Legacy");
@@ -599,6 +670,7 @@ void I_Tactile(int on,int off,int total )
 }
 
 ticcmd_t        emptycmd;
+
 ticcmd_t*       I_BaseTiccmd(void)
 {
     return &emptycmd;
