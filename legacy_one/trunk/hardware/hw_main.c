@@ -718,11 +718,10 @@ void Extracolormap_to_Surf( /*IN*/ extracolormap_t * extracmap, int light,
     // [WDJ] the rgba color can change according to light level
     // This accomodates the fade in CreateColormap, and Colormap_Analyze.
     temp.rgba = extracmap->rgba[ light >> LIGHT_TO_RGBA_SHIFT ];
-    int alpha = temp.s.alpha;
-    // 26 levels of alpha because of CreateColormap alpha= a..z
-    surfp->FlatColor.s.red = ((26 - alpha) * light + alpha * temp.s.red) / 26;
-    surfp->FlatColor.s.blue = ((26 - alpha) * light + alpha * temp.s.blue) / 26;
-    surfp->FlatColor.s.green = ((26 - alpha) * light + alpha * temp.s.green) / 26;
+    int alpha = ((int)temp.s.alpha) + 1;  // alpha -> 1..256, so can >> 8
+    surfp->FlatColor.s.red = ((256 - alpha) * light + alpha * temp.s.red) >> 8;
+    surfp->FlatColor.s.blue = ((256 - alpha) * light + alpha * temp.s.blue) >> 8;
+    surfp->FlatColor.s.green = ((256 - alpha) * light + alpha * temp.s.green) >> 8;
     surfp->FlatColor.s.alpha = 0xff;
 }
 
