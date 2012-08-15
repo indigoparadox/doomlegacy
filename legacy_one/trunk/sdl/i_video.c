@@ -559,7 +559,7 @@ int VID_SetMode(int modeNum)
         }
         else // (render_soft == rendermode)
         {
-            if(!OglSdlSurface(vid.width, vid.height, cv_fullscreen.value))
+            if(!OglSdlSurface(req_width, req_height, cv_fullscreen.value))
 	        goto fail;
         }
         vid.modenum = modeNum-firstEntry;
@@ -577,7 +577,7 @@ int VID_SetMode(int modeNum)
         }
         else //(render_soft == rendermode)
         {
-            if(!OglSdlSurface(vid.width, vid.height, cv_fullscreen.value))
+            if(!OglSdlSurface(req_width, req_height, cv_fullscreen.value))
 	        goto fail;
         }
         vid.modenum = modeNum;

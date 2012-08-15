@@ -106,11 +106,32 @@ boolean OglSdlSurface(int w, int h, int isFullscreen)
     cbpp = SDL_VideoModeOK(w, h, 16, surfaceFlags);
     if (cbpp < 16)
         return false;
+
+    if( verbose>1 )
+        fprintf(stderr,"OpenGL SDL_SetVideoMode(%i,%i,%i,0x%X)  %s\n",
+		w, h, 16, surfaceFlags,
+		(surfaceFlags&SDL_FULLSCREEN)?"Fullscreen":"Window");
+
     if((vidSurface = SDL_SetVideoMode(w, h, cbpp, surfaceFlags)) == NULL)
         return false;
 
+    if( verbose )
+    {
+        int32_t vflags = vidSurface->flags;
+        fprintf(stderr,"  OpenGL Got %ix%i, %i bpp, %i bytes\n",
+		vidSurface->w, vidSurface->h,
+		vidSurface->format->BitsPerPixel, vidSurface->format->BytesPerPixel );
+        fprintf(stderr,"  HW-surface= %x, HW-palette= %x, HW-accel= %x, Doublebuf= %x, Async= %x \n",
+		vflags&SDL_HWSURFACE, vflags&SDL_HWPALETTE, vflags&SDL_HWACCEL, vflags&SDL_DOUBLEBUF, vflags&SDL_ASYNCBLIT );
+        if(SDL_MUSTLOCK(vidSurface))
+	    fprintf(stderr,"  Notice: MUSTLOCK video surface\n" );
+    }
+    vid.bitpp = vidSurface->format->BitsPerPixel;
+    vid.bytepp = vidSurface->format->BytesPerPixel;
+    vid.width = vidSurface->w;
+    vid.height = vidSurface->h;
 
-    SetModelView(w, h);
+    SetModelView(vid.width, vid.height);
     SetStates();
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 

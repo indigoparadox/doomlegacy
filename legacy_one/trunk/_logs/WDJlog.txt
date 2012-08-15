@@ -2702,3 +2702,11 @@ OpenBSD reports mouse motion x and y as separate events.  In DoomLegacy
 later mouse motion events in a frame overwrote previous motion.  Mouse events
 are now added (like Legacy2 and other ports examined).
 
+*** w85_opengl_mode
+patchfile = w85_opengl_mode.patch
+- committed revision 962   by wesley johnson
+SDL OpenGL is not switching video modes at all.
+In my previous sdl rework, I forgot opengl video mode switch.
+This fixes opengl video mode switch similarily to the others, and it now
+switches video modes.
+
