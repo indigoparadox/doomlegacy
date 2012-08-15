@@ -492,6 +492,8 @@ void D_Display(void)
         SCR_SetMode();  // change video mode
         //added:26-01-98: NOTE! setsizeneeded is set by SCR_Recalc()
         SCR_Recalc();
+          // setsizeneeded -> redrawsbar
+          // con_recalc, st_recalc, am_recalc
     }
 
     // change the view size if needed
