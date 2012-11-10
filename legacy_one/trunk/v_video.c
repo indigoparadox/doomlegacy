@@ -1419,7 +1419,7 @@ void V_DrawRawScreen_Num(int x1, int y1, int lumpnum, int width, int height)
         MipPatch_t *grpatch = &(wadfiles[lumpnum >> 16]->hwrcache[lumpnum & 0xffff]);
         grpatch->width = width;
         grpatch->height = height;
-        grpatch->mipmap.tfflags |= TF_RAWASPIC;
+        grpatch->mipmap.tfflags |= TF_Her_Raw_Pic;  // Heretic Raw Pic
         HWR_DrawPic(x1, y1, lumpnum);
         return;
     }

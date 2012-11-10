@@ -188,6 +188,10 @@ void*   W_CachePatchName (char* name, int tag);
 
 void*   W_CachePatchNum (int lump, int tag);                        // return a patch_t
 void*   W_CachePatchNum_Endian ( int lump, int tag );
+#ifdef HWRENDER
+// [WDJ] Called from hardware render for special mapped sprites
+void*   W_CacheMappedPatchNum ( int lump, uint32_t drawflags );
+#endif
 
 void*   W_CacheRawAsPic( int lump, int width, int height, int tag); // return a pic_t
 

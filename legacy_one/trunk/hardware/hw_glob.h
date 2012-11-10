@@ -169,8 +169,10 @@ extern  consvar_t cv_grrounddown;   //on/off
 
 extern int patchformat;
 extern int textureformat;
+#if 0
+// [WDJ] Unused
 extern byte *gr_colormap; 
-extern boolean firetranslucent;
+#endif
 extern float gr_viewz;
 
 // ------------

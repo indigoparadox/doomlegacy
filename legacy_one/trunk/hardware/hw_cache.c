@@ -153,9 +153,12 @@
 #include "../z_zone.h"
 #include "../v_video.h"
 
+#if 0
+// [WDJ] Replaced global cache draw flags with drawflags parameter and TF_ flags
 //Hurdler: 25/04/2000: used for new colormap code in hardware mode
+//unused
 byte *gr_colormap = NULL; // by default it must be NULL ! (because colormap tables are not initialized)
-boolean firetranslucent = false;
+#endif
 
 // --------------------------------------------------------------------------
 // Values set after a call to HWR_ResizeBlock()
@@ -185,6 +188,7 @@ typedef union {
 #endif
 
 // sprite, use alpha and chroma key for hole
+// draw flags in mipmap->tfflags
 // Called from HWR_GetTexture->HWR_GenerateTexture
 // Called from HWR_MakePatch
 static
@@ -201,8 +205,8 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
     fixed_t      scale_y;
 
     // also can be called before translucenttables are setup
-    byte        *fx1trans =
-        (firetranslucent && translucenttables) ?  // fx1 (not fire), FIXME
+    byte        *fx1trans =   // only one opaque trans so far
+        ((mipmap->tfflags & TF_Opaquetrans) && translucenttables)?
           & translucenttables[ TRANSLU_TABLE_fx1 ]
           : NULL;
     byte         chromakey_mapped = (mipmap->tfflags & TF_CHROMAKEYED)? 1:0;
@@ -642,10 +646,12 @@ static void HWR_GenerateTexture (int texnum, MipTexture_t* grtex)
 // grTex : Hardware texture cache info
 //         .data : address of converted patch in heap memory
 //                 user for Z_Malloc(), becomes NULL if it is purged from the cache
+// drawflags can be TF_Opaquetrans
 // Called from HWR_Draw* -> HWR_LoadMappedPatch
 // Called from HWR_GetPatch
 // Called from W_CachePatchNum
-void HWR_MakePatch (patch_t* patch, MipPatch_t* grPatch, Mipmap_t *grMipmap)
+void HWR_MakePatch (patch_t* patch, MipPatch_t* grPatch, Mipmap_t *grMipmap,
+		    uint32_t drawflags)
 {
     byte*   block;
     int     newwidth, newheight;
@@ -668,7 +674,7 @@ void HWR_MakePatch (patch_t* patch, MipPatch_t* grPatch, Mipmap_t *grMipmap)
         grMipmap->height = blockheight;
 
         // no wrap around, no chroma key
-        grMipmap->tfflags = 0;
+        grMipmap->tfflags = drawflags;  // TF_Opaquetrans
         // setup the texture info
         grMipmap->grInfo.format = patchformat;
     }
@@ -822,6 +828,7 @@ MipTexture_t* HWR_GetTexture (int tex)
 #endif
     miptex = &gr_textures[tex];
 
+    // TF_ flags are unused in textures yet, but are needed for fog
     if ( !miptex->mipmap.grInfo.data && !miptex->mipmap.downloaded )
         HWR_GenerateTexture (tex, miptex);
 
@@ -898,6 +905,7 @@ void HWR_GetFlat (int flatlumpnum)
 // HWR_LoadMappedPatch(): replace the skin color of the sprite in cache
 //                          : load it first in doom cache if not already
 //
+// grmip.tfflags can have TF_Opaquetrans
 // Called from HWR_Draw* ->HWR_GetMappedPatch
 static void HWR_LoadMappedPatch(Mipmap_t *grmip, MipPatch_t *gpatch)
 {
@@ -906,7 +914,7 @@ static void HWR_LoadMappedPatch(Mipmap_t *grmip, MipPatch_t *gpatch)
     {
         // Load patch to temp, free it afterwards
         patch_t *patch = W_CachePatchNum_Endian(gpatch->patchlump, PU_IN_USE);
-        HWR_MakePatch(patch, gpatch, grmip);
+        HWR_MakePatch(patch, gpatch, grmip, grmip->tfflags);
 
         Z_Free(patch);
     }
@@ -926,8 +934,8 @@ void HWR_GetPatch( MipPatch_t* gpatch )
     {
         // load the software patch, PU_STATIC or the Z_Malloc for hardware patch will
         // flush the software patch before the conversion! oh yeah I suffered
-        patch_t *ptr = W_CachePatchNum_Endian(gpatch->patchlump, PU_STATIC);
-        HWR_MakePatch ( ptr, gpatch, &gpatch->mipmap);
+        patch_t *ptr = W_CachePatchNum_Endian(gpatch->patchlump, PU_IN_USE);
+        HWR_MakePatch ( ptr, gpatch, &gpatch->mipmap, 0);
 
         // this is inefficient.. but the hardware patch in heap is purgeable so it should
         // not fragment memory, and besides the REAL cache here is the hardware memory
@@ -941,6 +949,7 @@ void HWR_GetPatch( MipPatch_t* gpatch )
 // -------------------+
 // HWR_GetMappedPatch : Same as HWR_GetPatch for sprite color
 // -------------------+
+// colormap variations only, drawflags are fixed for whole sprite
 // Called from HWR_DrawSmallPatch, HWR_DrawMappedPatch, HWR_DrawSprite, HWR_DrawMD2
 void HWR_GetMappedPatch(MipPatch_t* gpatch, byte *colormap)
 {
@@ -967,8 +976,8 @@ void HWR_GetMappedPatch(MipPatch_t* gpatch, byte *colormap)
     // not found, create it !
     // If we are here, the sprite with the current colormap is not already in hardware memory
 
-    //BP: WARNING : don't free it manualy without clearing the cache of hardware renderer
-    //              (it have a liste of mipmap)
+    //BP: WARNING : don't free it manually without clearing the cache of hardware renderer
+    //              (it have a list of mipmap)
     //    this malloc is cleared in HWR_FreeTextureCache
     //    (...) unfortunately z_malloc fragment alot the memory :( so malloc is better
     newmip = malloc(sizeof(Mipmap_t));
@@ -978,6 +987,48 @@ void HWR_GetMappedPatch(MipPatch_t* gpatch, byte *colormap)
     newmip->colormap   = colormap;
     HWR_LoadMappedPatch( newmip, gpatch );
 }
+
+#if 0
+// [WDJ] Not needed until a patch needs both with and without TF_Opaquetrans
+// May be called with drawflags = TF_Opaquetrans
+void HWR_GetMappedPatch(MipPatch_t* gpatch, byte *colormap, uint32_t drawflags)
+{
+    Mipmap_t   *grmip, *newmip;
+
+    if( !drawflags && ((colormap==NULL) || (colormap==reg_colormaps)) )
+    {
+        // Load the default (green) color in doom cache (temporary?) AND hardware cache
+        HWR_GetPatch(gpatch);
+        return;
+    }
+
+    // search for the mipmap
+    // skip the first (no colormap translated)
+    for(grmip = &gpatch->mipmap ; grmip->nextcolormap ;)
+    {
+        grmip = grmip->nextcolormap;
+        if (grmip->colormap==colormap
+	    && ((grmip->tfflags & TF_Opaquetrans)==drawflags)  )
+        {
+            HWR_LoadMappedPatch( grmip, gpatch );
+            return;
+        }
+    }
+    // not found, create it !
+    // If we are here, the sprite with the current colormap is not already in hardware memory
+
+    //BP: WARNING : don't free it manually without clearing the cache of hardware renderer
+    //              (it have a list of mipmap)
+    //    this malloc is cleared in HWR_FreeTextureCache
+    //    (...) unfortunately z_malloc fragment alot the memory :( so malloc is better
+    newmip = malloc(sizeof(Mipmap_t));
+    grmip->nextcolormap = newmip;
+    memset(newmip, 0, sizeof(Mipmap_t));
+
+    newmip->tfflags = drawflags;
+    HWR_LoadMappedPatch( newmip, gpatch );
+}
+#endif
 
 static const int picmode2GR[] = {
     GR_TEXFMT_P_8,                // PALETTE
@@ -1075,7 +1126,7 @@ MipPatch_t *HWR_GetPic( int lumpnum )
         byte  *block;
         int   newwidth,newheight;
 
-        if( grpatch->mipmap.tfflags & TF_RAWASPIC )
+        if( grpatch->mipmap.tfflags & TF_Her_Raw_Pic )
         {
             // raw pic : so get size from grpatch since it is save in v_drawrawscreen
 	    // [WDJ] CacheRawAsPic is correct endian
@@ -1153,7 +1204,7 @@ MipPatch_t *HWR_GetPic( int lumpnum )
         Z_ChangeTag(pic, PU_CACHE);
         Z_ChangeTag(block, PU_HWRCACHE);
 
-        grpatch->mipmap.tfflags &= TF_RAWASPIC;
+        grpatch->mipmap.tfflags &= TF_Her_Raw_Pic;
         grpatch->max_s = (float)newwidth  / (float)blockwidth;
         grpatch->max_t = (float)newheight / (float)blockheight;
     }

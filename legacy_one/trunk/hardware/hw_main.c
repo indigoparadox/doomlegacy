@@ -1636,7 +1636,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                     blendmode = HWR_TranstableToAlpha(TRANSLU_fire, &Surf);
                     break;
                 case 288:  // Legacy selective translucent, on selected colors
-	            //FIXME: not work like this must be loaded with firetranslucent to true !
+	            //FIXME: not work like this must be loaded with TF_Opaquetrans !
                     blendmode = HWR_TranstableToAlpha(TRANSLU_fx1, &Surf);
                     break;
                 case 283:  // Legacy fog sheet
@@ -2971,14 +2971,14 @@ static void HWR_DrawSprite(gr_vissprite_t * spr)
     //          in memory and we add the md2 model if it exists for that sprite
 
     // convert sprite differently when fxtranslucent is detected
+    Surf.polyflags = 0;
+    Surf.texflags = 0;
     if ((spr->mobj->frame & FF_TRANSMASK) == (TRANSLU_fx1<<FF_TRANSSHIFT))
     {
-        firetranslucent = true;
-        gpatch = W_CachePatchNum(spr->patchlumpnum, PU_CACHE);
-        firetranslucent = false;
+        Surf.texflags = TF_Opaquetrans;
     }
-    else
-        gpatch = W_CachePatchNum(spr->patchlumpnum, PU_CACHE);
+    // get patch and draw to hardware cache
+    gpatch = W_CacheMappedPatchNum(spr->patchlumpnum, Surf.texflags );
 
     HWR_DL_AddLight(spr, gpatch);
 

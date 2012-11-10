@@ -658,15 +658,14 @@ void HWR_DrawMD2( gr_vissprite_t* spr )
     //          sure to do it the right way. So actually, we keep normal sprite
     //          in memory and we add the md2 model if it exists for that sprite
 
-    // convert srpite differently when fxtranslucent is detected
+    Surf.polyflags = 0;
+    Surf.texflags = 0;
+    // convert sprite differently when fx1 translucent is detected
     if( (spr->mobj->frame & FF_TRANSMASK) == (TRANSLU_fx1<<FF_TRANSSHIFT))
     {
-        firetranslucent = true;
-        gpatch = W_CachePatchNum (spr->patchlumpnum, PU_CACHE );
-        firetranslucent = false;
+        Surf.texflags = TF_Opaquetrans;
     }
-    else
-        gpatch = W_CachePatchNum (spr->patchlumpnum, PU_CACHE );    
+    gpatch = W_CacheMappedPatchNum(spr->patchlumpnum, Surf.texflags );
 
     //TODO: manage spr->flip
 
@@ -685,15 +684,18 @@ void HWR_DrawMD2( gr_vissprite_t* spr )
         else
         if( spr->mobj->frame & FF_SMOKESHADE )
         {
-            Surf.FlatColor.s.alpha = 0x80;blend = PF_Translucent;
+            Surf.FlatColor.s.alpha = 0x80;
+	    blend = PF_Translucent;
         }
         else if (spr->mobj->flags & MF_SHADOW)
         {
-            Surf.FlatColor.s.alpha = 0x40;blend = PF_Translucent;
+            Surf.FlatColor.s.alpha = 0x40;
+	    blend = PF_Translucent;
         }
         else
         {
-            Surf.FlatColor.s.alpha = 0xFF;blend = PF_Translucent|PF_Occlude;
+            Surf.FlatColor.s.alpha = 0xFF;
+	    blend = PF_Translucent|PF_Occlude;
         }
         // hack for updating the light level before drawing the md2
         HWD.pfnDrawPolygon( &Surf, vxtx, 4,
@@ -736,7 +738,7 @@ void HWR_DrawMD2( gr_vissprite_t* spr )
             }
         }
         //Hurdler: arf, I don't like that implementation at all... too much crappy
-        md2_tex_patch.mipmap.downloaded = md2->texture;
+        md2_tex_patch.mipmap.downloaded = md2->texture ? 1:0;
         HWD.pfnSetTexture( &md2_tex_patch.mipmap );
 
         //FIXME: this is not yet correct

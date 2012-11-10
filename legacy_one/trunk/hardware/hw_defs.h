@@ -232,8 +232,10 @@ typedef enum
     TF_WRAPY            = 0x00000002,            // wrap around Y
     TF_WRAPXY           = TF_WRAPY | TF_WRAPX,   // very common so use alias is more easy
     TF_CHROMAKEYED      = 0x00000010,
-    TF_RAWASPIC         = 0x00000020,            // the lump is a raw heretic pic
+    TF_Her_Raw_Pic      = 0x00000020,   // the lump is a raw heretic pic
     TF_TRANSPARENT      = 0x00000040,            // texture with some alpha=0
+    TF_Opaquetrans      = 0x00000100,   // Some translucent pixels are opaque (fx1)
+    TF_Fogsheet         = 0x00000200,   // Generate a fog sheet
 }  TextureFlags_e;
 
 #ifdef TODO
