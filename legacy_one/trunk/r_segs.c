@@ -1449,6 +1449,8 @@ void R_RenderSegLoop (void)
         rw_stopx = rdraw_viewwidth;
     }
 #endif   
+    if (fixedcolormap)
+        dc_colormap = fixedcolormap;
      
     for ( ; rw_x < rw_stopx ; rw_x++)
     {
