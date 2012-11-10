@@ -2741,3 +2741,14 @@ Other ports do not have any restriction on Heretic use of the SWITCHES entries.
 Requested by a Heretic wad project.
 Check for missing switch textures and default to use texture 1.
 
+*** w86_viewer_colormap
+patchfile = w86_1_viewer_colormap.patch
+- committed revision 967   by wesley johnson
+Make some BOOM_GLOBAL_COLORMAP code non-optional, for use with fog and
+other colormaps.
+Shortened some of the Boom Colormap Option text strings so they fit
+low-res screens.  This affects saved configs.
+Move BSPVIEWER code to r_main and make it non-optional.
+Add test for colormap fog using viewer_extracolormap.  This is not
+very good fog but at least it works now as documented.
+
