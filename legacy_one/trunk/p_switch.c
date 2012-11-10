@@ -185,11 +185,32 @@ void P_InitSwitchList(void)
       switchlist = realloc(switchlist, sizeof *switchlist *
           (max_numswitches = max_numswitches ? max_numswitches*2 : 8));
 
+#if 1
+    // [WDJ] 11/9/2012, remove restriction on Heretic
+    if (alphSwitchList[i].episode <= episode)
+#else
+    // [WDJ] I can only guess what this was supposed to accomplish, but
+    // none of the other ports are restricting it this way, and a fix has
+    // been requested to allow Heretic (and Blasphemer) PWAD to use SWITCHES.
     if (alphSwitchList[i].episode <= episode && 
         (gamemode != heretic || alphSwitchList[i].episode == 4)) 
+#endif
     {
-      switchlist[index++] = R_TextureNumForName(alphSwitchList[i].name1);
-      switchlist[index++] = R_TextureNumForName(alphSwitchList[i].name2);
+      int tex1 = R_TextureNumForName(alphSwitchList[i].name1);
+      int tex2 = R_TextureNumForName(alphSwitchList[i].name2);
+      // default missing textures to texture 1
+      if( tex1 == -1 )
+      {
+	  I_SoftError("Switch %i missing texture %s, using 1\n", i, alphSwitchList[i].name1 );
+	  tex1 = 1;
+      }
+      if( tex2 == -1 )
+      {
+	  I_SoftError("Switch %i missing texture %s, using 1\n", i, alphSwitchList[i].name2 );
+	  tex2 = 1;
+      }
+      switchlist[index++] = tex1;
+      switchlist[index++] = tex2;
     }
   }
 
