@@ -249,9 +249,9 @@ void I_GetEvent()
 	  // NOTE that SDL handles international keyboards and shift maps for us!
 	  Uint16 unicode = inputEvent.key.keysym.unicode; // SDL uses UCS-2 encoding (or maybe UTF-16?)
 	  if ((unicode & 0xff80) == 0)
-	    {
+	  {
 	      event.data2 = unicode & 0x7F;
-	    }
+	  }
 	  else
 	    event.data2 = 0; // non-ASCII char
 

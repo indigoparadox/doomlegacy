@@ -1018,7 +1018,6 @@ static void R_SplitSprite (vissprite_t* sprite, mobj_t* thing)
     sz_cut = (centeryfrac - FixedMul(lightheight - viewz, sprite->scale)) >> FRACBITS;
     if(sz_cut < 0)
             continue;
-//    if(sz_cut > vid.height)
     if(sz_cut > rdraw_viewheight)	// [WDJ] 11/14/2009
             return;
         

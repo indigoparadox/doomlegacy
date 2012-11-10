@@ -859,7 +859,7 @@ static void HWR_CacheFlat (Mipmap_t* grMipmap, int flatlumpnum)
 // Download a Doom 'flat' to the hardware cache and make it ready for use
 void HWR_GetFlat (int flatlumpnum)
 {
-    Mipmap_t*      grmip;
+    Mipmap_t * grmip;
 
     grmip = &(wadfiles[flatlumpnum>>16]->hwrcache[flatlumpnum & 0xffff].mipmap);
 

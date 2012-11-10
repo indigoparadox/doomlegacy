@@ -519,8 +519,8 @@ angle_t gr_xtoviewangle[MAXVIDWIDTH + 1];
 // BP: test change fov when looking up/down but bsp projection messup :(
 //#define NO_MLOOK_EXTENDS_FOV
 
-#define drawtextured  true
-//static  boolean     drawtextured = false;
+#define EN_drawtextured  true
+//static  boolean     EN_drawtextured = false;
 
 // base values set at SetViewSize
 float gr_basecentery;
@@ -1405,13 +1405,12 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
     vxtx[2].z = vxtx[1].z = ve.y;
 //    vxtx[0].w = vxtx[1].w = vxtx[2].w = vxtx[3].w = 1.0f;
 
-    if (drawtextured)
+    if (EN_drawtextured)
     {
         // x offset the texture
         fixed_t texturehpeg = gr_sidedef->textureoffset + gr_curline->offset;
 
         // clip texture s start/end coords with solidsegs
-	// [WDJ] FIXME, Cannot have int startfrac >0 and <1 ???
         if (startfrac > 0.0 && startfrac < 1.0)
             cliplow = texturehpeg + gr_curline->length * startfrac;
         else
@@ -1482,7 +1481,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
         int toptexnum = texturetranslation[gr_sidedef->toptexture];
         if (worldbacktop < worldtop && toptexnum)
         {
-            if (drawtextured)
+            if (EN_drawtextured)
             {
                 fixed_t texturevpegtop; //top
 
@@ -1523,7 +1522,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
         int bottomtexnum = texturetranslation[gr_sidedef->bottomtexture];
         if (worldbackbottom > worldbottom && bottomtexnum)    //only if VISIBLE!!!
         {
-            if (drawtextured)
+            if (EN_drawtextured)
             {
                 fixed_t texturevpegbottom = 0;  //bottom
 
@@ -1591,7 +1590,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
             else
                 l = polybottom > openbottom ? polybottom : openbottom;
 
-            if (drawtextured)
+            if (EN_drawtextured)
             {
                 fixed_t texturevpeg;
                 // PEGGING
@@ -1662,7 +1661,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
         midtexnum = texturetranslation[gr_sidedef->midtexture];
         if (midtexnum)
         {
-            if (drawtextured)
+            if (EN_drawtextured)
             {
                 fixed_t texturevpeg;
                 // PEGGING
@@ -1732,7 +1731,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
 	        midtexnum = texturetranslation[sides[bff->master->sidenum[0]].midtexture];
 	        if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
 
-                if (drawtextured)
+                if (EN_drawtextured)
                 {
 //		    if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
                     miptex = HWR_GetTexture( midtexnum );
@@ -1803,7 +1802,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
 	        midtexnum = texturetranslation[sides[fff->master->sidenum[0]].midtexture];
 	        if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
 
-                if (drawtextured)
+                if (EN_drawtextured)
                 {
 //		    if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
                     miptex = HWR_GetTexture( midtexnum );

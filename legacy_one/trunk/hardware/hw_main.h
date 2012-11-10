@@ -101,6 +101,8 @@
 #include "../d_player.h"
 #include "../r_defs.h"
 
+extern float gr_baseviewwindowy, gr_viewwindowx, gr_viewheight, gr_viewwidth;
+
 // Startup & Shutdown the hardware mode renderer
 void HWR_Startup (void);
 void HWR_Shutdown (void);

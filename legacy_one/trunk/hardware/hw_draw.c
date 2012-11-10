@@ -461,7 +461,6 @@ void HWR_DrawViewBorder (int clearlines)
     int         baseviewwidth,baseviewheight;
     int         basewindowx,basewindowy;
     MipPatch_t * mpatch;
-extern float gr_baseviewwindowy,gr_viewwindowx,gr_viewheight,gr_viewwidth;
 
 //    if (gr_viewwidth == vid.width)
 //        return;

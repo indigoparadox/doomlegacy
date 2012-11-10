@@ -327,7 +327,7 @@ void phiBounds(double phi1, double phi2, double *phiMin, double *phiMax)
     }
 
     I_OutputMsg("phiMin = %f, phiMax = %f, phi1 = %f, phi2 = %f\n", *phiMin, *phiMax, phi1, phi2);
-    I_Error("Holy shit, phiBounds() freaked out\n");
+    I_Error("phiBounds() freaked out\n");
 }
 
 //
