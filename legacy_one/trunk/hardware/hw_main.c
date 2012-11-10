@@ -914,7 +914,7 @@ static void HWR_RenderSkyPlane(extrasubsector_t * xsub, fixed_t fixedheight)
     if (nrPlaneVerts < 3)       //not even a triangle ?
         return;
 
-    //HWR_GetTexture (skytexture);
+    //HWR_GetTexture(skytexture, 0);
 
     //reference point for flat texture coord for each vertex around the polygon
     flatxref = ((fixed_t) pv->x & (~63)) / 64.0f;
@@ -1029,26 +1029,27 @@ void HWR_DrawSegsSplats(FSurfaceInfo_t * pSurfin)
 //                                        WALL GENERATION FROM SUBSECTOR SEGS
 // ==========================================================================
 
-#if 1
 // [WDJ] 6/1/2010 Translucent to GL operations table
 typedef struct
 {
-    int PF_op;
+    uint32_t  PF_op;
+    uint32_t  drawflags;
     byte alpha_equiv;
 } translucent_lookup_t;
 
 static  translucent_lookup_t  translucent_lookup[] =
 {
-   {0, 0},  // not translucent
-   {PF_Translucent, 0x78}, // TRANSLU_med
-   {PF_Translucent, 0x40}, // TRANSLU_more
-   {PF_Translucent, 0x30}, // TRANSLU_hi
-   {PF_Additive,    0x80}, // TRANSLU_fire
-   {PF_Translucent, 0xff}, // TRANSLU_fx1
-   {PF_Translucent, 0xB8}, // TRANSLU_75
+   {0, 0, 0},  // not translucent
+   {PF_Translucent, 0, 0x78 }, // TRANSLU_med
+   {PF_Translucent, 0, 0x40 }, // TRANSLU_more
+   {PF_Translucent, 0, 0x30 }, // TRANSLU_hi
+   {PF_Additive,    0, 0x80 }, // TRANSLU_fire
+   {PF_Translucent, TF_Opaquetrans, 0xff, }, // TRANSLU_fx1
+   {PF_Translucent, 0, 0xB8 }, // TRANSLU_75
 };
   
 // Called from HWR_StoreWallRange, HWR_DrawSprite
+// sets pSurf->texflags, polyflags
 int HWR_TranstableToAlpha(int transtablenum, FSurfaceInfo_t * pSurf)
 {
     int pfop = PF_Translucent;  // default
@@ -1083,36 +1084,12 @@ int HWR_TranstableToAlpha(int transtablenum, FSurfaceInfo_t * pSurf)
         translucent_lookup_t *  tlup = & translucent_lookup[ transtablenum ];
         pSurf->FlatColor.s.alpha = tlup->alpha_equiv;
         pfop = tlup->PF_op;
+        pSurf->polyflags = pfop;  // PF_ flags
+        pSurf->texflags = tlup->drawflags;  // TF_ flags
     }
 done:   
     return pfop;
 }
-#else
-// Old code, before 6/1/2010
-// Called from HWR_StoreWallRange, HWR_DrawSprite
-int HWR_TranstableToAlpha(int transtablenum, FSurfaceInfo_t * pSurf)
-{
-    switch (transtablenum)
-    {
-        case TRANSLU_med:
-            pSurf->FlatColor.s.alpha = 0x80;
-            return PF_Translucent;
-        case TRANSLU_more:
-            pSurf->FlatColor.s.alpha = 0x40;
-            return PF_Translucent;
-        case TRANSLU_hi:
-            pSurf->FlatColor.s.alpha = 0x30;
-            return PF_Translucent;
-        case TRANSLU_fire:
-            pSurf->FlatColor.s.alpha = 0x80;
-            return PF_Additive;
-        case TRANSLU_fx1:
-            pSurf->FlatColor.s.alpha = 0xff;
-            return PF_Translucent;
-    }
-    return PF_Translucent;
-}
-#endif
 
 // v1,v2 : the start & end vertices along the original wall segment, that may have been
 //         clipped so that only a visible portion of the wall seg is drawn.
@@ -1147,6 +1124,23 @@ void HWR_ProjectWall(vxtx3d_t * vxtx, FSurfaceInfo_t * pSurf, int blendmode)
     //HWD.pfnDrawPolygon( pSurf, vxtx, 4,
     //                    PF_Additive|PF_Modulated|PF_Occlude|PF_Clip);
 }
+
+#if 1
+#define HWR_RenderWall  HWR_ProjectWall
+#else
+// Called from HWR_RenderTransparentWalls
+void HWR_RenderWall(vxtx3d_t * vxtx, FSurfaceInfo_t * pSurf, int blendmode)
+{
+    HWD.pfnDrawPolygon(pSurf, vxtx, 4,
+		       blendmode | PF_Modulated | PF_Occlude | PF_Clip);
+
+    if (gr_curline->linedef->splats && cv_splats.value)
+        HWR_DrawSegsSplats(pSurf);
+
+    //Hurdler: TODO: do static lighting using gr_curline->lm
+    HWR_WallLighting(vxtx);
+}
+#endif
 
 // ==========================================================================
 //                                                          BSP , CULL, ETC..
@@ -1274,7 +1268,7 @@ void HWR_SplitWall(sector_t * sector, vxtx3d_t * vxtx, int texnum,
         vxtx[2].y = vxtx[3].y = top;
         vxtx[0].y = vxtx[1].y = bot;
 
-        miptex = HWR_GetTexture(texnum);
+        miptex = HWR_GetTexture(texnum, Surfp->texflags);
         if (miptex->mipmap.tfflags & TF_TRANSPARENT)
             HWR_AddTransparentWall(vxtx, Surfp, texnum, PF_Environment);
         else
@@ -1313,9 +1307,9 @@ void HWR_SplitWall(sector_t * sector, vxtx3d_t * vxtx, int texnum,
     vxtx[2].y = vxtx[3].y = top;
     vxtx[0].y = vxtx[1].y = bot;
 
-    miptex = HWR_GetTexture(texnum);
+    miptex = HWR_GetTexture(texnum, Surfp->texflags);
     if (miptex->mipmap.tfflags & TF_TRANSPARENT)
-        HWR_AddTransparentWall(vxtx, Surfp, texnum, PF_Environment);
+        HWR_AddTransparentWall(vxtx, Surfp, texnum, Surfp->polyflags);
     else
         HWR_ProjectWall(vxtx, Surfp, PF_Masked);
 }
@@ -1422,6 +1416,9 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
             cliphigh = texturehpeg + gr_curline->length;
     }
 
+    Surf.polyflags = PF_Environment;
+    Surf.texflags = 0;
+
     //  use different light tables
     //  for horizontal / vertical / diagonal
     //  note: try to get the same visual feel as the original
@@ -1485,7 +1482,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
             {
                 fixed_t texturevpegtop; //top
 
-                miptex = HWR_GetTexture(toptexnum);
+                miptex = HWR_GetTexture(toptexnum, 0);
 
                 // PEGGING
                 if (gr_linedef->flags & ML_DONTPEGTOP)
@@ -1526,7 +1523,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
             {
                 fixed_t texturevpegbottom = 0;  //bottom
 
-                miptex = HWR_GetTexture(bottomtexnum);
+                miptex = HWR_GetTexture(bottomtexnum, 0);
 
                 // PEGGING
                 if (gr_linedef->flags & ML_DONTPEGBOTTOM)
@@ -1559,6 +1556,42 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
         {
             int blendmode = PF_Masked;
             fixed_t opentop, openbottom, polytop, polybottom;
+
+            if(gr_linedef->translu_eff)  // Boom 260: make translucent
+            {
+	        blendmode = HWR_TranstableToAlpha(gr_linedef->translu_eff, &Surf);
+	    }
+            // set alpha for transparent walls (new boom and legacy linedef types)
+            switch (gr_linedef->special)
+            {
+                case 260:  // Boom make translucent
+	              // see test on translu_eff
+//                    blendmode = HWR_TranstableToAlpha(gr_linedef->translu_eff, &Surf);
+	            break;
+	                   // Legacy translucent  284 to 288
+                case 284:  // Legacy translucent, brighten (greenish)
+                    blendmode = HWR_TranstableToAlpha(TRANSLU_med, &Surf);
+                    break;
+                case 285:  // Legacy translucent, brighten (less greenish)
+                    blendmode = HWR_TranstableToAlpha(TRANSLU_more, &Surf);
+                    break;
+                case 286:  // Legacy translucent, darkens
+                    blendmode = HWR_TranstableToAlpha(TRANSLU_hi, &Surf);
+                    break;
+                case 287:  // Legacy translucent, brightens
+                    blendmode = HWR_TranstableToAlpha(TRANSLU_fire, &Surf);
+                    break;
+                case 288:  // Legacy selective translucent, on selected colors
+	            // sets TF_Opaquetrans in texflags
+                    blendmode = HWR_TranstableToAlpha(TRANSLU_fx1, &Surf);
+                    break;
+                case 283:  // Legacy fog sheet
+                    blendmode = PF_Substractive;
+                    break;
+                default:
+                    blendmode = PF_Masked;
+                    break;
+            }
 
             // SoM: a little note: This code re-arranging will
             // fix the bug in Nimrod map02. opentop and openbottom
@@ -1599,7 +1632,8 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                 else
                     texturevpeg = polytop - h;
 
-                miptex = HWR_GetTexture(midtexnum);
+	        // TRANSLU_fx1 requires TF_Opaquetrans flag to draw texture
+                miptex = HWR_GetTexture(midtexnum, Surf.texflags);
 
                 vxtx[3].tow = vxtx[2].tow = texturevpeg * miptex->scaleY;
                 vxtx[0].tow = vxtx[1].tow = (h - l + texturevpeg) * miptex->scaleY;
@@ -1610,44 +1644,8 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
             vxtx[2].y = vxtx[3].y = FIXED_TO_FLOAT( h );
             vxtx[0].y = vxtx[1].y = FIXED_TO_FLOAT( l );
 
-            if(gr_linedef->translu_eff)  // Boom 260: make translucent
-            {
-	        blendmode = HWR_TranstableToAlpha(gr_linedef->translu_eff, &Surf);
-	    }
-            // set alpha for transparent walls (new boom and legacy linedef types)
-	    // [WDJ] 6/2012 render order is wrong, only one transparency is seen
-            switch (gr_linedef->special)
-            {
-                case 260:  // Boom make translucent
-	              // see test on translu_eff
-//                    blendmode = HWR_TranstableToAlpha(gr_linedef->translu_eff, &Surf);
-	            break;
-	                   // Legacy translucent  284 to 288
-                case 284:  // Legacy translucent, brighten (greenish)
-                    blendmode = HWR_TranstableToAlpha(TRANSLU_med, &Surf);
-                    break;
-                case 285:  // Legacy translucent, brighten (less greenish)
-                    blendmode = HWR_TranstableToAlpha(TRANSLU_more, &Surf);
-                    break;
-                case 286:  // Legacy translucent, darkens
-                    blendmode = HWR_TranstableToAlpha(TRANSLU_hi, &Surf);
-                    break;
-                case 287:  // Legacy translucent, brightens
-                    blendmode = HWR_TranstableToAlpha(TRANSLU_fire, &Surf);
-                    break;
-                case 288:  // Legacy selective translucent, on selected colors
-	            //FIXME: not work like this must be loaded with TF_Opaquetrans !
-                    blendmode = HWR_TranstableToAlpha(TRANSLU_fx1, &Surf);
-                    break;
-                case 283:  // Legacy fog sheet
-                    blendmode = PF_Substractive;
-                    break;
-                default:
-                    blendmode = PF_Masked;
-                    break;
-            }
-            if (miptex->mipmap.tfflags & TF_TRANSPARENT)
-                blendmode = PF_Environment;
+            if (miptex && (miptex->mipmap.tfflags & TF_TRANSPARENT))
+                 blendmode = PF_Environment;
 
             if (blendmode != PF_Masked)
                 HWR_AddTransparentWall(vxtx, &Surf, midtexnum, blendmode);
@@ -1671,7 +1669,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                     // top of texture at top
                     texturevpeg = gr_sidedef->rowoffset;
 
-                miptex = HWR_GetTexture(midtexnum);
+                miptex = HWR_GetTexture(midtexnum, 0);
 
                 vxtx[3].tow = vxtx[2].tow = texturevpeg * miptex->scaleY;
                 vxtx[0].tow = vxtx[1].tow = (texturevpeg + worldtop - worldbottom) * miptex->scaleY;
@@ -1710,7 +1708,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
             for (bff = gr_backsector->ffloors; bff; bff = bff->next)
             {
                 if (!(bff->flags & FF_OUTER_SIDES) || !(bff->flags & FF_EXISTS))
-                     continue;
+		    continue;
 	        // outer sides backsector
                 if (*bff->topheight < lowcut || *bff->bottomheight > highcut)
                     continue;
@@ -1734,7 +1732,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                 if (EN_drawtextured)
                 {
 //		    if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
-                    miptex = HWR_GetTexture( midtexnum );
+                    miptex = HWR_GetTexture( midtexnum, 0 );
 
                     vxtx[3].tow = vxtx[2].tow = (*bff->topheight - h) * miptex->scaleY;
                     vxtx[0].tow = vxtx[1].tow = (h - l + (*bff->topheight - h)) * miptex->scaleY;
@@ -1805,7 +1803,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                 if (EN_drawtextured)
                 {
 //		    if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
-                    miptex = HWR_GetTexture( midtexnum );
+                    miptex = HWR_GetTexture( midtexnum, 0 );
 
                     vxtx[3].tow = vxtx[2].tow = (*fff->topheight - h) * miptex->scaleY;
                     vxtx[0].tow = vxtx[1].tow = (h - l + (*fff->topheight - h)) * miptex->scaleY;
@@ -3645,7 +3643,7 @@ void HWR_DrawSkyBackground(player_t * player)
 //  | /|
 //  |/ |
 //  0--1
-    HWR_GetTexture(skytexture);
+    HWR_GetTexture(skytexture, 0);
 
     //Hurdler: the sky is the only texture who need 4.0f instead of 1.0
     //         because it's called just after clearing the screen
@@ -4362,8 +4360,6 @@ void HWR_AddTransparentWall(vxtx3d_t * vxtx, FSurfaceInfo_t * pSurf, int texnum,
     num_late_walls++;
 }
 
-void HWR_RenderWall(vxtx3d_t * vxtx, FSurfaceInfo_t * pSurf, int blend);
-
 void HWR_RenderTransparentWalls()
 {
     int lwi = late_wall_farthest;
@@ -4372,23 +4368,12 @@ void HWR_RenderTransparentWalls()
     while( lwi >= 0 )
     {
         lw_p = & late_wallinfo[lwi];
-        HWR_GetTexture(lw_p->texnum);
+        // with TF_Opaquetrans
+        HWR_GetTexture(lw_p->texnum, lw_p->Surf.texflags);
         HWR_RenderWall(lw_p->vxtx, &lw_p->Surf, lw_p->blend);
         lwi = lw_p->next_nearer;
     }
     num_late_walls = 0;
     late_wall_farthest = -1;
-}
-
-void HWR_RenderWall(vxtx3d_t * vxtx, FSurfaceInfo_t * pSurf, int blendmode)
-{
-    HWD.pfnDrawPolygon(pSurf, vxtx, 4,
-		       blendmode | PF_Modulated | PF_Occlude | PF_Clip);
-
-    if (gr_curline->linedef->splats && cv_splats.value)
-        HWR_DrawSegsSplats(pSurf);
-
-    //Hurdler: TODO: do static lighting using gr_curline->lm
-    HWR_WallLighting(vxtx);
 }
 

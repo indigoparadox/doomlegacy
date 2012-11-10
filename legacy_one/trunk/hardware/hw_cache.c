@@ -541,15 +541,18 @@ static byte * MakeBlock( Mipmap_t *mipmap )
 // Create a composite texture from patches,
 // adapt the texture size to a power of 2
 // height and width for the hardware texture cache.
+// Usually called with mipmap from grtex, there are cases where it may
+// use another mipmap.
 //
+// drawflags: TF_Opaquetrans
 // Called from HWR_GetTexture
-static void HWR_GenerateTexture (int texnum, MipTexture_t* grtex)
+static void HWR_GenerateTexture (int texnum, MipTexture_t* grtex,
+				 Mipmap_t * mipmap, uint32_t drawflags)
 {
     byte*               block;
     texture_t*          texture;
     texpatch_t*         texpatch;
     patch_t*            realpatch;
-    Mipmap_t *          mipmap = & grtex->mipmap;
 
     int         i;
     int         bytepp;  // bytes per pixel
@@ -568,6 +571,7 @@ static void HWR_GenerateTexture (int texnum, MipTexture_t* grtex)
     }
     else
         mipmap->tfflags = TF_CHROMAKEYED | TF_WRAPXY;
+    mipmap->tfflags |= drawflags;  // TF_Opaquetrans
 
     HWR_ResizeBlock (texture->width, texture->height, &mipmap->grInfo);
     mipmap->width = blockwidth;
@@ -772,7 +776,21 @@ void HWR_FreeTextureCache (void)
     // now the heap don't have any 'user' pointing to our
     // texturecache info, we can free it
     if (gr_textures)
+    {
+        // destroy all of gr_textures
+        for( i=0; i<gr_numtextures; i++ )
+        {
+	    // free alternate texture mipmap used for TF_Opaquetrans
+	    Mipmap_t * altmip = gr_textures[i].mipmap.nextcolormap;
+	    while( altmip )
+	    {
+	        register Mipmap_t * nxt = altmip->nextcolormap;
+	        free(altmip);
+	        altmip = nxt;
+	    }
+	}
         free (gr_textures);
+    }
 }
 
 // Called from P_SetupLevel
@@ -814,25 +832,48 @@ void HWR_SetPalette( RGBA_t *palette )
 // --------------------------------------------------------------------------
 // Make sure texture is downloaded and set it as the source
 // --------------------------------------------------------------------------
+// drawflags: TF_Opaquetrans
 // Called from HWR_RenderSkyPlane // commented out
 // Called from HWR_DrawSkyBackground
 // Called from HWR_SplitWall
 // Called from HWR_StoreWallRange
 // Called from HWR_RenderTransparentWalls
-MipTexture_t* HWR_GetTexture (int tex)
+MipTexture_t* HWR_GetTexture (int tex, uint32_t drawflags)
 {
     MipTexture_t * miptex;
+    Mipmap_t * mipmap;
 #ifdef PARANOIA
     if( tex>=gr_numtextures )
         I_Error(" HWR_GetTexture : tex>=numtextures\n");
 #endif
     miptex = &gr_textures[tex];
+    mipmap = &(miptex->mipmap);  // mipmap in miptex
+    if ( miptex->mipmap.grInfo.data || miptex->mipmap.downloaded )
+    {
+        uint32_t tstflags = drawflags & (TF_Opaquetrans|TF_Fogsheet);
+        // mipmap already in use, find matching flags
+        for(; ; mipmap = mipmap->nextcolormap)
+        {
+	    if ((mipmap->tfflags & (TF_Opaquetrans|TF_Fogsheet)) == tstflags)
+	        goto found_mipmap;
+	    if( ! mipmap->nextcolormap )  break;
+	}
+	{
+	    // no matching mipmap found, make new one as alternate
+	    Mipmap_t * newmip = malloc(sizeof(Mipmap_t));
+	    if( newmip == NULL )
+	       I_Error(" HWR_GetTexture : mipmap alloc failed\n");
+	    mipmap->nextcolormap = newmip;  // link
+	    memset(newmip, 0, sizeof(Mipmap_t));
 
-    // TF_ flags are unused in textures yet, but are needed for fog
-    if ( !miptex->mipmap.grInfo.data && !miptex->mipmap.downloaded )
-        HWR_GenerateTexture (tex, miptex);
-
-    HWD.pfnSetTexture (&miptex->mipmap);
+	    mipmap = newmip;
+	}
+    }
+    // generate mipmap with texture
+    HWR_GenerateTexture (tex, miptex, mipmap, drawflags);
+ 
+found_mipmap:
+    HWD.pfnSetTexture (mipmap);
     return miptex;
 }
 

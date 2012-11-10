@@ -149,10 +149,10 @@ void HWR_FreeTextureCache (void);
 void HWR_FreeExtraSubsectors (void);
 
 void HWR_GetFlat (int flatlumpnum);
-MipTexture_t* HWR_GetTexture (int tex);
+MipTexture_t * HWR_GetTexture (int tex, uint32_t drawflags);
 void HWR_GetPatch (MipPatch_t* gpatch);
 void HWR_GetMappedPatch(MipPatch_t* gpatch, byte *colormap);
-MipPatch_t *HWR_GetPic (int lumpnum);
+MipPatch_t * HWR_GetPic (int lumpnum);
 void HWR_SetPalette( RGBA_t *palette );
 
 // --------

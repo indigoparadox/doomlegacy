@@ -2817,3 +2817,9 @@ patchfile = w86_7_drawflags.patch
 - committed revision 974   by wesley johnson
 Add drawflags and appropriate TF_ flags to hw_cache parameters so that do not
 have global draw cache modifiers.
+
+*** w86_hw_fx1
+patchfile = w86_8_hw_fx1.patch
+- committed revision 975   by wesley johnson
+Fix hardware draw of fx1 translucent.
+Fixes display of linedef 288 in opengl.
