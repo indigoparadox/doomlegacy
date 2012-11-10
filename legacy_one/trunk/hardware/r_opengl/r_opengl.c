@@ -234,11 +234,11 @@ static  GLuint      NextTexAvail    = FIRST_TEX_AVAIL;
 static  GLuint      tex_downloaded  = 0;
 static  GLfloat     fov             = 90.0;
 static  GLuint      pal_col         = 0;
-static  FRGBAFloat  const_pal_col;
+static  RGBA_float_t  const_pal_col;
 static  FBITFIELD   CurrentPolyFlags;
 
-static  FTextureInfo*  gr_cachetail = NULL;
-static  FTextureInfo*  gr_cachehead = NULL;
+static  FTextureInfo_t*  gr_cachetail = NULL;
+static  FTextureInfo_t*  gr_cachehead = NULL;
 
 RGBA_t  myPaletteData[256];
 GLint   screen_width;               // used by Draw2DLine()
@@ -483,7 +483,7 @@ void SetStates( void )
     glDepthRange( 0.0, 1.0 );
     glDepthFunc(GL_LEQUAL);
 
-    // this set CurrentPolyFlags to the acctual configuration
+    // this set CurrentPolyFlags to the actual configuration
     CurrentPolyFlags = 0xffffffff;
     SetBlend(0);
 
@@ -531,7 +531,7 @@ void Flush( void )
         // donc il sont dans ta liste !
 #if 0
         //Hurdler: 25/04/2000: now support colormap in hardware mode
-        FTextureInfo    *tmp = gr_cachehead->nextskin;
+        FTextureInfo_t    *tmp = gr_cachehead->nextskin;
 
         // The memory should be freed in the main code
         while (tmp)
@@ -565,7 +565,8 @@ int isExtAvailable(char *extension)
         return 0;
 
     start = gl_extensions;
-    for (;;) {
+    for (;;)
+    {
         where = (GLubyte *) strstr((const char *) start, extension);
         if (!where)
             break;
@@ -616,11 +617,13 @@ EXPORT void HWRAPI( ReadRect ) (int x, int y, int width, int height,
     image = (GLubyte *) malloc(width*height*3*sizeof(GLubyte));
     glReadPixels(x, y, width, height, GL_RGB, GL_UNSIGNED_BYTE, image);
     for (i=height-1; i>=0; i--)
+    {
         for (j=0; j<width; j++)
             dst_data[(height-1-i)*width+j] =
                                   ((image[(i*width+j)*3]>>3)<<11) |
                                   ((image[(i*width+j)*3+1]>>2)<<5) |
                                   ((image[(i*width+j)*3+2]>>3));
+    }
     free(image);
 }
 
@@ -652,22 +655,23 @@ EXPORT void HWRAPI( GClipRect ) (int minx, int miny, int maxx, int maxy, float n
 // -----------------+
 // ClearBuffer      : Clear the color/alpha/depth buffer(s)
 // -----------------+
-EXPORT void HWRAPI( ClearBuffer ) ( FBOOLEAN ColorMask,
-                                    FBOOLEAN DepthMask,
-                                    FRGBAFloat * ClearColor )
+EXPORT void HWRAPI( ClearBuffer ) ( boolean ColorMask, boolean DepthMask,
+                                    RGBA_float_t * ClearColor )
 {
     // DBG_Printf ("ClearBuffer(%d)\n", alpha);
     FUINT   ClearMask = 0;
 
-    if( ColorMask ) {
+    if( ColorMask )
+    {
         if( ClearColor )
-            glClearColor( ClearColor->red,
-                          ClearColor->green,
-                          ClearColor->blue,
-                          ClearColor->alpha );
+        {
+            glClearColor( ClearColor->red, ClearColor->green,
+                          ClearColor->blue, ClearColor->alpha );
+	}
         ClearMask |= GL_COLOR_BUFFER_BIT;
     }
-    if( DepthMask ) {
+    if( DepthMask )
+    {
         //glClearDepth( 1.0 );     //Hurdler: all that are permanen states
         //glDepthRange( 0.0, 1.0 );
         //glDepthFunc( GL_LEQUAL );
@@ -683,11 +687,9 @@ EXPORT void HWRAPI( ClearBuffer ) ( FBOOLEAN ColorMask,
 // -----------------+
 // HWRAPI Draw2DLine: Render a 2D line
 // -----------------+
-EXPORT void HWRAPI( Draw2DLine ) ( F2DCoord * v1,
-                                   F2DCoord * v2,
-                                   RGBA_t Color )
+EXPORT void HWRAPI( Draw2DLine ) ( v2d_t * v1, v2d_t * v2, RGBA_t Color )
 {
-    FRGBAFloat c;
+    RGBA_float_t c;
 
     // DBG_Printf ("DrawLine() (%f %f %f) %d\n", v1->x, -v1->y, -v1->z, v1->argb);
 #ifdef MINI_GL_COMPATIBILITY
@@ -715,7 +717,7 @@ EXPORT void HWRAPI( Draw2DLine ) ( F2DCoord * v1,
     glEnd();
 #else
     if( v2->x != v1->x )
-        angle = (float)atan((v2->y-v1->y)/(v2->x-v1->x));
+        angle = (float)atan((v2->y - v1->y)/(v2->x - v1->x));
     else
         angle = N_PI_DEMI;
     dx = (float)sin(angle) / (float)screen_width;
@@ -831,6 +833,7 @@ EXPORT void HWRAPI( SetBlend ) ( FBITFIELD PolyFlags )
             else
                 glDepthMask( 0 );
         }
+//#ifdef POLYSKY       
         ////Hurdler: not used if we don't define POLYSKY
         if( Xor & PF_Invisible )
         {                     
@@ -847,6 +850,7 @@ EXPORT void HWRAPI( SetBlend ) ( FBITFIELD PolyFlags )
                     glBlendFunc( GL_SRC_ALPHA, GL_ZERO );  
             }
         }
+//#endif       
         if( PolyFlags & PF_NoTexture )
         {
             SetNoTexture();
@@ -859,7 +863,7 @@ EXPORT void HWRAPI( SetBlend ) ( FBITFIELD PolyFlags )
 // -----------------+
 // SetTexture       : The mipmap becomes the current texture source
 // -----------------+
-EXPORT void HWRAPI( SetTexture ) ( FTextureInfo *pTexInfo )
+EXPORT void HWRAPI( SetTexture ) ( FTextureInfo_t *pTexInfo )
 {
     if( pTexInfo->downloaded )
     {
@@ -1040,14 +1044,14 @@ EXPORT void HWRAPI( SetTexture ) ( FTextureInfo *pTexInfo )
 // -----------------+
 // DrawPolygon      : Render a polygon, set the texture, set render mode
 // -----------------+
-EXPORT void HWRAPI( DrawPolygon ) ( FSurfaceInfo  *pSurf,
-                                    //FTextureInfo  *pTexInfo,
-                                    FOutVector    *pOutVerts,
+EXPORT void HWRAPI( DrawPolygon ) ( FSurfaceInfo_t  *pSurf,
+                                    //FTextureInfo_t  *pTexInfo,
+                                    vxtx3d_t      *pOutVerts,
                                     FUINT         iNumPts,
                                     FBITFIELD     PolyFlags )
 {
     FUINT i, j;
-    FRGBAFloat c;
+    RGBA_float_t c;
 
     //num_drawn_poly += iNumPts-2;
 
@@ -1151,7 +1155,7 @@ EXPORT void HWRAPI( DrawPolygon ) ( FSurfaceInfo  *pSurf,
 // ==========================================================================
 //
 // ==========================================================================
-EXPORT void HWRAPI( SetSpecialState ) (hwdspecialstate_t IdState, int Value)
+EXPORT void HWRAPI( SetSpecialState ) (hwd_specialstate_e IdState, int Value)
 {
     switch (IdState)
     {
@@ -1245,13 +1249,14 @@ EXPORT void HWRAPI( SetSpecialState ) (hwdspecialstate_t IdState, int Value)
     }
 }
 
-FTransform  md2_transform;
+FTransform_t  md2_transform;
 
 // -----------------+
 // HWRAPI DrawMD2   : Draw an MD2 model with glcommands
 // -----------------+
 //EXPORT void HWRAPI( DrawMD2 ) (md2_model_t *model, int frame)
-EXPORT void HWRAPI( DrawMD2 ) (int *gl_cmd_buffer, md2_frame_t *frame, FTransform *pos, float scale)
+EXPORT void HWRAPI( DrawMD2 ) (int *gl_cmd_buffer, md2_frame_t *frame,
+			       FTransform_t *pos, float scale)
 {
     int     val, count, index;
     GLfloat s, t;
@@ -1306,9 +1311,9 @@ EXPORT void HWRAPI( DrawMD2 ) (int *gl_cmd_buffer, md2_frame_t *frame, FTransfor
 // -----------------+
 // SetTransform     : 
 // -----------------+
-EXPORT void HWRAPI( SetTransform ) (FTransform *transform)
+EXPORT void HWRAPI( SetTransform ) (FTransform_t *transform)
 {
-	static int special_splitscreen;
+    static int special_splitscreen;
     glLoadIdentity();
     if (transform)
     {
@@ -1321,12 +1326,16 @@ EXPORT void HWRAPI( SetTransform ) (FTransform *transform)
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-		special_splitscreen = (transform->splitscreen && transform->fovxangle==90.0f);
-		if (special_splitscreen)
-			gluPerspective( 53.13, 2*ASPECT_RATIO,  // 53.13 = 2*atan(0.5)
-                           NEAR_CLIPPING_PLANE, FAR_CLIPPING_PLANE);
-		else
-		    gluPerspective( transform->fovxangle, ASPECT_RATIO, NEAR_CLIPPING_PLANE, FAR_CLIPPING_PLANE);
+        special_splitscreen = (transform->splitscreen && transform->fovxangle==90.0f);
+        if (special_splitscreen)
+        {
+	    gluPerspective( 53.13, 2*ASPECT_RATIO,  // 53.13 = 2*atan(0.5)
+			    NEAR_CLIPPING_PLANE, FAR_CLIPPING_PLANE);
+	}
+        else
+        {
+	    gluPerspective( transform->fovxangle, ASPECT_RATIO, NEAR_CLIPPING_PLANE, FAR_CLIPPING_PLANE);
+	}
 #ifndef MINI_GL_COMPATIBILITY
         glGetDoublev(GL_PROJECTION_MATRIX, projMatrix); // added for new coronas' code (without depth buffer)
 #endif
@@ -1338,12 +1347,16 @@ EXPORT void HWRAPI( SetTransform ) (FTransform *transform)
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-		if (special_splitscreen)
-			gluPerspective( 53.13, 2*ASPECT_RATIO,  // 53.13 = 2*atan(0.5)
-                           NEAR_CLIPPING_PLANE, FAR_CLIPPING_PLANE);
-		else
-			//Hurdler: is "fov" correct?
-            gluPerspective( fov, ASPECT_RATIO, NEAR_CLIPPING_PLANE, FAR_CLIPPING_PLANE);
+        if (special_splitscreen)
+        {
+	    gluPerspective( 53.13, 2*ASPECT_RATIO,  // 53.13 = 2*atan(0.5)
+			    NEAR_CLIPPING_PLANE, FAR_CLIPPING_PLANE);
+	}
+        else
+        {
+	    //Hurdler: is "fov" correct?
+	    gluPerspective( fov, ASPECT_RATIO, NEAR_CLIPPING_PLANE, FAR_CLIPPING_PLANE);
+	}
 #ifndef MINI_GL_COMPATIBILITY
         glGetDoublev(GL_PROJECTION_MATRIX, projMatrix); // added for new coronas' code (without depth buffer)
 #endif
@@ -1357,7 +1370,7 @@ EXPORT void HWRAPI( SetTransform ) (FTransform *transform)
 
 EXPORT int  HWRAPI( GetTextureUsed ) (void)
 {
-    FTextureInfo*   tmp = gr_cachehead;
+    FTextureInfo_t* tmp = gr_cachehead;
     int             res = 0;
 
     while (tmp)

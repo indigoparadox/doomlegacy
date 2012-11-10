@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -39,8 +39,13 @@
 
 #ifndef __GLIDE_H__
 
+#if 1
+typedef uint32_t   FxU32;
+typedef int32_t    FxI32;
+#else
 typedef unsigned long   FxU32;
 typedef long            FxI32;
+#endif
 
 typedef FxI32 GrAspectRatio_t;
 #define GR_ASPECT_LOG2_8x1        3       /* 8W x 1H */
@@ -74,6 +79,7 @@ typedef FxI32 GrTextureFormat_t;
 #define GR_TEXFMT_AP_88                 0xe /* 8-bit alpha 8-bit palette */
 #define GR_RGBA                         0x6 // 32 bit RGBA !
 
+// Passed in Glide lib calls, cannot alter
 typedef struct {
     GrLOD_t           smallLodLog2;
     GrLOD_t           largeLodLog2;

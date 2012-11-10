@@ -169,6 +169,21 @@ extern byte *   translucenttables;  // set of translucent tables
 int patchformat   = GR_TEXFMT_AP_88; // use alpha for holes
 int textureformat = GR_TEXFMT_P_8; // use chromakey for hole
 
+// [WDJ] a strange palette pixel format with alpha
+// to replace an endian swap within inner draw loop
+// *((unsigned short*)dest) = LE_SWAP16( (alpha<<8) | texel );
+typedef struct {
+   byte pixel; // paletted color
+   byte alpha;
+} pixelalpha_t;
+
+#if 0
+typedef union {
+   uint16_t     ui16;
+   pixelalpha_t s16;
+} pixelunion16a_t;
+#endif
+
 // sprite, use alpha and chroma key for hole
 // Called from HWR_GetTexture->HWR_GenerateTexture
 // Called from HWR_MakePatch

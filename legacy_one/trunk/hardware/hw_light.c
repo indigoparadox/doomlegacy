@@ -652,7 +652,7 @@ void CV_grMonsterDL_OnChange (void)
 // points) et ensuite calcul la distance (au carré) de ce point au point
 // projecté sur cette droite
 // --------------------------------------------------------------------------
-static float HWR_DistP2D(FOutVector *p1, FOutVector *p2, FVector *p3, FVector *inter)
+static float HWR_DistP2D(vxtx3d_t *p1, vxtx3d_t *p2, v3d_t *p3, v3d_t *inter)
 {
     if (p1->z == p2->z) {
         inter->x = p3->x;
@@ -663,17 +663,19 @@ static float HWR_DistP2D(FOutVector *p1, FOutVector *p2, FVector *p3, FVector *i
     } else {
         register float local, pente;
         // Wat een mooie formula! Hurdler's math ;-)
-        pente = ( p1->z-p2->z ) / ( p1->x-p2->x );
+        pente = ( p1->z - p2->z ) / ( p1->x - p2->x );
         local = p1->z - p1->x*pente;
         inter->x = (p3->z - local + p3->x/pente) * (pente/(pente*pente+1));
         inter->z = inter->x*pente + local;
     }
 
-    return (p3->x-inter->x)*(p3->x-inter->x) + (p3->z-inter->z)*(p3->z-inter->z);
+    return (p3->x - inter->x) * (p3->x - inter->x)
+         + (p3->z - inter->z) * (p3->z - inter->z);
 }
 
 // check if sphere (radius r) centred in p3 touch the bounding box defined by p1, p2
-static boolean SphereTouchBBox3D(FOutVector *p1, FOutVector *p2, FVector *p3, float r)
+static
+boolean SphereTouchBBox3D(vxtx3d_t *p1, vxtx3d_t *p2, v3d_t *p3, float r)
 {
     float minx=p1->x,maxx=p2->x,miny=p2->y,maxy=p1->y,minz=p2->z,maxz=p1->z;
 
@@ -709,14 +711,14 @@ static boolean SphereTouchBBox3D(FOutVector *p1, FOutVector *p2, FVector *p3, fl
 // calcul du dynamic lighting sur les murs
 // lVerts contient les coords du mur sans le mlook (up/down)
 // --------------------------------------------------------------------------
-void HWR_WallLighting(FOutVector *wlVerts)
+void HWR_WallLighting(vxtx3d_t *wlVerts)
 {
     int             i, j;
 
     // dynlights->nb == 0 if cv_grdynamiclighting.value is not set
     for (j=0; j<dynlights->nb; j++) {
-        FVector         inter;
-        FSurfaceInfo    Surf;
+        v3d_t           inter;
+        FSurfaceInfo_t  Surf;
         float           dist_p2d, d[4], s;
 
         // check bounding box first
@@ -782,15 +784,15 @@ void HWR_WallLighting(FOutVector *wlVerts)
 
 // BP: big hack for a test in lighting ref:1249753487AB
 extern int *bbox;
-extern FTransform atransform;
+extern FTransform_t atransform;
 // --------------------------------------------------------------------------
 // calcul du dynamic lighting sur le sol
 // clVerts contient les coords du sol avec le mlook (up/down)
 // --------------------------------------------------------------------------
-void HWR_PlaneLighting(FOutVector *clVerts, int nrClipVerts)
+void HWR_PlaneLighting(vxtx3d_t *clVerts, int nrClipVerts)
 {
     int     i, j;
-    FOutVector p1,p2;
+    vxtx3d_t p1,p2;
 
     p1.z=FIXED_TO_FLOAT( bbox[BOXTOP] );
     p1.x=FIXED_TO_FLOAT( bbox[BOXLEFT] );
@@ -800,7 +802,7 @@ void HWR_PlaneLighting(FOutVector *clVerts, int nrClipVerts)
     p1.y=clVerts[0].y;
 
     for (j=0; j<dynlights->nb; j++) {
-        FSurfaceInfo    Surf;
+        FSurfaceInfo_t  Surf;
         float           dist_p2d, s;
 
         // BP: The kickass Optimization: check if light touch bounding box
@@ -852,7 +854,7 @@ static int coronalumpnum;
 // --------------------------------------------------------------------------
 // coronas lighting
 // --------------------------------------------------------------------------
-void HWR_DoCoronasLighting(FOutVector *outVerts, gr_vissprite_t *spr) 
+void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr) 
 {
     light_t   *p_lspr;
 
@@ -864,9 +866,10 @@ void HWR_DoCoronasLighting(FOutVector *outVerts, gr_vissprite_t *spr)
         p_lspr = &lspr[ROCKETEXP_L];
     }
 
-    if ( cv_grcoronas.value && (p_lspr->type & CORONA_SPR) ) { // it's an object which emits light
-        FOutVector      light[4];
-        FSurfaceInfo    Surf;
+    if ( cv_grcoronas.value && (p_lspr->type & CORONA_SPR) ) // it's an object which emits light
+    {
+        vxtx3d_t        light[4];
+        FSurfaceInfo_t    Surf;
         float           cx=0.0f, cy=0.0f, cz=0.0f; // gravity center
         float           size;
         int             i;
@@ -951,8 +954,8 @@ void HWR_DrawCoronas( void )
     HWR_GetPic(coronalumpnum);  // TODO: use different coronas
     for( j=0;j<dynlights->nb;j++ )
     {
-        FOutVector      light[4];
-        FSurfaceInfo    Surf;
+        vxtx3d_t        light[4];
+        FSurfaceInfo_t  Surf;
         float           cx=LIGHT_POS(j).x;
         float           cy=LIGHT_POS(j).y;
         float           cz=LIGHT_POS(j).z; // gravity center
@@ -1041,7 +1044,7 @@ void HWR_SetLights(int viewnumber)
 // Add a light for dynamic lighting
 // The light position is already transformed execpt for mlook
 // --------------------------------------------------------------------------
-void HWR_DL_AddLight(gr_vissprite_t *spr, MipPatch_t *patch)
+void HWR_DL_AddLight(gr_vissprite_t *spr, MipPatch_t *mpatch)
 {
     light_t   *p_lspr;
 
@@ -1102,7 +1105,7 @@ void HWR_SetLight( void )
     if (!lightmappatch.mipmap.downloaded && !lightmappatch.mipmap.grInfo.data)
     {
 
-        USHORT *Data = Z_Malloc( 128*128*sizeof(USHORT), PU_HWRCACHE, &lightmappatch.mipmap.grInfo.data );
+        uint16_t *Data = Z_Malloc( 128*128*sizeof(uint16_t), PU_HWRCACHE, &lightmappatch.mipmap.grInfo.data );
                 
         for( i=0; i<128; i++ )
         {
@@ -1130,10 +1133,10 @@ void HWR_SetLight( void )
 }
 
 
-void HWR_DynamicShadowing(FOutVector *clVerts, int nrClipVerts, player_t *p)
+void HWR_DynamicShadowing(vxtx3d_t *clVerts, int nrClipVerts, player_t *p)
 {
     int  i;
-    FSurfaceInfo    Surf;
+    FSurfaceInfo_t  Surf;
 
     if (!cv_grdynamiclighting.value)
         return;
@@ -1171,7 +1174,7 @@ static void HWR_StoreWallRange (int startfrac, int endfrac)
 
 
 // p1 et p2 c'est le deux bou du seg en float
-void HWR_BuildWallLightmaps(FVector *p1, FVector *p2, int lighnum, seg_t *line)
+void HWR_BuildWallLightmaps(v3d_t *p1, v3d_t *p2, int lighnum, seg_t *line)
 {
     lightmap_t *lp;
 
@@ -1199,7 +1202,7 @@ static void HWR_AddLightMapForLine( int lightnum, seg_t *line)
     angle_t             span;
     angle_t             tspan;
     */
-    FVector             p1,p2;
+    v3d_t  p1,p2;
     
     gr_curline = line;
     gr_backsector = line->backsector;
@@ -1238,7 +1241,7 @@ static void HWR_CheckSubsector( int num, fixed_t *bbox )
     int         count;
     seg_t       *line;
     subsector_t *sub;
-    FVector     p1,p2;
+    v3d_t       p1,p2;
     int         lightnum;
 
     p1.y=FIXED_TO_FLOAT( bbox[BOXTOP] );

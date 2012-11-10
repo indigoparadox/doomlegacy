@@ -467,26 +467,25 @@ void md2_printModelInfo (md2_model_t *model)
 }
 
 
-#define word short
 typedef struct
 {
     byte manufacturer;   
     byte version;        
     byte encoding;    
     byte bitsPerPixel;
-    word xmin;
-    word ymin;
-    word xmax;
-    word ymax;
-    word hDpi;
-    word vDpi;
+    int16_t xmin;
+    int16_t ymin;
+    int16_t xmax;
+    int16_t ymax;
+    int16_t hDpi;
+    int16_t vDpi;
     byte colorMap[48];
     byte reserved;    
     byte numPlanes;   
-    word bytesPerLine;
-    word paletteInfo; 
-    word hScreenSize;  
-    word vScreenSize;
+    int16_t bytesPerLine;
+    int16_t paletteInfo; 
+    int16_t hScreenSize;  
+    int16_t vScreenSize;
     byte filler[54];  
 } PcxHeader;
 
@@ -643,14 +642,14 @@ void HWR_InitMD2()
     */
 void HWR_DrawMD2( gr_vissprite_t* spr )
 {
-    FOutVector      wallVerts[4];
+    vxtx3d_t        vxtx[4];
     MipPatch_t      *gpatch;      //sprite patch converted to hardware
-    FSurfaceInfo    Surf;
+    FSurfaceInfo_t  Surf;
 
     char            *ptr;
     char            filename[64];
     int             frame;
-    FTransform      p;
+    FTransform_t    ptf;
     md2_t           *md2;
 
     // cache sprite graphics
@@ -697,7 +696,8 @@ void HWR_DrawMD2( gr_vissprite_t* spr )
             Surf.FlatColor.s.alpha = 0xFF;blend = PF_Translucent|PF_Occlude;
         }
         // hack for updating the light level before drawing the md2
-        HWD.pfnDrawPolygon( &Surf, wallVerts, 4, blend|PF_Modulated|PF_Clip|PF_MD2 );
+        HWD.pfnDrawPolygon( &Surf, vxtx, 4,
+			    blend|PF_Modulated|PF_Clip|PF_MD2 );
 
         // dont forget to enabled the depth test because we can't do this like
         // before: polygons models are not sorted
@@ -743,13 +743,14 @@ void HWR_DrawMD2( gr_vissprite_t* spr )
         frame = spr->mobj->frame % md2->model->header.numFrames;
 
         //Hurdler: it seems there is still a small problem with mobj angle
-        p.x = FIXED_TO_FLOAT( spr->mobj->x );
-        p.y = FIXED_TO_FLOAT( spr->mobj->y ) + md2->offset;
-        p.z = FIXED_TO_FLOAT( spr->mobj->z );
-        p.angley = 45*((spr->mobj->angle>>29));
-        p.anglex = 0.0f;
+        ptf.x = FIXED_TO_FLOAT( spr->mobj->x );
+        ptf.y = FIXED_TO_FLOAT( spr->mobj->y ) + md2->offset;
+        ptf.z = FIXED_TO_FLOAT( spr->mobj->z );
+        ptf.angley = 45*((spr->mobj->angle>>29));
+        ptf.anglex = 0.0f;
 
-        HWD.pfnDrawMD2(md2->model->glCommandBuffer, &md2->model->frames[frame], &p, md2->scale);
+        HWD.pfnDrawMD2(md2->model->glCommandBuffer, &md2->model->frames[frame],
+		       &ptf, md2->scale);
     }
 }
 

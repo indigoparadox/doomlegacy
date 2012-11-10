@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -31,5 +31,5 @@
 
 #define MAXCLIPVERTS     256
 
-int ClipZ (FOutVector* inVerts, FOutVector* clipVerts, int numpoints);
-int ClipToFrustum (FOutVector *inVerts, FOutVector *outVerts, int nrInVerts);
+int ClipZ (vxtx3d_t* inVerts, vxtx3d_t* clipVerts, int numpoints);
+int ClipToFrustum (vxtx3d_t *inVerts, vxtx3d_t *outVerts, int nrInVerts);

@@ -127,20 +127,21 @@ float   gr_patch_scaley;
 #pragma pack(1)
 #endif
 typedef struct {  // sizeof() = 18
-  char  id_field_length;
-  char  color_map_type;
-  char  image_type;
-  char  dummy[5];
-/*short c_map_origin;
-  short c_map_length;
+  byte  id_field_length;
+  byte  color_map_type;
+  byte  image_type;
+  byte  dummy[5];
+/*int16_t c_map_origin;
+  int16_t c_map_length;
   char  c_map_size;*/
-  short x_origin;
-  short y_origin;
-  short width;
-  short height;
-  char  image_pix_size;
-  char  image_descriptor;
-} TGAHeader, *PTGAHeader;
+  int16_t x_origin;
+  int16_t y_origin;
+  uint16_t width;
+  uint16_t height;
+  byte  image_pix_size;
+  byte  image_descriptor;
+} TGAHeader_t;
+// TGAHeader_t * TGAHeaderp;
 #ifdef WIN32
 #pragma pack()
 #endif
@@ -157,7 +158,7 @@ void saveTGA(char *file_name, int width, int height, GLRGB *buffer);
 // -----------------+
 void HWR_DrawPatch (MipPatch_t* gpatch, int x, int y, int option)
 {
-    FOutVector      v[4];
+    vxtx3d_t      v[4];
 
 //  3--2
 //  | /|
@@ -191,19 +192,21 @@ void HWR_DrawPatch (MipPatch_t* gpatch, int x, int y, int option)
     // clip it since it is used for bunny scroll in doom I
     if (option & V_TRANSLUCENTPATCH)
     {
-        FSurfaceInfo Surf;
+        FSurfaceInfo_t Surf;
         Surf.FlatColor.s.red = Surf.FlatColor.s.green = Surf.FlatColor.s.blue = 0xff;
         Surf.FlatColor.s.alpha = cv_grtranslucenthud.value;
-        HWD.pfnDrawPolygon( &Surf, v, 4, PF_Modulated | BLENDMODE | PF_Clip | PF_NoZClip | PF_NoDepthTest);
+        HWD.pfnDrawPolygon( &Surf, v, 4,
+	    BLENDMODE | PF_Modulated | PF_Clip | PF_NoZClip | PF_NoDepthTest);
     }
     else
-        HWD.pfnDrawPolygon( NULL, v, 4, BLENDMODE | PF_Clip | PF_NoZClip | PF_NoDepthTest);
+        HWD.pfnDrawPolygon( NULL, v, 4,
+	    BLENDMODE | PF_Clip | PF_NoZClip | PF_NoDepthTest);
 }
 
 // Draws a patch 2x as small SSNTails 06-10-2003
 void HWR_DrawSmallPatch (MipPatch_t* gpatch, int x, int y, int option, byte *colormap)
 {
-    FOutVector      v[4];
+    vxtx3d_t      v[4];
 
     float sdupx = vid.fdupx;
     float sdupy = vid.fdupy;
@@ -231,7 +234,8 @@ void HWR_DrawSmallPatch (MipPatch_t* gpatch, int x, int y, int option, byte *col
     v[2].tow = v[3].tow = gpatch->max_t;
 
     // clip it since it is used for bunny scroll in doom I
-    HWD.pfnDrawPolygon( NULL, v, 4, BLENDMODE | PF_Clip | PF_NoZClip | PF_NoDepthTest);
+    HWD.pfnDrawPolygon( NULL, v, 4,
+	BLENDMODE | PF_Clip | PF_NoZClip | PF_NoDepthTest);
 }
 
 //
@@ -239,7 +243,7 @@ void HWR_DrawSmallPatch (MipPatch_t* gpatch, int x, int y, int option, byte *col
 //
 void HWR_DrawMappedPatch (MipPatch_t* gpatch, int x, int y, int option, byte *colormap)
 {
-    FOutVector      v[4];
+    vxtx3d_t      v[4];
 
     float sdupx = vid.fdupx*2;
     float sdupy = vid.fdupy*2;
@@ -269,22 +273,24 @@ void HWR_DrawMappedPatch (MipPatch_t* gpatch, int x, int y, int option, byte *co
     // clip it since it is used for bunny scroll in doom I
     if (option & V_TRANSLUCENTPATCH)
     {
-        FSurfaceInfo Surf;
+        FSurfaceInfo_t Surf;
         Surf.FlatColor.s.red = Surf.FlatColor.s.green = Surf.FlatColor.s.blue = 0xff;
         Surf.FlatColor.s.alpha = cv_grtranslucenthud.value;
-        HWD.pfnDrawPolygon( &Surf, v, 4, PF_Modulated | BLENDMODE | PF_Clip | PF_NoZClip | PF_NoDepthTest);
+        HWD.pfnDrawPolygon( &Surf, v, 4,
+	    BLENDMODE | PF_Modulated | PF_Clip | PF_NoZClip | PF_NoDepthTest);
     }
     else
-        HWD.pfnDrawPolygon( NULL, v, 4, BLENDMODE | PF_Clip | PF_NoZClip | PF_NoDepthTest);
+        HWD.pfnDrawPolygon( NULL, v, 4,
+	    BLENDMODE | PF_Clip | PF_NoZClip | PF_NoDepthTest);
 }
 
 void HWR_DrawPic(int x, int y, int lumpnum)
 {
-    FOutVector      v[4];
-    MipPatch_t    *patch;
+    vxtx3d_t      v[4];
+    MipPatch_t  *   mpatch;
 
     // make pic ready in hardware cache
-    patch = HWR_GetPic( lumpnum );
+    mpatch = HWR_GetPic( lumpnum );
 
 //  3--2
 //  | /|
@@ -292,16 +298,16 @@ void HWR_DrawPic(int x, int y, int lumpnum)
 //  0--1
 
     v[0].x = v[3].x = 2.0*(float)x/vid.width - 1;
-    v[2].x = v[1].x = 2.0*(float)(x+patch->width*vid.fdupx)/vid.width - 1;
+    v[2].x = v[1].x = 2.0*(float)(x + mpatch->width*vid.fdupx)/vid.width - 1;
     v[0].y = v[1].y =1-2.0*(float)y/vid.height;
-    v[2].y = v[3].y =1-2.0*(float)(y+patch->height*vid.fdupy)/vid.height;
+    v[2].y = v[3].y =1-2.0*(float)(y + mpatch->height*vid.fdupy)/vid.height;
 
     v[0].z = v[1].z = v[2].z = v[3].z = 1.0f;
 
     v[0].sow = v[3].sow =  0;
-    v[2].sow = v[1].sow =  patch->max_s;
+    v[2].sow = v[1].sow =  mpatch->max_s;
     v[0].tow = v[1].tow =  0;
-    v[2].tow = v[3].tow =  patch->max_t;
+    v[2].tow = v[3].tow =  mpatch->max_t;
 
 
     //Hurdler: Boris, the same comment as above... but maybe for pics
@@ -312,13 +318,15 @@ void HWR_DrawPic(int x, int y, int lumpnum)
     // BP: PF_Environment don't change anything ! and 0 is undifined
     if (cv_grtranslucenthud.value != 255)
     {
-        FSurfaceInfo Surf;
+        FSurfaceInfo_t Surf;
         Surf.FlatColor.s.red = Surf.FlatColor.s.green = Surf.FlatColor.s.blue = 0xff;
         Surf.FlatColor.s.alpha = cv_grtranslucenthud.value;
-        HWD.pfnDrawPolygon( &Surf, v, 4, PF_Modulated | BLENDMODE | PF_NoDepthTest | PF_Clip | PF_NoZClip);
+        HWD.pfnDrawPolygon( &Surf, v, 4,
+	    BLENDMODE | PF_Modulated | PF_NoDepthTest | PF_Clip | PF_NoZClip);
     }
     else
-        HWD.pfnDrawPolygon( NULL, v, 4, BLENDMODE | PF_NoDepthTest | PF_Clip | PF_NoZClip);
+        HWD.pfnDrawPolygon( NULL, v, 4,
+	    BLENDMODE | PF_NoDepthTest | PF_Clip | PF_NoZClip);
 }
 
 // ==========================================================================
@@ -331,7 +339,7 @@ void HWR_DrawPic(int x, int y, int lumpnum)
 // --------------------------------------------------------------------------
 void HWR_DrawFlatFill (int x, int y, int w, int h, int flatlumpnum)
 {
-    FOutVector  v[4];
+    vxtx3d_t  v[4];
     double flatsize;
     int flatflag;
     int size;
@@ -396,7 +404,8 @@ void HWR_DrawFlatFill (int x, int y, int w, int h, int flatlumpnum)
     // BTW, I see we put 0 for PFs, and If I'm right, that
     // means we take the previous PFs as default
     // how can we be sure they are ok?
-    HWD.pfnDrawPolygon( NULL, v, 4, PF_NoDepthTest); //PF_Translucent );
+      // maybe PF_Translucent ??
+    HWD.pfnDrawPolygon( NULL, v, 4, PF_NoDepthTest);
 }
 
 
@@ -409,8 +418,8 @@ void HWR_DrawFlatFill (int x, int y, int w, int h, int flatlumpnum)
 //  0--1
 void HWR_FadeScreenMenuBack( unsigned long color, long alpha, int height )
 {
-    FOutVector  v[4];
-    FSurfaceInfo Surf;
+    vxtx3d_t  v[4];
+    FSurfaceInfo_t Surf;
 
     // setup some neat-o translucency effect
     if (!height) //cool hack 0 height is full height
@@ -429,7 +438,8 @@ void HWR_FadeScreenMenuBack( unsigned long color, long alpha, int height )
 
     Surf.FlatColor.rgba = UINT2RGBA(color);
     Surf.FlatColor.s.alpha = alpha * ((float)height / vid.height);    //calum: varies console alpha
-    HWD.pfnDrawPolygon( &Surf, v, 4, PF_NoTexture|PF_Modulated|PF_Translucent|PF_NoDepthTest);
+    HWD.pfnDrawPolygon( &Surf, v, 4,
+        PF_NoTexture|PF_Modulated|PF_Translucent|PF_NoDepthTest);
 }
 
 
@@ -450,7 +460,7 @@ void HWR_DrawViewBorder (int clearlines)
     int         top,side;
     int         baseviewwidth,baseviewheight;
     int         basewindowx,basewindowy;
-    MipPatch_t*   patch;
+    MipPatch_t * mpatch;
 extern float gr_baseviewwindowy,gr_viewwindowx,gr_viewheight,gr_viewwidth;
 
 //    if (gr_viewwidth == vid.width)
@@ -501,30 +511,30 @@ extern float gr_baseviewwindowy,gr_viewwindowx,gr_viewheight,gr_viewwidth;
 
     // top edge
     if (clearlines > basewindowy-8) {
-        patch = W_CachePatchNum (viewborderlump[BRDR_T],PU_CACHE);
+        mpatch = W_CachePatchNum (viewborderlump[BRDR_T],PU_CACHE);
         for (x=0 ; x<baseviewwidth; x+=8)
-            HWR_DrawPatch (patch,basewindowx+x,basewindowy-8,0);
+            HWR_DrawPatch (mpatch, basewindowx+x, basewindowy-8, 0);
     }
 
     // bottom edge
     if (clearlines > basewindowy+baseviewheight) {
-        patch = W_CachePatchNum (viewborderlump[BRDR_B],PU_CACHE);
+        mpatch = W_CachePatchNum (viewborderlump[BRDR_B],PU_CACHE);
         for (x=0 ; x<baseviewwidth ; x+=8)
-            HWR_DrawPatch (patch,basewindowx+x,basewindowy+baseviewheight,0);
+            HWR_DrawPatch (mpatch, basewindowx+x, basewindowy+baseviewheight, 0);
     }
 
     // left edge
     if (clearlines > basewindowy) {
-        patch = W_CachePatchNum (viewborderlump[BRDR_L],PU_CACHE);
+        mpatch = W_CachePatchNum (viewborderlump[BRDR_L],PU_CACHE);
         for (y=0 ; y<baseviewheight && (basewindowy+y < clearlines); y+=8)
-            HWR_DrawPatch (patch,basewindowx-8,basewindowy+y,0);
+            HWR_DrawPatch (mpatch, basewindowx-8, basewindowy+y, 0);
     }
 
     // right edge
     if (clearlines > basewindowy) {
-        patch = W_CachePatchNum (viewborderlump[BRDR_R],PU_CACHE);
+        mpatch = W_CachePatchNum (viewborderlump[BRDR_R],PU_CACHE);
         for (y=0 ; y<baseviewheight && (basewindowy+y < clearlines); y+=8)
-            HWR_DrawPatch (patch,basewindowx+baseviewwidth,basewindowy+y,0);
+            HWR_DrawPatch (mpatch, basewindowx+baseviewwidth, basewindowy+y, 0);
     }
 
     // Draw beveled corners.
@@ -557,7 +567,7 @@ extern float gr_baseviewwindowy,gr_viewwindowx,gr_viewheight,gr_viewwidth;
 // Clear the automap part of the screen
 void HWR_clearAutomap( void )
 {
-    FRGBAFloat fColor = { 0,0,0,1 };
+    RGBA_float_t fColor = { 0,0,0,1 };
 
     //FIXTHIS faB - optimize by clearing only colors ?
     //HWD.pfnSetBlend ( PF_NoOcclude );
@@ -575,7 +585,7 @@ void HWR_clearAutomap( void )
 // -----------------+
 void HWR_drawAMline( fline_t* fl, int color )
 {
-    F2DCoord  v1, v2;
+    v2d_t  v1, v2;
     RGBA_t    color_rgba;
 
     color_rgba = V_GetColor( color );
@@ -595,8 +605,8 @@ void HWR_drawAMline( fline_t* fl, int color )
 // -----------------+
 void HWR_DrawFill( int x, int y, int w, int h, int color )
 {
-    FOutVector  v[4];
-    FSurfaceInfo Surf;
+    vxtx3d_t  v[4];
+    FSurfaceInfo_t Surf;
 
 //  3--2
 //  | /|
@@ -607,8 +617,10 @@ void HWR_DrawFill( int x, int y, int w, int h, int color )
     v[0].y = v[1].y = -(y - 100.0f)/100.0f;
     v[2].y = v[3].y = -((y+h) - 100.0f)/100.0f;
 
+#ifdef _GLIDE_ARGB_
     //Hurdler: do we still use this argb color? if not, we should remove it
     v[0].argb = v[1].argb = v[2].argb = v[3].argb = 0xff00ff00; //;
+#endif
     v[0].z = v[1].z = v[2].z = v[3].z = 1.0f;
 
     v[0].sow = v[3].sow = 0.0f;
@@ -618,7 +630,8 @@ void HWR_DrawFill( int x, int y, int w, int h, int color )
 
     Surf.FlatColor = V_GetColor( color );
 
-    HWD.pfnDrawPolygon( &Surf, v, 4, PF_Modulated|PF_NoTexture| PF_NoDepthTest );
+    HWD.pfnDrawPolygon( &Surf, v, 4,
+			PF_Modulated|PF_NoTexture| PF_NoDepthTest );
 }
 
 
@@ -632,18 +645,18 @@ boolean HWR_Screenshot (char *lbmname)
 {
     int     i, off;
     byte*   bufw;
-    unsigned short* bufr;
+    uint16_t* bufr;
     byte*   dest;
-    unsigned short  rgb565;
+    uint16_t  rgb565;
 
     bufr = malloc(vid.width*vid.height*2);
     if (!bufr)
-        return false;
+        goto done;
     bufw = malloc(vid.width*vid.height*3);
     if (!bufw)
     {
         free(bufr);
-        return false;
+        goto done;
     }
 
     //returns 16bit 565 RGB
@@ -703,6 +716,7 @@ boolean HWR_Screenshot (char *lbmname)
         }
     }
     free(bufw);
+done:
     return false;
 }
 
@@ -714,7 +728,7 @@ void saveTGA(char *file_name, int width, int height, GLRGB *buffer)
 {
     int fd;
     long size;
-    TGAHeader tga_hdr;
+    TGAHeader_t tga_hdr;
 
     fd = open(file_name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
     if (fd < 0)
@@ -729,7 +743,7 @@ void saveTGA(char *file_name, int width, int height, GLRGB *buffer)
     tga_hdr.image_descriptor = 32;
     size = (long)width * (long)height * 3L;
 
-    write(fd, &tga_hdr, sizeof(TGAHeader));
+    write(fd, &tga_hdr, sizeof(TGAHeader_t));
     write(fd, buffer, size);
     close(fd);
 }

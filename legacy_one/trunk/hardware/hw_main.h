@@ -126,7 +126,7 @@ void HWR_DrawPic(int x,int y,int lumpnum);
 void HWR_AddCommands (void);
 void HWR_CorrectSWTricks(void);
 void transform(float *cx, float *cy, float *cz);
-int HWR_TranstableToAlpha(int transtablenum, FSurfaceInfo *pSurf);
+int HWR_TranstableToAlpha(int transtablenum, FSurfaceInfo_t *pSurf);
 
 extern consvar_t cv_grmlook_extends_fov;
 extern consvar_t cv_grdynamiclighting;

@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -140,12 +140,12 @@ static FxU32 gr_alignboundary;
 static FBITFIELD CurrentPolyFlags;
 static FBITFIELD CurrentTextureFlags;
 
-static FOutVector tmpVerts[MAXCLIPVERTS*2];
-static FOutVector tmp2Verts[MAXCLIPVERTS*2];
-static FOutVector tmp3Verts[MAXCLIPVERTS*2];
+static vxtx3d_t tmpVerts[MAXCLIPVERTS*2];
+static vxtx3d_t tmp2Verts[MAXCLIPVERTS*2];
+static vxtx3d_t tmp3Verts[MAXCLIPVERTS*2];
 
-static FTransform grTransform;
-static FTransform defaulttransform = {0,0,0,0,90,1,1,1,90,90};
+static FTransform_t grTransform;
+static FTransform_t defaulttransform = {0,0,0,0,90,1,1,1,90,90};
 static float szsinx, szcosx, siny, cosy, sxsiny, sxcosy, sysinx, sycosx;
 
 static I_Error_t I_ErrorGr = NULL;
@@ -601,11 +601,13 @@ static void GR_ResetStates (viddef_t *lvid)
     grColorMask ( FXTRUE, FXFALSE);
 
     // my vertex format
-    grVertexLayout(GR_PARAM_XY   , FIELD_OFFSET(FOutVector,x)   , GR_PARAM_ENABLE);
-    grVertexLayout(GR_PARAM_PARGB, FIELD_OFFSET(FOutVector,argb), GR_PARAM_ENABLE);
+    grVertexLayout(GR_PARAM_XY   , FIELD_OFFSET(vxtx3d_t,x)   , GR_PARAM_ENABLE);
+#ifdef _GLIDE_ARGB_
+    grVertexLayout(GR_PARAM_PARGB, FIELD_OFFSET(vxtx3d_t,argb), GR_PARAM_ENABLE);
+#endif
     //grVertexLayout(GR_PARAM_Q, 12, GR_PARAM_ENABLE);
-    grVertexLayout(GR_PARAM_W    , FIELD_OFFSET(FOutVector,z) , GR_PARAM_ENABLE);
-    grVertexLayout(GR_PARAM_ST0  , FIELD_OFFSET(FOutVector,sow) , GR_PARAM_ENABLE);  //s and t for tmu0
+    grVertexLayout(GR_PARAM_W    , FIELD_OFFSET(vxtx3d_t,z) , GR_PARAM_ENABLE);
+    grVertexLayout(GR_PARAM_ST0  , FIELD_OFFSET(vxtx3d_t,sow) , GR_PARAM_ENABLE);  //s and t for tmu0
 
     grTexCombine (GR_TMU0, GR_COMBINE_FUNCTION_LOCAL,
                   GR_COMBINE_FACTOR_NONE,
@@ -642,14 +644,14 @@ static  FxU32           gr_cachemin;
 static  FxU32           gr_cachemax;
 
 static  FxU32           gr_cachepos;
-static  GlideMipmap_t*  gr_cachetail = NULL;
-static  GlideMipmap_t*  gr_cachehead;
-static  GlideMipmap_t*  lastmipmapset;
+static  Mipmap_t*  gr_cachetail = NULL;
+static  Mipmap_t*  gr_cachehead;
+static  Mipmap_t*  lastmipmapset;
 
 // --------------------------------------------------------------------------
 // This must be done once only for all program execution
 // --------------------------------------------------------------------------
-GlideMipmap_t fakemipmap;
+Mipmap_t fakemipmap;
 static void GR_ClearMipmapCache (void)
 {
     while (gr_cachetail)
@@ -669,7 +671,7 @@ static void GR_ClearMipmapCache (void)
 
     gr_cachetail = &fakemipmap;
     gr_cachehead = &fakemipmap;
-    gr_cachepos = gr_cachetail->cachepos+fakemipmap.mipmapSize;
+    gr_cachepos = gr_cachetail->cachepos + fakemipmap.mipmapSize;
 
     DBG_Printf ("Cache cleared\n");
 }
@@ -718,7 +720,7 @@ static void GR_FlushMipmap ()
     }
     else
     {
-//        DBG_Printf ("fluching mipmap at position %d (%d bytes) tailpos=%d (%d byte)\n",gr_cachetail->cachepos,gr_cachetail->mipmapSize,gr_cachetail->nextmipmap->cachepos,gr_cachetail->nextmipmap->mipmapSize);
+//        DBG_Printf ("flushing mipmap at position %d (%d bytes) tailpos=%d (%d byte)\n",gr_cachetail->cachepos,gr_cachetail->mipmapSize,gr_cachetail->nextmipmap->cachepos,gr_cachetail->nextmipmap->mipmapSize);
         gr_cachetail->cachepos = 0;
         gr_cachetail->mipmapSize = -1;
         gr_cachetail = gr_cachetail->nextmipmap;
@@ -728,7 +730,7 @@ static void GR_FlushMipmap ()
 // --------------------------------------------------------------------------
 // Download a 'surface' into the graphics card memory
 // --------------------------------------------------------------------------
-static void GR_DownloadMipmap (GlideMipmap_t* grMipmap)
+static void GR_DownloadMipmap (Mipmap_t* grMipmap)
 {
     FxU32   mipmapSize;
 
@@ -800,7 +802,7 @@ static void GR_DownloadMipmap (GlideMipmap_t* grMipmap)
 // ==========================================================================
 // The mipmap becomes the current texture source
 // ==========================================================================
-EXPORT void HWRAPI( SetTexture ) (GlideMipmap_t* grMipmap)
+EXPORT void HWRAPI( SetTexture ) (Mipmap_t* grMipmap)
 {
     FBITFIELD xor;
     if (!grPreviousContext) {
@@ -808,19 +810,19 @@ EXPORT void HWRAPI( SetTexture ) (GlideMipmap_t* grMipmap)
         return;
     }
 
-    // don't set exactely the same mipmap 
+    // don't set exactly the same mipmap 
     if( lastmipmapset == grMipmap )
         return;
 
     if (!grMipmap->downloaded)
         GR_DownloadMipmap (grMipmap);
 
-    xor = grMipmap->flags ^ CurrentTextureFlags;
+    xor = grMipmap->tfflags ^ CurrentTextureFlags;
     if(xor)
     {
         if(xor&TF_WRAPXY)
         {
-            switch(grMipmap->flags & TF_WRAPXY)
+            switch(grMipmap->tfflags & TF_WRAPXY)
         {
             case 0 :
                 grTexClampMode (GR_TMU0, GR_TEXTURECLAMP_CLAMP, GR_TEXTURECLAMP_CLAMP);
@@ -838,12 +840,12 @@ EXPORT void HWRAPI( SetTexture ) (GlideMipmap_t* grMipmap)
         }
         if( xor & TF_CHROMAKEYED )
         {
-            if(grMipmap->flags & TF_CHROMAKEYED )
+            if(grMipmap->tfflags & TF_CHROMAKEYED )
                 grChromakeyMode (GR_CHROMAKEY_ENABLE);
             else
                 grChromakeyMode (GR_CHROMAKEY_DISABLE);
         }
-        CurrentTextureFlags = grMipmap->flags;
+        CurrentTextureFlags = grMipmap->tfflags;
     }
     grTexSource (GR_TMU0, grMipmap->cachepos, GR_MIPMAPLEVELMASK_BOTH, &grMipmap->grInfo);
     lastmipmapset = grMipmap;
@@ -1021,9 +1023,8 @@ EXPORT void HWRAPI( GClipRect ) (int minx, int miny, int maxx, int maxy, float n
 // HWRAPI ClearBuffer
 //                  : Clear the color/alpha/depth buffer(s)
 // -----------------+
-EXPORT void HWRAPI( ClearBuffer ) ( FBOOLEAN ColorMask,
-                                    FBOOLEAN DepthMask,
-                                    FRGBAFloat * ClearColor )
+EXPORT void HWRAPI( ClearBuffer ) ( boolean ColorMask, boolean DepthMask,
+                                    RGBA_float_t * ClearColor )
 {
     FBITFIELD polyflags;
 
@@ -1062,11 +1063,9 @@ EXPORT void HWRAPI( ClearBuffer ) ( FBOOLEAN ColorMask,
 // -----------------+
 // HWRAPI Draw2DLine: Render a 2D line
 // -----------------+
-EXPORT void HWRAPI( Draw2DLine ) ( F2DCoord * v1,
-                                   F2DCoord * v2,
-                                   RGBA_t Color )
+EXPORT void HWRAPI( Draw2DLine ) ( v2d_t * v1, v2d_t * v2, RGBA_t Color )
 {
-    FOutVector a,b;
+    vxtx3d_t a,b;
 
     if (!grPreviousContext) {
         DBG_Printf ("HWRAPI DrawLine() : display not set\n");
@@ -1098,7 +1097,7 @@ EXPORT void HWRAPI( Draw2DLine ) ( F2DCoord * v1,
 #define BYTEPERPIXEL 2
 
 // test if center of corona is visible with the zbuffer (need raw acces to zbuffer)
-static boolean ComputeCoronaAlpha( float *retscalef, FOutVector *projVerts )
+static boolean ComputeCoronaAlpha( float *retscalef, vxtx3d_t *projVerts )
 {
 #define NUMPIXELS 8
     unsigned short buf[NUMPIXELS][NUMPIXELS];
@@ -1180,12 +1179,12 @@ static boolean ComputeCoronaAlpha( float *retscalef, FOutVector *projVerts )
     return true;
 }
 
-static FOutVector *doTransform(FOutVector *projVerts, 
+static vxtx3d_t * doTransform(vxtx3d_t *projVerts, 
                                FUINT       nClipVerts )
 {
     float tx,ty,tz;
     FUINT i;
-    FOutVector *p = tmp3Verts;
+    vxtx3d_t *p = tmp3Verts;
 
     for(i=0;i<nClipVerts;i++,p++,projVerts++)
     {
@@ -1211,7 +1210,7 @@ static FOutVector *doTransform(FOutVector *projVerts,
 // Draw a triangulated polygon
 // ==========================================================================
 EXPORT void HWRAPI( DrawPolygon ) ( FSurfaceInfo  *pSurf,
-                                    FOutVector    *projVerts,
+                                    vxtx3d_t      *projVerts,
                                     FUINT         nClipVerts,
                                     FBITFIELD     PolyFlags )
 {
@@ -1278,7 +1277,7 @@ EXPORT void HWRAPI( DrawPolygon ) ( FSurfaceInfo  *pSurf,
     for(i=0; (FUINT)i < nClipVerts; i++)
         projVerts[i].y = -projVerts[i].y;
 
-    grDrawVertexArrayContiguous(GR_POLYGON, nClipVerts, projVerts, sizeof(FOutVector));
+    grDrawVertexArrayContiguous(GR_POLYGON, nClipVerts, projVerts, sizeof(vxtx3d_t));
 }
 
 // ==========================================================================
@@ -1348,7 +1347,7 @@ static void FreeFogTable(void)
 // ==========================================================================
 //
 // ==========================================================================
-static Glide_SetSpecialState( hwdspecialstate_t IdState, int value )
+static Glide_SetSpecialState( hwd_specialstate_e IdState, int value )
 {
     switch (IdState)
     {
@@ -1420,11 +1419,12 @@ EXPORT void HWRAPI( SetSpecialState ) (hwdspecialstate_t IdState, int value)
 // -----------------+
 // HWRAPI DrawMD2   : Draw an MD2 model with glcommands
 // -----------------+
-EXPORT void HWRAPI( DrawMD2 ) (int *gl_cmd_buffer, md2_frame_t *frame, FTransform *pos, float scale)
+EXPORT void HWRAPI( DrawMD2 ) (int *gl_cmd_buffer, md2_frame_t *frame,
+			       FTransform_t *pos, float scale)
 {
 }
 
-EXPORT void HWRAPI( SetTransform ) (FTransform *transform_parm)
+EXPORT void HWRAPI( SetTransform ) (FTransform_t *transform_parm)
 {
     float sinx, cosx;
 

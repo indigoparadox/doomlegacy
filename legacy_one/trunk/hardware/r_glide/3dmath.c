@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -43,14 +43,14 @@
 //                                                   CLIPPING TO NEAR Z PLANE
 // ==========================================================================
 #define ZCLIP_PLANE     4.0f
-int ClipZ (FOutVector* inVerts, FOutVector* clipVerts, int numpoints)
+int ClipZ (vxtx3d_t* inVerts, vxtx3d_t* clipVerts, int numpoints)
 {
     int     nrClipVerts = 0;
     int     a;
     byte    curin,nextin;
     int     nextvert;
     float   curdot, nextdot;
-    FOutVector *pinvert, *poutvert;
+    vxtx3d_t *pinvert, *poutvert;
     float   scale;
 
     nrClipVerts = 0;
@@ -159,7 +159,7 @@ static __inline boolean ClipT (float d, float q, float *tl, float *tu)
 //             used by planes too, so make sure its large enough,
 //              see 'planeVerts'
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!dirty code!!!!!!!!!!!!!!!!!!
-static  FOutVector tempVerts[MAXCLIPVERTS*2];
+static  vxtx3d_t tempVerts[MAXCLIPVERTS*2];
 
 // Liang-Barsky three-dimensional clipping algorithm,
 //  assumes a 90degree left to right, and top to bottom fov
@@ -178,16 +178,16 @@ static  FOutVector tempVerts[MAXCLIPVERTS*2];
 // passes, or else we have a problem clipping to corners of the frustum, in
 // some cases a point is not generated.. until then..
 
-int ClipToFrustum (FOutVector *inVerts, FOutVector *outVerts, int nrInVerts)
+int ClipToFrustum (vxtx3d_t *inVerts, vxtx3d_t *outVerts, int nrInVerts)
 {
     float       tl,tu;
     float       deltax, deltay, deltaz;
 
     int         i;
     int         xClipVerts, nrClipVerts;
-    FOutVector  *pinvert;
-    FOutVector  *poutvert;
-    FOutVector  *nextvert;
+    vxtx3d_t  *pinvert;
+    vxtx3d_t  *poutvert;
+    vxtx3d_t  *nextvert;
 
 
     // first pass left/right clipping

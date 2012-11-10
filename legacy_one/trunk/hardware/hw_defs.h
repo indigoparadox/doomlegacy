@@ -83,12 +83,22 @@
 //                                                               SIMPLE TYPES
 // ==========================================================================
 
-typedef long            FINT;
+#if 1
+// 64bit safe
+typedef int32_t    FINT;  // unused
+typedef uint32_t   FUINT;
+//typedef unsigned char   FUBYTE;
+typedef uint32_t   FBITFIELD;
+//typedef float           FLOAT;
+//typedef unsigned char   FBOOLEAN;
+#else
+typedef long            FINT;  // unused
 typedef unsigned long   FUINT;
 typedef unsigned char   FUBYTE;
 typedef unsigned long   FBITFIELD;
 typedef float           FLOAT;
 typedef unsigned char   FBOOLEAN;
+#endif
 
 // ==========================================================================
 //                                                                      MATHS
@@ -96,7 +106,7 @@ typedef unsigned char   FBOOLEAN;
 
 // Constants
 #undef  PI
-#define PI         (3.1415926535897932)
+#define PI     (3.1415926535897932)
 #define DEGREE (.01745328f)     // 2*PI/360
 
 
@@ -112,24 +122,24 @@ typedef unsigned char   FBOOLEAN;
 #define HWR_PATCHES_CHROMAKEY_COLORVALUE     (0x00000000)    //RGBA format as in grSstWinOpen()
 
 // RGBA Color components with float type ranging [ 0 ... 1 ]
-struct FRGBAFloat
+typedef struct
 {
-    FLOAT   red;
-    FLOAT   green;
-    FLOAT   blue;
-    FLOAT   alpha;
-};
-typedef struct FRGBAFloat FRGBAFloat;
+    float  red;
+    float  green;
+    float  blue;
+    float  alpha;
+} RGBA_float_t;
 
-struct FColorARGB
+#if 0
+// Unused
+typedef struct
 {
-    FUBYTE  alpha;
-    FUBYTE  red;
-    FUBYTE  green;
-    FUBYTE  blue;
-};
-typedef struct FColorARGB ARGB_t;
-typedef struct FColorARGB FColorARGB;
+    byte  alpha;
+    byte  red;
+    byte  green;
+    byte  blue;
+} ARGB_t;
+#endif
 
 
 
@@ -140,42 +150,38 @@ typedef struct FColorARGB FColorARGB;
 // Simple 2D coordinate
 typedef struct 
 {
-    FLOAT x,y;
-} F2DCoord, v2d_t;
+    float x,y;
+} v2d_t;
 
 // Simple 3D vector
 typedef struct FVector
 {
-        FLOAT x,y,z;
-} FVector;
+    float x,y,z;
+} v3d_t;
 
-// 3D model vector (coords + texture coords)
+// [WDJ] joint 3D model vector (vertex coords + texture coords)
+// used for wallVerts and HWR API
+// No more extra copying
 typedef struct 
 {
-    //FVector     Point;
-    FLOAT       x,y,z;
-    FLOAT       s,t,w;            // texture coordinates
-} v3d_t, wallVert3D;
+    float  x,y,z;
+    float  sow,tow;  // texture coordinates (s over w) (t over w)
+//    float  w;      // only set to 1.0 (unused)
+#ifdef _GLIDE_ARGB_
+    FUINT  argb;     // flat-shaded color (used only in Glide, maybe)
+#endif
+} vxtx3d_t;
 
 //Hurdler: Transform (coords + angles)
 //BP: transform order : scale(rotation_x(rotation_y(translation(v))))
 typedef struct 
 {
-    FLOAT       x,y,z;           // position
-    FLOAT       anglex,angley;   // aimingangle / viewangle 
-    FLOAT       scalex,scaley,scalez;
-    FLOAT       fovxangle, fovyangle;
-    int	        splitscreen;
-} FTransform;
-
-// Transformed vector, as passed to HWR API
-typedef struct
-{
-    FLOAT       x,y,z;
-    FUINT       argb;           // flat-shaded color
-    FLOAT       sow;            // s texture ordinate (s over w)
-    FLOAT       tow;            // t texture ordinate (t over w)
-} FOutVector;
+    float  x,y,z;           // position
+    float  anglex,angley;   // aimingangle / viewangle 
+    float  scalex,scaley,scalez;
+    float  fovxangle, fovyangle;
+    int	   splitscreen;
+} FTransform_t;
 
 
 // ==========================================================================
@@ -184,21 +190,21 @@ typedef struct
 
 // Flags describing how to render a polygon
 // You pass a combination of these flags to DrawPolygon()
-enum EPolyFlags
+typedef enum
 {
-        // the first 5 are mutually exclusive
-
+    // the first 5 are mutually exclusive Blending
     PF_Masked           = 0x00000001,   // Poly is alpha scaled and 0 alpha pels are discarded (holes in texture)
     PF_Translucent      = 0x00000002,   // Poly is transparent, alpha = level of transparency
     PF_Additive         = 0x00000024,   // Poly is added to the frame buffer
     PF_Environment      = 0x00000008,   // Poly should be drawn environment mapped.
                                         // Hurdler: used for text drawing
     PF_Substractive     = 0x00000010,   // for splat
+     
+    // additional effects
     PF_NoAlphaTest      = 0x00000020,   // hiden param
     PF_Blending         = (PF_Environment|PF_Additive|PF_Translucent|PF_Masked|PF_Substractive)&~PF_NoAlphaTest,
 
-        // other flag bits
-    
+    // other flag bits
     PF_Occlude          = 0x00000100,   // Update the depth buffer
     PF_NoDepthTest      = 0x00000200,   // Disable the depth test mode
     PF_Invisible        = 0x00000400,   // Disable write to color buffer
@@ -211,16 +217,16 @@ enum EPolyFlags
     PF_Clip             = 0x40000000,   // clip to frustum and nearz plane (glide only, automatic in opengl)
     PF_NoZClip          = 0x20000000,   // in conjonction with PF_Clip
     PF_Debug            = 0x80000000    // print debug message in driver :)
-};
+}  PolyFlags_e;
 
 
-enum ESurfFlags
+typedef enum
 {
     SF_DYNLIGHT         = 0x00000001,
 
-};
+}  SurfFlags_e;
 
-enum ETextureFlags
+typedef enum
 {
     TF_WRAPX            = 0x00000001,            // wrap around X
     TF_WRAPY            = 0x00000002,            // wrap around Y
@@ -228,35 +234,36 @@ enum ETextureFlags
     TF_CHROMAKEYED      = 0x00000010,
     TF_RAWASPIC         = 0x00000020,            // the lump is a raw heretic pic
     TF_TRANSPARENT      = 0x00000040,            // texture with some alpha=0
-};
+}  TextureFlags_e;
 
 #ifdef TODO
-struct FTextureInfo
+struct FTextureInfo_s
 {
     FUINT       Width;              // Pixels
     FUINT       Height;             // Pixels
-    FUBYTE     *TextureData;        // Image data
+    byte        *TextureData;       // Image data
     FUINT       Format;             // FORMAT_RGB, ALPHA ...
     FBITFIELD   Flags;              // Flags to tell driver about texture (see ETextureFlags)
     void        DriverExtra;        // (OpenGL texture object nr, ... )
                                     // chromakey enabled,...
     
-    struct FTextureInfo *Next;      // Manage list of downloaded textures.
+    struct FTextureInfo_s * next;   // Manage list of downloaded textures.
 };
+typedef struct FTextureInfo_s  FTextureInfo_t;
 #else
-typedef struct Mipmap_s FTextureInfo;
+typedef struct Mipmap_s FTextureInfo_t;
 #endif
 
 // Description of a renderable surface
-struct FSurfaceInfo
+typedef struct
 {
-     FUINT    PolyFlags;          // Surface flags -- UNUSED YET --
-     RGBA_t   FlatColor;          // Flat-shaded color used with PF_Modulated mode
-};
-typedef struct FSurfaceInfo FSurfaceInfo;
+     FUINT    polyflags;      // PF_ flags (used for blend)
+     FUINT    texflags;       // TF_ flags (used for transparent)
+     RGBA_t   FlatColor;      // Flat-shaded color used with PF_Modulated mode
+} FSurfaceInfo_t;
 
 //Hurdler: added for backward compatibility
-enum hwdsetspecialstate {
+typedef enum {
     HWD_SET_FOG_TABLE = 1,
     HWD_SET_FOG_MODE,
     HWD_SET_FOG_COLOR,
@@ -269,16 +276,15 @@ enum hwdsetspecialstate {
     // [WDJ] Stifle compiler complaints
     // Unknown where this value is ever set
     HWD_MIRROR_77 = 77  // see SetSpecialState where it does ClearBuffer
-};
-typedef enum hwdsetspecialstate hwdspecialstate_t;
+} hwd_specialstate_e;
 
-enum hwdfiltermode {
+typedef enum {
     HWD_SET_TEXTUREFILTER_POINTSAMPLED, 
     HWD_SET_TEXTUREFILTER_BILINEAR,
     HWD_SET_TEXTUREFILTER_TRILINEAR,
     HWD_SET_TEXTUREFILTER_MIXED1,
     HWD_SET_TEXTUREFILTER_MIXED2,
-};
+} hwd_filtermode_e;
 
 
 #endif //_HWR_DEFS_

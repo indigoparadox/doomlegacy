@@ -85,23 +85,23 @@
 #define DL_MAX_LIGHT    256  // maximum number of light (extra light are ignored)
 
 void HWR_InitLight( void );
-void HWR_DL_AddLight(gr_vissprite_t *spr, MipPatch_t *patch);
-void HWR_DynamicShadowing(FOutVector *clVerts, int nrClipVerts, player_t *p);
-void HWR_PlaneLighting(FOutVector *clVerts, int nrClipVerts);
-void HWR_WallLighting(FOutVector *wlVerts);
+void HWR_DL_AddLight(gr_vissprite_t *spr, MipPatch_t *mpatch);
+void HWR_DynamicShadowing(vxtx3d_t *clVerts, int nrClipVerts, player_t *p);
+void HWR_PlaneLighting(vxtx3d_t *clVerts, int nrClipVerts);
+void HWR_WallLighting(vxtx3d_t *wlVerts);
 void HWR_ResetLights(void);
 void HWR_SetLights(int viewnumber);
 
 #ifdef NEWCORONAS
 void HWR_DrawCoronas( void );
 #else
-void HWR_DoCoronasLighting(FOutVector *outVerts, gr_vissprite_t *spr);
+void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr);
 #endif
 
 typedef struct {
     int         nb;
     light_t    *p_lspr[DL_MAX_LIGHT];
-    FVector    position[DL_MAX_LIGHT]; // actually maximum DL_MAX_LIGHT lights
+    v3d_t      position[DL_MAX_LIGHT]; // actually maximum DL_MAX_LIGHT lights
     mobj_t     *mo[DL_MAX_LIGHT];
 } dynlights_t;
 

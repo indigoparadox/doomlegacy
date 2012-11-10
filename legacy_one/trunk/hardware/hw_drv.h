@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2010 by DooM Legacy Team.
+// Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -143,30 +143,30 @@ EXPORT void HWRAPI( SetPalette ) (RGBA_t* pal, RGBA_t *gamma);
 
 EXPORT void HWRAPI( FinishUpdate ) ( int waitvbl ) ;
 
-EXPORT void HWRAPI( Draw2DLine ) ( F2DCoord * v1, F2DCoord * v2, RGBA_t Color );
-EXPORT void HWRAPI( DrawPolygon ) ( FSurfaceInfo  *pSurf,
+EXPORT void HWRAPI( Draw2DLine ) ( v2d_t * v1, v2d_t * v2, RGBA_t Color );
+EXPORT void HWRAPI( DrawPolygon ) ( FSurfaceInfo_t  *pSurf,
                                     //FTextureInfo  *pTexInfo,
-                                    FOutVector    *pOutVerts,
-                                    FUINT         iNumPts,
+                                    vxtx3d_t * pOutVerts, FUINT iNumPts,
                                     FBITFIELD     PolyFlags );
 
 EXPORT void HWRAPI( SetBlend ) ( FBITFIELD PolyFlags );
 
-EXPORT void HWRAPI( ClearBuffer ) ( FBOOLEAN ColorMask,
-                                    FBOOLEAN DepthMask,
-                                    FRGBAFloat *ClearColor );
-EXPORT void HWRAPI( SetTexture ) ( FTextureInfo *TexInfo );
+EXPORT void HWRAPI( ClearBuffer ) ( boolean ColorMask,
+                                    boolean DepthMask,
+                                    RGBA_float_t *ClearColor );
+EXPORT void HWRAPI( SetTexture ) ( FTextureInfo_t *TexInfo );
 EXPORT void HWRAPI( ReadRect ) (int x, int y, int width, int height,
                                 int dst_stride, unsigned short * dst_data) ;
 EXPORT void HWRAPI( GClipRect ) (int minx, int miny, int maxx, int maxy, float nearclip) ;
 EXPORT void HWRAPI( ClearMipMapCache ) (void) ;
 
 //Hurdler: added for backward compatibility
-EXPORT void HWRAPI( SetSpecialState ) (hwdspecialstate_t IdState, int Value) ;
+EXPORT void HWRAPI( SetSpecialState ) (hwd_specialstate_e IdState, int Value) ;
 
 //Hurdler: added for new development
-EXPORT void HWRAPI( DrawMD2 ) (int *gl_cmd_buffer, md2_frame_t *frame, FTransform *pos, float scale);
-EXPORT void HWRAPI( SetTransform ) (FTransform *transform);
+EXPORT void HWRAPI( DrawMD2 ) (int *gl_cmd_buffer, md2_frame_t *frame,
+			       FTransform_t *pos, float scale);
+EXPORT void HWRAPI( SetTransform ) (FTransform_t *transform);
 EXPORT int  HWRAPI( GetTextureUsed ) (void);
 EXPORT int  HWRAPI( GetRenderVersion ) (void);
 EXPORT char *HWRAPI( GetRenderer ) (void);
