@@ -1730,7 +1730,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
 #ifdef R_FAKEFLOORS
     if (gr_frontsector && gr_backsector && gr_frontsector->tag != gr_backsector->tag && (gr_backsector->ffloors || gr_frontsector->ffloors))
     {
-        ffloor_t *rover;
+        ffloor_t * fff, * bff;
         fixed_t highcut, lowcut;
 
         highcut = gr_frontsector->ceilingheight < gr_backsector->ceilingheight ? gr_frontsector->ceilingheight : gr_backsector->ceilingheight;
@@ -1738,15 +1738,16 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
 
         if (gr_backsector->ffloors)
         {
-            for (rover = gr_backsector->ffloors; rover; rover = rover->next)
+            for (bff = gr_backsector->ffloors; bff; bff = bff->next)
             {
-                if (!(rover->flags & FF_EXISTS) || !(rover->flags & FF_RENDERSIDES) || (rover->flags & FF_INVERTSIDES))
-                    continue;
-                if (*rover->topheight < lowcut || *rover->bottomheight > highcut)
+                if (!(bff->flags & FF_OUTER_SIDES) || !(bff->flags & FF_EXISTS))
+                     continue;
+	        // outer sides backsector
+                if (*bff->topheight < lowcut || *bff->bottomheight > highcut)
                     continue;
 
-                h = *rover->topheight;
-                l = *rover->bottomheight;
+                h = *bff->topheight;
+                l = *bff->bottomheight;
                 if (h > highcut)
                     h = highcut;
                 if (l < lowcut)
@@ -1758,7 +1759,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                 wallVerts[0].y = wallVerts[1].y = FIXED_TO_FLOAT( l );
 
 	        // protect against missing middle texture
-	        midtexnum = texturetranslation[sides[rover->master->sidenum[0]].midtexture];
+	        midtexnum = texturetranslation[sides[bff->master->sidenum[0]].midtexture];
 	        if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
 
                 if (drawtextured)
@@ -1766,20 +1767,20 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
 //		    if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
                     grTex = HWR_GetTexture( midtexnum );
 
-                    wallVerts[3].t = wallVerts[2].t = (*rover->topheight - h) * grTex->scaleY;
-                    wallVerts[0].t = wallVerts[1].t = (h - l + (*rover->topheight - h)) * grTex->scaleY;
+                    wallVerts[3].t = wallVerts[2].t = (*bff->topheight - h) * grTex->scaleY;
+                    wallVerts[0].t = wallVerts[1].t = (h - l + (*bff->topheight - h)) * grTex->scaleY;
                     wallVerts[0].s = wallVerts[3].s = cliplow * grTex->scaleX;
                     wallVerts[2].s = wallVerts[1].s = cliphigh * grTex->scaleX;
                 }
-                if (rover->master->special != 302) // NOT Legacy 3D fog in tagged sector
+                if (bff->master->special != 302) // NOT Legacy 3D fog in tagged sector
                 {
                     int blendmode = PF_Masked;
 
-                    if (rover->flags & FF_TRANSLUCENT)
+                    if (bff->flags & FF_TRANSLUCENT)
                     {
                         blendmode = PF_Translucent;
                         if (cv_grtranswall.value)
-                            Surf.FlatColor.s.alpha = rover->alpha;
+                            Surf.FlatColor.s.alpha = bff->alpha;
                     }
                     else if (grTex->mipmap.flags & TF_TRANSPARENT)
                     {
@@ -1791,7 +1792,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
 //		        if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
                         HWR_SplitWall(gr_frontsector, wallVerts,
 				      midtexnum, &Surf,
-				      rover->flags & FF_EXTRA ? FF_CUTEXTRA : FF_CUTSOLIDS);
+				      bff->flags & FF_EXTRA ? FF_CUTEXTRA : FF_CUTSOLIDS);
 		    }
                     else
                     {
@@ -1808,15 +1809,16 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
         }
         else if (gr_frontsector->ffloors)
         {
-            for (rover = gr_frontsector->ffloors; rover; rover = rover->next)
+            for (fff = gr_frontsector->ffloors; fff; fff = fff->next)
             {
-                if (!(rover->flags & FF_EXISTS) || !(rover->flags & FF_RENDERSIDES) || !(rover->flags & FF_ALLSIDES))
-                    continue;
-                if (*rover->topheight < lowcut || *rover->bottomheight > highcut)
+                if (!(fff->flags & FF_INNER_SIDES) || !(fff->flags & FF_EXISTS))
+                     continue;
+	        // inner sides of frontsector
+                if (*fff->topheight < lowcut || *fff->bottomheight > highcut)
                     continue;
 
-                h = *rover->topheight;
-                l = *rover->bottomheight;
+                h = *fff->topheight;
+                l = *fff->bottomheight;
                 if (h > highcut)
                     h = highcut;
                 if (l < lowcut)
@@ -1828,7 +1830,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                 wallVerts[0].y = wallVerts[1].y = FIXED_TO_FLOAT( l );
 
 	        // protect against missing middle texture
-	        midtexnum = texturetranslation[sides[rover->master->sidenum[0]].midtexture];
+	        midtexnum = texturetranslation[sides[fff->master->sidenum[0]].midtexture];
 	        if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
 
                 if (drawtextured)
@@ -1836,20 +1838,20 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
 //		    if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
                     grTex = HWR_GetTexture( midtexnum );
 
-                    wallVerts[3].t = wallVerts[2].t = (*rover->topheight - h) * grTex->scaleY;
-                    wallVerts[0].t = wallVerts[1].t = (h - l + (*rover->topheight - h)) * grTex->scaleY;
+                    wallVerts[3].t = wallVerts[2].t = (*fff->topheight - h) * grTex->scaleY;
+                    wallVerts[0].t = wallVerts[1].t = (h - l + (*fff->topheight - h)) * grTex->scaleY;
                     wallVerts[0].s = wallVerts[3].s = cliplow * grTex->scaleX;
                     wallVerts[2].s = wallVerts[1].s = cliphigh * grTex->scaleX;
                 }
-                if (rover->master->special != 302) // NOT Legacy 3D fog in tagged sector
+                if (fff->master->special != 302) // NOT Legacy 3D fog in tagged sector
                 {
                     int blendmode = PF_Masked;
 
-                    if (rover->flags & FF_TRANSLUCENT)
+                    if (fff->flags & FF_TRANSLUCENT)
                     {
                         blendmode = PF_Translucent;
                         if (cv_grtranswall.value)
-                            Surf.FlatColor.s.alpha = rover->alpha;
+                            Surf.FlatColor.s.alpha = fff->alpha;
                     }
                     else if (grTex->mipmap.flags & TF_TRANSPARENT)
                     {
@@ -1861,7 +1863,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
 //		        if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
                         HWR_SplitWall(gr_backsector, wallVerts,
 				      midtexnum, &Surf,
-				      rover->flags & FF_EXTRA ? FF_CUTEXTRA : FF_CUTSOLIDS);
+				      fff->flags & FF_EXTRA ? FF_CUTEXTRA : FF_CUTSOLIDS);
 		    }
                     else
                     {
@@ -2649,57 +2651,61 @@ static void HWR_Subsector(int num)
     if (gr_frontsector->ffloors)
     {
         // TODO:fix light, xoffs, yoffs, extracolormap ?
-        ffloor_t *rover;
+        ffloor_t *fff;
 
         R_Prep3DFloors(gr_frontsector);
-        for (rover = gr_frontsector->ffloors; rover; rover = rover->next)
+        for (fff = gr_frontsector->ffloors; fff; fff = fff->next)
         {
-
-            if (!(rover->flags & FF_EXISTS) || !(rover->flags & FF_RENDERPLANES))
+            if (!(fff->flags & (FF_OUTER_PLANES|FF_INNER_PLANES))
+		|| !(fff->flags & FF_EXISTS))
                 continue;
             if (sub->validcount == validcount)
                 continue;
 
-            if (*rover->bottomheight <= gr_frontsector->ceilingheight
-		&& *rover->bottomheight >= gr_frontsector->floorheight
-//                && ((dup_viewz < *rover->bottomheight && !(rover->flags & FF_INVERTPLANES))
-                && ((dup_viewz <= *rover->bottomheight && !(rover->flags & FF_INVERTPLANES))
-		    || (dup_viewz > *rover->bottomheight && (rover->flags & FF_BOTHPLANES))))
+            if (*fff->bottomheight <= gr_frontsector->ceilingheight
+		&& *fff->bottomheight >= gr_frontsector->floorheight
+//                && ((dup_viewz < *fff->bottomheight && (fff->flags & FF_OUTER_PLANES))
+                && ((dup_viewz <= *fff->bottomheight && (fff->flags & FF_OUTER_PLANES))
+		    || (dup_viewz > *fff->bottomheight && (fff->flags & FF_INNER_PLANES))))
             {
-                if (rover->flags & (FF_TRANSLUCENT | FF_FOG))   // SoM: Flags are more efficient
+                if (fff->flags & (FF_TRANSLUCENT | FF_FOG))   // SoM: Flags are more efficient
                 {
-                    light = R_GetPlaneLight_viewz(gr_frontsector, *rover->bottomheight);
-                    HWR_Add3DWater(levelflats[*rover->bottompic].lumpnum, &extrasubsectors[num],
-				   *rover->bottomheight, *gr_frontsector->lightlist[light].lightlevel, rover->alpha);
-                }
+                    light = R_GetPlaneLight_viewz(gr_frontsector, *fff->bottomheight);
+                    HWR_Add3DWater(levelflats[*fff->bottompic].lumpnum, &extrasubsectors[num],
+				   *fff->bottomheight, *gr_frontsector->lightlist[light].lightlevel,
+				   fff->alpha);
+                 }
                 else
                 {
-                    HWR_GetFlat(levelflats[*rover->bottompic].lumpnum);
-                    light = R_GetPlaneLight_viewz(gr_frontsector, *rover->bottomheight);
-                    HWR_RenderPlane(&extrasubsectors[num], *rover->bottomheight, PF_Occlude,
-				    NULL, *gr_frontsector->lightlist[light].lightlevel,
-				    levelflats[*rover->bottompic].lumpnum);
+                    HWR_GetFlat(levelflats[*fff->bottompic].lumpnum);
+                    light = R_GetPlaneLight_viewz(gr_frontsector, *fff->bottomheight);
+                    HWR_RenderPlane(&extrasubsectors[num], *fff->bottomheight,
+				    PF_Occlude, NULL,
+				    *gr_frontsector->lightlist[light].lightlevel,
+				    levelflats[*fff->bottompic].lumpnum);
                 }
             }
-            if (*rover->topheight >= gr_frontsector->floorheight
-		&& *rover->topheight <= gr_frontsector->ceilingheight
-//                && ((dup_viewz > *rover->topheight && !(rover->flags & FF_INVERTPLANES))
-                && ((dup_viewz >= *rover->topheight && !(rover->flags & FF_INVERTPLANES))
-		    || (dup_viewz < *rover->topheight && (rover->flags & FF_BOTHPLANES))))
+            if (*fff->topheight >= gr_frontsector->floorheight
+		&& *fff->topheight <= gr_frontsector->ceilingheight
+//                && ((dup_viewz > *fff->topheight && (fff->flags & FF_OUTER_PLANES))
+                && ((dup_viewz >= *fff->topheight && (fff->flags & FF_OUTER_PLANES))
+		    || (dup_viewz < *fff->topheight && (fff->flags & FF_INNER_PLANES))))
             {
-                if (rover->flags & (FF_TRANSLUCENT | FF_FOG))
+                if (fff->flags & (FF_TRANSLUCENT | FF_FOG))
                 {
-                    light = R_GetPlaneLight_viewz(gr_frontsector, *rover->topheight);
-                    HWR_Add3DWater(levelflats[*rover->toppic].lumpnum, &extrasubsectors[num],
-				   *rover->topheight, *gr_frontsector->lightlist[light].lightlevel, rover->alpha);
+                    light = R_GetPlaneLight_viewz(gr_frontsector, *fff->topheight);
+                    HWR_Add3DWater(levelflats[*fff->toppic].lumpnum, &extrasubsectors[num],
+				   *fff->topheight, *gr_frontsector->lightlist[light].lightlevel,
+				   fff->alpha);
                 }
                 else
                 {
-                    HWR_GetFlat(levelflats[*rover->toppic].lumpnum);
-                    light = R_GetPlaneLight_viewz(gr_frontsector, *rover->topheight);
-                    HWR_RenderPlane(&extrasubsectors[num], *rover->topheight, PF_Occlude,
-				    NULL, *gr_frontsector->lightlist[light].lightlevel,
-				    levelflats[*rover->toppic].lumpnum);
+                    HWR_GetFlat(levelflats[*fff->toppic].lumpnum);
+                    light = R_GetPlaneLight_viewz(gr_frontsector, *fff->topheight);
+                    HWR_RenderPlane(&extrasubsectors[num], *fff->topheight,
+				    PF_Occlude, NULL,
+				    *gr_frontsector->lightlist[light].lightlevel,
+				    levelflats[*fff->toppic].lumpnum);
                 }
             }
 
