@@ -2823,3 +2823,10 @@ patchfile = w86_8_hw_fx1.patch
 - committed revision 975   by wesley johnson
 Fix hardware draw of fx1 translucent.
 Fixes display of linedef 288 in opengl.
+
+*** w86_hw_view_colormap
+patchfile = w86_9_hw_view_colormap.patch
+- committed revision 976   by wesley johnson
+Fix the hardware draw of Boom and view_colormap.
+Now see global colormap change with Boom deep water and colormap fog
+in opengl mode.

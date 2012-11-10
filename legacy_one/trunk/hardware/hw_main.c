@@ -751,6 +751,7 @@ void HWR_RenderPlane(extrasubsector_t * xsub, fixed_t fixedheight,
     double flatsize;
     int flatflag;
     int size;
+    int lightnum;  // 0..255
 
     FSurfaceInfo_t Surf;
 
@@ -842,28 +843,35 @@ void HWR_RenderPlane(extrasubsector_t * xsub, fixed_t fixedheight,
     //  use different light tables
     //  for horizontal / vertical / diagonal
     //  note: try to get the same visual feel as the original
-    Surf.FlatColor.s.red = Surf.FlatColor.s.green = Surf.FlatColor.s.blue =
-       LightLevelToLum(lightlevel);        // SoM: Don't take from the frontsector
+    lightnum = LightLevelToLum(lightlevel);        // SoM: Don't take from the frontsector
+    Surf.FlatColor.s.red = Surf.FlatColor.s.green = Surf.FlatColor.s.blue = lightnum;
 
     //Hurdler: colormap test
-    if (gr_frontsector && !fixedcolormap)
+    if ( !fixedcolormap )
     {
-        sector_t *sector = gr_frontsector;
-
-        if (gr_frontsector->ffloors)
+        if ( view_extracolormap )
         {
-            ffloor_t *caster;
-
-            caster = gr_frontsector->lightlist[R_GetPlaneLight(gr_frontsector, fixedheight)].caster;
-            sector = caster ? &sectors[caster->model_secnum] : gr_frontsector;
-        }
-        if (sector && sector->extra_colormap && planecolormap == NULL)
-	    planecolormap = sector->extra_colormap;
-        if (planecolormap || view_colormap)
-        {
-	    Extracolormap_to_Surf( /*IN*/ planecolormap, LightLevelToLum(lightlevel),
+	    Extracolormap_to_Surf( /*IN*/ view_extracolormap, lightnum,
 				   /*OUT*/ & Surf );
-        }
+	}
+        else if ( gr_frontsector )
+        {
+	    sector_t *sector = gr_frontsector;
+
+	    if (gr_frontsector->ffloors)
+	    {
+	        ffloor_t *caster = gr_frontsector->
+		 lightlist[R_GetPlaneLight(gr_frontsector, fixedheight)].caster;
+	        sector = caster ? &sectors[caster->model_secnum] : gr_frontsector;
+	    }
+	    if (sector && sector->extra_colormap && planecolormap == NULL)
+	        planecolormap = sector->extra_colormap;
+	    if (planecolormap)
+	    {
+	        Extracolormap_to_Surf( /*IN*/ planecolormap, lightnum,
+				       /*OUT*/ & Surf );
+	    }
+	}
     }
 
     if ((PolyFlags & PF_Translucent) && !fixedcolormap)
@@ -1254,7 +1262,7 @@ void HWR_SplitWall(sector_t * sector, vxtx3d_t * vxtx, int texnum,
             Surfp->FlatColor.s.red = Surfp->FlatColor.s.green = Surfp->FlatColor.s.blue = lightnum;
 
             //Hurdler: colormap test
-            if (sector->extra_colormap || view_colormap)
+            if (sector->extra_colormap || view_extracolormap)
             {
 	        Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, lightnum,
 				       /*OUT*/ Surfp );
@@ -1293,7 +1301,7 @@ void HWR_SplitWall(sector_t * sector, vxtx3d_t * vxtx, int texnum,
         // store Surface->FlatColor to modulate wall texture
         Surfp->FlatColor.s.red = Surfp->FlatColor.s.green = Surfp->FlatColor.s.blue = lightnum;
 
-        if (sector->extra_colormap || view_colormap)
+        if (sector->extra_colormap || view_extracolormap)
         {
 	    Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, lightnum,
 				   /*OUT*/ Surfp );
@@ -1441,7 +1449,12 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
         Surf.FlatColor.s.red = Surf.FlatColor.s.green = Surf.FlatColor.s.blue = lightnum;
 
         //Hurdler: it seems to be better here :)
-        if (gr_frontsector)
+        if ( view_extracolormap )
+        {
+	    Extracolormap_to_Surf( /*IN*/ view_extracolormap, lightnum,
+				   /*OUT*/ & Surf );
+	}
+        else if (gr_frontsector)
         {
             sector_t *sector = gr_frontsector;
 
@@ -1453,12 +1466,13 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                 caster = sector->lightlist[R_GetPlaneLight(sector, sector->floorheight)].caster;
                 sector = caster ? &sectors[caster->model_secnum] : sector;
             }
-            if (sector->extra_colormap || view_colormap)
+            if (sector->extra_colormap)
             {
 	        Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, lightnum,
 				       /*OUT*/ & Surf );
             }
         }
+
     }
 
     if (gr_backsector)
@@ -3071,7 +3085,7 @@ static void HWR_DrawSprite(gr_vissprite_t * spr)
             caster = sector->lightlist[R_GetPlaneLight(sector, spr->mobj->z)].caster;
 	    sector = caster ? &sectors[caster->model_secnum] : sector;
         }
-        if (sector->extra_colormap || view_colormap)
+        if (sector->extra_colormap || view_extracolormap)
         {
 	    Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, spr->sectorlight,
 				       /*OUT*/ & Surf );
@@ -3587,7 +3601,7 @@ void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
                 caster = sector->lightlist[R_GetPlaneLight(sector, dup_viewz)].caster;
                 sector = caster ? &sectors[caster->model_secnum] : sector;
             }
-            if (sector->extra_colormap || view_colormap)
+            if (sector->extra_colormap || view_extracolormap)
             {
 	        Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, lightlevel,
 				       /*OUT*/ & Surf );
