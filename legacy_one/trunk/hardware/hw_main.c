@@ -950,7 +950,7 @@ void HWR_DrawSegsSplats(FSurfaceInfo * pSurfin)
     wallVert3D wallVerts[4];
     wallVert3D *pwallVerts;
     wallsplat_t *splat;
-    GlidePatch_t *gpatch;
+    MipPatch_t *gpatch;
     int i;
     FSurfaceInfo pSurf2;
     // seg bbox
@@ -1231,7 +1231,7 @@ static void HWR_SplitWall(sector_t * sector, wallVert3D * wallVerts, int texnum,
        lightlist. This may also include leaving out parts
        of the wall that can't be seen
      */
-    GlideTexture_t *glTex;
+    MipTexture_t *glTex;
     float realtop, realbot, top, bot;
     float pegt, pegb, pegmul;
     float height, bheight = 0;
@@ -1301,7 +1301,7 @@ static void HWR_SplitWall(sector_t * sector, wallVert3D * wallVerts, int texnum,
         wallVerts[0].y = wallVerts[1].y = bot;
 
         glTex = HWR_GetTexture(texnum);
-        if (glTex->mipmap.flags & TF_TRANSPARENT)
+        if (glTex->mipmap.tfflags & TF_TRANSPARENT)
             HWR_AddTransparentWall(wallVerts, Surfp, texnum, PF_Environment);
         else
             HWR_ProjectWall(wallVerts, Surfp, PF_Masked);
@@ -1341,7 +1341,7 @@ static void HWR_SplitWall(sector_t * sector, wallVert3D * wallVerts, int texnum,
     wallVerts[0].y = wallVerts[1].y = bot;
 
     glTex = HWR_GetTexture(texnum);
-    if (glTex->mipmap.flags & TF_TRANSPARENT)
+    if (glTex->mipmap.tfflags & TF_TRANSPARENT)
         HWR_AddTransparentWall(wallVerts, Surfp, texnum, PF_Environment);
     else
         HWR_ProjectWall(wallVerts, Surfp, PF_Masked);
@@ -1364,7 +1364,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
     fixed_t worldbacktop = 0;	// back sector, only used on two sided lines
     fixed_t worldbackbottom = 0;
 
-    GlideTexture_t *grTex;
+    MipTexture_t *grTex;
     float cliplow, cliphigh;
     int midtexnum;
     fixed_t h, l;               // 3D sides and 2s middle textures
@@ -1542,7 +1542,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
 
             if (gr_frontsector->numlights)
                 HWR_SplitWall(gr_frontsector, wallVerts, toptexnum, &Surf, FF_CUTSOLIDS);
-            else if (grTex->mipmap.flags & TF_TRANSPARENT)
+            else if (grTex->mipmap.tfflags & TF_TRANSPARENT)
                 HWR_AddTransparentWall(wallVerts, &Surf, toptexnum, PF_Environment);
             else
                 HWR_ProjectWall(wallVerts, &Surf, PF_Masked);
@@ -1579,7 +1579,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
 
             if (gr_frontsector->numlights)
                 HWR_SplitWall(gr_frontsector, wallVerts, bottomtexnum, &Surf, FF_CUTSOLIDS);
-            else if (grTex->mipmap.flags & TF_TRANSPARENT)
+            else if (grTex->mipmap.tfflags & TF_TRANSPARENT)
                 HWR_AddTransparentWall(wallVerts, &Surf, bottomtexnum, PF_Environment);
             else
                 HWR_ProjectWall(wallVerts, &Surf, PF_Masked);
@@ -1677,7 +1677,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                     blendmode = PF_Masked;
                     break;
             }
-            if (grTex->mipmap.flags & TF_TRANSPARENT)
+            if (grTex->mipmap.tfflags & TF_TRANSPARENT)
                 blendmode = PF_Environment;
 
             if (blendmode != PF_Masked)
@@ -1718,7 +1718,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                 HWR_SplitWall(gr_frontsector, wallVerts, midtexnum, &Surf, FF_CUTSOLIDS);
             else
             {
-                if (grTex->mipmap.flags & TF_TRANSPARENT)
+                if (grTex->mipmap.tfflags & TF_TRANSPARENT)
                     HWR_AddTransparentWall(wallVerts, &Surf, midtexnum, PF_Environment);
                 else
                     HWR_ProjectWall(wallVerts, &Surf, PF_Masked);
@@ -1782,7 +1782,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                         if (cv_grtranswall.value)
                             Surf.FlatColor.s.alpha = bff->alpha;
                     }
-                    else if (grTex->mipmap.flags & TF_TRANSPARENT)
+                    else if (grTex->mipmap.tfflags & TF_TRANSPARENT)
                     {
                         blendmode = PF_Environment;
                     }
@@ -1853,7 +1853,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                         if (cv_grtranswall.value)
                             Surf.FlatColor.s.alpha = fff->alpha;
                     }
-                    else if (grTex->mipmap.flags & TF_TRANSPARENT)
+                    else if (grTex->mipmap.tfflags & TF_TRANSPARENT)
                     {
                         blendmode = PF_Environment;
                     }
@@ -2993,7 +2993,7 @@ static void HWR_DrawSprite(gr_vissprite_t * spr)
     FOutVector *wv;
 #endif   
     FOutVector wallVerts[4];
-    GlidePatch_t *gpatch;       //sprite patch converted to hardware
+    MipPatch_t *gpatch;       //sprite patch converted to hardware
     FSurfaceInfo Surf;
 
     // cache sprite graphics
@@ -3503,7 +3503,7 @@ void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
     float x1;
     float x2;
 
-    GlidePatch_t *gpatch;       //sprite patch converted to hardware
+    MipPatch_t *gpatch;       //sprite patch converted to hardware
 
     FSurfaceInfo Surf;
 
@@ -4109,7 +4109,7 @@ void HWR_Startup(void)
 
     CONS_Printf("HWR_Startup()\n");
 
-    // setup GlidePatch_t scaling
+    // setup MipPatch_t scaling
     gr_patch_scalex = 1.0 / (float) vid.width;
     gr_patch_scaley = 1.0 / (float) vid.height;
 

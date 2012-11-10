@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -67,36 +67,39 @@
 
 // grInfo.data holds the address of the graphics data cached in heap memory
 //                NULL if the texture is not in Doom heap cache.
-struct GlideMipmap_s {
+struct Mipmap_s {
     GrTexInfo       grInfo;         //for TexDownloadMipMap
-    FxU32           flags;
-    unsigned short  height;
-    unsigned short  width;
-    unsigned int    downloaded;     // the dll driver have it in there cache ?
+    uint32_t        tfflags;	 // TF_ texture flags
+    uint16_t        height;
+    uint16_t        width;
+    unsigned int    downloaded;  // dll driver has it in cache
+   		                 // opengl : texture num, must match GLuint
+				 //   typedef unsigned int GLuint
 
-    struct GlideMipmap_s    *nextcolormap;    
-    byte                    *colormap;
+    // multiple texture renderings, by colormap and TF_Opaquetrans
+    struct Mipmap_s   *nextcolormap;  // next for this texture
+    byte              *colormap;
 
     // opengl/glide
-    struct GlideMipmap_s* nextmipmap;// glide  : the FIFO list of texture in the memory
+    struct Mipmap_s*  nextmipmap;// glide  : the FIFO list of texture in the memory
                                      //          _DO NOT TUCH IT_
-                                     // opengl : liste of all texture in opengl driver
+                                 // opengl : list of all texture in opengl driver
     // glide only
     FxU32           cachepos;        //offset in hardware cache
     FxU32           mipmapSize;      //size of mipmap
 };
-typedef struct GlideMipmap_s GlideMipmap_t;
+typedef struct Mipmap_s Mipmap_t;
 
 
 //
 // Doom texture info, as cached for hardware rendering
 //
-struct GlideTexture_s {
-        GlideMipmap_t mipmap;
-        float       scaleX;             //used for scaling textures on walls
-        float       scaleY;
+struct MipTexture_s {
+    Mipmap_t  mipmap;
+    float     scaleX;             //used for scaling textures on walls
+    float     scaleY;
 };
-typedef struct GlideTexture_s GlideTexture_t;
+typedef struct MipTexture_s MipTexture_t;
 
 
 // A cached patch as converted to hardware format, holding the original patch_t
@@ -104,34 +107,19 @@ typedef struct GlideTexture_s GlideTexture_t;
 // This is returned by W_CachePatchNum()/W_CachePatchName(), when rendermode
 // is 'render_glide'. Else it returns the normal patch_t data.
 
-#if 1
 // [WDJ] This is used for reading patches from wad.
-struct GlidePatch_s {
-        // the 4 first fields come right away from the original patch_t
-        uint16_t            width;          // bounding box size
-        uint16_t            height;
-        int16_t             leftoffset;     // pixels to the left of origin
-        int16_t             topoffset;      // pixels below the origin
-        //
-        float               max_s,max_t;
-        int                 patchlump;      // the software patch lump num for when the hardware patch
-                                            // was flushed, and we need to re-create it
-        GlideMipmap_t       mipmap;
+struct MipPatch_s {
+    // the 4 first fields come right away from the original patch_t
+    uint16_t       width;          // bounding box size
+    uint16_t       height;
+    int16_t        leftoffset;     // pixels to the left of origin
+    int16_t        topoffset;      // pixels below the origin
+    //
+    float          max_s,max_t;
+    int            patchlump;      // the software patch lump num for when the hardware patch
+                                   // was flushed, and we need to re-create it
+    Mipmap_t       mipmap;
 };
-#else
-struct GlidePatch_s {
-        // the 4 first fields come right away from the original patch_t
-        short               width;
-        short               height;
-        short               leftoffset;     // pixels to the left of origin
-        short               topoffset;      // pixels below the origin
-        //
-        float               max_s,max_t;
-        int                 patchlump;      // the software patch lump num for when the hardware patch
-                                            // was flushed, and we need to re-create it
-        GlideMipmap_t       mipmap;
-};
-#endif
-typedef struct GlidePatch_s GlidePatch_t;
+typedef struct MipPatch_s MipPatch_t;
 
 #endif //_HWR_DATA_

@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -149,10 +149,10 @@ void HWR_FreeTextureCache (void);
 void HWR_FreeExtraSubsectors (void);
 
 void HWR_GetFlat (int flatlumpnum);
-GlideTexture_t* HWR_GetTexture (int tex);
-void HWR_GetPatch (GlidePatch_t* gpatch);
-void HWR_GetMappedPatch(GlidePatch_t* gpatch, byte *colormap);
-GlidePatch_t *HWR_GetPic (int lumpnum);
+MipTexture_t* HWR_GetTexture (int tex);
+void HWR_GetPatch (MipPatch_t* gpatch);
+void HWR_GetMappedPatch(MipPatch_t* gpatch, byte *colormap);
+MipPatch_t *HWR_GetPic (int lumpnum);
 void HWR_SetPalette( RGBA_t *palette );
 
 // --------

@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
+// Portions Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -72,7 +72,7 @@
 #ifdef HWRENDER
 #include "hardware/hw_data.h"
 #else
-typedef void GlidePatch_t;
+typedef void MipPatch_t;
 #endif
 
 #ifdef __GNUG__
@@ -140,7 +140,7 @@ typedef struct wadfile_s
     char             *filename;
     lumpinfo_t*      lumpinfo;
     lumpcache_t*     lumpcache;
-    GlidePatch_t*    hwrcache;         // pacthes are cached in renderer's native format
+    MipPatch_t*      hwrcache;   // patches are cached in renderer's native format
     int              numlumps;          // this wad's number of resources
     int              handle;
     ULONG            filesize;          // for network

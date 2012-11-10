@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -114,9 +114,9 @@ void HWR_DrawFlatFill (int x, int y, int w, int h, int flatlumpnum);
 boolean HWR_Screenshot (char *lbmname);
 void HWR_InitTextureMapping (void);
 void HWR_SetViewSize (int blocks);
-void HWR_DrawPatch (GlidePatch_t* gpatch, int x, int y, int option);
-void HWR_DrawMappedPatch (GlidePatch_t* gpatch, int x, int y, int option, byte *colormap);
-void HWR_MakePatch (patch_t* patch, GlidePatch_t* grPatch, GlideMipmap_t *grMipmap);
+void HWR_DrawPatch (MipPatch_t* gpatch, int x, int y, int option);
+void HWR_DrawMappedPatch (MipPatch_t* gpatch, int x, int y, int option, byte *colormap);
+void HWR_MakePatch (patch_t* patch, MipPatch_t* grPatch, Mipmap_t *grMipmap);
 void HWR_CreatePlanePolygons (int bspnum);
 void HWR_CreateStaticLightmaps (int bspnum);
 void HWR_PrepLevelCache (int numtextures);

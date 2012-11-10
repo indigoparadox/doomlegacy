@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -172,7 +172,7 @@ int textureformat = GR_TEXFMT_P_8; // use chromakey for hole
 // sprite, use alpha and chroma key for hole
 // Called from HWR_GetTexture->HWR_GenerateTexture
 // Called from HWR_MakePatch
-static void HWR_DrawPatchInCache (GlideMipmap_t* mipmap,
+static void HWR_DrawPatchInCache (Mipmap_t* mipmap,
                                   int   blockwidth,
                                   int   blockheight,
                                   int   blockmodulo,
@@ -278,7 +278,7 @@ static void HWR_DrawPatchInCache (GlideMipmap_t* mipmap,
                     alpha = 0xff;
 
                 //Hurdler: not perfect, but better than holes
-                if( texel == HWR_PATCHES_CHROMAKEY_COLORINDEX && (mipmap->flags & TF_CHROMAKEYED))
+                if( texel == HWR_PATCHES_CHROMAKEY_COLORINDEX && (mipmap->tfflags & TF_CHROMAKEYED))
                     texel = HWR_CHROMAKEY_EQUIVALENTCOLORINDEX;
                 //Hurdler: 25/04/2000: now support colormap in hardware mode
                 else if (mipmap->colormap)
@@ -477,7 +477,7 @@ static const int format2bpp[16] = {
     2, //14 GR_TEXFMT_AP_88
 };
 
-static byte *MakeBlock( GlideMipmap_t *grMipmap )
+static byte *MakeBlock( Mipmap_t *grMipmap )
 {
     int bpp = format2bpp[grMipmap->grInfo.format];
     byte *block;
@@ -510,7 +510,7 @@ static byte *MakeBlock( GlideMipmap_t *grMipmap )
 // height and width for the hardware texture cache.
 //
 // Called from HWR_GetTexture
-static void HWR_GenerateTexture (int texnum, GlideTexture_t* grtex)
+static void HWR_GenerateTexture (int texnum, MipTexture_t* grtex)
 {
     byte*               block;
     texture_t*          texture;
@@ -529,10 +529,10 @@ static void HWR_GenerateTexture (int texnum, GlideTexture_t* grtex)
          texture->name[4] == 0 )
     {
         skyspecial = true;
-        grtex->mipmap.flags = TF_WRAPXY; // don't use the chromakey for sky
+        grtex->mipmap.tfflags = TF_WRAPXY; // don't use the chromakey for sky
     }
     else
-        grtex->mipmap.flags = TF_CHROMAKEYED | TF_WRAPXY;
+        grtex->mipmap.tfflags = TF_CHROMAKEYED | TF_WRAPXY;
 
     HWR_ResizeBlock (texture->width, texture->height, &grtex->mipmap.grInfo);
     grtex->mipmap.width = blockwidth;
@@ -587,7 +587,7 @@ static void HWR_GenerateTexture (int texnum, GlideTexture_t* grtex)
         {
             if (block[i] == 0)
             {
-                grtex->mipmap.flags |= TF_TRANSPARENT;
+                grtex->mipmap.tfflags |= TF_TRANSPARENT;
                 break;
             }
         }
@@ -606,7 +606,7 @@ static void HWR_GenerateTexture (int texnum, GlideTexture_t* grtex)
 //                 user for Z_Malloc(), becomes NULL if it is purged from the cache
 // Called from HWR_Draw* -> HWR_LoadMappedPatch
 // Called from HWR_GetPatch
-void HWR_MakePatch (patch_t* patch, GlidePatch_t* grPatch, GlideMipmap_t *grMipmap)
+void HWR_MakePatch (patch_t* patch, MipPatch_t* grPatch, Mipmap_t *grMipmap)
 {
     byte*   block;
     int     newwidth,newheight;
@@ -614,7 +614,7 @@ void HWR_MakePatch (patch_t* patch, GlidePatch_t* grPatch, GlideMipmap_t *grMipm
     // don't do it twice (like a cache)
     if(grMipmap->width==0)
     {
-        // save the original patch header so that the GlidePatch can be casted
+        // save the original patch header so that the MipPatch can be casted
         // into a standard patch_t struct and the existing code can get the
         // orginal patch dimensions and offsets.
         grPatch->width = patch->width;
@@ -628,7 +628,7 @@ void HWR_MakePatch (patch_t* patch, GlidePatch_t* grPatch, GlideMipmap_t *grMipm
         grMipmap->height = blockheight;
 
         // no wrap around, no chroma key
-        grMipmap->flags = 0;
+        grMipmap->tfflags = 0;
         // setup the texture info
         grMipmap->grInfo.format = patchformat;
     }
@@ -690,7 +690,7 @@ void HWR_MakePatch (patch_t* patch, GlidePatch_t* grPatch, GlideMipmap_t *grMipm
 // =================================================
 
 static int  gr_numtextures;
-static GlideTexture_t*  gr_textures;       // for ALL Doom textures
+static MipTexture_t*  gr_textures;       // for ALL Doom textures
 
 void HWR_InitTextureCache (void)
 {
@@ -710,10 +710,10 @@ void HWR_FreeTextureCache (void)
     for (j=0; j<numwadfiles; j++)
         for (i=0; i<wadfiles[j]->numlumps; i++)
         {
-            GlidePatch_t *grpatch = &(wadfiles[j]->hwrcache[i]);
+            MipPatch_t *grpatch = &(wadfiles[j]->hwrcache[i]);
             while (grpatch->mipmap.nextcolormap)
             {
-                GlideMipmap_t *grmip = grpatch->mipmap.nextcolormap;
+                Mipmap_t *grmip = grpatch->mipmap.nextcolormap;
                 grpatch->mipmap.nextcolormap = grmip->nextcolormap;
                 free(grmip);
             }
@@ -741,10 +741,10 @@ void HWR_PrepLevelCache (int numtextures)
     HWR_FreeTextureCache ();
 
     gr_numtextures = numtextures;
-    gr_textures = malloc (sizeof(GlideTexture_t) * numtextures);
+    gr_textures = malloc (sizeof(MipTexture_t) * numtextures);
     if (!gr_textures)
         I_Error ("3D can't alloc gr_textures");
-    memset (gr_textures, 0, sizeof(GlideTexture_t) * numtextures);
+    memset (gr_textures, 0, sizeof(MipTexture_t) * numtextures);
 }
 
 void HWR_SetPalette( RGBA_t *palette )
@@ -773,9 +773,9 @@ void HWR_SetPalette( RGBA_t *palette )
 // Called from HWR_SplitWall
 // Called from HWR_StoreWallRange
 // Called from HWR_RenderTransparentWalls
-GlideTexture_t* HWR_GetTexture (int tex)
+MipTexture_t* HWR_GetTexture (int tex)
 {
-    GlideTexture_t* grtex;
+    MipTexture_t* grtex;
 #ifdef PARANOIA
     if( tex>=gr_numtextures )
         I_Error(" HWR_GetTexture : tex>=numtextures\n");
@@ -791,7 +791,7 @@ GlideTexture_t* HWR_GetTexture (int tex)
 }
 
 
-static void HWR_CacheFlat (GlideMipmap_t* grMipmap, int flatlumpnum)
+static void HWR_CacheFlat (Mipmap_t* grMipmap, int flatlumpnum)
 {
     byte *block;
 	int size, flatsize;
@@ -801,7 +801,7 @@ static void HWR_CacheFlat (GlideMipmap_t* grMipmap, int flatlumpnum)
     grMipmap->grInfo.largeLodLog2 = GR_LOD_LOG2_64;
     grMipmap->grInfo.aspectRatioLog2 = GR_ASPECT_LOG2_1x1;
     grMipmap->grInfo.format = GR_TEXFMT_P_8;
-    grMipmap->flags = TF_WRAPXY;
+    grMipmap->tfflags = TF_WRAPXY;
 
 	size = W_LumpLength(flatlumpnum);
 
@@ -844,7 +844,7 @@ static void HWR_CacheFlat (GlideMipmap_t* grMipmap, int flatlumpnum)
 // Download a Doom 'flat' to the hardware cache and make it ready for use
 void HWR_GetFlat (int flatlumpnum)
 {
-    GlideMipmap_t*      grmip;
+    Mipmap_t*      grmip;
 
     grmip = &(wadfiles[flatlumpnum>>16]->hwrcache[flatlumpnum & 0xffff].mipmap);
 
@@ -860,7 +860,7 @@ void HWR_GetFlat (int flatlumpnum)
 //                          : load it first in doom cache if not already
 //
 // Called from HWR_Draw* ->HWR_GetMappedPatch
-static void HWR_LoadMappedPatch(GlideMipmap_t *grmip, GlidePatch_t *gpatch)
+static void HWR_LoadMappedPatch(Mipmap_t *grmip, MipPatch_t *gpatch)
 {
     if( !grmip->downloaded &&
         !grmip->grInfo.data )
@@ -879,7 +879,7 @@ static void HWR_LoadMappedPatch(GlideMipmap_t *grmip, GlidePatch_t *gpatch)
 // HWR_GetPatch     : Download a patch to the hardware cache and make it ready for use
 // -----------------+
 // Called from HWR_Draw* -> HWR_DrawSegsSplats, HWR_DrawPSprite, HWR_DrawPatch
-void HWR_GetPatch( GlidePatch_t* gpatch )
+void HWR_GetPatch( MipPatch_t* gpatch )
 {
     // is it in hardware cache
     if ( !gpatch->mipmap.downloaded &&
@@ -903,9 +903,9 @@ void HWR_GetPatch( GlidePatch_t* gpatch )
 // HWR_GetMappedPatch : Same as HWR_GetPatch for sprite color
 // -------------------+
 // Called from HWR_DrawSmallPatch, HWR_DrawMappedPatch, HWR_DrawSprite, HWR_DrawMD2
-void HWR_GetMappedPatch(GlidePatch_t* gpatch, byte *colormap)
+void HWR_GetMappedPatch(MipPatch_t* gpatch, byte *colormap)
 {
-    GlideMipmap_t   *grmip, *newmip;
+    Mipmap_t   *grmip, *newmip;
 
     if( (colormap==reg_colormaps) || (colormap==NULL) )
     {
@@ -932,9 +932,9 @@ void HWR_GetMappedPatch(GlidePatch_t* gpatch, byte *colormap)
     //              (it have a liste of mipmap)
     //    this malloc is cleared in HWR_FreeTextureCache
     //    (...) unfortunately z_malloc fragment alot the memory :( so malloc is better
-    newmip = malloc(sizeof(GlideMipmap_t));
+    newmip = malloc(sizeof(Mipmap_t));
     grmip->nextcolormap = newmip;
-    memset(newmip, 0, sizeof(GlideMipmap_t));
+    memset(newmip, 0, sizeof(Mipmap_t));
 
     newmip->colormap   = colormap;
     HWR_LoadMappedPatch(newmip, gpatch);
@@ -1018,9 +1018,9 @@ static void HWR_DrawPicInCache (byte* block,
 // HWR_GetPic       : Download a Doom pic (raw row encoded with no 'holes')
 // Returns          :
 // -----------------+
-GlidePatch_t *HWR_GetPic( int lumpnum )
+MipPatch_t *HWR_GetPic( int lumpnum )
 {
-    GlidePatch_t *grpatch;
+    MipPatch_t *grpatch;
 
     grpatch = &(wadfiles[lumpnum>>16]->hwrcache[lumpnum & 0xffff]);
 
@@ -1032,7 +1032,7 @@ GlidePatch_t *HWR_GetPic( int lumpnum )
         byte  *block;
         int   newwidth,newheight;
 
-        if( grpatch->mipmap.flags & TF_RAWASPIC )
+        if( grpatch->mipmap.tfflags & TF_RAWASPIC )
         {
             // raw pic : so get size from grpatch since it is save in v_drawrawscreen
 	    // [WDJ] CacheRawAsPic is correct endian
@@ -1113,7 +1113,7 @@ GlidePatch_t *HWR_GetPic( int lumpnum )
         Z_ChangeTag(pic, PU_CACHE);
         Z_ChangeTag(block, PU_HWRCACHE);
 
-        grpatch->mipmap.flags &= TF_RAWASPIC;
+        grpatch->mipmap.tfflags &= TF_RAWASPIC;
         grpatch->max_s = (float)newwidth  / (float)blockwidth;
         grpatch->max_t = (float)newheight / (float)blockheight;
     }

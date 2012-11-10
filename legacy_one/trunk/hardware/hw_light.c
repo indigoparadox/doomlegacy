@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -1041,7 +1041,7 @@ void HWR_SetLights(int viewnumber)
 // Add a light for dynamic lighting
 // The light position is already transformed execpt for mlook
 // --------------------------------------------------------------------------
-void HWR_DL_AddLight(gr_vissprite_t *spr, GlidePatch_t *patch)
+void HWR_DL_AddLight(gr_vissprite_t *spr, MipPatch_t *patch)
 {
     light_t   *p_lspr;
 
@@ -1078,7 +1078,7 @@ void HWR_DL_AddLight(gr_vissprite_t *spr, GlidePatch_t *patch)
     } 
 }
 
-static GlidePatch_t lightmappatch;
+static MipPatch_t lightmappatch;
 
 void HWR_InitLight( void )
 {
@@ -1124,7 +1124,7 @@ void HWR_SetLight( void )
         lightmappatch.mipmap.grInfo.smallLodLog2 = GR_LOD_LOG2_128;
         lightmappatch.mipmap.grInfo.largeLodLog2 = GR_LOD_LOG2_128;
         lightmappatch.mipmap.grInfo.aspectRatioLog2 = GR_ASPECT_LOG2_1x1;
-        lightmappatch.mipmap.flags = 0; //TF_WRAPXY; // DEBUG: view the overdraw !
+        lightmappatch.mipmap.tfflags = 0; //TF_WRAPXY; // DEBUG: view the overdraw !
     }
     HWD.pfnSetTexture( &lightmappatch.mipmap );
 }

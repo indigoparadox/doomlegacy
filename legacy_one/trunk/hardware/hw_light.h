@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -85,7 +85,7 @@
 #define DL_MAX_LIGHT    256  // maximum number of light (extra light are ignored)
 
 void HWR_InitLight( void );
-void HWR_DL_AddLight(gr_vissprite_t *spr, GlidePatch_t *patch);
+void HWR_DL_AddLight(gr_vissprite_t *spr, MipPatch_t *patch);
 void HWR_DynamicShadowing(FOutVector *clVerts, int nrClipVerts, player_t *p);
 void HWR_PlaneLighting(FOutVector *clVerts, int nrClipVerts);
 void HWR_WallLighting(FOutVector *wlVerts);

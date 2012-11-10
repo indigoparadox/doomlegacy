@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -155,7 +155,7 @@ void saveTGA(char *file_name, int width, int height, GLRGB *buffer);
 // Notes            : x,y : positions relative to the original Doom resolution
 //                  : textes(console+score) + menus + status bar
 // -----------------+
-void HWR_DrawPatch (GlidePatch_t* gpatch, int x, int y, int option)
+void HWR_DrawPatch (MipPatch_t* gpatch, int x, int y, int option)
 {
     FOutVector      v[4];
 
@@ -201,7 +201,7 @@ void HWR_DrawPatch (GlidePatch_t* gpatch, int x, int y, int option)
 }
 
 // Draws a patch 2x as small SSNTails 06-10-2003
-void HWR_DrawSmallPatch (GlidePatch_t* gpatch, int x, int y, int option, byte *colormap)
+void HWR_DrawSmallPatch (MipPatch_t* gpatch, int x, int y, int option, byte *colormap)
 {
     FOutVector      v[4];
 
@@ -237,7 +237,7 @@ void HWR_DrawSmallPatch (GlidePatch_t* gpatch, int x, int y, int option, byte *c
 //
 // HWR_DrawMappedPatch(): Like HWR_DrawPatch but with translated color
 //
-void HWR_DrawMappedPatch (GlidePatch_t* gpatch, int x, int y, int option, byte *colormap)
+void HWR_DrawMappedPatch (MipPatch_t* gpatch, int x, int y, int option, byte *colormap)
 {
     FOutVector      v[4];
 
@@ -281,7 +281,7 @@ void HWR_DrawMappedPatch (GlidePatch_t* gpatch, int x, int y, int option, byte *
 void HWR_DrawPic(int x, int y, int lumpnum)
 {
     FOutVector      v[4];
-    GlidePatch_t    *patch;
+    MipPatch_t    *patch;
 
     // make pic ready in hardware cache
     patch = HWR_GetPic( lumpnum );
@@ -450,7 +450,7 @@ void HWR_DrawViewBorder (int clearlines)
     int         top,side;
     int         baseviewwidth,baseviewheight;
     int         basewindowx,basewindowy;
-    GlidePatch_t*   patch;
+    MipPatch_t*   patch;
 extern float gr_baseviewwindowy,gr_viewwindowx,gr_viewheight,gr_viewwidth;
 
 //    if (gr_viewwidth == vid.width)

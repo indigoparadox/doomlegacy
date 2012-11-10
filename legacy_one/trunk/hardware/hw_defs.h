@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -244,7 +244,7 @@ struct FTextureInfo
     struct FTextureInfo *Next;      // Manage list of downloaded textures.
 };
 #else
-typedef struct GlideMipmap_s FTextureInfo;
+typedef struct Mipmap_s FTextureInfo;
 #endif
 
 // Description of a renderable surface

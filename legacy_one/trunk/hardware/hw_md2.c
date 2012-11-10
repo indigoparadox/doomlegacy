@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -490,14 +490,14 @@ typedef struct
     byte filler[54];  
 } PcxHeader;
 
-GlidePatch_t md2_tex_patch;
+MipPatch_t md2_tex_patch;
 
 // -----------------+
 // md2_loadTexture  : Download a pcx texture for MD2 models
 // -----------------+
 int md2_loadTexture (const char *filename)
 {    
-    GlidePatch_t    *grpatch;
+    MipPatch_t    *grpatch;
 
     grpatch = &md2_tex_patch;
     //if (!grpatch->mipmap.downloaded && !grpatch->mipmap.grInfo.data)
@@ -551,7 +551,7 @@ int md2_loadTexture (const char *filename)
 
         grpatch->mipmap.downloaded = 0;
         grpatch->mipmap.grInfo.format = GR_TEXFMT_P_8; 
-        grpatch->mipmap.flags = 0;
+        grpatch->mipmap.tfflags = 0;
 
         grpatch->width = w;
         grpatch->height = h;
@@ -644,7 +644,7 @@ void HWR_InitMD2()
 void HWR_DrawMD2( gr_vissprite_t* spr )
 {
     FOutVector      wallVerts[4];
-    GlidePatch_t    *gpatch;      //sprite patch converted to hardware
+    MipPatch_t      *gpatch;      //sprite patch converted to hardware
     FSurfaceInfo    Surf;
 
     char            *ptr;

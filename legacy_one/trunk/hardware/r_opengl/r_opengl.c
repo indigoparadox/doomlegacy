@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2000 by DooM Legacy Team.
+// Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -903,7 +903,7 @@ EXPORT void HWRAPI( SetTexture ) ( FTextureInfo *pTexInfo )
                 for( i=0; i<w; i++)
                 {
                     if ( (*pImgData==HWR_PATCHES_CHROMAKEY_COLORINDEX) &&
-                         (pTexInfo->flags & TF_CHROMAKEYED) )
+                         (pTexInfo->tfflags & TF_CHROMAKEYED) )
                     {
                         tex[w*j+i].s.red   = 0;
                         tex[w*j+i].s.green = 0;
@@ -922,7 +922,7 @@ EXPORT void HWRAPI( SetTexture ) ( FTextureInfo *pTexInfo )
 
                     if( pTexInfo->grInfo.format == GR_TEXFMT_AP_88 )
                     {
-                        if( !(pTexInfo->flags & TF_CHROMAKEYED) )
+                        if( !(pTexInfo->tfflags & TF_CHROMAKEYED) )
                             tex[w*j+i].s.alpha = *pImgData;
                         pImgData++;
                     }
@@ -999,12 +999,12 @@ EXPORT void HWRAPI( SetTexture ) ( FTextureInfo *pTexInfo )
         }
 #endif
 
-        if( pTexInfo->flags & TF_WRAPX )
+        if( pTexInfo->tfflags & TF_WRAPX )
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         else
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 
-        if( pTexInfo->flags & TF_WRAPY )
+        if( pTexInfo->tfflags & TF_WRAPY )
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         else
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
