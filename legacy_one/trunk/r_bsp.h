@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
+// Portions Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -85,18 +85,6 @@ typedef void (*drawfunc_t) (int start, int stop);
 void R_ClearClipSegs (void);
 void R_SetupClipSegs();
 void R_ClearDrawSegs (void);
-
-#define BSPVIEWER
-#ifdef BSPVIEWER
-// Setup viewer before call to recursive R_RenderBSPNode
-void R_SetupBSPRender( void );
-
-// [WDJ] viewer setup as used by R_RenderBSPNode, R_FakeFlat, R_ProjectSprite
-extern int      viewer_modelsec;
-extern boolean  viewer_has_model;
-extern boolean  viewer_underwater;  // only set when viewer_has_model
-extern boolean  viewer_overceiling; // only set when viewer_has_model
-#endif
 
 void R_RenderBSPNode (int bspnum);
 

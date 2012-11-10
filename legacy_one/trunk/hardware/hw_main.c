@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2010 by DooM Legacy Team.
+// Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -707,13 +707,11 @@ void Extracolormap_to_Surf( /*IN*/ extracolormap_t * extracmap, int light,
 {
     RGBA_t temp;
    
-#ifdef BOOM_GLOBAL_COLORMAP
     if( view_extracolormap )
     {
         // Boom global colormap override
         extracmap = view_extracolormap;
     }
-#endif
 
     // [WDJ] the rgba color can change according to light level
     // This accomodates the fade in CreateColormap, and Colormap_Analyze.
@@ -861,11 +859,7 @@ void HWR_RenderPlane(extrasubsector_t * xsub, fixed_t fixedheight,
         }
         if (sector && sector->extra_colormap && planecolormap == NULL)
 	    planecolormap = sector->extra_colormap;
-#ifdef BOOM_GLOBAL_COLORMAP
         if (planecolormap || view_colormap)
-#else
-        if (planecolormap)
-#endif
         {
 	    Extracolormap_to_Surf( /*IN*/ planecolormap, LightLevelToLum(lightlevel),
 				   /*OUT*/ & Surf );
@@ -1292,11 +1286,7 @@ static void HWR_SplitWall(sector_t * sector, wallVert3D * wallVerts, int texnum,
 
             //Hurdler: colormap test
             sector = (ffl_list[i - 1].caster)? &sectors[ ffl_list[i - 1].caster->model_secnum] : gr_frontsector;
-#ifdef BOOM_GLOBAL_COLORMAP
             if (sector->extra_colormap || view_colormap)
-#else
-            if (sector->extra_colormap)
-#endif
             {
 	        Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, lightnum,
 				       /*OUT*/ Surfp );
@@ -1336,11 +1326,7 @@ static void HWR_SplitWall(sector_t * sector, wallVert3D * wallVerts, int texnum,
         Surfp->FlatColor.s.red = Surfp->FlatColor.s.green = Surfp->FlatColor.s.blue = lightnum;
 
         sector = ffl_list[i - 1].caster ? &sectors[ffl_list[i - 1].caster->model_secnum] : gr_frontsector;
-#ifdef BOOM_GLOBAL_COLORMAP
         if (sector->extra_colormap || view_colormap)
-#else
-        if (sector->extra_colormap)
-#endif
         {
 	    Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, lightnum,
 				   /*OUT*/ Surfp );
@@ -1501,11 +1487,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                 caster = sector->lightlist[R_GetPlaneLight(sector, sector->floorheight)].caster;
                 sector = caster ? &sectors[caster->model_secnum] : sector;
             }
-#ifdef BOOM_GLOBAL_COLORMAP
             if (sector->extra_colormap || view_colormap)
-#else
-            if (sector->extra_colormap)
-#endif
             {
 	        Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, lightnum,
 				       /*OUT*/ & Surf );
@@ -3117,11 +3099,7 @@ static void HWR_DrawSprite(gr_vissprite_t * spr)
             caster = sector->lightlist[R_GetPlaneLight(sector, spr->mobj->z)].caster;
 	    sector = caster ? &sectors[caster->model_secnum] : sector;
         }
-#ifdef BOOM_GLOBAL_COLORMAP
         if (sector->extra_colormap || view_colormap)
-#else
-        if (sector->extra_colormap)
-#endif
         {
 	    Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, spr->sectorlight,
 				       /*OUT*/ & Surf );
@@ -3443,7 +3421,7 @@ static void HWR_ProjectSprite(mobj_t * thing)
     if (thing_has_model)   // only clip things which are in special sectors
     {
       sector_t * thingmodsecp = & sectors[thingmodelsec];
-#ifdef BSPVIEWER
+
       if (viewer_has_model)
       {
 	  if( viewer_underwater ?
@@ -3457,25 +3435,6 @@ static void HWR_ProjectSprite(mobj_t * thing)
 	      )
 	      return;
       }
-#else
-      int viewer_modelsec = viewplayer->mo->subsector->sector->modelsec;
-      // [WDJ] modelsec is used for more than water, do proper test
-      boolean viewer_has_model = viewplayer->mo->subsector->sector->model > SM_fluid;
-      // [WDJ] 4/20/2010  Added some structure and ()
-      if (viewer_has_model)
-      {
-	  if( (viewz < sectors[viewer_modelsec].floorheight) ?
-	      (thing->z >= thingmodsecp->floorheight)
-	      : (gz_top < thingmodsecp->floorheight)
-	      )
-	      return;
-	  if( (viewz > sectors[viewer_modelsec].ceilingheight) ?
-	      ((gz_top < thingmodsecp->ceilingheight) && (viewz >= thingmodsecp->ceilingheight))
-	      : (thing->z >= thingmodsecp->ceilingheight)
-	      )
-	      return;
-      }
-#endif       
     }
    }
 #if 0
@@ -3663,11 +3622,7 @@ void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
                 caster = sector->lightlist[R_GetPlaneLight(sector, dup_viewz)].caster;
                 sector = caster ? &sectors[caster->model_secnum] : sector;
             }
-#ifdef BOOM_GLOBAL_COLORMAP
             if (sector->extra_colormap || view_colormap)
-#else
-            if (sector->extra_colormap)
-#endif
             {
 	        Extracolormap_to_Surf( /*IN*/ sector->extra_colormap, lightlevel,
 				       /*OUT*/ & Surf );

@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
+// Portions Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -64,6 +64,7 @@ extern int              viewheight;
 extern int              viewwindowx;
 extern int              viewwindowy;
 
+extern mobj_t*		viewmobj;
 
 
 extern int              centerx;
@@ -112,11 +113,19 @@ extern lighttable_t*    zlight[LIGHTLEVELS][MAXLIGHTZ];
 
 extern int              extralight;
 extern lighttable_t*    fixedcolormap;
-#ifdef BOOM_GLOBAL_COLORMAP
+
+// [WDJ] viewer setup as used by R_RenderBSPNode, R_FakeFlat, R_ProjectSprite
+extern sector_t * viewer_sector;
+extern int      viewer_modelsec;
+extern boolean  viewer_has_model;
+extern boolean  viewer_underwater;  // only set when viewer_has_model
+extern boolean  viewer_overceiling; // only set when viewer_has_model
+
 // Boom colormap, and global viewer coloring
 extern lighttable_t*    view_colormap;  // full lightlevel range colormaps
 extern extracolormap_t *  view_extracolormap;
 
+#ifdef BOOM_GLOBAL_COLORMAP
 extern byte EN_boom_colormap;  // compatibility, user preference
 void BoomColormap_detect( void );
 #endif

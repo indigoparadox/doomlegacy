@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
+// Portions Copyright (C) 1998-2012 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -284,7 +284,6 @@ void R_MapPlane ( int y, int x1, int x2 )
             index = MAXLIGHTZ-1;
 
         ds_colormap = planezlight[index];
-#ifdef BOOM_GLOBAL_COLORMAP
         if(vsp_currentplane->extra_colormap || view_colormap)
         {
 	    // reverse indexing, and change to extra_colormap
@@ -292,14 +291,6 @@ void R_MapPlane ( int y, int x1, int x2 )
 	    lighttable_t* cm = view_colormap? view_colormap : vsp_currentplane->extra_colormap->colormap;
 	    ds_colormap = & cm[ lightindex ];
 	}
-#else
-        if(vsp_currentplane->extra_colormap)
-        {
-	    // reverse indexing, and change to extra_colormap
-	    int lightindex = ds_colormap - reg_colormaps;
-	    ds_colormap = & vsp_currentplane->extra_colormap->colormap[ lightindex ];
-	}
-#endif
     }
 
     ds_y = y;
