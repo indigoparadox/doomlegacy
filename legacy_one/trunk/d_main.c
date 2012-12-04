@@ -243,11 +243,11 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __WIN32__
+#ifdef __WIN32__
+#include <direct.h>
+#else
 #include <unistd.h>     // for access
 #define _MAX_PATH   MAX_WADPATH
-#else
-#include <direct.h>
 #endif
 
 // using MAX_WADPATH as buffer limit, so _MAX_PATH must be as long
@@ -379,9 +379,9 @@ byte    demo_ctrl;
 #endif
 
 // to make savegamename and directories, in m_menu.c
-char *legacyhome;
+char *legacyhome = NULL;
 int   legacyhome_len;
-static char *doomwaddir;
+static char *doomwaddir = NULL;
 
 
 #ifdef __MACH__
@@ -1359,8 +1359,8 @@ void IdentifyVersion()
     //[segabor]: on Mac OS X legacy.wad is within .app folder
     legacywad = mac_legacy_wad;
 #else
-    legacywad = malloc(strlen(doomwaddir) + 1 + 10 + 1);
-    cat_filename(legacywad, doomwaddir, "legacy.wad");
+    cat_filename(pathiwad, doomwaddir, "legacy.wad");  // must be MAX_WADPATH
+    legacywad = strdup( pathiwad );  // malloc
 #endif
 
     if( verbose )
@@ -1544,6 +1544,9 @@ void IdentifyVersion()
     }
     if( gamedesc.support_wad )
        D_AddFile( gamedesc.support_wad );
+#ifndef __MACH__
+    free(legacywad);  // from strdup, free local copy of name
+#endif
     return;
    
 iwad_failure:
