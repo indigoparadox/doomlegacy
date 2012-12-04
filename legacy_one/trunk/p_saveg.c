@@ -2865,7 +2865,7 @@ void P_LoadNetVars( void )
 	    if( save_p[0] == SYNC_sync && save_p[1] == SYNC_misc ) break;
         Got_NetVar((char**)&save_p, 0);
     }
-    fprintf(stderr, "Loaded %d netvars\n", count ); // [WDJ] DEBUG
+//    fprintf(stderr, "Loaded %d netvars\n", count ); // [WDJ] DEBUG
 }
 
 // =======================================================================

@@ -3467,6 +3467,7 @@ static void HWR_ProjectSprite(mobj_t * thing)
 // HWR_DrawPSprite  : Draw 'player sprites' : weapons, etc.
 //                  : fSectorLight ranges 0...1
 // -----------------+
+// Draw parts of the viewplayer weapon
 void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
 {
     spritedef_t *sprdef;
@@ -3482,6 +3483,8 @@ void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
     MipPatch_t *gpatch;       //sprite patch converted to hardware
 
     FSurfaceInfo_t Surf;
+
+    // [WDJ] 11/14/2012 use viewer variables, which will be for viewplayer
 
     // decide which patch to use
 #ifdef RANGECHECK
@@ -3569,7 +3572,7 @@ void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
 
     // set transparency and light level
 
-    if (viewplayer->mo->flags & MF_SHADOW)
+    if (viewmobj->flags & MF_SHADOW)
     {
         if (viewplayer->powers[pw_invisibility] > 4 * TICRATE || viewplayer->powers[pw_invisibility] & 8)
             Surf.FlatColor.s.alpha = 0xff / 3;
@@ -3586,7 +3589,7 @@ void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
     }
     else
     {
-        sector_t *sector = viewplayer->mo->subsector->sector;
+        sector_t *sector = viewer_sector;
 
         // default opaque mode using alpha 0 for holes
         Surf.FlatColor.s.red = Surf.FlatColor.s.green = Surf.FlatColor.s.blue = lightlevel;
@@ -3621,20 +3624,23 @@ void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
 // --------------------------------------------------------------------------
 // HWR_DrawPlayerSprites
 // --------------------------------------------------------------------------
+// Draw the viewplayer weapon
 static void HWR_DrawPlayerSprites(void)
 {
     int i;
     pspdef_t *psp;
     int lightlevel, light;
 
-    if (viewplayer->mo->subsector->sector->numlights)
+    // [WDJ] 11/14/2012 use viewer variables for viewplayer
+
+    if (viewer_sector->numlights)
     {
-        light = R_GetPlaneLight(viewplayer->mo->subsector->sector, viewplayer->mo->z + viewplayer->mo->info->height);
-        lightlevel = LightLevelToLum(*viewplayer->mo->subsector->sector->lightlist[light].lightlevel);
+        light = R_GetPlaneLight(viewer_sector, viewmobj->z + viewmobj->info->height);
+        lightlevel = LightLevelToLum(*viewer_sector->lightlist[light].lightlevel);
     }
     else
         // get light level
-        lightlevel = LightLevelToLum(viewplayer->mo->subsector->sector->lightlevel);
+        lightlevel = LightLevelToLum(viewer_sector->lightlevel);
 
     // add all active psprites
     for (i = 0, psp = viewplayer->psprites; i < NUMPSPRITES; i++, psp++)
