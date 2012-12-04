@@ -1945,7 +1945,8 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                 }
             }
         }
-        else if (gr_frontsector->ffloors)
+        // [WDJ] must check frontsector floors too, to get translucent sides of water
+        if (gr_frontsector->ffloors)
         {
             for (fff = gr_frontsector->ffloors; fff; fff = fff->next)
             {

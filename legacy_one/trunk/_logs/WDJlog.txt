@@ -2963,3 +2963,9 @@ Draw the fog face sheets when in foggy sectors.
 patchfile = w88_8_hwfogjoin.patch
 - committed revision 993   by wesley johnson
 Create fog draws of join sheets for FF_JOIN in hardware render.
+
+*** w88_hw_waterside
+patchfile = w88_9_hw_waterside.patch
+- committed revision 994   by wesley johnson
+Fix split wall draws so that hardware renderer draws water sides with
+3dfloor backsectors, and they are drawn translucent.
