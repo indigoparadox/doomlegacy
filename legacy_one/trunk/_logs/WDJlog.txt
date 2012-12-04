@@ -2952,3 +2952,9 @@ Create fog sheets at fog joins for the fogsheet fog model.
 This lessens the visibility with distance similar to true fog ray
 tracing, but using what is available in this map model.  It tolerates
 well mixing fog and non-foggy sectors, which other methods would not.
+
+*** w88_hwfogdraw
+patchfile = w88_7_hwfogdraw.patch
+- committed revision 992   by wesley johnson
+Adds fog drawing and fog texture creation to hardware renderer.
+Draw the fog face sheets when in foggy sectors.

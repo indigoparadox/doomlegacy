@@ -122,4 +122,8 @@ struct MipPatch_s {
 };
 typedef struct MipPatch_s MipPatch_t;
 
+// [WDJ] Fixed size fog textures
+#define FOG_WIDTH  256
+#define FOG_HEIGHT  64
+
 #endif //_HWR_DATA_

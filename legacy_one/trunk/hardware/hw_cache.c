@@ -643,9 +643,142 @@ static void HWR_GenerateTexture (int texnum, MipTexture_t* grtex,
     // use PU_PURGELEVEL so we can Z_FreeTags all at once
     Z_ChangeTag (block, PU_HWRCACHE);
 
+    // to convert fixed_t ceilingheight and floorheight, and x, to texture
     grtex->scaleX = FIXED_TO_FLOAT_MULT / (float)texture->width;
     grtex->scaleY = FIXED_TO_FLOAT_MULT / (float)texture->height;
 }
+
+
+
+// [WDJ] Generate a foggy texture from base texture as an alternate
+static void HWR_GenerateFogTexture (int texnum, Mipmap_t * mipmap,
+				    uint32_t drawflags)
+{
+    RGBA_t* rgbablock;
+    RGBA_t* fb;
+    RGBA_t* endpixel;
+    RGBA_t* cp;
+
+    int  srcsize, si_line3, si, si_endx;
+    int  i, x, y, fogb1, zc;
+    unsigned int  fc_g, fc_r, fc_b;
+    RGBA_t fc, fc_avg;
+    RGBA_t fogcolor = {.rgba=0x101010FF};
+   
+    // must have original texture first
+    MipTexture_t* base = HWR_GetTexture (texnum, 0);
+    RGBA_t * src = (RGBA_t*) base->mipmap.grInfo.data;
+    srcsize = base->mipmap.height * base->mipmap.width;
+
+    mipmap->tfflags = TF_WRAPXY | TF_Fogsheet | drawflags;
+
+    HWR_ResizeBlock (FOG_WIDTH, FOG_HEIGHT, &mipmap->grInfo);
+    mipmap->width = blockwidth;
+    mipmap->height = blockheight;
+    mipmap->grInfo.format = GR_RGBA;
+
+    rgbablock = (RGBA_t*) MakeBlock( mipmap );  // sets grInfo.data
+    fb = rgbablock;
+    endpixel = rgbablock + ((blockheight * blockwidth) - 1);
+
+    // Emulate column blend of other drawers
+    si_line3 = 3 * base->mipmap.height;
+    // average 16 pixels
+    fc_r = fc_g = fc_b = 0;
+    si = 0;
+    for( i=0; i<16; i++ )
+    {
+        // find non-transparent pixel
+        for( zc = srcsize; zc > 0; zc-- )
+        {
+	    si += si_line3 + 17;  // 3 lines + 17 pixels
+	    if( si >= srcsize )  si -= srcsize;
+	    fc.rgba = src[si].rgba;
+	    if( fc.s.alpha > 0x20 )  break;
+	    // if all transparent, will avg random pixel noise
+	}
+        fc_r += fc.s.red;
+        fc_g += fc.s.green;
+        fc_b += fc.s.blue;
+    }
+    fc_avg.s.red = fc_r >> 4; // avg
+    fc_avg.s.green = fc_g >> 4;
+    fc_avg.s.blue = fc_b >> 4;
+    fc_avg.s.alpha = 0xff;
+    fogcolor.rgba = fc_avg.rgba;  // init
+    fogb1 = 0;
+    // make a fog texture from averaged colors of linedef texture
+    for( x=0; x<blockwidth+32; x++ )  // wrap around width to smooth
+    {
+        if( x > blockwidth )
+        {
+	    // reduce visible artifact by smoothing over x wrap edge
+	    fb = & rgbablock[ x - blockwidth ];
+	    fc_r = fb->s.red * 3;
+	    fc_g = fb->s.green * 3;
+	    fc_b = fb->s.blue * 3;
+	}
+        else
+        {
+	    si = x % base->mipmap.width;  // top of column
+	    // always average three pixels of source texture
+	    fc_r = fc_g = fc_b = 0;
+	    for( i=0; i<3; i++ )
+	    {
+	        for( zc = 32; ; )
+	        {
+		    fc.rgba = src[si].rgba;
+		    if( fc.s.alpha > 0x20 )  break;
+		    // skip transparent pixels
+		    si += base->mipmap.width;  // down column
+		    if( si >= srcsize )  si -= srcsize;  // wrap source
+		    if( --zc < 0 )  // too many transparent pixel
+		    {
+		        fc.rgba = fc_avg.rgba;
+		        break;
+		    }
+		}
+	        fc_r += fc.s.red;
+	        fc_g += fc.s.green;
+	        fc_b += fc.s.blue;
+	        si += si_line3;
+	        if( si > srcsize )  si -= srcsize;  // wrap source
+	    }
+	}
+        // blend 61 and 3 = 4.6875%
+        fogcolor.s.red = ((((uint16_t)fogcolor.s.red)*61) + fc_r) >> 6;
+        fogcolor.s.green = ((((uint16_t)fogcolor.s.green)*61) + fc_g) >> 6;
+        fogcolor.s.blue = ((((uint16_t)fogcolor.s.blue)*61) + fc_b) >> 6;
+
+        // place fog down entire column
+        for( cp=fb; cp<=endpixel; cp+=blockwidth )
+        {
+	    cp->rgba = fogcolor.rgba;
+	}
+        fb++;
+    }
+    // copy any masked outline into fog
+    for( y=0; y<blockheight; y++ )
+    {
+       si= (y % base->mipmap.height) * base->mipmap.width;  // wrap
+       si_endx = si + base->mipmap.width;
+       fb= & rgbablock[y * blockwidth];
+       for( x=0; x<blockwidth; x++ )
+       {
+	   // Draw masked only recognizes alpha != 0
+	   fb->s.alpha = src[si].s.alpha;
+	   fb++;
+	   si++;
+	   if( si >= si_endx )  // wrap source, larger than fog
+	     si = si_endx - base->mipmap.width;
+       }
+    }
+
+    // make it purgable from zone memory
+    // use PU_PURGELEVEL so we can Z_FreeTags all at once
+    Z_ChangeTag (rgbablock, PU_HWRCACHE);
+}
+
 
 // grTex : Hardware texture cache info
 //         .data : address of converted patch in heap memory
@@ -869,9 +1002,25 @@ MipTexture_t* HWR_GetTexture (int tex, uint32_t drawflags)
 	    mipmap = newmip;
 	}
     }
-    // generate mipmap with texture
-    HWR_GenerateTexture (tex, miptex, mipmap, drawflags);
- 
+    else if (drawflags & TF_Fogsheet)
+    {
+         // Do not have base texture, base mipmap must go to base texture.
+         // These cannot overlap, otherwise wrong mipmap gets used
+         HWR_GetTexture (tex, 0);  // get base texture first
+         miptex = HWR_GetTexture (tex, drawflags);  // gen fog texture mipmap
+         return miptex;
+    }
+    if( drawflags & TF_Fogsheet )
+    {
+        // generate mipmap with foggy texture as alternate
+        HWR_GenerateFogTexture (tex, mipmap, drawflags);
+    }
+    else
+    {
+        // generate mipmap with texture
+        HWR_GenerateTexture (tex, miptex, mipmap, drawflags);
+    }
+
 found_mipmap:
     HWD.pfnSetTexture (mipmap);
     return miptex;

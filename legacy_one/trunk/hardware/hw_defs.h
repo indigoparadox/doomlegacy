@@ -195,13 +195,15 @@ typedef enum
     // the first 5 are mutually exclusive Blending
     PF_Masked           = 0x00000001,   // Poly is alpha scaled and 0 alpha pels are discarded (holes in texture)
     PF_Translucent      = 0x00000002,   // Poly is transparent, alpha = level of transparency
-    PF_Additive         = 0x00000024,   // Poly is added to the frame buffer
+    PF_Additive         = 0x00000084,   // Poly is added to the frame buffer
     PF_Environment      = 0x00000008,   // Poly should be drawn environment mapped.
                                         // Hurdler: used for text drawing
     PF_Substractive     = 0x00000010,   // for splat
+    PF_Fog		= PF_Translucent,   // Fog sheet, alpha = translucency
+//    PF_Fog		= 0x00000020,   // Fog sheet, alpha = translucency
      
     // additional effects
-    PF_NoAlphaTest      = 0x00000020,   // hiden param
+    PF_NoAlphaTest      = 0x00000080,   // hidden param, used by Additive
     PF_Blending         = (PF_Environment|PF_Additive|PF_Translucent|PF_Masked|PF_Substractive)&~PF_NoAlphaTest,
 
     // other flag bits
