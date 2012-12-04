@@ -1443,7 +1443,7 @@ void A_GauntletAttack(player_t *player, pspdef_t *psp)
         {
                 if(P_Random() > 64)
                 {
-                        player->extralight = !player->extralight;
+		   player->extralight = (player->extralight)? 0:LIGHT_UNIT;
                 }
                 S_StartSound(player->mo, sfx_gntful);
                 return;
@@ -1455,11 +1455,11 @@ void A_GauntletAttack(player_t *player, pspdef_t *psp)
         }
         else if(randVal < 160)
         {
-                player->extralight = 1;
+                player->extralight = 1*LIGHT_UNIT;
         }
         else
         {
-                player->extralight = 2;
+                player->extralight = 2*LIGHT_UNIT;
         }
         if(player->powers[pw_weaponlevel2])
         {

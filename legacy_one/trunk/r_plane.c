@@ -759,10 +759,10 @@ void R_DrawPlanes (void)
 
 void R_DrawSinglePlane(visplane_t* pl)
 {
-  int                 light = 0;
-  int                 x;
-  int                 stop;
-  int                 angle;
+  int    x;
+  int    stop;
+  int    angle;
+  int    vlight = 0;  // visible light 0..255
 
   if (pl->minx > pl->maxx)
     return;
@@ -783,26 +783,26 @@ void R_DrawSinglePlane(visplane_t* pl)
           ds_translucentmap = & translucenttables[ TRANSLU_TABLE_med ];
 
       if(pl->extra_colormap && pl->extra_colormap->fog)
-        light = (pl->lightlevel >> LIGHTSEGSHIFT);
+        vlight = pl->lightlevel;
       else
-        light = LIGHTLEVELS-1;
+        vlight = 255;
     }
     else if(pl->ffloor->flags & FF_FOG)
     {
       spanfunc = fogspanfunc; // R_DrawFogSpan_8 16 ..
-      light = (pl->lightlevel >> LIGHTSEGSHIFT);
+      vlight = pl->lightlevel;
     }
     else if(pl->extra_colormap && pl->extra_colormap->fog)
-      light = (pl->lightlevel >> LIGHTSEGSHIFT);
+      vlight = pl->lightlevel;
     else
-      light = (pl->lightlevel >> LIGHTSEGSHIFT)+extralight;
+      vlight = pl->lightlevel + extralight;
   }
   else
   {
     if(pl->extra_colormap && pl->extra_colormap->fog)
-      light = (pl->lightlevel >> LIGHTSEGSHIFT);
+      vlight = pl->lightlevel;
     else
-      light = (pl->lightlevel >> LIGHTSEGSHIFT)+extralight;
+      vlight = pl->lightlevel + extralight;
   }
 
   if(viewangle != pl->viewangle)
@@ -867,13 +867,10 @@ void R_DrawSinglePlane(visplane_t* pl)
   yoffs = pl->yoffs;
   planeheight = abs(pl->height - pl->viewz);
 
-  if (light >= LIGHTLEVELS)
-      light = LIGHTLEVELS-1;
-
-  if (light < 0)
-      light = 0;
-
-  planezlight = zlight[light];
+  planezlight =
+      (vlight < 0) ?  zlight[0]
+    : (vlight >= 255) ?  zlight[LIGHTLEVELS-1]
+    : zlight[vlight>>LIGHTSEGSHIFT];
 
   //set the MAXIMUM value for unsigned short (but is not MAX for int)
   // mark the columns on either side of the valid area

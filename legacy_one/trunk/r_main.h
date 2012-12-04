@@ -98,10 +98,14 @@ extern byte	fog_init;
 //
 
 // Lighting constants.
+// Light is 0..255
+#define LIGHT_UNIT     16
+
+// Reduced light scale for light table lookup ( scalelight[][] )
 // Now why not 32 levels here?
 #define LIGHTLEVELS             16
 #define LIGHTSEGSHIFT            4
-
+// Light scaled by distance
 #define MAXLIGHTSCALE           48
 #define LIGHTSCALESHIFT         12
 #define MAXLIGHTZ              128

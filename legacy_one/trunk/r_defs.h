@@ -323,10 +323,10 @@ typedef struct r_lightlist_s {
   fixed_t                 botheight;
   fixed_t                 botheightstep;
   short                   lightlevel;
+  short                   vlight;  // visible light 0..255
   extracolormap_t*        extra_colormap;
   lighttable_t*           rcolormap;
   int                     flags;
-  int                     lightnum;
 } r_lightlist_t;
 
 

@@ -878,12 +878,12 @@ void A_Light0 (player_t *player, pspdef_t *psp)
 
 void A_Light1 (player_t *player, pspdef_t *psp)
 {
-    player->extralight = 1;
+    player->extralight = 1*LIGHT_UNIT;
 }
 
 void A_Light2 (player_t *player, pspdef_t *psp)
 {
-    player->extralight = 2;
+    player->extralight = 2*LIGHT_UNIT;
 }
 
 
