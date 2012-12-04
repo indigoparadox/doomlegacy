@@ -55,5 +55,8 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 );
 
 void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor);
 
+void R_RenderFog( ffloor_t* fff, sector_t * fogsec, int foglight,
+		  fixed_t scale );
+
 void R_StoreWallRange( int start, int stop );
 #endif
