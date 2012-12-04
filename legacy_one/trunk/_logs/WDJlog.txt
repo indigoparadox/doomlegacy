@@ -2969,3 +2969,8 @@ patchfile = w88_9_hw_waterside.patch
 - committed revision 994   by wesley johnson
 Fix split wall draws so that hardware renderer draws water sides with
 3dfloor backsectors, and they are drawn translucent.
+
+*** w88_docs
+patchfile = w88_10_docs.patch
+- committed revision 995   by wesley johnson
+Update editing and whatsnew for alpha 4 release.
