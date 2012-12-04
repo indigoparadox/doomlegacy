@@ -1649,6 +1649,8 @@ menuitem_t EffectsOptionsMenu[]=
 #ifdef BOOM_GLOBAL_COLORMAP
     {IT_STRING | IT_CVAR,0,    "Boom Colormap"    , &cv_boom_colormap , 0},
 #endif
+    {IT_STRING | IT_CVAR,0,    "Water Effect"    , &cv_water_effect   , 0},
+    {IT_STRING | IT_CVAR,0,    "Fog Effect"      , &cv_fog_effect     , 0},
 };
 
 menu_t  EffectsOptionsDef =

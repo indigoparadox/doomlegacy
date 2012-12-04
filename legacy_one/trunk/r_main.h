@@ -214,6 +214,8 @@ extern consvar_t cv_detaillevel;
 extern consvar_t cv_scalestatusbar;
 extern consvar_t cv_grtranslucenthud;
 extern consvar_t cv_boom_colormap;
+extern consvar_t cv_water_effect;
+extern consvar_t cv_fog_effect;
 
 // Called by startup code.
 void R_Init (void);

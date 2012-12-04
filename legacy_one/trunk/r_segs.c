@@ -956,8 +956,9 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
     //   for horizontal / vertical / diagonal. Diagonal?
 
     curline = ds->curline;
-    backsector = ffloor->target;
-    frontsector = curline->frontsector == ffloor->target ? curline->backsector : curline->frontsector;
+    backsector = ffloor->taggedtarget;
+    frontsector = (curline->frontsector == ffloor->taggedtarget) ?
+                   curline->backsector : curline->frontsector;
     if (curline->v1->y == curline->v2->y)
         orient_light = -ORIENT_LIGHT;
     else if (curline->v1->x == curline->v2->x)

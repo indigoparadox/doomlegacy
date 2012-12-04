@@ -300,6 +300,20 @@ void BoomColormap_detect(void)
 }
 #endif
 
+// matches fogwater_effect_e
+CV_PossibleValue_t  fogwater_effect_cons_t[]={
+   {FW_colormap,"Colormap" },
+   {FW_clear,"Clear"},
+   {FW_cast,"Cast"},
+   {FW_fogfluid,"Fog Fluid"},
+   {FW_inside,"Inside"},
+   {FW_foglite,"Fog Lite"},
+   {FW_fogdust,"Fog Dust"},
+   {FW_fogsheet,"Fog Sheet"},
+   {0,NULL} };
+consvar_t cv_water_effect = {"watereffect", "Clear", CV_SAVE|CV_CALL, fogwater_effect_cons_t, R_FW_config_update};
+consvar_t cv_fog_effect = {"fogeffect", "Fog Dust", CV_SAVE|CV_CALL, fogwater_effect_cons_t, R_FW_config_update};
+
 // added 16-6-98:splitscreen
 
 void SplitScreen_OnChange(void);
@@ -1518,4 +1532,6 @@ void R_RegisterEngineStuff (void)
 #ifdef BOOM_GLOBAL_COLORMAP
     CV_RegisterVar (&cv_boom_colormap);
 #endif
+    CV_RegisterVar (&cv_water_effect);
+    CV_RegisterVar (&cv_fog_effect);
 }
