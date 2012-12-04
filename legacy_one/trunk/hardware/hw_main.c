@@ -654,7 +654,7 @@ byte LightLevelToLum(int l)
     if (fixedcolormap)
         return 255;
     l = lightleveltonumlut[l];
-    l += (extralight << 4);	// from guns
+    l += extralight;	// from guns
     if (l > 255)
         l = 255;
     return l;
@@ -666,7 +666,7 @@ byte LightLevelToLum_extra(int l, int extra)
     if (fixedcolormap)
         return 255;
     l = lightleveltonumlut[l];
-    l += (extra << 4);	// from guns, etc..
+    l += extra;	// from guns, etc..
     if (l > 255)
         l = 255;
     return l;

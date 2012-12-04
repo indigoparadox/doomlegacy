@@ -2870,5 +2870,10 @@ Disabled debug printf statement concerning netvars.
 
 *** w87_fs_misc
 patchfile = w87_5b_fs_misc.patch
-- committed revision 981   by wesley johnson
+- committed revision 982   by wesley johnson
 A portion of w83_fs patches that seems to have got left out.
+
+*** w87_extralight_misc
+patchfile = w87_5c_extralight__misc.patch
+- committed revision 983   by wesley johnson
+A portion of w87_light255 patch that seems to have got left out.
