@@ -3396,9 +3396,9 @@ static void HWR_ProjectSprite(mobj_t * thing)
       light = R_GetPlaneLight(thingsector, gz_top);
       lightlevel = *thingsector->lightlist[light].lightlevel;
       if(thingsector->lightlist[light].caster && thingsector->lightlist[light].caster->flags & FF_FOG)
-	 sectorlight = LightLevelToLum(lightlevel); // add extralight
+	sectorlight = LightLevelToLum_extra(lightlevel, extralight_fog); // add extralight
       else
-         sectorlight = LightLevelToLum_extra(lightlevel, 0);  // extralight=0
+        sectorlight = LightLevelToLum_extra(lightlevel, 0);  // extralight=0
     }
 
     thingmodelsec = thingsector->modelsec;

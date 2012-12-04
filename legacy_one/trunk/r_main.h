@@ -115,7 +115,9 @@ extern lighttable_t*    scalelight[LIGHTLEVELS][MAXLIGHTSCALE];
 extern lighttable_t*    scalelightfixed[MAXLIGHTSCALE];
 extern lighttable_t*    zlight[LIGHTLEVELS][MAXLIGHTZ];
 
-extern int              extralight;
+extern unsigned int     extralight;	 // extralight seen by most draws
+extern unsigned int     extralight_fog;  // partial extralight used by FF_FOG
+extern unsigned int     extralight_cm;   // partial extralight used by colormap->fog
 extern lighttable_t*    fixedcolormap;
 
 // [WDJ] viewer setup as used by R_RenderBSPNode, R_FakeFlat, R_ProjectSprite
