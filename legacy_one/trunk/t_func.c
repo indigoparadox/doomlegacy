@@ -4275,6 +4275,7 @@ err_numarg:
 }
 
 
+// Background color fades
 // SetFade( red, green, blue, alpha )
 void SF_SetFade(void)
 {
@@ -4290,7 +4291,7 @@ void SF_SetFade(void)
     b = (unsigned long)t_argv[2].value.i;
     alpha = t_argv[3].value.i;
 
-    // Calculate the color value
+    // Calculate the background color value
     fadecolor = (256 * b) + (65536 * g) + (16777216 * r);
     fadealpha = alpha;
 done:
