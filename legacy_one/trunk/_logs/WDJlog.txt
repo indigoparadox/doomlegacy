@@ -2958,3 +2958,8 @@ patchfile = w88_7_hwfogdraw.patch
 - committed revision 992   by wesley johnson
 Adds fog drawing and fog texture creation to hardware renderer.
 Draw the fog face sheets when in foggy sectors.
+
+*** w88_hwfogjoin
+patchfile = w88_8_hwfogjoin.patch
+- committed revision 993   by wesley johnson
+Create fog draws of join sheets for FF_JOIN in hardware render.

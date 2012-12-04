@@ -1319,18 +1319,19 @@ float HWR_ClipViewSegment(int x, polyvertex_t * v1, polyvertex_t * v2)
 //
 static
 void HWR_SplitWall(sector_t * sector, vxtx3d_t * vxtx, int texnum,
-		   FSurfaceInfo_t * Surfp, uint32_t cutflag)
+		   FSurfaceInfo_t * Surfp, uint32_t fflags, uint32_t cutflag)
 {
     /*
        SoM: split up and light walls according to the
        lightlist. This may also include leaving out parts
        of the wall that can't be seen
      */
-    MipTexture_t *miptex;
+    MipTexture_t * miptex;
     float realtop, realbot, top, bot;
     float pegt, pegb, pegmul;
     float height, bheight = 0;
     int solid, i;
+    byte base_alpha = Surfp->FlatColor.s.alpha;
     ff_lightlist_t *ffl_list = sector->lightlist;  // fakefloor lightlist
     ffloor_t * caster;
 
@@ -1345,6 +1346,9 @@ void HWR_SplitWall(sector_t * sector, vxtx3d_t * vxtx, int texnum,
         // check each fake floor for
         if (top < realbot)
             return;
+
+	Surfp->FlatColor.s.alpha = base_alpha;
+
         // check each ffloor light for blocking or affecting this wall draw
         caster = ffl_list[i].caster;
 
@@ -1353,7 +1357,16 @@ void HWR_SplitWall(sector_t * sector, vxtx3d_t * vxtx, int texnum,
         //    continue;
 
         if ( caster )
+        {
             solid = caster->flags & cutflag;
+            if( (fflags & FF_JOIN_SIDES)
+		&& ( (caster->flags & (FF_TRANSLUCENT|FF_FOG)) == (fflags & (FF_TRANSLUCENT|FF_FOG)) ) )
+	    {
+//	        Surfp->FlatColor.s.alpha = base_alpha * 0.4;  // JOIN
+	        Surfp->FlatColor.s.alpha = base_alpha * 0.45;  // JOIN
+	        solid = false;
+	    }
+	}
         else
             solid = false;
 
@@ -1643,7 +1656,8 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
 
 	    Surf.polyflags = PF_Environment;
             if (gr_frontsector->numlights)
-                HWR_SplitWall(gr_frontsector, vxtx, toptexnum, &Surf, FF_CUTSOLIDS);
+                HWR_SplitWall(gr_frontsector, vxtx, toptexnum, &Surf,
+			      0, FF_CUTSOLIDS);
             else if (miptex->mipmap.tfflags & TF_TRANSPARENT)
                 HWR_AddTransparentWall(vxtx, &Surf, toptexnum, PF_Environment);
             else
@@ -1681,7 +1695,8 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
 
 	    Surf.polyflags = PF_Environment;
             if (gr_frontsector->numlights)
-                HWR_SplitWall(gr_frontsector, vxtx, bottomtexnum, &Surf, FF_CUTSOLIDS);
+                HWR_SplitWall(gr_frontsector, vxtx, bottomtexnum, &Surf,
+			      0, FF_CUTSOLIDS);
             else if (miptex->mipmap.tfflags & TF_TRANSPARENT)
                 HWR_AddTransparentWall(vxtx, &Surf, bottomtexnum, PF_Environment);
             else
@@ -1822,7 +1837,8 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
             // I don't think that solid walls can use translucent linedef types...
 	    Surf.polyflags = PF_Environment;
             if (gr_frontsector->numlights)
-                HWR_SplitWall(gr_frontsector, vxtx, midtexnum, &Surf, FF_CUTSOLIDS);
+                HWR_SplitWall(gr_frontsector, vxtx, midtexnum, &Surf,
+			      0, FF_CUTSOLIDS);
             else
             {
                 if (miptex->mipmap.tfflags & TF_TRANSPARENT)
@@ -1914,7 +1930,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
 //		        if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
 		    Surf.polyflags = blendmode;
 		    HWR_SplitWall(gr_frontsector, vxtx, midtexnum, &Surf,
-//				  bff->flags,
+				  bff->flags,
 				  bff->flags & FF_EXTRA ? FF_CUTEXTRA : FF_CUTSOLIDS);
 		}
 	        else
@@ -1997,7 +2013,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
 //		        if( midtexnum == 0 ) continue;  // no texture to display (when 3Dslab is missing side texture)
 		    Surf.polyflags = blendmode;
 		    HWR_SplitWall(gr_backsector, vxtx, midtexnum, &Surf,
-//				  fff->flags,
+				  fff->flags,
 				  fff->flags & FF_EXTRA ? FF_CUTEXTRA : FF_CUTSOLIDS);
 		}
 	        else
