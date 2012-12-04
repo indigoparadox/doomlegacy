@@ -2678,8 +2678,7 @@ void R_PrecacheLevel (void)
     // Note that F_SKY1 is the name used to
     //  indicate a sky floor/ceiling as a flat,
     //  while the sky texture is stored like
-    //  a wall texture, with an episode dependend
-    //  name.
+    //  a wall texture, with an episode dependent name.
     texturepresent[skytexture] = 1;
 
     //if (devparm)
@@ -2698,13 +2697,6 @@ void R_PrecacheLevel (void)
 
         // note: pre-caching individual patches that compose textures became
         //       obsolete since we now cache entire composite textures
-
-        //for (j=0 ; j<texture->patchcount ; j++)
-        //{
-        //    lump = texture->patches[j].patch;
-        //    texturememory += W_LumpLength(lump);
-        //    W_CacheLumpNum(lump , PU_CACHE);
-        //}
     }
     //CONS_Printf ("total mem for %d textures: %d k\n",numgenerated,texturememory>>10);
 
