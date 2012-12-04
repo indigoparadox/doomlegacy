@@ -2830,3 +2830,11 @@ patchfile = w86_9_hw_view_colormap.patch
 Fix the hardware draw of Boom and view_colormap.
 Now see global colormap change with Boom deep water and colormap fog
 in opengl mode.
+
+*** w87_mobj_subsector
+patchfile = w87_1_mobj_subsector.patch
+- committed revision 977   by wesley johnson
+Fix segfault in dsv4.  When wrong buttons are pressed player is hurt.
+If they are pressed after getting the yellow key, then segfault.
+There is a mobj without a subsector, and script code must check first.
+
