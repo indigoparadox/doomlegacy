@@ -258,24 +258,25 @@ fs_value_t getvariablevalue(fs_variable_t *v)
 }
 
 // set a variable to a value from an fs_value_t
-
 void setvariablevalue(fs_variable_t *v, fs_value_t newvalue)
 {
   if(fs_killscript)  goto done;  // protect the variables when killing script
   
   if(!v)  goto done;
 
-  switch( v->type )  // store as type
+  if(v->type == FSVT_const)
   {
-   case FSVT_const:
       // const adapts to the value it is set to
       v->type = newvalue.type;
 
       // alloc memory for string
-      if(v->type == FSVT_string)   // static incase a global_script var
+      if(v->type == FSVT_string)   // static in case a global_script var
 	v->value.s = Z_Malloc(256, PU_STATIC, 0);
-      break;
-  
+      // fall through to set value like any other var
+  }
+
+  switch( v->type )  // store as type
+  {
    case FSVT_int:
       v->value.i = intvalue(newvalue);
       break;
