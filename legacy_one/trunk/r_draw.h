@@ -71,6 +71,9 @@ extern byte*            yhlookup[MAXVIDWIDTH];
 extern int              hcolumnofs[MAXVIDHEIGHT];
 #endif
 
+extern byte             dr_alpha;  // translucent and fog alpha, 0..255
+
+
 // -------------------------
 // COLUMN DRAWING CODE STUFF
 // -------------------------
@@ -91,9 +94,11 @@ extern byte             dc_translucent_index;
 
 
 // Variable flat sizes SSNTails 06-10-2003
-extern int flatsize;
-extern int flatmask;
-extern int flatsubtract;
+extern unsigned int flatsize;
+extern unsigned int flatbitsz;  // flat bit size, flatsize = 2**flatbitsz
+extern unsigned int flatfracbits; // FRACBITS - flatbitsz
+extern unsigned int flat_ymask;   // index mask, = (flatsize-1)<<flatbitsz
+extern fixed_t      flat_imask;   // index mask, = (flatsize<<flatbitsz) - 1
 
 // translation stuff here
 

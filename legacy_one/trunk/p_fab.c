@@ -128,7 +128,7 @@ enum { TRF_MT = 0xFFF, TRF_ext = 0x1000, TRF_noflag = 0x8000 };
 typedef struct {
     uint16_t     flag_mt;  // MT type to check MF_TRANSLUCENT, + TRF_
     uint16_t     first_state, last_state;  // statenum_t
-    byte         translu_sel;   // translucent_e
+    byte         translu_sel;   // translucent_e, no Boom ext
 } PACKED_ATTR  translucent_state_item_t;
 // [WDJ] Table costs 500 more bytes than the inline calls when not packed !!
 

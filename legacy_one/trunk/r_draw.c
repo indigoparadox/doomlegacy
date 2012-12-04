@@ -124,6 +124,8 @@ byte*           yhlookup[MAXVIDWIDTH];
 int             hcolumnofs[MAXVIDHEIGHT];
 #endif
 
+byte            dr_alpha;  // translucent and fog alpha, 0..255
+
 // =========================================================================
 //                      COLUMN DRAWING CODE STUFF
 // =========================================================================
@@ -188,9 +190,11 @@ byte*                   ds_source;      // start of a 64*64 tile image
 byte*                   ds_translucentmap;    // one of the translucency tables
 
 // Variable flat sizes SSNTails 06-10-2003
-int flatsize;
-int flatmask;
-int flatsubtract;
+unsigned int flatsize;
+unsigned int flatbitsz;  // flat bit size, flatsize = 2**flatbitsz
+unsigned int flatfracbits; // FRACBITS - flatbitsz
+unsigned int flat_ymask;   // index mask, = (flatsize-1)<<flatbitsz
+fixed_t      flat_imask;   // index mask, = (flatsize<<FRACBITS) - 1
 
 
 // ==========================================================================

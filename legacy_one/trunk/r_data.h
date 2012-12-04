@@ -241,6 +241,12 @@ typedef enum
     TRANSLU_TABLE_fx1 =  TRANSLU_TABLE_INDEX(TRANSLU_fx1)
 } translucent_table_index_e;
 
+// Table of alpha = 0..255 to translucent tables to be used for DRAW8PAL
+// index by alpha >> 4
+extern const unsigned int  translucent_alpha_table[16];
+// alpha where reversed translucent tables are used
+#define TRANSLU_REV_ALPHA    144
+
 
 typedef struct
 {
