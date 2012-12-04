@@ -1995,7 +1995,7 @@ void P_SpawnPlayer(mapthing_t * mthing, int playernum )
     // notify network
     SV_SpawnPlayer(playernum, mobj->x, mobj->y, mobj->angle);
 
-    if (camera.chase && displayplayer == playernum)
+    if (camera.chase == p)
         P_ResetCamera(p);
 
 #ifdef VOODOO_DOLL

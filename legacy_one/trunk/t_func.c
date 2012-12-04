@@ -2547,7 +2547,7 @@ err_numarg:
 
 /************* Camera functions ***************/
 
-camera_t script_camera = { false, 0, 0, 0, 0, NULL };
+camera_t script_camera = { NULL, NULL, 0, 0, 0, 0 };
 boolean script_camera_on;
 
 // SetCamera(obj, [angle], [viewheight], [pitch])

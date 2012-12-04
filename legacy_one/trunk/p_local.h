@@ -205,15 +205,14 @@ void P_DropWeapon (player_t* player);
 //
 typedef struct camera_s
 {
-    boolean     chase;
+    player_t *  chase;  // player the camera chases, NULL when off
+    mobj_t*     mo;     // the camera object
     angle_t     aiming;
     int         fixedcolormap;
 
     //SoM: Things used by FS cameras.
     fixed_t     viewheight;
     angle_t     startangle;
-
-    mobj_t*     mo;
 } camera_t;
 
 extern camera_t camera;

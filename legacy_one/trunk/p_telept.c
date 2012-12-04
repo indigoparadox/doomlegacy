@@ -131,7 +131,7 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle)
         player->bob_momx = player->bob_momy = 0;
 #endif
         // move chasecam at new player location
-        if ( camera.chase )
+        if ( camera.chase == player )
             P_ResetCamera (player);
     }
     
@@ -292,7 +292,7 @@ int EV_SilentTeleport(line_t *line, int side, mobj_t *thing)
               player->deltaviewheight = deltaviewheight;
 
               // SoM: 3/15/2000: move chasecam at new player location
-              if ( camera.chase )
+              if ( camera.chase == player )
                  P_ResetCamera (player);
 
 	  }
@@ -429,7 +429,7 @@ int EV_SilentLineTeleport(line_t *line, int side, mobj_t *thing,
             player->deltaviewheight = deltaviewheight;
 
             // SoM: 3/15/2000: move chasecam at new player location
-            if ( camera.chase )
+            if ( camera.chase == player )
                P_ResetCamera (player);
 	}
 
