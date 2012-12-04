@@ -1173,10 +1173,10 @@ void P_NightmareRespawn(mobj_t * mobj)
 
     // spawn a teleport fog at old spot
     // because of removal of the body?
-	if(mthing->options & MTF_FS_SPAWNED)
-		mo = P_SpawnMobj(mobj->x, mobj->y, mobj->z + (gamemode == heretic ? TELEFOGHEIGHT : 0), MT_TFOG);
-	else
-		mo = P_SpawnMobj(mobj->x, mobj->y, mobj->subsector->sector->floorheight + (gamemode == heretic ? TELEFOGHEIGHT : 0), MT_TFOG);
+    if(mthing->options & MTF_FS_SPAWNED)
+        mo = P_SpawnMobj(mobj->x, mobj->y, mobj->z + (gamemode == heretic ? TELEFOGHEIGHT : 0), MT_TFOG);
+    else
+        mo = P_SpawnMobj(mobj->x, mobj->y, mobj->subsector->sector->floorheight + (gamemode == heretic ? TELEFOGHEIGHT : 0), MT_TFOG);
     // initiate teleport sound
     S_StartSound(mo, sfx_telept);
 

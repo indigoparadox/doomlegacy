@@ -4179,23 +4179,65 @@ void transform(float *cx, float *cy, float *cz)
 
 //Hurdler: 3D Water stuff
 #define ABS(x) ((x) < 0 ? -(x) : (x))
-#define MAX_3DWATER 512
-static planeinfo_t *planeinfo = NULL;
 
+#define PLANEINFO_INC 512
+static planeinfo_t *planeinfo = NULL;
+static int planeinfo_len = 0;  // num allocated
+
+#define PLANE_MERGE_SORT
+
+// Add translucent plane, called for each plane visible
 void HWR_Add3DWater(int lumpnum, extrasubsector_t * xsub, fixed_t fixedheight, int lightlevel, int alpha)
 {
-    if (!(numplanes % MAX_3DWATER))
+    if (numplanes >= planeinfo_len)
     {
-        planeinfo = (planeinfo_t *) realloc(planeinfo, (numplanes + MAX_3DWATER) * sizeof(planeinfo_t));
+        // expand number of planeinfo
+        planeinfo_len += PLANEINFO_INC;
+        planeinfo = (planeinfo_t *) realloc(planeinfo, planeinfo_len * sizeof(planeinfo_t));
+        if( planeinfo == NULL )
+	    I_Error( "Planeinfo: cannot alloc\n" );
     }
+#ifdef PLANE_MERGE_SORT
+    {
+    // [WDJ] Merge sort is faster than bubble-sort or quicksort, because
+    // the tests can be made simpler, takes advantage of already sorted list,
+    // and it moves all closer entries at once, and only once.
+    planeinfo_t * plnew = & planeinfo[numplanes];
+    planeinfo_t * pl;
+    // merge sort farthest to closest
+    fixed_t dist_abs = ABS(dup_viewz - fixedheight);
+    fixed_t dist_min = dup_viewz - dist_abs;  // test
+    fixed_t dist_max = dup_viewz + dist_abs;  // test
+    for( pl = & planeinfo[0]; pl < plnew; pl++ )
+    {
+        // test for plane closer
+        if( pl->fixedheight > dist_min && pl->fixedheight < dist_max )
+	   break; // entry is closer than new plane
+    }
+    if( pl < plnew )
+    {
+        // move all closer entries at once
+	memmove( pl+1, pl, (byte*)plnew-(byte*)pl );
+        plnew = pl;
+    }
+    plnew->fixedheight = fixedheight;
+    plnew->lightlevel = lightlevel;
+    plnew->lumpnum = lumpnum;
+    plnew->xsub = xsub;
+    plnew->alpha = alpha;
+    }
+#else
     planeinfo[numplanes].fixedheight = fixedheight;
     planeinfo[numplanes].lightlevel = lightlevel;
     planeinfo[numplanes].lumpnum = lumpnum;
     planeinfo[numplanes].xsub = xsub;
     planeinfo[numplanes].alpha = alpha;
+#endif
     numplanes++;
 }
 
+#if 0
+// [WDJ] UNUSED
 #define DIST_PLANE(i) ABS(planeinfo[(i)].fixedheight-dup_viewz)
 
 //FIXME: this doesn't work yet
@@ -4231,11 +4273,16 @@ void HWR_QuickSortPlane(int low, int high)
         HWR_QuickSortPlane(hi + 1, high);
     }
 }
+#endif
 
 void HWR_Render3DWater()
 {
     int i;
 
+#ifdef PLANE_MERGE_SORT
+    //[WDJ] Do merge sort during insert of plane, then fewest operations,
+    // one calc of dist, and one memcpy
+#else
     //bubble sort 3D Water for correct alpha blending
     //FIXME: do a quick sort since there can be lots of plane to sort
     {
@@ -4258,6 +4305,7 @@ void HWR_Render3DWater()
         }
     }
     //HWR_QuickSortPlane(0, numplanes-1);
+#endif
 
     gr_frontsector = NULL;      //Hurdler: gr_fronsector is no longer valid
     for (i = 0; i < numplanes; i++)
@@ -4380,6 +4428,7 @@ void HWR_AddTransparentWall(vxtx3d_t * vxtx, FSurfaceInfo_t * pSurf, int texnum,
     num_late_walls++;
 }
 
+// Called from HWR_RenderPlayerView
 void HWR_RenderTransparentWalls()
 {
     int lwi = late_wall_farthest;
