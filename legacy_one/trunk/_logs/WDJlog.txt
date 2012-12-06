@@ -2974,3 +2974,13 @@ Fix split wall draws so that hardware renderer draws water sides with
 patchfile = w88_10_docs.patch
 - committed revision 995   by wesley johnson
 Update editing and whatsnew for alpha 4 release.
+
+*** fogtst.wad
+file = common/wads/fogtst.zip
+- committed revision 996   by wesley johnson
+A wad to test fog effects.
+
+*** w88_alpha4
+patchfile = w88_11_alpha4.patch
+- committed revision 997   by wesley johnson
+Update whatsnew doc for alpha4 release.
