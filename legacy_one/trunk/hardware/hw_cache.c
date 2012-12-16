@@ -521,12 +521,10 @@ static byte * MakeBlock( Mipmap_t *mipmap )
            {
                 // fill background with chromakey, alpha=0
 		pixelalpha_t alphachr = {HWR_PATCHES_CHROMAKEY_COLORINDEX, 0};
+	        pixelalpha_t * blka = (pixelalpha_t*) block;
 	        int i;
                 for( i=0; i<blocksize; i++ )
-	        {
-                   *((pixelalpha_t*)block) = alphachr;
-		   block += 2;
-		}
+                   blka[i] = alphachr;
 	   }
            break;
         case 4:

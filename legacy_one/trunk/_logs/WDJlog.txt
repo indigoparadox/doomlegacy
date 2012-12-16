@@ -2989,3 +2989,13 @@ Update whatsnew doc for alpha4 release.
 patchfile = w88_12_alpha4ver.patch
 - committed revision 998   by wesley johnson
 Update alpha4 VERSIONSTRING.
+
+*** w88_blockfill
+patchfile = w88_13_blockfill.patch
+- committed revision 999   by wesley johnson
+A previous patch ( w86_hw_cache, svn973 ) caused a bug, triggered when an imp
+shoots a fireball.
+Used the block ptr as a loop var and returned the same to the caller.
+Fixed by giving the loop its own copy of the ptr.
+
+
