@@ -329,7 +329,7 @@
 // Version number: major.minor.revision
 const int  VERSION  = 144; // major*100 + minor
 const int  REVISION = 0;   // for bugfix releases, should not affect compatibility. has nothing to do with svn revisions.
-static const char VERSIONSTRING[] = "alpha3 (rev " SVN_REV ")";
+static const char VERSIONSTRING[] = "alpha4 (rev " SVN_REV ")";
 char VERSION_BANNER[80];
 
 // [WDJ] change this if legacy.wad is changed

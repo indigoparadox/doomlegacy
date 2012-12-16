@@ -1,4 +1,4 @@
-[WDJ]	wesleyjohnson
+\[WDJ]	wesleyjohnson
 
 START: 11/1/2009
 
@@ -2984,3 +2984,8 @@ A wad to test fog effects.
 patchfile = w88_11_alpha4.patch
 - committed revision 997   by wesley johnson
 Update whatsnew doc for alpha4 release.
+
+*** w88_alpha4_version
+patchfile = w88_12_alpha4ver.patch
+- committed revision 998   by wesley johnson
+Update alpha4 VERSIONSTRING.
