@@ -2998,4 +2998,12 @@ shoots a fireball.
 Used the block ptr as a loop var and returned the same to the caller.
 Fixed by giving the loop its own copy of the ptr.
 
+*** w89_offset_patch
+patchfile = w89_1_offset_patch.patch
+- committed revision 1000   by wesley johnson
+FreeDoom is using large patches, with an offset to select a portion.
+A single patch texture, with an offset, was generating the wrong
+texture.  This detects these and uses the multiple patch combine
+generation instead.  Large patches also are directed to multiple patch
+combine to avoid multiple large copies of the same patch.
 
