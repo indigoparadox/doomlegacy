@@ -643,11 +643,17 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
         {
 	    // Boom transparency map
 	    translucent_map_t * tm = & translu_store[ ldef->translu_eff - TRANSLU_ext ];
+#if 0
 	    if( vid.drawmode == DRAW8PAL )
 	    {
 	        // dc_translucentmap only works on DRAW8PAL
 	        dc_translucentmap = W_CacheLumpNum( tm->translu_lump_num, PU_CACHE );
 	    }
+#else
+	    // dc_translucentmap required for DRAW8PAL,
+	    // but is used indirectly in other draw modes, for some TRANSLU.
+	    dc_translucentmap = W_CacheLumpNum( tm->translu_lump_num, PU_CACHE );
+#endif
 	    // for other draws
 	    dc_translucent_index = tm->substitute_std_translucent;
 	}
