@@ -1747,6 +1747,34 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                     break;
             }
 
+            if (EN_drawtextured)
+            {
+	        // TRANSLU_fx1 requires TF_Opaquetrans flag to draw texture
+                miptex = HWR_GetTexture(midtexnum, Surf.texflags);
+
+	        if (miptex && (miptex->mipmap.tfflags & TF_TRANSPARENT))
+		     blendmode = PF_Environment;
+	    }
+
+#if 1
+	    {
+		// [WDJ] ic2005.wad has three textures that are pegged
+	        // to moving DeepWater sectors.
+		// 1) translucent over DeepWater door, yoffset=+120
+		//    tried if( blendmode != PF_Masked )
+		// 2) transparent electric arc, under DeepWater ceiling.
+		//    tried if(miptex->mipmap.tfflags & TF_TRANSPARENT)
+		// 3) small texture grid, with moving DeepWater ceiling and floor
+		//    no test
+		// 
+	        // These must peg to the actual sectors, ignoring DeepWater
+	        worldtop = gr_linedef->frontsector->ceilingheight;
+	        worldbottom = gr_linedef->frontsector->floorheight;
+	        worldbacktop = gr_linedef->backsector->ceilingheight;
+	        worldbackbottom = gr_linedef->backsector->floorheight;
+	    }
+#endif
+
             // SoM: a little note: This code re-arranging will
             // fix the bug in Nimrod map02. opentop and openbottom
             // record the limits the texture can be displayed in.
@@ -1786,9 +1814,6 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                 else
                     texturevpeg = polytop - h;
 
-	        // TRANSLU_fx1 requires TF_Opaquetrans flag to draw texture
-                miptex = HWR_GetTexture(midtexnum, Surf.texflags);
-
                 vxtx[3].tow = vxtx[2].tow = texturevpeg * miptex->scaleY;
                 vxtx[0].tow = vxtx[1].tow = (h - l + texturevpeg) * miptex->scaleY;
                 vxtx[0].sow = vxtx[3].sow = cliplow * miptex->scaleX;
@@ -1797,9 +1822,6 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
             // set top/bottom coords
             vxtx[2].y = vxtx[3].y = FIXED_TO_FLOAT( h );
             vxtx[0].y = vxtx[1].y = FIXED_TO_FLOAT( l );
-
-            if (miptex && (miptex->mipmap.tfflags & TF_TRANSPARENT))
-                blendmode = PF_Environment;
 
             if (blendmode != PF_Masked)
                 HWR_AddTransparentWall(vxtx, &Surf, midtexnum, blendmode);
