@@ -3034,3 +3034,12 @@ Pushing a switch turns it on and off.
 Two sided middle textures must be pegged to the original ceiling,
 not to the deepwater sector.
 Fixes bug 3169993.
+
+*** w89_heretic_finale
+patchfile = w89_5_heretic_finale.patch
+- committed revision 1004   by wesley johnson
+Fix bug 0799500.
+After Heretic E2M8 ending pic, the palette was not restored.
+The finale heretic code now a separate func, another state for heretic
+finale has been provided (to avoid showing the cast),
+and the palette is restored after the underwater pic has been shown.
