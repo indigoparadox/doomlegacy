@@ -428,31 +428,30 @@ static LPDIRECTSOUNDBUFFER raw2DS(unsigned char *dsdata, int len)
 // --------------------------------------------------------------------------
 // This function loads the sound data from the WAD lump, for single sound.
 // --------------------------------------------------------------------------
-void* I_GetSfx (sfxinfo_t*  sfx)
+void I_GetSfx (sfxinfo_t*  sfx)
 {
-    byte*               dssfx;
-    int                 size;
+    byte *  dssfx;
+    int     size;
 
-    if (sfx->lumpnum<0)
-        sfx->lumpnum = S_GetSfxLumpNum (sfx);
+    S_GetSfx( sfx );
 
 #ifdef HW3SOUND
     if (hws_mode != HWS_DEFAULT_MODE)
-        return W_CacheLumpNum(sfx->lumpnum, PU_STATIC);
+        return ;
 #endif
 
-    size = W_LumpLength (sfx->lumpnum);
-
-    // PU_CACHE because the data is copied to the DIRECTSOUNDBUFFER, the one here will not be used
-    dssfx = (byte*) W_CacheLumpNum (sfx->lumpnum, PU_CACHE);
+    size = sfx->length;
+    dssfx = sfx->data;
+    // because the data is copied to the DIRECTSOUNDBUFFER, the one here will not be used
 
 #ifdef SURROUND
     // Make a normal (not inverted) sound buffer
-    return (void*)raw2DS (dssfx, size, FALSE);
+    sfx->data = (void*)raw2DS (dssfx, size, FALSE);
 #else
     // return the LPDIRECTSOUNDBUFFER, which will be stored in S_sfx[].data
-    return (void *)raw2DS (dssfx, size);
+    sfx->data = (void *)raw2DS (dssfx, size);
 #endif
+    Z_Free( dssfx );
 }
 
 
@@ -462,8 +461,6 @@ void* I_GetSfx (sfxinfo_t*  sfx)
 void I_FreeSfx (sfxinfo_t* sfx)
 {
     LPDIRECTSOUNDBUFFER dsbuffer;
-
-    
 
     if (sfx->lumpnum<0)
         return;
@@ -597,15 +594,13 @@ static int GetFreeStackNum(int  newpriority)
 #ifdef SURROUND
 static LPDIRECTSOUNDBUFFER CreateInvertedSound(int id)
 {
-    int   lumpnum;
+    sfxinfo * sfx = &S_sfx[id];
     byte  *dsdata;
 
-    lumpnum = S_sfx[id].lumpnum;
-    if (lumpnum<0)      
-        lumpnum = S_GetSfxLumpNum (&S_sfx[id]);
-    dsdata = W_CacheLumpNum (lumpnum, PU_CACHE);
-    return raw2DS(dsdata, W_LumpLength (lumpnum), TRUE);
-
+    S_GetSfx( sfx );
+    dsdata = sfx->data;
+    if( ! dsdata )  return;
+    return raw2DS(dsdata, sfx->length, TRUE);
 }
 #endif
 
@@ -632,6 +627,7 @@ int I_StartSound (int            id,
                   int            pitch,
                   int            priority )
 {
+    sfxinfo_t * sfx = &S_sfx[id];
     HRESULT     hr;
     LPDIRECTSOUNDBUFFER     dsbuffer;
     DWORD       dwStatus;
@@ -654,7 +650,7 @@ int I_StartSound (int            id,
 
     // if the original buffer is playing, duplicate it (DirectSound specific)
     // else, use the original buffer
-    dsbuffer = (LPDIRECTSOUNDBUFFER) S_sfx[id].data;
+    dsbuffer = (LPDIRECTSOUNDBUFFER) sfx->data;
     dsbuffer->lpVtbl->GetStatus (dsbuffer, &dwStatus);
     if (dwStatus & (DSBSTATUS_PLAYING | DSBSTATUS_LOOPING))
     {
@@ -664,7 +660,7 @@ int I_StartSound (int            id,
         {
             //CONS_Printf ("Cound't duplicate sound buffer\n");
             // re-use the original then..
-            dsbuffer = (LPDIRECTSOUNDBUFFER) S_sfx[id].data;
+            dsbuffer = (LPDIRECTSOUNDBUFFER) sfx->data;
             // clean up stacksounds info
             for (i=0; i<MAXSTACKSOUNDS; i++)
 	    {
@@ -743,13 +739,11 @@ int I_StartSound (int            id,
         {
             byte*   dsdata;
             // reload sample data here
-            int     lumpnum = S_sfx[id].lumpnum;
-            if (lumpnum<0)
-                lumpnum = S_GetSfxLumpNum (&S_sfx[id]);
-            dsdata = W_CacheLumpNum (lumpnum, PU_CACHE);
+	    S_GetSfx( sfx );
+            dsdata = sfx->data;
 
-            // Well... Data lenght must be -8!!!
-            CopySoundData (dsbuffer, (byte*)dsdata + 8, W_LumpLength (S_sfx[id].lumpnum) - 8);
+            // Well... Data length must be -8!!!
+            CopySoundData (dsbuffer, (byte*)dsdata + 8, sfx->length - 8);
             
             // play
             hr = dsbuffer->lpVtbl->Play (dsbuffer, 0, 0, 0);
@@ -771,12 +765,10 @@ int I_StartSound (int            id,
             if ( SUCCEEDED ( hr ) )
             {
                 byte*   dsdata;
-                int     lumpnum = S_sfx[id].lumpnum;
-
-                if (lumpnum<0)
-                    lumpnum = S_GetSfxLumpNum (&S_sfx[id]);
-                dsdata = W_CacheLumpNum (lumpnum, PU_CACHE);
-                CopyAndInvertSoundData (dssurround, (byte*)dsdata + 8, W_LumpLength (S_sfx[id].lumpnum) - 8);
+	       
+	        S_GetSfx( sfx );
+	        dsdata = sfx->data;
+                CopyAndInvertSoundData (dssurround, (byte*)dsdata + 8, sfx->length - 8);
             
                 hr = dssurround->lpVtbl->Play (dssurround, 0, 0, 0);
             }

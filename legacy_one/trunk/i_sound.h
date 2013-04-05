@@ -60,7 +60,7 @@
 #include "command.h"
 
 
-void* I_GetSfx (sfxinfo_t*  sfx);
+void  I_GetSfx (sfxinfo_t*  sfx);  // read lump to sfx data, length
 void  I_FreeSfx (sfxinfo_t* sfx);
 
 

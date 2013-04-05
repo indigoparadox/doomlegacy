@@ -613,16 +613,15 @@ void A_Punch ( player_t* player, pspdef_t* psp )
 //
 void A_Saw ( player_t* player, pspdef_t* psp )
 {
-    angle_t     angle;
-    int         damage;
-    int         slope;
+    int      damage = 2*(P_Random()%10+1);  // first random is damage
+    int      slope;
+    // Random() must be in separate statements otherwise
+    // evaluation order will be ambiguous (lose demo sync).
+    int      ra2 = P_Random();  // second random adds to angle
+    angle_t  angle = player->mo->angle;
+    angle += (ra2 - P_Random())<<18;  // third random is subtraction
 
-    damage = 2*(P_Random ()%10+1);
-    angle = player->mo->angle;
-    angle += (P_Random()<<18); // WARNING: don't put this in one line 
-    angle -= (P_Random()<<18); // else this expretion is ambiguous (evaluation order not diffined)
-
-    // use meleerange + 1 se the puff doesn't skip the flash
+    // use meleerange + 1 so the puff doesn't skip the flash
     slope = P_AimLineAttack (player->mo, angle, MELEERANGE+1);
     P_LineAttack (player->mo, angle, MELEERANGE+1, slope, damage);
 

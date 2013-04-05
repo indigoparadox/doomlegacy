@@ -2492,7 +2492,7 @@ void R_AddSkins (int wadnum)
                         !stricmp(S_sfx[i].name, token+2) )
                     {
                         skins[numskins].soundsid[S_sfx[i].skinsound]=
-                            S_AddSoundFx(value+2,S_sfx[i].singularity);
+                            S_AddSoundFx(value+2, S_sfx[i].flags);
                         found=true;
                     }
                 }

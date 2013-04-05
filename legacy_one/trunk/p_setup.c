@@ -1584,6 +1584,7 @@ boolean P_SetupLevel (int           episode,
     players[consoleplayer].viewz = 1;
 
     // Make sure all sounds are stopped before Z_FreeTags.
+    // This will kill the last menu pistol sound too.
     S_StopSounds();
 
     // [WDJ] 7/2010 Free allocated memory in sectors before PU_LEVEL purge
@@ -1674,7 +1675,7 @@ boolean P_SetupLevel (int           episode,
 #endif
 
     //SoM: We've loaded the music lump, start the music.
-    S_Start();
+    S_StartSounds();
 
     //faB: now part of level loading since in future each level may have
     //     its own anim texture sequences, switches etc.

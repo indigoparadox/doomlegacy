@@ -201,6 +201,7 @@ volatile static int flag = 0;
 // Needed for calling the actual sound output.
 #define SAMPLECOUNT             1024
 #define NUM_CHANNELS            16
+#define CHANNEL_NUM_MASK  (NUM_CHANNELS-1)
 // It is 2 for 16bit, and 2 for two channels.
 #define BUFMUL                  4
 #define MIXBUFFERSIZE           (SAMPLECOUNT*BUFMUL)
@@ -208,8 +209,6 @@ volatile static int flag = 0;
 #define SAMPLERATE              11025   // Hz
 #define SAMPLESIZE              2       // 16bit
 
-// The actual lengths of all sound effects.
-//int           lengths[NUMSFX];
 
 // The actual output device and a flag for using 8bit samples.
 int audio_fd;
@@ -240,6 +239,7 @@ int channelstart[NUM_CHANNELS];
 // The sound in channel handles,
 //  determined on registration,
 //  might be used to unregister/stop/modify,
+// Lowest bits are the channel num.
 int channelhandles[NUM_CHANNELS];
 
 // SFX id of the playing sound effect.
@@ -284,21 +284,18 @@ void I_FreeSfx(sfxinfo_t * sfx)
 // This function loads the sound data from the WAD lump,
 //  for single sound.
 //
-void *I_GetSfx(sfxinfo_t * sfx)
+void I_GetSfx(sfxinfo_t * sfx)
 {
     byte *dssfx;
     int size, i;
     unsigned char *paddedsfx;
     int paddedsize;
 
-    if (sfx->lumpnum < 0)
-    {
-        sfx->lumpnum = S_GetSfxLumpNum(sfx);
-    }
+    S_GetSfxLump( sfx );
+    dssfx = (byte *) sfx->data;
+    if( ! dssfx )  return;
+    size = sfx->length;
 
-    size = W_LumpLength(sfx->lumpnum);
-
-    dssfx = (byte *) W_CacheLumpNum(sfx->lumpnum, PU_STATIC);
     paddedsize = ((size - 8 + (SAMPLECOUNT - 1)) / SAMPLECOUNT) * SAMPLECOUNT;
     paddedsfx = (unsigned char *) Z_Malloc(paddedsize + 8, PU_STATIC, 0);
     memcpy(paddedsfx, dssfx, size);
@@ -325,8 +322,8 @@ void *I_GetSfx(sfxinfo_t * sfx)
     *((int *) paddedsfx) = sndcnt;
     sndcnt++;
 #endif
-    return (void *) (paddedsfx);
-
+    sfx->data = (void *) paddedsfx;
+    sfx->length = size;
 }
 
 //
@@ -338,13 +335,7 @@ void *I_GetSfx(sfxinfo_t * sfx)
 //
 int addsfx(int sfxid, int volume, int step, int seperation)
 {
-    static unsigned short handlenums = 0;
-
     int i;
-    int rc = -1;
-
-    int oldest = gametic;
-    int oldestnum = 0;
     int slot;
 
     int rightvol;
@@ -352,7 +343,7 @@ int addsfx(int sfxid, int volume, int step, int seperation)
 
     // Chainsaw troubles.
     // Play these sound effects only one at a time.
-    if (sfxid == sfx_sawup || sfxid == sfx_sawidl || sfxid == sfx_sawful || sfxid == sfx_sawhit || sfxid == sfx_stnmov || sfxid == sfx_pistol)
+    if (S_sfx[sfxid].flags & SFX_single)
     {
         // Loop all channels, check.
         for (i = 0; i < cv_numChannels.value; i++)
@@ -360,33 +351,31 @@ int addsfx(int sfxid, int volume, int step, int seperation)
             // Active, and using the same SFX?
             if ((channels[i]) && (channelids[i] == sfxid))
             {
-                // Reset.
+	        if( S_sfx[sfxid].flags & SFX_id_fin )
+		    return chanp->handle;  // already have one
+                // Kill, Reset.
                 channels[i] = 0;
-                // We are sure that iff,
-                //  there will only be one.
                 break;
             }
         }
     }
 
     // Loop all channels to find oldest SFX.
-    for (i = 0; (i < cv_numChannels.value) && (channels[i]); i++)
+    slot = 0;  // default
+    int oldest = MAXINT;
+    for (i = 0; (i < cv_numChannels.value); i++)
     {
+        if (channels[i] == 0)  // unused
+        {
+	    slot = i;
+	    break;
+	}
         if (channelstart[i] < oldest)
         {
-            oldestnum = i;
+            slot = i;
             oldest = channelstart[i];
         }
     }
-
-    // Tales from the cryptic.
-    // If we found a channel, fine.
-    // If not, we simply overwrite the first one, 0.
-    // Probably only happens at startup.
-    if (i == cv_numChannels.value)
-        slot = oldestnum;
-    else
-        slot = i;
 
     // Okay, in the less recent channel,
     //  we will handle the new SFX.
@@ -395,18 +384,9 @@ int addsfx(int sfxid, int volume, int step, int seperation)
     // Set pointer to end of raw data.
     channelsend[slot] = channels[slot] + *((int *) S_sfx[sfxid].data);
 
-    // Reset current handle number, limited to 0..100.
-    //if (!handlenums)
-    //  handlenums = 100;
-
-    // Assign current handle number.
-    // Preserved so sounds could be stopped (unused).
-    channelhandles[slot] = rc = handlenums++;
-
-    // Set stepping???
+    // Set stepping
     // Kinda getting the impression this is never used.
     channelstep[slot] = step;
-    // ???
     channelstepremainder[slot] = 0;
     // Should be gametic, I presume.
     channelstart[slot] = gametic;
@@ -424,10 +404,16 @@ int addsfx(int sfxid, int volume, int step, int seperation)
 
     // Sanity check, clamp volume.
     if (rightvol < 0 || rightvol > 127)
-        I_Error("rightvol out of bounds");
+    {
+        I_SoftError("rightvol out of bounds\n");
+        rightvol = ( rightvol < 0 ) ? 0 : 127;
+    }
 
     if (leftvol < 0 || leftvol > 127)
-        I_Error("leftvol out of bounds");
+    {
+        I_SoftError("leftvol out of bounds\n");
+        leftvol = ( leftvol < 0 ) ? 0 : 127;
+    }
 
     // Get the proper lookup table piece
     //  for this volume level???
@@ -438,8 +424,10 @@ int addsfx(int sfxid, int volume, int step, int seperation)
     //  e.g. for avoiding duplicates of chainsaw.
     channelids[slot] = sfxid;
 
-    // You tell me.
-    return rc;
+    // Assign current handle number.
+    // Preserved so sounds could be stopped (unused).
+    channelhandles[slot] = slot | ((channelhandles[slot] + NUM_CHANNELS) & ~CHANNEL_NUM_MASK);
+    return channelhandles[slot];
 }
 
 //
@@ -541,17 +529,6 @@ void I_SetMusicVolume(int volume)
 }
 
 //
-// Retrieve the raw data lump index
-//  for a given SFX name.
-//
-int I_GetSfxLumpNum(sfxinfo_t * sfx)
-{
-    char namebuf[9];
-    sprintf(namebuf, "ds%s", sfx->name);
-    return W_GetNumForName(namebuf);
-}
-
-//
 // Starting a sound means adding it
 //  to the current list of active sounds
 //  in the internal channels.
@@ -591,48 +568,40 @@ int I_StartSound(int id, int vol, int sep, int pitch, int priority)
     // Debug.
     //fprintf( stderr, "starting sound %d", id );
 
-    // Returns a handle (not used).
-    id = addsfx(id, vol, steptable[pitch], sep);
+    // Returns a handle.
+    int handle = addsfx(id, vol, steptable[pitch], sep);
 
     // fprintf( stderr, "/handle is %d\n", id );
 
-    return id;
+    return handle;
 #endif
 }
 
+// You need the handle returned by StartSound.
 void I_StopSound(int handle)
 {
-    // You need the handle returned by StartSound.
-    // Would be looping all channels,
-    //  tracking down the handle,
-    //  an setting the channel to zero.
-
 #ifndef SNDSERV
-    int i;
-
-    for (i = 0; i < cv_numChannels.value; i++)
+    int slot = handle & CHANNEL_NUM_MASK;
+    if (channelhandles[slot] == handle)
     {
-        if (channelhandles[i] == handle)
-        {
             channels[i] = 0;
-            break;
-        }
     }
 #endif
 }
 
 int I_SoundIsPlaying(int handle)
 {
-    // Ouch.
-    // return gametic < handle;
-
 #ifndef SNDSERV
-    int i;
-
-    for (i = 0; i < cv_numChannels.value; i++)
+    int slot = handle & CHANNEL_NUM_MASK;
+    if (channelhandles[slot] == handle)
     {
-        if (channelhandles[i] == handle)
+#if 1
+        return ( channels[chan] != NULL );
+
+#else
+        // old code
             return 1;
+#endif
     }
 #endif
     return 0;
