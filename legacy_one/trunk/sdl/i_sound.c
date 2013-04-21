@@ -300,7 +300,7 @@ int I_StartSound(int sfxid, int vol, int sep, int pitch, int priority)
 
     // Loop all channels to find unused channel, or oldest SFX.
     slot = 0;  // default
-    int oldest = MAXINT;
+    int oldest = -1;
     for (i = 0; (i < NUM_CHANNELS); i++)
     {
         if (! mix_channel[i].data_ptr )  // unused
