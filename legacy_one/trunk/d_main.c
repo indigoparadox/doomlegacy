@@ -2307,7 +2307,6 @@ void D_DoomMain()
 }
 
 
-#ifdef SOFTERROR
 // Print error and continue game [WDJ] 1/19/2009
 #define SoftError_listsize   8
 static char *  SE_msg[SoftError_listsize];
@@ -2338,7 +2337,7 @@ void I_SoftError (char *error, ...)
     if( SE_next_msg_slot >= SoftError_listsize )  SE_next_msg_slot = 0;  // wrap
     if( SE_msgcnt < SoftError_listsize ) SE_msgcnt++;  // limit
     // print msg
-    fprintf (stderr, "Error: ");
+    fprintf (stderr, "Warn: ");
     vfprintf (stderr,error,argptr);
 //    fprintf (stderr, "\n");
 done:   
@@ -2348,7 +2347,7 @@ done:
 
    
 }
-#endif
+
 
 void Help( void )
 {
