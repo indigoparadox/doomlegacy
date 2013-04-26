@@ -1302,7 +1302,7 @@ void R_SetupFrame (player_t* player)
 	       modsecp->topmap
 	     : modsecp->midmap;
 	    // only enable view_colormap when overriding globally
-	    if(bcm_num >= 0 || bcm_num < num_extra_colormaps)
+	    if(bcm_num >= 0 && bcm_num < num_extra_colormaps)
 	    {
 	       view_extracolormap = & extra_colormaps[bcm_num];
 	    }
