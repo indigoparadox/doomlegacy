@@ -1834,7 +1834,7 @@ boolean P_AddWadFile (char* wadfilename,char **firstmapname)
                     if (devparm)
                         CONS_Printf ("Sound %.8s replaced\n", name);
 
-                    I_FreeSfx (&S_sfx[j]);
+                    S_FreeSfx (&S_sfx[j]);
 
                     replaces++;
                 }

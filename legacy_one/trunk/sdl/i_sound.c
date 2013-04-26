@@ -235,16 +235,17 @@ void I_SetSfxVolume(int volume)
 void I_GetSfx(sfxinfo_t * sfx)
 {
     S_GetSfxLump( sfx ); // lump to sfx
-    // fix the data and length for this mixer
-    if( sfx->data )
+    // [WDJ] If save sfx->data += 8 to skip header,
+    // then would need to undo it to Free the mem.  Caused Z_Free failure.
+    if( sfx->length > 8 )
     {
-        sfx->data += 8;   // skip header
-        sfx->length -= 8;
+        sfx->length -= 8;  // length of sound
     }
 }
 
 void I_FreeSfx(sfxinfo_t * sfx)
 {
+    // normal Z_Free in S_FreeSfx
 }
 
 #if 0
@@ -325,9 +326,8 @@ int I_StartSound(int sfxid, int vol, int sep, int pitch, int priority)
 
     // Okay, in the less recent channel,
     //  we will handle the new SFX.
-    // Set pointer to raw data.
-    // S_sfx data ptr already skips header, and adjusts length
-    chanp->data_ptr = (unsigned char *) S_sfx[sfxid].data;
+    // Set pointer to raw data, skipping header.
+    chanp->data_ptr = (unsigned char *) S_sfx[sfxid].data + 8;
     // Set pointer to end of raw data.
     chanp->data_end = chanp->data_ptr + S_sfx[sfxid].length;
 

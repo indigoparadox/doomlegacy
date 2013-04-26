@@ -211,7 +211,7 @@ int  addsfx( int sfxid, int volume, int step, int seperation )
     // Set pointer to raw data.
     channels[slot] = (unsigned char *) S_sfx[sfxid].data;
     // Set pointer to end of raw data.
-    channelsend[slot] = channels[slot] + lengths[sfxid];
+    channelsend[slot] = channels[slot] + S_sfx[sfxid].length;
 
     // Set stepping???
     // Kinda getting the impression this is never used.
@@ -343,7 +343,7 @@ void I_GetSfx (sfxinfo_t*  sfx)
     int                 size;
     int                 paddedsize;
 
-    S_GetSfx( sfx );
+    S_GetSfxLump( sfx );
     if( ! sfx->data ) return;
     size = sfx->length;
     sfxdata = (unsigned char*) sfx->data;
@@ -369,7 +369,7 @@ void I_GetSfx (sfxinfo_t*  sfx)
     // Preserve padded length.
     sfx->length = paddedsize;
     // Return allocated padded data.
-    sfx->data = (void*) (paddedsfx + 8);
+    sfx->data = (void*) (paddedsfx + 8);  // skip header
 }
 
 
@@ -383,7 +383,7 @@ void I_FreeSfx (sfxinfo_t* sfx)
     // free sample data
     if(sfx->data)
     {
-        Z_Free( sfx->data );
+        Z_Free( sfx->data - 8 );  // undo skip header
     }
 
     sfx->data = NULL;

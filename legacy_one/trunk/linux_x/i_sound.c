@@ -131,8 +131,7 @@
 
 #include "i_system.h"
 #include "i_sound.h"
-//#include "s_sound.h"
-int S_GetSfxLumpNum(sfxinfo_t * sfx);
+#include "s_sound.h"
 #include "m_argv.h"
 #include "m_misc.h"
 #include "w_wad.h"
@@ -275,10 +274,6 @@ void myioctl(int fd, int command, int *arg)
     }
 }
 
-// dummy for now 19990220 by Kin
-void I_FreeSfx(sfxinfo_t * sfx)
-{
-}
 
 //
 // This function loads the sound data from the WAD lump,
@@ -325,6 +320,12 @@ void I_GetSfx(sfxinfo_t * sfx)
     sfx->data = (void *) paddedsfx;
     sfx->length = size;
 }
+
+void I_FreeSfx(sfxinfo_t * sfx)
+{
+    // normal free
+}
+
 
 //
 // This function adds a sound to the
@@ -939,11 +940,6 @@ void I_StartupSound()
     {
         fprintf(stderr, "found chaingun sound,");
     }
-
-    //for (i=1 ; i<NUMSFX ; i++)
-    //{ 
-    //  lengths[i] = 0;
-    //}
 
     fprintf(stderr, " pre-cached all sound data\n");
 

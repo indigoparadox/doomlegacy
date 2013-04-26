@@ -102,8 +102,6 @@ SAMPLE *raw2SAMPLE(unsigned char *dsdata, int len)
     SAMPLE *spl;
 
     spl=Z_Malloc(sizeof(SAMPLE),PU_STATIC,NULL);
-    if(spl==NULL)
-        I_Error("Raw2Sample : no more free mem");
     spl->bits = 8;
     spl->stereo = 0;
     spl->freq = *((unsigned short*)dsdata+1);   //mostly 11025, but some at 22050.
@@ -148,7 +146,7 @@ void I_FreeSfx (sfxinfo_t* sfx)
     // free sample data
     if( sfx->data )
     {
-        dssfx = (byte*) ((SAMPLE *)sfx->data)->data - 8;
+        dssfx = (byte*) ((SAMPLE *)sfx->data)->data - 8;  // undo skip header
         Z_Free (dssfx);
         // Allegro SAMPLE structure
         Z_Free (sfx->data);

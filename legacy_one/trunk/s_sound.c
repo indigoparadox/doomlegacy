@@ -423,12 +423,19 @@ static void S_GetSfx( sfxinfo_t * sfx )
 // [WDJ] Common routine to Free data for a sfx
 void S_FreeSfx( sfxinfo_t * sfx )
 {
-    I_FreeSfx( sfx );  // some must free their own buffers
-
-    if( sfx->data )    // if not already free
+    if( sfx->link )  // do not free linked data
     {
-        Z_Free( sfx->data );
         sfx->data = NULL;
+    }
+    else if( sfx->data )
+    {
+        I_FreeSfx( sfx );  // some must free their own buffers
+
+        if( sfx->data )    // if not already free
+        {
+	    Z_Free( sfx->data );
+	    sfx->data = NULL;
+	}
     }
 }
 

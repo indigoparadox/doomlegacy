@@ -298,7 +298,7 @@ a:
 // Like normal CopySoundData but sound data will be inverted
 static boolean CopyAndInvertSoundData(LPDIRECTSOUNDBUFFER dsbuffer, byte* data, int length)
 {
-        LPVOID  lpvAudio1;              // receives address of lock start
+    LPVOID  lpvAudio1;              // receives address of lock start
     DWORD   dwBytes1;               // receives number of bytes locked
     LPVOID  lpvAudio2;
     DWORD   dwBytes2;
@@ -470,7 +470,6 @@ void I_FreeSfx (sfxinfo_t* sfx)
     {
         if (sfx->data)
             Z_Free(sfx->data);
-      
     }
     else
 #endif

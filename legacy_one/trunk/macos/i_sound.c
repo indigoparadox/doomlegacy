@@ -316,12 +316,14 @@ void I_GetSfx (sfxinfo_t*  sfx)
     // Preserve padded length.
     sfx->length = paddedsize;
     // Return allocated padded data.
-    sfx->data = (void *) (paddedsfx + 8);
+    sfx->data = (void *) (paddedsfx + 8);  // skip header
 }
 
 void I_FreeSfx (sfxinfo_t* sfx)
 {
     // use default Free
+    if( sfx->data )
+        sfx->data -= 8;   // undo skip header, for Z_Free
 }
 
 int I_StartSound(int id,int vol,int sep,int pitch,int priority)
@@ -332,7 +334,7 @@ int I_StartSound(int id,int vol,int sep,int pitch,int priority)
     if(nosoundfx)
 	return 0;
 	
-	id = addsfx( id, vol, pitch, sep );
+    id = addsfx( id, vol, pitch, sep );
     
     return id;
 }
