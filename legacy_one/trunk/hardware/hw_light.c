@@ -190,7 +190,12 @@ void CV_grMonsterDL_OnChange (void);
 
 consvar_t cv_grdynamiclighting = {"gr_dynamiclighting",  "On", CV_SAVE, CV_OnOff };
 consvar_t cv_grstaticlighting  = {"gr_staticlighting",   "On", CV_SAVE, CV_OnOff };
+#ifdef CORONA_CHOICE
+CV_PossibleValue_t grcorona_cons_t[] = { {0, "Off"}, {1, "Sprite"}, {2, "Dyn"}, {3, "Auto"}, {0, NULL} };
+consvar_t cv_grcoronas         = {"gr_coronas",          "Auto", CV_SAVE, grcorona_cons_t };
+#else
 consvar_t cv_grcoronas         = {"gr_coronas",          "On", CV_SAVE, CV_OnOff };
+#endif
 consvar_t cv_grcoronasize      = {"gr_coronasize",        "1", CV_SAVE| CV_FLOAT,0 };
 consvar_t cv_grmblighting      = {"gr_mblighting",       "On", CV_SAVE|CV_CALL
                                   , CV_OnOff, CV_grMonsterDL_OnChange };
@@ -714,14 +719,13 @@ boolean SphereTouchBBox3D(vxtx3d_t *p1, vxtx3d_t *p2, v3d_t *p3, float r)
 // --------------------------------------------------------------------------
 void HWR_WallLighting(vxtx3d_t *wlVerts)
 {
+    FSurfaceInfo_t  Surf;
+    v3d_t           inter;
     int             i, j;
+    float           dist_p2d, d[4], s;
 
     // dynlights->nb == 0 if cv_grdynamiclighting.value is not set
     for (j=0; j<dynlights->nb; j++) {
-        v3d_t           inter;
-        FSurfaceInfo_t  Surf;
-        float           dist_p2d, d[4], s;
-
         // check bounding box first
         if( SphereTouchBBox3D(&wlVerts[2], &wlVerts[0], &LIGHT_POS(j), DL_RADIUS(j))==false )
             continue;
@@ -742,7 +746,7 @@ void HWR_WallLighting(vxtx3d_t *wlVerts)
         //dAB = sqrt((wlVerts[0].x-wlVerts[2].x)*(wlVerts[0].x-wlVerts[2].x)+(wlVerts[0].z-wlVerts[2].z)*(wlVerts[0].z-wlVerts[2].z));
         //if ( (d[0] < dAB) && (d[1] < dAB) ) // test if the intersection is on the wall
         //{
-        //    d[0] = -d[0]; // if yes, the left distcance must be negative for texcoord
+        //    d[0] = -d[0]; // if yes, the left distance must be negative for texcoord
         //}
         // test if the intersection is on the wall
         if ( (wlVerts[0].x<inter.x && wlVerts[2].x>inter.x) ||
@@ -750,7 +754,7 @@ void HWR_WallLighting(vxtx3d_t *wlVerts)
              (wlVerts[0].z<inter.z && wlVerts[2].z>inter.z) ||
              (wlVerts[0].z>inter.z && wlVerts[2].z<inter.z) )
         {
-            d[0] = -d[0]; // if yes, the left distcance must be negative for texcoord
+            d[0] = -d[0]; // if yes, the left distance must be negative for texcoord
         }
         d[2] = d[1]; d[3] = d[0];
 #ifdef DL_HIGH_QUALITY
@@ -792,6 +796,8 @@ extern FTransform_t atransform;
 // --------------------------------------------------------------------------
 void HWR_PlaneLighting(vxtx3d_t *clVerts, int nrClipVerts)
 {
+    FSurfaceInfo_t  Surf;
+    float           dist_p2d, s;
     int     i, j;
     vxtx3d_t p1,p2;
 
@@ -803,9 +809,6 @@ void HWR_PlaneLighting(vxtx3d_t *clVerts, int nrClipVerts)
     p1.y=clVerts[0].y;
 
     for (j=0; j<dynlights->nb; j++) {
-        FSurfaceInfo_t  Surf;
-        float           dist_p2d, s;
-
         // BP: The kickass Optimization: check if light touch bounding box
         if( SphereTouchBBox3D(&p1, &p2, &dynlights->position[j], DL_RADIUS(j))==false )
             continue;
@@ -851,33 +854,36 @@ void HWR_PlaneLighting(vxtx3d_t *clVerts, int nrClipVerts)
 
 
 static int coronalumpnum;
-#ifndef NEWCORONAS
+
+#ifdef SPDR_CORONAS
 // --------------------------------------------------------------------------
 // coronas lighting
 // --------------------------------------------------------------------------
 void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr) 
 {
-    light_t   *p_lspr;
+    FSurfaceInfo_t  Surf;
+    vxtx3d_t        light[4];
+    light_t   * p_lspr;
+    float size;
 
     //CONS_Printf("sprite (type): %d (%s)\n", spr->type, sprnames[spr->type]);
     p_lspr = t_lspr[spr->mobj->sprite];
-    if( (spr->mobj->state>=&states[S_EXPLODE1] && spr->mobj->state<=&states[S_EXPLODE3])
-     || (spr->mobj->state>=&states[S_FATSHOTX1] && spr->mobj->state<=&states[S_FATSHOTX3]))
+    if( (spr->mobj->state >= &states[S_EXPLODE1]
+	 && spr->mobj->state <= &states[S_EXPLODE3])
+     || (spr->mobj->state >= &states[S_FATSHOTX1]
+	 && spr->mobj->state <= &states[S_FATSHOTX3]))
     {
         p_lspr = &lspr[ROCKETEXP_L];
     }
 
     if ( cv_grcoronas.value && (p_lspr->type & CORONA_SPR) ) // it's an object which emits light
     {
-        vxtx3d_t        light[4];
-        FSurfaceInfo_t    Surf;
-        float           cx=0.0f, cy=0.0f, cz=0.0f; // gravity center
-        float           size;
-        int             i;
+        float cx=0.0f, cy=0.0f, cz=0.0f; // gravity center
 
         switch (p_lspr->type)
         {
             case LIGHT_SPR: 
+	        // dimming with distance
                 size  = p_lspr->corona_radius  * ((outVerts[0].z+120.0f)/950.0f); // d'ou vienne ces constante ?
                 break;
             case ROCKET_SPR: 
@@ -887,52 +893,59 @@ void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr)
                 size  = p_lspr->corona_radius  * ((outVerts[0].z+60.0f)/100.0f); // d'ou vienne ces constante ?
                 break;
             default:
-                I_Error("HWR_DoCoronasLighting: unknow light type %d",p_lspr->type);
+                I_SoftError("HWR_DoCoronasLighting: unknown light type %d", p_lspr->type);
                 return;
         }
         if (size > p_lspr->corona_radius) 
             size = p_lspr->corona_radius;
         size *= FIXED_TO_FLOAT( cv_grcoronasize.value<<1 );
 
+#if 1
         // compute position doing average
+        cx = (outVerts[0].x + outVerts[2].x) / 2.0;
+        cy = (outVerts[0].y + outVerts[2].y) / 2.0;
+        cz = (outVerts[0].z + outVerts[2].z) / 2.0;
+#else
+        // compute position doing average
+        int i;
         for (i=0; i<4; i++) {
             cx += outVerts[i].x;
             cy += outVerts[i].y;
             cz += outVerts[i].z;
         }
         cx /= 4.0f;  cy /= 4.0f;  cz /= 4.0f;
+#endif
 
         // more realistique corona !
         if( cz>=255*8+250 )
             return;
         Surf.FlatColor.rgba = p_lspr->corona_color;
-        if( cz>250.0f )
-            Surf.FlatColor.s.alpha = 0xff-((int)cz-250)/8;
-        else
-            Surf.FlatColor.s.alpha = 0xff;
+        Surf.FlatColor.s.alpha = ( cz>250.0f )? 0xff-((int)cz-250)/8 : 0xff;
 
-        // do not be hide by sprite of the light itself !
-        cz = cz - 2.0f; 
+        // put light little forward of the sprite so there is no 
+        // z-blocking or z-fighting
+	if( cz > 0.5 )  // correction for side drift due to cz change
+        {  // -0.75 per unit of cz
+	   cx += cx * ((-6.0f) / cz);
+	   cy += cy * ((-6.0f) / cz);
+	}
+        // need larger value to avoid z-blocking when look down
+        cz -= 8.0f;  // larger causes more side-to-side drift
 
         // Bp; je comprend pas, ou est la rotation haut/bas ?
         //     tu ajoute un offset a y mais si la tu la reguarde de haut 
         //     sa devrais pas marcher ... comprend pas :(
         //     (...) bon je croit que j'ai comprit il est tout pourit le code ?
         //           car comme l'offset est minime sa ce voit pas !
-        light[0].x = cx-size;  light[0].z = cz;
-        light[0].y = cy-size*1.33f+p_lspr->light_yoffset; 
+	cy += p_lspr->light_yoffset;
+        light[0].x = light[3].x = cx - size;
+        light[1].x = light[2].x = cx + size;
+        light[0].y = light[1].y = cy - (size*1.33f); 
+        light[2].y = light[3].y = cy + (size*1.33f); 
+        light[0].z = light[1].z = light[2].z = light[3].z = cz;
         light[0].sow = 0.0f;   light[0].tow = 0.0f;
-
-        light[1].x = cx+size;  light[1].z = cz;
-        light[1].y = cy-size*1.33f+p_lspr->light_yoffset; 
         light[1].sow = 1.0f;   light[1].tow = 0.0f;
-
-        light[2].x = cx+size;  light[2].z = cz;
-        light[2].y = cy+size*1.33f+p_lspr->light_yoffset; 
         light[2].sow = 1.0f;   light[2].tow = 1.0f;
-
-        light[3].x = cx-size;  light[3].z = cz;
-        light[3].y = cy+size*1.33f+p_lspr->light_yoffset; 
         light[3].sow = 0.0f;   light[3].tow = 1.0f;
 
         HWR_GetPic(coronalumpnum);  // TODO: use different coronas
@@ -942,11 +955,16 @@ void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr)
 }
 #endif
 
-#ifdef NEWCORONAS
-// use the lightlist of the frame to draw the coronas at the top of everythink
+#ifdef DYLT_CORONAS
+// Draw coronas from dynamic light list
 void HWR_DrawCoronas( void )
 {
-    int       j;
+    int j;
+    float           size;
+    FSurfaceInfo_t  Surf;
+    vxtx3d_t        light[4];
+    float           cx, cy, cz;
+    light_t         * p_lspr;
 
     if( !cv_grcoronas.value || dynlights->nb<=0)
         return;
@@ -954,13 +972,10 @@ void HWR_DrawCoronas( void )
     HWR_GetPic(coronalumpnum);  // TODO: use different coronas
     for( j=0;j<dynlights->nb;j++ )
     {
-        vxtx3d_t        light[4];
-        FSurfaceInfo_t  Surf;
-        float           cx=LIGHT_POS(j).x;
-        float           cy=LIGHT_POS(j).y;
-        float           cz=LIGHT_POS(j).z; // gravity center
-        float           size;
-        light_t         *p_lspr = dynlights->p_lspr[j];
+        cx=LIGHT_POS(j).x;
+        cy=LIGHT_POS(j).y;
+        cz=LIGHT_POS(j).z; // gravity center
+        p_lspr = dynlights->p_lspr[j];
         
         // it's an object which emits light
         if ( !(p_lspr->type & CORONA_SPR) )
@@ -989,7 +1004,7 @@ void HWR_DrawCoronas( void )
                 size  = p_lspr->corona_radius  * ((cz+60.0f)/100.0f); // d'ou vienne ces constante ?
                 break;
             default:
-                I_Error("HWR_DoCoronasLighting: unknown light type %d",p_lspr->type);
+                I_SoftError("HWR_DoCoronasLighting: unknown light type %d",p_lspr->type);
                 continue;
         }
         if (size > p_lspr->corona_radius)
@@ -999,22 +1014,22 @@ void HWR_DrawCoronas( void )
         // put light little forward the sprite so there is no 
         // z-buffer problem (coplanaire polygons)
         // BP: use PF_Decal do not help :(
+	if( cz > 0.5 )  // correction for side drift due to cz change
+        {
+	   cx += cx * ((-3.8f) / cz);
+	   cy += cy * ((-3.8f) / cz);
+	}
         cz = cz - 5.0f; 
 
-        light[0].x = cx-size;  light[0].z = cz;
-        light[0].y = cy-size*1.33f;
+        light[0].x = light[3].x = cx - size;
+        light[1].x = light[2].x = cx + size;
+        light[0].y = light[1].y = cy - (size*1.33f); 
+        light[2].y = light[3].y = cy + (size*1.33f); 
+        light[0].z = light[1].z = light[2].z = light[3].z = cz;
         light[0].sow = 0.0f;   light[0].tow = 0.0f;
-
-        light[1].x = cx+size;  light[1].z = cz;
-        light[1].y = cy-size*1.33f;
         light[1].sow = 1.0f;   light[1].tow = 0.0f;
-
-        light[2].x = cx+size;  light[2].z = cz;
-        light[2].y = cy+size*1.33f;
         light[2].sow = 1.0f;   light[2].tow = 1.0f;
-
-        light[3].x = cx-size;  light[3].z = cz;
-        light[3].y = cy+size*1.33f;
+        light[3].sow = 0.0f;   light[3].tow = 1.0f;
         light[3].sow = 0.0f;   light[3].tow = 1.0f;
 
         HWD.pfnDrawPolygon ( &Surf, light, 4, PF_Modulated | PF_Additive | PF_Clip | PF_NoDepthTest | PF_Corona );
@@ -1023,7 +1038,7 @@ void HWR_DrawCoronas( void )
 #endif
 
 // --------------------------------------------------------------------------
-// Remove all the dynamic lights at eatch frame
+// Remove all the dynamic lights at each frame
 // --------------------------------------------------------------------------
 // Called from P_SetupLevel, and maybe from HWR_RenderPlayerView
 void HWR_ResetLights(void)
@@ -1042,9 +1057,9 @@ void HWR_SetLights(int viewnumber)
 
 // --------------------------------------------------------------------------
 // Add a light for dynamic lighting
-// The light position is already transformed execpt for mlook
+// The light position is already transformed except for mlook
 // --------------------------------------------------------------------------
-void HWR_DL_AddLight(gr_vissprite_t *spr, MipPatch_t *mpatch)
+void HWR_DL_AddLightSprite(gr_vissprite_t *spr, MipPatch_t *mpatch)
 {
     light_t   *p_lspr;
 
@@ -1053,7 +1068,10 @@ void HWR_DL_AddLight(gr_vissprite_t *spr, MipPatch_t *mpatch)
         return;
 #ifdef PARANOIA
     if(!spr->mobj)
-        I_Error("vissprite without mobj !!!");
+    {
+        I_SoftError("AddLight: vissprite without mobj !!!");
+        return;
+    }
 #endif
     // check if sprite contain dynamic light
     p_lspr = t_lspr[spr->mobj->sprite];
@@ -1069,8 +1087,10 @@ void HWR_DL_AddLight(gr_vissprite_t *spr, MipPatch_t *mpatch)
         LIGHT_POS(dynlights->nb).z = FIXED_TO_FLOAT( spr->mobj->y );
 
         dynlights->mo[dynlights->nb] = spr->mobj;
-        if( (spr->mobj->state>=&states[S_EXPLODE1] && spr->mobj->state<=&states[S_EXPLODE3])
-         || (spr->mobj->state>=&states[S_FATSHOTX1] && spr->mobj->state<=&states[S_FATSHOTX3]))
+        if( (spr->mobj->state>=&states[S_EXPLODE1]
+	     && spr->mobj->state<=&states[S_EXPLODE3])
+         || (spr->mobj->state>=&states[S_FATSHOTX1]
+	     && spr->mobj->state<=&states[S_FATSHOTX3]))
         {
             p_lspr = &lspr[ROCKETEXP_L];
         }

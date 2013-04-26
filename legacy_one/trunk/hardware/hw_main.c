@@ -406,6 +406,11 @@
 #define EN_drawtextured  true
 //static  boolean     EN_drawtextured = false;
 
+#ifdef CORONA_CHOICE
+// mirror corona choice, with auto modifications
+byte  corona_draw_choice;
+#endif
+
 // ==========================================================================
 // the hardware driver object
 // ==========================================================================
@@ -3180,7 +3185,8 @@ static void HWR_DrawSprite(gr_vissprite_t * spr)
     // get patch and draw to hardware cache
     gpatch = W_CacheMappedPatchNum(spr->patchlumpnum, Surf.texflags );
 
-    HWR_DL_AddLight(spr, gpatch);
+    // dynamic lighting
+    HWR_DL_AddLightSprite(spr, gpatch);
 
     // create the sprite billboard
     //
@@ -3273,8 +3279,13 @@ static void HWR_DrawSprite(gr_vissprite_t * spr)
     }
 
     // draw a corona if this sprite contain light(s)
-#ifndef NEWCORONAS
-    HWR_DoCoronasLighting(vxtx, spr);
+#ifdef SPDR_CORONAS
+#ifdef CORONA_CHOICE
+    if( corona_draw_choice == 1 )
+#endif
+    {
+        HWR_DoCoronasLighting(vxtx, spr);
+    }
 #endif
 }
 
@@ -4056,13 +4067,22 @@ void HWR_RenderPlayerView(int viewnumber, player_t * player)
     // Draw MD2 and sprites
     HWR_SortVisSprites();
     HWR_DrawMD2S();
+#ifdef CORONA_CHOICE
+    // mirror corona choice, with auto -> dyn draw
+    corona_draw_choice = (cv_grcoronas.value == 3)?  2 : cv_grcoronas.value;
+#endif     
     // Draw the sprites like it was done previously without T&L
     HWD.pfnSetTransform(NULL);
     HWR_DrawSprites();
 
-#ifdef NEWCORONAS
-    //Hurdler: they must be drawn before translucent planes, what about gl fog?
-    HWR_DrawCoronas();
+#ifdef DYLT_CORONAS
+#ifdef CORONA_CHOICE
+    if( corona_draw_choice == 2 )
+#endif
+    {
+        //Hurdler: they must be drawn before translucent planes, what about gl fog?
+        HWR_DrawCoronas();
+    }
 #endif
 
     if (numplanes || num_late_walls)  //Hurdler: render 3D water and transparent walls after everything
@@ -4594,4 +4614,3 @@ void HWR_RenderTransparentWalls()
     num_late_walls = 0;
     late_wall_farthest = -1;
 }
-

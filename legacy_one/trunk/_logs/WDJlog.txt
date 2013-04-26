@@ -3099,3 +3099,22 @@ Make hardware render TERM_TRANSFORM the permanent choice, removing
 the conditional compilation.  Removed the dead code that this creates.
 Rename some functions.
 Fix some spelling.
+
+*** w89_corona
+patchfile = w89_12_corona.patch
+- committed revision 1011   by wesley johnson
+Cleaned the hardware render corona code.
+Revised the original corona draw, because it works better with sorted draw.
+Created compilation options, and a menu choice.
+Corona choices are
+  OFF
+  SPRITE (drawn with the sprite)
+  DYN (drawn from dynamic lights)
+  AUTO (decided by draw modes)
+The SPRITE draw works the best with transparent walls, as it draws the
+corona at the time the sprite is drawn.  This works well with sorted draw.
+The DYN corona draw (dynamic lights) does not draw corona behind
+translucent walls.
+The dynamic lights must remain active because it provides the wall
+lighting from things.
+

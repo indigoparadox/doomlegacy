@@ -80,26 +80,36 @@
 #include "hw_defs.h"
 
 //#define DO_MIRROR
-#define NEWCORONAS
 
-#define DL_MAX_LIGHT    256  // maximum number of light (extra light are ignored)
+// Coronas in dynlights
+#define DYLT_CORONAS
+// Coronas drawn with sprite draw
+#define SPDR_CORONAS
+
+#if ( defined(DYLT_CORONAS) && defined(SPDR_CORONAS) )
+#define CORONA_CHOICE
+#endif
+
+#ifdef DYLT_CORONAS
+void HWR_DrawCoronas( void );
+void HWR_DL_AddLightSprite(gr_vissprite_t *spr, MipPatch_t *mpatch);
+#endif
+#ifdef SPDR_CORONAS
+void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr);
+#endif
+
 
 void HWR_InitLight( void );
-void HWR_DL_AddLight(gr_vissprite_t *spr, MipPatch_t *mpatch);
 void HWR_DynamicShadowing(vxtx3d_t *clVerts, int nrClipVerts, player_t *p);
 void HWR_PlaneLighting(vxtx3d_t *clVerts, int nrClipVerts);
 void HWR_WallLighting(vxtx3d_t *wlVerts);
 void HWR_ResetLights(void);
 void HWR_SetLights(int viewnumber);
 
-#ifdef NEWCORONAS
-void HWR_DrawCoronas( void );
-#else
-void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr);
-#endif
+#define DL_MAX_LIGHT    256  // maximum number of light (extra light are ignored)
 
 typedef struct {
-    int         nb;
+    int        nb;
     light_t    *p_lspr[DL_MAX_LIGHT];
     v3d_t      position[DL_MAX_LIGHT]; // actually maximum DL_MAX_LIGHT lights
     mobj_t     *mo[DL_MAX_LIGHT];
