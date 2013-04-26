@@ -389,6 +389,16 @@
 #include "../r_splats.h"
 #include "../t_func.h"
 
+// [WDJ] new DrawSorted for sprites and translucent/transparent walls
+#define DRAW_SORTED
+// old draw routines, likely to be removed later
+#define DRAW_UNSORTED
+
+// with both have a choice of DrawSorted, early, or late
+#if ( defined( DRAW_SORTED ) && defined( DRAW_UNSORTED ) )
+#define DRAW_CHOICE
+#endif
+
 #define ZCLIP_PLANE     4.0f
 #define R_FAKEFLOORS
 #define SPRITE_LIGHTLEVEL
@@ -428,7 +438,12 @@ static void HWR_AddSprites(sector_t * sec);
 static void HWR_ProjectSprite(mobj_t * thing);
 static void HWR_Add3DWater(int lumpnum, extrasubsector_t * xsub, fixed_t fixedheight, int lightlevel, int alpha);
 static void HWR_Render3DWater();
-static void HWR_RenderTransparentWalls();
+#ifdef DRAW_SORTED
+static void HWR_RenderSorted( void );
+#endif
+#ifdef DRAW_UNSORTED
+static void HWR_RenderTransparentWalls( void );
+#endif
 
 static unsigned int atohex(char *s);
 
@@ -465,7 +480,6 @@ consvar_t cv_grrounddown = { "gr_rounddown", "Off", 0, CV_OnOff };
 consvar_t cv_grmlook_extends_fov = { "gr_mlook", "Full", CV_SAVE, grmlook_extends_fov_cons_t };
 consvar_t cv_grfov = { "gr_fov", "90", CV_SAVE | CV_CALL, grfov_cons_t, CV_grFov_OnChange };
 consvar_t cv_grsky = { "gr_sky", "On", 0, CV_OnOff };
-	// cv_grsky not registered, cannot use from console
 consvar_t cv_grfog = { "gr_fog", "On", CV_SAVE, CV_OnOff };
 consvar_t cv_grfogcolor = { "gr_fogcolor", "000000", CV_SAVE, NULL };
 consvar_t cv_grfogdensity = { "gr_fogdensity", "100", CV_SAVE | CV_CALL | CV_NOINIT, CV_Unsigned, CV_FogDensity_ONChange };
@@ -474,20 +488,23 @@ consvar_t cv_grgammagreen = { "gr_gammagreen", "127", CV_SAVE | CV_CALL, grgamma
 consvar_t cv_grgammablue = { "gr_gammablue", "127", CV_SAVE | CV_CALL, grgamma_cons_t, CV_Gammaxxx_ONChange };
 consvar_t cv_grfiltermode = { "gr_filtermode", "Bilinear", CV_SAVE | CV_CALL, grfiltermode_cons_t, CV_filtermode_ONChange };
 consvar_t cv_grzbuffer = { "gr_zbuffer", "On", 0, CV_OnOff };
-	// cv_grzbuffer not registered, cannot use from console
 consvar_t cv_grcorrecttricks = { "gr_correcttricks", "On", 0, CV_OnOff };
 consvar_t cv_grsolvetjoin = { "gr_solvetjoin", "On", 0, CV_OnOff };
 
 // console variables in development
 consvar_t cv_grpolygonsmooth = { "gr_polygonsmooth", "Off", CV_CALL, CV_OnOff, CV_grPolygonSmooth_OnChange };
 consvar_t cv_grmd2 = { "gr_md2", "Off", 0, CV_OnOff };
-//consvar_t cv_grtranswall = { "gr_transwall", "Off", 0, CV_OnOff };
-consvar_t cv_grtranswall = { "gr_transwall", "On", 0, CV_OnOff };  // [WDJ] Tried to fix it, again.
-	// cv_grtranswall not registered, cannot use from console
+#ifdef DRAW_CHOICE
+// three choices for debugging
+CV_PossibleValue_t grtranswall_cons_t[] = { {0, "Early"}, {1, "Late"}, {2, "Sorted"}, {0, NULL} };
+consvar_t cv_grtranswall = { "gr_transwall", "Sorted", 0, grtranswall_cons_t };
+#else
+// previous on/off, both which have problems
+consvar_t cv_grtranswall = { "gr_transwall", "On", 0, CV_OnOff };
+#endif
 
 // faB : needs fix : walls are incorrectly clipped one column less
-const consvar_t cv_grclipwalls = { "gr_clipwalls", "Off", 0, CV_OnOff };
-	// cv_grclipwalls not registered, cannot use from console
+consvar_t cv_grclipwalls = { "gr_clipwalls", "Off", 0, CV_OnOff };
 
 //development variables for diverse uses
 consvar_t cv_gralpha = { "gr_alpha", "160", 0, CV_Unsigned };
@@ -3343,6 +3360,7 @@ static void HWR_SortVisSprites(void)
     }
 }
 
+#ifdef DRAW_UNSORTED
 // --------------------------------------------------------------------------
 //  Draw all vissprites
 // --------------------------------------------------------------------------
@@ -3359,6 +3377,7 @@ static void HWR_DrawSprites(void)
         }
     }
 }
+#endif
 
 // --------------------------------------------------------------------------
 //  Draw all MD2
@@ -4052,10 +4071,13 @@ void HWR_RenderPlayerView(int viewnumber, player_t * player)
         dup_viewangle += ANG90;
     }
 #endif
+#ifdef DRAW_UNSORTED
     if (num_late_walls && !cv_grtranswall.value)      //Hurdler: render transparent walls after everything
     {
+        // when translucent walls OFF
         HWR_RenderTransparentWalls();
     }
+#endif
 
     // Check for new console commands.
     NetUpdate();
@@ -4067,6 +4089,24 @@ void HWR_RenderPlayerView(int viewnumber, player_t * player)
     // Draw MD2 and sprites
     HWR_SortVisSprites();
     HWR_DrawMD2S();
+#ifdef DRAW_CHOICE
+  if ( cv_grtranswall.value == 2)
+  {
+#endif
+#ifdef DRAW_SORTED
+#ifdef CORONA_CHOICE
+    // mirror corona choice, with auto -> sprite draw
+    corona_draw_choice = (cv_grcoronas.value == 3)?  1 : cv_grcoronas.value;
+#endif     
+    HWR_RenderSorted();
+    HWD.pfnSetTransform(NULL);
+#endif
+#ifdef DRAW_CHOICE
+  }
+  else
+  {
+#endif
+#ifdef DRAW_UNSORTED
 #ifdef CORONA_CHOICE
     // mirror corona choice, with auto -> dyn draw
     corona_draw_choice = (cv_grcoronas.value == 3)?  2 : cv_grcoronas.value;
@@ -4094,7 +4134,11 @@ void HWR_RenderPlayerView(int viewnumber, player_t * player)
             HWR_RenderTransparentWalls();
         HWD.pfnSetTransform(NULL);
     }
-
+#endif
+#ifdef DRAW_CHOICE
+  }
+#endif
+     
     // Check for new console commands.
     NetUpdate();
 
@@ -4245,6 +4289,10 @@ void HWR_AddEngineCommands(void)
     CV_RegisterVar(&cv_gralpha);
     CV_RegisterVar(&cv_grbeta);
     CV_RegisterVar(&cv_grgamma);
+    CV_RegisterVar(&cv_grzbuffer);
+    CV_RegisterVar(&cv_grsky);
+    CV_RegisterVar(&cv_grtranswall);
+    CV_RegisterVar(&cv_grclipwalls);
 
     // engine commands
     COM_AddCommand("gr_stats", Command_GrStats_f);
@@ -4528,6 +4576,7 @@ int  expand_late_wallinfo( void )
 }
 
 // [WDJ] To sort transparent walls
+// vxtx is in world coord with y up
 static
 void  late_wall_dist( vxtx3d_t * wVs, late_wallinfo_t * lw_p )
 {
@@ -4546,6 +4595,7 @@ void  late_wall_dist( vxtx3d_t * wVs, late_wallinfo_t * lw_p )
 }
 
 // Called from HWR_SplitWall, HWR_StoreWallRange
+// vxtx is in world coord with y up
 void HWR_AddTransparentWall(vxtx3d_t * vxtx, FSurfaceInfo_t * pSurf, int texnum, int blend)
 {
     late_wallinfo_t *  lw_p;
@@ -4597,8 +4647,10 @@ void HWR_AddTransparentWall(vxtx3d_t * vxtx, FSurfaceInfo_t * pSurf, int texnum,
     num_late_walls++;
 }
 
+#ifdef DRAW_UNSORTED
 // Called from HWR_RenderPlayerView
-void HWR_RenderTransparentWalls()
+static
+void HWR_RenderTransparentWalls( void )
 {
     int lwi = late_wall_farthest;
     late_wallinfo_t *  lw_p;
@@ -4614,3 +4666,128 @@ void HWR_RenderTransparentWalls()
     num_late_walls = 0;
     late_wall_farthest = -1;
 }
+#endif
+
+#ifdef DRAW_SORTED
+//#define DEBUG_DRAWSORTED
+static
+void HWR_RenderSorted( void )
+{
+#ifdef DEBUG_DRAWSORTED   
+    int   neg_dist_cnt = 0;
+    int   transform_load_cnt = 0;
+#endif
+    byte  affine_transform = 255;
+    // transparent walls
+    int lwi = -1;
+    late_wallinfo_t * lw_p = NULL;
+    // sprites
+    gr_vissprite_t * spr = NULL;
+    float spr_dist = -1000.0;
+    float tranwall_dist = -1000.0;
+
+    // sprites
+    if (gr_vissprite_p > gr_vissprites)
+    {
+        spr = gr_vsprsortedhead.next;
+        if( spr )
+	    spr_dist = spr->tz;
+    }
+    if (num_late_walls)
+    {
+        lwi = late_wall_farthest;
+        if( lwi >= 0 )
+        {
+	    lw_p = & late_wallinfo[lwi];
+	    tranwall_dist = lw_p->dist1;
+	}
+    }
+
+
+    for(;;)
+    {
+        if( spr && ( spr_dist > tranwall_dist ))
+        {
+#ifdef DEBUG_DRAWSORTED   
+	    if( spr_dist < 0 )  neg_dist_cnt++;
+#else
+	    if( spr_dist < -200.0 )  break;
+	       // farther back and cannot even contribute light
+#endif
+	    // sprite
+	    if( affine_transform != 0 )
+	    {
+		HWD.pfnSetTransform(NULL);
+	        affine_transform = 0;
+#ifdef DEBUG_DRAWSORTED   
+	        transform_load_cnt ++;
+#endif
+	    }
+            HWR_DrawSprite(spr);
+	    // draw vissprites back to front
+	    spr = spr->next;
+	    spr_dist = spr->tz;
+	    if(spr == &gr_vsprsortedhead)
+	    {
+	        spr = NULL;   // stop sprites
+	        spr_dist = -1000.0;
+	    }
+	}
+        else if( lw_p )
+        {
+#ifdef DEBUG_DRAWSORTED   
+	    if( tranwall_dist < 0 )  neg_dist_cnt++;
+#else
+	    if( tranwall_dist < -200.0 )  break;
+	       // farther back and cannot even contribute light
+#endif
+	    // transparent wall
+	    if( affine_transform != 1 )
+	    {
+	        HWD.pfnSetTransform(&atransform);
+	        affine_transform = 1;
+#ifdef DEBUG_DRAWSORTED   
+	        transform_load_cnt ++;
+#endif
+	    }
+	    // with TF_Opaquetrans, TF_Fogsheet flag
+	    HWR_GetTexture(lw_p->texnum, lw_p->Surf.texflags);
+	    HWR_RenderWall(lw_p->vxtx, &lw_p->Surf, lw_p->blend);
+	    lwi = lw_p->next_nearer;
+	    if( lwi >= 0 )
+	    {
+	        lw_p = & late_wallinfo[lwi];
+	        tranwall_dist = lw_p->dist1;
+	    }
+	    else
+	    {
+	        lw_p = NULL;
+	        tranwall_dist = -1000.0;
+	    }
+        }
+        else
+	    break; // done
+    }
+    num_late_walls = 0;
+    late_wall_farthest = -1;
+
+#ifdef DYLT_CORONAS
+    HWD.pfnSetTransform(NULL);
+#ifdef CORONA_CHOICE
+    if( corona_draw_choice == 2 )
+#endif     
+    //Hurdler: they must be drawn before translucent planes, what about gl fog?
+    HWR_DrawCoronas();
+#endif
+    if (numplanes)
+    {
+        HWD.pfnSetTransform(&atransform);
+        if (numplanes)
+            HWR_Render3DWater();
+        HWD.pfnSetTransform(NULL);
+    }
+#ifdef DEBUG_DRAWSORTED   
+    fprintf( stderr, "Neg dist count %i, Transforms %i\n", neg_dist_cnt, transform_load_cnt );
+#endif
+}
+#endif
