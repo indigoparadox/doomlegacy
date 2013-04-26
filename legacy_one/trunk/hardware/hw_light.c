@@ -158,6 +158,7 @@
 
 
 #include "hw_light.h"
+#include "hw_main.h"
 #include "../i_video.h"
 #include "../z_zone.h"
 #include "../m_random.h"
@@ -942,7 +943,6 @@ void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr)
 #endif
 
 #ifdef NEWCORONAS
-void transform(float *cx, float *cy, float *cz);
 // use the lightlist of the frame to draw the coronas at the top of everythink
 void HWR_DrawCoronas( void )
 {
@@ -966,7 +966,7 @@ void HWR_DrawCoronas( void )
         if ( !(p_lspr->type & CORONA_SPR) )
             continue;
 
-        transform(&cx,&cy,&cz);
+        transform_world_to_gr(&cx,&cy,&cz);
 
         // more realistique corona !
         if( cz>=255*8+250 )

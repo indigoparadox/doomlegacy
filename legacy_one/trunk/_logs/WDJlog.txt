@@ -3091,3 +3091,11 @@ Fix bug in Boom deepwater colormap support.
 Would use bogus colormap at [-1] instead of using no colormap.
 Bug would only show in opengl because opengl uses the rgba field instead
 of the colormap table field, which was NULL.
+
+*** w89_term_transform
+patchfile = w89_11_term_transform.patch
+- committed revision 1010   by wesley johnson
+Make hardware render TERM_TRANSFORM the permanent choice, removing
+the conditional compilation.  Removed the dead code that this creates.
+Rename some functions.
+Fix some spelling.

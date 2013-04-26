@@ -574,8 +574,6 @@ static float gr_fovlud;
 //                                    Transforms
 // ==========================================================================
 
-#define TERM_TRANSFORM
-#ifdef TERM_TRANSFORM
 // The only terms needed, the other terms are 0.
 // Don't try to make this a matrix, this is much easier to understand and maintain.
 static float world_trans_x_to_x, world_trans_y_to_x,
@@ -633,6 +631,8 @@ void HWR_transform_world_FOut(float wx, float wy, float wz, vxtx3d_t * fovp)
 }
 #endif
 
+#if 0
+// unused
 void HWR_transform_sprite_FOut(float cx, float cy, float cz, vxtx3d_t * fovp)
 {
     // Combined transforms for look up/down, and scaling
@@ -641,6 +641,7 @@ void HWR_transform_sprite_FOut(float cx, float cy, float cz, vxtx3d_t * fovp)
    fovp->x = (cx * sprite_trans_x_to_x);
 }
 #endif
+
 
 // ==========================================================================
 //                                    LIGHT stuffs
@@ -3158,12 +3159,6 @@ gr_vissprite_t *HWR_NewVisSprite(void)
 // -----------------+
 static void HWR_DrawSprite(gr_vissprite_t * spr)
 {
-#ifndef TERM_TRANSFORM
-    int i;
-    float tr_x;
-    float tr_y;
-    vxtx3d_t *wv;
-#endif
     int lightnum;  // 0..255
     vxtx3d_t vxtx[4];
     MipPatch_t *gpatch;       //sprite patch converted to hardware
@@ -3194,8 +3189,6 @@ static void HWR_DrawSprite(gr_vissprite_t * spr)
     //  |/ |
     //  0--1
 
-#ifdef TERM_TRANSFORM
-#if 1
     // fastest, use transform terms in optimized shared code
     // Combined transforms for look up/down and scaling
     float topty = spr->ty - gpatch->height;
@@ -3207,42 +3200,6 @@ static void HWR_DrawSprite(gr_vissprite_t * spr)
     float tranzz = spr->tz * sprite_trans_z_to_z;
     vxtx[0].z = vxtx[1].z = (topty * sprite_trans_y_to_z) + tranzz;
     vxtx[2].z = vxtx[3].z = (spr->ty * sprite_trans_y_to_z) + tranzz;
-#else
-    // Use standard transform calls, many redundant calculations
-    // Combined transforms for look up/down and scaling
-    float topty = spr->ty - gpatch->height;
-    HWR_transform_sprite_FOut(spr->x1, topty, spr->tz, &vxtx[0]);
-    HWR_transform_sprite_FOut(spr->x2, topty, spr->tz, &vxtx[1]);
-    HWR_transform_sprite_FOut(spr->x2, spr->ty, spr->tz, &vxtx[2]);
-    HWR_transform_sprite_FOut(spr->x1, spr->ty, spr->tz, &vxtx[3]);
-#endif
-#else
-    // old serial transform code
-    vxtx[0].x = vxtx[3].x = spr->x1;
-    vxtx[2].x = vxtx[1].x = spr->x2;
-    vxtx[2].y = vxtx[3].y = spr->ty;
-    vxtx[0].y = vxtx[1].y = spr->ty - gpatch->height;
-
-    // make a wall polygon (with 2 triangles), using the floor/ceiling heights,
-    // and the 2d map coords of start/end vertices
-    vxtx[0].z = vxtx[1].z = vxtx[2].z = vxtx[3].z = spr->tz;
-
-    // transform
-    wv = vxtx;
-
-    for (i = 0; i < 4; i++, wv++)
-    {
-        //look up/down
-        tr_x = wv->z;
-        tr_y = wv->y;
-        wv->y = (tr_x * gr_viewludcos) + (tr_y * gr_viewludsin);
-        wv->z = (tr_x * gr_viewludsin) - (tr_y * gr_viewludcos);
-
-        //scale y before frustum so that frustum can be scaled to screen height
-        wv->y *= ORIGINAL_ASPECT * gr_fovlud;
-        wv->x *= gr_fovlud;
-    }
-#endif   
 
     if (spr->flip)
     {
@@ -3304,9 +3261,9 @@ static void HWR_DrawSprite(gr_vissprite_t * spr)
         }
         else
         {
-            // BP: i agree that is little better in environement but it don't
+            // BP: i agree that is little better in environment but it don't
             //     work properly under glide nor with fogcolor to ffffff :(
-            // Hurdler: PF_Environement would be cool, but we need to fix
+            // Hurdler: PF_Environment would be cool, but we need to fix
             //          the issue with the fog before
             Surf.FlatColor.s.alpha = 0xFF;
             blend = PF_Translucent | PF_Occlude;
@@ -4057,10 +4014,8 @@ void HWR_RenderPlayerView(int viewnumber, player_t * player)
     //04/01/2000: Hurdler: added for T&L
     //                     Actually it only works on Walls and Planes
     HWD.pfnSetTransform(&atransform);
-#ifdef TERM_TRANSFORM
     // [WDJ] transform upgrade
     HWR_set_view_transform();
-#endif
 
     validcount++;
     HWR_RenderBSPNode(numnodes - 1);
@@ -4327,9 +4282,8 @@ void HWR_Shutdown(void)
 }
 
 
-#ifdef TERM_TRANSFORM
 // temporary, to supply old call
-void transform(float *cx, float *cy, float *cz)
+void transform_world_to_gr(float *cx, float *cy, float *cz)
 {
     // translation
     // Combined transforms for position, direction, look up/down, and scaling
@@ -4346,8 +4300,9 @@ void transform(float *cx, float *cy, float *cz)
        + (tr_z * world_trans_z_to_z );
 }
 
-#else
-void transform(float *cx, float *cy, float *cz)
+#if 0
+// for reference
+void transform_world_to_gr(float *cx, float *cy, float *cz)
 {
     float tr_x, tr_y;
     // translation
