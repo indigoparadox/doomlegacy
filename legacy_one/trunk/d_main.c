@@ -2382,14 +2382,14 @@ void Help( void )
   {
     printf
        ("Usage: doomlegacy [-opengl] [-iwad xxx.wad] [-file pwad.wad ...]\n"
-	"-version  Print Legacy version\n"
-	"-h    Help\n"
-	"-h g  Help game and wads\n"
-	"-h m  Help multiplayer\n"
-	"-h c  Help config\n"
-	"-h s  Help server\n"
-	"-h d  Help demo\n"
-	"-h D  Help Devmode\n"
+	"--version   Print Doom Legacy version\n"
+	"-h     Help\n"
+	"-h g   Help game and wads\n"
+	"-h m   Help multiplayer\n"
+	"-h c   Help config\n"
+	"-h s   Help server\n"
+	"-h d   Help demo\n"
+	"-h D   Help Devmode\n"
 	);
      return;
   }
@@ -2433,7 +2433,7 @@ void Help( void )
 	"-v   -v2        Verbose\n"
 	"-home name      Config and savegame directory\n"
 	"-config file    Config file\n"
-	"-opengl         OpenGL Hardware render\n"
+	"-opengl         OpenGL hardware renderer\n"
 	"-nosound        No sound effects\n"
 #ifdef CDMUS
 	"-nocd           No CD music\n"
