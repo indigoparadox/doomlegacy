@@ -120,8 +120,6 @@
 //
 //-----------------------------------------------------------------------------
 
-#include <malloc.h>
-
 #include "doomdef.h"
 #include "g_game.h"
 #include "i_video.h"

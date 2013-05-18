@@ -3140,3 +3140,9 @@ patchfile = w90_1_makefile.patch
 - committed revision 1013   by wesley johnson
 Fix debug libs with CDMUS conditional.
 Remove old dependencies.
+
+*** w90_malloc
+patchfile = w90_2_malloc.patch
+- committed revision 1014   by wesley johnson
+Remove old references to malloc.h, except for WATCOM.
+Fixes bug 0000602, compiling under FreeBSD.

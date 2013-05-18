@@ -178,8 +178,6 @@
 //
 //-----------------------------------------------------------------------------
 
-#include <malloc.h>
-
 #include "doomdef.h"
 #include "d_main.h"
 #include "byteptr.h"

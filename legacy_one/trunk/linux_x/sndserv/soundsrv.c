@@ -51,7 +51,6 @@
 //
 //-----------------------------------------------------------------------------
 
-
 #include <math.h>
 #include <sys/types.h>
 #include <stdio.h>
@@ -59,9 +58,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <stdlib.h>
-#ifndef FREEBSD
-#include <malloc.h>
-#endif
+  // malloc
 #include <sys/stat.h>
 #include <sys/time.h>
 
