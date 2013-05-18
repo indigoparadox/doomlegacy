@@ -104,10 +104,7 @@
 #include <sys/mount.h>
 /*For meminfo*/
 #include <sys/types.h>
-#include <kvm.h>
-#include <nlist.h>
-#include <sys/vmmeter.h>
-#include <fcntl.h>
+#include <sys/sysctl.h>
 #endif
 
 #ifdef LJOYSTICK // linux joystick 1.x
@@ -542,11 +539,22 @@ void I_StartupMouse2 (void)
 
 uint64_t I_GetFreeMem(uint64_t *total)
 {
-#ifndef FREEBSD
+#ifdef FREEBSD
+    unsigned page_count, free_count, pagesize;
+    size_t len = sizeof(unsigned);
+    if (sysctlbyname("vm.stats.vm.v_page_count", &page_count, &len, NULL, 0))
+      goto guess;
+    if (sysctlbyname("vm.stats.vm.v_free_count", &free_count, &len, NULL, 0))
+      goto guess;
+    if (sysctlbyname("hw.pagesize", &pagesize, &len, NULL, 0))
+      goto guess;
+    *total = (uint64_t)page_count * pagesize;
+    return (uint64_t)free_count * pagesize;
+#else
     char buf[1024];    
     char *memTag;
-    ULONG freeKBytes;
-    ULONG totalKBytes;
+    uint64_t freeKBytes;
+    uint64_t totalKBytes;
     int n;
     int meminfo_fd = -1;
 
@@ -555,66 +563,29 @@ uint64_t I_GetFreeMem(uint64_t *total)
     close(meminfo_fd);
     
     if(n<0)
-    {
-        // Error
-        *total = 0L;
-        return 0;
-    }
+        goto guess;
     
     buf[n] = '\0';
     if(NULL == (memTag = strstr(buf, MEMTOTAL)))
-    {
-        // Error
-        *total = 0L;
-        return 0;
-    }
+        goto guess;
         
     memTag += sizeof(MEMTOTAL);
     totalKBytes = atoi(memTag);
     
     if(NULL == (memTag = strstr(buf, MEMFREE)))
-    {
-        // Error
-        *total = 0L;
-        return 0;
-    }
+        goto guess;
         
     memTag += sizeof(MEMFREE);
     freeKBytes = atoi(memTag);
     
     *total = totalKBytes << 10;
     return freeKBytes << 10;
-#else /*FREEBSD*/
-	/*FREEBSD defined*/
-	struct  vmmeter sum;
-	kvm_t *kd;
-	struct nlist namelist[]= {
-#define X_SUM   0
-		{"_cnt"},
-		{ NULL }
-	};
-	if ((kd = kvm_open(NULL, NULL, NULL, O_RDONLY, "kvm_open")) == NULL)
-	{
-		*total = 0L;
-		return 0;
-	}
-	if (kvm_nlist(kd, namelist) != 0)
-	{
-		kvm_close (kd);
-		*total = 0L;
-		return 0;
-	}
-	if (kvm_read(kd,namelist[X_SUM].n_value ,&sum, sizeof(sum)) != sizeof(sum))
-	{
-		kvm_close (kd);
-		*total = 0L;
-		return 0;
-	}
-	kvm_close (kd);
 
-	*total = sum.v_page_count * sum.v_page_size;
-	return sum.v_free_count * sum.v_page_size;
-#endif /*FREEBSD*/
+ guess:
+    // make a conservative guess
+    *total = (32 << 20) + 0x01;  // guess indicator
+    return   0;
+#endif
 }
 
 

@@ -224,8 +224,9 @@ char *I_GetWadDir(void)
 
 ULONG I_GetFreeMem(ULONG *total)
 {
+  // add 0x01 to indicate guess
 	*total = MaxBlock() - 4*1024*1024;
-	return MaxBlock() - 6*1024*1024;	//Should fix this. 
+	return 0;  // no freemem
 }
 
 static int quiting=0; /* prevent recursive I_Quit() */
