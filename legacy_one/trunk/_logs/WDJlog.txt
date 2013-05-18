@@ -3135,3 +3135,8 @@ The SORTED draw has sprites drawn correctly for transparent and
 translucent walls.
 Later this menu item may be removed, with only draw sorted remaining.
 
+*** w90_Makefile
+patchfile = w90_1_makefile.patch
+- committed revision 1013   by wesley johnson
+Fix debug libs with CDMUS conditional.
+Remove old dependencies.
