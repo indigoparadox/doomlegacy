@@ -1823,17 +1823,42 @@ void D_DoomMain()
         // Make the home directory
         if (userhome)
         {
+#if 1
+	    // [WDJ] find directory, .doomlegacy, or .legacy
+	    char dirpath[ MAX_WADPATH ];
+
+	    // form directory filename, with slash (for savegamename)
+	    cat_filename( dirpath, userhome, DEFAULTDIR1 SLASH );
+	    // if it exists then use it
+	    if( ! access(dirpath, R_OK) == 0 )
+	    {
+	        // not there, try 2nd choice
+	        cat_filename( dirpath, userhome, DEFAULTDIR2 SLASH );
+	        if( ! access(dirpath, R_OK) == 0 )
+	        {
+		    // not there either, then make primary default dir
+		    cat_filename( dirpath, userhome, DEFAULTDIR1 SLASH );
+		}
+	    }
             // make subdirectory in userhome
-	    legacyhome = (char*) malloc( strlen(userhome) + strlen(DEFAULTDIR) + 5 );
+            // example: "/home/user/.doomlegacy/"
+	    legacyhome = strdup( dirpath );  // malloc
+#else
+            // make subdirectory in userhome
+	    legacyhome = (char*) malloc( strlen(userhome) + strlen(DEFAULTDIR1) + 5 );
             // example: "/home/user/.legacy/"
             sprintf(legacyhome, "%s" SLASH DEFAULTDIR SLASH, userhome);
+#endif
         }
         else
         {
             // default absolute path, do not set to ""
             legacyhome = DEFHOME;
         }
-        I_mkdir( legacyhome, 0700);
+        if( ! access(legacyhome, R_OK) == 0 )
+        {
+	    I_mkdir( legacyhome, 0700);
+	}
         legacyhome_len = strlen(legacyhome);
        
         // [WDJ] configfile must be set whereever legacyhome is on DOS or WIN32

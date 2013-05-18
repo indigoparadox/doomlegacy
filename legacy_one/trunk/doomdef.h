@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Copyright (C) 1998-2010 by DooM Legacy Team.
+// Copyright (C) 1998-2013 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -284,9 +284,15 @@ extern FILE *logstream;
 
 // Name of local directory for config files and savegames
 #ifdef LINUX
-#define DEFAULTDIR ".legacy"
+#define DEFAULTDIR1 ".doomlegacy"
+#define DEFAULTDIR2 ".legacy"
 #else
-#define DEFAULTDIR "legacy"
+#ifdef PC_DOS
+#define DEFAULTDIR1 "dmlegacy"
+#else
+#define DEFAULTDIR1 "doomlegacy"
+#endif
+#define DEFAULTDIR2 "legacy"
 #endif
 
 #if defined PC_DOS || defined WIN32
