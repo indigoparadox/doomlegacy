@@ -396,7 +396,7 @@ void SCR_Startup (void)
     vid.centerofs = 0;
 
 #ifdef USEASM
-    ASM_PatchRowBytes(vid.width);
+    ASM_PatchRowBytes(vid.ybytes);
 #endif
 
     V_Init_Draw();

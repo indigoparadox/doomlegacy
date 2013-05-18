@@ -24,6 +24,8 @@
 #     Compile the Linux X11 version with 'make SMIF=LINUX_X11'
 #     Compile the FreeBSD X11 version with 'make SMIF=FREEBSD_X11'
 #     Compile the OS/2 version with  'make SMIF=OS2_NATIVE'
+#     Compile assembly code for some draw functions with  'make USEASM=1'
+#     but the assembly code is not often updated with the latest improvements.
 #
 #############################################################################
 
@@ -386,6 +388,7 @@ ifdef USEASM
    OPTS:= $(OPTS) -DUSEASM
 endif
 
+
 # CD-Music
 ifdef CDMUS
    OBJS += $(CDMUSOBJ)
@@ -637,6 +640,19 @@ ifeq ($(SMIF), OS2_NATIVE)
 $(O)/%.res: os2/%.rc
 	rc.exe -i .\os2 -r $< $@
 endif
+
+ifdef USEASM
+$(O)/tmap.o: tmap.nas
+	nasm -o $@ -f $(NASMFORMAT) $<
+
+$(O)/vid_copy.o: vid_copy.s
+	$(CC) $(OPTS) $(SFLAGS) -x assembler-with-cpp -c $< -o $@
+endif
+
+# To dump draw functions to assembly
+objdump_draw: $(O)/r_draw.o
+	objdump -d $(O)/r_draw.o -l --source --no-show-raw-insn > $(BIN)/r_draw.s
+
 
 #=======================================================
 #[WDJ] Dependencies, replaces makedep.mak, which was unmaintained.
