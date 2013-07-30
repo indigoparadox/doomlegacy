@@ -74,6 +74,7 @@ typedef struct
 extern unsigned int    numlevelflats;
 extern levelflat_t*    levelflats;
 int P_AddLevelFlat (char* flatname);
+int P_PrecacheLevelFlats (void);
 char *P_FlatNameForNum(int num);
 
 extern int             nummapthings;

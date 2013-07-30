@@ -496,7 +496,7 @@ unsigned int            numlevelflats;  // actual in use
 levelflat_t*            levelflats;
 
 //SoM: Other files want this info.
-int P_PrecacheLevelFlats()
+int P_PrecacheLevelFlats( void )
 {
   int flatmemory = 0;
   int i;
