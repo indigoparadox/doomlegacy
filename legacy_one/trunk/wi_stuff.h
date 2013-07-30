@@ -61,9 +61,9 @@ void WI_Start(wbstartstruct_t*   wbstartstruct);
 
 boolean teamingame(int teamnum);
 
-// draw ranckings
-void WI_drawRancking(char *title,int x,int y,fragsort_t *fragtable
-                    , int scorelines, boolean large, int white);
+// draw rankings
+void WI_drawRanking(char *title,int x,int y,fragsort_t *fragtable,
+                    int scorelines, boolean large, int white);
 
 
 #endif
