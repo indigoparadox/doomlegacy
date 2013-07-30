@@ -392,7 +392,6 @@ void SCR_Startup (void)
 
     //vid.baseratio = FRACUNIT; //Hurdler: not used anymore
 
-    scaledofs = 0;
     vid.centerofs = 0;
 
 #ifdef USEASM
@@ -430,7 +429,6 @@ void SCR_Recalc (void)
     }
 
     //added:18-02-98: calculate centering offset for the scaled menu
-    scaledofs = 0;  //see v_video.c
     vid.centerofs = (((vid.height%BASEVIDHEIGHT)/2) * vid.width) +
                     (vid.width%BASEVIDWIDTH)/2;
 

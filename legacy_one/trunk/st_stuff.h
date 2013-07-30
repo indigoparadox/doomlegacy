@@ -52,7 +52,7 @@
                      //hardware mode : original coords, scaled to current resolution, correct aspect
 //#define ST_Y         (rendermode==render_soft ? vid.height - stbarheight : BASEVIDHEIGHT - ST_HEIGHT)
 extern int ST_Y;
-extern int fgbuffer;
+extern int fg_stbar;  // FG with status bar draw flags
 extern int st_x;
 extern boolean st_statusbar_on;
 extern int st_scalex;
