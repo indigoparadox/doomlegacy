@@ -71,9 +71,9 @@ typedef struct
     int         speed;
 } levelflat_t;
 
-extern int             numlevelflats;
+extern unsigned int    numlevelflats;
 extern levelflat_t*    levelflats;
-int P_AddLevelFlat (char* flatname, levelflat_t* levelflat);
+int P_AddLevelFlat (char* flatname);
 char *P_FlatNameForNum(int num);
 
 extern int             nummapthings;

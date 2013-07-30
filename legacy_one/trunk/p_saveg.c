@@ -870,9 +870,9 @@ void P_ArchiveWorld(void)
         //  flats
         //
         // P_AddLevelFlat should not add but just return the number
-        if (ss->floorpic != P_AddLevelFlat(ms->floorpic, levelflats))
+        if (ss->floorpic != P_AddLevelFlat(ms->floorpic))  // check changed id
             diff |= SD_FLOORPIC;
-        if (ss->ceilingpic != P_AddLevelFlat(ms->ceilingpic, levelflats))
+        if (ss->ceilingpic != P_AddLevelFlat(ms->ceilingpic))  // check changed id
             diff |= SD_CEILPIC;
 
         if (ss->lightlevel != LE_SWAP16(ms->lightlevel))
@@ -1081,12 +1081,12 @@ void P_UnArchiveWorld(void)
             secp->ceilingheight = READFIXED(get);
         if (diff & SD_FLOORPIC)
         {
-	    secp->floorpic = P_AddLevelFlat((char *)get, levelflats);
+	    secp->floorpic = P_AddLevelFlat((char *)get);  // find id
             get += 8;
         }
         if (diff & SD_CEILPIC)
         {
-            secp->ceilingpic = P_AddLevelFlat((char *)get, levelflats);
+            secp->ceilingpic = P_AddLevelFlat((char *)get);  // find id
             get += 8;
         }
         if (diff & SD_LIGHT)
