@@ -1894,9 +1894,9 @@ void P_KillMobj ( mobj_t*       target,
     }
     else
     {
-		//DarkWolf95: Support for Chex Quest
-		if(gamemode == chexquest1)  //don't drop monster ammo in chex quest
-			return;
+        //DarkWolf95: Support for Chex Quest
+        if(gamemode == chexquest1)  //don't drop monster ammo in chex quest
+	   return;
 
         switch (target->type)
         {

@@ -134,7 +134,7 @@ void P_RunThinkers (void)
             currentthinker->prev->next = currentthinker->next;
             removeit = currentthinker;
             currentthinker = currentthinker->next;
-            Z_Free (removeit);
+            Z_Free (removeit);  // mobj, etc.
         }
         else
         {

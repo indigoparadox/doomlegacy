@@ -2747,6 +2747,7 @@ void A_SpawnFly (mobj_t* mo)
     newmobj     = P_SpawnMobj (targ->x, targ->y, targ->z, type);
     if (P_LookForPlayers (newmobj, true) )
         P_SetMobjState (newmobj, newmobj->info->seestate);
+    // cube monsters have no mapthing (spawnpoint=NULL), do not respawn
 
     // telefrag anything in this spot
     P_TeleportMove (newmobj, newmobj->x, newmobj->y);

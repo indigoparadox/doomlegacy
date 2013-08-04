@@ -786,7 +786,7 @@ void P_LoadThings (int lump)
 	       mt->options &= ~MTF_MPSPAWN;  // Remove multiplayer only flag
 	}
 
-        P_SpawnMapThing (mt);
+        P_SpawnMapthing (mt);
     }
 
     Z_Free(data);
@@ -1614,6 +1614,7 @@ boolean P_SetupLevel (int           episode,
     // clear the splats from previous level
     R_ClearLevelSplats ();
 #endif
+    P_Clear_Extra_Mapthing();  // remove FS mapthings 
 
     script_camera_on = false;
     HU_ClearTips();

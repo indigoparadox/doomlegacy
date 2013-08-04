@@ -241,7 +241,7 @@ typedef struct
     int16_t             angle;  // normally (0,90,180,270), reported neg sometimes
     int16_t             type;
     int16_t             options;
-    struct mobj_s*      mobj;
+    struct mobj_s*      mobj;  // Extra MapThing, voodoo, and FS tests
 } mapthing_t;
 
 
