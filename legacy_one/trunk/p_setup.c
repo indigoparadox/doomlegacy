@@ -560,6 +560,9 @@ int P_AddLevelFlat ( char* flatname )
         levelflat_max += LEVELFLAT_INC;  // alloc more levelflats
         levelflat_t* new_levelflats =
             Z_Malloc (levelflat_max*sizeof(levelflat_t), PU_LEVEL, NULL);
+        // must zero because unanimated are left to defaults
+        memset( &new_levelflats[numlevelflats], 0,
+		(levelflat_max - numlevelflats)*sizeof(levelflat_t) );
         if( levelflats )
         {
 	    memcpy (new_levelflats, levelflats, numlevelflats*sizeof(levelflat_t));
