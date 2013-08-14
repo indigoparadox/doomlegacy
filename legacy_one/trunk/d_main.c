@@ -1262,15 +1262,15 @@ byte  Check_lumps( const char * wadname, const char * lumpnames[], int count )
     {
         if( fread( &lumpx, sizeof(lumpx), 1, wadfile ) < 1 )   goto read_err;
 #ifdef DEBUG       
-        int cmp = strnicmp( lumpx.name, lumpname, 8 );
-	if( strnicmp( lumpx.name, "TITLE", 5 ) == 0 )
+        int cmp = strncasecmp( lumpx.name, lumpname, 8 );
+	if( strncasecmp( lumpx.name, "TITLE", 5 ) == 0 )
 	 printf( "%8s %c %8s \n", lumpx.name,
 		 ( (cmp<0)?'<': (cmp>0)? '>' :'='),
 		  lumpname);
 #endif       
         for( lc=0; lc<count; lc++ )
         {
-            if( strnicmp( lumpx.name, lumpnames[lc], 8 ) == 0 )
+            if( strncasecmp( lumpx.name, lumpnames[lc], 8 ) == 0 )
 	        result |= 1<<lc;  // found it, record it
 	}
     }

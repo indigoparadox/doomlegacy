@@ -486,7 +486,7 @@ int G_KeyStringtoNum(char *keystr)
 
     for (j=0;j<NUMKEYNAMES;j++)
     {
-        if (stricmp(keynames[j].name,keystr)==0)
+        if (strcasecmp(keynames[j].name,keystr)==0)
             return keynames[j].keynum;
     }
 

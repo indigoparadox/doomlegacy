@@ -1173,7 +1173,7 @@ int W_AddFile (char *filename)
     CONS_Printf (" adding %s\n",filename);
     startlump = numlumps;
 
-    if (stricmp (filename+strlen(filename)-3, "wad") )
+    if (strcasecmp (filename+strlen(filename)-3, "wad") )
     {
         // single lump file
         fileinfo = &singleinfo;

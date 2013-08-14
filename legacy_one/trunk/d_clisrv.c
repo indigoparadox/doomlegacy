@@ -951,7 +951,7 @@ void Command_connect(void)
     }
     server = false;
 
-    if( stricmp(COM_Argv(1),"self")==0 )
+    if( strcasecmp(COM_Argv(1),"self")==0 )
     {
         servernode = 0;
         server = true;
@@ -961,7 +961,7 @@ void Command_connect(void)
     else
     {
         // used in menu to connect to a server in the list
-        if( netgame && stricmp(COM_Argv(1),"node")==0 )
+        if( netgame && strcasecmp(COM_Argv(1),"node")==0 )
             servernode = atoi(COM_Argv(2));
         else
         if( netgame )
@@ -976,7 +976,7 @@ void Command_connect(void)
             netgame = true;
             multiplayer = true;
         
-            if( stricmp(COM_Argv(1),"any")==0 )
+            if( strcasecmp(COM_Argv(1),"any")==0 )
                 servernode = BROADCASTADDR;
             else
             if( I_NetMakeNode )
@@ -1095,7 +1095,7 @@ int nametonum(char *name)
 
     for(i=0;i<MAXPLAYERS;i++)
     {
-        if(playeringame[i] && stricmp(player_names[i],name)==0)
+        if(playeringame[i] && strcasecmp(player_names[i],name)==0)
             return i;
     }
     

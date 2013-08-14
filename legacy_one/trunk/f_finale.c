@@ -672,6 +672,7 @@ void F_CastDrawer (void)
 //
 // [WDJ] patch is already endian fixed
 // Called by F_BunnyScroll
+// sx is x position in 320 width screen
 static void F_DrawPatchCol (int sx, patch_t* patch, int col )
 {
     column_t*   column;

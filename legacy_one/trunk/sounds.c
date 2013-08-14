@@ -573,7 +573,7 @@ int S_FindMusic(char *name)
   {
     if(!S_music[i].name)
       continue;
-    if(!stricmp(name, S_music[i].name)) return i;
+    if(!strcasecmp(name, S_music[i].name)) return i;
   }
 
   return S_AddMusic(name);

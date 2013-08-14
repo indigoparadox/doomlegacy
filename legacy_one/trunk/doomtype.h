@@ -143,9 +143,12 @@ typedef uint32_t  tic_t;
     #endif
 #endif
 
+#if 0
+// [WDJ] changed all stricmp to strcasecmp
 // [smite] we should use standard funcs
 #define stricmp(x,y) strcasecmp(x,y)
 #define strnicmp(x,y,n) strncasecmp(x,y,n)
+#endif
 
 
 #if !defined(WIN32) && !defined(__WINDOWS__)
@@ -173,22 +176,40 @@ int strlwr(char *n);
 //#include <limits.h>
 #endif
 
+// [WDJ] This is very dangerous considering 32 bit and 64 bit systems,
+// should use stdint.h values instead.
+// These are obsolete defines from values.h.
 #ifndef MAXCHAR
+// unused
 #define MAXCHAR   ((char)0x7f)
 #endif
+
 #ifndef MAXSHORT
+// defined in values.h
+// used in r_segs.c
 #define MAXSHORT  ((short)0x7fff)
 #endif
+
 #ifndef MAXINT
+// defined in values.h
+// used in many places
 #define MAXINT    ((int)0x7fffffff)
 #endif
+
 #ifndef MINCHAR
+// unused
 #define MINCHAR   ((char)0x80)
 #endif
+
 #ifndef MINSHORT
+// defined in values.h
+// unused
 #define MINSHORT  ((short)0x8000)
 #endif
+
 #ifndef MININT
+// defined in values.h
+// used in many places
 #define MININT    ((int)0x80000000)
 #endif
 
