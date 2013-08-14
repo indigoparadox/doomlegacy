@@ -348,6 +348,8 @@ void I_FinishUpdate (void)
       V_DrawPixel( dest, i * vid.dupy, 0x00 );
   }
 
+  // cv_vidwait.value not used, X11 handles its own vsync, no controls
+
 #ifdef EXPAND_BUFFER_ENABLE
   // scales the screen size before blitting it
   // disabled for now 19990221 by Kin

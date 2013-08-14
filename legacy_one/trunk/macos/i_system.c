@@ -276,8 +276,11 @@ void I_Quit (void)
     ExitToShell();
 }
 
-void I_WaitVBL(int count)
-{}
+// sleeps for the given amount of milliseconds
+void I_Sleep(unsigned int ms)
+{
+    usleep( ms * 1000 );
+}
 
 void I_BeginRead(void)
 {

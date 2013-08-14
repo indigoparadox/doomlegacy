@@ -367,18 +367,12 @@ void I_Quit (void)
 }
 
 
-//added:12-02-98: does want to work!!!! rhaaahahha
-void I_WaitVBL(int count)
+// sleeps for the given amount of milliseconds
+void I_Sleep(unsigned int ms)
 {
-   while(count-->0);
-   {
-     do {
-     } while (inportb(0x3DA) & 8);
-     do {
-     } while (!(inportb(0x3DA) & 8));
-   }
-
+    usleep( ms * 1000 );  // unistd
 }
+
 
 //  Fab: this is probably to activate the 'loading' disc icon
 //       it should set a flag, that I_FinishUpdate uses to know

@@ -1203,6 +1203,8 @@ void I_FinishUpdate(void)
 	    V_DrawPixel( dest, i * vid.dupy, 0x00 );
     }
 
+    // cv_vidwait.value not used, X11 handles its own vsync, no controls
+
     if( x_bytepp == vid.bytepp ) {
         // no translation
         // draw is same bpp as video
@@ -1293,7 +1295,7 @@ void I_FinishUpdate(void)
             if (XPending(X_display))
                 I_GetEvent();
             else
-                I_WaitVBL(1);
+	        usleep( 20 );
         } while (!shmFinished);
 
     }

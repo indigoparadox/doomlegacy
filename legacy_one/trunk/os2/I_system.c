@@ -206,9 +206,14 @@ void I_Quit (void)
    exit(0);
 }
 
-void I_WaitVBL(int count)
+// sleeps for the given amount of milliseconds
+void I_Sleep(unsigned int ms)
 {
-    DosSleep( count*1000/70);
+#if 1
+    usleep( ms * 1000 );  // unistd
+#else
+    DosSleep( ms );
+#endif
 }
 
 void I_BeginRead(void)

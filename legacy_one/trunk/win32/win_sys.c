@@ -281,9 +281,10 @@ int I_GetTime (void)
 
 
 
-// should move to i_video
-void I_WaitVBL(int count)
+// sleeps for the given amount of milliseconds
+void I_Sleep(unsigned int ms)
 {
+    usleep( ms * 1000 );  // unistd
 }
 
 

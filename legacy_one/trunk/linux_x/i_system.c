@@ -625,10 +625,9 @@ again:
     // care about the system clock running backwards sometimes. Make
     // sure the new tic is later then the last one.
     newtics = (tp.tv_sec-basetime)*TICRATE + tp.tv_usec*TICRATE/1000000;
-    if (!oldtics)
-        oldtics = newtics;
-    if (newtics < oldtics) {
-        I_WaitVBL(1);
+    if (oldtics && (newtics < oldtics))
+    {
+        usleep(1);
         goto again;
     }
     oldtics = newtics;
@@ -678,8 +677,11 @@ void I_Quit (void)
     exit(0);
 }
 
-void I_WaitVBL(int count)
+// sleeps for the given amount of milliseconds
+void I_Sleep(unsigned int ms)
 {
+    usleep( ms * 1000 );
+#if 0	   
 #ifdef SGI
     sginap(1);                                           
 #else
@@ -687,6 +689,7 @@ void I_WaitVBL(int count)
     sleep(0);
 #else
     usleep (count * (1000000/70) );                                
+#endif
 #endif
 #endif
 }

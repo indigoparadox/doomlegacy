@@ -722,9 +722,10 @@ void I_Quit (void)
     exit(0);
 }
 
-void I_WaitVBL(int count)
+// sleeps for the given amount of milliseconds
+void I_Sleep(unsigned int ms)
 {
-    SDL_Delay(1);
+    SDL_Delay(ms);
 }
 
 

@@ -287,7 +287,7 @@ void I_FinishUpdate (void)
             
             // draw dots
             for(j=0;j<=20*SCALE*vid.dupy;j+=2*SCALE*vid.dupy)
-            {
+	    {
 	        byte * dest = V_GetDrawAddr( 0, (vid.height-1-j) );
                 for (i=0;i<FPSPOINTS*SCALE*vid.dupx;i+=2*SCALE*vid.dupx)
 		    V_DrawPixel( dest, i, 0xff );

@@ -3359,5 +3359,17 @@ Fix win32 joystick to use newer joystick interfaces.
 Will allow two joysticks.
 Untested.
 
+*** W92_WaitVBL
+patchfile = w92_10_waitvbl.patch
+- committed revision 1037   by wesley johnson
+I_WaitVBL is no longer used by sdl, nor the code, it never worked,
+and most ports had dummy functions.
+Now there is I_Sleep, that is used (in one place, optionally, as an
+experiment).
+Removed I_WaitVBL from all the ports, and added an I_Sleep function,
+using usleep() from unistd.
+
+
+
 
 

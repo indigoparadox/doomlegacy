@@ -95,6 +95,8 @@ void I_UpdateNoBlit (void)
 }
 
 
+
+
 //profile stuff ---------------------------------------------------------
 //added:16-01-98:wanted to profile the VID_BlitLinearScreen() asm code.
 //#define TIMING      //uncomment this to enable profiling
@@ -110,7 +112,6 @@ static   unsigned long  nombre = TICRATE*10;
 
 #define FPSPOINTS  35
 #define SCALE      4
-#define PUTDOT(xx,yy,cc) screens[0][((yy)*vid.width+(xx))*vid.bytepp]=(cc)
 
 int fpsgraph[FPSPOINTS];
 
@@ -118,6 +119,7 @@ int fpsgraph[FPSPOINTS];
 // I_FinishUpdate
 //
 void I_BlitScreenVesa1(void);   //see later
+
 void I_FinishUpdate (void)
 {
 
@@ -130,7 +132,7 @@ void I_FinishUpdate (void)
     if (cv_ticrate.value)
     {
 #if 1   // display a graph of ticrate should be a cvar
-        int k,j,l;
+        int k,j;
 
         i = I_GetTime();
         tics = i - lasttic;
@@ -144,15 +146,18 @@ void I_FinishUpdate (void)
         // draw lines
         for(j=0;j<=20*SCALE*vid.dupy;j+=2*SCALE*vid.dupy)
         {
-           l=(vid.height-1-j)*vid.width*vid.bytepp;
-           for (i=0;i<FPSPOINTS*SCALE*vid.dupx;i+=4)
-               screens[0][l+i]=0xff;
+	    byte * dest = V_GetDrawAddr( 0, (vid.height-1-j) );
+	    for (i=0;i<FPSPOINTS*SCALE*vid.dupx;i+=2*SCALE*vid.dupx)
+	        V_DrawPixel( dest, i, 0xff );
         }
 
         // draw the graph
         for (i=0;i<FPSPOINTS;i++)
+        {
+	    byte * dest = V_GetDrawAddr( 0, vid.height-1-(fpsgraph[i]*SCALE*vid.dupy) );
             for(k=0;k<SCALE*vid.dupx;k++)
-                PUTDOT(i*SCALE*vid.dupx+k,vid.height-1-(fpsgraph[i]*SCALE*vid.dupy),0xff);
+	        V_DrawPixel( dest, (i*SCALE*vid.dupx)+k, 0xff );
+	}
 
 #else   // the old ticrate shower
         for (i=0 ; i<tics*2 ; i+=2)
@@ -166,10 +171,20 @@ void I_FinishUpdate (void)
    // this code sucks
    //memcpy(dascreen,screens[0],screenwidth*screenheight);
 
-   //added:03-01-98: I tried to I_WaitVBL(1) here, but it slows down
+   //added:03-01-98: I tried to vsync here, but it slows down
    //  the game when the view becomes complicated, it looses ticks
    if( cv_vidwait.value )
-       I_WaitVBL(1);
+   {
+#if 0
+       // Poll the CRTC status for VertRefresh
+//       do {
+//       } while (inportb(0x3DA) & 8);  // while VRI
+       do {
+       } while (!(inportb(0x3DA) & 8));  // while not VRI
+#else
+       vsync(); // allegro wait for vsync
+#endif
+   }
 
 
 //added:16-01-98:profile screen blit.
