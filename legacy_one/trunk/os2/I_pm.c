@@ -169,9 +169,9 @@ int PostCharEvent(WINDATA *this, PCHRMSG pchmsg)
       switch( pchmsg->vkey) {
 
       case VK_INSERT:   ev.data1 = KEY_INS;  break;
-      case VK_DELETE:   ev.data1 = KEY_DEL;  break;
+      case VK_DELETE:   ev.data1 = KEY_DELETE; break;
       case VK_HOME:     ev.data1 = KEY_HOME;  break;
-      case VK_END:      ev.data1 = KEY_END;  break;
+      case VK_END:      ev.data1 = KEY_END;   break;
       case VK_PAGEUP:   ev.data1 = KEY_PGUP;  break;
       case VK_PAGEDOWN: ev.data1 = KEY_PGDN;  break;
 
@@ -183,11 +183,11 @@ int PostCharEvent(WINDATA *this, PCHRMSG pchmsg)
       case VK_NEWLINE:
       case VK_ENTER: ev.data1 = KEY_ENTER;      break;
       case VK_TAB:   ev.data1 = KEY_TAB;        break;
-      case VK_SPACE:     ev.data1 = ' ';            break;
+      case VK_SPACE:     ev.data1 = ' ';        break;
       case VK_BACKSPACE: ev.data1 = KEY_BACKSPACE;  break;
       case VK_PAUSE:
       case VK_NUMLOCK:ev.data1 = KEY_PAUSE;     break;
-      case VK_CTRL:  ev.data1 = KEY_CTRL;       break;
+      case VK_CTRL:  ev.data1 = KEY_LCTRL;      break;
       case VK_F1:
 	  /* Hack! OS/2 grabs this key and only returns the keyup event */
 	  ev.type = ev_keydown;
@@ -262,7 +262,7 @@ int PostCharEvent(WINDATA *this, PCHRMSG pchmsg)
    } else if (pchmsg->fs & KC_CHAR) {    // normal keys
       /* For usual keys no key up event is generated so we must remember
          the last key down event to send a key-up later */
-      this->last_char = ev.data1 = tolower(pchmsg->chr) == '+' ? KEY_EQUALS : tolower( pchmsg->chr);
+      this->last_char = ev.data1 = (tolower(pchmsg->chr) == '+') ? '=' : tolower( pchmsg->chr);
    } else {
       return 0;
    }

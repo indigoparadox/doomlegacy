@@ -275,14 +275,14 @@ void I_GetJoyEvent(void)
           if(!((buttons >> jdata.number)&1)) {
             buttons |= 1 << jdata.number;
             event.type = ev_keydown;
-            event.data1 = KEY_JOY1+jdata.number;
+            event.data1 = KEY_JOY0BUT0 + (i*JOYBUTTONS) + jdata.number;
             D_PostEvent(&event);
           }
         } else {
           if((buttons>>jdata.number)&1) {
             buttons ^= 1 << jdata.number;
             event.type = ev_keyup;
-            event.data1 = KEY_JOY1+jdata.number;
+            event.data1 = KEY_JOY0BUT0 + (i*JOYBUTTONS) + jdata.number;
             D_PostEvent(&event);
           }
         }

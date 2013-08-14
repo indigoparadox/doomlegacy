@@ -53,7 +53,7 @@ typedef struct
 {
     evtype_t    type;
     int         data1;          // keys / mouse/joystick buttons
-    int         data2;          // mouse x move
+    int         data2;          // mouse x move, ASCII char
     int         data3;          // mouse y move
 } event_t;
 

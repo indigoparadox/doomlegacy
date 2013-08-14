@@ -123,29 +123,31 @@ int I_ScanCode2DoomCode(int c)
 // Translate keys from LibGII
 // Adapted from Linux Heretic v0.9.2
 
-int I_GIITranslateKey(const ggi_key_event* key)
+int I_GIITranslateKey(const ggi_key_event* key, event_t * ev)
 {
   int label = key->label, sym = key->sym;
   int rc=0;
+
+  ev->data2 = 0;  // ASCII character
   switch(label) {
-  case GIIK_CtrlL:  case GIIK_CtrlR:  rc=KEY_CTRL;      break;
-  case GIIK_ShiftL: case GIIK_ShiftR: rc=KEY_SHIFT;     break;
-  case GIIK_MetaL:  case GIIK_MetaR:
-  case GIIK_AltL:   case GIIK_AltR:   rc=KEY_ALT;       break;
+  case GIIK_CtrlL:  case GIIK_CtrlR:  rc=KEY_LCTRL;      break;
+  case GIIK_ShiftL: case GIIK_ShiftR: rc=KEY_LSHIFT;     break;
+  case GIIK_MetaL:  case GIIK_MetaR:  rc=KEY_LALT;       break;
+  case GIIK_AltL:   case GIIK_AltR:   rc=KEY_RALT;       break;
   case GIIUC_BackSpace:   rc = KEY_BACKSPACE;     break;
   case GIIUC_Escape:      rc = KEY_ESCAPE;        break;
-  case GIIK_Delete:       rc = KEY_DEL;        break;
+  case GIIK_Delete:       rc = KEY_DELETE;        break;
   case GIIK_Insert:       rc = KEY_INS;        break;
   case GIIK_PageUp:       rc = KEY_PGUP;        break;
   case GIIK_PageDown:     rc = KEY_PGDN;      break;
   case GIIK_Home:         rc = KEY_HOME;          break;
   case GIIK_End:  rc = KEY_END;           break;
-  case GIIUC_Tab:                     rc = KEY_TAB;     break;
-  case GIIK_Up:                       rc = KEY_UPARROW; break;
-  case GIIK_Down:                     rc = KEY_DOWNARROW;       break;
-  case GIIK_Left:                     rc = KEY_LEFTARROW;       break;
-  case GIIK_Right:                    rc = KEY_RIGHTARROW;      break;
-  case GIIK_Enter:                    rc = KEY_ENTER;           break;
+  case GIIUC_Tab:         rc = KEY_TAB;     break;
+  case GIIK_Up:           rc = KEY_UPARROW; break;
+  case GIIK_Down:         rc = KEY_DOWNARROW;       break;
+  case GIIK_Left:         rc = KEY_LEFTARROW;       break;
+  case GIIK_Right:        rc = KEY_RIGHTARROW;      break;
+  case GIIK_Enter:        rc = KEY_ENTER;           break;
   case GIIK_F1: rc = KEY_F1;            break;
   case GIIK_F2: rc = KEY_F2;            break;
   case GIIK_F3: rc = KEY_F3;            break;
@@ -177,7 +179,7 @@ int I_GIITranslateKey(const ggi_key_event* key)
   case GIIK_CapsLock:rc = KEY_CAPSLOCK;break;
   case GIIK_ScrollLock:rc = KEY_SCROLLLOCK;break;
   case GIIK_NumLock:rc = KEY_NUMLOCK;break;
-        default:
+  default:
           if ((label > '0' && label < '9') ||
               label == '.' ||
               label == ',') {
@@ -186,17 +188,19 @@ int I_GIITranslateKey(const ggi_key_event* key)
             rc = label;
           } else if (sym < 256) {
               /* ASCII key - we want those */
+	    ev->data2 = sym; // ASCII character
             rc = sym;
               /* We want lowercase */
             if (rc >='A' && rc <='Z') rc -= ('A' - 'a');
             switch (sym) {
               /* Some special cases */
-            case '+': rc = KEY_EQUALS;  break;
-            case '-': rc = KEY_MINUS;
-            default:                    break;
+            case '+': rc = '=';  break;
+//            case '-': rc = '-';
+            default:  break;
             }
           }
   }
+  ev->data1 = rc;  // keycode
   return rc;
 }
 
@@ -259,13 +263,13 @@ void I_GetEvent(void)
     switch(ggi_ev.any.type) {
     case evKeyPress:
       doom_ev.type = ev_keydown;
-      if ((doom_ev.data1= I_GIITranslateKey(&ggi_ev.key)) >0 )
+      if (I_GIITranslateKey(&ggi_ev.key, &doom_ev) >0 )
         D_PostEvent(&doom_ev);
       //fprintf(stderr,"p:%4x\n",doom_ev.data1);
       break;
     case evKeyRelease:
       doom_ev.type = ev_keyup;
-      if ((doom_ev.data1= I_GIITranslateKey(&ggi_ev.key)) > 0 )
+      if (I_GIITranslateKey(&ggi_ev.key, &doom_ev) >0 )
         D_PostEvent(&doom_ev);
       //fprintf(stderr,"r:%4x\n",doom_ev.data1);
       break;

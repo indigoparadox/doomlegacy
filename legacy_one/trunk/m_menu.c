@@ -2269,13 +2269,17 @@ void M_ChangecontrolResponse(event_t* ev)
         if (found>=0)
         {
             // replace mouse and joy clicks by double clicks
+	    // FIXME: first mouse only
             if (ch>=KEY_MOUSE1 && ch<=KEY_MOUSE1+MOUSEBUTTONS)
                 setupcontrols[control][found] = ch-KEY_MOUSE1+KEY_DBLMOUSE1;
-	    /* TODO ignore joystick doubleclicks for now
+#ifdef DBL_JOY_BUTTONS
+	    // joystick doubleclicks
+	    // FIXME: JOY0 only
             else
-              if (ch>=KEY_JOY1 && ch<=KEY_JOY1+JOYBUTTONS)
-                setupcontrols[control][found] = ch-KEY_JOY1+KEY_DBLJOY1;
-	    */
+//              if (ch>=KEY_JOY0BUT0 && ch<=(KEY_JOYLAST))  // all JOY
+              if (ch>=KEY_JOY0BUT0 && ch<=(KEY_JOY0BUT0+JOYBUTTONS))  // one JOY
+                setupcontrols[control][found] = ch + (KEY_DBLJOY0BUT0 - KEY_JOY0BUT0);
+#endif
         }
         else
         {
@@ -3963,8 +3967,8 @@ boolean M_Responder (event_t* ev)
     switch (ev->type )
     {
      case ev_keydown :
-        key = ev->data1;
-	ch  = ev->data2;
+        key = ev->data1;  // keycode
+	ch  = ev->data2;  // ASCII char
         if( key >= KEY_MOUSE1 )
         {
 	    if( key <= KEY_2MOUSE1 )

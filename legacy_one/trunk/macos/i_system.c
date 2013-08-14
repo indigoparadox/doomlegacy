@@ -99,44 +99,50 @@
 #include "i_joy.h"
 
 JoyType_t Joystick;
-unsigned char scantokey [128] =
+
+
+uint16_t scantokey [128] =
 {
-	'=',	    '9',	    '7',	    '-',		  '8',	     '0',		   ']',		'o',
-	'y',	    't',	    '1',	    '2',          '3',	     '4',		   '6',		'5',
-	'c',	    'v',	    0,		    'b',		  'q',	     'w',		   'e',		'r',
-	'a',	    's',	    'd',	    'f',		  'h',	     'g',		   'z',		'x',
-	KEY_SHIFT,  KEY_CAPSLOCK,KEY_ALT,   KEY_CTRL,	  0,	     0,	           0,	    0,
-	KEY_TAB,	KEY_SPACE,  KEY_CONSOLE,KEY_BACKSPACE,0,		 KEY_ESCAPE,   0,	    KEY_ALT,
-	'k',	    ';',	    '\\',	    ',',		  '/',	     'n',		   'm',		'.',
-	'u',	    '[',	    'i',	    'p',		  KEY_ENTER, 'l',		   'j',		'\'',
-	KEY_KEYPAD6,KEY_KEYPAD7,0,		    KEY_KEYPAD8,  KEY_KEYPAD9,0,		   0,	    0,
-	0,		    KEY_EQUALS, KEY_KEYPAD0,KEY_KEYPAD1,  KEY_KEYPAD2,KEY_KEYPAD3, KEY_KEYPAD4,KEY_KEYPAD5,
-	0,		    0,		    0,		    KEY_KPADSLASH,KEY_ENTER,0,		   KEY_MINUSPAD,0,
-	'`',		KEY_KPADDEL,0,	        '*',0,	     KEY_PLUSPAD,  0,	    KEY_NUMLOCK,
-	KEY_F2,	    KEY_PGDN,	KEY_F1,	    KEY_LEFTARROW,KEY_RIGHTARROW,KEY_DOWNARROW,KEY_UPARROW,	0,
-	0,		    0,	    KEY_INS,	KEY_HOME,     KEY_PGUP,	 KEY_DEL,	   KEY_F4,  KEY_END,
-	0,		    0,	    0,		    0,		  0,		 KEY_F10,	   0,	    KEY_F12,
-	KEY_F5,	    KEY_F6,	    KEY_F7,	    KEY_F3,		  KEY_F8,	 KEY_F9,	   0,	    KEY_F11,
+  '=',  '9',  '7',  '-',  '8',  '0',  ']',  'o',
+  'y',	't',  '1',  '2',  '3',  '4',  '6',  '5',
+  'c',	'v',    0,  'b',  'q',  'w',  'e',  'r',
+  'a',	's',  'd',  'f',  'h',  'g',  'z',  'x',
+  KEY_LSHIFT, KEY_CAPSLOCK, KEY_LALT, KEY_LCTRL, 0, 0, 0, 0,
+  KEY_TAB, KEY_SPACE, KEY_CONSOLE, KEY_BACKSPACE, 0, KEY_ESCAPE, 0, KEY_RALT,
+  'k',	';', '\\',  ',',  '/',  'n',  'm',  '.',
+  'u',	'[',  'i',  'p',  KEY_ENTER,  'l',  'j',  '\'',
+  KEY_KEYPAD6, KEY_KEYPAD7, 0, KEY_KEYPAD8, KEY_KEYPAD9, 0, 0, 0,
+  0, KEY_EQUALS, KEY_KEYPAD0, KEY_KEYPAD1, KEY_KEYPAD2, KEY_KEYPAD3, KEY_KEYPAD4, KEY_KEYPAD5,
+  0, 0, 0, KEY_KPADSLASH, KEY_KPADENTER, 0, KEY_MINUSPAD, 0,
+  '`',  KEY_KPADPERIOD, 0,  '*',  0, KEY_PLUSPAD, 0, KEY_NUMLOCK,
+  KEY_F2, KEY_PGDN, KEY_F1, KEY_LEFTARROW, KEY_RIGHTARROW, KEY_DOWNARROW, KEY_UPARROW, 0,
+  0, 0, KEY_INS, KEY_HOME, KEY_PGUP, KEY_DELETE, KEY_F4, KEY_END,
+  0, 0, 0, 0, 0, KEY_F10, 0, KEY_F12,
+  KEY_F5, KEY_F6, KEY_F7, KEY_F3, KEY_F8, KEY_F9, 0, KEY_F11,
 };
+
 
 int I_GetKey(void)
 {
-	KeyMap keymap;
-	byte newBit;
-	int i,n;
+    KeyMap keymap;
+    byte newBit;
+    int i,n;
 	
-	GetKeys ((unsigned long *) keymap);
+    GetKeys ((unsigned long *) keymap);
 	
-	for (i=0;i<4;i++)
-	    if (keymap[i])
-			for (n=0;n<32;n++)
-			{
-				newBit = ((keymap[i] >> n) & 1);
-				if (newBit)
-				    return scantokey[i*32+n];
-			}
-	
-	return 0;
+    for (i=0;i<4;i++)
+    {
+        if (keymap[i])
+        {
+	    for (n=0;n<32;n++)
+	    {
+	        newBit = ((keymap[i] >> n) & 1);
+	        if (newBit)
+		    return scantokey[i*32+n];
+	    }
+	}
+    }
+    return 0;
 }
 
 //
@@ -148,7 +154,7 @@ void I_OutputMsg (char *error, ...)
 {
 #ifdef DEBUG_TO_FILE
     int handle;
-	static int wipe = 1;
+static int wipe = 1;
     va_list     argptr;
     char        txt[1024];
 	

@@ -128,6 +128,8 @@
 #define SM_MOUSEWHEELPRESENT 75
 #endif
 
+// [WDJ] undefined
+#define JOYAXISRANGE  1024
 
 
 // ==================
@@ -138,7 +140,7 @@ BOOL   bDX0300;        // if true, we created a DirectInput 0x0300 version
 static LPDIRECTINPUT           lpDI = NULL;
 static LPDIRECTINPUTDEVICE     lpDIK = NULL;   // Keyboard
 static LPDIRECTINPUTDEVICE     lpDIM = NULL;   // mice
-static LPDIRECTINPUTDEVICE     lpDIJ = NULL;   // joystick 1
+static LPDIRECTINPUTDEVICE     lpDIJ1 = NULL;  // joystick 1
 static LPDIRECTINPUTDEVICE2    lpDIJ2 = NULL;  // joystick 2
 
 volatile tic_t ticcount;   //returned by I_GetTime(), updated by timer interrupt
@@ -1439,7 +1441,7 @@ SetPropFail:
     
     // we successfully created an IDirectInputDevice.  So stop looking 
     // for another one.
-    lpDIJ = pdev;
+    lpDIJ1 = pdev;
     return DIENUM_STOP;
 }
 
@@ -1471,7 +1473,7 @@ void I_InitJoystick (void)
             return;
 
     // acquire the joystick only once
-    if (lpDIJ==NULL)
+    if (lpDIJ1==NULL)
     {
         joystick_detected = false;
 
@@ -1486,7 +1488,7 @@ void I_InitJoystick (void)
             return;
         }
 
-        if (lpDIJ == NULL)
+        if (lpDIJ1 == NULL)
         {
             if (iJoyNum == 0)
                 CONS_Printf ("none found\n");
@@ -1506,11 +1508,11 @@ void I_InitJoystick (void)
         I_AddExitFunc (I_ShutdownJoystick);
 
         // set coop level
-        if ( FAILED( lpDIJ->lpVtbl->SetCooperativeLevel (lpDIJ, hWndMain, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND) ))
+        if ( FAILED( lpDIJ1->lpVtbl->SetCooperativeLevel (lpDIJ1, hWndMain, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND) ))
             I_Error ("I_InitJoystick: SetCooperativeLevel FAILED");
 
         // later
-        //if ( FAILED( lpDIJ->lpVtbl->Acquire (lpDIJ) ))
+        //if ( FAILED( lpDIJ1->lpVtbl->Acquire (lpDIJ1) ))
         //    I_Error ("Couldn't acquire Joystick");
 
         joystick_detected = true;
@@ -1532,7 +1534,7 @@ static void I_ShutdownJoystick (void)
     for(i=0;i<JOYBUTTONS;i++)
     {
         event.type=ev_keyup;
-        event.data1=KEY_JOY1+i;
+        event.data1=KEY_JOY0BUT0+i;
         D_PostEvent(&event);
     }
 
@@ -1546,11 +1548,11 @@ static void I_ShutdownJoystick (void)
     if ( joystick_detected )
         CONS_Printf ("I_ShutdownJoystick()\n");
         
-    if (lpDIJ)
+    if (lpDIJ1)
     {
-        lpDIJ->lpVtbl->Unacquire (lpDIJ);
-        lpDIJ->lpVtbl->Release (lpDIJ);
-        lpDIJ = NULL;
+        lpDIJ1->lpVtbl->Unacquire (lpDIJ1);
+        lpDIJ1->lpVtbl->Release (lpDIJ1);
+        lpDIJ1 = NULL;
     }
     if (lpDIJ2)
     {
@@ -1570,11 +1572,12 @@ static void I_GetJoystickEvents (void)
     HRESULT     hr;
     DIJOYSTATE  js;          // DirectInput joystick state 
     int         i;
+    int  joynum = 0;  // has two joysticks but only handles one
     static DWORD lastjoybuttons = 0;
     DWORD  joybuttons;
     event_t event;
 
-    if (lpDIJ==NULL)
+    if (lpDIJ1==NULL)
         return;
 
     // if input is lost then acquire and keep trying 
@@ -1596,7 +1599,7 @@ static void I_GetJoystickEvents (void)
         }
 
         // get the input's device state, and put the state in dims
-        hr = lpDIJ->lpVtbl->GetDeviceState( lpDIJ, sizeof(DIJOYSTATE), &js );
+        hr = lpDIJ1->lpVtbl->GetDeviceState( lpDIJ1, sizeof(DIJOYSTATE), &js );
 
         if ( hr == DIERR_INPUTLOST || hr==DIERR_NOTACQUIRED )
         {
@@ -1617,7 +1620,7 @@ static void I_GetJoystickEvents (void)
         break;
 acquire:
         //CONS_Printf ("I_GetJoystickEvents(): Acquire\n");
-        if ( FAILED(lpDIJ->lpVtbl->Acquire( lpDIJ )) ) 
+        if ( FAILED(lpDIJ1->lpVtbl->Acquire( lpDIJ1 )) ) 
              return;
     }
         
@@ -1659,6 +1662,7 @@ acquire:
         newbuttons = joybuttons ^ lastjoybuttons;    
         lastjoybuttons = joybuttons;
 
+        // FIXME: only one joystick
         for( i=0; i < JOYBUTTONS; i++, j<<=1 )
         {
             if ( newbuttons & j )      // button changed state ?
@@ -1667,7 +1671,7 @@ acquire:
                     event.type = ev_keydown;
                 else
                     event.type = ev_keyup;
-                event.data1 = KEY_JOY1 + i;
+                event.data1 = KEY_JOY0BUT0 + (joynum*JOYBUTTONS) + i;
                 D_PostEvent (&event);
             }
         }
@@ -1704,49 +1708,51 @@ acquire:
     
     
 // ===========================================================================================
-//                                                                       DIRECT INPUT KEYBOARD
+//                                                       DIRECT INPUT KEYBOARD
 // ===========================================================================================
 
-byte ASCIINames[256] = {
-        //  0       1       2       3       4       5       6       7
-        //  8       9       A       B       C       D       E       F
-    0  ,    27,     '1',    '2',    '3',    '4',    '5',    '6',
-        '7',    '8',    '9',    '0', KEY_MINUS,KEY_EQUALS,KEY_BACKSPACE, KEY_TAB,
-        'q',    'w',    'e',    'r',    't',    'y',    'u',    'i',
-        'o',    'p',    '[',    ']', KEY_ENTER,KEY_CTRL,'a',    's',
-        'd',    'f',    'g',    'h',    'j',    'k',    'l',    ';',
-        '\'',   '`', KEY_SHIFT, '\\',   'z',    'x',    'c',    'v',
-        'b',    'n',    'm',    ',',    '.',    '/', KEY_SHIFT, '*',
-        KEY_ALT,KEY_SPACE,KEY_CAPSLOCK, KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5,
-        KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10,KEY_NUMLOCK,KEY_SCROLLLOCK,KEY_KEYPAD7,
-        KEY_KEYPAD8,KEY_KEYPAD9,KEY_MINUSPAD,KEY_KEYPAD4,KEY_KEYPAD5,KEY_KEYPAD6,KEY_PLUSPAD,KEY_KEYPAD1,
-        KEY_KEYPAD2,KEY_KEYPAD3,KEY_KEYPAD0,KEY_KPADDEL,      0,      0,      0,      KEY_F11,
-        KEY_F12,0,          0,      0,      0,      0,      0,      0,
-        0,          0,      0,      0,      0,      0,      0,      0,
-        0,          0,      0,      0,      0,      0,      0,      0,
-        0,          0,      0,      0,      0,      0,      0,      0,
-        0,          0,      0,      0,      0,      0,      0,      0,
+uint16_t  ASCIINames[256] = {
+{
+//  0      1      2      3      4      5      6      7
+//  8      9      A      B      C      D      E      F
+    0,    27,   '1',   '2',   '3',   '4',   '5',   '6',
+  '7',   '8',   '9',   '0',   '-',   '=', KEY_BACKSPACE, KEY_TAB,
+  'q',   'w',   'e',   'r',   't',   'y',   'u',   'i',
+  'o',   'p',   '[',   ']', KEY_ENTER, KEY_LCTRL,  'a',  's',
+  'd',   'f',   'g',   'h',   'j',   'k',   'l',   ';',
+ '\'',   '`', KEY_LSHIFT,  '\\',  'z',  'x',  'c',  'v',
+  'b',   'n',   'm',   ',',   '.',   '/', KEY_RSHIFT,  '*',
+  KEY_LALT, KEY_SPACE, KEY_CAPSLOCK, KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5,
+  KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10, KEY_NUMLOCK, KEY_SCROLLLOCK, KEY_KEYPAD7,
+  KEY_KEYPAD8, KEY_KEYPAD9, KEY_MINUSPAD, KEY_KEYPAD4, KEY_KEYPAD5, KEY_KEYPAD6, KEY_PLUSPAD, KEY_KEYPAD1,
+  KEY_KEYPAD2, KEY_KEYPAD3, KEY_KEYPAD0, KEY_KPADPERIOD, 0, 0, 0,  KEY_F11,
+  KEY_F12, 0,     0,     0,     0,     0,     0,     0,
+    0,     0,     0,     0,     0,     0,     0,     0,
+    0,     0,     0,     0,     0,     0,     0,     0,
+    0,     0,     0,     0,     0,     0,     0,     0,
+    0,     0,     0,     0,     0,     0,     0,     0,
 
-        //  0       1       2       3       4       5       6       7
-        //  8       9       A       B       C       D       E       F
+//  0      1      2      3      4      5      6      7
+//  8      9      A      B      C      D      E      F
 
-        0,          0,      0,      0,      0,      0,      0,      0,          //0x80
-        0,          0,      0,      0,      0,      0,      0,      0,
-        0,          0,      0,      0,      0,      0,      0,      0,
-        0,          0,      0,      0,  KEY_ENTER,KEY_CTRL, 0,      0,
-        0,          0,      0,      0,      0,      0,      0,      0,          //0xa0
-        0,          0,      0,      0,      0,      0,      0,      0,
-        0,          0,      0, KEY_KPADDEL, 0,KEY_KPADSLASH,0,      0,
-        KEY_ALT,0,          0,      0,      0,      0,      0,      0,
-        0,          0,      0,      0,      0,      0,      0,          KEY_HOME,               //0xc0
-        KEY_UPARROW,KEY_PGUP,0,KEY_LEFTARROW,0,KEY_RIGHTARROW,0,KEY_END,
-        KEY_DOWNARROW,KEY_PGDN, KEY_INS,KEY_DEL,0,0,0,0,
-        0,          0,      0,KEY_LEFTWIN,KEY_RIGHTWIN,KEY_MENU, 0, 0,
-        0,          0,      0,      0,      0,      0,      0,      0,          //0xe0
-        0,          0,      0,      0,      0,      0,      0,      0,
-        0,          0,      0,      0,      0,      0,      0,      0,
-        0,          0,      0,      0,      0,      0,      0,      0
+    0,     0,     0,     0,     0,     0,     0,     0,  //0x80
+    0,     0,     0,     0,     0,     0,     0,     0,
+    0,     0,     0,     0,     0,     0,     0,     0,
+    0,     0,     0,     0,  KEY_ENTER, KEY_RCTRL, 0, 0,
+    0,     0,     0,     0,     0,     0,     0,     0,  //0xa0
+    0,     0,     0,     0,     0,     0,     0,     0,
+    0,     0,     0, KEY_KPADPERIOD, 0, KEY_KPADSLASH, 0, 0,
+  KEY_RALT,  0,   0,     0,     0,     0,     0,     0,
+    0,     0,     0,     0,     0,     0,     0,     KEY_HOME,  //0xc0
+  KEY_UPARROW, KEY_PGUP, 0, KEY_LEFTARROW,0, KEY_RIGHTARROW, 0, KEY_END,
+  KEY_DOWNARROW, KEY_PGDN, KEY_INS, KEY_DELETE, 0, 0, 0, 0,
+    0,     0,     0, KEY_LWIN, KEY_RWIN, KEY_MENU, 0, 0,
+    0,     0,     0,     0,     0,     0,     0,     0,  //0xe0
+    0,     0,     0,     0,     0,     0,     0,     0,
+    0,     0,     0,     0,     0,     0,     0,     0,
+    0,     0,     0,     0,     0,     0,     0,     0,
 };
+
 
 int pausepressed=0;
 
@@ -1927,11 +1933,9 @@ getBufferedData:
                 event.type = ev_keyup;
             
             ch = rgdod[d].dwOfs & 0xFF;
-            if (ASCIINames[ch]!=0)
-                event.data1 = ASCIINames[ch];
-            else
-                event.data1 = ch + 0x80;
-            
+	    event.data2 = ch;
+	    event.data1 = ASCIINames[ch];
+
             D_PostEvent(&event);
         }
 

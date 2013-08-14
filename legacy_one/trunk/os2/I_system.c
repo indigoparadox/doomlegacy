@@ -114,11 +114,7 @@ int I_GetKey (void)
     return 0;
 }
 
-void
-I_Tactile
-( int   on,
-  int   off,
-  int   total )
+void I_Tactile ( int on, int off, int total )
 {
   // UNUSED.
   on = off = total = 0;
@@ -246,6 +242,7 @@ byte*   I_AllocLow(int length)
 static void I_GetKeyboardEvents (void);
 static void I_GetMouseEvents (void);
 static void I_GetJoystickEvents (void);
+
 void I_GetEvent (void)
 {
    I_GetKeyboardEvents();
@@ -253,16 +250,23 @@ void I_GetEvent (void)
    //I_GetJoystickEvents();
 }
 
+
+static event_t ev_alt_up = { ev_keyup, KEY_LALT, 0, 0 };
+static event_t ev_alt_do = { ev_keydown, KEY_LALT, 0, 0 };
+static event_t ev_lshf_up = { ev_keyup, KEY_LSHIFT, 0, 0 };
+static event_t ev_lshf_do = { ev_keydown, KEY_LSHIFT, 0, 0 };
+static event_t ev_rshf_up = { ev_keyup, KEY_RSHIFT, 0, 0 };
+static event_t ev_rshf_do = { ev_keydown, KEY_RSHIFT, 0, 0 };
+
 void I_GetKeyboardEvents(void)
 {
-   static event_t ev_alt_up = { ev_keyup, KEY_ALT, 0, 0 };
-   static event_t ev_alt_do = { ev_keydown, KEY_ALT, 0, 0 };
-   static event_t ev_shf_up = { ev_keyup, KEY_SHIFT, 0, 0 };
-   static event_t ev_shf_do = { ev_keydown, KEY_SHIFT, 0, 0 };
    APIRET   rc;
    ULONG    ulReturn;
    static HFILE hkbd;
    SHIFTSTATE shiftstate;
+//   event_t  ev;
+//      data1 is 16bit keycode
+//      data2 is ASCII char
  
    if (hkbd == NULL) {
        DosOpen( (PSZ) "kbd$",                    // open driver
@@ -292,15 +296,26 @@ void I_GetKeyboardEvents(void)
       }
    }
 
-   if (shiftstate.fsState & RIGHTSHIFT || shiftstate.fsState & LEFTSHIFT) {
-      if (!pmData->fShiftPressed) {
-         D_PostEvent(&ev_shf_do);
-         pmData->fShiftPressed = 1;
+   if (shiftstate.fsState & LEFTSHIFT) {
+      if (!pmData->fShiftPressed&0x02) {
+         D_PostEvent(&ev_lshf_do);
+         pmData->fShiftPressed |= 0x02;
       }
    } else {
       if (pmData->fShiftPressed) {
-         D_PostEvent(&ev_shf_up);
-         pmData->fShiftPressed = 0;
+         D_PostEvent(&ev_lshf_up);
+         pmData->fShiftPressed &= ~0x02;
+      }
+   }
+   if (shiftstate.fsState & RIGHTSHIFT) {
+      if (!pmData->fShiftPressed&1) {
+         D_PostEvent(&ev_rshf_do);
+         pmData->fShiftPressed |= 1;
+      }
+   } else {
+      if (pmData->fShiftPressed&1) {
+         D_PostEvent(&ev_rshf_up);
+         pmData->fShiftPressed &= ~1;
       }
    }
 

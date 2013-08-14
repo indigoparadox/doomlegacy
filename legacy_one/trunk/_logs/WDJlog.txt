@@ -3300,3 +3300,13 @@ patchfile = w92_4_Os2_X11.patch
 Commit of more changes to video draw in OS2 code and Linux X11 code
 to make use of new generic video draw functions.  Untested.
 
+*** W92_keys
+patchfile = w92_5_keys.patch
+- committed revision 1032   by wesley johnson
+Implement changes to keycodes in DOS, OS2, LINUX_X, and WIN32 ports.
+Some KEY names were changed.
+This only makes it possible to compile and some ports may only have
+one usable joystick.  Mostly Untested.
+
+
+

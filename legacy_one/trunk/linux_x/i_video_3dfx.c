@@ -305,21 +305,22 @@ void I_StartFrame(void)
 
 static void keyboard_events(void)
 {
-        unsigned char           c;
-        event_t                         event;
+        unsigned char    c;
+        event_t          event;
 
         if (read(fileno(stdin), &c, 1) == 1) {
                 event.type = (c & 0x80) ? ev_keyup : ev_keydown;
-                event.data1 = xlatekey((int)(c & 0x7F));
+	        event.data2 = c & 0x7F;  // ASCII character
+                event.data1 = xlatekey((int)(c & 0x7F));  // keycode
                 D_PostEvent(&event);
         }
 }
 
 static int xlatekey(int c)
 {
-        int rc;
+    int rc;  // 16 bit key codes
 
-        switch (c) {
+    switch (c) {
         case 1:         rc = KEY_ESCAPE;                                break;
         case 2:         rc = '1';                                               break;
         case 3:         rc = '2';                                               break;
@@ -331,8 +332,8 @@ static int xlatekey(int c)
         case 9:         rc = '8';                                               break;
         case 10:        rc = '9';                                               break;
         case 11:        rc = '0';                                               break;
-        case 12:        rc = KEY_MINUS;                                 break;
-        case 13:        rc = KEY_EQUALS;                                break;
+        case 12:        rc = '-';                                break;
+        case 13:        rc = '=';                                break;
         case 14:        rc = KEY_BACKSPACE;                             break;
         case 15:        rc = KEY_TAB;                                   break;
         case 16:        rc = 'q';                                               break;
@@ -379,8 +380,8 @@ static int xlatekey(int c)
         case 66:        rc = KEY_F8;                                    break;
         case 67:        rc = KEY_F9;                                    break;
         case 68:        rc = KEY_F10;                                   break;
-        case 74:        rc = KEY_MINUS;                                 break;
-        case 78:        rc = KEY_EQUALS;                                break;
+        case 74:        rc = '-';                                break;
+        case 78:        rc = '=';                                break;
         case 86:        rc = '<';                                               break;
         case 87:        rc = KEY_F11;                                   break;
         case 88:        rc = KEY_F12;                                   break;
@@ -397,6 +398,6 @@ static int xlatekey(int c)
         case 111:       rc = KEY_BACKSPACE;                             break;
         case 119:       rc = KEY_PAUSE;                                 break;
         default:        rc = 0;                                                 break;
-        }
-        return rc;
+    }
+    return rc;
 }

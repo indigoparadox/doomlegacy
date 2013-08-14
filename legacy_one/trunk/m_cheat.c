@@ -235,7 +235,7 @@ boolean cht_Responder(event_t * ev)
 {
     int i;
     char *msg;
-    char ch = ev->data2; // ASCII is now data2
+    char ch = ev->data2; // ASCII character
 
     if (ev->type == ev_keydown)
     {

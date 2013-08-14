@@ -122,7 +122,9 @@ void I_AddExitFunc (void (*func)(void));
 void I_RemoveExitFunc (void (*func)(void));
 
 // Setup signal handler, plus stuff for trapping errors and cleanly exit.
+// Not called by game, port optional, see I_SysInit
 int  I_StartupSystem (void);
+// Not called by game, port optional, see I_Quit
 void I_ShutdownSystem (void);
 
 uint64_t I_GetDiskFreeSpace(void);

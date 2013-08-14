@@ -65,6 +65,7 @@ extern int num_joybindings;
 extern joybinding_t joybindings[MAX_JOYBINDINGS];
 
 void I_InitJoystick();
+// Axes is plual of Axis
 int I_JoystickNumAxes(int joynum);
 int I_JoystickGetAxis(int joynum, int axisnum);
 

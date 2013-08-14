@@ -108,20 +108,25 @@ int  gamecontrol[num_gamecontrols][2];
 int  gamecontrol2[num_gamecontrols][2];        // secondary splitscreen player
 
 
+// FIXME: this can be simplified to two bytes
 typedef struct {
-    int time;
+    int dtime;
     boolean state;
     int clicks;
 } dclick_t;
+
+// FIXME: only one mouse, only one joy
 static  dclick_t  mousedclicks[MOUSEBUTTONS];
-//static  dclick_t  joydclicks[JOYBUTTONS];
+#ifdef DBL_JOY_BUTTONS
+static  dclick_t  joydclicks[JOYBUTTONS];
+#endif
 
 //
 //  General double-click detection routine for any kind of input.
 //
 static boolean G_CheckDoubleClick(boolean state, dclick_t *dt)
 {
-    if (state != dt->state && dt->time > 1 )
+    if (state != dt->state && dt->dtime > 1 )
     {
         dt->state = state;
         if (state)
@@ -132,12 +137,12 @@ static boolean G_CheckDoubleClick(boolean state, dclick_t *dt)
             return true;
         }
         else
-            dt->time = 0;
+            dt->dtime = 0;
     }
     else
     {
-        dt->time ++;
-        if (dt->time > 20)
+        dt->dtime ++;
+        if (dt->dtime > 20)
         {
             dt->clicks = 0;
             dt->state = false;
@@ -196,13 +201,16 @@ void  G_MapEventsToControls (event_t *ev)
 
     // ALWAYS check for mouse & joystick double-clicks
     // even if no mouse event
+    // FIXME: first MOUSE only
     for (i=0;i<MOUSEBUTTONS;i++)
       gamekeydown[KEY_DBLMOUSE1+i] = G_CheckDoubleClick(gamekeydown[KEY_MOUSE1+i], &mousedclicks[i]);
 
-    /* TODO ignore joystick doubleclicks for now
+#ifdef DBL_JOY_BUTTONS     
+    // joystick doubleclicks
+    // FIXME: JOY0 only
     for (i=0;i<JOYBUTTONS;i++)
-      gamekeydown[KEY_DBLJOY1+i] = G_CheckDoubleClick(gamekeydown[KEY_JOY1+i], &joydclicks[i]);
-    */
+      gamekeydown[KEY_DBLJOY0BUT0+i] = G_CheckDoubleClick(gamekeydown[KEY_JOY0BUT0+i], &joydclicks[i]);
+#endif
 }
 
 
