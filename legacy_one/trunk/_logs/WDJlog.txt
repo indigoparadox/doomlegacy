@@ -3315,6 +3315,10 @@ Change uses of stricmp and strnicmp to strcasecmp and strncasecmp.
 Added comments in many places.
 Other cleanup.
 
+*** W92_hw_bsp_inits
+patchfile = w92_7_hw_bsp_inits.patch
+- committed revision 1034   by wesley johnson
+Init some polyvertex variables in hw_bsp.
 
 
 

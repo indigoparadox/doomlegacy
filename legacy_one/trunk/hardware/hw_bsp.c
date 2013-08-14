@@ -365,14 +365,14 @@ static void SplitPoly (fdivline_t* bsp,         //splitting parametric line
     int     i,j;
     polyvertex_t *pv;
 
-    int          ps,pe;
-    int          nptfront,nptback;
-    polyvertex_t vs;
-    polyvertex_t ve;
-    polyvertex_t lastpv;
-    float        fracs = 0.0,frace = 0.0;   //used to tell which poly is on
+    int          ps, pe;  // poly start, end
+    int          nptfront, nptback;
+    polyvertex_t vs = {0.0,0.0};
+    polyvertex_t ve = {0.0,0.0};
+    polyvertex_t lastpv = {0.0,0.0};
+    float        fracs = 0.0, frace = 0.0;   //used to tell which poly is on
                                 // the front side of the bsp partition line
-    int         psonline, peonline;
+    int          psonline, peonline;
 
     ps = pe = -1;
     psonline = peonline = 0;
@@ -529,7 +529,7 @@ static poly_t* CutOutSubsecPoly (seg_t* lseg, int count, poly_t* poly)
     polyvertex_t *pv;
     
     int          nump=0,ps,pe;
-    polyvertex_t vs,ve,p1,p2;
+    polyvertex_t vs={0.0,0.0}, ve={0.0,0.0}, p1, p2;
     float        fracs=0.0;
     
     fdivline_t   cutseg;     //x,y,dx,dy as start of node_t struct
