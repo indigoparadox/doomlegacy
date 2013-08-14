@@ -111,9 +111,6 @@
 #define SM_MOUSEWHEELPRESENT 75
 #endif
 
-// [WDJ] undefined
-#define JOYAXISRANGE  1024
-
 
 // ==================
 // DIRECT INPUT STUFF
@@ -123,8 +120,6 @@ BOOL   bDX0300;        // if true, we created a DirectInput 0x0300 version
 static LPDIRECTINPUT           lpDI = NULL;
 static LPDIRECTINPUTDEVICE     lpDIK = NULL;   // Keyboard
 static LPDIRECTINPUTDEVICE     lpDIM = NULL;   // mice
-static LPDIRECTINPUTDEVICE     lpDIJ1 = NULL;  // joystick 1
-static LPDIRECTINPUTDEVICE2    lpDIJ2 = NULL;  // joystick 2
 
 volatile tic_t ticcount;   //returned by I_GetTime(), updated by timer interrupt
 
@@ -135,7 +130,6 @@ byte    keyboard_started=0;
 byte    sound_started=0;
 boolean timer_started = false;
 boolean mouse_enabled = false;
-boolean joystick_detected;
 
 
     void    I_AddExitFunc(void (*func)());
@@ -144,6 +138,7 @@ boolean joystick_detected;
     void    I_OutputMsg (char *error, ...);
     void    I_ShutdownSystem (void);
 static void I_ShutdownKeyboard (void);
+static void I_ShutdownJoystick (void);
 
 //
 // Force feedback here ? :)
@@ -328,6 +323,8 @@ byte*   I_AllocLow(int length)
 static void I_GetKeyboardEvents (void);
 static void I_GetMouseEvents (void);
 static void I_GetJoystickEvents (void);
+
+
 void I_GetEvent (void)
 {
     I_GetKeyboardEvents ();
@@ -339,9 +336,9 @@ void I_GetEvent (void)
 // ----------
 // I_OsPolling
 // ----------
-void I_OsPolling()
+void I_OsPolling(void)
 {
-    MSG             msg;
+    MSG  msg;
 
     //faB: we need to dispatch messages to the window
     //     so the window procedure can respond to messages and PostEvent() for keys
@@ -611,6 +608,20 @@ void I_Quit (void)
     fflush(stderr);
     exit(0);
 }
+
+
+void I_SysInit(void)
+{
+    CONS_Printf("Win32 system ...\n");
+
+    I_StartupSystem();
+
+    // Initialize the joystick subsystem.
+    I_InitJoystick();
+
+    // d_main will next call I_StartupGraphics
+}
+   
 
 
 // --------------------------------------------------------------------------
@@ -1228,11 +1239,30 @@ getBufferedData:
 //                                                                       DIRECT INPUT JOYSTICK
 // ===========================================================================================
 
-// public for game control code
-    JoyType_t   Joystick;
+// gamepad as buttons (otherwise as additive joystick)
+#define GAMEPAD_AS_BUTTONS
 
-// private
-    static BYTE iJoyNum;        // used by enumeration
+// 0..1023
+#define JOYAXIS_MAX  1023
+// Deadzone 2500 = 25%
+#define JOY_DEADZONE 2500
+
+#define MAX_JOYSTICK 2
+#define MAX_JOYAXES 3
+
+typedef struct {
+  LPDIRECTINPUTDEVICE     joydevp;  // joystick interface
+  LPDIRECTINPUTDEVICE2    joypolldevp;  // joystick poll, NULL if no poll
+  byte  gamepad;
+  byte  numaxes;
+  uint16_t  axis[MAX_JOYAXES];
+  uint32_t  lastjoybuttons;
+} joystick_t;
+
+static joystick_t  joystk[ MAX_JOYSTICK ];
+
+static byte joystick_detect = 0;
+static byte num_joysticks = 0;
 
 
 // ------------------
@@ -1260,47 +1290,39 @@ static HRESULT SetDIDwordProperty( LPDIRECTINPUTDEVICE pdev,
 // ---------------
 // DIEnumJoysticks
 // There is no such thing as a 'system' joystick, contrary to mouse,
-// we must enumerate and choose one joystick device to use
+// we must enumerate joysticks.
+// The Game input may use one or more.
 // ---------------
 static BOOL CALLBACK DIEnumJoysticks ( LPCDIDEVICEINSTANCE lpddi,
-                                       LPVOID pvRef )   //cv_usejoystick
+                                       LPVOID pvRef )
 {
-    LPDIRECTINPUTDEVICE pdev;
+    LPDIRECTINPUTDEVICE pdev;  // dev ptr
     DIPROPRANGE         diprg;
     DIDEVCAPS_DX3       caps;
-    BOOL                bUseThisOne = FALSE;
+    boolean             needpoll;
+    const char *        reason = "";  // error msg reason
+    joystick_t *        jsp;  // our joystick info
 
-    iJoyNum++;
-
-    //faB: if cv holds a string description of joystick, the value from atoi() is 0
-    //     else, the value was probably set by user at console to one of the previsouly
-    //     enumerated joysticks
-    if ( ((consvar_t *)pvRef)->value == iJoyNum ||
-         !lstrcmp( ((consvar_t *)pvRef)->string, lpddi->tszProductName ) )
-        bUseThisOne = TRUE;
-
-    //CONS_Printf (" cv joy is %s\n", ((consvar_t *)pvRef)->string);
+    if( num_joysticks >= MAX_JOYSTICK )
+        return DIENUM_STOP;
+   
+    jsp = & joystk[num_joysticks];  // where to put all joystick info
+    memset( jsp, 0, sizeof( joystick_t ) );
 
     // print out device name
-    CONS_Printf ("%c%d: %s\n",
-        ( bUseThisOne ) ? '\2' : ' ',   // show name in white if this is the one we will use
-        iJoyNum,
+    CONS_Printf ("%d: %s\n",
+        num_joysticks,
         //( GET_DIDEVICE_SUBTYPE(lpddi->dwDevType) == DIDEVTYPEJOYSTICK_GAMEPAD ) ? "Gamepad " : "Joystick",
         lpddi->tszProductName ); // , lpddi->tszInstanceName );
     
-    // use specified joystick (cv_usejoystick.value in pvRef)
-    if ( !bUseThisOne )
-        return DIENUM_CONTINUE;
-
-    ((consvar_t *)pvRef)->value = iJoyNum;
     if (lpDI->lpVtbl->CreateDevice (lpDI, &lpddi->guidInstance,
                                     &pdev, NULL) != DI_OK)
     {
         // if it failed, then we can't use this joystick for some
         // bizarre reason.  (Maybe the user unplugged it while we
         // were in the middle of enumerating it.)  So continue enumerating
-        CONS_Printf ("DIEnumJoysticks(): CreateDevice FAILED\n");
-        return DIENUM_CONTINUE;
+        reason = "CreateDevice FAILED";
+        goto reason_cont:
     }
 
 
@@ -1309,24 +1331,21 @@ static BOOL CALLBACK DIEnumJoysticks ( LPCDIDEVICEINSTANCE lpddi,
     caps.dwSize = sizeof(DIDEVCAPS_DX3);
     if ( FAILED( pdev->lpVtbl->GetCapabilities ( pdev, (DIDEVCAPS*)&caps ) ) )
     {
-        CONS_Printf ("DIEnumJoysticks(): GetCapabilities FAILED\n");
-        pdev->lpVtbl->Release (pdev);
-        return DIENUM_CONTINUE;
+        reason = "GetCapabilities FAILED";
+        goto fail_and_release;
     }
     if ( !(caps.dwFlags & DIDC_ATTACHED) )   // should be, since we enumerate only attached devices
-        return DIENUM_CONTINUE;
+        goto retcont;
     
-    Joystick.bJoyNeedPoll = (( caps.dwFlags & DIDC_POLLEDDATAFORMAT ) != 0);
+    needpoll = (( caps.dwFlags & DIDC_POLLEDDATAFORMAT ) != 0);
 
     if ( caps.dwFlags & DIDC_FORCEFEEDBACK )
         CONS_Printf ("Sorry, force feedback is not yet supported\n");
 
-    Joystick.bGamepadStyle = ( GET_DIDEVICE_SUBTYPE( caps.dwDevType ) == DIDEVTYPEJOYSTICK_GAMEPAD );
-    //DEBUG CONS_Printf ("Gamepad: %d\n", Joystick.bGamepadStyle);
-
+    jsp->gamepad = ( GET_DIDEVICE_SUBTYPE( caps.dwDevType ) == DIDEVTYPEJOYSTICK_GAMEPAD );
 
     CONS_Printf ("Capabilities: %d axes, %d buttons, %d POVs, poll %d, Gamepad %d\n",
-                 caps.dwAxes, caps.dwButtons, caps.dwPOVs, Joystick.bJoyNeedPoll, Joystick.bGamepadStyle);
+                 caps.dwAxes, caps.dwButtons, caps.dwPOVs, needpoll, jsp->gamepad);
     
 
     // Set the data format to "simple joystick" - a predefined data format 
@@ -1338,9 +1357,8 @@ static BOOL CALLBACK DIEnumJoysticks ( LPCDIDEVICEINSTANCE lpddi,
     // DIJOYSTATE structure to IDirectInputDevice::GetDeviceState.
     if (pdev->lpVtbl->SetDataFormat (pdev, &c_dfDIJoystick) != DI_OK)
     {
-        CONS_Printf ("DIEnumJoysticks(): SetDataFormat FAILED\n");
-        pdev->lpVtbl->Release (pdev);
-        return DIENUM_CONTINUE;
+        reason = "SetDataFormat FAILED";
+        goto fail_and_release;
     }
 
     // Set the cooperativity level to let DirectInput know how
@@ -1349,162 +1367,151 @@ static BOOL CALLBACK DIEnumJoysticks ( LPCDIDEVICEINSTANCE lpddi,
     if (pdev->lpVtbl->SetCooperativeLevel (pdev, hWndMain,
                         DISCL_EXCLUSIVE | DISCL_FOREGROUND) != DI_OK)
     {
-        CONS_Printf ("DIEnumJoysticks(): SetCooperativeLevel FAILED\n");
-        pdev->lpVtbl->Release (pdev);
-        return DIENUM_CONTINUE;
+        reason = "SetCooperativeLevel FAILED";
+        goto fail_and_release;
     }
-
 
     // set the range of the joystick axis
     diprg.diph.dwSize       = sizeof(DIPROPRANGE);
     diprg.diph.dwHeaderSize = sizeof(DIPROPHEADER);
     diprg.diph.dwHow        = DIPH_BYOFFSET;
-    diprg.lMin              = -JOYAXISRANGE;    // value for extreme left
-    diprg.lMax              = +JOYAXISRANGE;    // value for extreme right
+    diprg.lMin              = -JOYAXIS_MAX;    // value for extreme left
+    diprg.lMax              = +JOYAXIS_MAX;    // value for extreme right
 
     diprg.diph.dwObj = DIJOFS_X;    // set the x-axis range
-    if (FAILED( pdev->lpVtbl->SetProperty( pdev, DIPROP_RANGE, &diprg.diph ) ) ) {
+    if (FAILED( pdev->lpVtbl->SetProperty( pdev, DIPROP_RANGE, &diprg.diph ) ) )
         goto SetPropFail;
-    }
 
     diprg.diph.dwObj = DIJOFS_Y;    // set the y-axis range
-    if (FAILED( pdev->lpVtbl->SetProperty( pdev, DIPROP_RANGE, &diprg.diph ) ) ) {
-SetPropFail:
-        CONS_Printf ("DIEnumJoysticks(): SetProperty FAILED\n");
-        pdev->lpVtbl->Release (pdev);
-        return DIENUM_CONTINUE;
-    }
+    if (FAILED( pdev->lpVtbl->SetProperty( pdev, DIPROP_RANGE, &diprg.diph ) ) )
+        goto SetPropFail;
+
+    // Only has code to handle two axis
+    jsp->numaxes = 2;
 
     diprg.diph.dwObj = DIJOFS_Z;    // set the z-axis range
-    if (FAILED( pdev->lpVtbl->SetProperty( pdev, DIPROP_RANGE, &diprg.diph ) ) ) {
-        CONS_Printf ("DIJOFS_Z not found\n");
-        // set a flag here..
+    if (! FAILED( pdev->lpVtbl->SetProperty( pdev, DIPROP_RANGE, &diprg.diph ) ) ) {
+        CONS_Printf ("DIJOFS_Z found, but can only use X,Y axis\n");
+//        CONS_Printf ("DIJOFS_Z found\n");
+//        jsp->numaxes++;
     }
 
     diprg.diph.dwObj = DIJOFS_RZ;   // set the rudder range
-    if (FAILED( pdev->lpVtbl->SetProperty( pdev, DIPROP_RANGE, &diprg.diph ) ) )
+    if (! FAILED( pdev->lpVtbl->SetProperty( pdev, DIPROP_RANGE, &diprg.diph ) ) )
     {
-        CONS_Printf ("DIJOFS_RZ (rudder) not found\n");
-        // set a flag here..
+        CONS_Printf ("DIJOFS_RZ (rudder) not found, but can only use X,Y axis\n");
+//        CONS_Printf ("DIJOFS_RZ (rudder) found\n");
+//        jsp->numaxes++;
     }
 
-    // set X axis dead zone to 25% (to avoid accidental turning)
-    if ( !Joystick.bGamepadStyle ) {
+#ifdef GAMEPAD_AS_BUTTONS   
+    if ( jsp->gamepad )
+       jsp->numaxes = 0;
+#endif
+    if ( ! jsp->gamepad ) {
+        // set X axis dead zone to 25% (to avoid accidental turning)
         if ( FAILED( SetDIDwordProperty (pdev, DIPROP_DEADZONE, DIJOFS_X,
-                                         DIPH_BYOFFSET, 2500) ) )
+                                         DIPH_BYOFFSET, JOY_DEADZONE) ) )
         {
             CONS_Printf ("DIEnumJoysticks(): couldn't SetProperty for DEAD ZONE\n");
             //pdev->lpVtbl->Release (pdev);
-            //return DIENUM_CONTINUE;
+            //goto retcont;
         }
         if (FAILED( SetDIDwordProperty (pdev, DIPROP_DEADZONE, DIJOFS_Y,
-                                        DIPH_BYOFFSET, 2500) ) )
+                                        DIPH_BYOFFSET, JOY_DEADZONE) ) )
         {
             CONS_Printf ("DIEnumJoysticks(): couldn't SetProperty for DEAD ZONE\n");
             //pdev->lpVtbl->Release (pdev);
-            //return DIENUM_CONTINUE;
+            //goto retcont;
         }
     }
 
     // query for IDirectInputDevice2 - we need this to poll the joystick 
-    if ( bDX0300 ) {
+    if ( bDX0300 || ! needpoll ) {
         // we won't use the poll
-        lpDIJ2 = NULL;
+        jsp->joypolldevp = NULL;
     }
     else
     {
+        // polling device
         if (FAILED( pdev->lpVtbl->QueryInterface(pdev, &IID_IDirectInputDevice2,
-                                                 (LPVOID *)&lpDIJ2) ) )
+                                                 (LPVOID *)&(jsp->joypolldevp)) ) )
         {
-            CONS_Printf ("DIEnumJoysticks(): QueryInterface FAILED\n");
-            pdev->lpVtbl->Release (pdev);
-            return DIENUM_CONTINUE;
+            reason= "QueryInterface FAILED";
+	    goto fail_and_release;
         }
     }
     
-    // we successfully created an IDirectInputDevice.  So stop looking 
-    // for another one.
-    lpDIJ1 = pdev;
+    // we successfully created an IDirectInputDevice.
+    jsp->joydevp = pdev;
+
+    num_joysticks++;
+    if( num_joysticks < MAX_JOYSTICK )
+        goto retcont;  // do not stop, get all
     return DIENUM_STOP;
+
+SetPropFail:
+    reason = "SetProperty FAILED";
+fail_and_release:
+    pdev->lpVtbl->Release (pdev);
+reason_cont:
+    CONS_Printf ("DIEnumJoysticks(): %s\n", reason);
+retcont:
+    return DIENUM_CONTINUE;
 }
+
 
 
 // --------------
 // I_InitJoystick
-// This is called everytime the 'use_joystick' variable changes
-// It is normally called at least once at startup when the config is loaded
 // --------------
-static void I_ShutdownJoystick (void);
+
 void I_InitJoystick (void)
 {
     HRESULT hr;
 
     // cleanup
-    I_ShutdownJoystick ();
+//    I_ShutdownJoystick ();
     
-    joystick_detected = false;
-
-    // joystick detection can be skipped by setting use_joystick to 0
     if ( M_CheckParm("-nojoy") ) {
         CONS_Printf ("Joystick disabled\n");
         return;
     }
-    else
-        // don't do anything at the registration of the joystick cvar,
-        // until config is loaded
-        if ( !lstrcmp( cv_usejoystick.string, "0" ) )
-            return;
 
     // acquire the joystick only once
-    if (lpDIJ1==NULL)
+    if ( joystick_detect == 0 )
     {
-        joystick_detected = false;
-
+        joystick_detect = 1;
         CONS_Printf ("Looking for joystick devices:\n");
-        iJoyNum = 0;
+        num_joysticks = 0;
+        // invoke our Callback function DIEnumJoysticks
         hr = lpDI->lpVtbl->EnumDevices( lpDI, DIDEVTYPE_JOYSTICK, 
                                         DIEnumJoysticks,
-                                        (void*)&cv_usejoystick,    // our user parameter is joystick number
+                                        0, // no user param
                                         DIEDFL_ATTACHEDONLY );
         if (FAILED(hr)) {
             CONS_Printf ("\nI_InitJoystick(): EnumDevices FAILED\n");
             return;
         }
 
-        if (lpDIJ1 == NULL)
+        if (num_joysticks == 0)
         {
-            if (iJoyNum == 0)
-                CONS_Printf ("none found\n");
-            else
-            {
-                CONS_Printf ("none used\n");
-                if ( cv_usejoystick.value > 0 &&
-                     cv_usejoystick.value > iJoyNum )
-                {
-                    CONS_Printf ("\2Set the use_joystick variable to one of the"
-                                 " enumerated joysticks number\n");
-                }
-            }
-            return;
-        }
+	    CONS_Printf ("none found\n");
+	    return;
+	}
 
         I_AddExitFunc (I_ShutdownJoystick);
 
         // set coop level
-        if ( FAILED( lpDIJ1->lpVtbl->SetCooperativeLevel (lpDIJ1, hWndMain, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND) ))
-            I_Error ("I_InitJoystick: SetCooperativeLevel FAILED");
+//        if ( FAILED( joydevp->lpVtbl->SetCooperativeLevel (joydevp, hWndMain, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND) ))
+//            I_Error ("I_InitJoystick: SetCooperativeLevel FAILED");
 
         // later
-        //if ( FAILED( lpDIJ1->lpVtbl->Acquire (lpDIJ1) ))
+        //if ( FAILED( joydevp->lpVtbl->Acquire (joydevp) ))
         //    I_Error ("Couldn't acquire Joystick");
 
-        joystick_detected = true;
+        joystick_detect = 2; // found joysticks
     }
-    else
-        CONS_Printf ("Joystick already initialized\n");
-
-    //faB: we don't unacquire joystick, so let's just pretend we re-acquired it
-    joystick_detected = true;
 }
 
 
@@ -1514,7 +1521,7 @@ static void I_ShutdownJoystick (void)
     event_t event;
 
     // emulate the up of all joystick buttons
-    for(i=0;i<JOYBUTTONS;i++)
+    for(i=0; i<(JOYBUTTONS*JOYSTICKS); i++)
     {
         event.type=ev_keyup;
         event.data1=KEY_JOY0BUT0+i;
@@ -1528,21 +1535,25 @@ static void I_ShutdownJoystick (void)
     event.data3 = 0;
     D_PostEvent(&event);
 
-    if ( joystick_detected )
+    if ( joystick_detect == 2 )
         CONS_Printf ("I_ShutdownJoystick()\n");
         
-    if (lpDIJ1)
+    for( i=0; i<num_joystick; i++ )
     {
-        lpDIJ1->lpVtbl->Unacquire (lpDIJ1);
-        lpDIJ1->lpVtbl->Release (lpDIJ1);
-        lpDIJ1 = NULL;
+        joystick_t * jsp = & joystk[i];
+        if (jsp->joydevp)
+        {
+	    jsp->joydevp->lpVtbl->Unacquire (joydevp);
+	    jsp->joydevp->lpVtbl->Release (joydevp);
+	    jsp->joydevp = NULL;
+	}
+        if (jsp->joypolldevp)
+        {
+	    jsp->joypolldevp->lpVtbl->Release(joypolldevp);
+	    jsp->joypolldevp = NULL;
+	}
     }
-    if (lpDIJ2)
-    {
-        lpDIJ2->lpVtbl->Release(lpDIJ2);
-        lpDIJ2 = NULL;
-    }
-    joystick_detected = false;
+    joystick_detect = 0;
 }
 
 
@@ -1550,17 +1561,16 @@ static void I_ShutdownJoystick (void)
 // I_GetJoystickEvents
 // Get current joystick axis and button states
 // -------------------
-static void I_GetJoystickEvents (void)
+static void I_Get_A_JoystickEvents ( int joynum )
 {
     HRESULT     hr;
-    DIJOYSTATE  js;          // DirectInput joystick state 
+    DIJOYSTATE  js;  // DirectInput joystick state 
+    joystick_t * jstkp = &joystk[joynum];
     int         i;
-    int  joynum = 0;  // has two joysticks but only handles one
-    static DWORD lastjoybuttons = 0;
-    DWORD  joybuttons;
+    uint32_t    joybuttons;
     event_t event;
 
-    if (lpDIJ1==NULL)
+    if (jstkp->joydevp==NULL)
         return;
 
     // if input is lost then acquire and keep trying 
@@ -1569,8 +1579,8 @@ static void I_GetJoystickEvents (void)
         // poll the joystick to read the current state
         //faB: if the device doesn't require polling, this function returns
         //     almost instantly
-        if ( lpDIJ2 ) {
-            hr = lpDIJ2->lpVtbl->Poll(lpDIJ2);
+        if ( jstkp->joypolldevp ) {
+            hr = jstkp->joypolldevp->lpVtbl->Poll(jstkp->joypolldevp);
             if ( hr == DIERR_INPUTLOST || hr==DIERR_NOTACQUIRED ) 
                 goto acquire;
             else
@@ -1582,7 +1592,7 @@ static void I_GetJoystickEvents (void)
         }
 
         // get the input's device state, and put the state in dims
-        hr = lpDIJ1->lpVtbl->GetDeviceState( lpDIJ1, sizeof(DIJOYSTATE), &js );
+        hr = jstkp->joydevp->lpVtbl->GetDeviceState( jstkp->joydevp, sizeof(DIJOYSTATE), &js );
 
         if ( hr == DIERR_INPUTLOST || hr==DIERR_NOTACQUIRED )
         {
@@ -1603,7 +1613,7 @@ static void I_GetJoystickEvents (void)
         break;
 acquire:
         //CONS_Printf ("I_GetJoystickEvents(): Acquire\n");
-        if ( FAILED(lpDIJ1->lpVtbl->Acquire( lpDIJ1 )) ) 
+        if ( FAILED(jstkp->joydevp->lpVtbl->Acquire( jstkp->joydevp )) ) 
              return;
     }
         
@@ -1636,16 +1646,15 @@ acquire:
 
     }
 
-    if ( joybuttons != lastjoybuttons )
+    if ( joybuttons != jstkp->lastjoybuttons )
     {
-        DWORD   j = 1;
-        DWORD   newbuttons;
+        uint32_t   j = 1;
+        uint32_t   newbuttons;
 
         // keep only bits that changed since last time
         newbuttons = joybuttons ^ lastjoybuttons;    
-        lastjoybuttons = joybuttons;
+        jstkp->lastjoybuttons = joybuttons;
 
-        // FIXME: only one joystick
         for( i=0; i < JOYBUTTONS; i++, j<<=1 )
         {
             if ( newbuttons & j )      // button changed state ?
@@ -1660,34 +1669,100 @@ acquire:
         }
     }
 
-    // send joystick axis positions
-    //
-    event.type = ev_joystick;
-    event.data1 = 0;
-    event.data2 = 0;
-    event.data3 = 0;
+    // save joystick axis positions (not an event)
 
-    if ( Joystick.bGamepadStyle )
+    if ( jstkp->gamepad )
     {
-        // gamepad control type, on or off, live or die
-        if ( js.lX < -(JOYAXISRANGE/2) )
-            event.data2 = -1;
-        else if ( js.lX > (JOYAXISRANGE/2) )
-            event.data2 = 1;
-        if ( js.lY < -(JOYAXISRANGE/2) )
-            event.data3 = -1;
-        else if ( js.lY > (JOYAXISRANGE/2) )
-            event.data3 = 1;
+#ifdef GAMEPAD_AS_BUTTONS
+        // gamepad controls to buttons
+	// use the last 4 buttons
+	int gpkey = 0;
+        if ( js.lX < -(JOYAXIS_MAX/2) )
+	    gpkey = JOYBUTTONS-1;
+        else if ( js.lX > (JOYAXIS_MAX/2) )
+	    gpkey = JOYBUTTONS-2;
+        else
+	    gpkey = 0;
+        if ( gpkey != jstkp->axis[0] ) {
+	    event.type = ev_keyup;
+	    event.data1 = KEY_JOY0BUT0 + (joynum*JOYBUTTONS) + jstkp->axis[0];
+	    D_PostEvent (&event);
+	}
+        if ( gpkey ) {
+	    event.type = ev_keydown;
+	    event.data1 = KEY_JOY0BUT0 + (joynum*JOYBUTTONS) + gpkey;
+	    D_PostEvent (&event);
+	}
+	jstkp->axis[0] = gpkey;
+
+        if ( js.lY < -(JOYAXIS_MAX/2) )
+	    gpkey = JOYBUTTONS-3;
+        else if ( js.lY > (JOYAXIS_MAX/2) )
+	    gpkey = JOYBUTTONS-4;
+        else
+	    gpkey = 0;
+        if ( gpkey != jstkp->axis[1] ) {
+	    event.type = ev_keyup;
+	    event.data1 = KEY_JOY0BUT0 + (joynum*JOYBUTTONS) + jstkp->axis[1];
+	    D_PostEvent (&event);
+	}
+        if ( gpkey ) {
+	    event.type = ev_keydown;
+	    event.data1 = KEY_JOY0BUT0 + (joynum*JOYBUTTONS) + gpkey;
+	    D_PostEvent (&event);
+	}
+	jstkp->axis[1] = gpkey;
+#else
+        // gamepad control additive joystick
+        if ( js.lX < -(JOYAXIS_MAX/2) )
+        {
+	    if( jstkp->axis[0] > -JOYAXIS_MAX )
+                jstkp->axis[0]--;
+	}
+        else if ( js.lX > (JOYAXIS_MAX/2) )
+        {
+	    if( jstkp->axis[0] < JOYAXIS_MAX )
+                jstkp->axis[0]++;
+	}
+        if ( js.lY < -(JOYAXIS_MAX/2) )
+        {
+	    if( jstkp->axis[1] > -JOYAXIS_MAX )
+                jstkp->axis[1]--;
+	}
+        else if ( js.lY > (JOYAXIS_MAX/2) )
+        {
+	    if( jstkp->axis[1] < JOYAXIS_MAX )
+                jstkp->axis[1]++;
+	}
+#endif       
     }
     else
     {
         // analog control style , just send the raw data
-        event.data2 = js.lX;    // x axis
-        event.data3 = js.lY;    // y axis
+        jstkp->axis[0] = js.lX;    // x axis
+        jstkp->axis[1] = js.lY;    // y axis
     }
-
-    D_PostEvent(&event);
 }
+
+static void I_GetJoystickEvents (void)
+{
+    int jn;
+    for( jn=0; jn<num_joysticks; jn++)
+	I_Get_A_JoystickEvents ( jn );
+}
+
+
+int I_JoystickNumAxes(int joynum)
+{
+    return (joynum < num_joysticks)? joystk[joynum].joyaxes : 0;
+}
+
+int I_JoystickGetAxis(int joynum, int axisnum)
+{
+    return ((joynum < num_joysticks) && (axisnum < joystk[joynum].numaxes)) ?
+           joystk[joynum].axis[axisnum] : 0;
+}
+
     
     
 // ===========================================================================================
@@ -1966,7 +2041,7 @@ static void I_ShutdownDirectInput (void)
 //  This stuff should get rid of the exception and page faults when
 //  Doom bugs out with an error. Now it should exit cleanly.
 //
-int  I_StartupSystem(void)
+void I_StartupSystem(void)
 {
     HRESULT hr;
 
@@ -2042,7 +2117,7 @@ int  I_StartupSystem(void)
 //
 //  NOTE : Shutdown user funcs. are effectively called in reverse order.
 //
-void I_ShutdownSystem()
+void I_ShutdownSystem(void)
 {
     int c;
     
