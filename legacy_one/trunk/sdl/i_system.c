@@ -77,14 +77,16 @@
 
 
 #ifdef LINUX
-# ifndef FREEBSD
-#  include <sys/vfs.h>
-# else
+# ifdef FREEBSD
 #  include <sys/param.h>
 #  include <sys/mount.h>
 /*For meminfo*/
 #  include <sys/types.h>
 #  include <sys/sysctl.h>
+# elif defined( __MACH__ )
+#  include <sys/statvfs.h>
+# else
+#  include <sys/vfs.h>
 # endif
 #endif
 
@@ -764,6 +766,7 @@ void I_Error (const char *error, ...)
 
     exit(-1);
 }
+
 #define MAX_QUIT_FUNCS     16
 typedef void (*quitfuncptr)();
 static quitfuncptr quit_funcs[MAX_QUIT_FUNCS] =
@@ -826,16 +829,22 @@ void I_ShutdownSystem()
 uint64_t I_GetDiskFreeSpace(void)
 {
 #ifdef LINUX
-#ifdef SOLARIS
+# ifdef SOLARIS
   goto guess;
 
-#else
+# elif defined( __MACH__ )
+  struct statvfs stfs;
+  if (statvfs(".", &stfs) == -1)
+    goto guess;
+
+  return (uint64_t) (stfs.f_bavail * stfs.f_bsize);
+# else
   struct statfs stfs;
   if (statfs(".", &stfs) == -1)
     goto guess;
 
-  return stfs.f_bavail * stfs.f_bsize;
-#endif
+  return (uint64_t) (stfs.f_bavail * stfs.f_bsize);
+# endif
 
 #elif defined(WIN32)
   ULARGE_INTEGER free;
@@ -853,6 +862,7 @@ guess:
   return MAXINT;
 }
 
+
 char *I_GetUserName(void)
 {
   static char username[MAXPLAYERNAME];
@@ -862,7 +872,7 @@ char *I_GetUserName(void)
   DWORD i = MAXPLAYERNAME;
   int ret = GetUserName(username, &i);
   if(!ret)
-    {
+  {
 #endif
 
   if ((p = getenv("USER")) == NULL)
@@ -874,7 +884,7 @@ char *I_GetUserName(void)
   strncpy(username, p, MAXPLAYERNAME);
 
 #ifdef WIN32
-    }
+  }
 #endif
 
   if (strcmp(username, "") == 0)

@@ -1748,9 +1748,10 @@ menuitem_t MouseOptionsMenu[]=
 #if 0
 //[WDJ] disabled in 143beta_macosx
 //[segabor]
-#ifdef __MACOS__
+# ifdef MACOS_DI
+// specific to macos directory
         ,{IT_CALL   | IT_WHITESTRING,0,"Configure Input Sprocket..."  ,macConfigureInput     ,60}
-#endif
+# endif
 #endif
 };
 

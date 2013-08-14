@@ -384,11 +384,14 @@ int   legacyhome_len;
 static char *doomwaddir = NULL;
 
 
-#ifdef __MACH__
+#if defined(__APPLE__) && defined(__MACH__)
+// [WDJ] This is very likely only for a development setup using an .app folder
+#ifdef EXT_MAC_DIR_SPEC
 //[segabor]: for Mac specific resources
 extern char mac_legacy_wad[FILENAME_SIZE];  // legacy.wad in Resources
 extern char mac_md2_wad[FILENAME_SIZE];	    // md2.wad in Resources
 extern char mac_user_home[FILENAME_SIZE];   // for config and savegames
+#endif
 #endif
 
 //
@@ -1352,9 +1355,27 @@ void IdentifyVersion()
     // find legacy.wad, IWADs
     // and... Doom LEGACY !!! :)
     char *legacywad;
-#ifdef __MACH__
+#if defined(__APPLE__) && defined(__MACH__)
+#ifdef EXT_MAC_DIR_SPEC
     //[segabor]: on Mac OS X legacy.wad is within .app folder
     legacywad = mac_legacy_wad;
+#else
+    // [WDJ]: on Mac OS X find legacy.wad
+#ifdef LEGACYWADDIR
+    // [WDJ] Try LEGACYWADDIR first
+    if( ! access( LEGACYWADDIR , R_OK)) {
+      // [WDJ] legacy.wad is in shared directory
+      legacywad = malloc(strlen(LEGACYWADDIR) + 1 + 10 + 1);
+      cat_filename(legacywad, LEGACYWADDIR, "legacy.wad");
+    }
+    else
+#endif
+    { 
+      // [WDJ] legacy.wad is with other wads
+      legacywad = malloc(strlen(doomwaddir) + 1 + 10 + 1);
+      cat_filename(legacywad, doomwaddir, "legacy.wad");
+    }
+#endif
 #else
     cat_filename(pathiwad, doomwaddir, "legacy.wad");  // must be MAX_WADPATH
     legacywad = strdup( pathiwad );  // malloc
@@ -1757,8 +1778,9 @@ void D_DoomMain()
     }
 #if 0
 //[WDJ] disabled in 143beta_macosx
+// was test on MACOS_DI but could exclude or include __MACH__ ??
 //[segabor]
-#ifdef __MACOS__
+#if defined( __APPLE__ ) && ! defined( __MACH__ )
     // cwd is always "/" when app is dbl-clicked
     if (!strcasecmp(doomwaddir, "/"))
     {
@@ -1806,10 +1828,14 @@ void D_DoomMain()
             }
 	}
 
-#ifdef __MACH__
+#ifdef __APPLE__
+#undef DEFAULTDIR
+#define DEFAULTDIR ".legacy"
+#endif
+#if defined(__APPLE__) && defined(__MACH__) && defined( EXT_MAC_DIR_SPEC )
 	//[segabor] ... ([WDJ] MAC port has vars handy)
 //	sprintf(configfile, "%s/DooMLegacy.cfg", mac_user_home);
-	cat_filename( configfile, max_user_home, "DooMLegacy.cfg" );
+	cat_filename( configfile, mac_user_home, "DooMLegacy.cfg" );
 	sprintf(savegamename, "%s/Saved games/Game %%d.doomSaveGame", mac_user_home);
         // legacyhome = mac_user_home;
 	// Needs slash

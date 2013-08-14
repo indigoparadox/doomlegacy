@@ -190,7 +190,7 @@ static void CON_DrawBackpic (pic_t *pic, int startx, int destwidth);
 //======================================================================
 //                   CONSOLE VARS AND COMMANDS
 //======================================================================
-#ifdef __MACOS__
+#if defined( MACOS_DI ) && ! defined( __GNUC__ )
 #define  CON_BUFFERSIZE   4096  //my compiler cant handle local vars >32k
 #else
 #define  CON_BUFFERSIZE   16384

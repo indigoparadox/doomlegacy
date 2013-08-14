@@ -93,7 +93,8 @@ extern consvar_t cd_volume;
 extern consvar_t cdUpdate;
 #endif
 
-#ifdef __MACOS__
+#ifdef MACOS_DI        //mp3 playlist stuff
+// specific to macos directory
 typedef enum
 {
     music_normal,

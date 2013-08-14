@@ -582,7 +582,7 @@ void HWR_InitMD2()
     }
     // read the md2.dat file
 
-#ifdef __MACOS__
+#if defined( __MACH__ ) && defined( EXT_MAC_DIR_SPEC )
     //[segabor]: md2 in the 'Doom Legacy.app/Contents/Resources' folder
     extern char mac_md2_wad[256];
    

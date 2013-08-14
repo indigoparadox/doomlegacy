@@ -3133,6 +3133,7 @@ const char * sg_head_format =
 #define sg_head_END "::END\n"
 const short idname_length = 18;  // !!<name> length
 
+// __BIG_ENDIAN__ is defined on MAC compilers, not on WIN, nor LINUX
 #ifdef __BIG_ENDIAN__
 const byte sg_big_endian = 1;
 #else

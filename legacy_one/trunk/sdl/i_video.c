@@ -69,6 +69,10 @@
 //      DOOM graphics stuff for SDL
 //
 //-----------------------------------------------------------------------------
+
+// Debugging unfinished MAC_SDL
+//#define DEBUG_MAC  1
+
 #define TESTBPP
 #ifdef TESTBPP
 // [WDJ] Test drawing in a testbpp mode, using native mode conversion.
@@ -110,13 +114,13 @@ RGBA_t  gamma_correction = {0x7F7F7F7F};
 // SDL vars
 
 // [WDJ] appeared in 143beta_macosx without static
-//   It may be the MAC version of gcc 3.3, so make it conditional on MACOS
-#ifdef __MACOS__
+//   It may be the MAC version of gcc 3.3, so make it conditional
+#if defined(__APPLE__) && defined(__GNUC__) && (__GNUC__ == 3) && (__GNUC_MINOR__ == 3)
 //[segabor] !!! I had problem compiling this source with gcc 3.3
 // maybe gcc 3.2 does it better
-	 SDL_Surface *vidSurface=NULL;
+	SDL_Surface *vidSurface=NULL;
 #else
-static   SDL_Surface *vidSurface=NULL;
+static  SDL_Surface *vidSurface=NULL;
 #endif
 
 static  SDL_Color    localPalette[256];
@@ -130,6 +134,13 @@ static  int        firstEntry = 0; // first entry in modeList which is not bigge
 static  byte       request_bitpp = 0;  // with modelist
 static  byte       request_NULL = 0;  // with modelist
 
+#ifdef __MACOSX__
+// SDL_DOUBLEBUF is unsupported for Mac OS X
+const static Uint32  surfaceFlags = SDL_SWSURFACE|SDL_HWPALETTE;
+// With SDL 1.2.6 there is an experimental software flipping that is
+// accessed using SDL_DOUBLEBUF|SDL_HWSURFACE|SDL_FULLSCREEN
+const static Uint32  surfaceFlags_fullscreen = SDL_DOUBLEBUF|SDL_HWSURFACE|SDL_FULLSCREEN|SDL_HWPALETTE;
+#else
 #if 1
 // NO DOUBLEBUF, as we already draw to buffer
 const static Uint32  surfaceFlags = SDL_HWSURFACE|SDL_HWPALETTE;
@@ -138,6 +149,7 @@ const static Uint32  surfaceFlags_fullscreen = SDL_HWSURFACE|SDL_HWPALETTE|SDL_F
 // DOUBLEBUF
 const static Uint32  surfaceFlags = SDL_HWSURFACE|SDL_HWPALETTE|SDL_DOUBLEBUF;
 const static Uint32  surfaceFlags_fullscreen = SDL_HWSURFACE|SDL_HWPALETTE|SDL_DOUBLEBUF|SDL_FULLSCREEN;
+#endif
 #endif
 
 
@@ -293,7 +305,14 @@ void I_FinishUpdate(void)
         // If page flip involves changing vid.display, then must change screens[0] too
         // [WDJ] SDL spec says to not call UpdateRect while vidSurface is locked
         //SDL_Flip(vidSurface);
+#ifdef __MACOSX__
+        // Setup Flip of DOUBLEBUF
+        SDL_Flip(vidSurface);
+	// Hardware that does not support DOUBLEBUF does
+        // SDL_UpdateRect(vidSurface, 0, 0, 0, 0);
+#else
         SDL_UpdateRect(vidSurface, 0, 0, 0, 0);
+#endif
     }
     else
     {
@@ -361,7 +380,14 @@ void I_SetPalette(RGBA_t* palette)
 	    localPalette[7].g = 96;  // at least get green text on black
 #endif
 
+#if defined(MAC_SDL) && defined( DEBUG_MAC )
+    if( ! SDL_SetColors(vidSurface, localPalette, 0, 256) )
+    {
+        fprintf(stderr,"Error: SDL_SetColors failed to set all colors\n");
+    }
+#else
     SDL_SetColors(vidSurface, localPalette, 0, 256);
+#endif
 
     return;
 }
@@ -587,6 +613,9 @@ int VID_SetMode(int modeNum)
 
     I_StartupMouse();
 
+#if defined(MAC_SDL) && defined( DEBUG_MAC )
+    SDL_Delay( 2 * 1000 );  // [WDJ] DEBUG: to see if errors are due to startup or activity
+#endif
     return 1;
 
 fail:
@@ -764,8 +793,8 @@ found_modes:
     vid.screen1 = NULL;
     vid.buffer = NULL;
 
-// [WDJ] To be safe, make it conditional on MACOS
-#ifdef __MACOS__
+// [WDJ] To be safe, make it conditional
+#ifdef MAC_SDL
     //[segabor]: Mac hack
     if(M_CheckParm("-opengl") || rendermode == render_opengl) 
 #else     
@@ -824,6 +853,9 @@ found_modes:
 
     graphics_started = 1;
 
+#if defined(MAC_SDL) && defined( DEBUG_MAC )
+    SDL_Delay( 4 * 1000 );  // [WDJ] DEBUG: to see if errors are due to startup or activity
+#endif
     return;  // have video mode
 
 abort_error:
@@ -851,5 +883,8 @@ void I_ShutdownGraphics()
         OglSdlShutdown();
     }
 
+#if defined(MAC_SDL) && defined( DEBUG_MAC )
+    fprintf(stderr,"SDL_Quit()\n");  // [WDJ] DEBUG:
+#endif
     SDL_Quit();
 }

@@ -17,7 +17,7 @@
  * If yes return a complete pathname, if not found just return the filename.
  */
 char *searchpath(char *file) {
-#ifndef __MACOS__
+#ifndef MACOS_DI
 	char		*path;
 	char		*dir;
 	static char	b[2048];

@@ -322,6 +322,7 @@ void P_InitPicAnims (void)
   {
     animdefs = (animdef_t *)W_CacheLumpName("ANIMATED", PU_IN_USE);
     // [WDJ] From wad, Do endian conversion on speed
+// __BIG_ENDIAN__ is defined on MAC compilers, not on WIN, nor LINUX
 #ifdef __BIG_ENDIAN__
     // [WDJ] Endian conversion, only when BIG_ENDIAN, when from wad,
     // and not when cache hit.

@@ -96,7 +96,8 @@ void I_ShutdownGraphics(void);          //restore old video mode
 // Takes full 8 bit values.
 void I_SetPalette (RGBA_t* palette);
 
-#ifdef __MACOS__
+#ifdef MACOS_DI
+// in macos directory
 void macConfigureInput(void);
 
 void VID_Pause(int pause);

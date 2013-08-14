@@ -43,6 +43,17 @@
 #include "m_argv.h"
 #include "d_main.h"
 
+#ifdef MAC_SDL
+// [WDJ] SDL 1.2.x Necessary on Mac to setup objective-C stuff.
+// It is reported that SDL 1.3 will not require SDL_main.
+// Must keep SDL_main until such time, if any, that SDL 1.2.x is not supported,
+// probably around 2015.
+// This include will rename main as SDL_main, and use a main from SDL.
+// Must also compile and link SDLmain.m, which is objective-C program.
+# include "SDL.h"
+  // This will also get SDL_main.h, SDL_config.h, SDL_platform.h
+#endif
+
 #ifdef LOGMESSAGES
 #include <stdio.h>
 FILE *logstream = NULL;
@@ -53,6 +64,15 @@ int main(int argc, char **argv)
     myargc = argc; 
     myargv = argv; 
  
+#ifdef MAC_SDL
+// __MACOS__ is defined in SDL_platform.h (==macintosh)
+# ifdef __MACOS__
+    // [WDJ] As stated in SDL_main.h, but not needed for MACOSX
+    struct QDGlobals quickdraw_g;
+    SDL_InitQuickDraw( & quickdraw_g );
+# endif
+#endif
+
 #ifdef LOGMESSAGES
     //Hurdler: only write log if we have the permission in the current directory
     logstream = fopen(".log/log.txt", "w");

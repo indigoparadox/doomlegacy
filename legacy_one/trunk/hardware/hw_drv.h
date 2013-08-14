@@ -135,11 +135,7 @@ EXPORT Window  HWRAPI( HookXwin ) (Display*,int,int,boolean) ;
 #endif
 #endif
 
-#ifdef __MACOS__
-EXPORT void HWRAPI( SetPalette ) (int*, RGBA_t *gamma);
-#else
 EXPORT void HWRAPI( SetPalette ) (RGBA_t* pal, RGBA_t *gamma);
-#endif
 
 EXPORT void HWRAPI( FinishUpdate ) ( int waitvbl ) ;
 

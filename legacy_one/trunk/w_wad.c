@@ -837,6 +837,7 @@ void* W_CacheLumpName ( char* name, int tag )
 // [WDJ] Only read patches using this function, hardware render too.
 inline void* W_CachePatchNum_Endian ( int lump, int tag )
 {
+// __BIG_ENDIAN__ is defined on MAC compilers, not on WIN, nor LINUX
 #ifdef __BIG_ENDIAN__
     patch_t * patch = W_CacheLumpNum(lump,tag);
     // [WDJ] If newly read patch then fix endian.
@@ -1001,6 +1002,7 @@ void* W_CacheRawAsPic( int lump, int width, int height, int tag)
 // Cache and endian convert a pic_t
 void* W_CachePicNum( int lumpnum, int tag )
 {
+// __BIG_ENDIAN__ is defined on MAC compilers, not on WIN, nor LINUX
 #ifdef __BIG_ENDIAN__
     pic_t * pt = W_CacheLumpNum ( lumpnum, tag );
     // [WDJ] If newly read pic then fix endian.

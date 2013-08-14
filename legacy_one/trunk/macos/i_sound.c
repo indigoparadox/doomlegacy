@@ -782,7 +782,8 @@ boolean PlayThis(char *name)
 	return true;
 }
 
-int I_RegisterSong(int handle)
+// [WDJ] len is unused, keep compatible API
+int I_RegisterSong(int handle, int len)
 {
 	Str63 name = "";
 	

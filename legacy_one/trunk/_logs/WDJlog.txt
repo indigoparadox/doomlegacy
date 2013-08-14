@@ -3275,3 +3275,16 @@ Remove file: linux_x/sndserv/Makefile.scoos5
 Remove file: linux_x/sndserv/Makefile.scouw2
 Remove file: linux_x/sndserv/Makefile.scouw7
 Add file: linux_x/musserv/Makefile
+
+*** W92_Mac
+patchfile = w92_2_Mac.patch
+- committed revision 1028   by wesley johnson
+Commit of extensive changes for Mac, and Mac using SDL.
+Change MACOS to MACOS_DI (Mac Direct Interface) which is NOT SDL.
+Mac using SDL defines MAC_SDL.
+This is not a working solution for Mac, just the best current code.
+Includes some useful optional debugging code.
+Updates Makefile for selecting MAC, and some MAC options.
+
+Add file "sdl/SDLmain.m"
+

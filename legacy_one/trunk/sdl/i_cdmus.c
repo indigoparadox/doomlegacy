@@ -39,6 +39,10 @@
 #include "command.h"
 #include "m_argv.h"
 
+// [WDJ] SDL_cdrom.h is not present on some MAC SDL installs.
+// This detects if SDL.h includes SDL/SDL_cdrom.h
+#ifdef SDL_AUDIO_TRACK
+
 #define MAX_CD_TRACKS 256
 
 #define CD_OK(cd) (CD_INDRIVE((cd)->status))
@@ -138,9 +142,9 @@ static void I_EjectCD(void)
   I_StopCD();
     
   if (SDL_CDEject(cdrom))
-    {
+  {
       CONS_Printf("CD eject failed\n");
-    }
+  }
 }
 
 /**************************************************************************
@@ -469,3 +473,41 @@ void I_PlayCD (unsigned int track, boolean looping)
   if (cd_volume.value == 0)
     I_PauseCD(); // cd "volume" hack
 }
+
+
+#else
+// [WDJ] some MAC do not have SDL_cdrom.h
+// This will stop errors for now.
+
+CV_PossibleValue_t cd_volume_cons_t[]={{0,"MIN"},{31,"MAX"},{0,NULL}};
+consvar_t cd_volume = {"cd_volume", "31", CV_SAVE | CV_CALL, cd_volume_cons_t, NULL};
+
+void I_StopCD(void)
+{
+}
+
+void I_PauseCD (void)
+{
+}
+
+void I_ResumeCD (void)
+{
+}
+
+void I_ShutdownCD (void)
+{
+}
+
+void I_InitCD (void)
+{
+}
+
+void I_UpdateCD (void)
+{
+}
+
+void I_PlayCD (unsigned int track, boolean looping)
+{
+}
+
+#endif

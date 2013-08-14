@@ -305,6 +305,15 @@ extern FILE *logstream;
 #define DEFHOME   "/usr/local/games/legacyhome"
 #endif
 
+#if defined(__APPLE__) && defined(__MACH__)
+// Use defined Mac resources (app folder)
+//#define EXT_MAC_DIR_SPEC
+
+// Legacy wad for Mac
+//#define  LEGACYWADDIR  ".app"
+#define  LEGACYWADDIR  "/usr/local/share/games/legacy"
+#endif
+
 // =========================================================================
 
 // The maximum number of players, multiplayer/networking.

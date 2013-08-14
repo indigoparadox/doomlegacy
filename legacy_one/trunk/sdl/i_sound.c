@@ -87,8 +87,12 @@
 #include "SDL.h"
 #include "SDL_audio.h"
 #include "SDL_mutex.h"
-#include "SDL_byteorder.h"
 #include "SDL_version.h"
+#if ((SDL_MAJOR_VERSION*100)+(SDL_MINOR_VERSION*10)) < 120
+# include "SDL_byteorder.h"
+#else
+# include "SDL_endian.h"
+#endif
 
 #ifdef HAVE_MIXER
 # define  USE_RWOPS

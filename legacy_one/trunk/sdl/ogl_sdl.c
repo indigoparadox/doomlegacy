@@ -41,17 +41,22 @@
 //
 //-----------------------------------------------------------------------------
 
+// Debugging unfinished MAC_SDL
+//#define DEBUG_MAC  1
+
 
 #include "SDL.h"
+#include "SDL_opengl.h"
 
 
 //[segabor]
 #ifdef __MACH__
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
+// [WDJ] This is from OpenGL framework
+# include <OpenGL/gl.h>
+# include <OpenGL/glu.h>
 #else
-#include <GL/gl.h>
-#include <GL/glu.h>
+# include <GL/gl.h>
+# include <GL/glu.h>
 #endif
 
 #include "../hardware/r_opengl/r_opengl.h"
@@ -60,20 +65,160 @@
 #include "v_video.h"
 
 
-// [WDJ] appeared in 143beta_macosx without static, shared
-//   It may be the MAC version of gcc 3.3, so make it conditional on MACOS
-#ifdef __MACOS__
-//[segabor]
-extern SDL_Surface *vidSurface; // use the one from sdl/i_video.c
-#else
-static SDL_Surface *vidSurface = NULL; //use the one from i_video_sdl.c instead?
+#ifdef MAC_SDL
+
+// As per an apple demo program, OpenGL is a framework
+# include <OpenGL/OpenGL.h>
+  // maybe OpenGL brings in the two below ??
+//# include <OpenGL/CGLCurrent.h>
+//# include <OpenGL/CGLTypes.h>
+// CGLCurrent.h and CGLTypes.h are in
+//    /System/Library/Frameworks/OpenGL.framework/Versions/A/Header
+
+GLint  majorver, minorver;
+GLint  numscreens;
+CGLError  cglerr;
+CGLContextObj  cglcon;
+CGLPixelFormatObj  cglpix;   // ptr, reference counted, release needed
+CGLPixelFormatAttribute  cglattrib[12] = { kCGLPFADoubleBuffer, 0 };
+int numattrib = 1;
+byte created_context = 0;
+
+
+void  mac_cgl_error( char * str, int cglerr )
+{
+   if( cglerr )
+   {
+      const char * errstr = CGLErrorString ( cglerr );
+      fprintf(stderr,"%s has CGL error: %s\n", str, errstr );
+   }
+}
+
+void  mac_report_context_var( char * str, GLint varid, int num )
+{
+    GLint paar[8];
+
+    cglerr = CGLGetParameter ( cglcon, varid, paar );
+    if( clgerr )
+      mac_cgl_error( "GetParameter", cglerr );
+    else
+    {
+      if( num == 1 )
+	 fprintf(stderr, "  %s = %i\n", paar[0] );
+      else
+	 fprintf(stderr, "  %s = %i,%i,%i,%i\n", paar[0], parr[1], parr[2], parr[3] );
+    }
+}
+
+
+void mac_init( void )
+{
+   CGLGetVersion ( & majorver, & minorver );
+#ifdef DEBUG_MAC   
+   fprintf(stderr, "Found CGL Version  %i.%i\n", majorver, minorver );
+#endif
+}
+
+#ifdef DEBUG_MAC   
+void mac_check_context( char * str )
+{
+   cglcon = CGLGetCurrentContext();
+   if( cglcon )
+   {
+      fprintf(stderr, "%s: CGL reports existing context %p\n", str, cglcon );
+   }
+   else
+   {
+      fprintf(stderr, "%s: CGL reports no current context\n", str);
+   }
+}
+#endif
+   
+   
+void  mac_set_context( void )
+{
+   cglcon = CGLGetCurrentContext();
+   if( cglcon == NULL )
+   {
+      if( vid.fullscreen )
+      {
+	 cglattrib[numattrib++] = kCGLPFAFullScreen;
+      }
+      cglattrib[numattrib++] = 0;
+      
+      cglerr = CGLChoosePixelFormat ( &cglattrib,  & cglpix, & numscreens );
+      mac_cgl_error( "Create CGL pixel format", cglerr );
+      
+      cglerr = CGLCreateContext ( cglpix, NULL, &cglcon );
+      mac_cgl_error( "Create CGL context", cglerr );
+      
+      fprintf(stderr, "Created CGL context %p\n", cglcon );
+      
+      created_context = 1;
+   }
+   
+   if( cglcon )
+   {
+      cglerr = CGLSetCurrentContext ( cglcon );
+      mac_cgl_error( "Set CGL Context", cglerr );
+      fprintf(stderr," GL_RENDERER = %s\n", glGetString(GL_RENDERER) );
+      fprintf(stderr," GL_VENDOR = %s\n", glGetString(GL_VENDOR) );
+      fprintf(stderr," GL_VERSION = %s\n", glGetString(GL_VERSION) );
+
+      fprintf(stderr, "CGL Context values\n" );
+      mac_report_context_var( "SwapRectangle", kCGLCPSwapRectangle, 4 );
+      mac_report_context_var( "SwapInterval", kCGLCPSwapInterval, 1 );
+      mac_report_context_var( "SurfaceBackingSize", kCGLCPSurfaceBackingSize, 1 );
+      mac_report_context_var( "SurfaceSurfaceVolatile", kCGLCPSurfaceSurfaceVolatile, 1 );
+      mac_report_context_var( "HasDrawable", kCGLCPHasDrawable, 1 );
+      mac_report_context_var( "CurrentRendererID", kCGLCPCurrentRendererID, 1 );
+   }
+   
+   // Create context retains the pixel format, so can release it
+   CGLReleasePixelFormat( cglpix );
+}
+
+void mac_close_context( void )
+{
+   cglerr = CGLSetCurrentContext( NULL );
+   mac_cgl_error( "Close CGL context", cglerr );
+   if( created_context )
+     CGLReleaseContext( cglcon );
+}
+
 #endif
 
 
+// [WDJ] appeared in 143beta_macosx without static, shared
+//   It may be the MAC version of gcc 3.3, so make it conditional
+#if defined(__APPLE__) && defined(__GNUC__) && (__GNUC__ == 3) && (__GNUC_MINOR__ == 3)
+//[segabor]
+extern SDL_Surface *vidSurface; // use the one from sdl/i_video.c
+#else
+static SDL_Surface *vidSurface = NULL;  // OGL gets separate ptr
+#endif
+
+
+// Called by VID_SetMode
+// SDL-OpenGL version of VID_SetMode
 boolean OglSdlSurface(int w, int h, int isFullscreen)
 {
     Uint32 surfaceFlags;
-    int cbpp;
+    int cbpp;  // bits per pixel
+
+#ifdef DEBUG_MAC
+    fprintf(stderr, "Detect: "
+# ifdef __MACOSX__
+	    " __MACOSX__ "
+# endif
+# ifdef __MACOS__
+	    " __MACOS__ "
+# endif
+# ifdef __LINUX__
+	    " __LINUX__ "
+# endif
+	    "\n" );
+#endif
 
     if(NULL != vidSurface)
     {
@@ -87,32 +232,64 @@ boolean OglSdlSurface(int w, int h, int isFullscreen)
 
     if(isFullscreen)
     {
+#ifdef MAC_SDL
+        surfaceFlags = SDL_OPENGL|SDL_DOUBLEBUF|SDL_FULLSCREEN; // Mac, Edge
+#else
         surfaceFlags = SDL_OPENGL|SDL_FULLSCREEN;
+#endif
     }
     else
     {
+#ifdef MAC_SDL
+        surfaceFlags = SDL_OPENGL|SDL_DOUBLEBUF; // Mac, Edge
+#else
         surfaceFlags = SDL_OPENGL;
+#endif
     }
 
-    /*
-     * We want at least 1 bit R, G, and B,
-     * and at least 16 bpp. Why 1 bit? May be more?
-     */
+#ifdef MAC_SDL   
+    mac_init( );
+#ifdef DEBUG_MAC
+    mac_check_context( "OglSdlSurface 1" );
+#endif
+    mac_set_context();
+//#define MAC_REINIT_AFTER_CONTEXT  1
+#ifdef MAC_REINIT_AFTER_CONTEXT   
+    SDL_QuitSubSystem(SDL_INIT_VIDEO);
+    SDL_InitSubSystem(SDL_INIT_VIDEO);
+#endif
+#endif
+
+#if 1   
+    // We want at least 4 bit R, G, and B, and at least 16 bpp.
+    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 4);
+    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 4);
+    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 4);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);  // Mac, because Edge does it
+#else
+    // We want at least 1 bit R, G, and B, and at least 16 bpp.
+    // Why 1 bit? May be more?
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 1);
     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 1);
     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
+#endif
 
     cbpp = SDL_VideoModeOK(w, h, 16, surfaceFlags);
     if (cbpp < 16)
         return false;
 
     if( verbose>1 )
+    {
         fprintf(stderr,"OpenGL SDL_SetVideoMode(%i,%i,%i,0x%X)  %s\n",
 		w, h, 16, surfaceFlags,
 		(surfaceFlags&SDL_FULLSCREEN)?"Fullscreen":"Window");
+    }
 
-    if((vidSurface = SDL_SetVideoMode(w, h, cbpp, surfaceFlags)) == NULL)
+    vidSurface = SDL_SetVideoMode(w, h, cbpp, surfaceFlags);
+    if(vidSurface == NULL)
         return false;
 
     if( verbose )
@@ -131,9 +308,41 @@ boolean OglSdlSurface(int w, int h, int isFullscreen)
     vid.width = vidSurface->w;
     vid.height = vidSurface->h;
 
+#ifdef MAC_SDL   
+#ifdef DEBUG_MAC
+    fprintf(stderr, " vid set: height=%i, width=%i\n", vid.height, vid.width );
+    if( vidSurface->pitch != (vid.width * vid.bytepp))
+    {
+        fprintf(stderr," Notice: Unusual buffer width = %i, where width x bytes = %i\n",
+		vidSurface->pitch, (vid.width * vid.bytepp) );
+    }
+    mac_check_context( "OglSdlSurface gl call" );
+#endif
+    mac_set_context();
+
+#ifdef DEBUG_MAC     
+    fprintf(stderr, " glClear: height=%i, width=%i\n", h, w );
+#endif
+
+    glClearColor(0.0,0.0,0.0,0.0);
+#endif
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+#ifdef MAC_SDL   
+#ifdef DEBUG_MAC     
+    fprintf(stderr, " SDL_GL_SwapBuffers: height=%i, width=%i\n", h, w );
+#endif
+    // [WDJ] SDL_GL_SwapBuffers is required here to prevent crashes on Mac.
+    // Do not know why.  (From Edge)
+    SDL_GL_SwapBuffers();
+#endif
+
+#ifdef DEBUG_MAC     
+    fprintf(stderr, " SetModelView: height=%i, width=%i\n", h, w );
+#endif
+    // Moved these after, from Edge, which does not crash on Mac
     SetModelView(vid.width, vid.height);
     SetStates();
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
     HWR_Startup();
     textureformatGL = (cbpp > 16)?GL_RGBA:GL_RGB5_A1;
@@ -156,7 +365,14 @@ void OglSdlShutdown(void)
         SDL_FreeSurface(vidSurface);
         vidSurface = NULL;
     }
+#ifdef MAC_SDL   
+#ifdef DEBUG_MAC
+    mac_check_context( "OglSdlShutdown" );
+#endif
+    mac_close_context();
+#endif
 }
+
 void OglSdlSetPalette(RGBA_t *palette, RGBA_t *gamma)
 {
     int i;

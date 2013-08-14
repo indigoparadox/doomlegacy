@@ -52,14 +52,13 @@ int VID_SetMode(int modeNum);
 
 struct modeDescription
 {
-        int w;
-        int h;
-        int freq;
+    uint16_t  w, h;
+    int freq;
 };
 
-RGBA_t                          gamma_correction = {0x7F7F7F7F};
+RGBA_t  gamma_correction = {0x7F7F7F7F};
 
-char                    vidModeName[33][32]; // allow 33 different modes
+char    vidModeName[33][32]; // allow 33 different modes
 
 // To disable fullscreen at startup; is set in VID_PrepareModeList
 int menu_height;
@@ -180,8 +179,8 @@ void VID_PrepareModeList(void)
 {
     int i;
 
-        if(graphics_started)
-            return;
+    if(graphics_started)
+        return;
 
     for (i=0;i<MAXWINMODES;i++)
     {
@@ -230,6 +229,7 @@ int VID_SetMode(int modeNum)
     if (cv_scr_depth.value<16)
         CV_Set(&cv_scr_depth,"16");         // dont want 8-bit (?)
 
+    vid.bitpp = 32;
     vid.bytepp = 4;
     vid.width = modeList[modeNum].w;
     vid.height = modeList[modeNum].h;

@@ -92,6 +92,7 @@ static inline int32_t SWAP_INT32_FAST( uint32_t x)
 //    Wads, lumps, MUS format, TGA format, network
 // Use BE_SWAP* to convert to and from external big-endian value.
 //    Midi
+// __BIG_ENDIAN__ is defined on MAC compilers, not on WIN, nor LINUX
 #ifdef __BIG_ENDIAN__
 
 // [WDJ] swap functions, reduces executable bloat.

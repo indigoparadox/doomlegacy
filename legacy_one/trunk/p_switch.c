@@ -161,6 +161,7 @@ void P_InitSwitchList(void)
   if(W_CheckNumForName("SWITCHES") != -1)
   {
     alphSwitchList = (switchlist_t *)W_CacheLumpName("SWITCHES", PU_IN_USE);
+// __BIG_ENDIAN__ is defined on MAC compilers, not on WIN, nor LINUX
 #ifdef __BIG_ENDIAN__
     // [WDJ] Endian conversion, only when BIG_ENDIAN, when from wad,
     // and not when cache hit.

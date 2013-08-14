@@ -425,6 +425,7 @@ static void SetNoTexture( void )
 // -----------------+
 // SetModelView     :
 // -----------------+
+// Called by ogl_sdl:OglSdlSurface or ogl_mac:OglMacSurface
 void SetModelView( GLint w, GLint h )
 {
     DBG_Printf( "SetModelView(): %dx%d\n", w, h );
@@ -432,7 +433,11 @@ void SetModelView( GLint w, GLint h )
     screen_width = w;
     screen_height = h;
 
+#ifdef MAC_SDL
+    // SDL tutorial for Mac does not call glViewport, use default
+#else
     glViewport( 0, 0, w, h );
+#endif
 
     glMatrixMode( GL_PROJECTION );
     glLoadIdentity();
@@ -453,6 +458,8 @@ void SetModelView( GLint w, GLint h )
 // -----------------+
 // SetStates        : Set permanent states
 // -----------------+
+// Called by ogl_sdl:OglSdlSurface or ogl_mac:OglMacSurface
+// Called after SetModelView
 void SetStates( void )
 {
     // Bind little white RGBA texture to ID NOTEXTURE_NUM.
