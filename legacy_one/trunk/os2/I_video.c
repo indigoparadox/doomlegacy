@@ -107,22 +107,21 @@ void I_UpdateNoBlit (void)
     // what is this?
 }
 
+#define FPSPOINTS  35
+#define SCALE      4
 //
 // I_FinishUpdate
 //
 void I_FinishUpdate (void)
 {
-   static int   lasttic;
-   int          tics;
-   int          i;
+    static int   lasttic;
+    int          tics;
+    int          i;
 
     // display a graph of ticrate
     if (cv_ticrate.value )
     {
         int k,j,l;
-        #define FPSPOINTS  35
-        #define SCALE      4
-        #define PUTDOT(xx,yy,cc) screens[0][((yy)*vid.width+(xx))*vid.bytepp]=(cc)
         int fpsgraph[FPSPOINTS];
 
         i = I_GetTime();
@@ -134,38 +133,40 @@ void I_FinishUpdate (void)
             fpsgraph[i]=fpsgraph[i+1];
         fpsgraph[FPSPOINTS-1]=20-tics;
 
-            // draw dots
-            for(j=0;j<=20*SCALE*vid.dupy;j+=2*SCALE*vid.dupy)
-            {
-                l=(vid.height-1-j)*vid.width*vid.bytepp;
-                for (i=0;i<FPSPOINTS*SCALE*vid.dupx;i+=2*SCALE*vid.dupx)
-                    screens[0][l+i]=0xff;
-            }
+        // draw dots
+        for(j=0;j<=20*SCALE*vid.dupy;j+=2*SCALE*vid.dupy)
+        {
+	    byte * dest = V_GetDrawAddr( 0, (vid.height-1-j) );
+	    for (i=0;i<FPSPOINTS*SCALE*vid.dupx;i+=2*SCALE*vid.dupx)
+	        V_DrawPixel( dest, i, 0xff );
+	}
 
-            // draw the graph
-            for (i=0;i<FPSPOINTS;i++)
-                for(k=0;k<SCALE*vid.dupx;k++)
-                    PUTDOT(i*SCALE*vid.dupx+k, vid.height-1-(fpsgraph[i]*SCALE*vid.dupy),0xff);
-
+        // draw the graph
+        for (i=0;i<FPSPOINTS;i++)
+        {
+	    byte * dest = V_GetDrawAddr( 0, vid.height-1-(fpsgraph[i]*SCALE*vid.dupy) );
+	    for(k=0;k<SCALE*vid.dupx;k++)
+	        V_DrawPixel( dest, (i*SCALE*vid.dupx)+k, 0xff );
+	}
     }
 
       // blit directly if BlitThread is not running.
       // Blit the image using DiveBlit
-   if (!pmData->fDataInProcess) {
-      DiveBlitImage( pmData->hDive, pmData->ulImage, DIVE_BUFFER_SCREEN);
-   }
-   DosSleep(0);
+    if (!pmData->fDataInProcess) {
+        DiveBlitImage( pmData->hDive, pmData->ulImage, DIVE_BUFFER_SCREEN);
+    }
+    DosSleep(0);
 
 /*
       // Use secondary blitting thread
 
       // blitted previous image?
-   if (pmData->fBlitReady == TRUE)
+    if (pmData->fBlitReady == TRUE)
       return; // no, try again
 
       // data is ready for blitting
-   memcpy( pmData->pbBuffer2, pmData->pbBuffer, vid.direct_size);
-   pmData->fBlitReady = TRUE;
+    memcpy( pmData->pbBuffer2, pmData->pbBuffer, vid.direct_size);
+    pmData->fBlitReady = TRUE;
 */
 }
 

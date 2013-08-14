@@ -228,13 +228,13 @@ int I_GetKey (void)
 #if 0
 // [WDJ] Old joystick code, scale is now handled in g_game.c
 int joy_scale = 1;
-void I_JoyScale()
+void I_JoyScale(void)
 {
   joy_scale = (cv_joyscale.value==0)?1:cv_joyscale.value;
 }
 #endif
 
-void I_GetJoyEvent()
+void I_GetJoyEvent(void)
 {
   struct js_event jdata;
   static event_t event = {0,0,0,0};
@@ -293,7 +293,7 @@ void I_GetJoyEvent()
   }
 }
 
-void I_ShutdownJoystick()
+void I_ShutdownJoystick(void)
 {
   int i;
   for( i=0; i<num_joysticks; i++ )
@@ -415,7 +415,7 @@ int I_JoystickGetAxis (int joynum, int axisnum )
 
 
 #ifdef LMOUSE2
-void I_GetMouse2Event()
+void I_GetMouse2Event(void)
 {
   static unsigned char mdata[5];
   static int i = 0,om2b = 0;
@@ -468,7 +468,7 @@ void I_GetMouse2Event()
   }
 }
 
-void I_ShutdownMouse2()
+void I_ShutdownMouse2(void)
 {
   if(fdmouse2!=-1) close(fdmouse2);
   mouse2_started = 0;
@@ -789,7 +789,7 @@ void I_RemoveExitFunc(void (*func)())
 //
 //  NOTE : Shutdown user funcs. are effectively called in reverse order.
 //
-void I_ShutdownSystem()
+void I_ShutdownSystem(void)
 {
    int c;
 
@@ -978,7 +978,7 @@ void I_LocateWad(void)
 
 
 
-void I_SysInit()
+void I_SysInit(void)
 {
   CONS_Printf("Linux X11 system ...\n");
 

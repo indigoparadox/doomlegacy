@@ -353,7 +353,7 @@ int addsfx(int sfxid, int volume, int step, int seperation)
             if ((channels[i]) && (channelids[i] == sfxid))
             {
 	        if( S_sfx[sfxid].flags & SFX_id_fin )
-		    return chanp->handle;  // already have one
+		    return channelhandles[i];  // already have one
                 // Kill, Reset.
                 channels[i] = 0;
                 break;

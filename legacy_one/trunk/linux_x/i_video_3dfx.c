@@ -53,6 +53,9 @@
 #include "i_video.h"
 #include "v_video.h"
 
+// [WDJ] 1/15/2012 Roughly convert to vid interface.  But no testing done.
+
+
 /*
  * Select one of the possible render modes.
  * If you don't have a SGI Octane or a 1000MHz Pentium CPU, drawing
@@ -184,20 +187,20 @@ void I_ShutdownGraphics(void)
 
 void I_FinishUpdate(void)
 {
-        int                             x, y;
-        static int              lasttic;
-        int                             tics;
-        int                             i;
+        static int      lasttic;
+        int             i, tics;
+        int             x, y;
         unsigned char   *src = (unsigned char *) screens[0];
 #ifdef RENDER_LFB
-        pixel_t                 pixel;
-        pixel_t                 *dst1 = &image[0];
-        pixel_t                 *dst2 = &image[SCREENWIDTH*2];
-        int                             step = SCREENWIDTH*2;
+        pixel_t         pixel;
+        pixel_t         *dst1 = &image[0];
+        pixel_t         *dst2 = &image[vid.width*2];
+        int             step = vid.width*2;
 #endif
 
         /* draws little dots on the bottom of the screen */
         if (devparm) {
+	        char * dest = V_GetDrawAddr( 3, (vid.height-2) );
                 i = I_GetTime();
                 tics = i - lasttic;
                 lasttic = i;
@@ -205,16 +208,16 @@ void I_FinishUpdate(void)
                 tics = 20;
 
                 for (i=0 ; i<tics*2 ; i+=2)
-                        screens[0][ (SCREENHEIGHT-2)*SCREENWIDTH + i + 3] = 0xff;
+                    V_DrawPixel( dest, i, 0xff );
                 for ( ; i<20*2 ; i+=2)
-                        screens[0][ (SCREENHEIGHT-2)*SCREENWIDTH + i + 3] = 0x0;
+                    V_DrawPixel( dest, i, 0x00 );
         }
 
 #ifdef RENDER_LFB
         /* convert the engine rendered image to RGB image, double size */
-        y = SCREENHEIGHT-1;
+        y = vid.height-1;
         do {
-                x = SCREENWIDTH-1;
+                x = vid.width-1;
                 do {
                         pixel = colors[*src++];
                         *dst1++ = pixel;
@@ -232,8 +235,8 @@ void I_FinishUpdate(void)
 #else
         /* convert every pixel to a vertex and draw anti-aliased vertices */
         grBufferClear(0, 0, GR_ZDEPTHVALUE_FARTHEST);
-        for (y=0; y<SCREENHEIGHT; y++) {
-                for (x=0; x<SCREENWIDTH; x++) {
+        for (y=0; y<vid.height; y++) {
+                for (x=0; x<vid.width; x++) {
                         vertex.x = (float)(x*2+1);
                         vertex.y = (float)(y*2+1);
                         vertex.r = colors[0][*src];
@@ -256,7 +259,7 @@ void I_UpdateNoBlit(void)
 
 void I_ReadScreen(byte *scr)
 {
-        memcpy (scr, screens[0], SCREENWIDTH*SCREENHEIGHT);
+        memcpy (scr, screens[0], vid.width*vid.height);
 }
 
 void I_SetPalette(RGBA_t *palette)
