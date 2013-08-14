@@ -30,13 +30,8 @@
 // Big TANDL update
 //
 // Revision 1.17  2001/05/16 21:21:15  bpereira
-// no message
-//
 // Revision 1.16  2001/04/09 23:26:06  hurdler
-// clean up
-//
 // Revision 1.15  2001/04/09 14:24:56  hurdler
-// no message
 //
 // Revision 1.14  2001/03/19 21:18:48  metzgermeister
 //   * missing textures in HW mode are replaced by default texture
@@ -45,26 +40,16 @@
 //   * added cvar gr_correcttricks
 //
 // Revision 1.13  2001/02/24 13:35:22  bpereira
-// no message
-//
 // Revision 1.12  2001/01/25 18:56:28  bpereira
-// no message
-//
 // Revision 1.11  2000/10/04 16:21:57  hurdler
-// small clean-up
-//
 // Revision 1.10  2000/08/31 14:30:57  bpereira
-// no message
-//
 // Revision 1.9  2000/07/01 09:23:50  bpereira
-// no message
 //
 // Revision 1.8  2000/05/09 20:57:31  hurdler
 // use my own code for colormap (next time, join with Boris own code)
 // (necessary due to a small bug in Boris' code (not found) which shows strange effects under linux)
 //
 // Revision 1.7  2000/04/30 10:30:10  bpereira
-// no message
 //
 // Revision 1.6  2000/04/27 17:48:47  hurdler
 // colormap code in hardware mode is now the default
@@ -73,14 +58,11 @@
 // Support colormap for text
 //
 // Revision 1.4  2000/04/22 21:08:23  hurdler
-// I like it better like that
 //
 // Revision 1.3  2000/04/12 16:03:51  hurdler
 // ready for T&L code and true static lighting
 //
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -90,16 +72,17 @@
 //
 //-----------------------------------------------------------------------------
 
+#ifndef HW_MAIN_H
+#define HW_MAIN_H
 
-#ifndef __HWR_MAIN_H__
-#define __HWR_MAIN_H__
-
-#include "hw_data.h"
 #include "hw_defs.h"
+#include "hw_data.h"
 
 #include "../am_map.h"
 #include "../d_player.h"
 #include "../r_defs.h"
+#include "../command.h"
+  // consvar_t
 
 extern float gr_baseviewwindowy, gr_viewwindowx, gr_viewheight, gr_viewwidth;
 

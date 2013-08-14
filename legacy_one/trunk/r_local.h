@@ -22,14 +22,11 @@
 // Fixed crashing bugs in software with 3D floors.
 //
 // Revision 1.4  2001/03/21 18:24:39  stroggonmeth
-// Misc changes and fixes. Code cleanup
 //
 // Revision 1.3  2001/03/13 22:14:20  stroggonmeth
 // Long time no commit. 3D floors, FraggleScript, portals, ect.
 //
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -40,9 +37,8 @@
 //
 //-----------------------------------------------------------------------------
 
-#ifndef __R_LOCAL__
-#define __R_LOCAL__
-
+#ifndef R_LOCAL_H
+#define R_LOCAL_H
 
 // Screen size related parameters.
 #include "doomdef.h"
@@ -66,4 +62,4 @@
 
 extern drawseg_t* firstseg;
 
-#endif          // __R_LOCAL__
+#endif // R_LOCAL_H

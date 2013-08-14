@@ -22,8 +22,6 @@
 // added heretic support
 //
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -32,7 +30,6 @@
 //      holds the weapon info for now...
 //
 //-----------------------------------------------------------------------------
-
 
 
 // We are referring to sprite numbers.

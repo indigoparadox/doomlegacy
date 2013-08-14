@@ -18,8 +18,6 @@
 //
 // $Log: i_joy.h,v $
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -29,12 +27,8 @@
 //
 //-----------------------------------------------------------------------------
 
-
-#ifndef __I_JOY_H__
-#define __I_JOY_H__
-
-#include "g_input.h"
-
+#ifndef I_JOY_H
+#define I_JOY_H
 
 //! All possible actions joystick axes can be bound to.
 typedef enum
@@ -69,4 +63,4 @@ void I_InitJoystick();
 int I_JoystickNumAxes(int joynum);
 int I_JoystickGetAxis(int joynum, int axisnum);
 
-#endif // __I_JOY_H__
+#endif // I_JOY_H

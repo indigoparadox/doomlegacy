@@ -18,7 +18,6 @@
 //
 // $Log: I_net.c,v $
 // Revision 1.3  2001/03/03 19:29:44  ydario
-// code clean up
 //
 //
 // DESCRIPTION:
@@ -26,7 +25,7 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "../doomdef.h"
+#include "../doomincl.h"
 #include "../m_argv.h"
 
 //

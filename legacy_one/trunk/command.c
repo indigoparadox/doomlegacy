@@ -30,32 +30,17 @@
 // fix a colormap bug, add scrolling floor/ceiling in hw mode
 //
 // Revision 1.11  2001/02/24 13:35:19  bpereira
-// no message
 //
 // Revision 1.10  2001/01/25 22:15:41  bpereira
 // added heretic support
 //
 // Revision 1.9  2000/11/11 13:59:45  bpereira
-// no message
-//
 // Revision 1.8  2000/11/02 19:49:35  bpereira
-// no message
-//
 // Revision 1.7  2000/10/08 13:29:59  bpereira
-// no message
-//
 // Revision 1.6  2000/09/28 20:57:14  bpereira
-// no message
-//
 // Revision 1.5  2000/08/31 14:30:54  bpereira
-// no message
-//
 // Revision 1.4  2000/08/03 17:57:41  bpereira
-// no message
-//
 // Revision 1.3  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.2  2000/02/26 00:28:42  hurdler
 // Mostly bug fix (see borislog.txt 23-2-2000, 24-2-2000)
 //
@@ -73,7 +58,7 @@
 //-----------------------------------------------------------------------------
 
 
-#include "doomdef.h"
+#include "doomincl.h"
 #include "doomstat.h"
 #include "command.h"
 #include "console.h"
@@ -159,7 +144,8 @@ void COM_BufInsertText (char *text)
     int templen = com_text.cursize;
     if (templen)
     {
-      temp = ZZ_Alloc (templen + 1); // add a trailing NUL (TODO why do we even allow non-string data in a vsbuf_t?)
+      // add a trailing NUL (TODO why do we even allow non-string data in a vsbuf_t?)
+      temp = Z_Malloc (templen + 1, PU_STATIC, NULL);
       temp[templen] = '\0';
       memcpy (temp, com_text.data, templen);
       VS_Clear (&com_text);
@@ -428,7 +414,7 @@ static void COM_TokenizeString (char *text, boolean script)
 
         if (com_argc < MAX_ARGS)
         {
-            com_argv[com_argc] = ZZ_Alloc (strlen(com_token)+1);
+            com_argv[com_argc] = Z_Malloc (strlen(com_token)+1, PU_STATIC, NULL);
             strcpy (com_argv[com_argc], com_token);
             com_argc++;
         }
@@ -460,7 +446,7 @@ void COM_AddCommand (char *name, com_func_t func)
         }
     }
 
-    cmd = ZZ_Alloc (sizeof(xcommand_t));
+    cmd = Z_Malloc (sizeof(xcommand_t), PU_STATIC, NULL);
     cmd->name = name;
     cmd->function = func;
     cmd->next = com_commands;
@@ -584,7 +570,7 @@ static void COM_Alias_f (void)
         return;
     }
 
-    a = ZZ_Alloc (sizeof(cmdalias_t));
+    a = Z_Malloc (sizeof(cmdalias_t), PU_STATIC, NULL);
     a->next = com_alias;
     com_alias = a;
 

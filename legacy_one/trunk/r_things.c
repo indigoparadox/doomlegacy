@@ -26,7 +26,6 @@
 //
 // Revision 1.42  2001/12/31 16:56:39  metzgermeister
 // see Dec 31 log
-// .
 //
 // Revision 1.41  2001/08/12 15:21:04  bpereira
 // see my log
@@ -35,10 +34,7 @@
 // Removed portal code, improved 3D floors in hardware mode.
 //
 // Revision 1.39  2001/06/16 08:07:55  bpereira
-// no message
-//
 // Revision 1.38  2001/06/10 21:16:01  bpereira
-// no message
 //
 // Revision 1.37  2001/05/30 18:15:21  stroggonmeth
 // Small crashing bug fix...
@@ -50,16 +46,12 @@
 // show 3d-floors bug + hack for filesearch with vc++
 //
 // Revision 1.34  2001/05/07 20:27:16  stroggonmeth
-// no message
-//
 // Revision 1.33  2001/04/27 13:32:14  bpereira
-// no message
 //
 // Revision 1.32  2001/04/17 21:12:08  stroggonmeth
 // Little commit. Re-enables colormaps for trans columns in C and fixes some sprite bugs.
 //
 // Revision 1.31  2001/03/30 17:12:51  bpereira
-// no message
 //
 // Revision 1.30  2001/03/21 18:24:56  stroggonmeth
 // Misc changes and fixes. Code cleanup
@@ -68,7 +60,6 @@
 // Long time no commit. 3D floors, FraggleScript, portals, ect.
 //
 // Revision 1.28  2001/02/24 13:35:21  bpereira
-// no message
 //
 // Revision 1.27  2001/01/25 22:15:44  bpereira
 // added heretic support
@@ -77,13 +68,11 @@
 // Optimised 3D floors and fixed crashing bug in high resolutions.
 //
 // Revision 1.25  2000/11/12 14:15:46  hurdler
-// Removed unecessary code
 //
 // Revision 1.24  2000/11/09 17:56:20  stroggonmeth
 // Hopefully fixed a few bugs and did a few optimizations.
 //
 // Revision 1.23  2000/11/03 02:37:36  stroggonmeth
-// Fix a few warnings when compiling.
 //
 // Revision 1.22  2000/11/02 17:50:10  stroggonmeth
 // Big 3Dfloors & FraggleScript commit!!
@@ -92,40 +81,20 @@
 // Change all those "3dfx names" to more appropriate names
 //
 // Revision 1.20  2000/10/02 18:25:45  bpereira
-// no message
-//
 // Revision 1.19  2000/10/01 10:18:19  bpereira
-// no message
-//
 // Revision 1.18  2000/09/30 16:33:08  metzgermeister
-// fixed compilation
-//
 // Revision 1.17  2000/09/28 20:57:18  bpereira
-// no message
-//
 // Revision 1.16  2000/09/21 16:45:08  bpereira
-// no message
-//
 // Revision 1.15  2000/08/31 14:30:56  bpereira
-// no message
 //
 // Revision 1.14  2000/08/11 21:37:17  hurdler
 // fix win32 compilation problem
 //
 // Revision 1.13  2000/08/11 19:10:13  metzgermeister
-// *** empty log message ***
-//
 // Revision 1.12  2000/04/30 10:30:10  bpereira
-// no message
-//
 // Revision 1.11  2000/04/24 20:24:38  bpereira
-// no message
-//
 // Revision 1.10  2000/04/20 21:47:24  stroggonmeth
-// no message
-//
 // Revision 1.9  2000/04/18 17:39:40  stroggonmeth
-// Bug fixes and performance tuning.
 //
 // Revision 1.8  2000/04/11 19:07:25  stroggonmeth
 // Finished my logs, fixed a crashing bug.
@@ -134,7 +103,6 @@
 // Fixed missing sprite def
 //
 // Revision 1.6  2000/04/08 17:29:25  stroggonmeth
-// no message
 //
 // Revision 1.5  2000/04/06 21:06:20  stroggonmeth
 // Optimized extra_colormap code...
@@ -147,8 +115,6 @@
 // Initial Boom compatability plus few misc changes all around.
 //
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -159,7 +125,7 @@
 //-----------------------------------------------------------------------------
 
 
-#include "doomdef.h"
+#include "doomincl.h"
 #include "console.h"
 #include "g_game.h"
 #include "r_local.h"
@@ -169,6 +135,7 @@
 #include "z_zone.h"
 
 #include "i_video.h"            //rendermode
+#include "m_swap.h"
 
 
 static void R_InitSkins (void);

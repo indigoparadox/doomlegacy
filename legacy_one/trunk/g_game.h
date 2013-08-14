@@ -22,7 +22,6 @@
 // New fmod, fs functions, bugfix or 2, patrol nodes
 //
 // Revision 1.12  2003/03/22 22:35:59  hurdler
-// Fix CR+LF issue
 //
 // Revision 1.11  2002/09/27 16:40:08  tonyd
 // First commit of acbot
@@ -40,20 +39,13 @@
 // Adding autorun2
 //
 // Revision 1.6  2000/11/02 19:49:35  bpereira
-// no message
-//
 // Revision 1.5  2000/10/21 08:43:29  bpereira
-// no message
-//
 // Revision 1.4  2000/10/01 10:18:17  bpereira
-// no message
 //
 // Revision 1.3  2000/04/07 23:11:17  metzgermeister
 // added mouse move
 //
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -64,10 +56,13 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __G_GAME__
-#define __G_GAME__
+#ifndef G_GAME_H
+#define G_GAME_H
 
 #include "doomdef.h"
+  // SAVEGAMEDIR
+#include "doomtype.h"
+  // PACKED_ATTR
 #include "doomstat.h"
 #include "d_event.h"
 

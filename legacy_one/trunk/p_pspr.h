@@ -22,8 +22,6 @@
 // added heretic support
 //
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -33,9 +31,8 @@
 //
 //-----------------------------------------------------------------------------
 
-
-#ifndef __P_PSPR__
-#define __P_PSPR__
+#ifndef P_PSPR_H
+#define P_PSPR_H
 
 // Basic data types.
 // Needs fixed point, and BAM angles.
@@ -51,6 +48,7 @@
 // i.e. the Thing Atrributes table
 // and the Frame Sequence table.
 #include "info.h"
+ // state_t
 
 #ifdef __GNUG__
 #pragma interface

@@ -16,7 +16,6 @@
 //
 // $Log: I_system.c,v $
 // Revision 1.9  2001/04/27 13:32:14  bpereira
-// no message
 //
 // Revision 1.8  2001/04/16 22:58:55  ydario
 // now error dialog is bound to application window
@@ -25,20 +24,13 @@
 // network play ESC fix
 //
 // Revision 1.6  2001/03/03 19:29:44  ydario
-// code clean up
-//
 // Revision 1.5  2001/02/24 13:35:22  bpereira
-// no message
-//
 // Revision 1.4  2000/10/16 21:21:11  hurdler
-// remove unecessary code
 //
 // Revision 1.3  2000/08/10 14:59:41  ydario
 // OS/2 port
 //
 // Revision 1.2  2000/08/10 11:07:51  ydario
-// fix CRLF
-//
 // Revision 1.1  2000/08/09 12:13:38  ydario
 // OS/2 specific platform code
 //
@@ -60,10 +52,11 @@ rcsid[] = "$Id$";
 #include <sys/time.h>
 #include <unistd.h>
 
+#include "doomincl.h"
+
 #define INCL_DOSDEVIOCTL
 #include "I_os2.h"
 
-#include "doomdef.h"
 #include "m_misc.h"
 #include "i_video.h"
 #include "i_sound.h"

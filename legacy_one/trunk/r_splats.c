@@ -21,17 +21,9 @@
 // Added some cvars
 //
 // Revision 1.5  2000/11/02 19:49:36  bpereira
-// no message
-//
 // Revision 1.4  2000/08/11 19:10:13  metzgermeister
-// *** empty log message ***
-//
 // Revision 1.3  2000/04/30 10:30:10  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -41,7 +33,7 @@
 //
 //-----------------------------------------------------------------------------
 
-
+#include "doomincl.h"
 #include "r_draw.h"
 #include "r_main.h"
 #include "r_plane.h"

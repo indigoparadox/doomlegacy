@@ -1,5 +1,5 @@
-#ifndef __I_OS2_H__
-#define __I_OS2_H__
+#ifndef I_OS2_H
+#define I_OS2_H
 
 #define INCL_DOS
 #define INCL_DOSERRORS

@@ -22,13 +22,11 @@
 // Long time no commit. 3D floors, FraggleScript, portals, ect.
 //
 // Revision 1.7  2000/11/03 02:37:36  stroggonmeth
-// Fix a few warnings when compiling.
 //
 // Revision 1.6  2000/11/02 17:50:09  stroggonmeth
 // Big 3Dfloors & FraggleScript commit!!
 //
 // Revision 1.5  2000/08/31 14:30:56  bpereira
-// no message
 //
 // Revision 1.4  2000/08/10 14:58:07  ydario
 // OS/2 port
@@ -37,8 +35,6 @@
 // Initial Boom compatability plus few misc changes all around.
 //
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -49,8 +45,12 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __R_BSP__
-#define __R_BSP__
+#ifndef R_BSP_H
+#define R_BSP_H
+
+#include "doomtype.h"
+#include "r_defs.h"
+  // seg_t, side_t, line_t, sector_t, drawseg_t
 
 #ifdef __GNUG__
 #pragma interface

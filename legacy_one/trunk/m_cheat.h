@@ -19,11 +19,7 @@
 //
 // $Log: m_cheat.h,v $
 // Revision 1.3  2001/02/10 12:27:14  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -33,12 +29,11 @@
 //
 //-----------------------------------------------------------------------------
 
-
-#ifndef __M_CHEAT__
-#define __M_CHEAT__
+#ifndef M_CHEAT_M
+#define M_CHEAT_M
 
 #include "d_event.h"
-
+  // event_t
 
 //
 // CHEAT SEQUENCE PACKAGE

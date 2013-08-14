@@ -21,10 +21,7 @@
 // that should fix issues some people were having in 1280x1024 mode (and now support up to 1600x1200)
 //
 // Revision 1.24  2002/09/21 11:10:27  hurdler
-// no message
-//
 // Revision 1.23  2001/04/18 19:32:27  hurdler
-// no message
 //
 // Revision 1.22  2001/04/18 15:02:25  hurdler
 // fix bis
@@ -33,16 +30,9 @@
 // fix pixel format
 //
 // Revision 1.20  2001/04/08 15:11:06  hurdler
-// Boris, are you happy with that :) ?
-//
 // Revision 1.19  2001/04/01 17:35:07  bpereira
-// no message
-//
 // Revision 1.18  2001/03/09 21:53:56  metzgermeister
-// *** empty log message ***
-//
 // Revision 1.17  2001/02/19 17:41:27  hurdler
-// It's better like that
 //
 // Revision 1.16  2001/02/14 20:59:27  hurdler
 // fix texture bug under Linux
@@ -51,28 +41,19 @@
 // fix a small bug with GeForce based cards
 //
 // Revision 1.14  2000/11/04 16:23:45  bpereira
-// no message
-//
 // Revision 1.13  2000/11/02 19:49:39  bpereira
-// no message
 //
 // Revision 1.12  2000/10/04 16:29:10  hurdler
 // Windowed mode looks better now. Still need some work, though
 //
 // Revision 1.11  2000/09/28 20:57:21  bpereira
-// no message
-//
 // Revision 1.10  2000/09/25 19:29:24  hurdler
-// Maintenance modifications
-//
 // Revision 1.9  2000/08/10 19:58:04  bpereira
-// no message
 //
 // Revision 1.8  2000/08/10 14:19:19  hurdler
 // add waitvbl, fix sky problem
 //
 // Revision 1.7  2000/08/03 17:57:42  bpereira
-// no message
 //
 // Revision 1.6  2000/05/30 18:01:07  kegetys
 // Removed the chromakey code from here
@@ -81,14 +62,8 @@
 // Sprites are drawn using PF_Environment
 //
 // Revision 1.4  2000/04/19 10:54:43  hurdler
-// no message
-//
 // Revision 1.3  2000/03/29 19:39:49  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -101,6 +76,7 @@
 //
 //-----------------------------------------------------------------------------
 
+//#define DEBUG_OGL_TO_FILE
 
 #ifdef __WIN32__
 
@@ -113,10 +89,10 @@
 //                                                                    GLOBALS
 // **************************************************************************
 
-#ifdef DEBUG_TO_FILE
+#ifdef DEBUG_OGL_TO_FILE
 static unsigned long nb_frames=0;
 static clock_t my_clock;
-HANDLE logstream;
+HANDLE ogl_logstream;
 #endif
 
 static  HDC     hDC   = NULL;       // the window's device context
@@ -146,11 +122,11 @@ BOOL APIENTRY DllMain( HANDLE hModule,      // handle to DLL module
         case DLL_PROCESS_ATTACH:
          // Initialize once for each new process.
          // Return FALSE to fail DLL load.
-#ifdef DEBUG_TO_FILE
-            logstream = INVALID_HANDLE_VALUE;
-            logstream = CreateFile ("ogllog.txt", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+#ifdef DEBUG_OGL_TO_FILE
+            ogl_logstream = INVALID_HANDLE_VALUE;
+            ogl_logstream = CreateFile ("ogllog.txt", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                                      FILE_ATTRIBUTE_NORMAL/*|FILE_FLAG_WRITE_THROUGH*/, NULL);
-            if (logstream == INVALID_HANDLE_VALUE)
+            if (ogl_logstream == INVALID_HANDLE_VALUE)
                 return FALSE;
 #endif
             break;
@@ -165,10 +141,10 @@ BOOL APIENTRY DllMain( HANDLE hModule,      // handle to DLL module
 
         case DLL_PROCESS_DETACH:
          // Perform any necessary cleanup.
-#ifdef DEBUG_TO_FILE
-            if ( logstream != INVALID_HANDLE_VALUE ) {
-                CloseHandle ( logstream );
-                logstream  = INVALID_HANDLE_VALUE;
+#ifdef DEBUG_OGL_TO_FILE
+            if ( ogl_logstream != INVALID_HANDLE_VALUE ) {
+                CloseHandle ( ogl_logstream );
+                ogl_logstream  = INVALID_HANDLE_VALUE;
             }
 #endif
             break;
@@ -468,7 +444,7 @@ EXPORT void HWRAPI( GetModeList ) ( vmode_t** pvidmodes, int* numvidmodes )
 // -----------------+
 EXPORT void HWRAPI( Shutdown ) ( void )
 {
-#ifdef DEBUG_TO_FILE
+#ifdef DEBUG_OGL_TO_FILE
     long nb_centiemes;
 
     DBG_Printf ("HWRAPI Shutdown()\n");
@@ -500,7 +476,7 @@ EXPORT void HWRAPI( Shutdown ) ( void )
 EXPORT void HWRAPI( FinishUpdate ) ( int waitvbl )
 {
     // DBG_Printf ("FinishUpdate()\n");
-#ifdef DEBUG_TO_FILE
+#ifdef DEBUG_OGL_TO_FILE
     if( (++nb_frames)==2 )  // on ne commence pas à la première frame
         my_clock = clock();
 #endif

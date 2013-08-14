@@ -26,8 +26,8 @@
 //
 //--------------------------------------------------------------------------
 
-#ifndef __T_ARRAY_H__
-#define __T_ARRAY_H__
+#ifndef T_ARRAY_H
+#define T_ARRAY_H
 
 #include "t_parse.h"
 

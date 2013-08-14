@@ -23,12 +23,14 @@
 // Revision 1.2  2002/09/27 16:40:08  tonyd
 // First commit of acbot
 //
+//-----------------------------------------------------------------------------
+
+#ifndef BOTLOOK_H
+#define BOTLOOK_H
 
 #include "d_player.h"
 #include "r_defs.h"
-
-#ifndef __BOTLOOK_H__
-#define __BOTLOOK_H__
+  // fixed_t
 
 boolean B_ReachablePoint (player_t *p, sector_t* destSector, fixed_t x, fixed_t y);
 boolean B_LookForSpecialLine (player_t* p, fixed_t* x, fixed_t* y);

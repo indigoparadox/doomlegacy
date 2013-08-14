@@ -21,14 +21,13 @@
 // Completely rewritten d3d driver... absolutely not finished at all
 //
 //
-//
 // DESCRIPTION:
 //      
 //
 //-----------------------------------------------------------------------------
 
-#ifndef _GL_2_D3D_H_
-#define _GL_2_D3D_H_
+#ifndef GL_2_D3D_H
+#define GL_2_D3D_H
 
 #include <windows.h>
 #include <ddraw.h>
@@ -1512,4 +1511,4 @@ public:
     void DeleteContext(HGLRC);
 };
 
-#endif // _GL_2_D3D_H_
+#endif // GL_2_D3D_H

@@ -22,14 +22,11 @@
 // fix Heretic issue with SDL and OS/2
 //
 // Revision 1.4  2003/07/13 13:18:59  hurdler
-// go RC1
 //
 // Revision 1.3  2000/08/16 16:32:27  ydario
 // Fixed nosound&nomusic parameters
 //
 // Revision 1.2  2000/08/10 11:07:51  ydario
-// fix CRLF
-//
 // Revision 1.1  2000/08/09 11:56:27  ydario
 // OS/2 specific platform code
 //
@@ -63,7 +60,9 @@
 #include <time.h>
 #include <signal.h>
 
-#include "z_zone.h"
+#include "doomincl.h"
+// added for 1.27 19990203 by Kin
+#include "doomstat.h"
 
 #include "i_system.h"
 #include "i_sound.h"
@@ -72,10 +71,8 @@
 #include "m_argv.h"
 #include "m_misc.h"
 #include "w_wad.h"
+#include "z_zone.h"
 
-#include "doomdef.h"
-// added for 1.27 19990203 by Kin
-#include "doomstat.h"
 
 
 #define MIDBUFFERSIZE   128*1024L          // buffer size for Mus2Midi conversion  (ugly code)

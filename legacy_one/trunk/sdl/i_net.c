@@ -19,8 +19,6 @@
 //
 // $Log: i_net.c,v $
 // Revision 1.2  2000/09/10 10:56:00  metzgermeister
-// clean up & made it work again
-//
 // Revision 1.1  2000/08/21 21:17:32  metzgermeister
 // Initial import to CVS
 //
@@ -30,23 +28,18 @@
 //      
 //-----------------------------------------------------------------------------
 
+#include "../doomincl.h"
+#include "../m_argv.h"
 
+#if 0
 #include <errno.h>
-
-#include "../doomdef.h"
-
+#include "../doomstat.h"
 #include "../i_system.h"
 #include "../d_event.h"
 #include "../d_net.h"
-#include "../m_argv.h"
-
-#include "../doomstat.h"
-
 #include "../i_net.h"
-
 #include "../z_zone.h"
 
-#if 0
 int I_InitTcpNetwork(void);
 //
 // NETWORKING
@@ -78,5 +71,4 @@ boolean I_InitNetwork (void)
             "see docs for more\n");
     }
     return false;
-
 }

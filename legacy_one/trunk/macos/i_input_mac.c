@@ -33,7 +33,7 @@
 
 #include <Carbon/Carbon.h>
 
-#include "doomdef.h"
+#include "doomincl.h"
 #include "doomstat.h"
 #include "i_system.h"
 #include "v_video.h"

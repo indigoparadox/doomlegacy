@@ -30,7 +30,6 @@
 // MP3/OGG support!
 //
 // Revision 1.17  2002/10/07 19:27:29  judgecutor
-// Minor fixes
 //
 // Revision 1.16  2002/08/16 20:20:54  judgecutor
 // Added sound pitching
@@ -40,10 +39,7 @@
 // Added support for an extarnal sound driver
 //
 // Revision 1.14  2001/05/27 13:42:48  bpereira
-// no message
-//
 // Revision 1.13  2001/04/08 10:15:54  bpereira
-// no message
 //
 // Revision 1.12  2001/04/04 20:19:07  judgecutor
 // Added support for the 3D Sound
@@ -52,7 +48,6 @@
 // added heretic support
 //
 // Revision 1.10  2001/01/21 04:33:35  judgecutor
-// *** empty log message ***
 //
 // Revision 1.9  2000/10/27 20:38:21  judgecutor
 // - Added the SurroundSound support
@@ -61,23 +56,11 @@
 // Fixed old bug of midi stream
 //
 // Revision 1.7  2000/10/08 13:30:03  bpereira
-// no message
-//
 // Revision 1.6  2000/09/28 20:57:22  bpereira
-// no message
-//
 // Revision 1.5  2000/09/01 19:34:38  bpereira
-// no message
-//
 // Revision 1.4  2000/08/10 19:58:05  bpereira
-// no message
-//
 // Revision 1.3  2000/04/16 18:38:07  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:12  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -89,10 +72,14 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "../doomdef.h"
+// Because of WINVER redefine, doomtype.h (via doomincl.h) is before any
+// other include that might define WINVER
+#include "../doomincl.h"
 
 #include "win_main.h"
 #include <mmsystem.h>
+
+// DirectX
 #define DXVERSION
 #include <dsound.h>
 

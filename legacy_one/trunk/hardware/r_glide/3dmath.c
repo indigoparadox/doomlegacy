@@ -21,11 +21,7 @@
 // added Treansform (and lighting) to glide
 //
 // Revision 1.3  2000/03/29 19:39:49  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //

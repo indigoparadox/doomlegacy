@@ -19,17 +19,9 @@
 //
 // $Log: I_system.c,v $
 // Revision 1.5  2000/10/21 08:43:32  bpereira
-// no message
-//
 // Revision 1.4  2000/10/02 18:25:46  bpereira
-// no message
-//
 // Revision 1.3  2000/04/16 18:38:07  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -41,6 +33,8 @@
 //
 //-----------------------------------------------------------------------------
 
+#include "../doomincl.h"
+  // stdlib, stdio, strings, defines
 
 #include <stdlib.h>
 #include <signal.h>
@@ -51,8 +45,7 @@
 #include <stdarg.h>
 #include <sys/time.h>
 
-
-#ifdef DJGPP
+#if defined( DJGPP ) || defined( __DJGPP__ )
  #include <dpmi.h>
  #include <go32.h>
  #include <pc.h>
@@ -64,8 +57,6 @@
  #include <keys.h>
 #endif
 
-
-#include "../doomdef.h"
 #include "../m_misc.h"
 #include "../i_video.h"
 #include "../i_sound.h"
@@ -88,6 +79,7 @@
 #endif
 
 #include "../i_joy.h"
+
 
 //### let's try with Allegro ###
 #define  alleg_mouse_unused
@@ -948,8 +940,8 @@ static void I_KeyboardHandler()
             D_PostEvent(&event);
           }
         }
-
     }
+
     outportb(0x20,0x20);
 }
 END_OF_FUNCTION(I_KeyboardHandler);

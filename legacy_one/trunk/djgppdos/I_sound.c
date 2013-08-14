@@ -19,17 +19,9 @@
 //
 // $Log: I_sound.c,v $
 // Revision 1.5  2003/07/13 13:18:59  hurdler
-// go RC1
-//
 // Revision 1.4  2001/03/30 17:12:52  bpereira
-// no message
-//
 // Revision 1.3  2000/03/06 15:32:56  hurdler
-// compiler warning removed
-//
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -39,6 +31,8 @@
 //
 //-----------------------------------------------------------------------------
 
+#include "../doomincl.h"
+  // stdio, stdlib, strings, defines
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +40,6 @@
 
 #include <math.h>
 
-#include "../doomdef.h"
 #include "../doomstat.h"
 #include "../i_system.h"
 #include "../i_sound.h"

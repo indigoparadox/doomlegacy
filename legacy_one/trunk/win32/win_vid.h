@@ -24,11 +24,7 @@
 // no message
 //
 // Revision 1.3  2000/03/29 20:14:21  hurdler
-// your fix didn't work under windows, find another solution
-//
 // Revision 1.2  2000/02/27 00:42:12  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -39,9 +35,10 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __WIN_VID_H__
-#define __WIN_VID_H__
+#ifndef WIN_VID_H
+#define WIN_VID_H
 
+#include "../doomtype.h"
 #include "../command.h"
 #include "../screen.h"
 
@@ -60,4 +57,4 @@ void VID_BlitLinearScreen (byte *srcptr, byte *destptr,
                            int width, int height,
                            int srcrowbytes, int destrowbytes);
 
-#endif //__WIN_VID_H__
+#endif // WIN_VID_H

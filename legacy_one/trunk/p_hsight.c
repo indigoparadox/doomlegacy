@@ -25,8 +25,6 @@
 // Initial Mac add
 //
 // Revision 1.3  2001/02/24 13:35:20  bpereira
-// no message
-//
 // Revision 1.2  2001/02/10 13:20:55  hurdler
 // update license
 //
@@ -36,7 +34,7 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "doomdef.h"
+#include "doomincl.h"
 #include "p_local.h"
 #include "r_main.h"
 #include "r_state.h"

@@ -34,111 +34,112 @@
 #include <AGL/glu.h>
 #include <Carbon/Carbon.h>
 
-#include "doomdef.h"
+#include "doomincl.h"
 #include "i_system.h"
 #include "r_opengl.h"
 #include "screen.h"	//MAXVIDWIDTH
 
 AGLContext	ctx = NULL;
-int			oglflags = 0;
-int			logstream = -1;
+int    oglflags = 0;
+int    logstream = -1;
 extern int menu_height;
 
-GLint		swapInterval = 1;
+GLint	swapInterval = 1;
 
 void I_FinishUpdate(void)
 {
-	aglSwapBuffers(ctx);
+    aglSwapBuffers(ctx);
 }
 
 char OglMacSurface(WindowRef *win, int w, int h, boolean fullscreen)
 {
-	BitMap screenbits;
-	GLint attrib[] = {	AGL_RGBA, AGL_DOUBLEBUFFER, AGL_DEPTH_SIZE, 16, AGL_NONE };
-	GLint attrib_fullscreen[] = {	AGL_RGBA, AGL_DOUBLEBUFFER, AGL_DEPTH_SIZE, 16, AGL_FULLSCREEN, AGL_NONE };
-	static AGLPixelFormat fmt;
-	int ok;
-	int hOffset, vOffset;
-	Rect *window_size, r;
+    BitMap screenbits;
+    GLint attrib[] = {	AGL_RGBA, AGL_DOUBLEBUFFER, AGL_DEPTH_SIZE, 16, AGL_NONE };
+    GLint attrib_fullscreen[] = {	AGL_RGBA, AGL_DOUBLEBUFFER, AGL_DEPTH_SIZE, 16, AGL_FULLSCREEN, AGL_NONE };
+    static AGLPixelFormat fmt;
+    int ok;
+    int hOffset, vOffset;
+    Rect *window_size, r;
 	
-	I_OutputMsg("OglMacSurface(%i,%i)\n",w,h);
+    I_OutputMsg("OglMacSurface(%i,%i)\n",w,h);
 	
-	SetRect(&r, 0, 0, w, h);
+    SetRect(&r, 0, 0, w, h);
 	
-	GetQDGlobalsScreenBits(&screenbits);
-	hOffset = (screenbits.bounds.right - w) / 2;
-	vOffset = (screenbits.bounds.bottom - h) / 2;
+    GetQDGlobalsScreenBits(&screenbits);
+    hOffset = (screenbits.bounds.right - w) / 2;
+    vOffset = (screenbits.bounds.bottom - h) / 2;
 	
-	if (ctx)
-	{
-		aglSetCurrentContext(NULL);
-		aglSetDrawable(ctx,NULL);
-		aglDestroyContext(ctx);
-		aglDestroyPixelFormat(fmt);
+    if (ctx)
+    {
+        aglSetCurrentContext(NULL);
+        aglSetDrawable(ctx,NULL);
+        aglDestroyContext(ctx);
+        aglDestroyPixelFormat(fmt);
+    }
+	
+    {
+        fmt = aglChoosePixelFormat(NULL, 0, attrib);
+        if(fmt == NULL)
+	    I_Error("aglChoosePixelFormat failed");
+        ctx = aglCreateContext(fmt, NULL);
+        if(ctx == NULL)
+	    I_Error("aglCreateContext failed");
+#if 0
+        if (!aglSetFullScreen (ctx, w, h, 85, 0)) // attach fulls screen device to the context
+        {
+	    CONS_Printf("aglSetFullScreen failed\n");
+	    fullscreen = false;
 	}
+#endif
+    }
 	
-	{
-		fmt = aglChoosePixelFormat(NULL, 0, attrib);
-		if(fmt == NULL)
-			I_Error("aglChoosePixelFormat failed");
-		ctx = aglCreateContext(fmt, NULL);
-		if(ctx == NULL)
-			I_Error("aglCreateContext failed");
-/*		if (0)
-			if (!aglSetFullScreen (ctx, w, h, 85, 0)) // attach fulls screen device to the context
-			{
-				CONS_Printf("aglSetFullScreen failed\n");
-				fullscreen = false;
-			}*/
-	}
+    if (fullscreen)
+    {
+        //window_size->top -= menu_height;
+        window_size = &screenbits.bounds;
+    }
+    else
+    {
+        window_size = &r;
+        OffsetRect(&r, hOffset, vOffset);
+        hOffset = vOffset = 0;
+    }
 	
-	if (fullscreen)
-	{
-		//window_size->top -= menu_height;
-		window_size = &screenbits.bounds;
-	}
-	else
-	{
-		window_size = &r;
-		OffsetRect(&r, hOffset, vOffset);
-		hOffset = vOffset = 0;
-	}
+    I_OutputMsg("win = %i,%i,%i,%i\n", window_size->left, window_size->top, window_size->right,window_size->bottom);
 	
-	I_OutputMsg("win = %i,%i,%i,%i\n", window_size->left, window_size->top, window_size->right,window_size->bottom);
-	
-	if (!*win)
-		*win = NewCWindow (NULL, window_size, "\pDoomLegacy", 0, kMovableModalWindowClass, (WindowPtr)-1, 0, 0);
-	
-	ShowWindow(*win);
-	
-	ok = aglSetDrawable(ctx, GetWindowPort(*win));
-	if(!ok)
-		I_Error("aglSetDrawable failed");
-	
-	ok = aglSetCurrentContext(ctx);
-	if(!ok)
-		I_Error("aglSetCurrentContext failed");
-	
-	aglSetInteger(ctx,AGL_SWAP_INTERVAL,&swapInterval);	//not supported yet but maybe some day? prevents tearing
-	
-	glClearColor(0.0,0.0,0.0,0.0);
-	glClear(GL_COLOR_BUFFER_BIT);
-	aglSwapBuffers(ctx);        //clears screen to black
-	
-	SetModelView(hOffset, vOffset, w, h);
-	SetStates();
-	HWR_Startup();
-	
-	I_OutputMsg("\tOglMacSurface done\n");
+    if (!*win)
+        *win = NewCWindow (NULL, window_size, "\pDoomLegacy", 0, kMovableModalWindowClass, (WindowPtr)-1, 0, 0);
 
-	return true;
+    ShowWindow(*win);
+	
+    ok = aglSetDrawable(ctx, GetWindowPort(*win));
+    if(!ok)
+        I_Error("aglSetDrawable failed");
+	
+    ok = aglSetCurrentContext(ctx);
+    if(!ok)
+        I_Error("aglSetCurrentContext failed");
+	
+    aglSetInteger(ctx,AGL_SWAP_INTERVAL,&swapInterval);	//not supported yet but maybe some day? prevents tearing
+	
+    glClearColor(0.0,0.0,0.0,0.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    aglSwapBuffers(ctx);        //clears screen to black
+	
+    SetModelView(hOffset, vOffset, w, h);
+    SetStates();
+    HWR_Startup();
+	
+    I_OutputMsg("\tOglMacSurface done\n");
+
+    return true;
 }
 
 void OglMacShutdown(void)
 {
-	CONS_Printf("OglMacShutdown\n");
-	aglSetCurrentContext(NULL);
-	aglSetDrawable(ctx, NULL);
+    CONS_Printf("OglMacShutdown\n");
+    aglSetCurrentContext(NULL);
+    aglSetDrawable(ctx, NULL);
 	
-	ShowMenuBar();
+    ShowMenuBar();
 }

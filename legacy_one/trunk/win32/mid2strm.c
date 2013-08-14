@@ -18,17 +18,9 @@
 //
 // $Log: mid2strm.c,v $
 // Revision 1.5  2000/09/28 20:57:22  bpereira
-// no message
-//
 // Revision 1.4  2000/09/01 19:34:37  bpereira
-// no message
-//
 // Revision 1.3  2000/08/10 19:58:05  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:12  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -43,7 +35,10 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "../doomdef.h" // warnings
+// Because of WINVER redefine, doomtype.h (via doomincl.h) is before any
+// other include that might define WINVER
+#include "../doomincl.h"
+  // warnings
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,14 +48,16 @@
 
 #include "mid2strm.h"
 
-#define LEGACY      // use Legacy's console output for error messages
-                    // (does not compile stand-alone)
+// use Legacy's console output for error messages
+// (does not compile stand-alone)
+#define LEGACY_OUTPUT
 
 
 // seems like Allegro's midi player ran the qmus2mid file because
 // it uses a running status of 'note off' as default on start of conversion
-#define BAD_MIDI_FIX    0x80        //should be 0 (that is running status initially -none-)
-                                    //but won't play qmus2mid output, or .. fix qmus2mid?
+#define BAD_MIDI_FIX    0x80
+  //should be 0 (that is running status initially -none-)
+  //but won't play qmus2mid output, or .. fix qmus2mid?
 
 // faBBe's prefs..
 #ifndef ULONG
@@ -71,7 +68,8 @@ typedef long            LONG;
 typedef unsigned char   UBYTE;
 #endif
 
-#define CB_STREAMBUF    (4096)                          // Size of each stream buffer
+// Size of each stream buffer
+#define CB_STREAMBUF    (4096)
 
 #define MIDS_SHORTMSG   (0x00000000)
 #define MIDS_TEMPO      (0x01000000)
@@ -80,10 +78,8 @@ typedef unsigned char   UBYTE;
 //
 #define WORDSWAP(w)     (((w) >> 8) | (((w) << 8) & 0xFF00))
 
-#define LONGSWAP(dw)   (((dw) >> 24) |                 \
-    (((dw) >> 8) & 0x0000FF00) |    \
-    (((dw) << 8) & 0x00FF0000) |    \
-(((dw) << 24) & 0xFF000000))
+#define LONGSWAP(dw)   (((dw) >> 24) | (((dw) >> 8) & 0x0000FF00) |  \
+    (((dw) << 8) & 0x00FF0000) | (((dw) << 24) & 0xFF000000))
 
 // In debug builds, TRACKERR will show us where the parser died
 //
@@ -216,7 +212,7 @@ void I_Error (char *error, ...);
 
 
 
-#ifndef LEGACY
+#ifndef LEGACY_OUTPUT
 static BOOL             BuildNewTracks(void);
 // only for stand-alone version
 //
@@ -1099,8 +1095,8 @@ static void ShowTrackError(INTRACKSTATE* pInTrack, char* szErr)
 }
 #endif
 
-#ifndef LEGACY
-// if LEGACY is not defined, the stand-alone version will print out error messages to stderr
+#ifndef LEGACY_OUTPUT
+// if LEGACY_OUTPUT is not defined, the stand-alone version will print out error messages to stderr
 void CONS_Printf (char *fmt, ...)
 {
     va_list     argptr;
@@ -1118,7 +1114,7 @@ void CONS_Printf (char *fmt, ...)
 //                                 MIDI STREAM PLAYBACK (called by win_snd.c)
 // ==========================================================================
 // the following code is used with Legacy (not in stand-alone)
-#ifdef LEGACY
+#ifdef LEGACY_OUTPUT
 
 static  DWORD   dwBufferTickLength;
         DWORD   dwProgressBytes;

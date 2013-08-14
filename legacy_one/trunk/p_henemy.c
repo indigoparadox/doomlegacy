@@ -22,19 +22,17 @@
 // see my log
 //
 // Revision 1.5  2001/05/27 13:42:47  bpereira
-// no message
 //
 // Revision 1.4  2001/04/17 22:26:07  calumr
 // Initial Mac add
 //
 // Revision 1.3  2001/02/24 13:35:20  bpereira
-// no message
 //
 //
 //
 // DESCRIPTION:
 //   this file is include by P_enemy.c
-//   it contain all heretic enemey specific
+//   it contain all heretic enemy specific
 //
 //-----------------------------------------------------------------------------
 

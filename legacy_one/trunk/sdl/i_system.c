@@ -28,10 +28,8 @@
 //
 // Revision 1.10  2001/12/31 16:56:39  metzgermeister
 // see Dec 31 log
-// .
 //
 // Revision 1.9  2001/08/20 20:40:42  metzgermeister
-// *** empty log message ***
 //
 // Revision 1.8  2001/05/16 22:33:35  bock
 // Initial FreeBSD support.
@@ -42,26 +40,19 @@
 //   * Crash fixed in Linux SW renderer initialization
 //
 // Revision 1.6  2001/02/24 13:35:23  bpereira
-// no message
-//
 // Revision 1.5  2000/11/02 19:49:40  bpereira
-// no message
-//
 // Revision 1.4  2000/10/16 21:20:53  hurdler
-// remove unecessary code
 //
 // Revision 1.3  2000/09/26 17:58:06  metzgermeister
 // I_Getkey implemented
 //
 // Revision 1.2  2000/09/10 10:56:00  metzgermeister
-// clean up & made it work again
-//
 // Revision 1.1  2000/08/21 21:17:32  metzgermeister
 // Initial import to CVS
 //
 //
-//
 // DESCRIPTION:
+//   SDL system interface
 //
 //-----------------------------------------------------------------------------
 
@@ -94,14 +85,16 @@
 #include <termios.h>
 #endif
 
-#include "doomdef.h"
+#include "doomincl.h"
 #include "m_misc.h"
+#include "screen.h"
 #include "i_video.h"
 #include "i_sound.h"
 #include "i_system.h"
 
 #include "d_net.h"
 #include "g_game.h"
+#include "g_input.h"
 
 #include "keys.h"
 #include "i_joy.h"
@@ -925,7 +918,7 @@ uint64_t I_GetFreeMem(uint64_t *total)
     return (uint64_t)free_count * pagesize;
 #elif defined(SOLARIS)
     goto guess;
-#endif
+#else
     // Actual Linux
 
 #define MEMINFO_FILE "/proc/meminfo"
@@ -959,6 +952,8 @@ uint64_t I_GetFreeMem(uint64_t *total)
     
     *total = totalKBytes << 10;
     return freeKBytes << 10;
+#endif
+
  guess:
     // make a conservative guess
     *total = (32 << 20) + 0x01;  // guess indicator

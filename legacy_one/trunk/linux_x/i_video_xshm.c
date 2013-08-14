@@ -119,6 +119,9 @@
 //
 //-----------------------------------------------------------------------------
 
+#include "doomincl.h"
+  // stdlib, stdio, defines
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/ipc.h>
@@ -155,9 +158,8 @@ int XShmGetEventBase( Display* dpy );
 #if defined(SCOOS5) || defined(SCOUW2) || defined(SCOUW7)
 #include "strcmp.h"
 #endif
-// it must be here 19990117 by Kin
-#include "doomdef.h"
 
+// unknown flag DONTDEFINEBOOL, it is not in any DoomLegacy code
 #define DONTDEFINEBOOL
 #include "doomstat.h"
 #include "i_system.h"
@@ -177,7 +179,8 @@ int XShmGetEventBase( Display* dpy );
 #include "hardware/hw_glob.h"
 #include "console.h"
 #include "command.h"
-#include "d_clisrv.h" // for dedicated
+#include "d_clisrv.h"
+  // for dedicated
 #include "r_data.h"
   // R_Init_color8_translate, color8
 

@@ -26,7 +26,6 @@
 // Add fs arrys files
 //
 //
-//
 //--------------------------------------------------------------------------
 //
 // DESCRIPTION:
@@ -36,6 +35,9 @@
 //   By James Haley, with special thanks to SoM
 //
 //--------------------------------------------------------------------------
+
+#include <string.h>
+  // memcpy, memset
 
 #include "z_zone.h"
 #include "t_array.h"

@@ -42,40 +42,23 @@
 // Add translucent 3D water in hw mode
 //
 // Revision 1.19  2001/05/16 21:21:15  bpereira
-// no message
-//
 // Revision 1.18  2001/04/01 17:35:07  bpereira
-// no message
-//
 // Revision 1.17  2001/02/28 17:50:56  bpereira
-// no message
-//
 // Revision 1.16  2001/02/24 13:35:22  bpereira
-// no message
 //
 // Revision 1.15  2001/01/31 17:15:09  hurdler
 // Add cv_scalestatusbar in hardware mode
 //
 // Revision 1.14  2001/01/25 18:56:27  bpereira
-// no message
-//
 // Revision 1.13  2000/11/02 19:49:39  bpereira
-// no message
-//
 // Revision 1.12  2000/10/04 16:21:57  hurdler
-// small clean-up
 //
 // Revision 1.11  2000/09/14 10:42:47  hurdler
 // Fix compiling problem under win32
 //
 // Revision 1.10  2000/09/10 10:48:13  metzgermeister
-// *** empty log message ***
-//
 // Revision 1.9  2000/08/31 14:30:57  bpereira
-// no message
-//
 // Revision 1.8  2000/08/11 19:11:57  metzgermeister
-// *** empty log message ***
 //
 // Revision 1.7  2000/04/27 17:48:47  hurdler
 // colormap code in hardware mode is now the default
@@ -87,14 +70,11 @@
 // fix a small bug in skin color
 //
 // Revision 1.4  2000/04/22 21:08:23  hurdler
-// I like it better like that
 //
 // Revision 1.3  2000/04/14 16:34:26  hurdler
 // some nice changes for coronas
 //
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -104,13 +84,16 @@
 //
 //-----------------------------------------------------------------------------
 
+#include "../doomincl.h"
 
 #include "hw_glob.h"
 #include "hw_drv.h"
 
-#include "../m_misc.h"      //FIL_WriteFile()
+#include "../m_misc.h"
+  //FIL_WriteFile()
 #include "../m_swap.h"
-#include "../r_draw.h"      //viewborderlump
+#include "../r_draw.h"
+  //viewborderlump
 #include "../r_main.h"
 #include "../w_wad.h"
 #include "../z_zone.h"
@@ -118,7 +101,8 @@
 
 #include <unistd.h>
 #include <fcntl.h>
-#include "../i_video.h"  // for rendermode != render_glide
+#include "../i_video.h"
+  // for rendermode != render_glide
 
 float   gr_patch_scalex;
 float   gr_patch_scaley;

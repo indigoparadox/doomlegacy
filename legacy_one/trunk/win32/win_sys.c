@@ -27,13 +27,11 @@
 // fix dx8+ sdk compatibility
 //
 // Revision 1.16  2001/04/27 13:32:15  bpereira
-// no message
 //
 // Revision 1.15  2001/01/25 22:15:45  bpereira
 // added heretic support
 //
 // Revision 1.14  2001/01/21 04:33:35  judgecutor
-// *** empty log message ***
 //
 // Revision 1.13  2001/01/06 22:21:08  judgecutor
 // Added NoDirectInput mouse input
@@ -45,32 +43,14 @@
 // Fixed problem with mouse wheel event
 //
 // Revision 1.10  2000/10/21 08:43:32  bpereira
-// no message
-//
 // Revision 1.9  2000/10/02 18:25:47  bpereira
-// no message
-//
 // Revision 1.8  2000/09/28 20:57:22  bpereira
-// no message
-//
 // Revision 1.7  2000/09/01 19:34:38  bpereira
-// no message
-//
 // Revision 1.6  2000/08/10 19:58:05  bpereira
-// no message
-//
 // Revision 1.5  2000/08/03 17:57:42  bpereira
-// no message
-//
 // Revision 1.4  2000/04/23 16:19:52  bpereira
-// no message
-//
 // Revision 1.3  2000/04/16 18:38:07  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:12  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -82,7 +62,10 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "../doomdef.h"
+// Because of WINVER redefine, doomtype.h (via doomincl.h) is before any
+// other include that might define WINVER
+#include "../doomincl.h"
+
 #include <stdlib.h>
 #include <signal.h>
 #include <stdio.h>
@@ -136,7 +119,7 @@
 // DIRECT INPUT STUFF
 // ==================
 BOOL   bDX0300;        // if true, we created a DirectInput 0x0300 version
-                                        // faB: what a beautiful variable name, isn't it ?
+                       // faB: what a beautiful variable name, isn't it ?
 static LPDIRECTINPUT           lpDI = NULL;
 static LPDIRECTINPUTDEVICE     lpDIK = NULL;   // Keyboard
 static LPDIRECTINPUTDEVICE     lpDIM = NULL;   // mice
@@ -1780,7 +1763,10 @@ int I_GetKey (void)
 // I_StartupKeyboard
 // Installs DirectInput keyboard
 // -----------------
-#define DI_KEYBOARD_BUFFERSIZE          32              //number of data elements in keyboard buffer
+
+//number of data elements in keyboard buffer
+#define DI_KEYBOARD_BUFFERSIZE     32
+
 void I_StartupKeyboard()
 {
     DIPROPDWORD dip;
@@ -1949,7 +1935,8 @@ getBufferedData:
             if (event.type == ev_keydown)       // use the last event!
                 RepeatKeyCode = event.data1;
         }
-        else {
+        else
+        {
             // no new keys, repeat last pushed key after some time
             if (RepeatKeyCode &&
                 (hacktics - RepeatKeyTics) > KEY_REPEAT_DELAY)
@@ -2007,7 +1994,9 @@ int  I_StartupSystem(void)
     hr = DirectInputCreate (myInstance, DIRECTINPUT_VERSION, &lpDI, NULL);
 
     if ( SUCCEEDED( hr ) )
+    {
         bDX0300 = FALSE;
+    }
     else
     {
         // try opening DirectX3 interface for NT compatibility

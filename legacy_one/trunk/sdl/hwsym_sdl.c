@@ -24,14 +24,9 @@
 //   * Crash fixed in Linux SW renderer initialization
 //
 // Revision 1.3  2001/03/09 21:53:56  metzgermeister
-// *** empty log message ***
-//
 // Revision 1.2  2001/02/24 13:35:23  bpereira
-// no message
-//
 // Revision 1.1  2000/08/21 21:17:32  metzgermeister
 // Initial import to CVS
-//
 //
 //
 // DESCRIPTION:
@@ -44,6 +39,8 @@
 //      otherwise we have a conflict with the compiler.
 //      
 //-----------------------------------------------------------------------------
+
+#include <string.h>
 
 #include "hardware/r_opengl/r_opengl.h"
 #include "ogl_sdl.h"

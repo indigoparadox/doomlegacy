@@ -10,14 +10,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// need this 19990118 by Kin
-#include "doomdef.h"
+#include "doomincl.h"
 #include "w_wad.h"
 #include "z_zone.h"
 #include "m_argv.h"
 #include "endtxt.h"
 
-void ShowEndTxt()
+void ShowEndTxt( void )
 {
 	int i, j;
 	int att = 0;

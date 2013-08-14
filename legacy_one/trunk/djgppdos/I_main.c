@@ -19,11 +19,7 @@
 //
 // $Log: I_main.c,v $
 // Revision 1.3  2000/04/23 16:19:52  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -34,16 +30,14 @@
 //-----------------------------------------------------------------------------
 
 
-#include "../doomdef.h"
+#include "../doomincl.h"
 
 #include "../m_argv.h"
 #include "../d_main.h"
 
 #include "../i_system.h"
 
-int
-main ( int           argc,
-       char**        argv )
+int main ( int argc, char** argv )
 {
     myargc = argc;
     myargv = argv;

@@ -19,11 +19,8 @@
 //
 // $Log: m_misc.h,v $
 // Revision 1.3  2000/04/16 18:38:07  bpereira
-// no message
 //
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -36,13 +33,12 @@
 //    
 //-----------------------------------------------------------------------------
 
+#ifndef M_MISC_H
+#define M_MISC_H
 
-#ifndef __M_MISC__
-#define __M_MISC__
-
-
+#include "doomdef.h"
+  // MAX_WADPATH
 #include "doomtype.h"
-#include "w_wad.h"
 
 // the file where all game vars and settings are saved
 #define CONFIGFILENAME   "config.cfg"
@@ -109,10 +105,8 @@ void M_SaveConfig (char *filename);
 
 //===========================================================================
 
-int M_DrawText ( int           x,
-                 int           y,
-                 boolean       direct,
-                 char*         string );
+int M_DrawText ( int x, int y, boolean direct,
+                 char* string );
 
 // dest must be filename buffer of MAX_WADPATH
 // If directory dn does not end in '/', then a separator will be included.

@@ -34,22 +34,16 @@
 // Misc changes and fixes. Code cleanup
 //
 // Revision 1.11  2001/02/24 13:35:20  bpereira
-// no message
-//
 // Revision 1.10  2001/01/25 22:15:44  bpereira
 // added heretic support
 //
 // Revision 1.9  2000/11/11 13:59:46  bpereira
-// no message
 //
 // Revision 1.8  2000/11/02 17:50:08  stroggonmeth
 // Big 3Dfloors & FraggleScript commit!!
 //
 // Revision 1.7  2000/10/21 08:43:30  bpereira
-// no message
-//
 // Revision 1.6  2000/04/16 18:38:07  bpereira
-// no message
 //
 // Revision 1.5  2000/04/07 18:48:56  hurdler
 // AnyKey doesn't seem to compile under Linux, now renamed to AnyKey_
@@ -61,8 +55,6 @@
 // Initial Boom compatability plus few misc changes all around.
 //
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -75,14 +67,14 @@
 //
 //-----------------------------------------------------------------------------
 
+#ifndef P_SPEC_H
+#define P_SPEC_H
 
-#ifndef __P_SPEC__
-#define __P_SPEC__
-
+#include "doomtype.h"
 #include "p_mobj.h"
   // mobj_t
 #include "r_defs.h"
-  // line_t
+  // line_t, sector_t
 #include "d_player.h"
   // player_t
 

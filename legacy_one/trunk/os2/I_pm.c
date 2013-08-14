@@ -5,10 +5,10 @@
 #include <string.h>
 
 #define INCL_WIN
-#include "i_os2.h"
+#include "I_os2.h"
 
+#include "doomincl.h"
 #include "i_system.h"
-#include "doomdef.h"
 #include "m_argv.h"
 #include "d_main.h"
 #include "keys.h"

@@ -18,8 +18,6 @@
 //
 // $Log: 3dmath.h,v $
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -29,7 +27,12 @@
 //
 //-----------------------------------------------------------------------------
 
+#ifndef HW_3DMATH_H
+#define HW_3DMATH_H
+
 #define MAXCLIPVERTS     256
 
 int ClipZ (vxtx3d_t* inVerts, vxtx3d_t* clipVerts, int numpoints);
 int ClipToFrustum (vxtx3d_t *inVerts, vxtx3d_t *outVerts, int nrInVerts);
+
+#endif

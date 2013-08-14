@@ -18,17 +18,12 @@
 //
 // $Log: win_main.h,v $
 // Revision 1.5  2000/08/03 17:57:42  bpereira
-// no message
 //
 // Revision 1.4  2000/04/27 18:02:35  hurdler
 // changed boolean to int (at least it compiles on my computer)
 //
 // Revision 1.3  2000/04/23 16:19:52  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:12  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -38,10 +33,15 @@
 //
 //-----------------------------------------------------------------------------
 
+#ifndef WIN_MAIN_H
+#define WIN_MAIN_H
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <stdio.h>
+
+#include "doomdef.h"
+  // LOGMESSAGES
 
 extern  HINSTANCE       myInstance;
 extern  HWND            hWndMain;
@@ -63,3 +63,5 @@ void I_GetLastErrorMsgBox (void);
 
 // output formatted string to file using win32 functions (win_dbg.c)
 void FPrintf (HANDLE fileHandle, LPCTSTR lpFmt, ...);
+
+#endif

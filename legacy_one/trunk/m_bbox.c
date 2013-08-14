@@ -19,8 +19,6 @@
 //
 // $Log: m_bbox.c,v $
 // Revision 1.3  2000/04/23 16:19:52  bpereira
-// no message
-//
 // Revision 1.2  2000/02/26 00:28:42  hurdler
 // Mostly bug fix (see borislog.txt 23-2-2000, 24-2-2000)
 //

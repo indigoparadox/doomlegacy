@@ -21,16 +21,12 @@
 // accept -glide command line switch
 //
 // Revision 1.21  2002/09/21 11:10:28  hurdler
-// no message
 //
 // Revision 1.20  2001/08/06 23:57:11  stroggonmeth
 // Removed portal code, improved 3D floors in hardware mode.
 //
 // Revision 1.19  2001/03/30 17:12:52  bpereira
-// no message
-//
 // Revision 1.18  2001/02/10 12:27:15  bpereira
-// no message
 //
 // Revision 1.17  2001/01/25 22:15:45  bpereira
 // added heretic support
@@ -42,31 +38,20 @@
 // add renderer version checking
 //
 // Revision 1.14  2000/11/04 16:23:45  bpereira
-// no message
-//
 // Revision 1.13  2000/11/02 19:49:40  bpereira
-// no message
-//
 // Revision 1.12  2000/10/21 08:43:32  bpereira
-// no message
 //
 // Revision 1.11  2000/10/04 16:25:57  hurdler
 // Change all those "3dfx names" to more appropriate names
 //
 // Revision 1.10  2000/10/01 10:18:23  bpereira
-// no message
-//
 // Revision 1.9  2000/09/28 20:57:22  bpereira
-// no message
 //
 // Revision 1.8  2000/09/25 19:30:17  hurdler
 // Enable Direct3D support as OpenGL
 //
 // Revision 1.7  2000/09/01 19:34:38  bpereira
-// no message
-//
 // Revision 1.6  2000/08/10 19:58:05  bpereira
-// no message
 //
 // Revision 1.5  2000/08/10 17:04:22  hurdler
 // add ticrate to hardware mode
@@ -75,8 +60,6 @@
 // add waitvbl
 //
 // Revision 1.3  2000/02/27 00:42:12  hurdler
-// fix CR+LF problem
-//
 // Revision 1.2  2000/02/26 00:28:42  hurdler
 // Mostly bug fix (see borislog.txt 23-2-2000, 24-2-2000)
 //
@@ -86,7 +69,9 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "../doomdef.h"
+// Because of WINVER redefine, doomtype.h (via doomincl.h) is before any
+// other include that might define WINVER
+#include "../doomincl.h"
 
 #include <stdlib.h>
 #include <stdarg.h>

@@ -50,9 +50,9 @@
 
 /* includes ************************/
 
-#include "command.h"
+#include "doomincl.h"
 #include "doomstat.h"
-#include "doomtype.h"
+#include "command.h"
 #include "z_zone.h"
 
 #include "t_parse.h"

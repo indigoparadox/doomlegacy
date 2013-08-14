@@ -18,8 +18,8 @@
 //
 //-----------------------------------------------------------------------------
 
-#ifndef __TABLES__
-#define __TABLES__
+#ifndef TABLES_H
+#define TABLES_H
 
 #include "m_fixed.h"
 

@@ -24,25 +24,18 @@
 // MD2 implementation is getting better but still need lots of work
 //
 // Revision 1.12  2001/02/24 13:35:22  bpereira
-// no message
-//
 // Revision 1.11  2001/02/13 20:37:27  metzgermeister
-// *** empty log message ***
 //
 // Revision 1.10  2001/01/05 18:18:39  hurdler
 // add renderer version checking
 //
 // Revision 1.9  2000/11/04 16:23:44  bpereira
-// no message
-//
 // Revision 1.8  2000/10/04 16:21:57  hurdler
-// small clean-up
 //
 // Revision 1.7  2000/08/21 21:13:26  metzgermeister
 // SDL support
 //
 // Revision 1.6  2000/08/10 14:16:25  hurdler
-// no message
 //
 // Revision 1.5  2000/04/14 16:34:26  hurdler
 // some nice changes for coronas
@@ -54,8 +47,6 @@
 // fullscreen support under X in Linux
 //
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -65,29 +56,28 @@
 //
 //-----------------------------------------------------------------------------
 
+#ifndef HW_DRV_H
+#define HW_DRV_H
 
-#ifndef __HWR_DRV_H__
-#define __HWR_DRV_H__
-
-// this must be here 19991024 by Kin
+// this must be here 19991024 by Kin  (?? why)
 #include "../screen.h"
-#include "hw_data.h"
 #include "hw_defs.h"
+#include "hw_data.h"
 #include "hw_md2.h"
 
 
 
 // Function declaration for exports from the DLL :
 // EXPORT <return-type> HWRAPI(<function-name>) ( <arguments> ) ;
-// If _CREATE_DLL_ is defined the above declaration translates to :
+// If HWRAPI_CREATE_DLL is defined the above declaration translates to :
 // __declspec(dllexport) <return-type> WINAPI <function-name> ( <arguments> ) ;
-// If _CREATE_DLL_ is NOT DEFINED the above declaration translates to :
+// If HWRAPI_CREATE_DLL is NOT DEFINED the above declaration translates to :
 // __declspec(dllexport) <return->type> (WINAPI *<function-name>) ( <arguments> ) ;
 
 
 // [smite] I replaced the __WIN32__ macro with WIN_NATIVE_PLACEHOLDER if we ever need such a version.
 // Windows SDL version does not require any of these.
-#ifdef _CREATE_DLL_
+#ifdef HWRAPI_CREATE_DLL
   #ifdef WIN_NATIVE_PLACEHOLDER
     #ifdef __cplusplus
       #define EXPORT  extern "C" __declspec( dllexport )
@@ -103,7 +93,7 @@
     #endif
     #define HWRAPI(fn)  fn
   #endif   
-#else // _CREATE_DLL_
+#else // HWRAPI_CREATE_DLL
   #define EXPORT      typedef
   #ifdef WIN_NATIVE_PLACEHOLDER
     #define HWRAPI(fn)  (WINAPI *fn)
@@ -172,7 +162,7 @@ EXPORT char *HWRAPI( GetRenderer ) (void);
 //                                      HWR DRIVER OBJECT, FOR CLIENT PROGRAM
 // ==========================================================================
 
-#if !defined(_CREATE_DLL_)
+#if !defined( HWRAPI_CREATE_DLL )
 
 struct hwdriver_s {
     Init                pfnInit;
@@ -208,6 +198,6 @@ extern struct hwdriver_s hwdriver;
 
 #define HWD hwdriver
 
-#endif //not defined _CREATE_DLL_
+#endif //not defined HWRAPI_CREATE_DLL
 
-#endif //__HWR_DRV_H__
+#endif // HWR_DRV_H

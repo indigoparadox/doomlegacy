@@ -37,7 +37,8 @@
 //-----------------------------------------------------------------------------
 
 
-#include "doomdef.h"
+#include "doomincl.h"
+  // LOGMESSAGES, logstream
 
 #include "m_argv.h"
 #include "d_main.h"

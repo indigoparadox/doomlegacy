@@ -18,17 +18,9 @@
 //
 // $Log: fabdxlib.c,v $
 // Revision 1.5  2001/03/30 17:12:52  bpereira
-// no message
-//
 // Revision 1.4  2001/03/03 06:17:34  bpereira
-// no message
-//
 // Revision 1.3  2000/09/01 19:34:37  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:12  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -39,7 +31,10 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "../doomdef.h"
+// Because of WINVER redefine, doomtype.h (via doomincl.h) is before any
+// other include that might define WINVER
+#include "../doomincl.h"
+
 #include <windows.h>
 #include <windowsx.h>
 #include "dx_error.h"

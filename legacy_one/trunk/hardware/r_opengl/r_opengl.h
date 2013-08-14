@@ -18,13 +18,11 @@
 //
 // $Log: r_opengl.h,v $
 // Revision 1.16  2001/03/09 21:53:56  metzgermeister
-// *** empty log message ***
 //
 // Revision 1.15  2001/02/19 17:45:20  hurdler
 // Fix the problem of fullbright with Matrox's drivers under Linux
 //
 // Revision 1.14  2000/11/02 19:49:40  bpereira
-// no message
 //
 // Revision 1.13  2000/10/22 14:17:17  hurdler
 // Adjust version string
@@ -36,13 +34,8 @@
 // latest changes for v1.30
 //
 // Revision 1.10  2000/08/10 19:58:05  bpereira
-// no message
-//
 // Revision 1.9  2000/08/03 17:57:42  bpereira
-// no message
-//
 // Revision 1.8  2000/05/09 21:10:04  hurdler
-// update version
 //
 // Revision 1.7  2000/04/18 12:45:09  hurdler
 // change a little coronas' code
@@ -54,14 +47,8 @@
 // fix linux compilation
 //
 // Revision 1.4  2000/03/06 15:29:32  hurdler
-// change version number
-//
 // Revision 1.3  2000/02/27 16:37:14  hurdler
-// Update version number
-//
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -71,9 +58,12 @@
 //
 //-----------------------------------------------------------------------------
 
+#ifndef R_OPENGL_H
+#define R_OPENGL_H
 
-#ifndef _R_OPENGL_H_
-#define _R_OPENGL_H_
+// Because of redefine WINVER, doomtype.h (via doomdef.h) needs to be before
+// any other possible WINVER users, like gl and glu
+#include "../../doomdef.h"
 
 //[segabor]
 #ifdef __MACH__
@@ -84,8 +74,8 @@
 #include <GL/glu.h>
 #endif
 
-#define  _CREATE_DLL_  // necessary for Unix AND Windows
-#include "../../doomdef.h"
+// necessary for Unix AND Windows (param to hw_drv)
+#define  HWRAPI_CREATE_DLL
 #include "../hw_drv.h"
 
 // ==========================================================================

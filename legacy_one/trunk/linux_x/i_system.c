@@ -81,6 +81,7 @@
 //
 //-----------------------------------------------------------------------------
 
+#include "doomincl.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -115,13 +116,13 @@
 #include <linux/joystick.h>
 #endif
 
-#include "doomdef.h"
 #include "m_misc.h"
 #include "i_video.h"
 #include "i_sound.h"
 
 #include "d_net.h"
 #include "g_game.h"
+#include "g_input.h"
 
 #include "endtxt.h"
 

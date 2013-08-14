@@ -30,12 +30,13 @@
 //--------------------------------------------------------------------------
 
 
-#ifndef __FUNC_H__
-#define __FUNC_H__
+#ifndef T_FUNC_H
+#define T_FUNC_H
 
 #include "t_parse.h"
 
 #include "p_local.h"
+  // camera_t
 
 extern camera_t script_camera;
 extern boolean  script_camera_on;

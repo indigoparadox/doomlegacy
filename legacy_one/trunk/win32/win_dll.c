@@ -24,13 +24,11 @@
 // MD2 implementation is getting better but still need lots of work
 //
 // Revision 1.9  2001/05/27 13:42:48  bpereira
-// no message
 //
 // Revision 1.8  2001/04/04 20:19:07  judgecutor
 // Added support for the 3D Sound
 //
 // Revision 1.7  2001/02/24 13:35:23  bpereira
-// no message
 //
 // Revision 1.6  2001/01/05 18:19:48  hurdler
 // add renderer version checking
@@ -42,7 +40,6 @@
 // add waitvbl
 //
 // Revision 1.3  2000/04/16 18:38:07  bpereira
-// no message
 //
 //
 // DESCRIPTION:
@@ -50,7 +47,10 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "../doomdef.h"
+// Because of WINVER redefine, doomtype.h (via doomincl.h) is before any
+// other include that might define WINVER
+#include "../doomincl.h"
+
 #include "../hardware/hw_drv.h"        // get the standard 3D Driver DLL exports prototypes
 
 #include "../hardware/hw3dsdrv.h"      // get the 3D sound driver DLL export prototypes

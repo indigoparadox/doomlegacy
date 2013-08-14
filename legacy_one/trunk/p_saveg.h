@@ -19,14 +19,11 @@
 //
 // $Log: p_saveg.h,v $
 // Revision 1.4  2000/11/11 13:59:45  bpereira
-// no message
 //
 // Revision 1.3  2000/11/02 17:50:08  stroggonmeth
 // Big 3Dfloors & FraggleScript commit!!
 //
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -37,9 +34,10 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __P_SAVEG__
-#define __P_SAVEG__
+#ifndef P_SAVEG_H
+#define P_SAVEG_H
 
+#include "doomtype.h"
 
 #ifdef __GNUG__
 #pragma interface

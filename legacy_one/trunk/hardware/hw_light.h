@@ -33,23 +33,11 @@
 // do not define NEWCORONA by default
 //
 // Revision 1.11  2001/02/24 13:35:22  bpereira
-// no message
-//
 // Revision 1.10  2001/01/25 18:56:27  bpereira
-// no message
-//
 // Revision 1.9  2000/11/18 15:51:25  bpereira
-// no message
-//
 // Revision 1.8  2000/08/31 14:30:57  bpereira
-// no message
-//
 // Revision 1.7  2000/08/03 17:57:42  bpereira
-// no message
-//
 // Revision 1.6  2000/04/16 18:38:07  bpereira
-// no message
-//
 // Revision 1.5  2000/04/14 16:34:26  hurdler
 // some nice changes for coronas
 //
@@ -57,11 +45,7 @@
 // ready for T&L code and true static lighting
 //
 // Revision 1.3  2000/03/29 19:39:49  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -71,15 +55,14 @@
 //
 //-----------------------------------------------------------------------------
 
+#ifndef HW_LIGHTS_H
+#define HW_LIGHTS_H
 
-#ifndef _HW_LIGHTS_
-#define _HW_LIGHTS_
+//#define DO_MIRROR
 
 #include "hw_glob.h"
 #include "hw_drv.h"
 #include "hw_defs.h"
-
-//#define DO_MIRROR
 
 // Coronas in dynlights
 #define DYLT_CORONAS

@@ -34,15 +34,11 @@
 //--------------------------------------------------------------------------
 
 
-#ifndef __VARIABLE_H__
-#define __VARIABLE_H__
-
-typedef struct fs_variable_s fs_variable_t;
-#define VARIABLESLOTS 16
+#ifndef T_VARIABLE_H
+#define T_VARIABLE_H
 
 #include "t_parse.h"
-#include "p_mobj.h"
-#include "m_fixed.h"
+  // m_fixed.h, p_mobj.h
 
 // hash the variables for speed: this is the hashkey
 

@@ -23,14 +23,15 @@
 // Revision 1.2  2002/09/27 16:40:08  tonyd
 // First commit of acbot
 //
+//-----------------------------------------------------------------------------
 
+#ifndef BOTGAME_H
+#define BOTGAME_H
+
+#include "b_bot.h"
 // bot_game.h
 #include "d_ticcmd.h"
-//#include "doomdef.h"
 #include "d_player.h"
-
-#ifndef __BOTGAME_H__
-#define __BOTGAME_H__
 
 typedef struct
 {

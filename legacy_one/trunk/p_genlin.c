@@ -24,13 +24,13 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "doomdef.h"
-#include "g_game.h"
+#include "doomincl.h"
 #include "p_local.h"
 #include "r_data.h"
-#include "m_random.h"
+#include "g_game.h"
 #include "s_sound.h"
 #include "z_zone.h"
+#include "m_random.h"
 
 /*
   SoM: 3/9/2000: Copied this entire file from Boom sources to Legacy sources.

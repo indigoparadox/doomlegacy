@@ -27,65 +27,37 @@
 // added Treansform (and lighting) to glide
 //
 // Revision 1.23  2001/07/28 16:18:39  bpereira
-// no message
-//
 // Revision 1.22  2001/02/24 13:35:22  bpereira
-// no message
-//
 // Revision 1.21  2001/01/25 18:56:28  bpereira
-// no message
 //
 // Revision 1.20  2001/01/05 18:19:13  hurdler
 // add renderer version checking
 //
 // Revision 1.19  2000/11/04 16:23:45  bpereira
-// no message
-//
 // Revision 1.18  2000/10/08 13:30:02  bpereira
-// no message
 //
 // Revision 1.17  2000/10/04 16:29:57  hurdler
 // Implement hardware texture memory stats (TODO in glide mode)
 //
 // Revision 1.16  2000/09/28 20:57:21  bpereira
-// no message
-//
 // Revision 1.15  2000/08/31 14:30:57  bpereira
-// no message
 //
 // Revision 1.14  2000/08/10 14:17:58  hurdler
 // add waitvbl
 //
 // Revision 1.13  2000/08/03 17:57:42  bpereira
-// no message
-//
 // Revision 1.12  2000/07/01 09:23:50  bpereira
-// no message
-//
 // Revision 1.11  2000/05/09 20:50:57  hurdler
-// remove warning
-//
 // Revision 1.10  2000/05/05 18:00:06  bpereira
-// no message
-//
 // Revision 1.9  2000/04/30 10:30:10  bpereira
-// no message
-//
 // Revision 1.8  2000/04/23 16:19:52  bpereira
-// no message
-//
 // Revision 1.7  2000/04/18 12:50:55  hurdler
-// join with Boris' code
 //
 // Revision 1.5  2000/04/14 16:38:24  hurdler
 // some nice changes for coronas
 //
 // Revision 1.4  2000/03/06 15:26:17  hurdler
-// change version number
-//
 // Revision 1.3  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.2  2000/02/26 00:28:42  hurdler
 // Mostly bug fix (see borislog.txt 23-2-2000, 24-2-2000)
 //
@@ -95,19 +67,18 @@
 //
 //-----------------------------------------------------------------------------
 
+//output debugging msgs to r_glide.log
+//#define DEBUG_GLIDE_TO_FILE
 
 #include <windows.h>
 #include <glide.h>
 #include <math.h>
 
-#define  _CREATE_DLL_
+#define  HWRAPI_CREATE_DLL
 #include "../hw_drv.h"
 
 #include "../../screen.h"
 #include "3dmath.h"
-
-#undef DEBUG_TO_FILE
-#define DEBUG_TO_FILE         //output debugging msgs to r_glide.log
 
 
 // **************************************************************************
@@ -115,8 +86,8 @@
 // **************************************************************************
 
 // output all debugging messages to this file
-#ifdef DEBUG_TO_FILE
-static HANDLE  logstream;
+#ifdef DEBUG_GLIDE_TO_FILE
+static HANDLE  glide_logstream;
 #endif
 
 static void GR_ResetStates(viddef_t *lvid);
@@ -165,11 +136,11 @@ BOOL APIENTRY DllMain( HANDLE hModule,      // handle to DLL module
         case DLL_PROCESS_ATTACH:
          // Initialize once for each new process.
          // Return FALSE to fail DLL load.
-#ifdef DEBUG_TO_FILE
-            logstream = INVALID_HANDLE_VALUE;
-            logstream = CreateFile ("r_glide.log", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+#ifdef DEBUG_GLIDE_TO_FILE
+            glide_logstream = INVALID_HANDLE_VALUE;
+            glide_logstream = CreateFile ("r_glide.log", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                                      FILE_ATTRIBUTE_NORMAL/*|FILE_FLAG_WRITE_THROUGH*/, NULL);
-            if (logstream == INVALID_HANDLE_VALUE)
+            if (glide_logstream == INVALID_HANDLE_VALUE)
                 return FALSE;
 #endif
             break;
@@ -184,10 +155,10 @@ BOOL APIENTRY DllMain( HANDLE hModule,      // handle to DLL module
 
         case DLL_PROCESS_DETACH:
          // Perform any necessary cleanup.
-#ifdef DEBUG_TO_FILE
-            if ( logstream != INVALID_HANDLE_VALUE ) {
-                CloseHandle ( logstream );
-                logstream  = INVALID_HANDLE_VALUE;
+#ifdef DEBUG_GLIDE_TO_FILE
+            if ( glide_logstream != INVALID_HANDLE_VALUE ) {
+                CloseHandle ( glide_logstream );
+                glide_logstream  = INVALID_HANDLE_VALUE;
             }
 #endif
             break;
@@ -198,12 +169,12 @@ BOOL APIENTRY DllMain( HANDLE hModule,      // handle to DLL module
 
 // ----------
 // DBG_Printf
-// Output error messages to debug log if DEBUG_TO_FILE is defined,
+// Output error messages to debug log if DEBUG_GLIDE_TO_FILE is defined,
 // else do nothing
 // ----------
 void DBG_Printf (LPCTSTR lpFmt, ...)
 {
-#ifdef DEBUG_TO_FILE
+#ifdef DEBUG_GLIDE_TO_FILE
     char    str[1999];
     va_list arglist;
     DWORD   bytesWritten;
@@ -212,8 +183,8 @@ void DBG_Printf (LPCTSTR lpFmt, ...)
     vsprintf (str, lpFmt, arglist);
     va_end    (arglist);
 
-    if ( logstream != INVALID_HANDLE_VALUE )
-        WriteFile (logstream, str, lstrlen(str), &bytesWritten, NULL);
+    if ( glide_logstream != INVALID_HANDLE_VALUE )
+        WriteFile (glide_logstream, str, lstrlen(str), &bytesWritten, NULL);
 #endif
 }
 

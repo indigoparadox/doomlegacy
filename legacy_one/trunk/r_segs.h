@@ -22,14 +22,9 @@
 // Long time no commit. 3D floors, FraggleScript, portals, ect.
 //
 // Revision 1.4  2000/11/03 02:37:36  stroggonmeth
-// Fix a few warnings when compiling.
-//
 // Revision 1.3  2000/11/02 19:49:36  bpereira
-// no message
 //
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -39,10 +34,10 @@
 //
 //-----------------------------------------------------------------------------
 
+#ifndef R_SEGS_H
+#define R_SEGS_H
 
-#ifndef __R_SEGS__
-#define __R_SEGS__
-
+#include "r_defs.h"
 
 #ifdef __GNUG__
 #pragma interface

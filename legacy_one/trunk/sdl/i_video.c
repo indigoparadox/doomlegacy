@@ -22,14 +22,11 @@
 // that should fix issues some people were having in 1280x1024 mode (and now support up to 1600x1200)
 //
 // Revision 1.12  2002/07/01 19:59:59  metzgermeister
-// *** empty log message ***
 //
 // Revision 1.11  2001/12/31 16:56:39  metzgermeister
 // see Dec 31 log
-// .
 //
 // Revision 1.10  2001/08/20 20:40:42  metzgermeister
-// *** empty log message ***
 //
 // Revision 1.9  2001/05/16 22:33:35  bock
 // Initial FreeBSD support.
@@ -38,7 +35,6 @@
 // fixed mouse and menu bug
 //
 // Revision 1.7  2001/04/27 13:32:14  bpereira
-// no message
 //
 // Revision 1.6  2001/03/12 21:03:10  metzgermeister
 //   * new symbols for rendererlib added in SDL
@@ -46,23 +42,16 @@
 //   * Crash fixed in Linux SW renderer initialization
 //
 // Revision 1.5  2001/03/09 21:53:56  metzgermeister
-// *** empty log message ***
 //
 // Revision 1.4  2001/02/24 13:35:23  bpereira
-// no message
 //
 // Revision 1.3  2001/01/25 22:15:45  bpereira
 // added heretic support
 //
 // Revision 1.2  2000/11/02 19:49:40  bpereira
-// no message
-//
 // Revision 1.1  2000/09/10 10:56:00  metzgermeister
-// clean up & made it work again
-//
 // Revision 1.1  2000/08/21 21:17:32  metzgermeister
 // Initial import to CVS
-//
 //
 //
 // DESCRIPTION:
@@ -83,10 +72,9 @@ static int testbpp = 0;
 
 #include "SDL.h"
 
-
-#include "doomdef.h"
-
+#include "doomincl.h"
 #include "doomstat.h"
+
 #include "i_system.h"
 #include "v_video.h"
   // cv_fullscreen, etc

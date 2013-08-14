@@ -19,11 +19,7 @@
 //
 // $Log: d_event.h,v $
 // Revision 1.3  2001/03/03 06:17:33  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -33,8 +29,8 @@
 //    
 //-----------------------------------------------------------------------------
 
-#ifndef __D_EVENT__
-#define __D_EVENT__
+#ifndef D_EVENT_H
+#define D_EVENT_H
 
 #include "doomtype.h"
 #include "g_state.h"

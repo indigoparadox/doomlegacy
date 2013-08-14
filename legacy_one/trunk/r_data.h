@@ -31,8 +31,6 @@
 // Initial Boom compatability plus few misc changes all around.
 //
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -44,11 +42,17 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __R_DATA__
-#define __R_DATA__
+#ifndef R_DATA_H
+#define R_DATA_H
 
+#include "doomdef.h"
+  // ENABLE_DRAWxx
+#include "doomtype.h"
+  // RBGA_t
 #include "r_defs.h"
 #include "r_state.h"
+#include "command.h"
+  // CV_PossibleValue_t
 
 #ifdef __GNUG__
 #pragma interface

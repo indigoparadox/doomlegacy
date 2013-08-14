@@ -22,13 +22,11 @@
 // go RC1
 //
 // Revision 1.32  2003/07/13 13:16:15  hurdler
-// go RC1
 //
 // Revision 1.31  2002/12/13 22:34:27  ssntails
 // MP3/OGG support!
 //
 // Revision 1.30  2002/09/19 21:47:05  judgecutor
-// no message
 //
 // Revision 1.29  2002/09/12 20:10:51  hurdler
 // Added some cvars
@@ -37,16 +35,12 @@
 // Sound pitching coming back
 //
 // Revision 1.27  2001/08/20 20:40:39  metzgermeister
-// *** empty log message ***
-//
 // Revision 1.26  2001/05/27 13:42:48  bpereira
-// no message
 //
 // Revision 1.25  2001/04/30 17:19:24  stroggonmeth
 // HW fix and misc. changes
 //
 // Revision 1.24  2001/04/18 19:32:26  hurdler
-// no message
 //
 // Revision 1.23  2001/04/17 22:26:07  calumr
 // Initial Mac add
@@ -55,19 +49,10 @@
 // Added support for the 3D Sound
 //
 // Revision 1.21  2001/04/02 18:54:32  bpereira
-// no message
-//
 // Revision 1.20  2001/04/01 17:35:07  bpereira
-// no message
-//
 // Revision 1.19  2001/03/03 11:11:49  hurdler
-// I hate warnigs ;)
-//
 // Revision 1.18  2001/02/24 13:35:21  bpereira
-// no message
-//
 // Revision 1.17  2001/01/27 11:02:36  bpereira
-// no message
 //
 // Revision 1.16  2001/01/25 22:15:44  bpereira
 // added heretic support
@@ -88,10 +73,7 @@
 // - Added the SurroundSound support
 //
 // Revision 1.10  2000/09/28 20:57:18  bpereira
-// no message
-//
 // Revision 1.9  2000/05/07 08:27:57  metzgermeister
-// no message
 //
 // Revision 1.8  2000/04/22 16:16:50  emanne
 // Correction de l'interface.
@@ -99,16 +81,9 @@
 //
 // Revision 1.7  2000/04/21 08:23:47  emanne
 // To have SDL working.
-// Makefile: made the hiding by "@" optional. See the CC variable at
-// the begining. Sorry, but I like to see what's going on while building
-//
 // qmus2mid.h: force include of qmus2mid_sdl.h when needed.
-// s_sound.c: ??!
-// s_sound.h: with it.
-// (sorry for s_sound.* : I had problems with cvs...)
 //
 // Revision 1.6  2000/03/29 19:39:48  bpereira
-// no message
 //
 // Revision 1.5  2000/03/22 18:51:08  metzgermeister
 // introduced I_PauseCD() for Linux
@@ -119,31 +94,17 @@
 // didn't break anything ... Erling Jacobsen, linuxcub@email.dk
 //
 // Revision 1.3  2000/03/06 15:13:08  hurdler
-// maybe a bug detected
-//
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
 //
-// DESCRIPTION:  
-//
+// DESCRIPTION:
+//    Sound control
 //
 //-----------------------------------------------------------------------------
 
-#ifdef MUSSERV
-#include <sys/msg.h>
-struct musmsg
-{
-    long msg_type;
-    char msg_text[12];
-};
-extern int msg_id;
-#endif
-
-#include "doomdef.h"
+#include "doomincl.h"
 #include "doomstat.h"
 #include "command.h"
 #include "g_game.h"
@@ -162,6 +123,16 @@ extern int msg_id;
 
 // 3D Sound Interface
 #include "hardware/hw3sound.h"
+
+#ifdef MUSSERV
+#include <sys/msg.h>
+struct musmsg
+{
+    long msg_type;
+    char msg_text[12];
+};
+extern int msg_id;
+#endif
 
 // commands for music and sound servers
 #ifdef MUSSERV

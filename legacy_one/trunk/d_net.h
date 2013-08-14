@@ -19,31 +19,24 @@
 //
 // $Log: d_net.h,v $
 // Revision 1.5  2001/02/10 12:27:13  bpereira
-// no message
-//
 // Revision 1.4  2000/09/15 19:49:22  bpereira
-// no message
-//
 // Revision 1.3  2000/08/31 14:30:55  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
 //
 // DESCRIPTION:
 //      Networking stuff.
-//      part of layer 4 (transport) (tp4) of the osi model
-//      assure the reception of packet and proceed a checksums
+//      Part of layer 4 (transport) (tp4) of the osi model.
+//      Assure the reception of packet and process checksums.
 //
 //-----------------------------------------------------------------------------
 
+#ifndef D_NET_H
+#define D_NET_H
 
-#ifndef __D_NET__
-#define __D_NET__
+#include "doomtype.h"
 
 //
 // Network play related stuff.
@@ -66,7 +59,7 @@ extern  float  lostpercent,duppercent,gamelostpercent;
 extern  int    packetheaderlength;
 boolean Net_GetNetStat(void);
 extern  int    getbytes;
-extern  INT64  sendbytes;        // realtime updated 
+extern  int64_t  sendbytes;        // realtime updated 
 
 void    Net_AckTicker(void);
 boolean Net_AllAckReceived(void);

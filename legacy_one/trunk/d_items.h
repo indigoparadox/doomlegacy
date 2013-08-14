@@ -25,7 +25,6 @@
 // go final + translucent HUD + fix spawn in net game
 //
 // Revision 1.6  2003/07/21 11:33:57  hurdler
-// go RC1
 //
 // Revision 1.5  2003/06/11 03:38:09  ssntails
 // THING Z definable in levels by using upper 9 bits
@@ -37,8 +36,6 @@
 // added heretic support
 //
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -48,11 +45,12 @@
 //
 //-----------------------------------------------------------------------------
 
-
-#ifndef __D_ITEMS__
-#define __D_ITEMS__
+#ifndef D_ITEMS_H
+#define D_ITEMS_H
 
 #include "doomdef.h"
+  // TICRATE
+#include "doomtype.h"
 
 #ifdef __GNUG__
 #pragma interface

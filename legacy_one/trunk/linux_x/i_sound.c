@@ -86,6 +86,9 @@
 //
 //-----------------------------------------------------------------------------
 
+#include "doomincl.h"
+  // stdio, stdlib
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -127,7 +130,7 @@
 
 #include <errno.h>
 
-#include "z_zone.h"
+#include "doomstat.h"
 
 #include "i_system.h"
 #include "i_sound.h"
@@ -136,11 +139,10 @@
 #include "m_misc.h"
 #include "w_wad.h"
 
-#include "doomdef.h"
-// added for 1.27 19990203 by Kin
-#include "doomstat.h"
 #include "searchp.h"
 #include "d_main.h"
+#include "z_zone.h"
+
 
 //#include "cd_audio.h"
 

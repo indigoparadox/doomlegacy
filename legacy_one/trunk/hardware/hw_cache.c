@@ -30,49 +30,23 @@
 // Manage transparent wall a little better
 //
 // Revision 1.35  2001/03/03 06:17:34  bpereira
-// no message
-//
 // Revision 1.34  2001/02/28 17:50:56  bpereira
-// no message
-//
 // Revision 1.33  2001/02/24 13:35:22  bpereira
-// no message
-//
 // Revision 1.32  2001/01/25 18:56:27  bpereira
-// no message
-//
 // Revision 1.31  2000/11/04 16:23:44  bpereira
-// no message
-//
 // Revision 1.30  2000/11/02 22:16:03  bpereira
-// no message
-//
 // Revision 1.29  2000/11/02 21:54:26  bpereira
-// no message
-//
 // Revision 1.28  2000/11/02 19:49:39  bpereira
-// no message
-//
 // Revision 1.27  2000/10/04 16:21:57  hurdler
-// small clean-up
-//
 // Revision 1.26  2000/09/28 20:57:20  bpereira
-// no message
-//
 // Revision 1.25  2000/08/31 14:30:57  bpereira
-// no message
-//
 // Revision 1.24  2000/08/11 19:11:57  metzgermeister
-// *** empty log message ***
-//
 // Revision 1.23  2000/08/03 17:57:42  bpereira
-// no message
 //
 // Revision 1.22  2000/07/13 21:07:47  metzgermeister
 // fixed memory leak
 //
 // Revision 1.21  2000/07/01 09:23:50  bpereira
-// no message
 //
 // Revision 1.20  2000/05/30 18:01:53  kegetys
 // Added the chromakey flag to sprites
@@ -85,13 +59,11 @@
 // (necessary due to a small bug in Boris' code (not found) which shows strange effects under linux)
 //
 // Revision 1.17  2000/04/30 10:30:10  bpereira
-// no message
 //
 // Revision 1.16  2000/04/27 17:48:47  hurdler
 // colormap code in hardware mode is now the default
 //
 // Revision 1.15  2000/04/24 20:24:38  bpereira
-// no message
 //
 // Revision 1.14  2000/04/24 17:23:26  hurdler
 // Better support of colormap
@@ -100,16 +72,12 @@
 // Support colormap for text
 //
 // Revision 1.12  2000/04/23 16:19:52  bpereira
-// no message
 //
 // Revision 1.11  2000/04/23 00:30:47  hurdler
 // fix a small bug in skin color
 //
 // Revision 1.10  2000/04/22 21:08:23  hurdler
-// I like it better like that
-//
 // Revision 1.9  2000/04/22 20:16:30  hurdler
-// I like it better like that
 //
 // Revision 1.8  2000/04/22 19:12:50  hurdler
 // support skin color in hardware mode
@@ -118,10 +86,7 @@
 // support skin color in hardware mode
 //
 // Revision 1.6  2000/04/18 12:52:21  hurdler
-// join with Boris' code
-//
 // Revision 1.5  2000/04/16 18:38:07  bpereira
-// no message
 //
 // Revision 1.4  2000/04/09 17:18:01  hurdler
 // modified coronas' code for 16 bits video mode
@@ -130,8 +95,6 @@
 // add Boris' changes for coronas in doom3.wad
 //
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -141,12 +104,15 @@
 //
 //-----------------------------------------------------------------------------
 
+#include "../doomincl.h"
 
 #include "hw_glob.h"
 #include "hw_drv.h"
 
-#include "../doomstat.h"    //gamemode
-#include "../i_video.h"     //rendermode
+#include "../doomstat.h"
+  //gamemode
+#include "../i_video.h"
+  //rendermode
 #include "../m_swap.h"
 #include "../r_data.h"
 #include "../w_wad.h"

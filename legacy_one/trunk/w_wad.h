@@ -22,10 +22,7 @@
 // Added md5-sum support, removed recursiv wad search
 //
 // Revision 1.12  2001/02/28 17:50:55  bpereira
-// no message
-//
 // Revision 1.11  2001/02/24 13:35:21  bpereira
-// no message
 //
 // Revision 1.10  2001/01/25 22:15:44  bpereira
 // added heretic support
@@ -34,17 +31,10 @@
 // Change all those "3dfx names" to more appropriate names
 //
 // Revision 1.8  2000/09/28 20:57:19  bpereira
-// no message
-//
 // Revision 1.7  2000/08/31 14:30:56  bpereira
-// no message
-//
 // Revision 1.6  2000/04/16 18:38:07  bpereira
-// no message
-//
 // Revision 1.5  2000/04/13 23:47:48  stroggonmeth
-// See logs
-//
+// 
 // Revision 1.4  2000/04/11 19:07:25  stroggonmeth
 // Finished my logs, fixed a crashing bug.
 //
@@ -52,8 +42,6 @@
 // Initial Boom compatability plus few misc changes all around.
 //
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -64,10 +52,10 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __W_WAD__
-#define __W_WAD__
+#ifndef W_WAD_H
+#define W_WAD_H
 
-#include <stdint.h>
+#include "doomtype.h"
 
 #ifdef HWRENDER
 #include "hardware/hw_data.h"

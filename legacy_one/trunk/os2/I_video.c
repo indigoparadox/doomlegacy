@@ -19,29 +19,20 @@
 // that should fix issues some people were having in 1280x1024 mode (and now support up to 1600x1200)
 //
 // Revision 1.7  2001/04/16 22:59:25  ydario
-// removed unused variable
-//
 // Revision 1.6  2001/03/03 19:29:44  ydario
-// code clean up
-//
 // Revision 1.5  2000/11/02 19:49:40  bpereira
-// no message
 //
 // Revision 1.4  2000/08/16 16:31:25  ydario
 // Give more timeslice to other threads
 //
 // Revision 1.3  2000/08/10 11:07:51  ydario
-// fix CRLF
-//
 // Revision 1.2  2000/08/10 09:19:31  ydario
-// *** empty log message ***
-//
 // Revision 1.1  2000/08/09 12:15:09  ydario
 // OS/2 specific platform code
 //
 //
 // DESCRIPTION:
-//      DOOM graphics stuff for X11, UNIX.
+//      DOOM graphics stuff for OS2.
 //
 //-----------------------------------------------------------------------------
 
@@ -61,6 +52,7 @@ rcsid[] = "$Id$";
 
 //#include "mgraph.h"
 
+#include "doomincl.h"
 #include "doomstat.h"
 #include "i_system.h"
 #include "i_video.h"
@@ -68,8 +60,6 @@ rcsid[] = "$Id$";
 #include "v_video.h"
 #include "m_argv.h"
 #include "d_main.h"
-
-#include "doomdef.h"
 
 #define MAXWINMODES (8)
 static char vidModeName[MAXWINMODES][32];

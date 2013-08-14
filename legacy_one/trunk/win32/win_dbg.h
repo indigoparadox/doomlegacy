@@ -18,8 +18,6 @@
 //
 // $Log: win_dbg.h,v $
 // Revision 1.2  2000/02/27 00:42:12  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -29,9 +27,13 @@
 //
 //-----------------------------------------------------------------------------
 
+#ifndef WIN_DBG_H
+#define WIN_DBG_H
 
 #include <windows.h>
 
 // called in the exception filter of the __try block, writes all useful debugging information
 // to a file, using only win32 functions in case the C runtime is in a bad state.
 int __cdecl RecordExceptionInfo (PEXCEPTION_POINTERS data, const char *Message, LPSTR lpCmdLine);
+
+#endif

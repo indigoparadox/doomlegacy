@@ -59,7 +59,7 @@
 #include <errno.h>
 
 #include <linux/cdrom.h>
-#include "doomtype.h"
+#include "doomincl.h"
 #include "i_sound.h"
 #include "command.h"
 #include "m_argv.h"

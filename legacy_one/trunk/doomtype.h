@@ -25,20 +25,13 @@
 // Initial Mac add
 //
 // Revision 1.6  2001/02/24 13:35:19  bpereira
-// no message
-//
 // Revision 1.5  2000/11/02 19:49:35  bpereira
-// no message
-//
 // Revision 1.4  2000/10/21 08:43:28  bpereira
-// no message
 //
 // Revision 1.3  2000/08/10 14:53:57  ydario
 // OS/2 port
 //
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -47,12 +40,14 @@
 //      doom games standard types
 //      Simple basic typedefs, isolated here to make it easier
 //      separating modules.
+//      Dependent upon system and compile flags, but not dependent upon
+//      doomdef.h.
 //    
 //-----------------------------------------------------------------------------
 
-
-#ifndef __DOOMTYPE__
-#define __DOOMTYPE__
+#ifndef DOOMTYPE_H
+#define DOOMTYPE_H
+// General type defines, not dependent upon doomdef.h
 
 #include <stdint.h>
 

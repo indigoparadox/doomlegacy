@@ -25,14 +25,8 @@
 // Big 3Dfloors & FraggleScript commit!!
 //
 // Revision 1.4  2000/10/21 08:43:31  bpereira
-// no message
-//
 // Revision 1.3  2000/10/08 13:30:01  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //

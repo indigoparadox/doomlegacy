@@ -18,7 +18,6 @@
 //
 // $Log: ogl_x11.c,v $
 // Revision 1.11  2001/03/09 21:53:56  metzgermeister
-// *** empty log message ***
 //
 // Revision 1.10  2001/02/19 17:43:38  hurdler
 // Fix the problem of fullbright with Matrox's drivers under Linux
@@ -27,10 +26,7 @@
 // fix texture bug under Linux
 //
 // Revision 1.8  2001/02/13 20:37:27  metzgermeister
-// *** empty log message ***
-//
 // Revision 1.7  2000/08/11 16:32:29  metzgermeister
-// *** empty log message ***
 //
 // Revision 1.6  2000/05/13 19:54:54  metzgermeister
 // no tex flush on setmode
@@ -45,8 +41,6 @@
 // fix linux compilation
 //
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //

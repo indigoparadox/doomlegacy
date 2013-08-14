@@ -18,8 +18,6 @@
 //
 // $Log: midstuff.h,v $
 // Revision 1.2  2000/02/27 00:42:12  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -32,9 +30,8 @@
 //
 //-----------------------------------------------------------------------------
 
-
-#ifndef __MIDSTUFF_H__
-#define __MIDSTUFF_H__
+#ifndef MIDSTUFF_H
+#define MIDSTUFF_H
 
 // MIDI file constants
 //
@@ -156,4 +153,4 @@ typedef struct
     INTRACKSTATE *pitsTracks;           // -> array of tracks in this file
 } INFILESTATE, *PINFILESTATE;
 
-#endif //__MIDSTUFF_H__
+#endif // MIDSTUFF_H

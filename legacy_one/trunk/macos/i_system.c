@@ -17,84 +17,24 @@
 // GNU General Public License for more details.
 //
 //
-// $Log: i_system.c,v $
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-//
 // Revision 1.1  2001/04/17 22:23:38  calumr
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-//
-// Initial add
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-//
-//
 // Revision 1.1  2000/08/21 21:17:32  metzgermeister
 // Initial import to CVS
 //
-//
-//
 // DESCRIPTION:
+//   Macos system interface
 //
 //-----------------------------------------------------------------------------
 
 #include <Carbon/Carbon.h>
 
-#include "doomdef.h"
+#include "doomincl.h"
 #include "m_misc.h"
 #include "i_video.h"
 #include "i_sound.h"
 #include "d_net.h"
 #include "g_game.h"
+#include "g_input.h"
 #include "endtxt.h"
 #include "i_joy.h"
 
@@ -121,7 +61,6 @@ uint16_t scantokey [128] =
   KEY_F5, KEY_F6, KEY_F7, KEY_F3, KEY_F8, KEY_F9, 0, KEY_F11,
 };
 
-
 int I_GetKey(void)
 {
     KeyMap keymap;
@@ -142,6 +81,7 @@ int I_GetKey(void)
 	    }
 	}
     }
+	   
     return 0;
 }
 
@@ -154,7 +94,7 @@ void I_OutputMsg (char *error, ...)
 {
 #ifdef DEBUG_TO_FILE
     int handle;
-static int wipe = 1;
+    static int wipe = 1;
     va_list     argptr;
     char        txt[1024];
 	
@@ -162,18 +102,18 @@ static int wipe = 1;
     vsprintf (txt,error,argptr);
     va_end   (argptr);
 	
-	printf(txt);	// Woohoo! MacOSX command-line output!
+    printf(txt);	// Woohoo! MacOSX command-line output!
 	
-	if (wipe)
-	{
-		handle = open ("log.txt", O_WRONLY | O_APPEND | O_BINARY | O_TRUNC | O_CREAT, 0666);
-		wipe = 0;
-	}
-	else
-		handle = open ("log.txt", O_RDWR | O_APPEND | O_BINARY, 0666);
-	
-	if (handle == -1)
-		return;
+    if (wipe)
+    {
+        handle = open ("log.txt", O_WRONLY | O_APPEND | O_BINARY | O_TRUNC | O_CREAT, 0666);
+        wipe = 0;
+    }
+    else
+        handle = open ("log.txt", O_RDWR | O_APPEND | O_BINARY, 0666);
+   
+    if (handle == -1)
+        return;
 	
     write(handle, txt, strlen(txt));
     close(handle);
@@ -275,22 +215,22 @@ ULONG  I_GetTime (void)
     static UInt32 hiTicks=0;
     double ticks;
 	
-	Microseconds(&ftime);
+    Microseconds(&ftime);
 	
-	ticks = ftime.lo/1000000.0f;
+    ticks = ftime.lo/1000000.0f;
 	
-	if (!baseTicks)
-	{
-		baseTicks = ticks;
-		hiTicks = ftime.hi;
-	}
+    if (!baseTicks)
+    {
+        baseTicks = ticks;
+        hiTicks = ftime.hi;
+    }
 	
-	if (hiTicks != ftime.hi)
-	{
-	    baseTicks = 0;
-	}
+    if (hiTicks != ftime.hi)
+    {
+        baseTicks = 0;
+    }
 	
-	hiTicks = ftime.hi;
+    hiTicks = ftime.hi;
 	
     return (ticks - baseTicks) * TICRATE;
 }
@@ -363,8 +303,8 @@ void I_Error (char *error, ...)
     va_end   (argptr);
     
     {
-		SInt16 res;
-		c2pstr(txt);
+        SInt16 res;
+        c2pstr(txt);
 		
         StandardAlert(kAlertStopAlert,"\pError:",(ConstStr255Param)txt,NULL,&res);
     }
@@ -372,14 +312,14 @@ void I_Error (char *error, ...)
     // Shutdown. Here might be other errors.
     if (demorecording)
         G_CheckDemoStatus();
-	W_Shutdown();
+    W_Shutdown();
     D_QuitNetGame ();
     I_ShutdownMusic();
     I_ShutdownSound();
     I_ShutdownGraphics();
     I_ShutdownInput();
     
-    I_OutputMsg("%s\nFeck. I didn't see that one coming. \n",txt);
+    I_OutputMsg("Error: %s. \n",txt);
     ExitToShell();
 }
 
@@ -390,7 +330,7 @@ void I_GetDiskFreeSpace(long long *freespace) {
 
 char *I_GetUserName(void)
 {
-	return getenv("USER");
+    return getenv("USER");
 }
 
 int  I_mkdir(const char *dirname, int unixright)

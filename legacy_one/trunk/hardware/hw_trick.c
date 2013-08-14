@@ -18,7 +18,6 @@
 //
 // $Log: hw_trick.c,v $
 // Revision 1.10  2002/07/26 15:22:44  hurdler
-// near RC release
 //
 // Revision 1.9  2001/12/26 17:24:47  hurdler
 // Update Linux version
@@ -33,13 +32,8 @@
 // temporary "fix" for heretic
 //
 // Revision 1.6  2001/04/11 21:14:11  metzgermeister
-// *** empty log message ***
-//
 // Revision 1.5  2001/04/10 18:39:39  metzgermeister
-// fixed a (possible?) crash bug
-//
 // Revision 1.4  2001/04/09 23:26:06  hurdler
-// clean up
 //
 // Revision 1.3  2001/04/09 20:23:12  metzgermeister
 // more conservative trick treatment
@@ -83,6 +77,9 @@
 //-----------------------------------------------------------------------------
 
 #include <math.h>
+
+#include "../doomincl.h"
+
 #include "hw_glob.h"
 #include "../r_local.h"
 #include "../i_system.h"

@@ -26,9 +26,10 @@
 #include <AGL/glu.h>
 #include <Carbon/Carbon.h>
 
-#include "doomdef.h"
+#include "doomincl.h"
 #include "doomstat.h"
 #include "i_system.h"
+#include "i_video.h"
 #include "v_video.h"
 #include "m_argv.h"
 #include "m_menu.h"
@@ -37,14 +38,14 @@
 #include "g_input.h"
 #include "st_stuff.h"
 #include "g_game.h"
-#include "i_video.h"
   // cv_fullscreen, cv_gamma etc.
+#include "console.h"
+#include "command.h"
 #include "z_zone.h"
 #include "hw_main.h"
 #include "hw_drv.h"
-#include "console.h"
-#include "command.h"
-#include "hwsym_mac.h" // For dynamic referencing of HW rendering functions
+#include "hwsym_mac.h"
+  // For dynamic referencing of HW rendering functions
 #include "r_opengl.h"
 
 void VID_PrepareModeList(void);
@@ -87,7 +88,8 @@ void OglMacSetPalette(RGBA_t *palette, RGBA_t *gamma)
 {
     int i;
 
-    for (i=0; i<256; i++) {
+    for (i=0; i<256; i++)
+    {
         myPaletteData[i].s.red   = MIN((palette->s.red   * gamma->s.red)  /127, 255);
         myPaletteData[i].s.green = MIN((palette->s.green * gamma->s.green)/127, 255);
         myPaletteData[i].s.blue  = MIN((palette->s.blue  * gamma->s.blue) /127, 255);
@@ -142,7 +144,7 @@ void VID_Pause(boolean pause)
 
 int   VID_NumModes(void)
 {
-        return numModes;
+    return numModes;
 }
 
 //------------------------------
@@ -152,22 +154,24 @@ int   VID_NumModes(void)
 // indicate window/fullscreen
 char  *VID_GetModeName(int modeNum)
 {
-        sprintf(&vidModeName[modeNum][0], "%ix%i", modeList[modeNum].w, modeList[modeNum].h);
+    sprintf(&vidModeName[modeNum][0], "%ix%i", modeList[modeNum].w, modeList[modeNum].h);
 
     return &vidModeName[modeNum][0];
 }
 
 int VID_GetModeForSize(int w, int h)
 {
-   int matchMode, i;
+    int matchMode, i;
 
     matchMode=-1;
     for(i=0; i<MAXWINMODES; i++)
+    {
         if(modeList[i].w == w && modeList[i].h == h)
         {
             matchMode = i;
             break;
         }
+    }
     if(-1 == matchMode) // use smallest windowed mode (640x480)
         matchMode = 3;
 
@@ -194,29 +198,29 @@ void VID_PrepareModeList(void)
 
 void SetDSpMode(int w, int h, boolean enable)
 {
-        static int lastw, lasth, last_enable = -1;
+    static int lastw, lasth, last_enable = -1;
 
-        if (mainWindow)
-        {
-                DisposeWindow(mainWindow);
-                mainWindow = NULL;
-        }
+    if (mainWindow)
+    {
+        DisposeWindow(mainWindow);
+        mainWindow = NULL;
+    }
 
-        if (enable)
-        {
-                HideCursor();
-                HideMenuBar();
-        }
-        else
-        {
-                ShowCursor();
-                ShowMenuBar();
-                DrawMenuBar();
-        }
+    if (enable)
+    {
+        HideCursor();
+        HideMenuBar();
+    }
+    else
+    {
+        ShowCursor();
+        ShowMenuBar();
+        DrawMenuBar();
+    }
 
-        lastw = w;
-        lasth = h;
-        last_enable = enable;
+    lastw = w;
+    lasth = h;
+    last_enable = enable;
 }
 
 int VID_SetMode(int modeNum)

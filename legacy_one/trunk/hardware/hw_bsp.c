@@ -26,10 +26,7 @@
 // Modified WalkBSPNode bounding box calculations
 //
 // Revision 1.20  2001/08/14 00:36:26  hurdler
-// Small update
-//
 // Revision 1.19  2001/08/13 17:23:17  hurdler
-// Little modif
 //
 // Revision 1.18  2001/08/13 16:27:45  hurdler
 // Added translucency to linedef 300 and colormap to 3d-floors
@@ -44,38 +41,15 @@
 // Big TANDL update
 //
 // Revision 1.14  2001/05/01 20:38:34  hurdler
-// some fix/hack for the beta release
-//
 // Revision 1.13  2001/04/16 15:16:26  hurdler
-// minor changes
-//
 // Revision 1.12  2000/10/04 16:21:57  hurdler
-// small clean-up
-//
 // Revision 1.11  2000/10/02 18:25:46  bpereira
-// no message
-//
 // Revision 1.10  2000/08/11 19:11:57  metzgermeister
-// *** empty log message ***
-//
 // Revision 1.9  2000/08/10 14:16:25  hurdler
-// no message
-//
 // Revision 1.8  2000/08/03 17:57:42  bpereira
-// no message
-//
 // Revision 1.7  2000/08/03 17:32:31  metzgermeister
-// *** empty log message ***
-//
 // Revision 1.6  2000/03/13 21:41:40  linuxcub
-// Removed my socalled "fix". The answer lies elsewhere :-( linuxcub@email.dk
-//
 // Revision 1.5  2000/03/12 23:01:29  linuxcub
-// I really hope this doesn't break anything important. I'd like
-// to hear from anyone, especially Linux/opengl users. Try
-// running E4M7 from "ultimate doom", at least my patch improves
-// that level, although other levels still render incorrectly.
-// Erling Jacobsen, linuxcub@email.dk
 //
 // Revision 1.4  2000/03/06 18:44:00  hurdler
 // hack for the polypoolsize problem
@@ -84,8 +58,6 @@
 // remove polypoolsize limit
 //
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -95,7 +67,7 @@
 //
 //-----------------------------------------------------------------------------
 
-
+#include "../doomincl.h"
 #include "hw_glob.h"
 #include "../r_local.h"
 #include "../z_zone.h"

@@ -18,14 +18,11 @@
 //
 // $Log: win_net.c,v $
 // Revision 1.4  2000/09/01 19:34:38  bpereira
-// no message
 //
 // Revision 1.3  2000/09/01 19:13:09  hurdler
 // fix some issues with latest network code changes
 //
 // Revision 1.2  2000/02/27 00:42:12  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -35,7 +32,7 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "../doomdef.h"
+#include "../doomincl.h"
 #include "../m_argv.h"
 
 //
@@ -48,10 +45,10 @@
 boolean I_InitNetwork (void)
 {
     if( M_CheckParm ("-net") )
-  {
+    {
       I_Error("The Win32 version of Legacy don't work with external driver like ipxsetup, sersetup, or doomatic\n"
               "Read the documentation about \"-server\" and \"-connect\" parameters or just use the launcher\n");
-  }
+    }
 
     return false;
 }

@@ -18,7 +18,6 @@
 //
 // $Log: hw_md2.c,v $
 // Revision 1.10  2002/07/26 15:22:45  hurdler
-// near RC release
 //
 // Revision 1.9  2002/06/30 21:37:48  hurdler
 // Ready for 1.32 beta 5 release
@@ -36,14 +35,8 @@
 // Crappy MD2 implementation (still need lots of work)
 //
 // Revision 1.4  2000/10/04 16:21:57  hurdler
-// small clean-up
-//
 // Revision 1.3  2000/03/29 20:17:31  hurdler
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -55,13 +48,15 @@
 //-----------------------------------------------------------------------------
 
 
+#include "../doomincl.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+
 #include "hw_drv.h"
 #include "hw_light.h"
-#include "../doomdef.h"
 #include "../r_main.h"
 #include "../w_wad.h"
 #include "../z_zone.h"

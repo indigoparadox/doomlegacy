@@ -19,17 +19,11 @@
 //
 // $Log: m_random.c,v $
 // Revision 1.5  2001/06/10 21:16:01  bpereira
-// no message
-//
 // Revision 1.4  2001/03/30 17:12:50  bpereira
-// no message
-//
 // Revision 1.3  2001/01/25 22:15:42  bpereira
 // added heretic support
 //
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -39,8 +33,7 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "doomdef.h"
-#include "doomtype.h"
+#include "doomincl.h"
 #include "m_random.h"
 //
 // M_Random

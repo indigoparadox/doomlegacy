@@ -24,14 +24,8 @@
 // Initial FreeBSD support.
 //
 // Revision 1.4  2001/03/09 21:53:56  metzgermeister
-// *** empty log message ***
-//
 // Revision 1.3  2000/11/02 19:49:40  bpereira
-// no message
-//
 // Revision 1.2  2000/09/10 10:56:01  metzgermeister
-// clean up & made it work again
-//
 // Revision 1.1  2000/08/21 21:17:32  metzgermeister
 // Initial import to CVS
 //
@@ -44,22 +38,14 @@
 // Debugging unfinished MAC_SDL
 //#define DEBUG_MAC  1
 
+// Because of WINVER redefine, before any include that could define WINVER
+#include "doomincl.h"
 
 #include "SDL.h"
 #include "SDL_opengl.h"
 
-
-//[segabor]
-#ifdef __MACH__
-// [WDJ] This is from OpenGL framework
-# include <OpenGL/gl.h>
-# include <OpenGL/glu.h>
-#else
-# include <GL/gl.h>
-# include <GL/glu.h>
-#endif
-
 #include "../hardware/r_opengl/r_opengl.h"
+  // OpenGL, gl.h, glu.h
 #include "../hardware/hw_main.h"
   // HWR_Startup()
 #include "v_video.h"

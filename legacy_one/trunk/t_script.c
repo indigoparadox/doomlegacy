@@ -42,6 +42,7 @@
 //
 //----------------------------------------------------------------------------
 
+#include "doomincl.h"
 #include "doomstat.h"
 #include "command.h"
 //#include "c_net.h"

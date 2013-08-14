@@ -18,23 +18,26 @@
 //
 // $Log: console.h,v $
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
 //
 // DESCRIPTION:
-//
-//
+//   Drop down console for entering commands.
+//   
 //-----------------------------------------------------------------------------
 
+#ifndef CONSOLE_H
+#define CONSOLE_H
 
 #include "d_event.h"
+  // event_t
 
-
-// for debugging shopuld be replaced by nothing later.. so debug is inactive
+#if 0
+// unused
+// for debugging should be replaced by nothing later.. so debug is inactive
 #define LOG(x) CONS_Printf(x)
+#endif
 
 void CON_Init (void);
 
@@ -66,3 +69,5 @@ void CONS_Error (char *msg);       // print out error msg, and wait a key
 
 // force console to move out
 void CON_ToggleOff (void);
+
+#endif

@@ -21,23 +21,11 @@
 // added heretic support
 //
 // Revision 1.7  2000/09/28 20:57:22  bpereira
-// no message
-//
 // Revision 1.6  2000/09/01 19:34:38  bpereira
-// no message
-//
 // Revision 1.5  2000/08/03 17:57:42  bpereira
-// no message
-//
 // Revision 1.4  2000/04/24 20:24:39  bpereira
-// no message
-//
 // Revision 1.3  2000/04/16 18:38:07  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:12  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -49,7 +37,11 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "../doomdef.h" //just for VERSION ..
+// Because of WINVER redefine, doomtype.h (via doomincl.h) is before any
+// other include that might define WINVER
+#include "../doomincl.h"
+  // VERSION
+
 #include "win_dbg.h"
 #include "win_main.h"
 

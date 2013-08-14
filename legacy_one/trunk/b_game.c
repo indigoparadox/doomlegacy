@@ -29,14 +29,16 @@
 // Revision 1.2  2002/09/27 16:40:07  tonyd
 // First commit of acbot
 //
+//-----------------------------------------------------------------------------
 
 // Bot include
 #include "b_bot.h"
 #include "b_game.h"
 #include "b_look.h"
 #include "b_node.h"
+
 // Doom include
-#include "doomdef.h"
+#include "doomincl.h"
 #include "doomstat.h"
 //#include "r_defs.h"
 #include "m_random.h"

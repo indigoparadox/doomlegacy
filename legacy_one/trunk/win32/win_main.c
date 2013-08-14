@@ -24,7 +24,6 @@
 // no message
 //
 // Revision 1.13  2001/02/10 12:27:14  bpereira
-// no message
 //
 // Revision 1.12  2001/01/06 22:21:08  judgecutor
 // Added NoDirectInput mouse input
@@ -33,32 +32,17 @@
 // Please fix this so it works under ALL version of win32
 //
 // Revision 1.10  2000/11/06 20:52:16  bpereira
-// no message
 //
 // Revision 1.9  2000/10/23 19:25:50  judgecutor
 // Fixed problem with mouse wheel event
 //
 // Revision 1.8  2000/10/08 13:30:02  bpereira
-// no message
-//
 // Revision 1.7  2000/09/28 20:57:22  bpereira
-// no message
-//
 // Revision 1.6  2000/09/01 19:34:38  bpereira
-// no message
-//
 // Revision 1.5  2000/08/03 17:57:42  bpereira
-// no message
-//
 // Revision 1.4  2000/04/23 16:19:52  bpereira
-// no message
-//
 // Revision 1.3  2000/04/16 18:38:07  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:12  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -72,25 +56,32 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "../doomdef.h"
+// Because of WINVER redefine, doomtype.h (via doomincl.h) is before any
+// other include that might define WINVER
+#include "../doomincl.h"
+
 #include <stdio.h>
 
-#include "../doomstat.h"  // netgame
+#include "../doomstat.h"
+  // netgame
 #include "resource.h"
 
 #include "../m_argv.h"
 #include "../d_main.h"
 #include "../i_system.h"
 
-#include "../keys.h"    //hack quick test
+#include "../keys.h"
+  //hack quick test
 
 #include "../console.h"
 
 #include "fabdxlib.h"
 #include "win_main.h"
 #include "win_dbg.h"
-#include "../I_sound.h"  // midi pause/unpause
-#include "../g_input.h"   // KEY_MOUSEWHEELxxx
+#include "../I_sound.h"
+  // midi pause/unpause
+#include "../g_input.h"
+  // KEY_MOUSEWHEELxxx
 
 // judgecutor: MSWheel support for Win95/NT3.51
 #include <zmouse.h>

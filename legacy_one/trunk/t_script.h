@@ -32,13 +32,13 @@
 //
 //--------------------------------------------------------------------------
 
-#ifndef __T_SCRIPT_H__
-#define __T_SCRIPT_H__
+#ifndef T_SCRIPT_H
+#define T_SCRIPT_H
 
 typedef struct runningscript_s runningscript_t;
 
-#include "p_mobj.h"
 #include "t_parse.h"
+#include "p_mobj.h"
 
 struct runningscript_s
 {

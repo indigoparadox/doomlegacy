@@ -22,14 +22,11 @@
 // get rid of FS hud pics on level exit and new game, also added exl's fix for clearing hub variables on new game
 //
 // Revision 1.4  2000/11/03 03:27:17  stroggonmeth
-// Again with the bug fixing...
 //
 // Revision 1.3  2000/11/02 17:50:06  stroggonmeth
 // Big 3Dfloors & FraggleScript commit!!
 //
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -39,10 +36,10 @@
 //
 //-----------------------------------------------------------------------------
 
-#ifndef __HU_STUFF_H__
-#define __HU_STUFF_H__
+#ifndef HU_STUFF_H
+#define HU_STUFF_H
 
-
+#include "doomtype.h"
 #include "d_event.h"
 #include "w_wad.h"
 #include "wi_stuff.h"

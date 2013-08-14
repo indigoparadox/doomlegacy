@@ -17,9 +17,8 @@
 //
 //-----------------------------------------------------------------------------
 
-
-#ifndef __KEYS_H__
-#define __KEYS_H__
+#ifndef KEYS_H
+#define KEYS_H
 
 /// These are the key event codes posted by the keyboard handler, and closely match the SDLKey symbols.
 /// 0-127 are ASCII codes. The codes KEY_NUMKB- are reserved for virtual keys.

@@ -21,10 +21,7 @@
 // remove the BOOL define
 //
 // Revision 1.8  2000/10/04 16:21:57  hurdler
-// small clean-up
-//
 // Revision 1.7  2000/04/30 10:30:10  bpereira
-// no message
 //
 // Revision 1.6  2000/04/27 17:48:47  hurdler
 // colormap code in hardware mode is now the default
@@ -39,8 +36,6 @@
 // fullscreen support under X in Linux
 //
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -50,15 +45,13 @@
 //
 //-----------------------------------------------------------------------------
 
+#ifndef HW_DATA_H
+#define HW_DATA_H
 
-#ifndef _HWR_DATA_
-#define _HWR_DATA_
+#include "doomtype.h"
 
-
-#include "../doomdef.h"
 //THIS MUST DISAPPEAR!!!
 #include "hw_glide.h"
-#include "../screen.h"
 
 
 // ==========================================================================
@@ -82,7 +75,7 @@ struct Mipmap_s {
 
     // opengl/glide
     struct Mipmap_s*  nextmipmap;// glide  : the FIFO list of texture in the memory
-                                     //          _DO NOT TUCH IT_
+                                 //          _DO NOT TOUCH IT_
                                  // opengl : list of all texture in opengl driver
     // glide only
     FxU32           cachepos;        //offset in hardware cache
@@ -126,4 +119,4 @@ typedef struct MipPatch_s MipPatch_t;
 #define FOG_WIDTH  256
 #define FOG_HEIGHT  64
 
-#endif //_HWR_DATA_
+#endif // HW_DATA_H

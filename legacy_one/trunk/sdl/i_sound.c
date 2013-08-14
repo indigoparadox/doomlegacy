@@ -39,10 +39,7 @@
 // fix Heretic issue with SDL and OS/2
 //
 // Revision 1.11  2003/07/13 13:16:15  hurdler
-// go RC1
-//
 // Revision 1.10  2001/08/20 20:40:42  metzgermeister
-// *** empty log message ***
 //
 // Revision 1.9  2001/05/16 22:33:35  bock
 // Initial FreeBSD support.
@@ -64,14 +61,8 @@
 //   * separate hw_trick.c now for HW_correctSWTrick(.)
 //
 // Revision 1.4  2001/03/09 21:53:56  metzgermeister
-// *** empty log message ***
-//
 // Revision 1.3  2000/11/02 19:49:40  bpereira
-// no message
-//
 // Revision 1.2  2000/09/10 10:56:00  metzgermeister
-// clean up & made it work again
-//
 // Revision 1.1  2000/08/21 21:17:32  metzgermeister
 // Initial import to CVS
 //
@@ -99,21 +90,20 @@
 # include "SDL_mixer.h"
 #endif
 
-#include "z_zone.h"
+#include "doomincl.h"
+#include "doomstat.h"
 
-#include "m_swap.h"
 #include "i_system.h"
 #include "i_sound.h"
 #include "m_argv.h"
 #include "m_misc.h"
+#include "m_swap.h"
 #include "w_wad.h"
 
-#include "doomdef.h"
-#include "doomstat.h"
 #include "s_sound.h"
-#include "doomtype.h"
 
 #include "d_main.h"
+#include "z_zone.h"
 
 #include "qmus2mid.h"
 

@@ -19,11 +19,7 @@
 //
 // $Log: dstrings.h,v $
 // Revision 1.3  2000/04/16 18:38:07  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -33,10 +29,11 @@
 //
 //-----------------------------------------------------------------------------
 
+#ifndef DSTRINGS_H
+#define DSTRINGS_H
 
-#ifndef __DSTRINGS__
-#define __DSTRINGS__
-
+#include "doomdef.h"
+  // FRENCH, BEX
 
 // All important printed strings.
 // Language selection (message strings).

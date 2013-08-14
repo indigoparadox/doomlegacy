@@ -22,11 +22,16 @@
 // Initial import to CVS
 //
 //
-//
 // DESCRIPTION:
 //      Tool for dynamic referencing of hardware rendering functions
 //
 //-----------------------------------------------------------------------------
 
+#ifndef HWSYM_SDL_H
+#define HWSYM_SDL_H
+
 void *hwSym(char *funcName);
+
+#endif
+
 

@@ -29,9 +29,8 @@
 //
 //-----------------------------------------------------------------------------
 
-
-#ifndef _H_FABDXLIB_
-#define _H_FABDXLIB_
+#ifndef FABDXLIB_H
+#define FABDXLIB_H
 
 #define SAFE_RELEASE(x) if(x != NULL) { x->lpVtbl->Release(x); x = NULL; }
 #define SAFE_DELETE(x) if(x != NULL) { delete x; x = NULL; }
@@ -45,22 +44,23 @@ typedef BOOL (*APPENUMMODESCALLBACK)(int width, int height, int bpp);
 
 
 // globals
-extern IDirectDraw*                                     DDr;
-extern IDirectDrawSurface*                      ScreenReal;
-extern IDirectDrawSurface*                      ScreenVirtual;
-extern IDirectDrawPalette*                      DDPalette;
+extern IDirectDraw*             DDr;
+extern IDirectDrawSurface*      ScreenReal;
+extern IDirectDrawSurface*      ScreenVirtual;
+extern IDirectDrawPalette*      DDPalette;
 
-extern BOOL                                     bAppFullScreen;                             // main code might need this to know the current
-                                                                                                        // fullscreen or windowed state
+extern BOOL                     bAppFullScreen;
+  // main code might need this to know the current
+  // fullscreen or windowed state
 
-extern int                                      windowPosX;                             // current position in windowed mode
-extern int                                      windowPosY;
+extern int                      windowPosX;   // current position in windowed mode
+extern int                      windowPosY;
 
-extern int                                      ScreenWidth;    
-extern int                                      ScreenHeight;
-extern BOOL                                     ScreenLocked;                   // Screen surface is being locked
-extern int                                      ScreenPitch;                    // offset from one line to the next
-extern unsigned char*           ScreenPtr;                              // memory of the surface
+extern int                      ScreenWidth;    
+extern int                      ScreenHeight;
+extern BOOL                     ScreenLocked; // Screen surface is being locked
+extern int                      ScreenPitch;  // offset from one line to the next
+extern unsigned char*           ScreenPtr;    // memory of the surface
 
 
 BOOL    EnumDirectDrawDisplayModes (APPENUMMODESCALLBACK appFunc);
@@ -85,4 +85,4 @@ boolean LockScreen (void);
 void    UnlockScreen (void);
 
 
-#endif /* _H_FABDXLIB_ */
+#endif /* FABDXLIB_H */

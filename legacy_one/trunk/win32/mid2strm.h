@@ -18,8 +18,6 @@
 //
 // $Log: mid2strm.h,v $
 // Revision 1.2  2000/02/27 00:42:12  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -29,41 +27,52 @@
 //
 //-----------------------------------------------------------------------------
 
+#ifndef MID2STRM_H
+#define MID2STRM_H
+
+// undefine this to remove warning messages
+//#define DEBUGMIDISTREAM
 
 #include <windows.h>
 #include <windowsx.h>
 #include <mmsystem.h>
 
 
-// undefine this to remove warning messages
-//#define DEBUGMIDISTREAM
+#define OUT_BUFFER_SIZE      1024
+  // Max stream buffer size in bytes
+#define BUFFER_TIME_LENGTH   60
+  // Amount to fill in milliseconds
+#define NUM_STREAM_BUFFERS   2
 
-#define OUT_BUFFER_SIZE             1024 // Max stream buffer size in bytes
-#define BUFFER_TIME_LENGTH                  60   // Amount to fill in milliseconds
-#define NUM_STREAM_BUFFERS          2
+#define CONVERTERR_NOERROR    0
+  // No error occured
+#define CONVERTF_STATUS_DONE  0x00000001
 
-#define CONVERTERR_NOERROR              0               // No error occured
-#define CONVERTF_STATUS_DONE            0x00000001
+#define CONVERTERR_DONE          -103
+  // Converter is done
+#define CONVERTERR_BUFFERFULL    -104
+  // The buffer is full
 
-#define CONVERTERR_DONE                 -103        // Converter is done
-#define CONVERTERR_BUFFERFULL       -104            // The buffer is full
-
-#define CONVERTF_RESET                      0x00000001
+#define CONVERTF_RESET                  0x00000001
 #define CONVERTF_STATUS_STUCK           0x00000002
 #define CONVERTF_STATUS_GOTEVENT        0x00000004
-#define CONVERTERR_CORRUPT              -101        // The input file is corrupt
+#define CONVERTERR_CORRUPT       -101
+  // The input file is corrupt
 
 // The converter has already encountered a corrupt file and cannot convert any
 // more of this file -- you must reset the converter
-#define CONVERTERR_STUCK                -102
-#define CONVERTERR_METASKIP             -105        // Skipping unknown meta event
+#define CONVERTERR_STUCK         -102
+#define CONVERTERR_METASKIP      -105
+  // Skipping unknown meta event
 
-#define MAX_MIDI_IN_TRACKS          16
+#define MAX_MIDI_IN_TRACKS         16
 
 // MIDI file constants
 //
-#define MThd            0x6468544D                      // Start of file
-#define MTrk            0x6B72544D                      // Start of track
+#define MThd            0x6468544D
+   // Start of file
+#define MTrk            0x6B72544D
+   // Start of track
 
 #define MIDI_SYSEX      ((BYTE)0xF0)                    // SysEx begin
 #define MIDI_SYSEXEND   ((BYTE)0xF7)                    // SysEx begin
@@ -125,13 +134,13 @@ typedef struct
 // and the midi playback code in win_snd.c
 typedef struct _ConvertInfo
 {
-    MIDIHDR     mhBuffer;               // Standard Windows stream buffer header
+    MIDIHDR     mhBuffer;           // Standard Windows stream buffer header
     DWORD       dwStartOffset;      // Start offset from mhStreamBuffer.lpStart
     DWORD       dwMaxLength;        // Max length to convert on this pass
 
     DWORD       dwBytesRecorded;    // Used internally by the mid2strm.c module
-    DWORD       tkStart;                // Used internally by the mid2strm.c module
-    BOOL        bTimesUp;               // Used internally by the mid2strm.c module
+    DWORD       tkStart;            // Used internally by the mid2strm.c module
+    BOOL        bTimesUp;           // Used internally by the mid2strm.c module
 } CONVERTINFO, *LPCONVERTINFO;
 
 // mid2strm.c
@@ -141,3 +150,5 @@ extern  DWORD   dwProgressBytes;
 void    Mid2StreamConverterCleanup (void);
 BOOL    Mid2StreamConverterInit( unsigned char* pMidiData, ULONG iMidiSize );
 int     Mid2StreamConvertToBuffer( DWORD dwFlags, LPCONVERTINFO lpciInfo );
+
+#endif

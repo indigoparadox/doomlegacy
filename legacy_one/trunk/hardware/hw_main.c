@@ -24,7 +24,6 @@
 // better translucent hud
 //
 // Revision 1.113  2003/07/13 13:16:15  hurdler
-// go RC1
 //
 // Revision 1.112  2003/07/10 20:51:43  bock
 // Small types fix
@@ -36,7 +35,6 @@
 // adding some math functions to FraggleScript
 //
 // Revision 1.109  2002/01/12 02:26:47  stroggonmeth
-// Uh, commit again heh
 //
 // Revision 1.108  2002/01/05 01:08:51  hurdler
 // fix a crashing bug with phobx in splitwall (is it ok ?)
@@ -60,7 +58,6 @@
 // small commit, mainly splitscreen fix
 //
 // Revision 1.101  2001/09/03 21:06:52  hurdler
-// bug fix
 //
 // Revision 1.100  2001/08/27 19:59:35  hurdler
 // Fix colormap in heretic + opengl, fixedcolormap and NEWCORONA
@@ -69,19 +66,13 @@
 // added fov for glide and fixed newcoronas code
 //
 // Revision 1.98  2001/08/19 20:41:04  hurdler
-// small changes
 //
 // Revision 1.97  2001/08/19 15:40:07  bpereira
 // added Treansform (and lighting) to glide
 //
 // Revision 1.96  2001/08/14 00:36:26  hurdler
-// Small update
-//
 // Revision 1.95  2001/08/13 22:53:54  stroggonmeth
-// Small commit
-//
 // Revision 1.94  2001/08/13 17:23:17  hurdler
-// Little modif
 //
 // Revision 1.93  2001/08/13 17:01:40  hurdler
 // Fix some coloured sector issue
@@ -132,13 +123,8 @@
 // Fix small bugs (win2k timer + status bar)
 //
 // Revision 1.77  2001/06/16 08:07:55  bpereira
-// no message
-//
 // Revision 1.76  2001/05/27 13:42:48  bpereira
-// no message
-//
 // Revision 1.75  2001/05/16 21:21:15  bpereira
-// no message
 //
 // Revision 1.74  2001/05/14 19:02:58  metzgermeister
 //   * Fixed floor not moving up with player on E3M1
@@ -147,7 +133,6 @@
 //   * fixed sound bug in SDL
 //
 // Revision 1.73  2001/05/07 20:27:16  stroggonmeth
-// no message
 //
 // Revision 1.72  2001/05/03 21:52:23  hurdler
 // fix bis
@@ -165,7 +150,6 @@
 // HW fix and misc. changes
 //
 // Revision 1.67  2001/04/27 13:32:14  bpereira
-// no message
 //
 // Revision 1.66  2001/04/18 23:22:00  hurdler
 // Until SoM fix it more properly than me ;)
@@ -177,19 +161,10 @@
 // Fix misaligned midtexture problem (to verify!)
 //
 // Revision 1.63  2001/04/16 15:16:45  hurdler
-// minor changes
-//
 // Revision 1.62  2001/04/09 23:26:05  hurdler
-// clean up
-//
 // Revision 1.61  2001/04/09 20:24:28  metzgermeister
-// turned it on again :)
-//
 // Revision 1.60  2001/04/09 14:18:21  hurdler
-// no message
-//
 // Revision 1.59  2001/04/08 10:15:54  bpereira
-// no message
 //
 // Revision 1.58  2001/04/03 23:15:39  hurdler
 // FIXME: this code adds basic 3D-floors support in hw mode
@@ -214,52 +189,30 @@
 // Long time no commit. 3D floors, FraggleScript, portals, ect.
 //
 // Revision 1.52  2001/02/24 13:35:22  bpereira
-// no message
-//
 // Revision 1.51  2001/02/10 12:27:14  bpereira
-// no message
 //
 // Revision 1.50  2001/01/31 17:15:09  hurdler
 // Add cv_scalestatusbar in hardware mode
 //
 // Revision 1.49  2001/01/25 18:56:27  bpereira
-// no message
-//
 // Revision 1.48  2000/11/18 15:51:25  bpereira
-// no message
 //
 // Revision 1.47  2000/11/12 21:04:28  hurdler
 // Fix a bug with validcount and boom code (dyn.light looked ugly with boom water)
 //
 // Revision 1.46  2000/11/11 13:59:47  bpereira
-// no message
-//
 // Revision 1.45  2000/11/02 22:14:02  bpereira
-// no message
-//
 // Revision 1.44  2000/11/02 21:54:26  bpereira
-// no message
-//
 // Revision 1.43  2000/11/02 19:49:39  bpereira
-// no message
 //
 // Revision 1.42  2000/10/22 14:16:41  hurdler
 // Prepare code for TANDL
 //
 // Revision 1.41  2000/10/21 08:43:32  bpereira
-// no message
-//
 // Revision 1.40  2000/10/04 16:21:57  hurdler
-// small clean-up
-//
 // Revision 1.39  2000/10/02 18:25:46  bpereira
-// no message
-//
 // Revision 1.38  2000/10/01 15:18:38  hurdler
-// no message
-//
 // Revision 1.37  2000/10/01 10:18:23  bpereira
-// no message
 //
 // Revision 1.36  2000/10/01 09:10:19  hurdler
 // Put the md2 code in #ifdef TANDL
@@ -268,25 +221,15 @@
 // remove polysky, enable PF_Environment for sprites
 //
 // Revision 1.34  2000/09/28 20:57:20  bpereira
-// no message
-//
 // Revision 1.33  2000/09/21 16:45:11  bpereira
-// no message
-//
 // Revision 1.32  2000/08/31 14:30:57  bpereira
-// no message
 //
 // Revision 1.31  2000/08/21 21:13:58  metzgermeister
 // crash on polys>256verts fixed
 //
 // Revision 1.30  2000/08/11 19:11:57  metzgermeister
-// *** empty log message ***
-//
 // Revision 1.29  2000/08/03 17:57:42  bpereira
-// no message
-//
 // Revision 1.28  2000/07/01 09:23:50  bpereira
-// no message
 //
 // Revision 1.27  2000/06/08 19:40:34  hurdler
 // my changes before splitting (can be reverted in development branch)
@@ -295,13 +238,8 @@
 // Wall, floor and ceiling lighting is now done by changing only the RGB, not the alpha
 //
 // Revision 1.25  2000/05/10 17:45:35  kegetys
-// no message
-//
 // Revision 1.24  2000/05/05 18:00:05  bpereira
-// no message
-//
 // Revision 1.23  2000/04/30 10:30:10  bpereira
-// no message
 //
 // Revision 1.22  2000/04/27 23:41:16  hurdler
 // better splitscreen support in OpenGL mode
@@ -310,19 +248,16 @@
 // colormap code in hardware mode is now the default
 //
 // Revision 1.20  2000/04/24 20:24:38  bpereira
-// no message
 //
 // Revision 1.19  2000/04/24 15:46:34  hurdler
 // Support colormap for text
 //
 // Revision 1.18  2000/04/23 16:19:52  bpereira
-// no message
 //
 // Revision 1.17  2000/04/23 12:50:32  hurdler
 // support filter mode in OpenGL
 //
 // Revision 1.16  2000/04/22 21:08:23  hurdler
-// I like it better like that
 //
 // Revision 1.15  2000/04/22 16:09:14  hurdler
 // support skin color in hardware mode
@@ -331,7 +266,6 @@
 // better support of decals
 //
 // Revision 1.13  2000/04/18 12:52:21  hurdler
-// join with Boris' code
 //
 // Revision 1.11  2000/04/14 16:34:26  hurdler
 // some nice changes for coronas
@@ -340,29 +274,22 @@
 // ready for T&L code and true static lighting
 //
 // Revision 1.9  2000/04/09 01:59:06  hurdler
-// removed warnings
 //
 // Revision 1.8  2000/04/08 11:28:46  hurdler
 // added boom water support
 //
 // Revision 1.7  2000/03/29 19:39:49  bpereira
-// no message
 //
 // Revision 1.6  2000/03/08 17:02:05  hurdler
 // fix the joiningame problem under Linux
 //
 // Revision 1.5  2000/03/07 14:22:48  hurdler
-// no message
 //
 // Revision 1.4  2000/03/06 16:52:06  hurdler
 // hack for OpenGL / Open Entry problem
 //
 // Revision 1.3  2000/03/05 17:10:56  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -374,11 +301,14 @@
 
 #include <math.h>
 
+#include "../doomincl.h"
+
 #include "hw_glob.h"
 #include "hw_light.h"
 
 #include "../doomstat.h"
-#include "../i_video.h" // added by Hurdler for rendermode == render_glide
+#include "../i_video.h"
+  // added by Hurdler for rendermode == render_glide
 #include "../v_video.h"
 #include "../p_local.h"
 #include "../p_setup.h"

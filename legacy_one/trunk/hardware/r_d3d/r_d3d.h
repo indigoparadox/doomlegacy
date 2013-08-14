@@ -24,19 +24,20 @@
 // Completely rewritten d3d driver... absolutely not finished at all
 //
 //
-//
 // DESCRIPTION:
 //      
 //
 //-----------------------------------------------------------------------------
 
+#ifndef R_D3D_H
+#define R_D3D_H
 
-#ifndef _R_D3D_H_
-#define _R_D3D_H_
-
+#include "doomtype.h"
+  // RGBA_t
 #include "gl2d3d.h"
 
-#define  _CREATE_DLL_  // necessary for Unix AND Windows
+// necessary for Unix AND Windows
+#define  HWRAPI_CREATE_DLL
 #include "../hw_drv.h"
 
 // ==========================================================================
@@ -46,8 +47,6 @@
 #define MIN(x,y) ( ((x)<(y)) ? (x) : (y) )
 #define MAX(x,y) ( ((x)>(y)) ? (x) : (y) )
 
-#undef DEBUG_TO_FILE            // maybe defined in previous *.h
-#define DEBUG_TO_FILE           // output debugging msgs to d3dlog.txt
 
 #define DRIVER_STRING "HWRAPI Init(): DooM Legacy Direct3D renderer"
 
@@ -70,7 +69,7 @@ void SetStates(void);
 
 extern const GLubyte    *gl_extensions;
 extern RGBA_t           myPaletteData[];
-extern HANDLE           logstream;
+//extern HANDLE           logstream;   // name clash
 extern GLint            screen_width;
 extern GLint            screen_height;
 extern GLbyte           screen_depth;

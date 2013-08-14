@@ -25,7 +25,6 @@
 // New fmod, fs functions, bugfix or 2, patrol nodes
 //
 // Revision 1.4  2002/01/12 02:21:36  stroggonmeth
-// Big commit
 //
 // Revision 1.3  2001/03/13 22:14:20  stroggonmeth
 // Long time no commit. 3D floors, FraggleScript, portals, ect.
@@ -49,7 +48,7 @@
 
 /* includes ************************/
 
-#include <stdio.h>
+#include "doomincl.h"
 #include "doomstat.h"
 #include "command.h"
 #include "z_zone.h"

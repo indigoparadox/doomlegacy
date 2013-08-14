@@ -24,32 +24,23 @@
 // *** empty log message ***
 //
 // Revision 1.10  2001/03/30 17:12:49  bpereira
-// no message
-//
 // Revision 1.9  2001/02/24 13:35:19  bpereira
-// no message
-//
 // Revision 1.8  2001/02/10 12:27:13  bpereira
-// no message
 //
 // Revision 1.7  2001/01/25 22:15:42  bpereira
 // added heretic support
 //
 // Revision 1.6  2000/11/26 00:46:31  hurdler
-// small bug fixes
 //
 // Revision 1.5  2000/10/04 17:03:57  hurdler
 // This is the formule I propose for mouse sensitivity
 //
 // Revision 1.4  2000/04/16 18:38:07  bpereira
-// no message
 //
 // Revision 1.3  2000/04/04 00:32:45  stroggonmeth
 // Initial Boom compatability plus few misc changes all around.
 //
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -60,7 +51,7 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "doomdef.h"
+#include "doomincl.h"
 #include "doomstat.h"
 #include "g_input.h"
 #include "keys.h"

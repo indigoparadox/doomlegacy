@@ -19,28 +19,25 @@
 //
 // $Log: d_think.h,v $
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
 //
 // DESCRIPTION:
+//  Mobj, and some mapthings, as thinkers.
 //  MapObj data. Map Objects or mobjs are actors, entities,
 //  thinker, take-your-pick... anything that moves, acts, or
 //  suffers state changes of more or less violent nature.
 //
 //-----------------------------------------------------------------------------
 
-
-#ifndef __D_THINK__
-#define __D_THINK__
+#ifndef D_THINK_H
+#define D_THINK_H
 
 
 #ifdef __GNUG__
 #pragma interface
 #endif
-
 
 
 //

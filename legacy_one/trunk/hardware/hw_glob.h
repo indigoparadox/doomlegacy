@@ -24,19 +24,10 @@
 // Add translucent 3D water in hw mode
 //
 // Revision 1.13  2001/05/16 21:21:15  bpereira
-// no message
-//
 // Revision 1.12  2000/11/18 15:51:25  bpereira
-// no message
-//
 // Revision 1.11  2000/11/04 16:23:44  bpereira
-// no message
-//
 // Revision 1.10  2000/11/02 19:49:39  bpereira
-// no message
-//
 // Revision 1.9  2000/09/21 16:45:11  bpereira
-// no message
 //
 // Revision 1.8  2000/04/27 17:48:47  hurdler
 // colormap code in hardware mode is now the default
@@ -45,20 +36,13 @@
 // Support colormap for text
 //
 // Revision 1.6  2000/04/23 16:19:52  bpereira
-// no message
-//
 // Revision 1.5  2000/04/22 21:08:23  hurdler
-// I like it better like that
 //
 // Revision 1.4  2000/04/22 16:09:14  hurdler
 // support skin color in hardware mode
 //
 // Revision 1.3  2000/03/29 19:39:49  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -68,9 +52,8 @@
 //
 //-----------------------------------------------------------------------------
 
-
-#ifndef _HWR_GLOB_H_
-#define _HWR_GLOB_H_
+#ifndef HW_GLOB_H
+#define HW_GLOB_H
 
 #include "hw_defs.h"
 #include "hw_main.h"
@@ -179,5 +162,4 @@ extern float gr_viewz;
 // misc externs
 // ------------
 
-
-#endif //_HW_GLOB_
+#endif // HW_GLOB_H

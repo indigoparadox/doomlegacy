@@ -18,13 +18,11 @@
 //
 // $Log: r_opengl.c,v $
 // Revision 1.60  2002/09/21 11:10:28  hurdler
-// no message
 //
 // Revision 1.59  2002/06/30 21:37:48  hurdler
 // Ready for 1.32 beta 5 release
 //
 // Revision 1.58  2002/01/05 16:39:19  hurdler
-// Little fix
 //
 // Revision 1.57  2001/12/31 13:47:46  hurdler
 // Add setcorona FS command and prepare the code for beta 4
@@ -66,22 +64,14 @@
 // fix PF_Occlude/PF_NoDepthTest
 //
 // Revision 1.44  2001/03/09 21:53:56  metzgermeister
-// *** empty log message ***
-//
 // Revision 1.43  2001/02/28 17:50:56  bpereira
-// no message
-//
 // Revision 1.42  2001/02/24 13:35:22  bpereira
-// no message
 //
 // Revision 1.41  2001/02/19 17:45:20  hurdler
 // Fix the problem of fullbright with Matrox's drivers under Linux
 //
 // Revision 1.40  2001/02/10 13:26:06  hurdler
-// no message
-//
 // Revision 1.39  2001/01/25 18:56:28  bpereira
-// no message
 //
 // Revision 1.38  2001/01/05 18:19:29  hurdler
 // add renderer version checking
@@ -90,10 +80,7 @@
 // fix a small bug with GeForce based cards
 //
 // Revision 1.36  2000/11/02 19:49:39  bpereira
-// no message
-//
 // Revision 1.35  2000/10/22 14:17:17  hurdler
-// Adjust version string
 //
 // Revision 1.34  2000/10/04 16:27:56  hurdler
 // Implement hardware texture memory stats
@@ -102,19 +89,13 @@
 // Fix a bug with PF_Invisible
 //
 // Revision 1.32  2000/09/28 20:57:21  bpereira
-// no message
-//
 // Revision 1.31  2000/09/10 10:48:56  metzgermeister
-// *** empty log message ***
-//
 // Revision 1.30  2000/08/10 19:58:04  bpereira
-// no message
 //
 // Revision 1.29  2000/08/10 14:19:19  hurdler
 // add waitvbl, fix sky problem
 //
 // Revision 1.28  2000/07/01 09:23:50  bpereira
-// no message
 //
 // Revision 1.27  2000/06/08 19:41:53  hurdler
 // my changes before splitting (can be reverted in development branch)
@@ -126,10 +107,7 @@
 // definitively fix the colormap
 //
 // Revision 1.24  2000/05/05 18:00:06  bpereira
-// no message
-//
 // Revision 1.23  2000/04/30 10:30:10  bpereira
-// no message
 //
 // Revision 1.22  2000/04/28 00:09:22  hurdler
 // Full support of coronas in splitscreen mode
@@ -144,19 +122,16 @@
 // Support colormap for text
 //
 // Revision 1.18  2000/04/23 15:07:37  hurdler
-// quick bug fix
 //
 // Revision 1.17  2000/04/23 12:55:24  hurdler
 // support filter mode in OpenGL
 //
 // Revision 1.16  2000/04/22 16:48:56  hurdler
-// no message
 //
 // Revision 1.15  2000/04/22 16:48:00  hurdler
 // support skin color
 //
 // Revision 1.14  2000/04/19 10:54:43  hurdler
-// no message
 //
 // Revision 1.13  2000/04/18 16:07:47  hurdler
 // better support of decals
@@ -168,7 +143,6 @@
 // change a little coronas' code
 //
 // Revision 1.10  2000/04/16 18:38:07  bpereira
-// no message
 //
 // Revision 1.9  2000/04/14 23:31:02  hurdler
 // fix the bug of near clipping plane at startup
@@ -186,14 +160,11 @@
 // add support for new coronas
 //
 // Revision 1.4  2000/03/29 19:39:49  bpereira
-// no message
 //
 // Revision 1.3  2000/03/07 03:31:14  hurdler
 // fix linux compilation
 //
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -206,6 +177,9 @@
 
 #include <stdarg.h>
 #include <math.h>
+
+#include "doomincl.h"
+  // logstream
 #include "r_opengl.h"
 
 // ==========================================================================
@@ -329,6 +303,7 @@ void DBG_Printf( LPCTSTR lpFmt, ... )
     dbgbuf[DBG_BUF_SIZE-1] = '\0'; // term, when length limited
     va_end(ap);
 
+#ifdef LOGMESSAGES
 #ifdef WIN_NATIVE_PLACEHOLDER
     DWORD   bytesWritten;
     if( logstream != INVALID_HANDLE_VALUE )
@@ -336,6 +311,7 @@ void DBG_Printf( LPCTSTR lpFmt, ... )
 #else
     if (logstream)
       fputs(dbgbuf, logstream);
+#endif
 #endif
 
 #endif

@@ -22,7 +22,6 @@
 // New fmod, fs functions, bugfix or 2, patrol nodes
 //
 // Revision 1.6  2003/03/22 22:35:59  hurdler
-// Fix CR+LF issue
 //
 // Revision 1.5  2002/09/27 16:40:08  tonyd
 // First commit of acbot
@@ -31,11 +30,7 @@
 // added heretic support
 //
 // Revision 1.3  2000/08/31 14:30:55  bpereira
-// no message
-//
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -45,9 +40,8 @@
 //
 //-----------------------------------------------------------------------------
 
-
-#ifndef __D_PLAYER__
-#define __D_PLAYER__
+#ifndef D_PLAYER_H
+#define D_PLAYER_H
 
 
 // The player data structure depends on a number

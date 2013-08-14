@@ -31,17 +31,12 @@
 // Long time no commit. 3D floors, FraggleScript, portals, ect.
 //
 // Revision 1.5  2001/02/24 13:35:21  bpereira
-// no message
-//
 // Revision 1.4  2000/11/09 17:56:20  stroggonmeth
-// Hopefully fixed a few bugs and did a few optimizations.
 //
 // Revision 1.3  2000/11/02 17:50:09  stroggonmeth
 // Big 3Dfloors & FraggleScript commit!!
 //
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -52,9 +47,12 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __R_DRAW__
-#define __R_DRAW__
+#ifndef R_DRAW_H
+#define R_DRAW_H
 
+#include "doomdef.h"
+  // HORIZONTALDRAW
+#include "doomtype.h"
 #include "r_defs.h"
 
 // -------------------------------
@@ -259,4 +257,4 @@ void    R_DrawFogSpan_32(void);
 void    R_DrawFogColumn_32(void);
 
 // =========================================================================
-#endif  // __R_DRAW__
+#endif  // R_DRAW_H

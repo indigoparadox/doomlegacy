@@ -30,10 +30,11 @@
 //--------------------------------------------------------------------------
 
 
-#ifndef __OPERATOR_H__
-#define __OPERATOR_H__
+#ifndef T_OPERATOR_H
+#define T_OPERATOR_H
 
 #include "t_parse.h"
+  // operator_t
 
 extern operator_t operators[];
 extern int num_operators;

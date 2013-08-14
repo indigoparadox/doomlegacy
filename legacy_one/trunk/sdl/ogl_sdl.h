@@ -18,17 +18,19 @@
 //
 // $Log: ogl_sdl.h,v $
 // Revision 1.2  2000/11/02 19:49:40  bpereira
-// no message
-//
 // Revision 1.1  2000/09/26 17:54:42  metzgermeister
 // initial import
-//
 //
 //
 // DESCRIPTION:
 //      SDL specific part of the OpenGL API for Doom Legacy
 //
 //-----------------------------------------------------------------------------
+
+#ifndef OGL_SDL_H
+#define OGL_SDL_H
+
+#include "doomtype.h"
 
 boolean OglSdlSurface(int w, int h, int isFullscreen);
 
@@ -37,4 +39,6 @@ void OglSdlFinishUpdate(boolean vidwait);
 void OglSdlShutdown(void);
 
 void OglSdlSetPalette(RGBA_t *palette, int gammaRed, int gammaGreen, int gammaBlue);
+
+#endif
 

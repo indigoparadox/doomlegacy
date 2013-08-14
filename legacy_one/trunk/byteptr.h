@@ -21,21 +21,20 @@
 // Fix problems in adapting to __BIG_ENDIAN__ machines.
 //
 // Revision 1.5  2000/10/21 08:43:28  bpereira
-// no message
-//
 // Revision 1.4  2000/04/16 18:38:06  bpereira
-// no message
 //
 //
 // DESCRIPTION:
-//    Macro to read/write from/to a char*, used for packet cration and such...
+//    Macro to read/write from/to a char*, used for packet creation and such...
 //
 //-----------------------------------------------------------------------------
 
-#include "m_swap.h"
-
 #ifndef BYTEPTR_H
 #define BYTEPTR_H
+
+#include <string.h>
+  // memcpy
+#include "m_swap.h"
 
 // These are used in save game, network communications, and reading some wad lumps.
 

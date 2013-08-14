@@ -21,8 +21,6 @@
 // Initial FreeBSD support.
 //
 // Revision 1.2  2000/09/10 10:56:00  metzgermeister
-// clean up & made it work again
-//
 // Revision 1.1  2000/08/21 21:17:32  metzgermeister
 // Initial import to CVS
 //
@@ -31,10 +29,11 @@
 //
 //-----------------------------------------------------------------------------
 
-#include <stdlib.h>
+// Because of WINVER redefine, put before any include that might define WINVER
+#include "doomincl.h"
+
 #include "SDL.h"
 
-#include "doomtype.h"
 #include "i_sound.h"
 #include "command.h"
 #include "m_argv.h"

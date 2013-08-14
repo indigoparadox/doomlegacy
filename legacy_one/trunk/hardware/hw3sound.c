@@ -33,11 +33,8 @@
 // Added "static" sources
 //
 // Revision 1.2  2001/05/27 13:42:48  bpereira
-// no message
-//
 // Revision 1.1  2001/04/04 19:41:16  judgecutor
 // Initial release of 3D Sound Support
-//
 // 
 //
 // DESCRIPTION:
@@ -46,19 +43,19 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "../doomdef.h"
+#include "../doomincl.h"
 #include "hw3sound.h"
 #include "../i_sound.h"
 #include "../s_sound.h"
 #include "../w_wad.h"
 
-#include "../z_zone.h"
 #include "../g_game.h"
 #include "../tables.h"
 #include "../sounds.h"
 #include "../r_main.h" 
 #include "../r_things.h"
 #include "../m_random.h"
+#include "../z_zone.h"
 
 #define ANGLE2DEG(x) (((double)(x)) / ((double)ANG45/45))
 

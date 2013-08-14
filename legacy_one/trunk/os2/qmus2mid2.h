@@ -1,4 +1,4 @@
-#if !defined( QMUS2MID_H )
+#ifndef QMUS2MID_H
 #define QMUS2MID_H
 
 #ifdef MSDOG

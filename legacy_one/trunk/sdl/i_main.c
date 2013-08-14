@@ -25,8 +25,6 @@
 // Add log file under Linux
 //
 // Revision 1.2  2000/09/10 10:56:00  metzgermeister
-// clean up & made it work again
-//
 // Revision 1.1  2000/08/21 21:17:32  metzgermeister
 // Initial import to CVS
 //
@@ -38,7 +36,9 @@
 //-----------------------------------------------------------------------------
 
 
-#include "doomdef.h"
+#include "doomincl.h"
+  // stdlib, stdio, string
+  // MAC_SDL, LOGMESSAGES
 
 #include "m_argv.h"
 #include "d_main.h"

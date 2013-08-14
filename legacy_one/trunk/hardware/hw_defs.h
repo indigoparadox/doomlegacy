@@ -36,25 +36,12 @@
 // MD2 implementation is getting better but still need lots of work
 //
 // Revision 1.11  2001/02/28 17:50:56  bpereira
-// no message
-//
 // Revision 1.10  2001/02/10 12:27:14  bpereira
-// no message
-//
 // Revision 1.9  2001/01/25 18:56:27  bpereira
-// no message
-//
 // Revision 1.8  2000/11/02 19:49:39  bpereira
-// no message
-//
 // Revision 1.7  2000/08/31 14:30:57  bpereira
-// no message
-//
 // Revision 1.6  2000/07/01 09:23:50  bpereira
-// no message
-//
 // Revision 1.5  2000/05/05 18:00:05  bpereira
-// no message
 //
 // Revision 1.4  2000/04/18 16:07:16  hurdler
 // better support of decals
@@ -63,8 +50,6 @@
 // Better coronas support
 //
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -74,9 +59,10 @@
 //
 //-----------------------------------------------------------------------------
 
+#ifndef HW_DEFS_H
+#define HW_DEFS_H
 
-#ifndef _HWR_DEFS_
-#define _HWR_DEFS_
+#include "../doomdef.h"
 #include "../doomtype.h"
 
 // ==========================================================================
@@ -291,4 +277,4 @@ typedef enum {
 } hwd_filtermode_e;
 
 
-#endif //_HWR_DEFS_
+#endif // HW_DEFS_H

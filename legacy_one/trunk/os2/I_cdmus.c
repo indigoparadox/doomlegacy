@@ -18,7 +18,6 @@
 //
 // $Log: I_cdmus.c,v $
 // Revision 1.2  2000/08/10 11:07:51  ydario
-// fix CRLF
 //
 // Revision 1.1  2000/08/09 11:42:47  ydario
 // OS/2 specific platform code
@@ -27,7 +26,6 @@
 // changed to CDROMPLAYMSF for CD music
 //
 // Revision 1.5  2000/04/07 23:12:38  metzgermeister
-// fixed some minor bugs
 //
 // Revision 1.4  2000/03/28 16:18:42  linuxcub
 // Added a command to the Linux sound-server which sets a master volume...
@@ -36,8 +34,6 @@
 // Ripped CD code out of Quake and put it here
 //
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -58,7 +54,7 @@
 #include <time.h>
 #include <errno.h>
 
-#include "doomtype.h"
+#include "doomincl.h"
 #include "i_sound.h"
 #include "command.h"
 #include "m_argv.h"

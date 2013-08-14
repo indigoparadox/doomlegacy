@@ -1,3 +1,22 @@
+// Emacs style mode select   -*- C++ -*- 
+//-----------------------------------------------------------------------------
+//
+// $Id$
+//
+// Copyright (C) 1998-2000 by DooM Legacy Team.
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+//-----------------------------------------------------------------------------
+
 #include <stdio.h>
 #include <direct.h>
 #include <fcntl.h>
@@ -15,7 +34,7 @@
 //
 // filesearch:
 //
-// ATTENTION : make sure there is enouth space in filename to put a full path (255 or 512)
+// ATTENTION : make sure there is enough space in filename to put a full path (255 or 512)
 // if needmd5check==0 there is no md5 check
 // if changestring then filename will be change with the full path and name
 // maxsearchdepth==0 only search given directory, no subdirs

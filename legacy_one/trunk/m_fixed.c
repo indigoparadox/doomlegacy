@@ -19,14 +19,8 @@
 //
 // $Log: m_fixed.c,v $
 // Revision 1.4  2001/03/30 17:12:50  bpereira
-// no message
-//
 // Revision 1.3  2000/11/26 01:02:27  hurdler
-// small bug fixes
-//
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -43,13 +37,13 @@
 #ifndef USEASM
 fixed_t FixedMul (fixed_t a, fixed_t b)
 {
-    return ((INT64) a * (INT64) b) >> FRACBITS;
+    return ((int64_t) a * (int64_t) b) >> FRACBITS;
 }
 fixed_t FixedDiv2 (fixed_t a, fixed_t b)
 {
 #if 0
-    INT64 c;
-    c = ((INT64)a<<16) / ((INT64)b);
+    int64_t c;
+    c = ((int64_t)a<<16) / ((int64_t)b);
     return (fixed_t) c;
 #endif
 

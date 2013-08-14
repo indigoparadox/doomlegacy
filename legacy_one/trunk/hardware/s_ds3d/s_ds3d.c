@@ -18,7 +18,6 @@
 //
 // $Log: s_ds3d.c,v $
 // Revision 1.6  2002/10/07 19:28:35  judgecutor
-// Minor fixes
 //
 // Revision 1.5  2002/08/16 20:22:31  judgecutor
 // Added sound pitching
@@ -42,19 +41,18 @@
 //
 //-----------------------------------------------------------------------------
 
+//#define DEBUG_SDS3D_TO_FILE
+
 #define INITGUID
 #include <windows.h>
 #include <cguid.h>
 #include <dsound.h>
 
 
-#define  _CREATE_DLL_
+#define  HWRAPI_CREATE_DLL
 #include "../hw3dsdrv.h"
+
 #include "../../m_fixed.h"
-
-#undef DEBUG_TO_FILE
-#define DEBUG_TO_FILE
-
 
 // Internal sound stack
 typedef struct stack_snd_s
@@ -93,8 +91,8 @@ static int      srate;                   // Default sample rate
 
 
 // output all debugging messages to this file
-#ifdef DEBUG_TO_FILE
-static HANDLE  logstream;
+#ifdef DEBUG_SDS3D_TO_FILE
+static HANDLE  s3d_logstream;
 #endif
 
 static LPDIRECTSOUND            DSnd            = NULL;  // Main DirectSound object
@@ -135,11 +133,11 @@ BOOL APIENTRY DllMain( HANDLE hModule,      // handle to DLL module
         case DLL_PROCESS_ATTACH:
          // Initialize once for each new process.
          // Return FALSE to fail DLL load.
-#ifdef DEBUG_TO_FILE
-            logstream = INVALID_HANDLE_VALUE;
-            logstream = CreateFile ("s_ds3d.log", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+#ifdef DEBUG_SDS3D_TO_FILE
+            s3d_logstream = INVALID_HANDLE_VALUE;
+            s3d_logstream = CreateFile ("s_ds3d.log", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                                      FILE_ATTRIBUTE_NORMAL/*|FILE_FLAG_WRITE_THROUGH*/, NULL);
-            if (logstream == INVALID_HANDLE_VALUE)
+            if (s3d_logstream == INVALID_HANDLE_VALUE)
                 return FALSE;
 #endif
             break;
@@ -154,10 +152,10 @@ BOOL APIENTRY DllMain( HANDLE hModule,      // handle to DLL module
 
         case DLL_PROCESS_DETACH:
          // Perform any necessary cleanup.
-#ifdef DEBUG_TO_FILE
-            if ( logstream != INVALID_HANDLE_VALUE ) {
-                CloseHandle ( logstream );
-                logstream  = INVALID_HANDLE_VALUE;
+#ifdef DEBUG_SDS3D_TO_FILE
+            if ( s3d_logstream != INVALID_HANDLE_VALUE ) {
+                CloseHandle ( s3d_logstream );
+                s3d_logstream  = INVALID_HANDLE_VALUE;
             }
 #endif
             break;
@@ -168,14 +166,14 @@ BOOL APIENTRY DllMain( HANDLE hModule,      // handle to DLL module
 /***************************************************************
  *
  * DBG_Printf
- * Output error messages to debug log if DEBUG_TO_FILE is defined,
+ * Output error messages to debug log if DEBUG_SDS3D_TO_FILE is defined,
  * else do nothing
  *
  ***************************************************************
  */
 void DBG_Printf (LPCTSTR lpFmt, ...)
 {
-#ifdef DEBUG_TO_FILE
+#ifdef DEBUG_SDS3D_TO_FILE
     char    str[1999];
     va_list arglist;
     DWORD   bytesWritten;
@@ -184,8 +182,8 @@ void DBG_Printf (LPCTSTR lpFmt, ...)
     vsprintf (str, lpFmt, arglist);
     va_end    (arglist);
 
-    if ( logstream != INVALID_HANDLE_VALUE )
-        WriteFile (logstream, str, lstrlen(str), &bytesWritten, NULL);
+    if ( s3d_logstream != INVALID_HANDLE_VALUE )
+        WriteFile (s3d_logstream, str, lstrlen(str), &bytesWritten, NULL);
 #endif
 }
 

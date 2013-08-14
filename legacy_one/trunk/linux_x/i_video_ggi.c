@@ -49,14 +49,15 @@
 // checked mouse 19990314 by Kin
 #define CHECKEDMOUSE
 
+
+#include "doomincl.h"
+
 #include <stdio.h>
 #include <unistd.h>
 #include <ctype.h>
 
 #include <ggi/ggi.h>
 
-// it must be here 19990117 by Kin
-#include "doomdef.h"
 #ifdef USEASM
 // added 19990125 by Kin
 #include "../vid_copy.h"
@@ -64,6 +65,7 @@
 
 #include "doomstat.h"
 #include "i_system.h"
+#include "i_video.h"
 #include "v_video.h"
 #include "m_argv.h"
 #include "m_menu.h"
@@ -73,7 +75,6 @@
 #include "g_input.h"
 #include "st_stuff.h"
 #include "g_game.h"
-#include "i_video.h"
 
 boolean showkey=0; // force to no 19990118 by Kin
 int vid_modenum = 0; // index for vid mode list 19990119 by Kin

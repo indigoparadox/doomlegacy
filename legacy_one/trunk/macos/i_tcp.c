@@ -16,28 +16,15 @@
 // GNU General Public License for more details.
 //
 // Revision 1.30  2000/11/26 00:46:31  hurdler
-// small bug fixes
-//
 // Revision 1.29  2000/10/21 08:43:29  bpereira
-// no message
-//
 // Revision 1.28  2000/10/16 20:02:29  bpereira
-// no message
-//
 // Revision 1.27  2000/10/08 13:30:00  bpereira
-// no message
-//
 // Revision 1.26  2000/10/01 15:20:23  hurdler
 // Add private server
 //
 // Revision 1.25  2000/09/28 20:57:15  bpereira
-// no message
-//
 // Revision 1.24  2000/09/15 19:49:22  bpereira
-// no message
-//
 // Revision 1.23  2000/09/10 10:43:21  metzgermeister
-// *** empty log message ***
 //
 // Revision 1.22  2000/09/08 22:28:30  hurdler
 // merge masterserver_ip/port in one cvar, add -private
@@ -46,7 +33,6 @@
 // fix some issues with latest network code changes
 //
 // Revision 1.20  2000/08/31 14:30:55  bpereira
-// no message
 //
 // Revision 1.19  2000/08/29 15:53:47  hurdler
 // Remove master server connect timeout on LAN (not connected to Internet)
@@ -73,10 +59,7 @@
 // OS/2 port
 //
 // Revision 1.11  2000/08/10 14:08:48  hurdler
-// no message
-//
 // Revision 1.10  2000/08/03 17:57:42  bpereira
-// no message
 //
 // Revision 1.9  2000/04/21 13:03:27  hurdler
 // apply Robert's patch for SOCK_Get error. Boris, can you verify this?
@@ -85,10 +68,7 @@
 // apply Robert's patch for SOCK_Get error. Boris, can you verify this?
 //
 // Revision 1.7  2000/04/16 18:38:07  bpereira
-// no message
-//
 // Revision 1.6  2000/03/29 19:39:48  bpereira
-// no message
 //
 // Revision 1.5  2000/03/08 14:44:52  hurdler
 // fix "select" problem under linux
@@ -97,11 +77,7 @@
 // fix linux compilation
 //
 // Revision 1.3  2000/03/06 15:46:43  hurdler
-// compiler warning removed
-//
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -112,11 +88,12 @@
 //
 //-----------------------------------------------------------------------------
 
+#include "doomincl.h"
+  // stdlib, string, stdio, defines
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -128,18 +105,14 @@
 
 #define STD_STRING_LEN 256 // Just some standard length for a char string
 
-
-
-
-#include "doomdef.h"
+#include "doomstat.h"
 #include "i_system.h"
 #include "i_net.h"
 #include "d_net.h"
 #include "m_argv.h"
 #include "command.h"
-
-#include "doomstat.h"
-#include "mserv.h" //Hurdler: support master server
+#include "mserv.h"
+  //Hurdler: support master server
 
 #define  SOCKET int
 #define  INVALID_SOCKET -1
@@ -184,11 +157,13 @@ static int getfreenode( void )
     int j;
 
     for(j=0;j<MAXNETNODES;j++)
+    {
         if( !nodeconnected[j] )
         {
             nodeconnected[j]=true;
             return j;
         }
+    }
     return -1;
 }
 
@@ -218,12 +193,14 @@ void SOCK_Get(void)
 
     // find remote node number
     for (i=0 ; i<MAXNETNODES ; i++)
+    {
         if ( SOCK_cmpaddr(&fromaddress,&(clientaddress[i])) )
         {
             doomcom->remotenode = (i);      // good packet from a game player
             doomcom->datalength = (c);
             return;
         }
+    }
 
     // not found
     // find a free slot
@@ -385,10 +362,10 @@ void SOCK_CloseSocket( void )
 
 void I_ShutdownTcpDriver(void)
 {
-	if(mysocket != -1)   //A.J. possible bug fix. I_ShutdownTcpDriver never used in Mac version
-	{
-		SOCK_CloseSocket();
-	}
+    if(mysocket != -1)   //A.J. possible bug fix. I_ShutdownTcpDriver never used in Mac version
+    {
+        SOCK_CloseSocket();
+    }
     if ( init_tcp_driver )
     {
         init_tcp_driver = 0;

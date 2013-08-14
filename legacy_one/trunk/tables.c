@@ -19,8 +19,6 @@
 //
 // $Log: tables.c,v $
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -81,8 +79,8 @@ const angle_t ANGLE_60  = 0x80000000 / 3;
     int SlopeDiv ( unsigned      num,
                    unsigned      den)
     {
-    ULONG  ans;
-    INT64  t;
+    uint32_t ans;
+    int64_t  t;
 
     if (den < 512)
         return SLOPERANGE;

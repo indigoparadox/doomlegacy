@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*-
+// Emacs style mode select   -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
 // $Id$
@@ -14,64 +14,10 @@
 // FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
 // for more details.
 //
-// $Log: i_sound.c,v $
 // Revision 1.2  2003/07/13 13:18:59  hurdler
-// go RC1
-//
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
 // Revision 1.1  2001/04/17 22:23:38  calumr
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
-// Initial add
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
-//
 // Revision 1.1  2000/08/21 21:17:32  metzgermeister
 // Initial import to CVS
-//
 //
 // DESCRIPTION:
 //	System interface for sound.
@@ -83,25 +29,23 @@
 #include <fcntl.h>
 #include <Carbon/Carbon.h>
 
-#include "z_zone.h"
-#include "command.h"
-#include "m_swap.h"
+#include "doomincl.h"
+#include "doomstat.h"
+
 #include "i_system.h"
 #include "i_sound.h"
 #include "m_argv.h"
 #include "m_misc.h"
 #include "m_random.h"
 #include "w_wad.h"
-
-#define W_CacheLumpNum(num) (W_CacheLumpNum)((num),1)
-#define W_CacheLumpName(name) W_CacheLumpNum (W_GetNumForName(name))
-
-#include "doomdef.h"
-#include "doomstat.h"
+  // ?? no longer gets own lumps
 #include "s_sound.h"
-#include "doomtype.h"
-
+#include "command.h"
+  // consvar_t
+#include "m_swap.h"
 #include "d_main.h"
+#include "z_zone.h"
+
 
 static void COM_PlaySong (void);
 
@@ -136,21 +80,20 @@ extern boolean nomusic;
 
 //start of mac stuff
 static SndChannelPtr	soundChannels[NUM_CHANNELS];
-static int				channelbusy[NUM_CHANNELS];
+static int		channelbusy[NUM_CHANNELS];
 
 static pascal void soundCallback (SndChannelPtr soundChannel, SndCommand *pCmd)
 {
-	if (pCmd->param1 == 0x1234)
-	{
-		int *channelInUse = (int *)pCmd->param2;
-		*channelInUse = 0;
-	}
+    if (pCmd->param1 == 0x1234)
+    {
+        int *channelInUse = (int *)pCmd->param2;
+        *channelInUse = 0;
+    }
 }
 
 
 //
-// This function adds a sound to the
-//  list of currently active sounds,
+// This function adds a sound to the list of currently active sounds,
 //  which is maintained as a given number
 //  (eight, usually) of internal channels.
 // Returns a handle.
@@ -160,10 +103,9 @@ static int addsfx ( int		sfxid,
 		    int		step,
 		    int		seperation )
 {
-    int		i;
-    int		slot;
-    int		rightvol;
-    int		leftvol;
+    int  i;
+    int	 slot;
+    int	 rightvol, leftvol;
 
     // Chainsaw troubles.
     // Play these sound effects only one at a time.
@@ -240,34 +182,34 @@ static int addsfx ( int		sfxid,
     channelids[slot] = sfxid;
     
     {
-	    ExtSoundHeader theSndBuffer;
-		SndCommand theCmd;
+        ExtSoundHeader theSndBuffer;
+        SndCommand theCmd;
 		
-		theCmd.param1 = 0;
-		theCmd.param2 = (rightvol << 16) + leftvol;
-		theCmd.cmd = volumeCmd;
-		SndDoImmediate (soundChannels[slot], &theCmd);
-		
-		theSndBuffer.samplePtr = (Ptr) S_sfx[sfxid].data;
-		theSndBuffer.numFrames = S_sfx[sfxid].length;
-		theSndBuffer.numChannels = 1; // 2 for stereo
-		theSndBuffer.sampleRate = rate11025hz;
-		theSndBuffer.encode = extSH;
-		theSndBuffer.sampleSize = 8; // 8-bit data
+        theCmd.param1 = 0;
+        theCmd.param2 = (rightvol << 16) + leftvol;
+        theCmd.cmd = volumeCmd;
+        SndDoImmediate (soundChannels[slot], &theCmd);
 
-		// Send the buffer to the channel
-		theCmd.param1 = 0;
-		theCmd.param2 = (long) &theSndBuffer;
-		theCmd.cmd = bufferCmd;
+        theSndBuffer.samplePtr = (Ptr) S_sfx[sfxid].data;
+        theSndBuffer.numFrames = S_sfx[sfxid].length;
+        theSndBuffer.numChannels = 1; // 2 for stereo
+        theSndBuffer.sampleRate = rate11025hz;
+        theSndBuffer.encode = extSH;
+        theSndBuffer.sampleSize = 8; // 8-bit data
+
+        // Send the buffer to the channel
+        theCmd.param1 = 0;
+        theCmd.param2 = (long) &theSndBuffer;
+        theCmd.cmd = bufferCmd;
 		
-		//SndDoCommand (soundChannels[slot], &theCmd, false);
-		SndDoImmediate (soundChannels[slot], &theCmd);
-		channelbusy[slot] = 1;
+        //SndDoCommand (soundChannels[slot], &theCmd, false);
+        SndDoImmediate (soundChannels[slot], &theCmd);
+        channelbusy[slot] = 1;
 		
-		theCmd.param1 = 0x1234;
-		theCmd.param2 = (long) &channelbusy[slot];
-		theCmd.cmd = callBackCmd;
-		SndDoCommand (soundChannels[slot], &theCmd, false);
+        theCmd.param1 = 0x1234;
+        theCmd.param2 = (long) &channelbusy[slot];
+        theCmd.cmd = callBackCmd;
+        SndDoCommand (soundChannels[slot], &theCmd, false);
     }
     
     return slot;   // handle is slot
@@ -344,17 +286,17 @@ void I_StopSound (int handle)
 {
     SndCommand theCmd;
 	
-	if (handle < 0 || handle >= NUM_CHANNELS) return;
+    if (handle < 0 || handle >= NUM_CHANNELS) return;
 
-	// Immediately stop this sound
-	theCmd.param1 = 0;
-	theCmd.param2 = 0;
-	theCmd.cmd = quietCmd;
-	SndDoImmediate (soundChannels[handle], &theCmd);
-	theCmd.cmd = flushCmd;
-	SndDoImmediate (soundChannels[handle], &theCmd);
+    // Immediately stop this sound
+    theCmd.param1 = 0;
+    theCmd.param2 = 0;
+    theCmd.cmd = quietCmd;
+    SndDoImmediate (soundChannels[handle], &theCmd);
+    theCmd.cmd = flushCmd;
+    SndDoImmediate (soundChannels[handle], &theCmd);
 	
-	channelbusy[handle] = 0;
+    channelbusy[handle] = 0;
 }
 
 // You need the handle returned by StartSound.
@@ -365,46 +307,46 @@ int I_SoundIsPlaying(int handle)
 
 void I_UpdateSound (void)
 {
-	MusicEvents();  //for QuickTime music playing
+    MusicEvents();  //for QuickTime music playing
 }
 
 void I_SubmitSound(void)
 {}
 
 // You need the handle returned by StartSound.
-void I_UpdateSoundParams(int handle,int vol,int sep,int pitch)
+void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
 {
     SndCommand theCmd;
-	int lvol, rvol;
+    int lvol, rvol;
 	
-	if(nosoundfx)
-	return;
+    if(nosoundfx)
+        return;
 
-	lvol = vol - ((vol*sep*sep) >> 16);
+    lvol = vol - ((vol*sep*sep) >> 16);
     sep = sep - 257;
     rvol = vol - ((vol*sep*sep) >> 16);	
 
-	// Send the volume to the channel
-	theCmd.param1 = 0;
-	theCmd.param2 = (rvol << 16) + lvol;
-	theCmd.cmd = volumeCmd;
-	SndDoImmediate (soundChannels[handle], &theCmd);
+    // Send the volume to the channel
+    theCmd.param1 = 0;
+    theCmd.param2 = (rvol << 16) + lvol;
+    theCmd.cmd = volumeCmd;
+    SndDoImmediate (soundChannels[handle], &theCmd);
 }
 
 
 void I_ShutdownSound(void)
 {    
-	int i;
+    int i;
 	
     if(nosoundfx)
 	return;
 	
-	CONS_Printf("I_ShutdownSound:\n");
+    CONS_Printf("I_ShutdownSound:\n");
 	
-	for (i = 0; i < NUM_CHANNELS; i++)
-	{
-		SndDisposeChannel (soundChannels[i], true);
-	}
+    for (i = 0; i < NUM_CHANNELS; i++)
+    {
+        SndDisposeChannel (soundChannels[i], true);
+    }
     
     CONS_Printf("\tshut down\n");
 }
@@ -423,29 +365,29 @@ void I_StartupSound()
     
     for (i = 0; i < NUM_CHANNELS; i ++)
     {
-		soundChannels[i] = NULL;
-		channelbusy[i] = 0;
-		err = SndNewChannel (&soundChannels[i], sampledSynth, initMono, 		NewSndCallBackUPP(soundCallback));
+	soundChannels[i] = NULL;
+	channelbusy[i] = 0;
+	err = SndNewChannel (&soundChannels[i], sampledSynth, initMono, 		NewSndCallBackUPP(soundCallback));
     }
 
 #if 0   
-	for (i=1 ; i<NUMSFX ; i++)
-	{ 
-		// Alias? Example is the chaingun sound linked to pistol.
-		if (S_sfx[i].name) { 
-			if (!S_sfx[i].link)
-			{
-				// Load data from WAD file.
-				S_sfx[i].data = getsfx( &S_sfx[i] );
-			}	
-			else
-			{
-				// Previously loaded already?
-				S_sfx[i].data = S_sfx[i].link->data;
-				S_sfx[i].length = S_sfx[i].link->length;
-			}
-		}
+    for (i=1 ; i<NUMSFX ; i++)
+    { 
+	// Alias? Example is the chaingun sound linked to pistol.
+	if (S_sfx[i].name) { 
+            if (!S_sfx[i].link)
+	    {
+	        // Load data from WAD file.
+		S_sfx[i].data = getsfx( &S_sfx[i] );
+	    }
+	    else
+	    {
+	        // Previously loaded already?
+	        S_sfx[i].data = S_sfx[i].link->data;
+	        S_sfx[i].length = S_sfx[i].link->length;
+	    }
 	}
+    }
 #endif
 
     CONS_Printf("\tpre-cached all sound data\n");
@@ -472,13 +414,15 @@ static void COM_SkipNext (void)
     mus_song++;
     
     DisposeMovie (midiMovie);
-	midiMovie = NULL;
+    midiMovie = NULL;
+
+    if (mus_song==PLAYLIST_LENGTH)
+       mus_song = 0;
 	
-	if (mus_song==PLAYLIST_LENGTH)
-	    mus_song = 0;
-	
-	if (PlayThis(user_songs[mus_song].string))
-	    CONS_Printf("Playing next song\n");
+    if (PlayThis(user_songs[mus_song].string))
+    {
+        CONS_Printf("Playing next song\n");
+    }
     else
     {
         CV_Set(&user_songs[mus_song], " ");
@@ -490,13 +434,15 @@ static void COM_SkipPrev (void)
     mus_song--;
     
     DisposeMovie (midiMovie);
-	midiMovie = NULL;
+    midiMovie = NULL;
 	
-	if (mus_song==-1)
-	    mus_song = PLAYLIST_LENGTH;
+    if (mus_song==-1)
+        mus_song = PLAYLIST_LENGTH;
 	
-	if (PlayThis(user_songs[mus_song].string))
-	    CONS_Printf("Playing next song\n");
+    if (PlayThis(user_songs[mus_song].string))
+    {
+        CONS_Printf("Playing next song\n");
+    }
     else
     {
         CV_Set(&user_songs[mus_song], " ");
@@ -524,58 +470,62 @@ static void COM_PlayListStop (void)
     CV_SetValue(&play_mode, music_normal);
     mus_song = 0;
     DisposeMovie (midiMovie);
-	midiMovie = NULL;
+    midiMovie = NULL;
 	
     CONS_Printf("Stopped play list\n");
 }
 
 void MusicEvents (void)
 {
-	if (nomusic)
-	    return;
+    if (nomusic)
+        return;
 	
-	if (midiMovie)
-	{
-		// Let QuickTime get some time
-		MoviesTask (midiMovie, 0);
-	
-		// If this song is looping, restart it
-		if (IsMovieDone (midiMovie))
-		{
-			if (midiLoop)
-			{
-				GoToBeginningOfMovie (midiMovie);
-				StartMovie (midiMovie);
-			}
-			else
-			{
-				DisposeMovie (midiMovie);
-				midiMovie = NULL;
-			}
-		}
+    if (midiMovie)
+    {
+        // Let QuickTime get some time
+        MoviesTask (midiMovie, 0);
+
+        // If this song is looping, restart it
+        if (IsMovieDone (midiMovie))
+        {
+	    if (midiLoop)
+	    {
+	        GoToBeginningOfMovie (midiMovie);
+	        StartMovie (midiMovie);
+	    }
+	    else
+	    {
+	        DisposeMovie (midiMovie);
+	        midiMovie = NULL;
+	    }
 	}
-	else if (play_mode.value == playlist_normal)
-	{
-	    mus_song++;
-	    if (mus_song==PLAYLIST_LENGTH)
-	        mus_song = 0;
-	    if (PlayThis(user_songs[mus_song].string))
-    	    CONS_Printf("Playing next song\n");
+    }
+    else if (play_mode.value == playlist_normal)
+    {
+        mus_song++;
+        if (mus_song==PLAYLIST_LENGTH)
+	    mus_song = 0;
+        if (PlayThis(user_songs[mus_song].string))
+        {
+	    CONS_Printf("Playing next song\n");
+	}
         else
         {
             CV_Set(&user_songs[mus_song], "");
         }
-	}
-	else if (play_mode.value == playlist_random)
-	{
-	    mus_song = M_Random() % PLAYLIST_LENGTH;
-	    if (PlayThis(user_songs[mus_song].string))
+    }
+    else if (play_mode.value == playlist_random)
+    {
+        mus_song = M_Random() % PLAYLIST_LENGTH;
+        if (PlayThis(user_songs[mus_song].string))
+        {
     	    CONS_Printf("Playing next song\n");
+	}
         else
         {
             CV_Set(&user_songs[mus_song], "");
         }
-	}
+    }
 }
 
 void I_ShutdownMusic(void) 
@@ -583,17 +533,17 @@ void I_ShutdownMusic(void)
     if(nomusic)
 	return;
 	
-	CONS_Printf("I_ShutdownMusic:\n");
+    CONS_Printf("I_ShutdownMusic:\n");
 	
-	if (midiMovie)
-	{
-		StopMovie (midiMovie);
-		DisposeMovie (midiMovie);
-		ExitMovies ();
-		midiMovie = NULL;
-	}
+    if (midiMovie)
+    {
+        StopMovie (midiMovie);
+        DisposeMovie (midiMovie);
+        ExitMovies ();
+        midiMovie = NULL;
+    }
 
-     CONS_Printf("\tshut down\n");
+    CONS_Printf("\tshut down\n");
 }
 
 void I_InitMusic(void)
@@ -601,55 +551,55 @@ void I_InitMusic(void)
     if(nomusic)
 	return;
 	
-	CONS_Printf("I_InitMusic:\n");
+    CONS_Printf("I_InitMusic:\n");
 	
-	if (EnterMovies () != noErr)
-	{
-		CONS_Printf("\tI_InitMusic: Couldn't initialise Quicktime\n");
-		nomusic = true;
-	}
+    if (EnterMovies () != noErr)
+    {
+        CONS_Printf("\tI_InitMusic: Couldn't initialise Quicktime\n");
+        nomusic = true;
+    }
 
-	mus_song = 0;
-	midiMovie = NULL;
-    
-	COM_AddCommand ("playsong",COM_PlaySong);
-	COM_AddCommand ("playrandom",COM_PlayListRandom);
-	COM_AddCommand ("playlist",COM_PlayList);
-	COM_AddCommand ("stopplaylist",COM_PlayListStop);
+    mus_song = 0;
+    midiMovie = NULL;
+
+    COM_AddCommand ("playsong",COM_PlaySong);
+    COM_AddCommand ("playrandom",COM_PlayListRandom);
+    COM_AddCommand ("playlist",COM_PlayList);
+    COM_AddCommand ("stopplaylist",COM_PlayListStop);
+
+    COM_AddCommand ("nextsong",COM_SkipNext);
+    COM_AddCommand ("prevsong",COM_SkipPrev);
 	
-	COM_AddCommand ("nextsong",COM_SkipNext);
-	COM_AddCommand ("prevsong",COM_SkipPrev);
-	
-	CONS_Printf("\tdone\n");
+    CONS_Printf("\tdone\n");
 }
 
 void I_PlaySong(int handle, int looping)
 {
-	if(nomusic)
-		return;
+    if(nomusic)
+        return;
     
     if (play_mode.value != music_normal)
-	    return;
+        return;
 	
-	midiLoop = looping;
-	if (midiMovie)
-	{
-		StartMovie (midiMovie);
-	}
+    midiLoop = looping;
+    if (midiMovie)
+    {
+        StartMovie (midiMovie);
+    }
 }
 
 void I_PauseSong (int handle)
 {
     if(nomusic)
-	return;
+        return;
 	
-	if (play_mode.value != music_normal)
-	    return;
+    if (play_mode.value != music_normal)
+        return;
 	
-	if (midiMovie)
-	{
-		StopMovie (midiMovie);
-	}
+    if (midiMovie)
+    {
+        StopMovie (midiMovie);
+    }
 }
 
 void I_ResumeSong (int handle)
@@ -657,13 +607,13 @@ void I_ResumeSong (int handle)
     if(nomusic)
 	return;
 	
-	if (play_mode.value != music_normal)
-	    return;
+    if (play_mode.value != music_normal)
+        return;
 	
-	if (midiMovie)
-	{
-		StartMovie (midiMovie);
-	}
+    if (midiMovie)
+    {
+        StartMovie (midiMovie);
+    }
 }
 
 void I_StopSong(int handle)
@@ -671,13 +621,13 @@ void I_StopSong(int handle)
     if(nomusic)
 	return;
 	
-	if (play_mode.value != music_normal)
-	    return;
+    if (play_mode.value != music_normal)
+        return;
 	
-	if (midiMovie)
-	{
-		StopMovie (midiMovie);
-	}
+    if (midiMovie)
+    {
+        StopMovie (midiMovie);
+    }
 }
 
 void I_UnRegisterSong(int handle)
@@ -685,123 +635,123 @@ void I_UnRegisterSong(int handle)
     if(nomusic)
 	return;
 	
-	if (play_mode.value != music_normal)
-	    return;
+    if (play_mode.value != music_normal)
+        return;
 	
-	if (midiMovie)
-	{
-		StopMovie (midiMovie);
-		DisposeMovie (midiMovie);
-		midiMovie = NULL;
-	}
+    if (midiMovie)
+    {
+        StopMovie (midiMovie);
+        DisposeMovie (midiMovie);
+        midiMovie = NULL;
+    }
 }
 
 boolean PlayThis(char *name)
 {
-	FSSpec midiSpec;
-	OSErr err;
-	short midiRef;
-	char  mid_file[256];
-	FSRef ref;
+    FSSpec midiSpec;
+    OSErr err;
+    short midiRef;
+    char  mid_file[256];
+    FSRef ref;
 	
-	if(nomusic)
-		return false;
+    if(nomusic)
+        return false;
 	
-	if (midiMovie)
-	    DisposeMovie (midiMovie);
-	midiMovie = NULL;
+    if (midiMovie)
+        DisposeMovie (midiMovie);
+    midiMovie = NULL;
 	
-	if (!name || *name == 0)
-	    return false;
+    if (!name || *name == 0)
+        return false;
 	
-	{
-		char *path;
-		
-		if (getenv("DOOMMUSICDIR"))
-		{
-			path = getenv("DOOMMUSICDIR");
-			sprintf(mid_file, "%s/%s", path, name);
-		}
-		else
-		{
-#ifdef __MACH__
-			//[segabor]: If Music folder is in the Resources folder get mid from there
-			extern char mac_music_home[256];
+    {
+        char *path;
 
-			if (mac_music_home[0] == '.')
-				sprintf(mid_file, "./Music/%s", name);
-			else
-				sprintf(mid_file, "%s/%s", mac_music_home, name);
+        if (getenv("DOOMMUSICDIR"))
+        {
+	    path = getenv("DOOMMUSICDIR");
+	    sprintf(mid_file, "%s/%s", path, name);
+	}
+        else
+        {
+#ifdef __MACH__
+	    //[segabor]: If Music folder is in the Resources folder get mid from there
+	    extern char mac_music_home[256];
+
+	    if (mac_music_home[0] == '.')
+	        sprintf(mid_file, "./Music/%s", name);
+	    else
+	        sprintf(mid_file, "%s/%s", mac_music_home, name);
 #else
-			path = malloc(256);
-			if ( getcwd(path, 256) == NULL )
-				path = ".";
-			sprintf(mid_file, "%s/Music/%s", path, name);
-			free(path);
+	    path = malloc(256);
+	    if ( getcwd(path, 256) == NULL )
+	        path = ".";
+	    sprintf(mid_file, "%s/Music/%s", path, name);
+	    free(path);
 #endif
-		}
 	}
+    }
 	
-	I_OutputMsg("i_sound: Attempting to play %s\n", mid_file);
+    I_OutputMsg("i_sound: Attempting to play %s\n", mid_file);
 	
-	err = FSPathMakeRef(mid_file, &ref, NULL);
-	if (err)
-	{
-	    I_OutputMsg("PlayThis: FSPathMakeRef = %i\n", err);
-	    return false;
-	}
+    err = FSPathMakeRef(mid_file, &ref, NULL);
+    if (err)
+    {
+        I_OutputMsg("PlayThis: FSPathMakeRef = %i\n", err);
+        return false;
+    }
 	
-	err = FSGetCatalogInfo(&ref, kFSCatInfoNone, NULL, NULL, &midiSpec, NULL);
-	if (err)
-	{
-	    I_OutputMsg("PlayThis: FSGetCatalogInfo = %i\n", err);
-	    return false;
-	}
+    err = FSGetCatalogInfo(&ref, kFSCatInfoNone, NULL, NULL, &midiSpec, NULL);
+    if (err)
+    {
+        I_OutputMsg("PlayThis: FSGetCatalogInfo = %i\n", err);
+        return false;
+    }
 	
-	err = OpenMovieFile (&midiSpec, &midiRef, fsRdPerm);
-	if (err)
-	{
-	    I_OutputMsg("PlayThis: OpenMovieFile = %i\n", err);
-	    return false;
-	}
+    err = OpenMovieFile (&midiSpec, &midiRef, fsRdPerm);
+    if (err)
+    {
+        I_OutputMsg("PlayThis: OpenMovieFile = %i\n", err);
+        return false;
+    }
 	
-	err = NewMovieFromFile (&midiMovie, midiRef, NULL, NULL, newMovieActive, NULL);
-	if (err)
-	{
-	    I_OutputMsg("PlayThis: NewMovieFromFile = %i\n", err);
-	    return false;
-	}
+    err = NewMovieFromFile (&midiMovie, midiRef, NULL, NULL, newMovieActive, NULL);
+    if (err)
+    {
+        I_OutputMsg("PlayThis: NewMovieFromFile = %i\n", err);
+        return false;
+    }
 	
-	GoToBeginningOfMovie (midiMovie);
-	PrerollMovie (midiMovie, 0, 0x10000);
-	SetMovieVolume (midiMovie, musicVolume << 3);
-	StartMovie (midiMovie);
+    GoToBeginningOfMovie (midiMovie);
+    PrerollMovie (midiMovie, 0, 0x10000);
+    SetMovieVolume (midiMovie, musicVolume << 3);
+    StartMovie (midiMovie);
 	
-	CloseMovieFile (midiRef);
+    CloseMovieFile (midiRef);
 	
-	return true;
+    return true;
 }
 
 // [WDJ] len is unused, keep compatible API
 int I_RegisterSong(int handle, int len)
 {
-	Str63 name = "";
+    Str63 name = "";
 	
-	if (play_mode.value != music_normal)
-	    return handle;
+    if (play_mode.value != music_normal)
+        return handle;
 	
-	// Make sure song number is valid
-	if (handle < mus_e1m1 || handle > NUMMUSIC)
-		return -1;
+    // Make sure song number is valid
+    if (handle < mus_e1m1 || handle > NUMMUSIC)
+        return -1;
 	
-	mus_song = handle;
+    mus_song = handle;
 	
-	strcat ((char *)name, S_music[handle].name);
-	strcat((char *)name, ".mid!");
-	strupr(name);
-	PlayThis(name);
-	
-	return handle;
+    strcat ((char *)name, S_music[handle].name);
+    strcat((char *)name, ".mid!");
+    strupr(name);
+    PlayThis(name);
+
+    return handle;
 }
 
 static void COM_PlaySong (void)
@@ -838,9 +788,9 @@ void I_SetMusicVolume(int volume)
     if(nomusic)
 	return;
 	
-	musicVolume = volume;
-	if (midiMovie)
-		SetMovieVolume (midiMovie, musicVolume << 3);
+    musicVolume = volume;
+    if (midiMovie)
+        SetMovieVolume (midiMovie, musicVolume << 3);
 }
 
 //Hurdler: TODO

@@ -22,7 +22,6 @@
 // Initial Mac add
 //
 // Revision 1.5  2001/02/24 13:35:21  bpereira
-// no message
 //
 // Revision 1.4  2001/01/25 22:15:44  bpereira
 // added heretic support
@@ -31,8 +30,6 @@
 // Big 3Dfloors & FraggleScript commit!!
 //
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -43,8 +40,8 @@
 //
 //-----------------------------------------------------------------------------
 
-#ifndef __SOUNDS__
-#define __SOUNDS__
+#ifndef SOUNDS_H
+#define SOUNDS_H
 
 #include <stdint.h>
 
@@ -65,7 +62,7 @@ typedef enum {
 
 
 // free sfx for S_AddSoundFx()
-                         //MAXSKINS
+// MAXSKINS
 #define NUMSFXFREESLOTS    (32*NUMSKINSOUNDS)
 #define NUMMUSICFREESLOTS  64
 

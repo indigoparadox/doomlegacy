@@ -18,14 +18,11 @@
 //
 // $Log: dosstr.c,v $
 // Revision 1.2  2000/09/10 10:53:46  metzgermeister
-// *** empty log message ***
 //
 // Revision 1.1  2000/08/21 21:17:32  metzgermeister
 // Initial import to CVS
 //
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //

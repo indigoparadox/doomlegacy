@@ -22,8 +22,6 @@
 // added heretic support
 //
 // Revision 1.2  2000/02/27 00:42:11  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:32  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -33,13 +31,12 @@
 //
 //-----------------------------------------------------------------------------
 
-#ifndef __WI_STUFF__
-#define __WI_STUFF__
+#ifndef WI_STUFF_H
+#define WI_STUFF_H
 
-//#include "v_video.h"
-
-#include "doomdef.h"
+#include "doomtype.h"
 #include "d_player.h"
+  // wbstartstruct_t
 
 //added:05-02-98:
 typedef struct {
@@ -62,7 +59,7 @@ void WI_Start(wbstartstruct_t*   wbstartstruct);
 boolean teamingame(int teamnum);
 
 // draw rankings
-void WI_drawRanking(char *title,int x,int y,fragsort_t *fragtable,
+void WI_drawRanking(char *title, int x, int y, fragsort_t *fragtable,
                     int scorelines, boolean large, int white);
 
 

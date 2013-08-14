@@ -34,10 +34,7 @@
 // Big 3Dfloors & FraggleScript commit!!
 //
 // Revision 1.7  2000/10/21 08:43:29  bpereira
-// no message
-//
 // Revision 1.6  2000/08/31 14:30:55  bpereira
-// no message
 //
 // Revision 1.5  2000/04/11 19:07:23  stroggonmeth
 // Finished my logs, fixed a crashing bug.
@@ -49,8 +46,6 @@
 // Initial Boom compatability plus few misc changes all around.
 //
 // Revision 1.2  2000/02/27 00:42:10  hurdler
-// fix CR+LF problem
-//
 // Revision 1.1.1.1  2000/02/22 20:32:33  hurdler
 // Initial import into CVS (v1.29 pr3)
 //
@@ -63,11 +58,11 @@
 //-----------------------------------------------------------------------------
 
 // Data.
-#include "doomdef.h"
-#include "sounds.h"
-#include "m_fixed.h"
+#include "doomincl.h"
 #include "d_items.h"
 #include "p_mobj.h"
+#include "m_fixed.h"
+#include "sounds.h"
 #include "action.h"
 
 char *sprnames[NUMSPRITES+1] = {

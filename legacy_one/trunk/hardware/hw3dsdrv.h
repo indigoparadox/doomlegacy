@@ -22,20 +22,18 @@
 //
 // Revision 1.1  2001/04/04 19:42:42  judgecutor
 // Initial release of the 3D Sound Support
-//
 // 
 //
 // DESCRIPTION:
 //      3D sound import/export prototypes for low-level
 //      hardware interface
-//      
 //
 //-----------------------------------------------------------------------------
 
-#ifndef __HW_3DS_DRV_H__
-#define __HW_3DS_DRV_H__
+#ifndef HW_3DS_DRV_H
+#define HW_3DS_DRV_H
 
-// Use standart hardware API
+// Use standard hardware API
 #include "hw_drv.h"
 
 
@@ -158,7 +156,7 @@ EXPORT void HWRAPI (KillSource) (int handle);
 //EXPORT void HWRAPI (GetHW3DSTitle) (char *buf, int size);
 
 
-#if !defined(_CREATE_DLL_)
+#if !defined( HWRAPI_CREATE_DLL )
 
 struct hardware3ds_s
 {
@@ -188,6 +186,6 @@ extern struct hardware3ds_s hw3ds_driver;
 #define HW3DS hw3ds_driver
 
 
-#endif  // _CREATE_DLL_
+#endif  // HWRAPI_CREATE_DLL
 
-#endif // __HW_3DS_DRV_H__
+#endif // HW_3DS_DRV_H
