@@ -269,7 +269,6 @@ void I_UpdateNoBlit (void)
 
 #define FPSPOINTS  35
 #define SCALE      4
-#define PUTDOT(xx,yy,cc) screens[0][((yy)*vid.width+(xx))*vid.bytepp]=(cc)
 
 static int fpsgraph[FPSPOINTS];
 
@@ -304,15 +303,18 @@ void I_FinishUpdate (void)
             // draw dots
             for(j=0;j<=20*SCALE*vid.dupy;j+=2*SCALE*vid.dupy)
             {
-                l=(vid.height-1-j)*vid.width*vid.bytepp;
+	        byte * dest = V_GetDrawAddr( 0, (vid.height-1-j) );
                 for (i=0;i<FPSPOINTS*SCALE*vid.dupx;i+=2*SCALE*vid.dupx)
-                    screens[0][l+i]=0xff;
+		    V_DrawPixel( dest, i, 0xff );
             }
 
             // draw the graph
             for (i=0;i<FPSPOINTS;i++)
+	    {
+	        byte * dest = V_GetDrawAddr( 0, vid.height-1-(fpsgraph[i]*SCALE*vid.dupy) );
                 for(k=0;k<SCALE*vid.dupx;k++)
-                    PUTDOT(i*SCALE*vid.dupx+k, vid.height-1-(fpsgraph[i]*SCALE*vid.dupy),0xff);
+		    V_DrawPixel( dest, (i*SCALE*vid.dupx)+k, 0xff );
+	    }
         }
         else
         {
@@ -343,6 +345,7 @@ void I_FinishUpdate (void)
     }
 
     //
+    // If page flip involves changing vid.display, then must change screens[0] too
     if ( bDIBMode )
     {
         // paranoia
@@ -352,7 +355,7 @@ void I_FinishUpdate (void)
         SetDIBitsToDevice (hDCMain,
                            0, 0, 320, 200,
                            0, 0, 0, 200,
-                           vid.buffer, bmiMain, DIB_RGB_COLORS);
+                           vid.display, bmiMain, DIB_RGB_COLORS);
     }
     else
     if (rendermode != render_soft) {
@@ -405,7 +408,7 @@ void I_LoadingScreen ( LPCSTR msg )
     SetDIBitsToDevice (hDCMain,
                        0, 0, 320, 200,
                        0, 0, 0, 200,
-                       vid.buffer, bmiMain, DIB_RGB_COLORS);
+                       vid.display, bmiMain, DIB_RGB_COLORS);
 
     if ( msg ) {
         if ( rect.bottom - rect.top > 32 )
@@ -726,6 +729,7 @@ void VID_Init (void)
     // store the main window handle in viddef struct
     vid.WndParent = hWndMain;
     vid.buffer = NULL;
+    vid.display = NULL;
 
     // we startup in windowed mode using DIB bitmap
     // we will use DirectDraw when switching fullScreen and entering main game loop
@@ -1018,6 +1022,7 @@ int VID_SetMode (int modenum)  //, unsigned char *palette)
     vid.direct_size = vid.direct_rowbytes * vid.height;
 
     stat = (*pcurrentmode->setmode) (&vid, pcurrentmode);
+      // sets vid.direct, vid.buffer, vid.disply, vid.ybytes, vid.screen_size, vid.screen1
 
     if (stat < 1)
     {
@@ -1026,7 +1031,7 @@ int VID_SetMode (int modenum)  //, unsigned char *palette)
             // harware could not setup mode
             //if (!VID_SetMode (vid.modenum))
             //        I_Error ("VID_SetMode: couldn't set video mode (hard failure)");
-            I_Error ("Couldn't set video mode %d (%dx%d %d bits)\n", modenum, vid.width, vid.height, (vid.bytepp*8));
+            I_Error ("Couldn't set video mode %d (%dx%d %d bits)\n", modenum, vid.width, vid.height, vid.bitpp));
         }
         else
             if (stat == -1)
@@ -1039,6 +1044,7 @@ int VID_SetMode (int modenum)  //, unsigned char *palette)
                 vid.height = pcurrentmode->height;
                 vid.rowbytes = pcurrentmode->rowbytes;
                 vid.bytepp  = pcurrentmode->bytesperpixel;
+                vid.bitpp = vid.bytepp * 8;
                 return 0;*/
             }
     }
@@ -1141,7 +1147,7 @@ static int VID_SetDirectDrawMode (viddef_t *lvid, vmode_t *pcurrentmode)
 
     //added:20-01-98: should clear video mem here
 
-    // note use lvid->bpp instead of 8 ... will thios be needed ? will we support other than 256color
+    // note use lvid->bpp instead of 8 ... will this be needed ? will we support other than 256color
     // in software ?
     if (!InitDirectDrawe(hWndMain, lvid->width, lvid->height, 8, TRUE)) // TRUE currently always full screen
         return 0;               // could not set mode

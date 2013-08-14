@@ -3288,3 +3288,8 @@ Updates Makefile for selecting MAC, and some MAC options.
 
 Add file "sdl/SDLmain.m"
 
+*** W92_WinVid
+patchfile = w92_3_winvid.patch
+- committed revision 1030   by wesley johnson
+Commit of more changes to video draw in Win32 code to make it
+compatible with vid structure.  Untested.

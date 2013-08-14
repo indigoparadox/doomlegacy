@@ -949,10 +949,10 @@ static void I_DoStartupSysMouse()
         w_rect.left = windowPosX;
     }
     
-    w_rect.bottom = w_rect.top + VIDHEIGHT;
-    w_rect.right = w_rect.left + VIDWIDTH;
-    center_x = w_rect.left + (VIDWIDTH >> 1);
-    center_y = w_rect.top + (VIDHEIGHT >> 1);
+    w_rect.bottom = w_rect.top + vid.height;
+    w_rect.right = w_rect.left + vid.width;
+    center_x = w_rect.left + (vid.width >> 1);
+    center_y = w_rect.top + (vid.height >> 1);
     SetCursor(NULL);    
     SetCursorPos(center_x, center_y);
     SetCapture(hWndMain);
