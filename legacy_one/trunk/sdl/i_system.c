@@ -686,7 +686,8 @@ tic_t I_GetTime(void)
     return (ticks - basetime)*TICRATE/1000;
 }
 
-/// sleeps for a while, giving CPU time to other processes
+// sleeps for a while, giving CPU time to other processes
+// in milleseconds
 void I_Sleep(unsigned int ms)
 {
   SDL_Delay(ms);
@@ -720,12 +721,6 @@ void I_Quit (void)
     printf("\r");
     ShowEndTxt();
     exit(0);
-}
-
-// sleeps for the given amount of milliseconds
-void I_Sleep(unsigned int ms)
-{
-    SDL_Delay(ms);
 }
 
 
