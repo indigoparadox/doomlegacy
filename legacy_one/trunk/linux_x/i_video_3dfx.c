@@ -187,8 +187,6 @@ void I_ShutdownGraphics(void)
 
 void I_FinishUpdate(void)
 {
-        static int      lasttic;
-        int             i, tics;
         int             x, y;
         unsigned char   *src = (unsigned char *) screens[0];
 #ifdef RENDER_LFB
@@ -197,21 +195,6 @@ void I_FinishUpdate(void)
         pixel_t         *dst2 = &image[vid.width*2];
         int             step = vid.width*2;
 #endif
-
-        /* draws little dots on the bottom of the screen */
-        if (devparm) {
-	        char * dest = V_GetDrawAddr( 3, (vid.height-2) );
-                i = I_GetTime();
-                tics = i - lasttic;
-                lasttic = i;
-                if (tics > 20)
-                tics = 20;
-
-                for (i=0 ; i<tics*2 ; i+=2)
-                    V_DrawPixel( dest, i, 0xff );
-                for ( ; i<20*2 ; i+=2)
-                    V_DrawPixel( dest, i, 0x00 );
-        }
 
 #ifdef RENDER_LFB
         /* convert the engine rendered image to RGB image, double size */

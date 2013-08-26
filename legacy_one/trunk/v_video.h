@@ -269,4 +269,6 @@ void V_DrawPixel(byte * line, int x, byte color);
 // [WDJ] Draw a palette src to a screen line
 void V_DrawPixels(byte * line, int x, int count, byte* src);
 
+void V_Draw_ticrate_graph( void );
+
 #endif

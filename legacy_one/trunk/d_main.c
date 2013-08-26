@@ -653,6 +653,9 @@ void D_Display(void)
 #endif
         {
             //I_BeginProfile();
+	    // display a graph of ticrate 
+	    if (cv_ticrate.value )
+	        V_Draw_ticrate_graph();
             I_FinishUpdate();   // page flip or blit buffer
             //CONS_Printf ("last frame update took %d\n", I_EndProfile());
         }

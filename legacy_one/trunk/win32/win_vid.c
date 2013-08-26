@@ -252,82 +252,12 @@ void I_UpdateNoBlit (void)
 }
 
 
-#define FPSPOINTS  35
-#define SCALE      4
-
-static int fpsgraph[FPSPOINTS];
-
-
 // --------------
 // I_FinishUpdate
 // --------------
 void I_FinishUpdate (void)
 {
-    int          i;
     //RECT        Rect;
-
-    // display a graph of ticrate 
-    if (cv_ticrate.value )
-    {
-        int k,j,l;
-        static tic_t lasttic;
-        tic_t        tics,t;
-
-        t = I_GetTime();
-        tics = t - lasttic;
-        lasttic = t;
-        if (tics > 20) tics = 20;
-
-        for (i=0;i<FPSPOINTS-1;i++)
-            fpsgraph[i]=fpsgraph[i+1];
-        fpsgraph[FPSPOINTS-1]=20-tics;
-
-        if( rendermode == render_soft )
-        {
-            
-            // draw dots
-            for(j=0;j<=20*SCALE*vid.dupy;j+=2*SCALE*vid.dupy)
-	    {
-	        byte * dest = V_GetDrawAddr( 0, (vid.height-1-j) );
-                for (i=0;i<FPSPOINTS*SCALE*vid.dupx;i+=2*SCALE*vid.dupx)
-		    V_DrawPixel( dest, i, 0xff );
-            }
-
-            // draw the graph
-            for (i=0;i<FPSPOINTS;i++)
-	    {
-	        byte * dest = V_GetDrawAddr( 0, vid.height-1-(fpsgraph[i]*SCALE*vid.dupy) );
-                for(k=0;k<SCALE*vid.dupx;k++)
-		    V_DrawPixel( dest, (i*SCALE*vid.dupx)+k, 0xff );
-	    }
-        }
-        else
-        {
-            fline_t p;
-            for(j=0;j<=20*SCALE*vid.dupy;j+=2*SCALE*vid.dupy)
-            {
-                l=(vid.height-1-j);
-                for (i=0;i<FPSPOINTS*SCALE*vid.dupx;i+=2*SCALE*vid.dupx)
-                {
-                    p.a.x = i;
-                    p.a.y = l;
-                    p.b.x = i+1;
-                    p.b.y = l;
-                    HWR_drawAMline(&p, 0xff);
-                }
-            }
-
-
-            for (i=1;i<FPSPOINTS;i++)
-            {
-                p.a.x = SCALE * (i-1);
-                p.a.y = vid.height-1-fpsgraph[i-1]*SCALE*vid.dupy;
-                p.b.x = SCALE * i;
-                p.b.y = vid.height-1-fpsgraph[i]*SCALE*vid.dupy;
-                HWR_drawAMline(&p, 0xff);
-            }
-        }
-    }
 
     //
     // If page flip involves changing vid.display, then must change screens[0] too

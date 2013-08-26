@@ -1184,24 +1184,6 @@ void I_FinishUpdate(void)
 {
 
   if(rendermode==render_soft) {
-    // draws little dots on the bottom of the screen
-    if (devparm)
-    {
-        static int  lasttic;
-        byte * dest = V_GetDrawAddr( 3, (vid.height-2) );
-        int tics;
-        int i;
-
-        i = I_GetTime();
-        tics = i - lasttic;
-        lasttic = i;
-        if (tics > 20) tics = 20;
-      
-        for (i=0 ; i<tics*2 ; i+=2)
-	    V_DrawPixel( dest, i * vid.dupy, 0x04 ); // white
-        for ( ; i<20*2 ; i+=2)
-	    V_DrawPixel( dest, i * vid.dupy, 0x00 );
-    }
 
     // cv_vidwait.value not used, X11 handles its own vsync, no controls
 

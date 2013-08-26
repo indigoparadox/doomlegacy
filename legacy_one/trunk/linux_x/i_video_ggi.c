@@ -329,25 +329,6 @@ void I_UpdateNoBlit (void)
 //
 void I_FinishUpdate (void)
 {
-
-  // draws little dots on the bottom of the screen
-  if (devparm) {
-    static int  lasttic;
-    int  tics;
-    int  i;
-    byte * dest = V_GetDrawAddr( 3, (vid.height-2) );
-
-    i = I_GetTime();
-    tics = i - lasttic;
-    lasttic = i;
-    if (tics > 20) tics = 20;
-
-    for (i=0 ; i<tics*2 ; i+=2)
-      V_DrawPixel( dest, i * vid.dupy, 0x04 ); // white
-    for ( ; i<20*2 ; i+=2)
-      V_DrawPixel( dest, i * vid.dupy, 0x00 );
-  }
-
   // cv_vidwait.value not used, X11 handles its own vsync, no controls
 
 #ifdef EXPAND_BUFFER_ENABLE
@@ -359,7 +340,6 @@ void I_FinishUpdate (void)
 
   // Blit it
   ggiPutBox(screen, 0, 0, vid.width, vid.height, vid.display);
-
 }
 
 //
@@ -372,7 +352,6 @@ void I_ReadScreen (byte* scr)
 
 void I_SetPalette(RGBA_t* palette)
 {
-
   if (vid.bitpp == 8) {
     ggi_color ggi_pal[256];
     ggi_color* p;
@@ -398,7 +377,6 @@ void I_SetPalette(RGBA_t* palette)
 
 void I_ShutdownGraphics(void)
 {
-
   ggiRemoveFlags(screen, GGIFLAG_ASYNC);
 
   if (vid.buffer)
@@ -437,16 +415,18 @@ ggi_mode vidmodes[MAX_GGIMODES+1];
 int rescount;
 
 // dummy for test 19990221 by Kin
-int   VID_NumModes(void) {
+int   VID_NumModes(void)
+{
   return rescount;
 }
 
-char  *VID_GetModeName(int modenum) {
+char  *VID_GetModeName(int modenum)
+{
   return vidname[modenum];
 }
 
-int VID_GetModeForSize( int w, int h) {
-
+int VID_GetModeForSize( int w, int h)
+{
   int i;
 
   for (i=0; i<rescount;i++) {
@@ -470,7 +450,6 @@ int VID_GetModeForSize( int w, int h) {
   }
 
   return 0;
-
 }
 
 void I_StartupGraphics(void)
@@ -620,8 +599,8 @@ abort_error:
     I_Error("StartupGraphics Abort\n");
 }
 
-int VID_SetMode(int modenum) {
-
+int VID_SetMode(int modenum)
+{
   if (ggiSetMode(screen,&vidmodes[modenum])) {
     I_Error("Failed to set mode");
 //    return 0;

@@ -97,49 +97,11 @@ void I_UpdateNoBlit (void)
     // what is this?
 }
 
-#define FPSPOINTS  35
-#define SCALE      4
 //
 // I_FinishUpdate
 //
 void I_FinishUpdate (void)
 {
-    static int   lasttic;
-    int          tics;
-    int          i;
-
-    // display a graph of ticrate
-    if (cv_ticrate.value )
-    {
-        int k,j,l;
-        int fpsgraph[FPSPOINTS];
-
-        i = I_GetTime();
-        tics = i - lasttic;
-        lasttic = i;
-        if (tics > 20) tics = 20;
-
-        for (i=0;i<FPSPOINTS-1;i++)
-            fpsgraph[i]=fpsgraph[i+1];
-        fpsgraph[FPSPOINTS-1]=20-tics;
-
-        // draw dots
-        for(j=0;j<=20*SCALE*vid.dupy;j+=2*SCALE*vid.dupy)
-        {
-	    byte * dest = V_GetDrawAddr( 0, (vid.height-1-j) );
-	    for (i=0;i<FPSPOINTS*SCALE*vid.dupx;i+=2*SCALE*vid.dupx)
-	        V_DrawPixel( dest, i, 0xff );
-	}
-
-        // draw the graph
-        for (i=0;i<FPSPOINTS;i++)
-        {
-	    byte * dest = V_GetDrawAddr( 0, vid.height-1-(fpsgraph[i]*SCALE*vid.dupy) );
-	    for(k=0;k<SCALE*vid.dupx;k++)
-	        V_DrawPixel( dest, (i*SCALE*vid.dupx)+k, 0xff );
-	}
-    }
-
       // blit directly if BlitThread is not running.
       // Blit the image using DiveBlit
     if (!pmData->fDataInProcess) {

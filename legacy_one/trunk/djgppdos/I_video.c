@@ -110,11 +110,6 @@ static   unsigned long  nombre = TICRATE*10;
 //profile stuff ---------------------------------------------------------
 
 
-#define FPSPOINTS  35
-#define SCALE      4
-
-int fpsgraph[FPSPOINTS];
-
 //
 // I_FinishUpdate
 //
@@ -122,51 +117,6 @@ void I_BlitScreenVesa1(void);   //see later
 
 void I_FinishUpdate (void)
 {
-
-    static int  lasttic;
-    int         tics;
-    int         i;
-    // UNUSED static unsigned char *bigscreen=0;
-
-    // draws little dots on the bottom of the screen
-    if (cv_ticrate.value)
-    {
-#if 1   // display a graph of ticrate should be a cvar
-        int k,j;
-
-        i = I_GetTime();
-        tics = i - lasttic;
-        lasttic = i;
-        if (tics > 20) tics = 20;
-
-        for (i=0;i<FPSPOINTS-1;i++)
-            fpsgraph[i]=fpsgraph[i+1];
-        fpsgraph[FPSPOINTS-1]=20-tics;
-
-        // draw lines
-        for(j=0;j<=20*SCALE*vid.dupy;j+=2*SCALE*vid.dupy)
-        {
-	    byte * dest = V_GetDrawAddr( 0, (vid.height-1-j) );
-	    for (i=0;i<FPSPOINTS*SCALE*vid.dupx;i+=2*SCALE*vid.dupx)
-	        V_DrawPixel( dest, i, 0xff );
-        }
-
-        // draw the graph
-        for (i=0;i<FPSPOINTS;i++)
-        {
-	    byte * dest = V_GetDrawAddr( 0, vid.height-1-(fpsgraph[i]*SCALE*vid.dupy) );
-            for(k=0;k<SCALE*vid.dupx;k++)
-	        V_DrawPixel( dest, (i*SCALE*vid.dupx)+k, 0xff );
-	}
-
-#else   // the old ticrate shower
-        for (i=0 ; i<tics*2 ; i+=2)
-            screens[0][ (vid.height-1)*vid.width*vid.bytepp + i] = 0xff;
-        for ( ; i<20*2 ; i+=2)
-            screens[0][ (vid.height-1)*vid.width*vid.bytepp + i] = 0x0;
-#endif
-    }
-
    //blast it to the screen
    // this code sucks
    //memcpy(dascreen,screens[0],screenwidth*screenheight);
@@ -286,6 +236,7 @@ void I_BlitScreenVesa1(void)
 //added:08-01-98: now we use Allegro's set_gfx_mode, but we want to
 //                restore the exact text mode that was before.
 static short  myOldVideoMode;
+
 void I_SaveOldVideoMode(void)
 {
   __dpmi_regs r;
