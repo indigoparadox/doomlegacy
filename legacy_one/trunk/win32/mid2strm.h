@@ -106,7 +106,7 @@ typedef struct
     LONG               iBytesLeft;             // Bytes left unread in track
     unsigned char*     pTrackData;             // -> start of track data
     unsigned char*     pTrackPointer;          // -> next UBYTE to read
-    DWORD              tkNextEventDue;         // Absolute time of next event in track
+    uint32_t           tkNextEventDue;         // Absolute time of next event in track
     BYTE               bRunningStatus;         // Running status from last channel msg
 #ifdef DEBUGMIDISTREAM
     LONG               nTrack;                 // # of this track for debugging

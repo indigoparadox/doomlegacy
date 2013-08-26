@@ -35,11 +35,12 @@
 // other include that might define WINVER
 #include "../doomincl.h"
 
+#include "win_main.h"
+#include "fabdxlib.h"
+#include "dx_error.h"
 #include <windows.h>
 #include <windowsx.h>
-#include "dx_error.h"
 #include <ddraw.h>
-#include "fabdxlib.h"
 #include "../i_system.h"
 
 #define NT4COMPAT   //always defined, always compatible
@@ -47,13 +48,21 @@
 
 // globals
 
+#if 1
+LPDIRECTDRAW2                   DDr2 = NULL;
+LPDIRECTDRAWSURFACE             ScreenReal = NULL;              // DirectDraw primary surface
+LPDIRECTDRAWSURFACE             ScreenVirtual = NULL;           // DirectDraw back surface
+LPDIRECTDRAWPALETTE             DDPalette = NULL;               // The primary surface palette
+LPDIRECTDRAWCLIPPER             windclip = NULL;                // clipper for windowed mode
+#else
 IDirectDraw2*                   DDr2 = NULL;
 IDirectDrawSurface*             ScreenReal = NULL;              // DirectDraw primary surface
 IDirectDrawSurface*             ScreenVirtual = NULL;           // DirectDraw back surface
 IDirectDrawPalette*             DDPalette = NULL;               // The primary surface palette
 IDirectDrawClipper*             windclip = NULL;                // clipper for windowed mode
+#endif
 
-BOOL                            bAppFullScreen;                 // true for fullscreen exclusive mode,
+BOOL   fdx_fullscreen;  // true for fullscreen exclusive mode,
 
 int                             windowPosX = 0;                 // current position in windowed mode
 int                             windowPosY = 0;
@@ -64,11 +73,13 @@ BOOL                            ScreenLocked;                   // Screen surfac
 int                             ScreenPitch;                    // offset from one line to the next
 unsigned char*                  ScreenPtr;                      // memory of the surface
 
+#define SAFE_RELEASE(x) if(x != NULL) { x->lpVtbl->Release(x); x = NULL; }
+#define SAFE_DELETE(x) if(x != NULL) { delete x; x = NULL; }
 
 //
 // CreateNewSurface
 //
-IDirectDrawSurface* CreateNewSurface(int dwWidth,
+IDirectDrawSurface* create_draw_surface(int dwWidth,
                                      int dwHeight,
                                      int dwSurfaceCaps)
 {
@@ -102,6 +113,7 @@ IDirectDrawSurface* CreateNewSurface(int dwWidth,
 }
 
 
+#ifdef ENUM_DIRECT_DRAW_DEV
 //
 // hmm.. I've got just one device 'Pilote d'affichage principal'
 //
@@ -115,36 +127,31 @@ BOOL WINAPI myEnumDDDevicesCallback (GUID FAR*lpGUID,
     
     return DDENUMRET_OK;
 }
+#endif
 
 
 //
 // wow! from 320x200x8 up to 1600x1200x32 thanks Banshee! :)
-// 
-BOOL WINAPI myEnumModesCallback (LPDDSURFACEDESC surf, LPVOID lpContext)
+//
+// Called by EnumDisplayModes, passing appFunc in lpContext
+// DirectDraw 2, 3
+HRESULT WINAPI FDX_local_enum_mode_callback (LPDDSURFACEDESC surf, LPVOID lpContext)
 {
-    //LONG  iIndex;
-    //char  buff[256];
-    //HWND  hWnd = (HWND) lpContext;
-    //LPVOID        lpDesc = NULL;
-    
-    ((APPENUMMODESCALLBACK)lpContext) (surf->dwWidth,
-        surf->dwHeight,
-        surf->ddpfPixelFormat.dwRGBBitCount);
-    
-        /*CONS_Printf ("%dx%dx%d bpp %d refresh\n",
+    // Call the user callback, with (width, height, bbp)
+    BOOL cont = ((FDX_enum_mode_callback)lpContext) (
         surf->dwWidth,
         surf->dwHeight,
-        surf->ddpfPixelFormat.dwRGBBitCount,
-    surf->dwRefreshRate );*/
-    
-    return  DDENUMRET_OK;
+        surf->ddpfPixelFormat.dwRGBBitCount);
+
+    // continue or stop
+    return  (cont)? DDENUMRET_OK : DDENUMRET_CANCEL;
 }
 
 
 //
 // Application call here to enumerate display modes
 //
-BOOL EnumDirectDrawDisplayModes (APPENUMMODESCALLBACK appFunc)
+BOOL FDX_EnumDisplayModes (FDX_enum_mode_callback appFunc)
 {
     if (DDr2==NULL)
         return FALSE;
@@ -152,12 +159,13 @@ BOOL EnumDirectDrawDisplayModes (APPENUMMODESCALLBACK appFunc)
     // enumerate display modes
     // Carl: DirectX 3.x apparently does not support VGA modes. Who cares. :)
     // faB: removed DDEDM_REFRESHRATES, detects too many modes, plus we don't care of refresh rate.
-    if( bDX0300 )
+    // Enumerate passes appFunc to FDX_enum_mode_callback()
+    if( have_DX0300 )
         DDr2->lpVtbl->EnumDisplayModes (DDr2, 0 /*| DDEDM_REFRESHRATES*/,
-                                        NULL, (void*)appFunc, myEnumModesCallback);
+                      NULL, (void*)appFunc, FDX_local_enum_mode_callback);
     else
         DDr2->lpVtbl->EnumDisplayModes (DDr2, DDEDM_STANDARDVGAMODES /*| DDEDM_REFRESHRATES*/,
-                                    NULL, (void*)appFunc, myEnumModesCallback);
+                      NULL, (void*)appFunc, FDX_local_enum_mode_callback);
     return TRUE;
 }
 
@@ -165,66 +173,69 @@ BOOL EnumDirectDrawDisplayModes (APPENUMMODESCALLBACK appFunc)
 //
 // Create the DirectDraw object for later
 //
-BOOL CreateDirectDrawInstance (void)
+void FDX_create_main_instance (void)
 {
     HRESULT hr;
-    IDirectDraw* DDr;
+    IDirectDraw* cDDr;
 
     //
     // create an instance of DirectDraw object
     //
-    if (FAILED(hr = DirectDrawCreate(NULL, &DDr, NULL)))
+    if (FAILED(hr = DirectDrawCreate(NULL, &cDDr, NULL)))
         I_Error ("DirectDrawCreate FAILED: %s", DXErrorToString(hr));
     
     // change interface to IDirectDraw2
-    if (FAILED(hr = DDr->lpVtbl->QueryInterface (DDr, &IID_IDirectDraw2, (LPVOID*)&DDr2)))
+    if (FAILED(hr = cDDr->lpVtbl->QueryInterface (cDDr, &IID_IDirectDraw2, (LPVOID*)&DDr2)))
         I_Error("Failed to query DirectDraw2 interface: %s", DXErrorToString(hr));
     
     // release the interface we don't need
-    DDr->lpVtbl->Release (DDr);
-    return TRUE;
+    cDDr->lpVtbl->Release (cDDr);
 }
 
 
 //
-// - returns true if DirectDraw was initialized properly
+// - DirectDraw is initialized properly, or I_Error
 //
-int  InitDirectDrawe (HWND appWin, int width, int height, int bpp, int fullScr)
+BOOL  FDX_InitDDMode (HWND appWin, int width, int height, int bpp, int fullScr)
 {
-    
-    DDSURFACEDESC               ddsd;                               // DirectDraw surface description for allocating
-    DDSCAPS                     ddscaps;
-    HRESULT                     ddrval;
+    char *  reason;
+    DDSURFACEDESC   ddsd;  // DirectDraw surface description for allocating
+    DDSCAPS         ddscaps;
+    HRESULT         ddrval;
     
     DWORD           dwStyle;
     RECT            rect;
     
+#ifdef ENUM_DIRECT_DRAW_DEV
     // enumerate directdraw devices
-    //if ( FAILED(DirectDrawEnumerate (myEnumDDDevicesCallback, NULL)))
-    //      I_Error ("Error with DirectDrawEnumerate");
+    if ( FAILED(DirectDrawEnumerate (myEnumDDDevicesCallback, NULL)))
+          I_Error ("Error with DirectDrawEnumerate");
+#endif
     
     if (!DDr2)
-        CreateDirectDrawInstance();
+        FDX_create_main_instance();
     
     // remember what screen mode we are in
-    bAppFullScreen = fullScr;
+    fdx_fullscreen = fullScr;
     ScreenHeight = height;
     ScreenWidth = width;
     
-    if (bAppFullScreen)
+    if (fdx_fullscreen)
     {
         // Change window attributes
         dwStyle = WS_POPUP | WS_VISIBLE;
         SetWindowLong (appWin, GWL_STYLE, dwStyle);
-        SetWindowPos(appWin, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOACTIVATE |
-            SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
+        SetWindowPos(appWin, HWND_TOPMOST, 0, 0, 0, 0,
+	    SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
         
         // Get exclusive mode
-        ddrval = DDr2->lpVtbl->SetCooperativeLevel(DDr2, appWin, DDSCL_EXCLUSIVE |
-            DDSCL_FULLSCREEN |
-            DDSCL_ALLOWREBOOT);
+        ddrval = DDr2->lpVtbl->SetCooperativeLevel(DDr2, appWin,
+	    DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_ALLOWREBOOT);
         if (ddrval != DD_OK)
-            I_Error ("SetCooperativeLevel FAILED: %s\n", DXErrorToString(ddrval));
+        {
+	    reason = "Set cooperative";
+	    goto fail_msg;
+	}
         
         // Switch from windows desktop to fullscreen
         
@@ -234,7 +245,10 @@ int  InitDirectDrawe (HWND appWin, int width, int height, int bpp, int fullScr)
         ddrval = DDr2->lpVtbl->SetDisplayMode(DDr2, width, height, bpp, 0, DDSDM_STANDARDVGAMODE);
 #endif
         if (ddrval != DD_OK)
-            I_Error ("SetDisplayMode FAILED: %s\n", DXErrorToString(ddrval));
+        {
+	    reason = "Set display mode";
+	    goto fail_msg;
+	}
         
         // This is not really needed, except in certain cases. One case
         // is while using MFC. When the desktop is initally at 16bpp, a mode
@@ -259,17 +273,24 @@ int  InitDirectDrawe (HWND appWin, int width, int height, int bpp, int fullScr)
         
         ddrval = DDr2->lpVtbl->CreateSurface(DDr2,&ddsd, &ScreenReal, NULL);
         if (ddrval != DD_OK)
-            I_Error ("CreateSurface Primary Screen FAILED");
+        {
+	    reason = "Create primary surface";
+	    goto fail_msg;
+	}
         
         // Get a pointer to the back buffer
         
         ddscaps.dwCaps = DDSCAPS_BACKBUFFER;
         ddrval = ScreenReal->lpVtbl->GetAttachedSurface(ScreenReal,&ddscaps, &ScreenVirtual);
         if (ddrval != DD_OK)
-            I_Error ("GetAttachedSurface FAILED");
+        {
+	    reason = "Surface attach";
+	    goto fail_msg;
+	}
     }
     else
     {
+        // windowed
         rect.top = 0;
         rect.left = 0;
         rect.bottom = height-1;
@@ -291,7 +312,7 @@ int  InitDirectDrawe (HWND appWin, int width, int height, int bpp, int fullScr)
         // Just in case the window was moved off the visible area of the
         // screen.
         
-        SetWindowPos(appWin, NULL, 0, 0, rect.right-rect.left,
+        SetWindowPos(appWin, NULL, 0, 0, rect.right - rect.left,
             rect.bottom-rect.top, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
         
         SetWindowPos(appWin, HWND_NOTOPMOST, 0, 0, 0, 0,
@@ -302,7 +323,10 @@ int  InitDirectDrawe (HWND appWin, int width, int height, int bpp, int fullScr)
         
         ddrval = DDr2->lpVtbl->SetCooperativeLevel(DDr2,appWin, DDSCL_NORMAL );
         if (ddrval != DD_OK)
-            I_Error ("SetCooperativeLevel FAILED");
+        {
+	    reason = "Set cooperative";
+	    goto fail_msg;
+	}
         
         // Always zero the DDSURFACEDESC structure and set the dwSize member!
         
@@ -315,15 +339,21 @@ int  InitDirectDrawe (HWND appWin, int width, int height, int bpp, int fullScr)
         
         ddrval = DDr2->lpVtbl->CreateSurface(DDr2,&ddsd, &ScreenReal, NULL);
         if (ddrval != DD_OK)
-            I_Error ("CreateSurface Primary Screen FAILED");
+        {
+	    reason = "Create primary surface";
+	    goto fail_msg;
+	}
         
         // Create a back buffer for offscreen rendering, this will be used to
         // blt to the primary
         
-        ScreenVirtual = CreateNewSurface(width, height, DDSCAPS_OFFSCREENPLAIN |
+        ScreenVirtual = create_draw_surface(width, height, DDSCAPS_OFFSCREENPLAIN |
             DDSCAPS_SYSTEMMEMORY );
         if (ScreenVirtual == NULL)
-            I_Error ("CreateSurface Secondary Screen FAILED");
+        {
+	    reason = "Create second surface";
+	    goto fail_msg;
+	}
         
         
         //TODO: get the desktop bit depth, and build a lookup table
@@ -337,27 +367,39 @@ int  InitDirectDrawe (HWND appWin, int width, int height, int bpp, int fullScr)
         
         ddrval = DDr2->lpVtbl->CreateClipper (DDr2, 0, &windclip, 0);
         if (ddrval != DD_OK)
-            I_Error ("CreateClipper FAILED");
+        {
+	    reason = "Clipper create";
+	    goto fail_msg;
+	}
         
         // Associate the clipper with the window.
         ddrval = windclip->lpVtbl->SetHWnd (windclip,0, appWin);
         if (ddrval != DD_OK)
-            I_Error ("Clipper -> SetHWnd  FAILED");
+        {
+	    reason = "Clipper set window";
+	    goto fail_msg;
+	}
         
         // Attach the clipper to the surface.
         ddrval = ScreenReal->lpVtbl->SetClipper (ScreenReal,windclip);
         if (ddrval != DD_OK)
-            I_Error ("PrimaryScreen -> SetClipperClipper  FAILED");
+        {
+	    reason = "Clipper attach surfce";
+	    goto fail_msg;
+	}
     }
-    
-    return TRUE;    
+    return true;
+ 
+fail_msg:
+    I_SoftError( "InitMode FAILED: %s, %s\n", reason, DXErrorToString(ddrval));
+    return false;
 }
 
 
 //
 // Free all memory
 //
-void    CloseDirectDraw (void)
+void  FDX_CloseDirectDraw (void)
 {
     if (DDr2 != NULL)
     {
@@ -369,9 +411,9 @@ void    CloseDirectDraw (void)
         // attached buffers, so explicitly releasing the back buffer is not
         // necessary.
         
-        if (!bAppFullScreen)
+        if (!fdx_fullscreen)
             SAFE_RELEASE (ScreenVirtual);   // release hidden surface
-        SAFE_RELEASE (ScreenReal);                      // and attached backbuffers for bAppFullScreen mode
+        SAFE_RELEASE (ScreenReal);                      // and attached backbuffers for fdx_fullscreen mode
         DDr2->lpVtbl->Release(DDr2);
         DDr2 = NULL;
     }
@@ -381,7 +423,7 @@ void    CloseDirectDraw (void)
 //
 // Release DirectDraw stuff before display mode change
 //
-void    ReleaseChtuff (void)
+void   FDX_ReleaseChtuff (void)
 {
     if (DDr2 != NULL)
     {
@@ -393,9 +435,9 @@ void    ReleaseChtuff (void)
         // attached buffers, so explicitly releasing the back buffer is not
         // necessary.
         
-        if (!bAppFullScreen)
+        if (!fdx_fullscreen)
             SAFE_RELEASE (ScreenVirtual);   // release hidden surface
-        SAFE_RELEASE (ScreenReal);                      // and attached backbuffers for bAppFullScreen mode
+        SAFE_RELEASE (ScreenReal);                      // and attached backbuffers for fdx_fullscreen mode
     }
 }
 
@@ -403,7 +445,7 @@ void    ReleaseChtuff (void)
 //
 // Clear the surface to color
 //
-void ClearSurface (IDirectDrawSurface* surface, int color)
+void  FDX_ClearSurface (IDirectDrawSurface* surface, int color)
 {
     DDBLTFX             ddbltfx;
     
@@ -417,16 +459,16 @@ void ClearSurface (IDirectDrawSurface* surface, int color)
 
 //
 // Flip the real page with virtual page
-// - in bAppFullScreen mode, do page flipping
+// - in fdx_fullscreen mode, do page flipping
 // - in windowed mode, copy the hidden surface to the visible surface
 //
 // waitflip : if not 0, wait for page flip to end
-BOOL ScreenFlip (int waitflip)
+void  FDX_ScreenFlip (int waitflip)
 {
     HRESULT hr;
     RECT    rect;
     
-    if (bAppFullScreen)
+    if (fdx_fullscreen)
     {               
         //hr = ScreenReal->lpVtbl->GetFlipStatus (ScreenReal, DDGFS_);
         
@@ -468,8 +510,6 @@ BOOL ScreenFlip (int waitflip)
     
     if (hr != DD_OK)
         I_Error ("ScreenFlip() : couldn't Flip surfaces");
-    
-    return FALSE;
 }
 
 
@@ -499,7 +539,7 @@ void TextPrint (int x, int y, char* message)
 //
 // Lock surface before multiple drawings by hand, for speed
 //
-boolean LockScreen(void)
+BOOL  FDX_LockScreen(void)
 {
     DDSURFACEDESC  ddsd;
     HRESULT        ddrval;
@@ -542,7 +582,7 @@ boolean LockScreen(void)
 //
 // Unlock surface
 //
-void UnlockScreen(void)
+void FDX_UnlockScreen(void)
 {
     if (DD_OK != ScreenVirtual->lpVtbl->Unlock(ScreenVirtual,NULL))
         I_Error ("Couldn't UnLock the renderer!");
@@ -613,19 +653,19 @@ void MakeScreen (int width, int height, BYTE* lpSurface)
 //
 // Create a palette object
 // 
-void CreateDDPalette (PALETTEENTRY* colorTable)
+void FDX_CreateDDPalette (PALETTEENTRY* colorTable)
 {
     HRESULT  ddrval;
-    ddrval = DDr2->lpVtbl->CreatePalette(DDr2,DDPCAPS_8BIT|DDPCAPS_ALLOW256, colorTable, &DDPalette, NULL);
+    ddrval = DDr2->lpVtbl->CreatePalette(DDr2, DDPCAPS_8BIT|DDPCAPS_ALLOW256, colorTable, &DDPalette, NULL);
     if (ddrval != DD_OK)
-        I_Error ("couldn't CreatePalette");
+        I_Error ("CreatePalette: %s\n", DXErrorToString(ddrval));
 };
 
 
 //
 // Free the palette object
 //
-void DestroyDDPalette (void)
+void FDX_DestroyDDPalette (void)
 {
     SAFE_RELEASE(DDPalette);
 }
@@ -634,11 +674,11 @@ void DestroyDDPalette (void)
 //
 // Set a a full palette of 256 PALETTEENTRY entries
 //
-void SetDDPalette (PALETTEENTRY* pal)
+void FDX_SetDDPalette (PALETTEENTRY* pal)
 {
     // create palette first time
     if (DDPalette==NULL)
-        CreateDDPalette (pal);
+        FDX_CreateDDPalette (pal);
     else
         DDPalette->lpVtbl->SetEntries(DDPalette,0,0,256,pal);
     // setting the same palette to the same surface again does not increase
@@ -650,7 +690,8 @@ void SetDDPalette (PALETTEENTRY* pal)
 //
 // Wait for vsync, gross
 //
-void WaitVbl (void)
+void FDX_WaitVbl (void)
 {
-    DDr2->lpVtbl->WaitForVerticalBlank (DDr2,DDWAITVB_BLOCKBEGIN, NULL);
+    if( DDr2 )
+        DDr2->lpVtbl->WaitForVerticalBlank (DDr2, DDWAITVB_BLOCKBEGIN, NULL);
 }

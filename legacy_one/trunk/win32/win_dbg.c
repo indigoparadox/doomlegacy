@@ -361,7 +361,6 @@ int __cdecl RecordExceptionInfo (PEXCEPTION_POINTERS data, const char *Message, 
     SetFilePointer (fileHandle, 0, 0, FILE_END);
     
     // Print out some blank lines to separate this error log from any previous ones.
-    FPrintf (fileHandle, "Email this file to Doom legacy support so we can fix the bugs\r\n");
     FPrintf (fileHandle, "\r\n\r\n\r\n\r\n");
     FPrintf (fileHandle, "%s -ERROR LOG-\r\n\r\n", VERSION_BANNER);
     FPrintf (fileHandle, "Command Line parameters: ");

@@ -61,6 +61,7 @@
 #include "../doomincl.h"
 
 #include <stdio.h>
+#include <windef.h>
 
 #include "../doomstat.h"
   // netgame
@@ -70,6 +71,7 @@
 #include "../d_main.h"
 #include "../i_system.h"
 
+#include "../screen.h"
 #include "../keys.h"
   //hack quick test
 
@@ -85,16 +87,16 @@
 
 // judgecutor: MSWheel support for Win95/NT3.51
 #include <zmouse.h>
+  // WM_MOUSEWHEEL
 
-HINSTANCE       myInstance=NULL;
-HWND            hWndMain=NULL;
+HINSTANCE       main_prog_instance=NULL;
+HWND            hWnd_main=NULL;
 HCURSOR         windowCursor=NULL;                      // main window cursor
 
 boolean         appActive = false;                      //app window is active
 
 #ifdef LOGMESSAGES
-// this is were I log debug text, cons_printf, I_error ect for window port debugging
-HANDLE  logstream;
+FILE * logstream = NULL;
 #endif
 
 // faB: the MIDI callback is another thread, and Midi volume is delayed here in window proc
@@ -103,24 +105,23 @@ extern DWORD dwVolumePercent;
 
 boolean             nodinput = FALSE;
 extern void         I_GetSysMouseEvents(int mouse_state);
-extern boolean      win95;
-extern unsigned int MSHWheelMessage;
 
-void I_LoadingScreen ( LPCSTR msg );
 long FAR PASCAL  MainWndproc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
     event_t ev;              //Doom input event
     int     mouse_keys;
 
+#ifdef MSH_WHEEL
     // judgecutor:
     // Response MSH Mouse Wheel event
 
     if (message == MSHWheelMessage)
     {
-            message = WM_MOUSEWHEEL;
+        message = WM_MOUSEWHEEL;
         if (win95)
             wParam <<= 16;
     }
+#endif
     
     
     switch( message )
@@ -145,7 +146,7 @@ long FAR PASCAL  MainWndproc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         break;
 
     case WM_PAINT:
-        if (!appActive && !bAppFullScreen && !netgame)
+        if (!appActive && !vid.fullscreen && !netgame)
             // app becomes inactive (if windowed )
         {
             // Paint "Game Paused" in the middle of the screen
@@ -164,7 +165,7 @@ long FAR PASCAL  MainWndproc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
     //case WM_LBUTTONDOWN:
 
     case WM_MOVE:
-        if (bAppFullScreen) {
+        if (vid.fullscreen) {
             SetWindowPos(hWnd, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
             return 0;
         }
@@ -183,7 +184,7 @@ long FAR PASCAL  MainWndproc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         break;
 
     case WM_SETCURSOR:
-        if (bAppFullScreen)
+        if (vid.fullscreen)
             SetCursor(NULL);
         else
             SetCursor(windowCursor);
@@ -305,7 +306,7 @@ HWND    OpenMainWindow (HINSTANCE hInstance, int nCmdShow, char* wTitle)
     hWnd = CreateWindowEx(WS_EX_TOPMOST,    //ExStyle
         "LegacyWC",                         //Classname
         wTitle,                             //Windowname
-        WS_CAPTION|WS_POPUP|WS_SYSMENU,     //dwStyle       //WS_VISIBLE|WS_POPUP for bAppFullScreen
+        WS_CAPTION|WS_POPUP|WS_SYSMENU,     //dwStyle       //WS_VISIBLE|WS_POPUP for vid.fullscreen
         0,
         0,
         320,  //GetSystemMetrics(SM_CXSCREEN),
@@ -330,7 +331,7 @@ BOOL tlErrorMessage( char *err)
     printf("Error %s..\n", err);
     fflush(stdout);
 
-    MessageBox( hWndMain, err, "ERROR", MB_OK );
+    MessageBox( hWnd_main, err, "ERROR", MB_OK );
     return FALSE;
 }
 
@@ -340,7 +341,7 @@ BOOL tlErrorMessage( char *err)
 // ------------------
 #define         MAXCMDLINEARGS          64
 static  char*   myWargv[MAXCMDLINEARGS+1];
-static  char    myCmdline[512];
+static  char    my_cmdline[512];
 
 static void     GetArgcArgv (LPCSTR cmdline)
 {
@@ -350,8 +351,8 @@ static void     GetArgcArgv (LPCSTR cmdline)
     BOOL    bCvar = FALSE, prevCvar = FALSE;
 
     // split arguments of command line into argv
-    strncpy (myCmdline, cmdline, 511);      // in case window's cmdline is in protected memory..for strtok
-    len = lstrlen (myCmdline);
+    strncpy (my_cmdline, cmdline, 511);      // in case window's cmdline is in protected memory..for strtok
+    len = strlen (my_cmdline);
 
     myargc = 0; 
     i = 0;
@@ -359,12 +360,12 @@ static void     GetArgcArgv (LPCSTR cmdline)
     while( myargc < MAXCMDLINEARGS )
     {
         // get token
-        while ( myCmdline[i] == cSep )
+        while ( my_cmdline[i] == cSep )
             i++;
         if ( i >= len )
             break;
-        token = myCmdline + i;
-        if ( myCmdline[i] == '"' ) {
+        token = my_cmdline + i;
+        if ( my_cmdline[i] == '"' ) {
             cSep = '"';
             i++;
             if ( !prevCvar )    //cvar leave the "" in
@@ -374,16 +375,16 @@ static void     GetArgcArgv (LPCSTR cmdline)
             cSep = ' ';
 
         //cvar
-        if ( myCmdline[i] == '+' && cSep == ' ' )   //a + begins a cvarname, but not after quotes
+        if ( my_cmdline[i] == '+' && cSep == ' ' )   //a + begins a cvarname, but not after quotes
             bCvar = TRUE;
         else
             bCvar = FALSE;
 
-        while ( myCmdline[i] &&
-                myCmdline[i] != cSep )
+        while ( my_cmdline[i] &&
+                my_cmdline[i] != cSep )
             i++;
 
-        if ( myCmdline[i] == '"' ) {
+        if ( my_cmdline[i] == '"' ) {
              cSep = ' ';
              if ( prevCvar )
                  i++;       // get ending " quote in arg
@@ -391,15 +392,15 @@ static void     GetArgcArgv (LPCSTR cmdline)
 
         prevCvar = bCvar;
 
-        if ( myCmdline + i > token )
+        if ( my_cmdline + i > token )
         {
             myWargv[myargc++] = token;
         }
 
-        if ( !myCmdline[i] || i >= len )
+        if ( !my_cmdline[i] || i >= len )
             break;
 
-        myCmdline[i++] = '\0';
+        my_cmdline[i++] = '\0';
     }
     myWargv[myargc] = NULL;
 
@@ -438,41 +439,38 @@ int WINAPI HandledWinMain(HINSTANCE hInstance,
     LPTSTR          args;
 
 #ifdef LOGMESSAGES
-    // DEBUG!!! - set logstream to NULL to disable debug log
-    logstream = INVALID_HANDLE_VALUE;
-
-    logstream = CreateFile ("log.txt", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
-                             FILE_ATTRIBUTE_NORMAL, NULL);  //file flag writethrough?
+    logstream = fopen("log.txt", "w");
 #endif
 
     // fill myargc,myargv for m_argv.c retrieval of cmdline arguments
-    CONS_Printf ("GetArgcArgv() ...\n");
+//    CONS_Printf ("GetArgcArgv() ...\n");
     args = GetCommandLine();
-    CONS_Printf ("lpCmdLine is '%s'\n", args);
+//    CONS_Printf ("Command line is '%s'\n", args);
     GetArgcArgv(args);
 
-    CONS_Printf ("Myargc: %d\n", myargc);
-    for (i=0;i<myargc;i++)
-        CONS_Printf("myargv[%d] : '%s'\n", i, myargv[i]);
+//    CONS_Printf ("Myargc: %d\n", myargc);
+//    for (i=0;i<myargc;i++)
+//        CONS_Printf("myargv[%d] : '%s'\n", i, myargv[i]);
 
 
     // store for later use, will we need it ?
-    myInstance = hInstance;
+    main_prog_instance = hInstance;
 
     // open a dummy window, both 3dfx Glide and DirectX need one.
-    if ( (hWndMain = OpenMainWindow(hInstance,nCmdShow, VERSION_BANNER) == NULL ))
+    hWnd_main = OpenMainWindow(hInstance, nCmdShow, VERSION_BANNER);
+    if ( hWnd_main == NULL )
     {
         tlErrorMessage("Couldn't open window");
         return FALSE;
     }
 
     // currently starts DirectInput 
-    CONS_Printf ("I_StartupSystem() ...\n");
-    I_StartupSystem();
+//    CONS_Printf ("I_StartupSystem() ...\n");
+//    I_StartupSystem();  // called in D_DoomMain
     MakeCodeWritable();
 
     // startup Doom Legacy
-    CONS_Printf ("D_DoomMain() ...\n");
+//    CONS_Printf ("D_DoomMain() ...\n");
     D_DoomMain ();
     CONS_Printf ("Entering main app loop...\n");
     // never return
@@ -492,6 +490,10 @@ int WINAPI WinMain (HINSTANCE hInstance,
                     int          nCmdShow)
 {
     int Result = -1;
+#if 1
+    // MinGW: __try does not work, file says exception will likely crash
+    Result = HandledWinMain (hInstance, hPrevInstance, lpCmdLine, nCmdShow);
+#else
     __try
     {
         Result = HandledWinMain (hInstance, hPrevInstance, lpCmdLine, nCmdShow);
@@ -501,6 +503,7 @@ int WINAPI WinMain (HINSTANCE hInstance,
     {
         //Do nothing here.
     }
+#endif
 
     return Result;
 }

@@ -39,6 +39,7 @@
 // other include that might define WINVER
 #include "../doomincl.h"
   // warnings
+  // I_Error, CONS_Printf
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -99,16 +100,16 @@ typedef unsigned char   UBYTE;
 //
 typedef struct
 {
-    LONG               dwTag;                  // Type
-    LONG               cbChunk;                // Length (hi-lo)
+    uint32_t           dwTag;                  // Type
+    uint32_t           cbChunk;                // Length (hi-lo)
 } MIDICHUNK;
 
 // Contents of MThd chunk.
 typedef struct
 {
-    WORD                wFormat;                // Format (hi-lo)
-    WORD                nTracks;                // # tracks (hi-lo)
-    WORD                wTimeDivision;          // Time division (hi-lo)
+    uint16_t            wFormat;                // Format (hi-lo)
+    uint16_t            nTracks;                // # tracks (hi-lo)
+    uint16_t            wTimeDivision;          // Time division (hi-lo)
 } MIDIFILEHDR;
 
 #pragma pack()
@@ -118,9 +119,9 @@ typedef struct
 //
 typedef struct
 {
-    LONG               tkEvent;                // Absolute time of event
+    uint32_t           tkEvent;                // Absolute time of event
     BYTE               abEvent[4];             // Event type and parameters if channel msg
-    LONG               dwEventLength;          // Of data which follows if meta or sysex
+    uint32_t           dwEventLength;          // Of data which follows if meta or sysex
     UBYTE*             pEvent;                 // -> Event data if applicable
 } TEMPEVENT, *PTEMPEVENT;
 
@@ -135,10 +136,10 @@ typedef struct STREAMBUF *PSTREAMBUF;
 typedef struct STREAMBUF
 {
     UBYTE*             pBuffer;                // -> Start of actual buffer
-    LONG               tkStart;                // Tick time just before first event
+    uint32_t           tkStart;                // Tick time just before first event
     UBYTE*             pbNextEvent;            // Where to write next event
-    LONG               iBytesLeft;             // UBYTEs left in buffer
-    LONG               iBytesLeftUncompressed; // UBYTEs left when uncompressed
+    int32_t            iBytesLeft;             // UBYTEs left in buffer
+    int32_t            iBytesLeftUncompressed; // UBYTEs left when uncompressed
     PSTREAMBUF         pNext;                  // Next buffer
 } STREAMBUF;
 
@@ -146,7 +147,7 @@ typedef struct STREAMBUF
 //
 typedef struct
 {
-    LONG               tkTrack;                // Current tick position in track       
+    uint32_t           tkTrack;                // Current tick position in track
     PSTREAMBUF         pFirst;                 // First stream buffer
     PSTREAMBUF         pLast;                  // Last (current) stream buffer
 } OUTSTREAMSTATE;
@@ -159,9 +160,9 @@ typedef struct
 #define MDS_F_NOSTREAMID        0x00000001      // Stream ID's skipped; reader inserts
 typedef struct
 {
-    LONG               dwTimeFormat;           // Low word == time format in SMF format
-    LONG               cbMaxBuffer;            // Guaranteed max buffer size
-    LONG               dwFlags;                // Format flags
+    uint32_t           dwTimeFormat;           // Low word == time format in SMF format
+    uint32_t           cbMaxBuffer;            // Guaranteed max buffer size
+    uint32_t           dwFlags;                // Format flags
 } MIDSFMT;
 
 // 'data' chunk buffer header
@@ -174,13 +175,15 @@ typedef struct
 
 // A few globals
 //
+#ifndef LEGACY_OUTPUT
 static HANDLE           hInFile = INVALID_HANDLE_VALUE;
 static HANDLE           hOutFile= INVALID_HANDLE_VALUE;
-static OUTSTREAMSTATE   ots;
 static BOOL             fCompress = FALSE;
+static OUTSTREAMSTATE   ots;
+#endif
 
        INFILESTATE      ifs;
-static DWORD            tkCurrentTime;
+static uint32_t         tkCurrentTime;
 
 #ifdef DEBUGMIDISTREAM
 static char gteBadRunStat[] =           "Reference to missing running status.";
@@ -195,25 +198,22 @@ static char gteMetaTrunc[] =            "Meta event truncated";
 
 // Prototypes
 //
-static BOOL             Init(LPSTR szInFile, LPSTR szOutFile);
 static UBYTE*           GetInFileData(LONG cbToGet);
-static void             Cleanup(void);
-static BOOL             WriteStreamBuffers(void);
-static BOOL             GetTrackVDWord(INTRACKSTATE* pInTrack, ULONG* lpdw);
+static BOOL             GetTrackVDWord(INTRACKSTATE* pInTrack, uint32_t* lpdw);
 static BOOL             GetTrackEvent(INTRACKSTATE* pInTrack, TEMPEVENT *pMe);
-static BOOL             AddEventToStream(TEMPEVENT *pMe);
-static UBYTE*           GetOutStreamBytes(LONG tkNow, LONG cbNeeded, LONG cbUncompressed);
 #ifdef DEBUGMIDISTREAM
 static void             ShowTrackError(INTRACKSTATE* pInTrack, char* szErr);
 #endif
-// either uses the local one (prints out on stderr) or Legacy's console output
-void CONS_Printf (char *fmt, ...);
-void I_Error (char *error, ...);
 
 
 
 #ifndef LEGACY_OUTPUT
+static BOOL             Init(LPSTR szInFile, LPSTR szOutFile);
+static BOOL             WriteStreamBuffers(void);
 static BOOL             BuildNewTracks(void);
+static void             Cleanup(void);
+static BOOL             AddEventToStream(TEMPEVENT *pMe);
+static UBYTE*           GetOutStreamBytes(uint32_t tkNow, LONG cbNeeded, LONG cbUncompressed);
 // only for stand-alone version
 //
 void _cdecl main(int argc, char* argv[])
@@ -253,6 +253,7 @@ void _cdecl main(int argc, char* argv[])
 #endif
 
 
+#ifndef LEGACY_OUTPUT
 // ----
 // Init (stand-alone version)
 // 
@@ -431,6 +432,7 @@ Init_Cleanup:
     
     return fRet;
 }
+#endif
 
 
 // -------------
@@ -454,6 +456,7 @@ static UBYTE* GetInFileData(LONG iBytesToGet)
 }
 
 
+#ifndef LEGACY_OUTPUT
 // -------
 // Cleanup
 //
@@ -483,8 +486,10 @@ static void Cleanup(void)
         pCurr = pNext;
     }
 }
+#endif
 
 
+#ifndef LEGACY_OUTPUT
 // --------------
 // BuildNewTracks
 //
@@ -514,7 +519,8 @@ static BOOL BuildNewTracks(void)
         pInTrackFound = NULL;
         tkNext = 0xFFFFFFFFL;
         
-        for (idx = 0, pInTrack = ifs.pTracks; idx < ifs.nTracks; ++idx, ++pInTrack) {
+        for (idx = 0, pInTrack = ifs.pTracks; idx < ifs.nTracks; ++idx, ++pInTrack)
+        {
             if ( (!(pInTrack->fdwTrack & ITS_F_ENDOFTRK)) && (pInTrack->tkNextEventDue < tkNext))
             {
                 tkNext = pInTrack->tkNextEventDue;
@@ -549,8 +555,10 @@ static BOOL BuildNewTracks(void)
     
     return TRUE;
 }
+#endif
 
 
+#ifndef LEGACY_OUTPUT
 //
 // WriteStreamBuffers
 //
@@ -634,22 +642,23 @@ static BOOL WriteStreamBuffers(void)
     
     return TRUE;
 }
+#endif
 
 
 // --------------
 // GetTrackVDWord
-// Attempts to parse a variable length LONG from the given track. A VDWord
+// Attempts to parse a variable length u32 from the given track. A VDWord
 // in a MIDI file
 //  (a) is in lo-hi format 
 //  (b) has the high bit set on every UBYTE except the last
-// Returns the LONG in *lpdw and TRUE on success; else
+// Returns the u32 in *lpdw and TRUE on success; else
 // FALSE if we hit end of track first. Sets ITS_F_ENDOFTRK
 // if we hit end of track.
 // --------------
-static BOOL GetTrackVDWord(INTRACKSTATE* pInTrack, ULONG* lpdw)
+static BOOL GetTrackVDWord(INTRACKSTATE* pInTrack, uint32_t* lpdw)
 {
     BYTE    b;
-    LONG    dw = 0;
+    ULONG   dw = 0;
     
     if (pInTrack->fdwTrack & ITS_F_ENDOFTRK)
         return FALSE;
@@ -706,7 +715,7 @@ static BOOL GetTrackVDWord(INTRACKSTATE* pInTrack, ULONG* lpdw)
 static BOOL GetTrackEvent(INTRACKSTATE* pInTrack, TEMPEVENT *pMe)
 {
     BYTE     b;
-    LONG     dwEventLength;
+    int32_t  dwEventLength;
     
     // Clear out the temporary event structure to get rid of old data...
     ZeroMemory( pMe, sizeof(TEMPEVENT));
@@ -887,7 +896,7 @@ static BOOL GetTrackEvent(INTRACKSTATE* pInTrack, TEMPEVENT *pMe)
     //
     if (!(pInTrack->fdwTrack & ITS_F_ENDOFTRK))
     {
-        LONG                           tkDelta;
+        uint32_t tkDelta;
         
         if (!GetTrackVDWord(pInTrack, &tkDelta))
             return FALSE;
@@ -899,6 +908,7 @@ static BOOL GetTrackEvent(INTRACKSTATE* pInTrack, TEMPEVENT *pMe)
 }
 
 
+#ifndef LEGACY_OUTPUT
 // ----------------
 // AddEventToStream
 //
@@ -911,7 +921,7 @@ static BOOL GetTrackEvent(INTRACKSTATE* pInTrack, TEMPEVENT *pMe)
 static BOOL AddEventToStream(TEMPEVENT *pMe)
 {
     PLONG   pdw;
-    LONG    tkNow, tkDelta;
+    int32_t tkNow, tkDelta;
     UINT    cdw;
 
     tkNow = ots.tkTrack;
@@ -990,8 +1000,10 @@ static BOOL AddEventToStream(TEMPEVENT *pMe)
     
     return TRUE;    
 }
+#endif
 
 
+#ifndef LEGACY_OUTPUT
 // -----------------
 // GetOutStreamBytes
 //
@@ -1004,7 +1016,7 @@ static BOOL AddEventToStream(TEMPEVENT *pMe)
 //
 // Returns a pointer to the number of requested UBYTEs or NULL if we're out of memory
 // -----------------
-static UBYTE* GetOutStreamBytes(LONG tkNow, LONG cbNeeded, LONG cbUncompressed)
+static UBYTE* GetOutStreamBytes(uint32_t tkNow, LONG cbNeeded, LONG cbUncompressed)
 {
     UBYTE* pb;
     
@@ -1066,6 +1078,7 @@ static UBYTE* GetOutStreamBytes(LONG tkNow, LONG cbNeeded, LONG cbUncompressed)
     
     return pb;
 }
+#endif
 
 #ifdef DEBUGMIDISTREAM
 static void ShowTrackError(INTRACKSTATE* pInTrack, char* szErr)
@@ -1119,7 +1132,7 @@ void CONS_Printf (char *fmt, ...)
 static  DWORD   dwBufferTickLength;
         DWORD   dwProgressBytes;
 // win_snd.c
-extern  BOOL    bMidiLooped;
+extern  BOOL    midi_looped;
 
 
 // --------------------------
@@ -1486,7 +1499,7 @@ int Mid2StreamConvertToBuffer( DWORD dwFlags, LPCONVERTINFO lpciInfo )
     // If we were already done, then return with a warning...
     if( dwStatus & CONVERTF_STATUS_DONE )
         {
-            if( bMidiLooped )
+            if( midi_looped )
             {
                 Mid2StreamRewindConverter();
                 dwProgressBytes = 0;

@@ -17,8 +17,16 @@
 //
 //-----------------------------------------------------------------------------
 
+// Because of WINVER redefine, doomtype.h (via doomincl.h) is before any
+// other include that might define WINVER
+#include "../doomincl.h"
+
 #include <stdio.h>
+#include <string.h>
 #include <direct.h>
+  // io.h -> access, _findnext, _A_SUBDIR, chdir
+
+#if 0
 #include <fcntl.h>
 #include <sys/stat.h>
 #ifndef __WIN32__
@@ -26,7 +34,7 @@
 #else
 #include <windows.h>
 #endif
-#include <string.h>
+#endif
 
 #include "../filesrch.h"
 #include "../m_misc.h"
@@ -35,6 +43,7 @@
 // filesearch:
 //
 // ATTENTION : make sure there is enough space in filename to put a full path (255 or 512)
+//    filename must be buffer of MAX_WADPATH
 // if needmd5check==0 there is no md5 check
 // if changestring then filename will be change with the full path and name
 // maxsearchdepth==0 only search given directory, no subdirs
@@ -51,21 +60,17 @@ filestatus_e filesearch(char *filename, char *startpath, unsigned char *wantedmd
     searchhandle=access(filename,4);
     if(searchhandle!=-1)
     {
-        if(true)
-        {
-            // take care of gmt timestamp conversion
-            if( checkfilemd5(filename,wantedmd5sum) )
+        // take care of gmt timestamp conversion
+        if( checkfilemd5(filename,wantedmd5sum) )
                 return FS_FOUND;
-            else
-                return FS_MD5SUMBAD; // found with differant date
-        }
         else
-            return FS_FOUND;
+                return FS_MD5SUMBAD; // found with differant date
     }
     
     if((searchhandle=_findfirst("*.*",&dta))!=-1)
     {
-        do {
+        do
+        {
             if((dta.name[0]!='.') && (dta.attrib & _A_SUBDIR ))
             {
                 if( chdir(dta.name)==0 ) { // can fail if we haven't the right
@@ -75,7 +80,12 @@ filestatus_e filesearch(char *filename, char *startpath, unsigned char *wantedmd
                     if( found )
                     {
                         if(changestring)
-                            strcatbf(filename,dta.name,"\\");
+		        {
+			    char orig_name[MAX_WADPATH];
+			    strncpy( orig_name, filename, MAX_WADPATH-1 );
+			    orig_name[MAX_WADPATH-1] = '\0';
+			    cat_filename(filename, dta.name, orig_name);
+			}
                         _findclose(searchhandle);
                         return found;
                     }

@@ -73,11 +73,20 @@
 #include <io.h>
 #include <stdarg.h>
 #include <direct.h>
+// unistd is already used throughout DoomLegacy
+#include <unistd.h>
+  // usleep
+#ifdef MSH_WHEEL
+#include <winuser.h>
+#endif
 
-#include "../m_misc.h"
 #include "../i_video.h"
 #include "../i_sound.h"
+#include "../i_system.h"
+  // graphics_started
+#include "../i_joy.h"
 
+#include "../m_misc.h"
 #include "../d_net.h"
 #include "../g_game.h"
 
@@ -90,21 +99,24 @@
 #include "../g_input.h"
 
 #include "../keys.h"
+#include "../screen.h"
+  // vid
 
 #include "fabdxlib.h"
 
 #include <mmsystem.h>
 
 #include "win_main.h"
-#include "../i_joy.h"
 
-#define DIRECTINPUT_VERSION 0x700
+#define INITGUID
 // Force dinput.h to generate old DX3 headers.
-#define DXVERSION_NTCOMPATIBLE  0x0300
+// DIRECTINPUT can use version 0x0300, 0x0500, 0x0700
+#define DIRECTINPUT_VERSION 0x0700
 #include <dinput.h>
 
 // judgecutor: Wheel support for Win95/WinNT3.51
 #include <zmouse.h>
+  // WM_MOUSEWHEEL
 
 // judgecutor: Taken from Win98/NT4.0
 #ifndef SM_MOUSEWHEELPRESENT
@@ -115,28 +127,22 @@
 // ==================
 // DIRECT INPUT STUFF
 // ==================
-BOOL   bDX0300;        // if true, we created a DirectInput 0x0300 version
-                       // faB: what a beautiful variable name, isn't it ?
-static LPDIRECTINPUT           lpDI = NULL;
-static LPDIRECTINPUTDEVICE     lpDIK = NULL;   // Keyboard
-static LPDIRECTINPUTDEVICE     lpDIM = NULL;   // mice
+// Drop back to second choice of compatibility, NT
+#define REQ_DX0300  0x0300
+byte   have_DX0300;    // got DirectInput 0x0300 version instead
+
+static LPDIRECTINPUT           DI_main = NULL;    // DirectInput main object
+static LPDIRECTINPUTDEVICE     DID_keyboard = NULL;   // Keyboard
+static LPDIRECTINPUTDEVICE     DID_mouse = NULL;   // mice
 
 volatile tic_t ticcount;   //returned by I_GetTime(), updated by timer interrupt
 
 
 // Do not execute cleanup code more than once. See Shutdown_xxx() routines.
-byte    graphics_started=0;
 byte    keyboard_started=0;
-byte    sound_started=0;
 boolean timer_started = false;
 boolean mouse_enabled = false;
 
-
-    void    I_AddExitFunc(void (*func)());
-    void    I_Quit (void);
-    void    I_Error (char *error, ...);
-    void    I_OutputMsg (char *error, ...);
-    void    I_ShutdownSystem (void);
 static void I_ShutdownKeyboard (void);
 static void I_ShutdownJoystick (void);
 
@@ -155,18 +161,13 @@ void I_Tactile ( int   on,   int   off,   int   total )
 //
 // BP: yes it is for virtual reality system, next incoming feature :)
 ticcmd_t        emptycmd;
+
 ticcmd_t*       I_BaseTiccmd(void)
 {
     return &emptycmd;
 }
 
 
-
-
-//  Allocates the base zone memory,
-//  this function returns a valid pointer and size,
-//  else it should interrupt the program immediately.
-//
 //added:11-02-98: now checks if mem could be allocated, this is still
 //    prehistoric... there's a lot to do here: memory locking, detection
 //    of win95 etc...
@@ -188,23 +189,37 @@ static void I_DetectWin95 (void)
 
 
 // return free and total memory in the system
-ULONG I_GetFreeMem(ULONG *total)
+// total is required
+uint64_t I_GetFreeMem(uint64_t *total)
 {
+#if defined(WIN_LARGE_MEM) && defined( _WIN32_WINNT ) && (_WIN32_WINNT >= 0x0500)
+    // large memory status, only in newer libraries
+    MEMORYSTATUSEX statex;
+
+    statex.dwLength = sizeof(statex);
+    GlobalMemoryStatusEx(&statex);
+    *total = statex.ullTotalPhys;
+    return statex.ullAvailPhys;
+#else
+    // older memory status
     MEMORYSTATUS info;
 
     info.dwLength = sizeof(MEMORYSTATUS);
     GlobalMemoryStatus( &info );
-    if( total )
-        *total = info.dwTotalPhys;
+    *total = info.dwTotalPhys;
     return info.dwAvailPhys;
+#endif
 }
 
 
+#ifdef ENABLE_PROFILE
+// [WDJ] Unused, incomplete, commented out call
 // ---------
 // I_Profile
 // Two little functions to profile our code using the high resolution timer
 // ---------
 static LARGE_INTEGER    ProfileCount;
+
 void I_BeginProfile (void)
 {
     if (!QueryPerformanceCounter (&ProfileCount))
@@ -228,6 +243,7 @@ DWORD I_EndProfile (void)
     return ret;
 }
 
+#endif
 
 // ---------
 // I_GetTime
@@ -238,14 +254,14 @@ DWORD I_EndProfile (void)
 static long    hacktics = 0;       //faB: used locally for keyboard repeat keys
 static DWORD   starttickcount = 0; //Hurdler: hack for win2k time bug
 
-int I_GetTime (void)
+tic_t I_GetTime (void)
 {
     int newtics;
 
     if (!starttickcount) // high precision timer
     {
         LARGE_INTEGER   currtime;       // use only LowPart if high resolution counter not available
-        static LARGE_INTEGER basetime = {0};
+        static LARGE_INTEGER basetime = {{0}};
 
         // use this if High Resolution timer is found
         static LARGE_INTEGER frequency;
@@ -303,6 +319,8 @@ void I_BeginRead (void) {}
 void I_EndRead (void) {}
 
 
+#if 0
+// unused
 byte*   I_AllocLow(int length)
 {
     byte*       mem;
@@ -311,11 +329,12 @@ byte*   I_AllocLow(int length)
     memset (mem,0,length);
     return mem;
 }
+#endif
 
 
-// ===========================================================================================
-//                                                                                      EVENTS
-// ===========================================================================================
+// ===========================================================================
+//                                                         EVENTS
+// ===========================================================================
 
 // ----------
 // I_GetEvent
@@ -370,9 +389,9 @@ void I_OsPolling(void)
 }
 
 
-// ===========================================================================================
-//                                                                              TIMER
-// ===========================================================================================
+// ===========================================================================
+//                                                         TIMER
+// ===========================================================================
 
 //
 //  Timer user routine called at ticrate.
@@ -383,13 +402,17 @@ void winTimer (HWND hwnd, UINT uMsg, UINT idEvent, DWORD dwTime)
 }
 
 
+#ifdef USE_MYTIMER
 //added:08-01-98: we don't use allegro_exit() so we have to do it ourselves.
 static  UINT    myTimer;
+#endif
 
 void I_ShutdownTimer (void)
 {
-    //if (myTimer)
-    //      KillTimer (hWndMain, myTimer);
+#ifdef USE_MYTIMER
+    if (myTimer)
+          KillTimer (hWnd_main, myTimer);
+#endif
     timer_started = false;
 }
 
@@ -399,12 +422,15 @@ void I_ShutdownTimer (void)
 //
 #define TIMER_ID            1
 #define TIMER_RATE          (1000/TICRATE)
+
 void I_StartupTimer(void)
 {
     ticcount = 0;
-    
-    //if ( (myTimer =SetTimer (hWndMain, TIMER_ID, TIMER_RATE, winTimerISR)) == 0)
-    //      I_Error("I_StartupTimer: could not install timer.");
+
+#ifdef USE_MYTIMER
+    if ( (myTimer =SetTimer (hWnd_main, TIMER_ID, TIMER_RATE, winTimerISR)) == 0)
+          I_Error("I_StartupTimer: could not install timer.");
+#endif
     
     //I_AddExitFunc(I_ShutdownTimer);
     timer_started = true;
@@ -418,19 +444,20 @@ void I_StartupTimer(void)
 }
 
 
-// ===========================================================================================
-//                                                                   EXIT CODE, ERROR HANDLING
-// ===========================================================================================
+// ===========================================================================
+//                                        EXIT CODE, ERROR HANDLING
+// ===========================================================================
 
-int     errorcount = 0;                 // phuck recursive errors
+int     errorcount = 0;  // control recursive errors
 int shutdowning= false;
 
+#if defined(NDEBUG)
 //
 //  Used to trap various signals, to make sure things get shut down cleanly.
 //
 static void signal_handler(int num)
 {
-    static char msg[] = "oh no! back to reality!\r\n";
+    static char msg[] = "none";
     char*       sigmsg;
     char        sigdef[64];
         
@@ -465,20 +492,26 @@ static void signal_handler(int num)
     }
     
 #ifdef LOGMESSAGES
-    if (logstream != INVALID_HANDLE_VALUE)
+    if( logstream )
     {
-        FPrintf (logstream,"signal_handler() error: %s\n", sigmsg);
-        CloseHandle (logstream);
-        logstream = INVALID_HANDLE_VALUE;
+        fprintf (logstream,"signal_handler() error: %s\n", sigmsg);
+        fclose( logstream );
+        logstream = NULL;
     }
 #endif    
     
-    MessageBox(hWndMain,va("signal_handler() : %s",sigmsg),"Doom Legacy error",MB_OK|MB_ICONERROR);
+    MessageBox(hWnd_main,va("signal_handler() : %s",sigmsg),"Doom Legacy error",MB_OK|MB_ICONERROR);
         
     signal(num, SIG_DFL);               //default signal action
     raise(num);
 }
+#endif
 
+
+void I_MsgBox (char * msg )
+{
+    MessageBox (hWnd_main, msg, "Doom Legacy", MB_OK);
+}
 
 //
 // put an error message (with format) on stderr
@@ -496,15 +529,16 @@ void I_OutputMsg (char *error, ...)
     // dont flush the message!
 
 #ifdef LOGMESSAGES
-    if (logstream != INVALID_HANDLE_VALUE)
-        FPrintf (logstream,"%s", txt);
+    if (logstream)
+        fprintf (logstream, "Error: %s\n", txt);
 #endif
 }
 
 
+
 // display error messy after shutdowngfx
 //
-void I_Error (char *error, ...)
+void I_Error (const char *error, ...)
 {
     va_list     argptr;
     char        txt[512];
@@ -513,7 +547,7 @@ void I_Error (char *error, ...)
     if(shutdowning)
     {
         errorcount++;
-        // try to shutdown separetely eatch stuff
+        // try to shutdown separetely each stuff
         if(errorcount==5)
             I_ShutdownGraphics();
         if(errorcount==6)
@@ -522,7 +556,7 @@ void I_Error (char *error, ...)
             M_SaveConfig (NULL);
         if(errorcount>20)
         {
-            MessageBox(hWndMain,txt,"Doom Legacy Recursive Error",MB_OK|MB_ICONERROR);
+            MessageBox(hWnd_main,txt,"Doom Legacy Recursive Error",MB_OK|MB_ICONERROR);
             exit(-1);     // recursive errors detected
         }
     }
@@ -553,15 +587,14 @@ void I_Error (char *error, ...)
     I_ShutdownSystem();
 
 #ifdef LOGMESSAGES
-    if (logstream != INVALID_HANDLE_VALUE)
+    if( logstream )
     {
-        //FPrintf (logstream,"I_Error(): %s", txt);
-        CloseHandle (logstream);
-        logstream = INVALID_HANDLE_VALUE;
+        fclose( logstream );
+        logstream = NULL;
     }
 #endif
     
-    MessageBox (hWndMain, txt, "Doom Legacy Error", MB_OK|MB_ICONERROR);
+    MessageBox (hWnd_main, txt, "Doom Legacy Error", MB_OK|MB_ICONERROR);
 
     //getchar();
     exit (-1);
@@ -592,14 +625,14 @@ void I_Quit (void)
     I_ShutdownSystem();
         
     if (shutdowning || errorcount)
-        I_Error("Error detected (%d)",errorcount);
+        I_Error("Errors detected (count=%d)", errorcount);
 
 #ifdef LOGMESSAGES
-    if (logstream != INVALID_HANDLE_VALUE)
+    if( logstream )
     {
-        FPrintf (logstream,"I_Quit(): end of logstream.\n");
-        CloseHandle (logstream);
-        logstream = INVALID_HANDLE_VALUE;
+        fprintf (logstream,"I_Quit(): end of logstream.\n");
+        fclose( logstream );
+        logstream = NULL;
     }
 #endif
 
@@ -611,18 +644,6 @@ void I_Quit (void)
 }
 
 
-void I_SysInit(void)
-{
-    CONS_Printf("Win32 system ...\n");
-
-    I_StartupSystem();
-
-    // Initialize the joystick subsystem.
-    I_InitJoystick();
-
-    // d_main will next call I_StartupGraphics
-}
-   
 
 
 // --------------------------------------------------------------------------
@@ -654,9 +675,9 @@ void I_GetLastErrorMsgBox (void)
 }
 
 
-// ===========================================================================================
+// ===========================================================================
 // CLEAN STARTUP & SHUTDOWN HANDLING, JUST CLOSE EVERYTHING YOU OPENED.
-// ===========================================================================================
+// ===========================================================================
 //
 //
 #define MAX_QUIT_FUNCS     16
@@ -702,49 +723,48 @@ void I_RemoveExitFunc(void (*func)())
 }
 
 
-// ===========================================================================================
+// ===========================================================================
 // DIRECT INPUT HELPER CODE
-// ===========================================================================================
+// ===========================================================================
 
 
 // Create a DirectInputDevice interface,
 // create a DirectInputDevice2 interface if possible
-static void CreateDevice2 ( LPDIRECTINPUT   di,
-                            REFGUID         pguid,
+// in context of main input DI_main
+static void create_device_intf ( REFGUID         pguid,
                             LPDIRECTINPUTDEVICE* lpDEV,
                             LPDIRECTINPUTDEVICE2* lpDEV2 )
 {
     HRESULT hr, hr2;
     LPDIRECTINPUTDEVICE lpdid1;
-    LPDIRECTINPUTDEVICE2 lpdid2;
+    LPDIRECTINPUTDEVICE2 lpdid2 = NULL;
 
-    hr = di->lpVtbl->CreateDevice (di, pguid, &lpdid1, NULL);
+    hr = DI_main->lpVtbl->CreateDevice (DI_main, pguid, &lpdid1, NULL);
 
-    if (SUCCEEDED (hr))
-    {
-        // get Device2 but only if we are not in DirectInput version 3
-        if ( !bDX0300 && ( lpDEV2 != NULL ) ) {
-            hr2 = lpdid1->lpVtbl->QueryInterface (lpdid1, &IID_IDirectInputDevice2, (void**)&lpdid2);
-            if ( FAILED( hr2 ) ) {
-                CONS_Printf ("\2Could not create IDirectInput device 2");
-                lpdid2 = NULL;
-            }
-        }
-    }
-    else
+    if (FAILED (hr))
         I_Error ("Could not create IDirectInput device");
 
+    // get Device2 but only if we are not in DirectInput version 3
+    if ( lpDEV2 != NULL )
+    {
+       if ( !have_DX0300 )
+       {
+            hr2 = lpdid1->lpVtbl->QueryInterface (lpdid1, &IID_IDirectInputDevice2, (void**)&lpdid2);
+            if ( FAILED( hr2 ) )
+                CONS_Printf ("\2Could not create IDirectInput device 2");
+        }
+        *lpDEV2 = lpdid2;     //only if we requested it
+    }
     *lpDEV = lpdid1;
-    if ( lpDEV2 != NULL )   //only if we requested it
-        *lpDEV2 = lpdid2;
 }
 
 
-// ===========================================================================================
-//                                                                          DIRECT INPUT MOUSE
-// ===========================================================================================
+// ===========================================================================
+//                                             DIRECT INPUT MOUSE
+// ===========================================================================
 
-#define DI_MOUSE_BUFFERSIZE             16              //number of data elements in mouse buffer
+//number of data elements in mouse buffer
+#define DI_MOUSE_BUFFERSIZE  16
 
 //
 //  Initialise the mouse.
@@ -921,7 +941,11 @@ static int      old_mparms[3], new_mparms[3] = {0, 0, 1};
 static          boolean restore_mouse = FALSE;
 static int      old_mouse_state = 0;
 extern          boolean nodinput;
+#ifdef MSH_WHEEL
+// [WDJ] Does not compile and I don't know what it does.
+char * MSH_MOUSEWHEEL = "MOUSEWHEEL";
 unsigned int    MSHWheelMessage = 0;
+#endif
 
 static void I_DoStartupSysMouse()
 {
@@ -935,7 +959,7 @@ static void I_DoStartupSysMouse()
         restore_mouse = SystemParametersInfo(SPI_SETMOUSE, 0, new_mparms, 0);
     }
 
-    if (bAppFullScreen)
+    if (vid.fullscreen)
     {
         w_rect.top = 0;
         w_rect.left = 0;
@@ -952,7 +976,7 @@ static void I_DoStartupSysMouse()
     center_y = w_rect.top + (vid.height >> 1);
     SetCursor(NULL);    
     SetCursorPos(center_x, center_y);
-    SetCapture(hWndMain);
+    SetCapture(hWnd_main);
     ClipCursor(&w_rect);
 
 }
@@ -1039,17 +1063,19 @@ void I_DoStartupMouse (void)
         //I_DoStartupSysMouse();
         I_AddExitFunc(I_ShutdownMouse);
        
+#ifdef MSH_WHEEL
         //if (!GetSystemMetrics(SM_MOUSEWHEELPRESENT))
         MSHWheelMessage = RegisterWindowMessage(MSH_MOUSEWHEEL);
+#endif
 
     } 
-    else if (lpDIM==NULL) // acquire the mouse only once
+    else if (DID_mouse==NULL) // acquire the mouse only once
     {
-        CreateDevice2 (lpDI, &GUID_SysMouse, &lpDIM, NULL);
+        create_device_intf (&GUID_SysMouse, &DID_mouse, NULL);
 
-        if (lpDIM)
+        if (DID_mouse)
         {
-            if (FAILED( lpDIM->lpVtbl->SetDataFormat (lpDIM, &c_dfDIMouse) ))
+            if (FAILED( DID_mouse->lpVtbl->SetDataFormat (DID_mouse, &c_dfDIMouse) ))
                 I_Error ("Couldn't set mouse data format");
         
             // create buffer for buffered data
@@ -1058,21 +1084,21 @@ void I_DoStartupMouse (void)
             dip.diph.dwObj        = 0;
             dip.diph.dwHow        = DIPH_DEVICE;
             dip.dwData            = DI_MOUSE_BUFFERSIZE;
-            if (FAILED( lpDIM->lpVtbl->SetProperty (lpDIM, DIPROP_BUFFERSIZE, &dip.diph)))
+            if (FAILED( DID_mouse->lpVtbl->SetProperty (DID_mouse, DIPROP_BUFFERSIZE, &dip.diph)))
                 I_Error ("Couldn't set mouse buffer size");
 
-            if (FAILED( lpDIM->lpVtbl->SetCooperativeLevel (lpDIM, hWndMain, DISCL_EXCLUSIVE | DISCL_FOREGROUND)))
+            if (FAILED( DID_mouse->lpVtbl->SetCooperativeLevel (DID_mouse, hWnd_main, DISCL_EXCLUSIVE | DISCL_FOREGROUND)))
                 I_Error ("Couldn't set mouse coop level");
 
              //BP: acquire it latter
-             //if (FAILED( lpDIM->lpVtbl->Acquire (lpDIM) ))
+             //if (FAILED( DID_mouse->lpVtbl->Acquire (DID_mouse) ))
              //    I_Error ("Couldn't acquire mouse");
         }
         else
             I_Error ("Couldn't create mouse input");
     }
 
-    if( lpDIM ) 
+    if( DID_mouse ) 
         I_AddExitFunc (I_ShutdownMouse);
 
     // if re-enabled while running, just set mouse_enabled true again,
@@ -1091,11 +1117,11 @@ static void I_ShutdownMouse (void)
 
     CONS_Printf ("I_ShutdownMouse()\n");
         
-    if (lpDIM)
+    if (DID_mouse)
     {
-        lpDIM->lpVtbl->Unacquire (lpDIM);
-        lpDIM->lpVtbl->Release (lpDIM);
-        lpDIM = NULL;
+        DID_mouse->lpVtbl->Unacquire (DID_mouse);
+        DID_mouse->lpVtbl->Release (DID_mouse);
+        DID_mouse = NULL;
     }
 
     // emulate the up of all mouse buttons
@@ -1171,7 +1197,7 @@ static void I_GetMouseEvents (void)
 
 getBufferedData:
     dwItems = DI_MOUSE_BUFFERSIZE;
-    hr = lpDIM->lpVtbl->GetDeviceData (lpDIM, sizeof(DIDEVICEOBJECTDATA),
+    hr = DID_mouse->lpVtbl->GetDeviceData (DID_mouse, sizeof(DIDEVICEOBJECTDATA),
                                        rgdod,
                                        &dwItems,
                                        0 );
@@ -1179,7 +1205,7 @@ getBufferedData:
     // If data stream was interrupted, reacquire the device and try again.
     if (hr==DIERR_INPUTLOST || hr==DIERR_NOTACQUIRED)
     {
-        hr = lpDIM->lpVtbl->Acquire (lpDIM);
+        hr = DID_mouse->lpVtbl->Acquire (DID_mouse);
         if (SUCCEEDED(hr))
             goto getBufferedData;
     }
@@ -1236,9 +1262,9 @@ getBufferedData:
 }
 
 
-// ===========================================================================================
-//                                                                       DIRECT INPUT JOYSTICK
-// ===========================================================================================
+// ===========================================================================
+//                                                DIRECT INPUT JOYSTICK
+// ===========================================================================
 
 // gamepad as buttons (otherwise as additive joystick)
 #define GAMEPAD_AS_BUTTONS
@@ -1263,7 +1289,8 @@ typedef struct {
 static joystick_t  joystk[ MAX_JOYSTICK ];
 
 static byte joystick_detect = 0;
-static byte num_joysticks = 0;
+int num_joysticks = 0;
+//byte joystick_started = 0;
 
 
 // ------------------
@@ -1316,14 +1343,14 @@ static BOOL CALLBACK DIEnumJoysticks ( LPCDIDEVICEINSTANCE lpddi,
         //( GET_DIDEVICE_SUBTYPE(lpddi->dwDevType) == DIDEVTYPEJOYSTICK_GAMEPAD ) ? "Gamepad " : "Joystick",
         lpddi->tszProductName ); // , lpddi->tszInstanceName );
     
-    if (lpDI->lpVtbl->CreateDevice (lpDI, &lpddi->guidInstance,
+    if (DI_main->lpVtbl->CreateDevice (DI_main, &lpddi->guidInstance,
                                     &pdev, NULL) != DI_OK)
     {
         // if it failed, then we can't use this joystick for some
         // bizarre reason.  (Maybe the user unplugged it while we
         // were in the middle of enumerating it.)  So continue enumerating
         reason = "CreateDevice FAILED";
-        goto reason_cont:
+        goto reason_cont;
     }
 
 
@@ -1365,7 +1392,7 @@ static BOOL CALLBACK DIEnumJoysticks ( LPCDIDEVICEINSTANCE lpddi,
     // Set the cooperativity level to let DirectInput know how
     // this device should interact with the system and with other
     // DirectInput applications.
-    if (pdev->lpVtbl->SetCooperativeLevel (pdev, hWndMain,
+    if (pdev->lpVtbl->SetCooperativeLevel (pdev, hWnd_main,
                         DISCL_EXCLUSIVE | DISCL_FOREGROUND) != DI_OK)
     {
         reason = "SetCooperativeLevel FAILED";
@@ -1428,7 +1455,7 @@ static BOOL CALLBACK DIEnumJoysticks ( LPCDIDEVICEINSTANCE lpddi,
     }
 
     // query for IDirectInputDevice2 - we need this to poll the joystick 
-    if ( bDX0300 || ! needpoll ) {
+    if ( have_DX0300 || ! needpoll ) {
         // we won't use the poll
         jsp->joypolldevp = NULL;
     }
@@ -1486,7 +1513,7 @@ void I_InitJoystick (void)
         CONS_Printf ("Looking for joystick devices:\n");
         num_joysticks = 0;
         // invoke our Callback function DIEnumJoysticks
-        hr = lpDI->lpVtbl->EnumDevices( lpDI, DIDEVTYPE_JOYSTICK, 
+        hr = DI_main->lpVtbl->EnumDevices( DI_main, DIDEVTYPE_JOYSTICK, 
                                         DIEnumJoysticks,
                                         0, // no user param
                                         DIEDFL_ATTACHEDONLY );
@@ -1504,7 +1531,7 @@ void I_InitJoystick (void)
         I_AddExitFunc (I_ShutdownJoystick);
 
         // set coop level
-//        if ( FAILED( joydevp->lpVtbl->SetCooperativeLevel (joydevp, hWndMain, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND) ))
+//        if ( FAILED( joydevp->lpVtbl->SetCooperativeLevel (joydevp, hWnd_main, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND) ))
 //            I_Error ("I_InitJoystick: SetCooperativeLevel FAILED");
 
         // later
@@ -1518,39 +1545,38 @@ void I_InitJoystick (void)
 
 static void I_ShutdownJoystick (void)
 {
-    int i;
+    int i, a;
+    joystick_t * jsp;
     event_t event;
-
+   
     // emulate the up of all joystick buttons
-    for(i=0; i<(JOYBUTTONS*JOYSTICKS); i++)
+    for(i=0; i<(JOYBUTTONS*num_joysticks); i++)
     {
         event.type=ev_keyup;
         event.data1=KEY_JOY0BUT0+i;
         D_PostEvent(&event);
     }
 
-    // reset joystick position
-    event.type = ev_joystick;
-    event.data1 = 0;
-    event.data2 = 0;
-    event.data3 = 0;
-    D_PostEvent(&event);
-
     if ( joystick_detect == 2 )
         CONS_Printf ("I_ShutdownJoystick()\n");
         
-    for( i=0; i<num_joystick; i++ )
+    for( i=0; i<num_joysticks; i++ )
     {
-        joystick_t * jsp = & joystk[i];
+        jsp = & joystk[i];
+
+        // reset joystick position
+	for( a=0; a<jsp->numaxes; a++ )
+	    jsp->axis[a] = 0;
+
         if (jsp->joydevp)
         {
-	    jsp->joydevp->lpVtbl->Unacquire (joydevp);
-	    jsp->joydevp->lpVtbl->Release (joydevp);
+	    jsp->joydevp->lpVtbl->Unacquire (jsp->joydevp);
+	    jsp->joydevp->lpVtbl->Release (jsp->joydevp);
 	    jsp->joydevp = NULL;
 	}
         if (jsp->joypolldevp)
         {
-	    jsp->joypolldevp->lpVtbl->Release(joypolldevp);
+	    jsp->joypolldevp->lpVtbl->Release(jsp->joypolldevp);
 	    jsp->joypolldevp = NULL;
 	}
     }
@@ -1564,36 +1590,39 @@ static void I_ShutdownJoystick (void)
 // -------------------
 static void I_Get_A_JoystickEvents ( int joynum )
 {
+    char *  reason;
     HRESULT     hr;
     DIJOYSTATE  js;  // DirectInput joystick state 
-    joystick_t * jstkp = &joystk[joynum];
+    joystick_t * jsp = &joystk[joynum];
     int         i;
     uint32_t    joybuttons;
     event_t event;
 
-    if (jstkp->joydevp==NULL)
+    if (jsp->joydevp==NULL)
         return;
 
-    // if input is lost then acquire and keep trying 
-    while( 1 ) 
+    // if input is lost then try a few times to acquire
+    // Do not get stuck here.
+    for( i=3; i>0; i-- )
     {
         // poll the joystick to read the current state
         //faB: if the device doesn't require polling, this function returns
         //     almost instantly
-        if ( jstkp->joypolldevp ) {
-            hr = jstkp->joypolldevp->lpVtbl->Poll(jstkp->joypolldevp);
+        if ( jsp->joypolldevp ) {
+            hr = jsp->joypolldevp->lpVtbl->Poll(jsp->joypolldevp);
             if ( hr == DIERR_INPUTLOST || hr==DIERR_NOTACQUIRED ) 
                 goto acquire;
-            else
             if ( FAILED(hr) )
             {
-                CONS_Printf ("I_GetJoystickEvents(): Poll FAILED\n");
-                return;
+	        reason = "Poll FAILED";
+	        goto fail_msg;
             }
         }
 
         // get the input's device state, and put the state in dims
-        hr = jstkp->joydevp->lpVtbl->GetDeviceState( jstkp->joydevp, sizeof(DIJOYSTATE), &js );
+        hr = jsp->joydevp->lpVtbl->GetDeviceState( jsp->joydevp, sizeof(DIJOYSTATE), &js );
+        if( SUCCEEDED( hr ) )
+	    goto read_joystick;
 
         if ( hr == DIERR_INPUTLOST || hr==DIERR_NOTACQUIRED )
         {
@@ -1604,20 +1633,17 @@ static void I_Get_A_JoystickEvents ( int joynum )
             // try again.
             goto acquire;
         }
-        else
-        if( FAILED(hr) )
-        {
-            CONS_Printf ("I_GetJoystickEvents(): GetDeviceState FAILED\n");
-            return;
-        }
+        reason = "GetDeviceState FAILED";
+        goto fail_msg;
 
-        break;
 acquire:
         //CONS_Printf ("I_GetJoystickEvents(): Acquire\n");
-        if ( FAILED(jstkp->joydevp->lpVtbl->Acquire( jstkp->joydevp )) ) 
-             return;
+        if ( FAILED(jsp->joydevp->lpVtbl->Acquire( jsp->joydevp )) ) 
+             break;  // try later
     }
-        
+    return;  // try again later
+
+read_joystick:
     // post virtual key events for buttons
     //
     joybuttons = 0;
@@ -1647,14 +1673,14 @@ acquire:
 
     }
 
-    if ( joybuttons != jstkp->lastjoybuttons )
+    if ( joybuttons != jsp->lastjoybuttons )
     {
         uint32_t   j = 1;
         uint32_t   newbuttons;
 
         // keep only bits that changed since last time
-        newbuttons = joybuttons ^ lastjoybuttons;    
-        jstkp->lastjoybuttons = joybuttons;
+        newbuttons = joybuttons ^ jsp->lastjoybuttons;    
+        jsp->lastjoybuttons = joybuttons;
 
         for( i=0; i < JOYBUTTONS; i++, j<<=1 )
         {
@@ -1672,7 +1698,7 @@ acquire:
 
     // save joystick axis positions (not an event)
 
-    if ( jstkp->gamepad )
+    if ( jsp->gamepad )
     {
 #ifdef GAMEPAD_AS_BUTTONS
         // gamepad controls to buttons
@@ -1684,9 +1710,9 @@ acquire:
 	    gpkey = JOYBUTTONS-2;
         else
 	    gpkey = 0;
-        if ( gpkey != jstkp->axis[0] ) {
+        if ( gpkey != jsp->axis[0] ) {
 	    event.type = ev_keyup;
-	    event.data1 = KEY_JOY0BUT0 + (joynum*JOYBUTTONS) + jstkp->axis[0];
+	    event.data1 = KEY_JOY0BUT0 + (joynum*JOYBUTTONS) + jsp->axis[0];
 	    D_PostEvent (&event);
 	}
         if ( gpkey ) {
@@ -1694,7 +1720,7 @@ acquire:
 	    event.data1 = KEY_JOY0BUT0 + (joynum*JOYBUTTONS) + gpkey;
 	    D_PostEvent (&event);
 	}
-	jstkp->axis[0] = gpkey;
+	jsp->axis[0] = gpkey;
 
         if ( js.lY < -(JOYAXIS_MAX/2) )
 	    gpkey = JOYBUTTONS-3;
@@ -1702,9 +1728,9 @@ acquire:
 	    gpkey = JOYBUTTONS-4;
         else
 	    gpkey = 0;
-        if ( gpkey != jstkp->axis[1] ) {
+        if ( gpkey != jsp->axis[1] ) {
 	    event.type = ev_keyup;
-	    event.data1 = KEY_JOY0BUT0 + (joynum*JOYBUTTONS) + jstkp->axis[1];
+	    event.data1 = KEY_JOY0BUT0 + (joynum*JOYBUTTONS) + jsp->axis[1];
 	    D_PostEvent (&event);
 	}
         if ( gpkey ) {
@@ -1712,37 +1738,42 @@ acquire:
 	    event.data1 = KEY_JOY0BUT0 + (joynum*JOYBUTTONS) + gpkey;
 	    D_PostEvent (&event);
 	}
-	jstkp->axis[1] = gpkey;
+	jsp->axis[1] = gpkey;
 #else
         // gamepad control additive joystick
         if ( js.lX < -(JOYAXIS_MAX/2) )
         {
-	    if( jstkp->axis[0] > -JOYAXIS_MAX )
-                jstkp->axis[0]--;
+	    if( jsp->axis[0] > -JOYAXIS_MAX )
+                jsp->axis[0]--;
 	}
         else if ( js.lX > (JOYAXIS_MAX/2) )
         {
-	    if( jstkp->axis[0] < JOYAXIS_MAX )
-                jstkp->axis[0]++;
+	    if( jsp->axis[0] < JOYAXIS_MAX )
+                jsp->axis[0]++;
 	}
         if ( js.lY < -(JOYAXIS_MAX/2) )
         {
-	    if( jstkp->axis[1] > -JOYAXIS_MAX )
-                jstkp->axis[1]--;
+	    if( jsp->axis[1] > -JOYAXIS_MAX )
+                jsp->axis[1]--;
 	}
         else if ( js.lY > (JOYAXIS_MAX/2) )
         {
-	    if( jstkp->axis[1] < JOYAXIS_MAX )
-                jstkp->axis[1]++;
+	    if( jsp->axis[1] < JOYAXIS_MAX )
+                jsp->axis[1]++;
 	}
 #endif       
     }
     else
     {
         // analog control style , just send the raw data
-        jstkp->axis[0] = js.lX;    // x axis
-        jstkp->axis[1] = js.lY;    // y axis
+        jsp->axis[0] = js.lX;    // x axis
+        jsp->axis[1] = js.lY;    // y axis
     }
+    return;
+
+fail_msg:
+    CONS_Printf ("I_GetJoystickEvents(): %s \n", reason);
+    return;
 }
 
 static void I_GetJoystickEvents (void)
@@ -1755,7 +1786,7 @@ static void I_GetJoystickEvents (void)
 
 int I_JoystickNumAxes(int joynum)
 {
-    return (joynum < num_joysticks)? joystk[joynum].joyaxes : 0;
+    return (joynum < num_joysticks)? joystk[joynum].numaxes : 0;
 }
 
 int I_JoystickGetAxis(int joynum, int axisnum)
@@ -1764,13 +1795,13 @@ int I_JoystickGetAxis(int joynum, int axisnum)
            joystk[joynum].axis[axisnum] : 0;
 }
 
-    
-    
-// ===========================================================================================
-//                                                       DIRECT INPUT KEYBOARD
-// ===========================================================================================
 
-uint16_t  ASCIINames[256] = {
+
+// ===========================================================================
+//                                            DIRECT INPUT KEYBOARD
+// ===========================================================================
+
+uint16_t  ASCIINames[256] =
 {
 //  0      1      2      3      4      5      6      7
 //  8      9      A      B      C      D      E      F
@@ -1813,7 +1844,10 @@ uint16_t  ASCIINames[256] = {
 };
 
 
+
 int pausepressed=0;
+boolean shiftdown = false;
+boolean altdown = false;
 
 //  Return a key that has been pushed, or 0
 //  (replace getchar() at game startup)
@@ -1825,7 +1859,8 @@ int I_GetKey (void)
     if (eventtail != eventhead)
     {
         ev = &events[eventtail];
-        eventtail = (++eventtail)&(MAXEVENTS-1);
+        eventtail++;  // MinGW needs this to be separate stmt
+        eventtail = (eventtail)&(MAXEVENTS-1);
         if (ev->type == ev_keydown)
             return ev->data1;
         else
@@ -1849,45 +1884,41 @@ void I_StartupKeyboard()
 
     //faB: make sure the app window has the focus or
     //     DirectInput acquire keyboard won't work
-    if ( hWndMain!=NULL )
+    if ( hWnd_main!=NULL )
     {
-        SetFocus(hWndMain);
-        ShowWindow(hWndMain, SW_SHOW);
-        UpdateWindow(hWndMain);
+        SetFocus(hWnd_main);
+        ShowWindow(hWnd_main, SW_SHOW);
+        UpdateWindow(hWnd_main);
     }
 
     //faB: detect error
-    if (lpDIK != NULL) {
-        CONS_Printf ("\2I_StartupKeyboard(): called twice\n");
+    if (DID_keyboard != NULL)
         return;
-    }
 
-    CreateDevice2 (lpDI, &GUID_SysKeyboard, &lpDIK, NULL);
+    create_device_intf (&GUID_SysKeyboard, &DID_keyboard, NULL);
 
-    if (lpDIK)
-    {
-        if (FAILED( lpDIK->lpVtbl->SetDataFormat (lpDIK, &c_dfDIKeyboard) ))
-            I_Error ("Couldn't set keyboard data format");
+    if ( ! DID_keyboard)
+        I_Error ("Couldn't create keyboard input");
+
+    if (FAILED( DID_keyboard->lpVtbl->SetCooperativeLevel (DID_keyboard, hWnd_main, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND)))
+        I_Error ("Couldn't set keyboard coop level");
+
+    if (FAILED( DID_keyboard->lpVtbl->SetDataFormat (DID_keyboard, &c_dfDIKeyboard) ))
+        I_Error ("Couldn't set keyboard data format");
             
-        // create buffer for buffered data
-        dip.diph.dwSize       = sizeof(dip);
-        dip.diph.dwHeaderSize = sizeof(dip.diph);
-        dip.diph.dwObj        = 0;
-        dip.diph.dwHow        = DIPH_DEVICE;
-        dip.dwData            = DI_KEYBOARD_BUFFERSIZE;
-        if (FAILED( lpDIK->lpVtbl->SetProperty (lpDIK, DIPROP_BUFFERSIZE, &dip.diph)))
-            I_Error ("Couldn't set keyboard buffer size");
+    // create buffer for buffered data
+    dip.diph.dwSize       = sizeof(dip);
+    dip.diph.dwHeaderSize = sizeof(dip.diph);
+    dip.diph.dwObj        = 0;
+    dip.diph.dwHow        = DIPH_DEVICE;
+    dip.dwData            = DI_KEYBOARD_BUFFERSIZE;
+    if (FAILED( DID_keyboard->lpVtbl->SetProperty (DID_keyboard, DIPROP_BUFFERSIZE, &dip.diph)))
+        I_Error ("Couldn't set keyboard buffer size");
     
-        if (FAILED( lpDIK->lpVtbl->SetCooperativeLevel (lpDIK, hWndMain, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND)))
-            I_Error ("Couldn't set keyboard coop level");
-
         //faB: it seems to FAIL if the window doesn't have the focus
         //BP: acquire it latter
-        //if (FAILED( lpDIK->lpVtbl->Acquire (lpDIK) ))
+        //if (FAILED( DID_keyboard->lpVtbl->Acquire (DID_keyboard) ))
         //    I_Error ("Couldn't acquire keyboard\n");
-    }
-    else
-        I_Error ("Couldn't create keyboard input");
 
     I_AddExitFunc (I_ShutdownKeyboard);
     hacktics = 0;                       //faB: see definition
@@ -1906,16 +1937,20 @@ static void I_ShutdownKeyboard()
         
     CONS_Printf ("I_ShutdownKeyboard()\n");
         
-    if ( lpDIK )
+    if ( DID_keyboard )
     {
-        lpDIK->lpVtbl->Unacquire (lpDIK);
-        lpDIK->lpVtbl->Release (lpDIK);
-        lpDIK = NULL;
+        DID_keyboard->lpVtbl->Unacquire (DID_keyboard);
+        DID_keyboard->lpVtbl->Release (DID_keyboard);
+        DID_keyboard = NULL;
     }
 
     keyboard_started = false;
 }
 
+
+//faB: simply repeat the last pushed key every xx tics,
+//     make more user friendly input for Console and game Menus
+#define KEY_REPEAT_DELAY    (TICRATE/17)      // TICRATE tics, repeat every 1/3 second
 
 // -------------------
 // I_GetKeyboardEvents
@@ -1923,11 +1958,8 @@ static void I_ShutdownKeyboard()
 // -------------------
 static void I_GetKeyboardEvents (void)
 {
-    static  boolean         KeyboardLost = false;
+    static  boolean         keyboard_lost = false;
     
-    //faB: simply repeat the last pushed key every xx tics,
-    //     make more user friendly input for Console and game Menus
-    #define KEY_REPEAT_DELAY    (TICRATE/17)      // TICRATE tics, repeat every 1/3 second
     static  long            RepeatKeyTics = 0;
     static  BYTE            RepeatKeyCode;
     
@@ -1935,29 +1967,30 @@ static void I_GetKeyboardEvents (void)
     DWORD                   dwItems;
     DWORD                   d;
     HRESULT                 hr;
-    int                     ch;
+    int      ch, aqcnt = 0;
     
-    event_t         event;
+    boolean  keydown;
+    event_t  event;
     
     if (!keyboard_started)
         return;
     
-getBufferedData:
+retry_getdata:
+    if ( ++aqcnt > 5 )  // too many attempts
+        return;
     dwItems = DI_KEYBOARD_BUFFERSIZE;
-    hr = lpDIK->lpVtbl->GetDeviceData (lpDIK, sizeof(DIDEVICEOBJECTDATA),
-                                       rgdod,
-                                       &dwItems,
-                                       0 );
+    hr = DID_keyboard->lpVtbl->GetDeviceData (DID_keyboard, sizeof(DIDEVICEOBJECTDATA),
+                                       rgdod, &dwItems, 0 );
     
     // If data stream was interrupted, reacquire the device and try again.
     if (hr == DIERR_INPUTLOST || hr==DIERR_NOTACQUIRED)
     {
         // why it succeeds to acquire just after I don't understand.. so I set the flag BEFORE
-        KeyboardLost = true;
+        keyboard_lost = true;
         
-        hr = lpDIK->lpVtbl->Acquire (lpDIK);
+        hr = DID_keyboard->lpVtbl->Acquire (DID_keyboard);
         if (SUCCEEDED(hr))
-            goto getBufferedData;
+            goto retry_getdata;
         return;
     }
     
@@ -1967,20 +2000,20 @@ getBufferedData:
         //I_Error ("DI buffer overflow (keyboard)");
         //I_RecoverKeyboardState ();
         
-        //hr = lpDIM->lpVtbl->GetDeviceState (lpDIM, sizeof(keys), &diMouseState);
+        //hr = DID_mouse->lpVtbl->GetDeviceState (DID_mouse, sizeof(keys), &diMouseState);
     }
     
     // We got buffered input, act on it
     if (SUCCEEDED(hr))
     {
         // if we previously lost keyboard data, recover its current state
-        if (KeyboardLost)
+        if (keyboard_lost)
         {
             //faB: my current hack simply clear the keys so we don't have the last pressed keys
             // still active.. to have to re-trigger it is not much trouble for the user.
             memset (gamekeydown, 0, sizeof(gamekeydown));
             //CONS_Printf ("we lost it, we cleared stuff!\n");
-            KeyboardLost = false;
+            keyboard_lost = false;
         }
         
         // dwItems contains number of elements read (could be 0)
@@ -1990,13 +2023,27 @@ getBufferedData:
             // dwData member 0x80 bit set press down, clear is release
             
             if (rgdod[d].dwData & 0x80)
+	    {
                 event.type = ev_keydown;
+	        keydown = 1;
+	    }
             else
+	    {
                 event.type = ev_keyup;
+	        keydown = 0;
+	    }
             
             ch = rgdod[d].dwOfs & 0xFF;
 	    event.data2 = ch;
 	    event.data1 = ASCIINames[ch];
+	    if (event.data1 == KEY_LSHIFT || event.data1 == KEY_RSHIFT )
+	    {
+	        shiftdown = keydown;
+	    }
+	    if (event.data1 == KEY_LALT || event.data1 == KEY_RALT )
+	    {
+	        altdown = keydown;
+	    }
 
             D_PostEvent(&event);
         }
@@ -2033,9 +2080,9 @@ getBufferedData:
 //
 static void I_ShutdownDirectInput (void)
 {
-    if (lpDI!=NULL)
-        lpDI->lpVtbl->Release (lpDI);
-    lpDI = NULL;
+    if (DI_main!=NULL)
+        DI_main->lpVtbl->Release (DI_main);
+    DI_main = NULL;
 }
 
 
@@ -2052,6 +2099,7 @@ void I_StartupSystem(void)
     sound_started = false;
     timer_started = false;
     cdaudio_started = false;
+    have_DX0300 = false;
     
     I_DetectWin95 ();
 
@@ -2067,16 +2115,13 @@ void I_StartupSystem(void)
 
     // create DirectInput - so that I_StartupKeyboard/Mouse can be called later on
     // from D_DoomMain just like DOS version
-    hr = DirectInputCreate (myInstance, DIRECTINPUT_VERSION, &lpDI, NULL);
+    hr = DirectInputCreate (main_prog_instance, DIRECTINPUT_VERSION, &DI_main, NULL);
 
-    if ( SUCCEEDED( hr ) )
+    if (  FAILED( hr ) )
     {
-        bDX0300 = FALSE;
-    }
-    else
-    {
+        // failed at DIRECTINPUT_VERSION
         // try opening DirectX3 interface for NT compatibility
-        hr = DirectInputCreate (myInstance, DXVERSION_NTCOMPATIBLE, &lpDI, NULL);
+        hr = DirectInputCreate (main_prog_instance, REQ_DX0300, &DI_main, NULL);
 
         if ( FAILED ( hr ) )
         {
@@ -2101,19 +2146,17 @@ void I_StartupSystem(void)
             }
             I_Error ("Couldn't create DirectInput (reason: %s)", sErr);
         }
-        else
-            CONS_Printf ("\2Using DirectX3 interface\n");
-
+       
         // only use DirectInput3 compatible structures and calls
-        bDX0300 = TRUE;
+        have_DX0300 = true;
+        CONS_Printf ("\2Using DirectX3 interface\n");
     }
     I_AddExitFunc (I_ShutdownDirectInput);
-    return 0;
 }
 
 
 //  Closes down everything. This includes restoring the initial
-//  pallete and video mode, and removing whatever mouse, keyboard, and
+//  palette and video mode, and removing whatever mouse, keyboard, and
 //  timer routines have been installed.
 //
 //  NOTE : Shutdown user funcs. are effectively called in reverse order.
@@ -2130,12 +2173,28 @@ void I_ShutdownSystem(void)
 }
 
 
+// Init system
+void I_SysInit(void)
+{
+    CONS_Printf("Win32 system ...\n");
+
+    I_StartupSystem();
+   
+    I_StartupKeyboard();
+
+    // Initialize the joystick subsystem.
+    I_InitJoystick();
+
+    // d_main will next call I_StartupGraphics
+}
+   
+
 // ---------------
 // I_SaveMemToFile
 // Save as much as iLength bytes starting at pData, to
 // a new file of given name. The file is overwritten if it is present.
 // ---------------
-void I_SaveMemToFile (unsigned char* pData, unsigned long iLength, char* sFileName)
+void I_SaveMemToFile (byte* pData, unsigned long iLength, char* sFileName)
 {
     HANDLE  fileHandle;
     DWORD   bytesWritten;
@@ -2143,53 +2202,65 @@ void I_SaveMemToFile (unsigned char* pData, unsigned long iLength, char* sFileNa
         FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH, NULL);
     if (fileHandle == INVALID_HANDLE_VALUE)
     {
-        I_Error ("SaveMemToFile");
+        I_SoftError ("SaveMemToFile");
+        return;
     }
     WriteFile (fileHandle, pData, iLength, &bytesWritten, NULL);
     CloseHandle (fileHandle);
 }
 
+
 // my god how win32 suck
 typedef BOOL (WINAPI *MyFunc)(LPCSTR RootName, PULARGE_INTEGER pulA, PULARGE_INTEGER pulB, PULARGE_INTEGER pulFreeBytes); 
 
-void I_GetDiskFreeSpace(INT64 *freespace)
+uint64_t I_GetDiskFreeSpace( void )
 {
 static MyFunc pfnGetDiskFreeSpaceEx=NULL;
 static boolean testwin95 = false;
 
-    INT64 usedbytes;
+    uint64_t freespace;
 
     if(!testwin95)
     {
         HINSTANCE h = LoadLibraryA("kernel32.dll"); 
 
-        if (h) { 
+        if (h) {
              pfnGetDiskFreeSpaceEx = (MyFunc)GetProcAddress(h,"GetDiskFreeSpaceExA"); 
-             FreeLibrary(h); 
+             FreeLibrary(h);
         }
         testwin95 = true;
     } 
-    if (pfnGetDiskFreeSpaceEx) { 
-        if (!pfnGetDiskFreeSpaceEx(NULL,(PULARGE_INTEGER)freespace,(PULARGE_INTEGER)&usedbytes,NULL)) 
-            *freespace = MAXINT;
-    } 
+    if (pfnGetDiskFreeSpaceEx)
+    {
+        // ULARGE_INTEGER is a complex union
+        ULARGE_INTEGER ul_freespace;
+        ULARGE_INTEGER ul_usedbytes;
+        if (pfnGetDiskFreeSpaceEx(NULL, &ul_freespace, &ul_usedbytes, NULL))
+	    freespace = ul_freespace.QuadPart;
+	else
+            freespace = MAXINT;
+    }
     else
-    {       
-        ULONG SectorsPerCluster, BytesPerSector, NumberOfFreeClusters;
-        ULONG TotalNumberOfClusters;
+    {
+        // DWORD is required by GetDiskFreeSpace
+        DWORD SectorsPerCluster, BytesPerSector, NumberOfFreeClusters;
+        DWORD TotalNumberOfClusters;
         GetDiskFreeSpace(NULL, &SectorsPerCluster, &BytesPerSector, 
                                &NumberOfFreeClusters, &TotalNumberOfClusters);
-        *freespace = BytesPerSector*SectorsPerCluster*NumberOfFreeClusters;
+        freespace = BytesPerSector * SectorsPerCluster * NumberOfFreeClusters;
     }
+    return freespace;
 }
+
 
 char *I_GetUserName(void)
 {
-static char username[MAXPLAYERNAME];
+static char username[MAXPLAYERNAME];  // return to user
      char  *p;
      int   ret;
-     ULONG i=MAXPLAYERNAME;
-     ret = GetUserName(username,&i);
+     // DWORD is required by GetUserName
+     DWORD i=MAXPLAYERNAME;
+     ret = GetUserName(username, &i);
      if(!ret)
      {
          if((p=getenv("USER"))==NULL)
@@ -2203,6 +2274,7 @@ static char username[MAXPLAYERNAME];
          return NULL;
      return username;
 }
+
 
 int  I_mkdir(const char *dirname, int unixright)
 {

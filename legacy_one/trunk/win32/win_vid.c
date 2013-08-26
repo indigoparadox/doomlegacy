@@ -87,19 +87,23 @@
 #include "win_main.h"
 #include "win_vid.h"
 
+#ifdef HWRENDER
 #include "win_dll.h"                //loading the Glide Render DLL
 #include "../hardware/hw_drv.h"     //calling Driver Init & Shutdown
 #include "../hardware/hw_main.h"    //calling HWR module Init & Shutdown
+#endif
 
 // -------
 // Globals
 // -------
 
-static  BOOL        bDIBMode;           // means we are using DIB instead of DirectDraw surfaces
-static  BITMAPINFO* bmiMain = NULL;
-static  HDC         hDCMain = NULL;
+static  BOOL        DIB_mode;  // means we are using DIB instead of DirectDraw surfaces
+static  BITMAPINFO* bmi_main = NULL;
+static  HDC         hDC_main = NULL;
 
+static  BOOL  req_win;
 static  byte  request_bitpp = 0;  // to select modes
+static  byte  highcolor = 0;
 
 
 // -----------------
@@ -110,7 +114,7 @@ static  byte  request_bitpp = 0;  // to select modes
 static  vmode_t     extra_modes[MAX_EXTRA_MODES] = {{NULL, NULL}};
 static  char        names[MAX_EXTRA_MODES][10];
 
-static  int     totalvidmem;
+//static  int     totalvidmem;
 
 int     numvidmodes;   //total number of DirectDraw display modes
 vmode_t *pvidmodes;    //start of videomodes list.
@@ -145,7 +149,7 @@ static  void VID_Command_Mode_f     (void);
 static  int VID_SetDirectDrawMode (viddef_t *lvid, vmode_t *pcurrentmode);
 static  int VID_SetWindowedDisplayMode (viddef_t *lvid, vmode_t *pcurrentmode);
         vmode_t *VID_GetModePtr (int modenum);
-        void VID_Init (void);
+static  void VID_Init (void);
 
 // judgecutor:
 extern void I_RestartSysMouse();
@@ -164,6 +168,7 @@ void I_StartupGraphics(void)
     // 0 for 256 color, else use highcolor modes
     highcolor = (req_drawmode == REQ_highcolor);
 
+#ifdef HWRENDER   
     if (M_CheckParm ("-3dfx"))
         rendermode = render_glide;
     else if (M_CheckParm ("-glide"))
@@ -175,10 +180,23 @@ void I_StartupGraphics(void)
     else if (M_CheckParm ("-d3d"))
         rendermode = render_d3d;
     else
+#endif
         rendermode = render_soft;
+
+    // if '-win' is specified on the command line, do not add DirectDraw modes
+    req_win = M_CheckParm ("-win");
+//    if ( req_win )
+//        rendermode  = render_soft;
 
     VID_Init();
 
+    COM_AddCommand ("vid_nummodes", VID_Command_NumModes_f);
+    COM_AddCommand ("vid_modeinfo", VID_Command_ModeInfo_f);
+    COM_AddCommand ("vid_modelist", VID_Command_ModeList_f);
+    COM_AddCommand ("vid_mode", VID_Command_Mode_f);
+
+    CV_RegisterVar (&cv_vidwait);
+   
     //added:03-01-98: register exit code for graphics
     I_AddExitFunc (I_ShutdownGraphics);
     graphics_started = TRUE;
@@ -197,15 +215,16 @@ void I_ShutdownGraphics (void)
     CONS_Printf ("I_ShutdownGraphics()\n");
 
     // release windowed startup stuff
-    if (hDCMain) {
-        ReleaseDC (hWndMain, hDCMain);
-        hDCMain = NULL;
+    if (hDC_main) {
+        ReleaseDC (hWnd_main, hDC_main);
+        hDC_main = NULL;
     }
-    if (bmiMain) {
-        GlobalFree (bmiMain);
-        bmiMain = NULL;
+    if (bmi_main) {
+        GlobalFree (bmi_main);
+        bmi_main = NULL;
     }
 
+#ifdef HWRENDER
     if ( rendermode != render_soft )
     {
         // Hurdler: swap des deux lignes comme ça on close
@@ -215,6 +234,7 @@ void I_ShutdownGraphics (void)
         HWD.pfnShutdown ();   //close 3d card display
         Shutdown3DDriver ();  //free the driver DLL
     }
+#endif
 
     // free the last video mode screen buffers
     if (vid.buffer) {
@@ -227,7 +247,7 @@ void I_ShutdownGraphics (void)
     {
         //HWD.pfnShutdown ();
         //ShutdownSoftDriver ();
-        CloseDirectDraw ();
+        FDX_CloseDirectDraw ();
     }
 
     graphics_started = FALSE;
@@ -261,27 +281,29 @@ void I_FinishUpdate (void)
 
     //
     // If page flip involves changing vid.display, then must change screens[0] too
-    if ( bDIBMode )
+    if ( DIB_mode )
     {
         // paranoia
-        if ( !hDCMain || !bmiMain || !vid.buffer )
+        if ( !hDC_main || !bmi_main || !vid.buffer )
             return;
         // main game loop, still in a window (-win parm)
-        SetDIBitsToDevice (hDCMain,
+        SetDIBitsToDevice (hDC_main,
                            0, 0, 320, 200,
                            0, 0, 0, 200,
-                           vid.display, bmiMain, DIB_RGB_COLORS);
+                           vid.display, bmi_main, DIB_RGB_COLORS);
     }
+#ifdef HWRENDER
     else
     if (rendermode != render_soft) {
         HWD.pfnFinishUpdate ( cv_vidwait.value );
     }
+#endif
     else
     {
         // DIRECT DRAW
         // copy virtual screen to real screen
         // 26-12-99 BP: can fail when not active (alt-tab)
-        if(LockScreen())
+        if(FDX_LockScreen())
         {
             //faB: TODO: use directX blit here!!? a blit might use hardware with access
             //     to main memory on recent hardware, and software blit of directX may be
@@ -290,10 +312,10 @@ void I_FinishUpdate (void)
                                   vid.widthbytes, vid.height, // copy area
                                   vid.ybytes, ScreenPitch ); // scanline inc
 
-            UnlockScreen();
+            FDX_UnlockScreen();
 
             // swap screens
-            ScreenFlip(cv_vidwait.value);
+            FDX_ScreenFlip(cv_vidwait.value);
         }
     }
 }
@@ -301,39 +323,41 @@ void I_FinishUpdate (void)
 
 
 // for Win32 version
-static HWND        WndParent;       // handle of the application's window
+static byte  WndNumpages;
 
 
 //
 // This is meant to be called only by CONS_Printf() while game startup
 //
-void I_LoadingScreen ( LPCSTR msg )
+// printf to loading screen
+void I_LoadingScreen ( const char * msg )
 {
     //PAINTSTRUCT ps;
     RECT        rect;
     //HDC         hdc;
 
     // paranoia
-    if ( !hDCMain || !bmiMain || !vid.buffer )
+    if ( !hDC_main || !bmi_main || !vid.buffer || !hWnd_main )
         return;
 
-    //hdc = BeginPaint (vid.WndParent, &ps);
-    GetClientRect (vid.WndParent, &rect);
+    //hdc = BeginPaint (hWnd_main, &ps);
+    GetClientRect (hWnd_main, &rect);
 
-    SetDIBitsToDevice (hDCMain,
+    SetDIBitsToDevice (hDC_main,
                        0, 0, 320, 200,
                        0, 0, 0, 200,
-                       vid.display, bmiMain, DIB_RGB_COLORS);
+                       vid.display, bmi_main, DIB_RGB_COLORS);
 
-    if ( msg ) {
+    if ( msg )
+    {
         if ( rect.bottom - rect.top > 32 )
             rect.top = rect.bottom - 32;        // put msg on bottom of window
-        SetBkMode ( hDCMain, TRANSPARENT );
-        SetTextColor ( hDCMain, RGB(0xff,0xff,0xff) );
-        DrawText (hDCMain, msg, -1, &rect,
+        SetBkMode ( hDC_main, TRANSPARENT );
+        SetTextColor ( hDC_main, RGB(0xff,0xff,0xff) );
+        DrawText (hDC_main, msg, -1, &rect,
                   DT_WORDBREAK | DT_CENTER ); //| DT_SINGLELINE | DT_VCENTER);
     }
-    //EndPaint (vid.WndParent, &ps);
+    //EndPaint (hWnd_main, &ps);
 }
 
 
@@ -342,9 +366,11 @@ void I_LoadingScreen ( LPCSTR msg )
 // ------------
 void I_ReadScreen (byte* scr)
 {
+#ifdef HWRENDER
     // DEBUGGING
     if (rendermode != render_soft)
-        I_Error ("I_ReadScreen: called while in non-software mode");
+        I_SoftError ("I_ReadScreen: called while in non-software mode");
+#endif
     CopyMemory (scr, vid.display, vid.screen_size);
 }
 
@@ -356,11 +382,11 @@ void I_SetPalette (RGBA_t *palette)
 {
     int   i;
 
-    if ( bDIBMode )
+    if ( DIB_mode )
     {
         // set palette in RGBQUAD format, NOT THE SAME ORDER as PALETTEENTRY, grmpf!
         RGBQUAD*    pColors;
-        pColors = (RGBQUAD*) ((char*)bmiMain + bmiMain->bmiHeader.biSize);
+        pColors = (RGBQUAD*) ((char*)bmi_main + bmi_main->bmiHeader.biSize);
         ZeroMemory (pColors, sizeof(RGBQUAD)*256);
         for (i=0; i<256; i++, pColors++,palette++)
         {
@@ -391,7 +417,7 @@ void I_SetPalette (RGBA_t *palette)
         if( palette[7].s.green < 96 )
 	    mainpal[i].peGreen = 96;  // at least get green text on black
 #endif
-        SetDDPalette (mainpal);         // set DirectDraw palette
+        FDX_SetDDPalette (mainpal);         // set DirectDraw palette
     }
 }
 
@@ -449,7 +475,8 @@ int VID_GetModeForSize( unsigned int w, unsigned int h)
 // Enumerate DirectDraw modes available
 //
 static  int     nummodes=0;
-static BOOL GetExtraModesCallback (int width, int height, int bpp)
+
+static BOOL VID_DDModes_callback (int width, int height, int bpp)
 {
     CONS_Printf ("mode %d x %d x %d bpp\n", width, height, bpp);
 
@@ -524,7 +551,7 @@ static BOOL GetExtraModesCallback (int width, int height, int bpp)
 
     nummodes++;
 skip:
-    return TRUE;
+    return TRUE;  // continue
 }
 
 
@@ -534,7 +561,7 @@ skip:
 void VID_GetExtraModes (void)
 {
     nummodes = 0;
-    EnumDirectDrawDisplayModes (GetExtraModesCallback);
+    FDX_EnumDisplayModes (VID_DDModes_callback);
 
     // add the extra modes (non 320x200) at the start of the mode list (if there are any)
     if (nummodes)
@@ -564,47 +591,22 @@ static void WindowMode_Init(void)
 // VID_Init
 // Initialize Video modes subsystem
 // *************************************************************************************
+// Called from I_StartupGraphics
 void VID_Init (void)
 {
     vmode_t*    pv;
     int         iMode;
-    BOOL        bWinParm;
     char * req_errmsg = NULL;
     byte  alt_request_bitpp = 0;
 
-    // if '-win' is specified on the command line, do not add DirectDraw modes
-    bWinParm = M_CheckParm ("-win");
-//    if ( bWinParm )
-//        rendermode  = render_soft;
-
-    COM_AddCommand ("vid_nummodes", VID_Command_NumModes_f);
-    COM_AddCommand ("vid_modeinfo", VID_Command_ModeInfo_f);
-    COM_AddCommand ("vid_modelist", VID_Command_ModeList_f);
-    COM_AddCommand ("vid_mode", VID_Command_Mode_f);
-
-    CV_RegisterVar (&cv_vidwait);
-
-#if 0   
-    if( req_drawmode == REQ_native )
-    {
-        vid.bitpp  = videoInfo->BitsPerPixel; // FIXME
-        vid.bytepp = videoInfo->BytesPerPixel; // FIXME
-        if( V_CanDraw( vid.bitpp ))
-        {
-	    request_bitpp = vid.bitpp;
-	    goto get_modelist;
-	}
-        // Use 8 bit and do the palette lookup.
-        if( verbose )
-	    fprintf(stderr,"Native %i bpp rejected\n", vid.bitpp );
-	}
-    }
-#endif
+//  unsigned int screen_width = GetSystemMetrics(SM_CXFULLSCREEN);
+//  unsigned int screen_height = GetSystemMetrics(SM_CYFULLSCREEN);
 
     switch(req_drawmode)
     {
-#if 0
      case REQ_native:
+       vid.bitpp = GetDeviceCaps( GetDC( hWnd_main ), BITSPIXEL );
+       vid.bytepp = (vid.bitpp + 7) >> 3;
        if( V_CanDraw( vid.bitpp )) {
 	   request_bitpp = vid.bitpp;
        }else{
@@ -614,7 +616,6 @@ void VID_Init (void)
 	   request_bitpp = 8;
        }
        break;
-#endif
      case REQ_specific:
        request_bitpp = req_bitpp;
        break;
@@ -631,7 +632,7 @@ void VID_Init (void)
 //       if( vid.bitpp == 32 )  request_bitpp = 32;  // native preference
        break;
      default:
-       request_bitpp = 8;
+       request_bitpp = 8;  // default native
        break;
     }
 
@@ -641,17 +642,16 @@ void VID_Init (void)
     pcurrentmode = NULL;
     numvidmodes = 0;
 
-    // store the main window handle in viddef struct
-    vid.WndParent = hWndMain;
     vid.buffer = NULL;
     vid.display = NULL;
 
     // we startup in windowed mode using DIB bitmap
     // we will use DirectDraw when switching fullScreen and entering main game loop
-    bDIBMode = TRUE;
-    bAppFullScreen = FALSE;
+    DIB_mode = TRUE;
+    vid.fullscreen = FALSE;
 
     // initialize the appropriate display device
+#ifdef HWRENDER
     if ( rendermode != render_soft )
     {
         char* drvname;
@@ -667,7 +667,9 @@ void VID_Init (void)
                     drvname = "r_minigl.dll";
                 break;
             case render_d3d:   drvname = "r_d3d.dll"; break;
-            default: I_Error ("Unknown hardware render mode"); return;
+            default:
+	       I_Error ("Unknown hardware render mode");
+	       return;
         }
 
         // load the DLL
@@ -690,7 +692,7 @@ void VID_Init (void)
                 }
             }
             // perform initialisations
-            HWD.pfnInit (I_Error);
+            HWD.pfnInit ((I_Error_t)I_Error);
             // get available display modes for the device
             HWD.pfnGetModeList (&pvidmodes, &numvidmodes);
         }
@@ -706,14 +708,15 @@ void VID_Init (void)
                 case render_d3d:
                     I_Error ("Error initializing Direct3D\n");
                     break;
+                default: break;
             }
             rendermode = render_soft;
         }
     }
-    if (rendermode == render_soft && !bWinParm )
+#endif
+    if (rendermode == render_soft && !req_win )
     {
-        if (!CreateDirectDrawInstance ())
-            I_Error ("Error initializing DirectDraw");
+        FDX_create_main_instance();
 
         // try the requested bpp, then alt, then 8bpp
         for(;;)
@@ -746,12 +749,12 @@ void VID_Init (void)
 
     // the game boots in 320x200 standard VGA, but
     // we need a highcolor mode to run the game in highcolor
-    if (request_bpp>8 && numvidmodes==0)
+    if (request_bitpp>8 && numvidmodes==0)
         I_Error ("No highcolor/truecolor VESA2 video mode found, cannot run in highcolor/truecolor.\n");
 
 found_modes:
-    vid.bitpp = request_bpp;
-    vid.bytepp = (request_bpp + 7) >> 3;
+    vid.bitpp = request_bitpp;
+    vid.bytepp = (request_bitpp + 7) >> 3;
 
     // add windowed mode at the start of the list, very important!
     WindowMode_Init();
@@ -785,16 +788,16 @@ abort_error:
 // --------------------------
 static int VID_SetWindowedDisplayMode (viddef_t *lvid, vmode_t *pcurrentmode)
 {
-    int     iScrWidth, iScrHeight;
-    int     iWinWidth, iWinHeight;
+    int     screen_width, screen_height;
+    int     window_width, window_height;
     //RECT    Rect;
 
 #ifdef DEBUG
     CONS_Printf("VID_SetWindowedDisplayMode()\n");
 #endif
 
-    lvid->u.numpages = 1;         // not used
-    lvid->direct = NULL;        // DOS remains
+    WndNumpages = 1;      // not used
+    lvid->direct = NULL;  // DOS remains
     lvid->buffer = NULL;
 
     // allocate screens
@@ -803,41 +806,41 @@ static int VID_SetWindowedDisplayMode (viddef_t *lvid, vmode_t *pcurrentmode)
 
     // lvid->buffer should be NULL here!
 
-    if ((bmiMain = (void*)GlobalAlloc (GPTR, sizeof(BITMAPINFO) + (sizeof(RGBQUAD)*256)))==NULL)
+    if ((bmi_main = (void*)GlobalAlloc (GPTR, sizeof(BITMAPINFO) + (sizeof(RGBQUAD)*256)))==NULL)
         I_Error ("VID_SWDM(): No mem");
 
     // setup a BITMAPINFO to allow copying our video buffer to the desktop,
     // with color conversion as needed
-    bmiMain->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmiMain->bmiHeader.biWidth = lvid->width;
-    bmiMain->bmiHeader.biHeight= -(lvid->height);
-    bmiMain->bmiHeader.biPlanes = 1;
-    bmiMain->bmiHeader.biBitCount = 8;
-    bmiMain->bmiHeader.biCompression = BI_RGB;
+    bmi_main->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi_main->bmiHeader.biWidth = lvid->width;
+    bmi_main->bmiHeader.biHeight= -(lvid->height);
+    bmi_main->bmiHeader.biPlanes = 1;
+    bmi_main->bmiHeader.biBitCount = 8;
+    bmi_main->bmiHeader.biCompression = BI_RGB;
 
     // center window on the desktop
-    iScrWidth = GetSystemMetrics(SM_CXFULLSCREEN);
-    iScrHeight = GetSystemMetrics(SM_CYFULLSCREEN);
+    screen_width = GetSystemMetrics(SM_CXFULLSCREEN);
+    screen_height = GetSystemMetrics(SM_CYFULLSCREEN);
 
-    iWinWidth = lvid->width;
-    iWinWidth += GetSystemMetrics(SM_CXFIXEDFRAME) * 2;
+    window_width = lvid->width;
+    window_width += GetSystemMetrics(SM_CXFIXEDFRAME) * 2;
 
-    iWinHeight = lvid->height;
-    iWinHeight += GetSystemMetrics(SM_CYCAPTION);
-    iWinHeight += GetSystemMetrics(SM_CYFIXEDFRAME) * 2;
+    window_height = lvid->height;
+    window_height += GetSystemMetrics(SM_CYCAPTION);
+    window_height += GetSystemMetrics(SM_CYFIXEDFRAME) * 2;
 
     if( devparm )
-        MoveWindow (hWndMain, (iScrWidth - iWinWidth)   , (iScrHeight - iWinHeight)   , iWinWidth, iWinHeight, TRUE);
+        MoveWindow (hWnd_main, (screen_width - window_width)   , (screen_height - window_height)   , window_width, window_height, TRUE);
     else
-        MoveWindow (hWndMain, (iScrWidth - iWinWidth)>>1, (iScrHeight - iWinHeight)>>1, iWinWidth, iWinHeight, TRUE);
+        MoveWindow (hWnd_main, (screen_width - window_width)>>1, (screen_height - window_height)>>1, window_width, window_height, TRUE);
 
-    SetFocus(hWndMain);
-    ShowWindow(hWndMain, SW_SHOW);
+    SetFocus(hWnd_main);
+    ShowWindow(hWnd_main, SW_SHOW);
 
-    hDCMain = GetDC(hWndMain);
-    if( !hDCMain )
+    hDC_main = GetDC(hWnd_main);
+    if( !hDC_main )
         I_Error ("VID_SWDM(): GetDC FAILED");
-    //SetStretchBltMode (hDCMain, COLORONCOLOR);
+    //SetStretchBltMode (hDC_main, COLORONCOLOR);
 
     return 1;
 }
@@ -885,7 +888,7 @@ int VID_SetMode (int modenum)  //, unsigned char *palette)
 
     //faB: if mode 0 (windowed) we must not be fullscreen already,
     //     if other mode, check it is not mode 0 and existing
-    if ((modenum != 0) || (bAppFullScreen))
+    if ((modenum != 0) || (vid.fullscreen))
     {
         if ((modenum > numvidmodes) || (modenum < NUMSPECIALMODES))
         {
@@ -919,6 +922,7 @@ int VID_SetMode (int modenum)  //, unsigned char *palette)
     vid.bytepp = pcurrentmode->bytesperpixel;
     vid.bitpp = (vid.bytepp==1)? 8:15;
     vid.drawmode = (vid.bytepp==1)? DRAW8PAL:DRAW15;
+#ifdef HWRENDER
     //hurdler: 15/10/99: added
     if (modenum) { // if not 320x200 windowed mode
         // it's actually a hack
@@ -933,11 +937,12 @@ int VID_SetMode (int modenum)  //, unsigned char *palette)
             pcurrentmode->windowed = ! vid.fullscreen;
         }
     }
+#endif
     vid.widthbytes = vid.width * vid.bytepp;
     vid.direct_size = vid.direct_rowbytes * vid.height;
 
     stat = (*pcurrentmode->setmode) (&vid, pcurrentmode);
-      // sets vid.direct, vid.buffer, vid.disply, vid.ybytes, vid.screen_size, vid.screen1
+      // sets vid.direct, vid.buffer, vid.display, vid.ybytes, vid.screen_size, vid.screen1
 
     if (stat < 1)
     {
@@ -946,7 +951,7 @@ int VID_SetMode (int modenum)  //, unsigned char *palette)
             // harware could not setup mode
             //if (!VID_SetMode (vid.modenum))
             //        I_Error ("VID_SetMode: couldn't set video mode (hard failure)");
-            I_Error ("Couldn't set video mode %d (%dx%d %d bits)\n", modenum, vid.width, vid.height, vid.bitpp));
+            I_Error ("Couldn't set video mode %d (%dx%d %d bits)\n", modenum, vid.width, vid.height, vid.bitpp);
         }
         else
             if (stat == -1)
@@ -973,19 +978,22 @@ int VID_SetMode (int modenum)  //, unsigned char *palette)
     if ( modenum < NUMSPECIALMODES )
     {
         // we are in startup windowed mode
-        bAppFullScreen = FALSE;
-        bDIBMode = TRUE;
+        vid.fullscreen = false;
+        DIB_mode = TRUE;
     }
     else
     {
         // we switch to fullscreen
-        bAppFullScreen = TRUE;
-        bDIBMode = FALSE;
-        if ( rendermode != render_soft ) {
+        vid.fullscreen = fdx_fullscreen;
+        DIB_mode = FALSE;
+#ifdef HWRENDER
+        if ( rendermode != render_soft )
+        {
             // purge all patch graphics stored in software format
             //Z_FreeTags ( PU_PURGELEVEL, PU_PURGELEVEL+100 );
             HWR_Startup ();
         }
+#endif
     }
 
     // judgecutor:
@@ -1038,7 +1046,7 @@ BOOL    VID_FreeAndAllocVidbuffer (viddef_t *lvid)
 // ========================================================================
 // Set video mode routine for DirectDraw display modes
 // Out: 1 ok,
-//              0 hardware could not set mode,
+//      0 hardware could not set mode,
 //     -1 no mem
 // ========================================================================
 static int VID_SetDirectDrawMode (viddef_t *lvid, vmode_t *pcurrentmode)
@@ -1049,12 +1057,12 @@ static int VID_SetDirectDrawMode (viddef_t *lvid, vmode_t *pcurrentmode)
 #endif
 
     // DD modes do double-buffer page flipping, but the game engine doesn't need this..
-    lvid->u.numpages = 2;
+    WndNumpages = 2;
 
-//MessageBox (hWndMain, "switch full screen","bla",MB_OK|MB_ICONERROR);
+//MessageBox (hWnd_main, "switch full screen","bla",MB_OK|MB_ICONERROR);
 
     // release ddraw surfaces etc..
-    ReleaseChtuff();
+    FDX_ReleaseChtuff();
 
     // clean up any old vid buffer lying around, alloc new if needed
     if (!VID_FreeAndAllocVidbuffer (lvid))
@@ -1062,9 +1070,7 @@ static int VID_SetDirectDrawMode (viddef_t *lvid, vmode_t *pcurrentmode)
 
     //added:20-01-98: should clear video mem here
 
-    // note use lvid->bpp instead of 8 ... will this be needed ? will we support other than 256color
-    // in software ?
-    if (!InitDirectDrawe(hWndMain, lvid->width, lvid->height, 8, TRUE)) // TRUE currently always full screen
+    if (! FDX_InitDDMode(hWnd_main, lvid->width, lvid->height, lvid->bitpp, lvid->fullscreen))
         return 0;               // could not set mode
 
     // this is NOT used with DirectDraw modes, game engine should never use this directly
@@ -1115,12 +1121,14 @@ static  void VID_Command_ModeInfo_f (void)
     CONS_Printf("width : %d\n"
                 "height: %d\n", pv->width, pv->height);
     if (rendermode==render_soft)
+    {
         CONS_Printf("bytes per scanline: %d\n"
                     "bytes per pixel: %d\n"
                     "numpages: %d\n",
                     pv->rowbytes,
                     pv->bytesperpixel,
                     pv->numpages);
+    }
 }
 
 

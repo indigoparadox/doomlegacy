@@ -81,6 +81,10 @@
 
 // DirectX
 #define DXVERSION
+#ifdef __MINGW32__
+// blocks duplicate definition of LPDIRECTFULLDUPLEX
+#define _IDirectSoundFullDuplex_
+#endif
 #include <dsound.h>
 
 #include "../command.h"
@@ -101,17 +105,23 @@
 
 #include "win_dll.h"
 
-// TO COMPILE WIN32 EXECUTABLE YOU NOW NEED THE FMOD LIBRARY. GET IT AT WWW.FMOD.ORG
-// SSNTails 12-13-2002
 #include <windows.h>
 #include <conio.h>
-#include <fmod.h>
-#include <fmod_errors.h>	/* optional */
+
+#ifdef FMOD_SOUND
+// TO COMPILE WIN32 EXECUTABLE YOU NOW NEED THE FMOD LIBRARY. GET IT AT WWW.FMOD.ORG
+// SSNTails 12-13-2002
+# include <fmod.h>
+# include <fmod_errors.h>	/* optional */
+// FIXME: for what VERSION was this written
+#define FMOD_VERSION_NEEDED    1
+#endif
 
 //#define TESTCODE            // remove this for release version
 
 #ifndef SURROUND
-#define SURROUND              // comment out this to disable the SurroundSound code
+// comment out this to disable the SurroundSound code
+#define SURROUND
 #endif
 
 // DirectSound3D mode
@@ -135,10 +145,18 @@ typedef struct {
 } WAVEFORMATEX; 
 */
 
+#ifdef FMOD_SOUND
 // SSNTails 12-13-2002
 FSOUND_STREAM *fmus = NULL;
-void I_SaveMemToFile (unsigned char* pData, unsigned long iLength, char* sFileName);    //win_sys.c
-extern boolean digmusic;
+extern boolean  fmod_music;
+#endif
+
+static void I_ShutdownMusic(void);
+
+byte    sound_started=0;
+byte    music_started=0;
+
+#define NORMAL_PITCH   128
 
 // --------------------------------------------------------------------------
 // DirectSound stuff
@@ -166,16 +184,19 @@ typedef struct {
     int                 priority;
     boolean             duplicate;
 } StackSound_t;
-StackSound_t    StackSounds[MAXSTACKSOUNDS];
+
+static StackSound_t    StackSounds[MAXSTACKSOUNDS];
 
 
 // --------------------------------------------------------------------------
 // Fill the DirectSoundBuffer with data from a sample, made separate so that
 // sound data can be reloaded if a sound buffer was lost.
 // --------------------------------------------------------------------------
+#ifdef WIN98
 // win9x version only
-static boolean CopySoundData_win95 (LPDIRECTSOUNDBUFFER dsbuffer, byte* data)
+static boolean CopySoundData (LPDIRECTSOUNDBUFFER dsbuffer, byte* data)
 {
+    char *  reason;
     LPVOID  lpvAudio1;              // receives address of lock start
     DWORD   dwBytes1;               // receives number of bytes locked
     LPVOID  lpvAudio2;              // receives address of lock start
@@ -190,15 +211,24 @@ static boolean CopySoundData_win95 (LPDIRECTSOUNDBUFFER dsbuffer, byte* data)
     { 
         hr = dsbuffer->lpVtbl->Restore (dsbuffer);
         if( FAILED (hr) )
-            I_Error("Restor fail on %x, %s\n",dsbuffer,DXErrorToString(hr));
+        {
+	    reason = "Restore fail";
+	    goto errmsg;
+	}
         hr = dsbuffer->lpVtbl->Lock (dsbuffer, 0, 0, &lpvAudio1, &dwBytes1, NULL, NULL, DSBLOCK_ENTIREBUFFER);
         if( FAILED (hr) )
-            I_Error("Lock fail(2) on %x, %s\n",dsbuffer,DXErrorToString(hr));
+        {
+	    reason = "Lock fail(2)";
+	    goto errmsg;
+	}
     }
     else
     {
         if( FAILED (hr) )
-            I_Error("Lock fail(1) on %x, %s\n",dsbuffer,DXErrorToString(hr));
+        {
+	    reason = "Lock fail(1)";
+	    goto errmsg;
+	}
     }
 
     // copy wave data into the buffer (note: dwBytes1 should equal to dsbdesc->dwBufferBytes ...)
@@ -208,14 +238,24 @@ static boolean CopySoundData_win95 (LPDIRECTSOUNDBUFFER dsbuffer, byte* data)
     hr = dsbuffer->lpVtbl->Unlock (dsbuffer, lpvAudio1, dwBytes1, lpvAudio2, dwBytes2);
 
     if( FAILED (hr) )
-        I_Error("Unlock fail on %x, %s\n",dsbuffer,DXErrorToString(hr));
+    {
+        reason = "Unlock fail";
+        goto errmsg;
+    }
 
     return true;
+
+errmsg:
+    I_SoftError("Copy Sound: %s on %x, %s\n", reason, dsbuffer, DXErrorToString(hr));
+    return false;
 }
+
+#else
 
 // NT compatible version
 static boolean CopySoundData (LPDIRECTSOUNDBUFFER dsbuffer, byte* data, int length)
 {
+    char *  reason;
     LPVOID  lpvAudio1;              // receives address of lock start
     DWORD   dwBytes1;               // receives number of bytes locked
     LPVOID  lpvAudio2;              // receives address of lock start
@@ -230,15 +270,24 @@ static boolean CopySoundData (LPDIRECTSOUNDBUFFER dsbuffer, byte* data, int leng
     { 
         hr = dsbuffer->lpVtbl->Restore (dsbuffer);
         if( FAILED (hr) )
-            I_Error("Restor fail on %x, %s\n",dsbuffer,DXErrorToString(hr));
+        {
+	    reason = "Restore fail";
+	    goto errmsg;
+	}
         hr = dsbuffer->lpVtbl->Lock (dsbuffer, 0, length, &lpvAudio1, &dwBytes1, NULL, NULL, 0);
         if( FAILED (hr) )
-            I_Error("Lock fail(2) on %x, %s\n",dsbuffer,DXErrorToString(hr));
+        {
+	    reason = "Lock fail(2)";
+	    goto errmsg;
+	}
     }
     else
     {
         if( FAILED (hr) )
-            I_Error("Lock fail(1) on %x, %s\n",dsbuffer,DXErrorToString(hr));
+        {
+	    reason = "Lock fail(1)";
+	    goto errmsg;
+	}
     }
 
     // copy wave data into the buffer (note: dwBytes1 should equal to dsbdesc->dwBufferBytes ...)
@@ -252,16 +301,31 @@ static boolean CopySoundData (LPDIRECTSOUNDBUFFER dsbuffer, byte* data, int leng
     hr = dsbuffer->lpVtbl->Unlock (dsbuffer, lpvAudio1, dwBytes1, lpvAudio2, dwBytes2);
 
     if( FAILED (hr) )
-        I_Error("Unlock fail on %x, %s\n",dsbuffer,DXErrorToString(hr));
+    {
+        reason = "Unlock fail";
+        goto errmsg;
+    }
 
     return true;
+
+errmsg:
+    I_SoftError("Copy Sound: %s on %x, %s\n", reason, dsbuffer, DXErrorToString(hr));
+    return false;
 }
+#endif
 
 #ifdef SURROUND
 // judgecutor:
 // Hmmm... May be this function is not too good...
-static void CopyAndInvertMemory(void *dest, void *src, int bytes)
+static void CopyAndInvertMemory(byte *dest, byte *src, int bytes)
 {
+#ifdef __GNUC__
+    while (bytes > 0)
+    {
+       *(dest++) = - *(src++);
+       bytes--;
+    }
+#else
     _asm
     {
         push esi
@@ -279,12 +343,14 @@ a:
         pop  edi
         pop  esi
     }
+#endif
 }
 
 // judgecutor:
 // Like normal CopySoundData but sound data will be inverted
 static boolean CopyAndInvertSoundData(LPDIRECTSOUNDBUFFER dsbuffer, byte* data, int length)
 {
+    char *  reason;
     LPVOID  lpvAudio1;              // receives address of lock start
     DWORD   dwBytes1;               // receives number of bytes locked
     LPVOID  lpvAudio2;
@@ -299,15 +365,24 @@ static boolean CopyAndInvertSoundData(LPDIRECTSOUNDBUFFER dsbuffer, byte* data, 
     { 
         hr = dsbuffer->lpVtbl->Restore (dsbuffer);
         if( FAILED (hr) )
-            I_Error("CopyAndInvert: Restore fail on %x, %s\n",dsbuffer,DXErrorToString(hr));
+        {
+	    reason = "Restore fail";
+	    goto errmsg;
+	}
         hr = dsbuffer->lpVtbl->Lock (dsbuffer, 0, length, &lpvAudio1, &dwBytes1, NULL, NULL, 0);
         if( FAILED (hr) )
-            I_Error("CopyAndInvert: Lock fail(2) on %x, %s\n",dsbuffer,DXErrorToString(hr));
+        {
+	    reason = "Lock fail(2)";
+	    goto errmsg;
+	}
     }
     else
     {
         if( FAILED (hr) )
-              I_Error("CopyAndInvert: Lock fail(1) on %x, %s\n",dsbuffer,DXErrorToString(hr));
+        {
+	    reason = "Lock fail(1)";
+	    goto errmsg;
+	}
     }
     
     
@@ -320,8 +395,15 @@ static boolean CopyAndInvertSoundData(LPDIRECTSOUNDBUFFER dsbuffer, byte* data, 
    
     hr = dsbuffer->lpVtbl->Unlock (dsbuffer, lpvAudio1, dwBytes1, lpvAudio2, dwBytes2);
     if( FAILED (hr) )
-        I_Error("CopyAndInvert: Unlock fail on %x, %s\n",dsbuffer,DXErrorToString(hr));
+    {
+        reason = "Unlock fail";
+        goto errmsg;
+    }
 
+    return true;
+
+errmsg:
+    I_SoftError("CopyAndInvert Sound: %s on %x, %s\n", reason, dsbuffer, DXErrorToString(hr));
     return false;
 }
 #endif
@@ -346,10 +428,10 @@ static DWORD sound_buffer_flags = DSBCAPS_CTRLPAN |
 // judgecutor:
 // We need an another function definition for supporting the surround sound
 // Invert just cause to copy an inverted sound data
-static LPDIRECTSOUNDBUFFER raw2DS(unsigned char *dsdata, int len, boolean invert)
+static LPDIRECTSOUNDBUFFER raw2DS( byte * dsdata, int len, boolean invert)
 
 #else
-static LPDIRECTSOUNDBUFFER raw2DS(unsigned char *dsdata, int len)
+static LPDIRECTSOUNDBUFFER raw2DS( byte * dsdata, int len)
 
 #endif
 {
@@ -420,7 +502,7 @@ void I_GetSfx (sfxinfo_t*  sfx)
     byte *  dssfx;
     int     size;
 
-    S_GetSfx( sfx );
+    S_GetSfxLump( sfx );
 
 #ifdef HW3SOUND
     if (hws_mode != HWS_DEFAULT_MODE)
@@ -580,12 +662,12 @@ static int GetFreeStackNum(int  newpriority)
 #ifdef SURROUND
 static LPDIRECTSOUNDBUFFER CreateInvertedSound(int id)
 {
-    sfxinfo * sfx = &S_sfx[id];
+    sfxinfo_t * sfx = &S_sfx[id];
     byte  *dsdata;
 
-    S_GetSfx( sfx );
+    S_GetSfxLump( sfx );
     dsdata = sfx->data;
-    if( ! dsdata )  return;
+    if( ! dsdata )  return NULL;
     return raw2DS(dsdata, sfx->length, TRUE);
 }
 #endif
@@ -593,7 +675,7 @@ static LPDIRECTSOUNDBUFFER CreateInvertedSound(int id)
 // Calculate internal pitch from Doom pitch
 static float recalc_pitch(int doom_pitch)
 {
-    return doom_pitch < NORMAL_PITCH ?
+    return (doom_pitch < NORMAL_PITCH) ?
         (float)(doom_pitch + NORMAL_PITCH) / (NORMAL_PITCH * 2)
         :(float)doom_pitch / (float)NORMAL_PITCH;
 }
@@ -607,12 +689,9 @@ extern consvar_t cv_rndsoundpitch;
 // FIXME: if a specific sound Id is already being played, another instance
 //        of that sound should be created with DuplicateSound()
 // --------------------------------------------------------------------------
-int I_StartSound (int            id,
-                  int            vol,
-                  int            sep,
-                  int            pitch,
-                  int            priority )
+int I_StartSound (int id, int vol, int sep, int pitch, int priority )
 {
+    char *  reason;
     sfxinfo_t * sfx = &S_sfx[id];
     HRESULT     hr;
     LPDIRECTSOUNDBUFFER     dsbuffer;
@@ -625,12 +704,12 @@ int I_StartSound (int            id,
 #endif
 
     if (nosoundfx)
-        return -1;
+        goto ret_nothing;
 
     //CONS_Printf ("I_StartSound:\n\t\tS_sfx[%d]\n", id);
     handle = GetFreeStackNum(priority);
     if( handle<0 )  
-        return -1;
+        goto ret_nothing;
 
     //CONS_Printf ("\t\tusing handle %d\n", handle);
 
@@ -690,7 +769,7 @@ int I_StartSound (int            id,
     I_UpdateSoundVolume (dsbuffer, vol);
 
 #ifdef SURROUND
-        // Prepare the surround sound buffer
+    // Prepare the surround sound buffer
     // Use a normal sound data for the left channel (with pan == 0)
     // and an inverted sound data for the right channel (with pan == 255)
     
@@ -708,10 +787,12 @@ int I_StartSound (int            id,
         dssurround->lpVtbl->SetCurrentPosition(dssurround, 0);
     }
     else
-    // Perform normal operation
+        // Perform normal operation
+        I_UpdateSoundPanning (dsbuffer, sep);
+#else
+    I_UpdateSoundPanning (dsbuffer, sep);
 #endif
 
-        I_UpdateSoundPanning (dsbuffer, sep);
 
     dsbuffer->lpVtbl->SetCurrentPosition (dsbuffer, 0);
 
@@ -725,7 +806,7 @@ int I_StartSound (int            id,
         {
             byte*   dsdata;
             // reload sample data here
-	    S_GetSfx( sfx );
+	    S_GetSfxLump( sfx );
             dsdata = sfx->data;
 
             // Well... Data length must be -8!!!
@@ -735,7 +816,10 @@ int I_StartSound (int            id,
             hr = dsbuffer->lpVtbl->Play (dsbuffer, 0, 0, 0);
         }
         else
-            I_Error ("I_StartSound : ->Restore FAILED, %s",DXErrorToString(hr));
+        {
+	    reason = "Restore fail";
+	    goto errmsg;
+	}
     }
 
 #ifdef SURROUND
@@ -752,14 +836,17 @@ int I_StartSound (int            id,
             {
                 byte*   dsdata;
 	       
-	        S_GetSfx( sfx );
-	        dsdata = sfx->data;
+                S_GetSfxLump( sfx );
+                dsdata = sfx->data;
                 CopyAndInvertSoundData (dssurround, (byte*)dsdata + 8, sfx->length - 8);
             
                 hr = dssurround->lpVtbl->Play (dssurround, 0, 0, 0);
             }
             else
-                I_Error ("I_StartSound : ->Restore FAILED, %s",DXErrorToString(hr));
+	    {
+	        reason = "Restore fail";
+	        goto errmsg;
+	    }
         }
     }
     StackSounds[handle].lpSurround = dssurround;
@@ -767,6 +854,11 @@ int I_StartSound (int            id,
 
     // Returns a handle
     return handle;
+
+errmsg:
+    I_SoftError ("StartSound : %s, %s", DXErrorToString(hr));
+ret_nothing:
+    return -1;
 }
 
 
@@ -833,10 +925,7 @@ int I_SoundIsPlaying(int handle)
 // --------------------------------------------------------------------------
 // Update properties of a sound currently playing
 // --------------------------------------------------------------------------
-void I_UpdateSoundParams(int    handle,
-                                     int        vol,
-                                     int        sep,
-                                     int        pitch)
+void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
 {
     LPDIRECTSOUNDBUFFER     dsbuffer;
 #ifdef SURROUND
@@ -905,11 +994,15 @@ void I_UpdateSoundParams(int    handle,
 //
 // Shutdown DirectSound
 //
-void I_ShutdownSound(void)
+// Is also a registered exit func
+static void I_DS_ShutdownSound(void)
 {
     int i;
+   
+    if( nosoundfx )
+        return;
 
-    CONS_Printf("I_ShutdownSound()\n");
+    CONS_Printf("I_DS_ShutdownSound: \n");
 
 #ifdef HW3SOUND
     if (hws_mode != HWS_DEFAULT_MODE)
@@ -938,7 +1031,7 @@ void I_ShutdownSound(void)
 // ==========================================================================
 // Startup DirectSound
 // ==========================================================================
-void I_StartupSound()
+static void I_DS_StartupSound( void )
 {
     HRESULT             hr;
     LPDIRECTSOUNDBUFFER lpDsb;
@@ -953,13 +1046,8 @@ void I_StartupSound()
     snddev_t            snddev;
 #endif
 
-    sound_started = false;
-    
-    if (nosoundfx)
-        return;
-
     // Secure and configure sound device first.
-    CONS_Printf("I_StartupSound: ");
+    CONS_Printf("I_DS_StartupSound: \n");
 
     // frequency of primary buffer may be set at cmd-line
     p = M_CheckParm ("-freq");
@@ -1000,10 +1088,9 @@ void I_StartupSound()
         if (Init3DSDriver(sdrv_name))
         {
             //nosoundfx = true;
-            I_AddExitFunc(I_ShutdownSound);
+            I_AddExitFunc(I_DS_ShutdownSound);
             snddev.cooplevel = cooplevel;
             snddev.bps = 16;
-            snddev.hWnd = hWndMain;
             snddev.sample_rate = frequency;
             if (HW3S_Init(I_Error, &snddev))
             {
@@ -1029,9 +1116,9 @@ void I_StartupSound()
     }
 
     // register exit code, now that we have at least DirectSound to close
-    I_AddExitFunc (I_ShutdownSound);
+    I_AddExitFunc (I_DS_ShutdownSound);
        
-    hr = DSnd->lpVtbl->SetCooperativeLevel (DSnd, hWndMain, cooplevel);
+    hr = DSnd->lpVtbl->SetCooperativeLevel (DSnd, hWnd_main, cooplevel);
     if ( FAILED( hr ) ) {
         CONS_Printf (" SetCooperativeLevel FAILED\n");
         nosoundfx = true;
@@ -1141,8 +1228,7 @@ void I_StartupSound()
 #define MIDBUFFERSIZE   128*1024L       // buffer size for Mus2Midi conversion  (ugly code)
 #define SPECIAL_HANDLE_CLEANMIDI  -1999 // tell I_StopSong() to do a full (slow) midiOutReset() on exit
 
-static  BOOL            bMusicStarted;
-static  char*           pMus2MidData;       // buffer allocated at program start for Mus2Mid conversion
+static  byte*       pMus2MidData;       // buffer allocated at program start for Mus2Mid conversion
 
 static  UINT        uMIDIDeviceID, uCallbackStatus;
 static  HMIDISTRM   hStream;
@@ -1151,29 +1237,29 @@ static  HANDLE      hBufferReturnEvent; // for synch between the callback thread
 
 static  int         nCurrentBuffer = 0, nEmptyBuffers;
 
-static  BOOL        bBuffersPrepared = FALSE;
+static  boolean     buffers_prepared = FALSE;
 static  DWORD       dwVolCache[MAX_MIDI_IN_TRACKS];
         DWORD       dwVolumePercent;    // accessed by win_main.c
 
         // this is accessed by mid2strm.c conversion code
-        BOOL        bMidiLooped = FALSE, bMidiPlaying = FALSE, bMidiPaused = FALSE;
+        boolean     midi_looped = FALSE, midi_playing = FALSE, midi_paused = FALSE;
         CONVERTINFO ciStreamBuffers[NUM_STREAM_BUFFERS];
 
-#define STATUS_KILLCALLBACK         100     // Signals that the callback should die
-#define STATUS_CALLBACKDEAD         200     // Signals callback is done processing
+#define STATUS_KILLCALLBACK     100     // Signals that the callback should die
+#define STATUS_CALLBACKDEAD     200     // Signals callback is done processing
 #define STATUS_WAITINGFOREND    300     // Callback's waiting for buffers to play
 
 #define DEBUG_CALLBACK_TIMEOUT 2000         // Wait 2 seconds for callback
                                         // faB: don't freeze the main code if we debug..
 
-#define VOL_CACHE_INIT              127     // for dwVolCache[]
+#define VOL_CACHE_INIT          127     // for dwVolCache[]
 
-static BOOL bMidiCanSetVolume;          // midi caps
+static boolean  midi_can_set_volume;          // midi caps
 
 static void Mid2StreamFreeBuffers( void );
 static void CALLBACK MidiStreamCallback (HMIDIIN hMidi, UINT uMsg, DWORD dwInstance,
                                                  DWORD dwParam1, DWORD dwParam2 );
-static BOOL StreamBufferSetup( unsigned char* pMidiData, int iMidiSize );
+static BOOL StreamBufferSetup( byte* pMidiData, int iMidiSize );
 
 // -------------------
 // MidiErrorMessageBox
@@ -1210,7 +1296,7 @@ void I_InitAudioMixer (void)
 // I_InitMusic
 // Startup Midi device for streaming output
 // -----------
-void I_InitMusic(void)
+static void I_InitMusic(void)
 {
     DWORD       idx;
     MMRESULT    mmrRetVal;
@@ -1218,30 +1304,30 @@ void I_InitMusic(void)
     MIDIOUTCAPS MidiOutCaps;
     char*       szTechnology;
 
-    bMusicStarted = false;
-    
-    CONS_Printf("I_InitMusic()\n");
+    CONS_Printf("I_InitMusic: \n");
 
-    if(digmusic)
+#ifdef FMOD_SOUND
+    if(fmod_music)
     {
-		// SSNTails 12-13-2002
-		if (FSOUND_GetVersion() < FMOD_VERSION)
-		{
-			I_Error("Error : You are using the wrong DLL version!  You should be using FMOD %.02f\n", FMOD_VERSION);
-		}
+        // SSNTails 12-13-2002
+        if (FSOUND_GetVersion() < FMOD_VERSION_NEEDED)
+        {
+	    I_SoftError("Error : You are using the wrong DLL version!  You should be using FMOD %.02f\n", FMOD_VERSION_NEEDED);
+	    fmod_music = 0;
+	    goto no_fmod;
+	}
     
-		/*
-			INITIALIZE
-		*/
-		if (!FSOUND_Init(44100, 1, FSOUND_INIT_GLOBALFOCUS)) // Source data MUST be 44.1khz!
-		{
-			I_Error("%s\n", FMOD_ErrorString(FSOUND_GetError()));
-		}
-		nomusic = true; // Disable MIDI
-    }
-
-    if (nomusic)
+        // INITIALIZE FMOD
+        if (!FSOUND_Init(44100, 1, FSOUND_INIT_GLOBALFOCUS)) // Source data MUST be 44.1khz!
+        {
+	    I_SoftError("%s\n", FMOD_ErrorString(FSOUND_GetError()));
+	    fmod_music = 0;
+	    goto no_fmod;
+	}
         return;
+    }
+no_fmod:
+#endif
 
     // check out number of MIDI devices available
     //
@@ -1290,7 +1376,7 @@ void I_InitMusic(void)
             CONS_Printf ("-Direct support for midiStreamOut()\n");
         if (MidiOutCaps.dwSupport & MIDICAPS_VOLUME)
             CONS_Printf ("-Volume control\n");
-        bMidiCanSetVolume = ((MidiOutCaps.dwSupport & MIDICAPS_VOLUME)!=0);
+        midi_can_set_volume = ((MidiOutCaps.dwSupport & MIDICAPS_VOLUME)!=0);
     }
 
 #ifdef TESTCODE
@@ -1298,7 +1384,7 @@ void I_InitMusic(void)
 #endif
 
     // initialisation of midicard by I_StartupSound
-    pMus2MidData = (char *)Z_Malloc (MIDBUFFERSIZE,PU_STATIC,NULL);
+    pMus2MidData = Z_Malloc (MIDBUFFERSIZE,PU_STATIC,NULL);
 
     // ----------------------------------------------------------------------
     // Midi2Stream initialization
@@ -1336,34 +1422,38 @@ void I_InitMusic(void)
     // register exit code
     I_AddExitFunc (I_ShutdownMusic);
 
-    bMusicStarted = true;
+    music_started = true;
 }
 
 
 // ---------------
 // I_ShutdownMusic
 // ---------------
-void I_ShutdownMusic(void)
+// Is also a registered exit func
+static void I_ShutdownMusic(void)
 {
     DWORD       idx;
     MMRESULT    mmrRetVal;
+   
+    if( nomusic )
+        return;
 
-    if(digmusic)
-    {
-		FSOUND_Stream_Stop(fmus);
-		FSOUND_Stream_Close(fmus);
-		FSOUND_Close();
-		remove("mus.tmp"); // Delete the temp file
-		return;
-     }
-     else if(nomusic)
-		return;
-
-    if (!bMusicStarted)
-                return;
-        
     CONS_Printf("I_ShutdownMusic: \n");
 
+#ifdef FMOD_SOUND
+    if(fmod_music)
+    {
+        FSOUND_Stream_Stop(fmus);
+        FSOUND_Stream_Close(fmus);
+        FSOUND_Close();
+        remove("mus.tmp"); // Delete the temp file
+        return;
+    }
+#endif
+
+    if (!music_started)
+        return;
+        
     if (hStream)
     {
         I_StopSong (SPECIAL_HANDLE_CLEANMIDI);
@@ -1373,25 +1463,29 @@ void I_ShutdownMusic(void)
     Mid2StreamFreeBuffers();
 
     // Free our stream buffers
-    for( idx = 0; idx < NUM_STREAM_BUFFERS; idx++ ) {
+    for( idx = 0; idx < NUM_STREAM_BUFFERS; idx++ )
+    {
             if( ciStreamBuffers[idx].mhBuffer.lpData )
             {
-            GlobalFreePtr( ciStreamBuffers[idx].mhBuffer.lpData );
+	        // MinGW could not handle expr in GlobalFreePtr
+	        void * dp = ciStreamBuffers[idx].mhBuffer.lpData;
+                GlobalFreePtr( dp );
                 ciStreamBuffers[idx].mhBuffer.lpData = NULL;
             }
     }
 
-    if (hStream) {
-                if(( mmrRetVal = midiStreamClose( hStream )) != MMSYSERR_NOERROR )
-                    MidiErrorMessageBox( mmrRetVal );
+    if (hStream)
+    {
+        if(( mmrRetVal = midiStreamClose( hStream )) != MMSYSERR_NOERROR )
+	    MidiErrorMessageBox( mmrRetVal );
         hStream = NULL;
     }
     
-        CloseHandle( hBufferReturnEvent );
+    CloseHandle( hBufferReturnEvent );
 
     //free (pMus2MidData);
 
-    bMusicStarted = false;
+    music_started = false;
 }
 
 
@@ -1405,7 +1499,7 @@ static void SetAllChannelVolumes( DWORD dwVolumePercent )
     DWORD       dwEvent, dwStatus, dwVol, idx;
     MMRESULT    mmrRetVal;
 
-    if( !bMidiPlaying )
+    if( !midi_playing )
         return;
 
     for( idx = 0, dwStatus = MIDI_CTRLCHANGE; idx < MAX_MIDI_IN_TRACKS; idx++, dwStatus++ )
@@ -1430,18 +1524,25 @@ static void SetAllChannelVolumes( DWORD dwVolumePercent )
 // ----------------
 void I_SetMusicVolume(int volume)
 {
-    MMRESULT    mmrRetVal;
-    int         iVolume;
-
     if (nomusic)
         return;
         
-    if (bMidiCanSetVolume)
+#ifdef FMOD_SOUND
+    if (fmod_music )
     {
+        // left and right channels
+        FSOUND_SetVolume(0, (volume<<3)+(volume>>2));
+        return;
+    }
+#endif
+
+    if (midi_can_set_volume)
+    {
+        MMRESULT    mmrRetVal;
         // method A
         // current volume is 0-31, we need 0-0xFFFF in each word (left/right channel)
-        iVolume = (volume << 11) | (volume << 27);
-        if ((mmrRetVal = midiOutSetVolume ((HMIDIOUT)uMIDIDeviceID, iVolume)) != MMSYSERR_NOERROR) {
+        int midi_volume = (volume << 11) | (volume << 27);
+        if ((mmrRetVal = midiOutSetVolume ((HMIDIOUT)uMIDIDeviceID, midi_volume)) != MMSYSERR_NOERROR) {
             CONS_Printf ("I_SetMusicVolume: couldn't set volume\n");
             MidiErrorMessageBox(mmrRetVal);
         }
@@ -1454,31 +1555,37 @@ void I_SetMusicVolume(int volume)
     }
 }
 
-void I_SetFMODVolume(int volume)
-{
-#ifdef FMODSOUND
-	FSOUND_SetVolume(0, (volume<<3)+(volume>>2));
-#endif
-}
+
+void I_StartFMODSong (char* musicname, int looping);
 
 // ----------
 // I_PlaySong
 // Note: doesn't use the handle, would be useful to switch between mid's after
 //       some trigger (would do several RegisterSong, then PlaySong the chosen one)
 // ----------
-void I_PlaySong(int handle, int bLooping)
+void I_PlaySong(int handle, int looping)
 {
     MMRESULT        mmrRetVal;
 
     if (nomusic)
         return;
-        
+
+#ifdef FMOD_SOUND   
+    if (fmod_music)
+    {
+#if 0
+       	// FIXME: Need handle --> musicname
+        I_StartFMODSong ( musicname, looping);
+#endif
+    }
+#endif
+
 #ifdef DEBUGMIDISTREAM
-    CONS_Printf("I_PlaySong: looping %d\n", bLooping);
+    CONS_Printf("I_PlaySong: looping %d\n", looping);
 #endif
 
     // unpause the song first if it was paused
-    if( bMidiPaused )
+    if( midi_paused )
         I_PauseSong( handle );
 
     // Clear the status of our callback so it will handle
@@ -1489,10 +1596,11 @@ void I_PlaySong(int handle, int bLooping)
         MidiErrorMessageBox( mmrRetVal );
         Mid2StreamFreeBuffers();
         Mid2StreamConverterCleanup();
-        I_Error ("I_PlaySong: midiStreamRestart error");
+        I_SoftError ("I_PlaySong: midiStreamRestart error");
+        return;
     }
-    bMidiPlaying = TRUE;
-    bMidiLooped = bLooping;
+    midi_playing = TRUE;
+    midi_looped = looping;
 }
 
 
@@ -1502,23 +1610,26 @@ void I_PlaySong(int handle, int bLooping)
 // -----------
 void I_PauseSong (int handle)
 {
-    if(digmusic)
+#ifdef FMOD_SOUND
+    if(fmod_music)
     {
-		if(FSOUND_IsPlaying(0)) // FMOD's so easy you almost lose brain
-			FSOUND_SetPaused(0, true); // cells programming for it!
+        if(FSOUND_IsPlaying(0)) // FMOD's so easy you almost lose brain
+	    FSOUND_SetPaused(0, true); // cells programming for it!
 
-		return;
+        return;
     }
-    else if (nomusic)
+#endif
+
+    if (nomusic)
         return;
 
 #ifdef DEBUGMIDISTREAM
     CONS_Printf("I_PauseSong: \n");
 #endif
 
-    if (!bMidiPaused) {
+    if (!midi_paused) {
         midiStreamPause( hStream );
-        bMidiPaused = true;
+        midi_paused = true;
     }
 }
 
@@ -1529,22 +1640,26 @@ void I_PauseSong (int handle)
 // ------------
 void I_ResumeSong (int handle)
 {
-    if(digmusic)
+#ifdef FMOD_SOUND
+    if(fmod_music)
     {
-		if(FSOUND_GetPaused(0))
-			FSOUND_SetPaused(0, false);
-		return;
+        if(FSOUND_GetPaused(0))
+	    FSOUND_SetPaused(0, false);
+        return;
     }
-    else if (nomusic)
+#endif
+
+    if (nomusic)
         return;
 
 #ifdef DEBUGMIDISTREAM
     CONS_Printf("I_ResumeSong: \n");
 #endif
 
-    if( bMidiPaused ) {
+    if( midi_paused )
+    {
         midiStreamRestart( hStream );
-        bMidiPaused = false;
+        midi_paused = false;
     }
 }
 
@@ -1561,13 +1676,21 @@ void I_StopSong(int handle)
     if (nomusic)
         return;
         
+#ifdef FMOD_SOUND
+    if (fmod_music)
+    {
+        if(FSOUND_IsPlaying(0))
+	    FSOUND_Stream_Stop(fmus);
+    }
+#endif
+
 #ifdef DEBUGMIDISTREAM
     CONS_Printf("I_StopSong: \n");
 #endif
 
-    if (bMidiPlaying || (uCallbackStatus != STATUS_CALLBACKDEAD) )
+    if (midi_playing || (uCallbackStatus != STATUS_CALLBACKDEAD) )
     {    
-        bMidiPlaying = bMidiPaused = FALSE;
+        midi_playing = midi_paused = FALSE;
         if( uCallbackStatus != STATUS_CALLBACKDEAD &&
             uCallbackStatus != STATUS_WAITINGFOREND )
                     uCallbackStatus = STATUS_KILLCALLBACK;
@@ -1581,7 +1704,7 @@ void I_StopSong(int handle)
 
         //faB: if we don't call midiOutReset() seems we have to stop the buffers
         //     ourselves (or it doesn't play anymore)
-        if (!bMidiPaused && (handle != SPECIAL_HANDLE_CLEANMIDI))
+        if (!midi_paused && (handle != SPECIAL_HANDLE_CLEANMIDI))
         {
             midiStreamPause( hStream );
         }
@@ -1627,13 +1750,6 @@ void I_StopSong(int handle)
     }
 }
 
-void I_StopFMODSong()
-{
-#ifdef FMODSOUND
-	if(FSOUND_IsPlaying(0))
-		FSOUND_Stream_Stop(fmus);
-#endif
-}
 
 // Is the song playing?
 int I_QrySongPlaying (int handle)
@@ -1644,7 +1760,13 @@ int I_QrySongPlaying (int handle)
 #ifdef DEBUGMIDISTREAM
     CONS_Printf("I_QrySongPlaying: \n");
 #endif
-    return (bMidiPlaying);
+#ifdef FMOD_SOUND
+    if (fmod_music)
+    {
+        return FSOUND_IsPlaying(0);
+    }
+#endif
+    return (midi_playing);
 }
 
 
@@ -1662,6 +1784,7 @@ void I_UnRegisterSong(int handle)
 #endif
 }
 
+#ifdef FMOD_SOUND
 // Special FMOD support SSNTails 12-13-2002
 void I_StartFMODSong (char* musicname, int looping)
 {
@@ -1669,7 +1792,7 @@ void I_StartFMODSong (char* musicname, int looping)
 	void* data;
 	int lumpnum;
 
-	if(!digmusic)
+	if(!fmod_music)
 		return;
 
 	if(fmus != NULL)
@@ -1711,8 +1834,8 @@ void I_StartFMODSong (char* musicname, int looping)
 	*/
 
 	FSOUND_Stream_Play(0, fmus);
-
 }
+#endif
 
 // --------------
 // I_RegisterSong
@@ -1721,15 +1844,12 @@ void I_StartFMODSong (char* musicname, int looping)
 // - setup midi stream buffers, and activate the callback procedure
 //   which will continually fill the buffers with new data
 // --------------
-#ifdef DEBUGMIDISTREAM
-void I_SaveMemToFile (unsigned char* pData, unsigned long iLength, char* sFileName);    //win_sys.c
-#endif
 
-int I_RegisterSong(void* data,int len)
+int I_RegisterSong(void* data, int len)
 {
-    int             iErrorCode;
-    char*           pMidiFileData = NULL;       // MIDI music buffer to be played or NULL
-    int             iMus2MidSize;               // size of Midi output data
+    int    err_code;
+    byte*  pMidiFileData = NULL;  // MIDI music buffer to be played or NULL
+    unsigned long  iMus2MidSize;  // size of Midi output data
 
     if (nomusic)
         return 1;
@@ -1742,10 +1862,11 @@ int I_RegisterSong(void* data,int len)
         // convert mus to mid with a wonderful function
         // thanks to S.Bacquet for the sources of qmus2mid
         // convert mus to mid and load it in memory
-        if((iErrorCode = qmus2mid((char *)data,pMus2MidData,89,64,0,len,MIDBUFFERSIZE,
-                                   &iMus2MidSize))!=0)
+        err_code = qmus2mid((byte *)data, pMus2MidData, 89,64,0, len,
+				MIDBUFFERSIZE, &iMus2MidSize);
+        if(err_code!=0)
         {
-            CONS_Printf("Cannot convert mus to mid, converterror :%d\n",iErrorCode);
+            CONS_Printf("Cannot convert mus to mid, converterror :%d\n",err_code);
             return 0;
         }
         pMidiFileData = pMus2MidData;
@@ -1765,7 +1886,7 @@ int I_RegisterSong(void* data,int len)
 
     if (pMidiFileData == NULL)
     {
-        CONS_Printf ("Not a valid MIDI file : %d\n",iErrorCode);
+        CONS_Printf ("Not a valid MIDI file : %d\n", err_code);
         return 0;
     }
 #ifdef DEBUGMIDISTREAM //EVENMORE
@@ -1776,9 +1897,11 @@ int I_RegisterSong(void* data,int len)
 #endif
     
     // setup midi stream buffer
-    if (StreamBufferSetup(pMidiFileData, iMus2MidSize)) {
+    if (StreamBufferSetup(pMidiFileData, iMus2MidSize))
+    {
         Mid2StreamConverterCleanup();
-        I_Error ("I_RegisterSong: StreamBufferSetup FAILED");
+        I_SoftError ("I_RegisterSong: StreamBufferSetup FAILED\n");
+        return 0;
     }
 
     return 1;
@@ -1793,7 +1916,7 @@ int I_RegisterSong(void* data,int len)
 // -----------------
 
 //mid2strm.c - returns TRUE if an error occurs
-BOOL Mid2StreamConverterInit( unsigned char* pMidiData, ULONG iMidiSize );
+BOOL Mid2StreamConverterInit( byte* pMidiData, ULONG iMidiSize );
 void Mid2StreamConverterCleanup( void );
 
 
@@ -1801,7 +1924,7 @@ void Mid2StreamConverterCleanup( void );
 // StreamBufferSetup
 // - returns TRUE if a problem occurs
 // -----------------
-static BOOL StreamBufferSetup( unsigned char* pMidiData, int iMidiSize )
+static BOOL StreamBufferSetup( byte* pMidiData, int iMidiSize )
 {
     MMRESULT            mmrRetVal;
     MIDIPROPTIMEDIV     mptd;
@@ -1822,7 +1945,8 @@ static BOOL StreamBufferSetup( unsigned char* pMidiData, int iMidiSize )
     for (idx = 0; idx < NUM_STREAM_BUFFERS; idx++ )
     {
         ciStreamBuffers[idx].mhBuffer.dwBufferLength = OUT_BUFFER_SIZE;
-        if( ciStreamBuffers[idx].mhBuffer.lpData == NULL ) {
+        if( ciStreamBuffers[idx].mhBuffer.lpData == NULL )
+        {
             if(( ciStreamBuffers[idx].mhBuffer.lpData = GlobalAllocPtr( GHND, OUT_BUFFER_SIZE )) == NULL )
             {
                 return (FALSE);
@@ -1878,7 +2002,7 @@ static BOOL StreamBufferSetup( unsigned char* pMidiData, int iMidiSize )
         ciStreamBuffers[nCurrentBuffer].mhBuffer.dwBytesRecorded
             = ciStreamBuffers[nCurrentBuffer].dwBytesRecorded;
         
-        if( !bBuffersPrepared ) {
+        if( !buffers_prepared ) {
             if(( mmrRetVal = midiOutPrepareHeader( (HMIDIOUT)hStream,
                 &ciStreamBuffers[nCurrentBuffer].mhBuffer,
                 sizeof(MIDIHDR))) != MMSYSERR_NOERROR )
@@ -1900,7 +2024,7 @@ static BOOL StreamBufferSetup( unsigned char* pMidiData, int iMidiSize )
             break;
     }
 
-    bBuffersPrepared = TRUE;
+    buffers_prepared = TRUE;
     nCurrentBuffer = 0;
 
     // MIDI volume
@@ -1922,7 +2046,7 @@ void I_SetMidiChannelVolume( DWORD dwChannel, DWORD dwVolumePercent )
     DWORD       dwEvent, dwVol;
     MMRESULT    mmrRetVal;
 
-    if( !bMidiPlaying )
+    if( !midi_playing )
             return;
 
     dwVol = ( dwVolCache[dwChannel] * dwVolumePercent ) / 1000;
@@ -2008,7 +2132,7 @@ static void CALLBACK MidiStreamCallback (HMIDIIN hMidi, UINT uMsg, DWORD dwInsta
         // Fill an available buffer with audio data again...
         // -------------------------------------------------
 
-            if( bMidiPlaying && nEmptyBuffers )
+            if( midi_playing && nEmptyBuffers )
             {
                 ciStreamBuffers[nCurrentBuffer].dwStartOffset = 0;
                 ciStreamBuffers[nCurrentBuffer].dwMaxLength = OUT_BUFFER_SIZE;
@@ -2031,7 +2155,7 @@ static void CALLBACK MidiStreamCallback (HMIDIIN hMidi, UINT uMsg, DWORD dwInsta
                         //faB: we're not in the main thread so we can't call I_Error() now
                         //     log the error message out, and post exit message.
                         CONS_Printf( "MidiStreamCallback(): conversion pass failed!" );
-                        PostMessage(hWndMain, WM_CLOSE, 0, 0);
+                        PostMessage(hWnd_main, WM_CLOSE, 0, 0);
                         return;
                     }
                 }
@@ -2068,7 +2192,7 @@ static void CALLBACK MidiStreamCallback (HMIDIIN hMidi, UINT uMsg, DWORD dwInsta
                 if( MIDIEVENT_DATA1( pme->dwEvent ) == MIDICTRL_VOLUME_LSB )
                 {
                     CONS_Printf ( "Got an LSB volume event" );
-                    PostMessage (hWndMain, WM_CLOSE, 0, 0); //faB: can't I_Error() here
+                    PostMessage (hWnd_main, WM_CLOSE, 0, 0); //faB: can't I_Error() here
                     break;
                 }
 #endif
@@ -2081,7 +2205,7 @@ static void CALLBACK MidiStreamCallback (HMIDIIN hMidi, UINT uMsg, DWORD dwInsta
                 dwVolCache[ MIDIEVENT_CHANNEL( pme->dwEvent )] = MIDIEVENT_VOLUME( pme->dwEvent );
                 // call SetChannelVolume() later to adjust MIDI volume control message to our
                 // own current volume level.
-                PostMessage( hWndMain, WM_MSTREAM_UPDATEVOLUME,
+                PostMessage( hWnd_main, WM_MSTREAM_UPDATEVOLUME,
                              MIDIEVENT_CHANNEL( pme->dwEvent ), 0L );
             }
             break;
@@ -2105,7 +2229,7 @@ static void Mid2StreamFreeBuffers( void )
     DWORD       idx;
     MMRESULT    mmrRetVal;
 
-    if( bBuffersPrepared )
+    if( buffers_prepared )
     {
         for( idx = 0; idx < NUM_STREAM_BUFFERS; idx++ ) {
                 if(( mmrRetVal = midiOutUnprepareHeader( (HMIDIOUT)hStream,
@@ -2116,9 +2240,48 @@ static void Mid2StreamFreeBuffers( void )
                     MidiErrorMessageBox( mmrRetVal );
                 }
         }
-        bBuffersPrepared = FALSE;
+        buffers_prepared = FALSE;
     }
 
     //faB: I don't free the stream buffers here, but rather allocate them
     //      once at startup, and free'em at shutdown
+}
+
+
+//[WDJ] New init sound interface for sound effects and music combined
+void I_StartupSound(void)
+{
+    sound_started = false;
+    music_started = false;
+    
+    if ( ! nosoundfx )
+    { 
+        I_DS_StartupSound();
+    }
+   
+    if ( ! nomusic )
+    {
+        I_InitMusic();
+    }
+}
+
+void I_ShutdownSound(void)
+{
+    if ( ! nosoundfx )
+    { 
+        I_DS_ShutdownSound();
+    }
+    if( ! nomusic)
+    {
+        I_ShutdownMusic();
+    }
+}
+
+
+void I_SubmitSound(void)
+{
+}
+
+void I_UpdateSound(void)
+{
 }

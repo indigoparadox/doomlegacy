@@ -32,15 +32,14 @@
 #ifndef FABDXLIB_H
 #define FABDXLIB_H
 
-#define SAFE_RELEASE(x) if(x != NULL) { x->lpVtbl->Release(x); x = NULL; }
-#define SAFE_DELETE(x) if(x != NULL) { delete x; x = NULL; }
-
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+// We can use 0x0300, 0x0500, 0x0600, or 0x0700, or can default
+#define DIRECTDRAW_VERSION  0x0300
 #include <ddraw.h>
 
 // format of function in app called with width,height
-typedef BOOL (*APPENUMMODESCALLBACK)(int width, int height, int bpp);
+typedef BOOL (*FDX_enum_mode_callback)(int width, int height, int bpp);
 
 
 // globals
@@ -49,7 +48,7 @@ extern IDirectDrawSurface*      ScreenReal;
 extern IDirectDrawSurface*      ScreenVirtual;
 extern IDirectDrawPalette*      DDPalette;
 
-extern BOOL                     bAppFullScreen;
+extern BOOL                     fdx_fullscreen;
   // main code might need this to know the current
   // fullscreen or windowed state
 
@@ -63,26 +62,26 @@ extern int                      ScreenPitch;  // offset from one line to the nex
 extern unsigned char*           ScreenPtr;    // memory of the surface
 
 
-BOOL    EnumDirectDrawDisplayModes (APPENUMMODESCALLBACK appFunc);
-BOOL    CreateDirectDrawInstance (void);
+BOOL    FDX_EnumDisplayModes (FDX_enum_mode_callback appFunc);
+void    FDX_create_main_instance (void);
 
-int     InitDirectDrawe (HWND appWin, int width, int height, int bpp, int fullScr);
-void    CloseDirectDraw (void);
+BOOL    FDX_InitDDMode (HWND appWin, int width, int height, int bpp, int fullScr);
+void    FDX_CloseDirectDraw (void);
 
-void    ReleaseChtuff (void);
+void    FDX_ReleaseChtuff (void);
 
-void    ClearSurface (IDirectDrawSurface* surface, int color);
-BOOL    ScreenFlip (int wait);
+void    FDX_ClearSurface (IDirectDrawSurface* surface, int color);
+void    FDX_ScreenFlip (int wait);
 void    TextPrint (int x, int y, char* message);
 
-void    CreateDDPalette (PALETTEENTRY* colorTable);
-void    DestroyDDPalette (void);
-void    SetDDPalette (PALETTEENTRY* pal);
+void    FDX_CreateDDPalette (PALETTEENTRY* colorTable);
+void    FDX_DestroyDDPalette (void);
+void    FDX_SetDDPalette (PALETTEENTRY* pal);
 
-void    WaitVbl (void);
+void    FDX_WaitVbl (void);
 
-boolean LockScreen (void);
-void    UnlockScreen (void);
+BOOL    FDX_LockScreen (void);
+void    FDX_UnlockScreen (void);
 
 
 #endif /* FABDXLIB_H */

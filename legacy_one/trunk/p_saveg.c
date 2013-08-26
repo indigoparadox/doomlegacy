@@ -128,6 +128,8 @@ boolean  save_game_abort = 0;
 #define SAVEBUF_SIZEINC (128*1024)
 #define SAVEBUF_HEADERSIZE   (64 + (80*5) + 1024 + 256)
 #define SAVEBUF_FREE_TRIGGER  (64*1024)
+
+//#define SAVEBUF_REPORT_BUFINC
 // [WDJ] Uncomment the following to see how close to overrunning the buffer.
 //#define SAVEBUF_REPORT_MIN_FREE 1
 #ifdef SAVEBUF_REPORT_MIN_FREE
@@ -184,10 +186,6 @@ byte *  P_Alloc_savebuffer( boolean large_size )
 // return -1 if overrun the buffer
 size_t  P_Savegame_length( void )
 {
-#ifdef PADSAVEP
-    // Remove alignment pad for length, file, and network I/O
-    SG_remove_pad();
-#endif
     size_t length = save_p - savebuffer;
     if (length > savebuffer_size)
     {
@@ -293,8 +291,15 @@ void SG_Writebuf( void )
 	}
         savebuffer = newbuf;
         savebuffer_size = newsize;
-        // [WDJ] Uncomment the following line to see buffer increases
+        // [WDJ] Enable the following to see buffer increases
+#ifdef SAVEBUF_REPORT_BUFFINC
+#ifdef __MINGW32__
+        // MinGW does not understand %z
+        fprintf(stderr, "Savegame buffer realloc of %u bytes.\n", (int)newsize);
+#else
         fprintf(stderr, "Savegame buffer realloc of %zu bytes.\n", newsize);
+#endif
+#endif
         goto done;
     }
 			     

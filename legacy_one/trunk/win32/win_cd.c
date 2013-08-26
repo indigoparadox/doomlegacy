@@ -52,20 +52,22 @@ typedef struct {
     BOOL    IsAudio;
     DWORD   Start, End;
     DWORD   Length;         // minutes
-} CDTrack;
+} CDTrack_t;
 
 // -------
 // private
 // -------
-static  CDTrack             m_nTracks[MAX_CD_TRACKS];
-static  int                             m_nTracksCount;             // up to MAX_CD_TRACKS
-static  MCI_STATUS_PARMS        m_MCIStatus;
-static  MCI_OPEN_PARMS          m_MCIOpen;
+static  CDTrack_t           track_stack[MAX_CD_TRACKS];
+static  int                 num_tracks;  // up to MAX_CD_TRACKS
+static  MCI_STATUS_PARMS    mci_status;
+static  MCI_OPEN_PARMS      mci_open;
 
 // ------
 // protos
 // ------
-void Command_Cd_f (void);
+static void Command_Cd_f (void);
+static void I_StopCD (void);
+static int I_SetVolumeCD (int volume);
 
 
 // -------------------
@@ -73,12 +75,12 @@ void Command_Cd_f (void);
 // Retrieve error message corresponding to return value from
 //  mciSendCommand() or mciSenString()
 // -------------------
-static void MCIErrorMessageBox (MCIERROR iErrorCode)
+static void CD_MCI_ErrorMessageBox (MCIERROR error_code)
 {
-    char szErrorText[128];
-    if (!mciGetErrorString (iErrorCode, szErrorText, sizeof(szErrorText)))
-        wsprintf(szErrorText,"MCI CD Audio Unknow Error #%d\n", iErrorCode);
-    CONS_Printf (szErrorText);
+    char errtext[128];
+    if (!mciGetErrorString (error_code, errtext, sizeof(errtext)))
+        wsprintf(errtext,"MCI CD Audio Unknown Error #%d\n", error_code);
+    CONS_Printf (errtext);
     /*MessageBox (GetActiveWindow(), szTemp+1, "LEGACY",
                 MB_OK | MB_ICONSTOP );*/
 }
@@ -101,44 +103,44 @@ static void CD_Reset (void)
 // ----------------
 static BOOL CD_ReadTrackInfo (void)
 {
-        int         i;
-    int         nTrackLength;
-    MCIERROR    iErr;
+    int         i;
+    int         track_len;
+    MCIERROR    merr;
     
-        m_nTracksCount = 0;
+    num_tracks = 0;
                 
-        m_MCIStatus.dwItem = MCI_STATUS_NUMBER_OF_TRACKS;
-        if ( (iErr = mciSendCommand(m_MCIOpen.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM|MCI_WAIT, (DWORD)(LPVOID)&m_MCIStatus)) )
-        {
-                MCIErrorMessageBox (iErr);
-                return FALSE;
-        }
-        m_nTracksCount = m_MCIStatus.dwReturn;
-        if (m_nTracksCount > MAX_CD_TRACKS)
-                m_nTracksCount = MAX_CD_TRACKS;
+    mci_status.dwItem = MCI_STATUS_NUMBER_OF_TRACKS;
+    if ( (merr = mciSendCommand(mci_open.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM|MCI_WAIT, (DWORD)(LPVOID)&mci_status)) )
+    {
+        CD_MCI_ErrorMessageBox (merr);
+        return FALSE;
+    }
+    num_tracks = mci_status.dwReturn;
+    if (num_tracks > MAX_CD_TRACKS)
+        num_tracks = MAX_CD_TRACKS;
 
-        for (i=0; i<m_nTracksCount; i++)
+    for (i=0; i<num_tracks; i++)
+    {
+        mci_status.dwTrack = i+1;
+        mci_status.dwItem = MCI_STATUS_LENGTH;
+        if ((merr = mciSendCommand(mci_open.wDeviceID, MCI_STATUS, MCI_TRACK|MCI_STATUS_ITEM|MCI_WAIT, (DWORD)(LPVOID)&mci_status)))
         {
-                m_MCIStatus.dwTrack = i+1;
-        m_MCIStatus.dwItem = MCI_STATUS_LENGTH;
-                if ((iErr = mciSendCommand(m_MCIOpen.wDeviceID, MCI_STATUS, MCI_TRACK|MCI_STATUS_ITEM|MCI_WAIT, (DWORD)(LPVOID)&m_MCIStatus)))
-        {
-            MCIErrorMessageBox (iErr);
+            CD_MCI_ErrorMessageBox (merr);
             return FALSE;
         }
-                nTrackLength = (DWORD)(MCI_MSF_MINUTE(m_MCIStatus.dwReturn)*60 + MCI_MSF_SECOND(m_MCIStatus.dwReturn));
-                m_nTracks[i].Length = nTrackLength;
+        track_len = (DWORD)(MCI_MSF_MINUTE(mci_status.dwReturn)*60 + MCI_MSF_SECOND(mci_status.dwReturn));
+        track_stack[i].Length = track_len;
 
-        m_MCIStatus.dwItem = MCI_CDA_STATUS_TYPE_TRACK;
-        if ((iErr = mciSendCommand(m_MCIOpen.wDeviceID, MCI_STATUS, MCI_TRACK|MCI_STATUS_ITEM|MCI_WAIT, (DWORD)(LPVOID)&m_MCIStatus)))
+        mci_status.dwItem = MCI_CDA_STATUS_TYPE_TRACK;
+        if ((merr = mciSendCommand(mci_open.wDeviceID, MCI_STATUS, MCI_TRACK|MCI_STATUS_ITEM|MCI_WAIT, (DWORD)(LPVOID)&mci_status)))
         {
-            MCIErrorMessageBox (iErr);
+            CD_MCI_ErrorMessageBox (merr);
             return FALSE;
         }
-        m_nTracks[i].IsAudio = (m_MCIStatus.dwReturn == MCI_CDA_TRACK_AUDIO);
-        }
+        track_stack[i].IsAudio = (mci_status.dwReturn == MCI_CDA_TRACK_AUDIO);
+    }
         
-        return TRUE;
+    return TRUE;
 }
 
 
@@ -148,13 +150,14 @@ static BOOL CD_ReadTrackInfo (void)
 // ------------
 static int CD_TotalTime (void)
 {
-        int nTotalLength = 0;
-        int nTrack;
-    for (nTrack=0; nTrack<m_nTracksCount; nTrack++) {
-        if (m_nTracks[nTrack].IsAudio)
-                    nTotalLength = nTotalLength + m_nTracks[nTrack].Length;
+    int total_len = 0;  // total of all tracks
+    int track;
+    for (track=0; track<num_tracks; track++)
+    {
+        if (track_stack[track].IsAudio)
+             total_len += track_stack[track].Length;
     }
-        return nTotalLength;
+    return total_len;
 }
 
 
@@ -170,8 +173,8 @@ static boolean cdLooping = false;
 static byte    cdRemap[MAX_CD_TRACKS];
 static boolean cdEnabled=true;      // cd info available
 static boolean cdValid;             // true when last cd audio info was ok
-static boolean wasPlaying;
-static int     cdVolume=0;          // current cd volume (0-31)
+static boolean cd_was_playing;   // was playing, then stopped
+//static int     cdVolume=0;          // current cd volume (0-31)
 
 // 0-31 like Music & Sfx, though CD hardware volume is 0-255.
 consvar_t   cd_volume = {"cd_volume","31",CV_SAVE,soundvolume_cons_t};
@@ -180,10 +183,10 @@ consvar_t   cd_volume = {"cd_volume","31",CV_SAVE,soundvolume_cons_t};
 // some crap cd drivers take up to
 // a second for a simple 'busy' check..
 // (on those Update can be disabled)
-consvar_t   cdUpdate  = {"cd_update","1",CV_SAVE};
+consvar_t   cd_update  = {"cd_update","1",CV_SAVE};
 
-// hour,minutes,seconds
-static char* hms(int seconds)
+// time in hour,minutes,seconds
+static char* time_hms(int seconds)
 {
     int hours, minutes;
     static char s[9];
@@ -199,7 +202,8 @@ static char* hms(int seconds)
     return s;
 }
 
-void Command_Cd_f (void)
+// console command handler
+static void Command_Cd_f (void)
 {
     char*     s;
     int       i,j;
@@ -211,7 +215,7 @@ void Command_Cd_f (void)
     {
         CONS_Printf ("cd [on] [off] [remap] [reset] [open]\n"
                      "   [info] [play <track>] [loop <track>]\n"
-                     "   [stop] [resume]\n");
+		     "   [stop] [pause] [resume]\n");
         return;
     }
 
@@ -289,20 +293,20 @@ void Command_Cd_f (void)
 
         cdValid = true;
 
-        if (m_nTracksCount <= 0)
+        if (num_tracks <= 0)
             CONS_Printf ("No audio tracks\n");
         else
         {
             // display list of tracks
             // highlight current playing track
-            for (i = 0; i<m_nTracksCount; i++)
+            for (i = 0; i<num_tracks; i++)
             {
                 CONS_Printf    ("%s%2d. %s  %s\n",
                                 cdPlaying && (cdPlayTrack == i) ? "\2 " : " ",
-                                i+1, m_nTracks[i].IsAudio ? "audio" : "data ",
-                                hms(m_nTracks[i].Length));
+                                i+1, track_stack[i].IsAudio ? "audio" : "data ",
+                                time_hms(track_stack[i].Length));
             }
-            CONS_Printf ("\2Total time : %s\n", hms(CD_TotalTime()));
+            CONS_Printf ("\2Total time : %s\n", time_hms(CD_TotalTime()));
         }
         if (cdPlaying)
         {
@@ -330,6 +334,11 @@ void Command_Cd_f (void)
         return;
     }
 
+    if (!strncmp(s, "pause", 5)) {
+	I_PauseCD();
+	return;
+    }
+
     if (!strncmp(s,"resume",4))
     {
         I_ResumeCD ();
@@ -346,7 +355,7 @@ void Command_Cd_f (void)
 // ------------
 void I_ShutdownCD (void)
 {
-    MCIERROR    iErr;
+    MCIERROR    merr;
 
     if (!cdaudio_started)
         return;
@@ -356,8 +365,8 @@ void I_ShutdownCD (void)
     I_StopCD();
 
     // closes MCI CD
-    if ((iErr = mciSendCommand(m_MCIOpen.wDeviceID, MCI_CLOSE, 0, (DWORD)NULL)))
-        MCIErrorMessageBox (iErr);
+    if ((merr = mciSendCommand(mci_open.wDeviceID, MCI_CLOSE, 0, (DWORD)NULL)))
+        CD_MCI_ErrorMessageBox (merr);
 }
 
 
@@ -365,31 +374,32 @@ void I_ShutdownCD (void)
 // I_InitCD
 // Init CD Audio subsystem
 // --------
+// Interface i_sound.h
 void I_InitCD (void)
 {
-        MCI_SET_PARMS   mciSet;
-    MCIERROR    iErr;
+    MCI_SET_PARMS   mci_set;
+    MCIERROR    merr;
     int         i;
     
     // We don't have an open device yet
-        m_MCIOpen.wDeviceID = 0;
-        m_nTracksCount = 0;
+    mci_open.wDeviceID = 0;
+    num_tracks = 0;
 
     cdaudio_started = false;
 
-    m_MCIOpen.lpstrDeviceType = (LPCTSTR)MCI_DEVTYPE_CD_AUDIO;
-        if ((iErr = mciSendCommand((MCIDEVICEID)NULL, MCI_OPEN, MCI_OPEN_TYPE|MCI_OPEN_TYPE_ID, (DWORD)&m_MCIOpen)))
-        {
-                MCIErrorMessageBox (iErr);
+    mci_open.lpstrDeviceType = (LPCTSTR)MCI_DEVTYPE_CD_AUDIO;
+    if ((merr = mciSendCommand((MCIDEVICEID)NULL, MCI_OPEN, MCI_OPEN_TYPE|MCI_OPEN_TYPE_ID, (DWORD)&mci_open)))
+    {
+        CD_MCI_ErrorMessageBox (merr);
         return;
     }
 
         // Set the time format to track/minute/second/frame (TMSF).
-    mciSet.dwTimeFormat = MCI_FORMAT_TMSF;
-    if ((iErr = mciSendCommand(m_MCIOpen.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)&mciSet)))
+    mci_set.dwTimeFormat = MCI_FORMAT_TMSF;
+    if ((merr = mciSendCommand(mci_open.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)&mci_set)))
     {
-                MCIErrorMessageBox (iErr);
-        mciSendCommand(m_MCIOpen.wDeviceID, MCI_CLOSE, 0, (DWORD)NULL);
+        CD_MCI_ErrorMessageBox (merr);
+        mciSendCommand(mci_open.wDeviceID, MCI_CLOSE, 0, (DWORD)NULL);
         return;
     }  
 
@@ -427,6 +437,7 @@ void I_InitCD (void)
 // update the volume when it has changed (from console/menu)
 // TODO: check for cd change and restart music ?
 //
+// Interface i_sound.h
 void I_UpdateCD (void)
 {
         
@@ -434,10 +445,11 @@ void I_UpdateCD (void)
 
 
 //
-void I_PlayCD (int nTrack, boolean bLooping)
+// Interface i_sound.h
+void I_PlayCD (unsigned int track, boolean looping)
 {
-        MCI_PLAY_PARMS  mciPlay;
-    MCIERROR        iErr;
+    MCI_PLAY_PARMS  mci_play;
+    MCIERROR        merr;
         
     if (!cdaudio_started || !cdEnabled)
         return;
@@ -449,69 +461,70 @@ void I_PlayCD (int nTrack, boolean bLooping)
         return;
 
     // tracks start at 0 in the code..
-    nTrack--;
-    if (nTrack < 0 || nTrack >= m_nTracksCount)
-        nTrack = nTrack % m_nTracksCount;
+    track--;
+    if (track < 0 || track >= num_tracks)
+        track = track % num_tracks;
 
-    nTrack = cdRemap[nTrack];
+    track = cdRemap[track];
 
     if (cdPlaying)
     {
-        if (cdPlayTrack == nTrack)
+        if (cdPlayTrack == track)
             return;
         I_StopCD ();
     }
     
-    cdPlayTrack = nTrack;
+    cdPlayTrack = track;
 
-    if (!m_nTracks[nTrack].IsAudio)
+    if (!track_stack[track].IsAudio)
     {
         CONS_Printf ("\2CD Play: not an audio track\n");
         return;
     }
 
-    cdLooping = bLooping;
+    cdLooping = looping;
 
     //faB: stop MIDI music, MIDI music will restart if volume is upped later
     cv_musicvolume.value = 0;
     I_StopSong (0);
 
     //faB: I don't use the notify message, I'm trying to minimize the delay
-    mciPlay.dwCallback = (DWORD)hWndMain;
-        mciPlay.dwFrom = MCI_MAKE_TMSF(nTrack+1, 0, 0, 0);
-        if ((iErr = mciSendCommand(m_MCIOpen.wDeviceID, MCI_PLAY, MCI_FROM|MCI_NOTIFY, (DWORD)&mciPlay)))
-        {
-                MCIErrorMessageBox (iErr);
+    mci_play.dwCallback = (DWORD)hWnd_main;
+    mci_play.dwFrom = MCI_MAKE_TMSF(track+1, 0, 0, 0);
+    if ((merr = mciSendCommand(mci_open.wDeviceID, MCI_PLAY, MCI_FROM|MCI_NOTIFY, (DWORD)&mci_play)))
+    {
+        CD_MCI_ErrorMessageBox (merr);
         cdValid = false;
         cdPlaying = false;
         return;
-        }
+    }
 
     cdPlaying = true;
+    cd_was_playing = false;
 }
 
 
 // pause cd music
-void I_StopCD (void)
+static void I_StopCD (void)
 {
-    MCIERROR    iErr;
+    MCIERROR    merr;
 
     if (!cdaudio_started || !cdEnabled)
         return;
 
-    if ((iErr = mciSendCommand(m_MCIOpen.wDeviceID, MCI_PAUSE, MCI_WAIT, (DWORD)NULL)))
-        MCIErrorMessageBox (iErr);
+    if ((merr = mciSendCommand(mci_open.wDeviceID, MCI_PAUSE, MCI_WAIT, (DWORD)NULL)))
+        CD_MCI_ErrorMessageBox (merr);
     else {
-        wasPlaying = cdPlaying;
+        cd_was_playing = cdPlaying;
         cdPlaying = false;
     }
 }
 
 
-// continue after a pause
-void I_ResumeCD (void)
+// Interface i_sound.h
+void I_PauseCD (void)
 {
-    MCIERROR    iErr;
+    MCIERROR    merr;
 
     if (!cdaudio_started || !cdEnabled)
         return;
@@ -519,18 +532,39 @@ void I_ResumeCD (void)
     if (!cdValid)
         return;
 
-    if (!wasPlaying)
+    if ((merr = mciSendCommand(mci_open.wDeviceID, MCI_PAUSE, MCI_WAIT, (DWORD)NULL)))
+        CD_MCI_ErrorMessageBox (merr);
+    else {
+        cd_was_playing = cdPlaying;
+        cdPlaying = false;
+    }
+}
+
+
+// continue after a pause
+// Interface i_sound.h
+void I_ResumeCD (void)
+{
+    MCIERROR    merr;
+
+    if (!cdaudio_started || !cdEnabled)
         return;
 
-    if ((iErr = mciSendCommand(m_MCIOpen.wDeviceID, MCI_RESUME, MCI_WAIT, (DWORD)NULL)))
-                MCIErrorMessageBox (iErr);
+    if (!cdValid)
+        return;
+
+    if (!cd_was_playing)
+        return;
+
+    if ((merr = mciSendCommand(mci_open.wDeviceID, MCI_RESUME, MCI_WAIT, (DWORD)NULL)))
+        CD_MCI_ErrorMessageBox (merr);
     else
         cdPlaying = true;
 }
 
 
 // volume : logical cd audio volume 0-31 (hardware is 0-255)
-int I_SetVolumeCD (int volume)
+static int I_SetVolumeCD (int volume)
 {
     return 1;
 }

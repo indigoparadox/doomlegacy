@@ -480,10 +480,10 @@ ifeq ($(SMIF), WIN32_NATIVE)
   # DDINC="" alternative directory to find ddraw.h and other includes
   # DDLIB="" alternative directory to find ddraw and other libs
   ifndef DDINC
-    DDINC=-I\MINGW\MX80\include
+#    DDINC=-I\MINGW\MX80\include
   endif
   ifndef DDLIB
-    DDLIB=-L\MINGW\MX80\lib
+#    DDLIB=-L\MINGW\MX80\lib
   endif
   # FMODINC="" alternative directory to find fmod.h and other includes
   # FMODLIB="" alternative directory to find fmod libs
@@ -507,13 +507,14 @@ ifeq ($(SMIF), WIN32_NATIVE)
   endif
 
 #  DEBUGLIBS:=
-  ifdef CC_MINGW
-    LIBS:=-lwinmm -lwsock32 -lgdi32 -lddraw -ldsound -ldinput -ldxguid
-  else
-    LIBS:=-lwinmm -lsocket -lddraw -ldsound -ldinput
-  endif
+  LIBS:=
   ifdef DDLIB
-    LIBS+=$(DDLIB) -ddraw
+    LIBS+=$(DDLIB)
+  endif
+  ifdef CC_MINGW
+    LIBS+=-lwinmm -lwsock32 -lgdi32 -lddraw -ldsound -ldinput -ldxguid
+  else
+    LIBS+=-lwinmm -lsocket -lddraw -ldsound -ldinput
   endif
 
   ifdef WINNT

@@ -40,26 +40,36 @@
 #include <windows.h>
 #include <stdio.h>
 
-#include "doomdef.h"
+#include "../doomdef.h"
   // LOGMESSAGES
 
-extern  HINSTANCE       myInstance;
-extern  HWND            hWndMain;
+extern  HINSTANCE       main_prog_instance;
+extern  HWND            hWnd_main;
 
-// debugging CONS_Printf to file
-#ifdef LOGMESSAGES
-extern  HANDLE          logstream;
-#endif
 extern  int             appActive;
 
+extern  byte  cdaudio_started;
+extern  byte  sound_started;
+extern  byte  music_started;
+extern  byte  keyboard_started;
+extern  byte  have_DX0300;
+extern  boolean  win95;
+extern  boolean  winnt;
 //faB: midi channel Volume set is delayed by the MIDI stream callback thread, see win_snd.c
 #define WM_MSTREAM_UPDATEVOLUME (WM_USER + 101)
+
+#define MSH_WHEEL
+#ifdef MSH_WHEEL
+extern unsigned int MSHWheelMessage;
+#endif
 
 // defined in win_sys.c
 void    I_BeginProfile (void);    //for timing code
 DWORD   I_EndProfile (void);
 
 void I_GetLastErrorMsgBox (void);
+
+void I_SaveMemToFile (unsigned char* pData, unsigned long iLength, char* sFileName);
 
 // output formatted string to file using win32 functions (win_dbg.c)
 void FPrintf (HANDLE fileHandle, LPCTSTR lpFmt, ...);

@@ -3404,3 +3404,11 @@ Move ticrate graph generation to v_video, and remove it from port code.
 There is only one copy to maintain now and every port has the same
 response to vid_ticrate.
 Gave the display a more consistent time axis.
+
+*** W93_win_native
+patchfile = w93_5_win_native.patch
+- committed revision 1044   by wesley johnson
+Extensive changes to get WIN_NATIVE port working again.
+Now works in window and fullscreen, windows draw and Directx draw.
+Tested in 8bpp and native bpp.
+Has -win parameter to force windows drawing.
