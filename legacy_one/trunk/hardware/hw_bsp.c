@@ -67,6 +67,8 @@
 //
 //-----------------------------------------------------------------------------
 
+#include <math.h>
+
 #include "../doomincl.h"
 #include "hw_glob.h"
 #include "../r_local.h"
@@ -313,11 +315,19 @@ static boolean SameVertice (polyvertex_t* p1, polyvertex_t* p2)
     diff = p2->y - p1->y;
     if (diff < -1.5f || diff > 1.5f)
        return false;
-#else       
+#else
+#if 1
+    // cures HOM in Freedoom map09
+    if (fabsf( p2->x - p1->x ) > 0.4999f)
+       return false;
+    if (fabsf( p2->y - p1->y ) > 0.4999f)
+       return false;
+#else
     if (p1->x != p2->x)
         return false;
     if (p1->y != p2->y)
         return false;
+#endif
 #endif
     // p1 and p2 are considered the same vertex
     return true;
