@@ -842,6 +842,7 @@ int I_QrySongPlaying(int handle)
    return 0;
 }
 
+#ifdef FMOD_SOUND
 //Hurdler: TODO
 void I_StartFMODSong()
 {
@@ -856,3 +857,4 @@ void I_SetFMODVolume(int volume)
 {
     CONS_Printf("I_SetFMODVolume: Not yet supported under OS/2.\n");
 }
+#endif

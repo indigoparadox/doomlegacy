@@ -92,16 +92,16 @@ static boolean CDAudio_GetAudioDiskInfo(void)
   CDstatus cdStatus = SDL_CDStatus(cdrom);
 
   if (cdStatus == CD_ERROR)
-    {
+  {
       CONS_Printf("CD Error: %s\n", SDL_GetError());
       return false;
-    }
+  }
 
   if (!CD_INDRIVE(cdStatus))
-    {
+  {
       CONS_Printf("No CD in drive\n");
       return false;
-    }
+  }
     
   return true;
 }
@@ -279,9 +279,9 @@ void I_PauseCD (void)
     return;
     
   if (SDL_CDPause(cdrom))
-    {
+  {
       CONS_Printf("CD pause failed\n");
-    }
+  }
 }
 
 /**************************************************************************
@@ -299,9 +299,9 @@ void I_ResumeCD (void)
     return;
 
   if (SDL_CDResume(cdrom))
-    {
+  {
       CONS_Printf("CD resume failed\n");
-    }
+  }
 }
 
 

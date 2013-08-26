@@ -431,7 +431,7 @@ void I_RemoveExitFunc(void (*func)())
 //  This stuff should get rid of the exception and page faults when
 //  Doom bugs out with an error. Now it should exit cleanly.
 //
-int  I_StartupSystem(void)
+void  I_StartupSystem(void)
 {
 
     // some 'more globals than globals' things to initialize here ?
@@ -451,7 +451,6 @@ int  I_StartupSystem(void)
     signal(SIGINT , signal_handler);
 #endif
 
-    return 0;
 }
 
 //  Closes down everything. This includes restoring the initial

@@ -100,6 +100,11 @@ void I_FinishUpdate (void);
 
 void I_ReadScreen (byte* scr);
 
+#if defined(WIN_NATIVE) || defined(OS2_NATIVE) 
+// printf to loading screen
+void I_LoadingScreen ( const char * msg );
+#endif
+
 // debug in color
 // unused
 void IO_Color( unsigned char color, unsigned char r, unsigned char g, unsigned char b );

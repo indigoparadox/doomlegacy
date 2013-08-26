@@ -159,6 +159,8 @@
 #include "p_spec.h"
 
 #include "i_sound.h" //for I_PlayCD()..
+#include "i_video.h"
+  // I_FinishUpdate
 #include "r_sky.h"
 
 #include "r_data.h"

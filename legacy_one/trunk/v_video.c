@@ -700,7 +700,7 @@ void V_CopyRect(int srcx, int srcy, int srcscrn, int width, int height, int dest
 }
 
 
-#if !defined(USEASM) || defined(WIN_NATIVE_PLACEHOLDER)
+#if !defined(USEASM) || defined(WIN_NATIVE)
 // --------------------------------------------------------------------------
 // Copy a rectangular area from one bitmap to another (8bpp)
 // srcPitch, destPitch : width of source and destination bitmaps

@@ -139,7 +139,7 @@ ticcmd_t*       I_BaseTiccmd(void)
 boolean   win95;
 boolean   lockmem;
 
-void I_DetectWin95 (void)
+static void I_DetectWin95 (void)
 {
     __dpmi_regs     r;
 
@@ -157,7 +157,7 @@ void I_DetectWin95 (void)
     }
 }
 
-ULONG I_GetFreeMem(ULONG *total)
+uint64_t I_GetFreeMem(uint64_t *total)
 {
     _go32_dpmi_meminfo     info;
 
@@ -270,7 +270,7 @@ void I_OutputMsg (char *error, ...)
     // dont flush the message!
 }
 
-int errorcount=0; // fuck recursive errors
+int errorcount=0; // control recursive errors
 int shutdowning=false;
 
 //added 31-12-97 : display error messy after shutdowngfx
@@ -359,7 +359,7 @@ void I_Quit (void)
     gotoxy(1,24);
 
     if(shutdowning || errorcount)
-        I_Error("Error detected (%d)",errorcount);
+        I_Error("Errors detected (count=%d)", errorcount);
 
     fflush(stderr);
 
@@ -1129,10 +1129,9 @@ static char msg[] = "Oh no! Back to reality!\r\n";
 //  This stuff should get rid of the exception and page faults when
 //  Doom bugs out with an error. Now it should exit cleanly.
 //
-int  I_StartupSystem(void)
+void  I_StartupSystem(void)
 {
     I_DetectWin95 ();
-    i_love_bill = win95;
 
    // some 'more globals than globals' things to initialize here ?
    graphics_started = false;
@@ -1152,7 +1151,19 @@ int  I_StartupSystem(void)
    signal(SIGKILL, break_handler);
    signal(SIGQUIT, break_handler);
 
-   return 0;
+}
+
+// Init system called by d_main
+void I_SysInit(void)
+{
+    CONS_Printf("DOS system ...\n");
+
+    I_StartupSystem();
+
+    // Initialize the joystick subsystem.
+    I_InitJoystick();
+
+    // d_main will next call I_StartupGraphics
 }
 
 

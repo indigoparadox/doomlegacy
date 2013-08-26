@@ -605,10 +605,12 @@ void D_Display(void)
     //added:24-01-98:vid size change is now finished if it was on...
     vid.recalc = 0;
 
+#ifdef HWRENDER
     // Exl: draw a faded background
     if (fadealpha != 0 && rendermode != render_soft)
 	HWR_FadeScreenMenuBack(fadecolor, fadealpha, 0);
-	
+#endif
+
 	//FIXME: draw either console or menu, not the two
     CON_Drawer();
 

@@ -164,7 +164,8 @@ void I_FinishUpdate (void)
 //
 // This is meant to be called only by CONS_Printf() while game startup
 //
-void I_LoadingScreen ( PSZ msg )
+// printf to loading screen
+void I_LoadingScreen ( const char * msg )
 {
     HPS    hps;
     RECTL  rect;

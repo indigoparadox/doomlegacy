@@ -752,6 +752,7 @@ filestatus_e checkfilemd5(char *filename, unsigned char *wantedmd5sum)
     return return_val;
 }
 
+// filename must be a buffer of MAX_WADPATH
 filestatus_e findfile(char *filename, unsigned char *wantedmd5sum, boolean completepath)
 {
     //FIXME: implement wadpath-search

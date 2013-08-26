@@ -49,10 +49,9 @@ typedef struct snddev_s
     int     sample_rate;
     int     bps;
     
-// Windows specific data
-#ifdef WIN_NATIVE_PLACEHOLDER
+#ifdef WIN_NATIVE
+    // Windows specific data, but no windows types allowed
     int     cooplevel;
-    HWND    hWnd;
 #endif
 } snddev_t;
 

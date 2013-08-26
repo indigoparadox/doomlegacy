@@ -657,6 +657,7 @@ void Command_Stopdemo_f(void)
 //
 void Command_Map_f(void)
 {
+    // findfile requires a buffer of (at least) MAX_WADPATH
     char buf[MAX_WADPATH + 3];
 #define MAPNAME (&buf[2])
     int i;

@@ -538,6 +538,7 @@ int I_RegisterSong(void* data,int len)
     return 1;
 }
 
+#ifdef FMOD_SOUND
 //Hurdler: TODO
 void I_StartFMODSong()
 {
@@ -552,3 +553,5 @@ void I_SetFMODVolume(int volume)
 {
     CONS_Printf("I_SetFMODVolume: Not yet supported under DOS.\n");
 }
+#endif
+

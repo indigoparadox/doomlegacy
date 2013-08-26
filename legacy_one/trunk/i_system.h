@@ -108,6 +108,9 @@ void I_Tactile (int on, int off, int total);
 //                the return code 0 of I_Quit();
 void I_OutputMsg (char *error, ...);
 
+#ifdef WIN_NATIVE
+void I_MsgBox (char * msg );
+#endif
 
 /* list of functions to call at program cleanup */
 void I_AddExitFunc (void (*func)(void));
@@ -115,7 +118,7 @@ void I_RemoveExitFunc (void (*func)(void));
 
 // Setup signal handler, plus stuff for trapping errors and cleanly exit.
 // Not called by game, port optional, see I_SysInit
-int  I_StartupSystem (void);
+void I_StartupSystem (void);
 // Not called by game, port optional, see I_Quit
 void I_ShutdownSystem (void);
 

@@ -54,6 +54,14 @@
 
 #include "../../m_fixed.h"
 
+#ifdef WIN_NATIVE
+#include "../../win32/win_main.h"
+  // hWndMain
+#else
+// Making dependencies hits this.
+// #error s_ds3d is WIN_NATIVE only
+#endif
+
 // Internal sound stack
 typedef struct stack_snd_s
 {
@@ -487,12 +495,15 @@ EXPORT BOOL HWRAPI( Startup ) (I_Error_t FatalErrorFunction, snddev_t *snd_dev)
         return FALSE;
     }
 
-    hr = IDirectSound_SetCooperativeLevel(DSnd, snd_dev->hWnd, snd_dev->cooplevel);
+#ifdef WIN_NATIVE
+    // these paramters are only defined for WIN_NATIVE
+    hr = IDirectSound_SetCooperativeLevel(DSnd, hWndMain, snd_dev->cooplevel);
     if (FAILED (hr))
     {
         DBG_Printf("Couldn't set coopertive level\n");
         return FALSE;
     }
+#endif
 
     dscaps.dwSize = sizeof(DSCAPS);
 

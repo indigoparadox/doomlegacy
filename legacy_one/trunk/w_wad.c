@@ -189,6 +189,7 @@ int W_LoadWadFile (char *filename)
     int              i;
     int              length;
     struct stat      bufstat;
+    // findfile requires a buffer of (at least) MAX_WADPATH
     char             filenamebuf[MAX_WADPATH];
 #ifdef HWRENDER    
     MipPatch_t*      grPatch;
@@ -209,8 +210,9 @@ int W_LoadWadFile (char *filename)
     // open wad file
     if ( (handle = open (filename,O_RDONLY|O_BINARY,0666)) == -1)
     {
+        // not in cur dir, must search
         nameonly(filename); // leave full path here
-        if( findfile(filename, NULL, true) )
+        if( findfile(filename, NULL, true) )  // returns dir+filename
         {
             if ( (handle = open (filename,O_RDONLY|O_BINARY,0666)) == -1)
             {

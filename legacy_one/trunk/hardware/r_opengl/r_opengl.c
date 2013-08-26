@@ -304,14 +304,8 @@ void DBG_Printf( LPCTSTR lpFmt, ... )
     va_end(ap);
 
 #ifdef LOGMESSAGES
-#ifdef WIN_NATIVE_PLACEHOLDER
-    DWORD   bytesWritten;
-    if( logstream != INVALID_HANDLE_VALUE )
-        WriteFile( logstream, dbgbuf, lstrlen(dbgbuf), &bytesWritten, NULL );
-#else
     if (logstream)
       fputs(dbgbuf, logstream);
-#endif
 #endif
 
 #endif
