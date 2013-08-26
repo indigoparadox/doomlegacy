@@ -2628,7 +2628,16 @@ void SF_MoveCamera(void)
     int moved = 0; // camera moved
     int quad1, quad2;
 
+#if 1
+    // Phobiata.wad has at least one movecamera with 7 parameters
+    // movecamera( 154, 157, 780, 6, 270, 0.5, -30 )
+    if (t_argc < 6)  goto err_numarg;
+    if (t_argc > 6)
+        I_SoftError( "movecamera: wrong num arg (%i), extra ignored\n", t_argc );
+#else
+    // This is correct, but causes Phobiata.wad to fail.
     if (t_argc != 6)  goto err_numarg;
+#endif
 
     camera = MobjForSvalue(t_argv[0]);
     if( ! camera )  goto err_nomobj;
