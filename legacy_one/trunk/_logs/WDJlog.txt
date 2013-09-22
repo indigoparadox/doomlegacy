@@ -3412,3 +3412,11 @@ Extensive changes to get WIN_NATIVE port working again.
 Now works in window and fullscreen, windows draw and Directx draw.
 Tested in 8bpp and native bpp.
 Has -win parameter to force windows drawing.
+
+*** W93_screendeg
+patchfile = w93_6_screendeg.patch
+- committed revision 1045   by wesley johnson
+Add a -screendeg command line option, which is a generalization of
+-left and -right.
+A few comments and some #ifdef around some unused code.
+

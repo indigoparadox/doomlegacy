@@ -548,7 +548,7 @@ typedef struct line_s
     
     //SoM: 3/6/2000
     int translu_eff;       // translucency effect table, 0 == none 
-   			   // TRANSLU_med or (TRANSLU_ext + lumpnum)
+   			   // TRANSLU_med or (TRANSLU_ext + translu_store index)
     int firsttag,nexttag;  // improves searches for tags.
 
 //    int ecolormap;         // SoM: Used for 282 linedefs

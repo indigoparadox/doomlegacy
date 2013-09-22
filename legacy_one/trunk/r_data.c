@@ -2373,6 +2373,7 @@ translucent_map_t *  translu_store = NULL;
 int translu_store_num = 0;
 int translu_store_len = 0;
 
+// Return translu_store index
 int  R_setup_translu_store( int lump_num )
 {
    int ti;

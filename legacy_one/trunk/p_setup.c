@@ -1086,6 +1086,7 @@ void P_LoadSideDefs2(int lump)
 	  // other linedef effects.
 	  eff = TRANSLU_med;  // default TRANMAP
 	  sd->midtexture = 0;  // default, no texture
+	  // texture name = "TRANMAP" means use TRANSLU_med
 	  if( strncasecmp("TRANMAP", msd->midtexture, 8) != 0 )
 	  {
 	      // From Boom, any lump can be transparency map if it is right size

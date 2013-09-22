@@ -1696,7 +1696,8 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
 	            Surf.texflags = TF_Fogsheet;
                     break;
                 default:
-                    blendmode = PF_Masked;
+	            // do not override Boom 260 tagged assign of blendmode
+//                    blendmode = PF_Masked;
                     break;
             }
 
