@@ -242,6 +242,8 @@ void P_ParseLevelVar(char *cmd)
 
             case IVT_CONSOLECMD:
               {
+		// consolecmd = <string>
+		// pass the string as a console command
                 char t[256];
                 snprintf(t, 255, "%s\n", equals);
 		t[255] = '\0';
