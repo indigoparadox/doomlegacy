@@ -524,6 +524,7 @@ int convert( const char *mus, const char *mid, int nodisplay, int div,
 }
 
 
+#if 0
 int CheckParm( char *check, int argc, char *argv[] )
 {
   int i;
@@ -534,6 +535,7 @@ int CheckParm( char *check, int argc, char *argv[] )
 
   return 0;
 }
+#endif
 
 
 void PrintHeader( void )
@@ -544,7 +546,7 @@ void PrintHeader( void )
          "===============================================================================\n" ) ;
 }
 
-
+#if 0
 void PrintSyntax( void )
 {
   PrintHeader() ;
@@ -559,7 +561,9 @@ void PrintSyntax( void )
          "     -t ###    : Ticks per quarter note. Default = 89\n" 
          ) ;
 }
+#endif
 
+#if 0
 /*
 int main( int argc, char *argv[] )
 {
@@ -603,3 +607,4 @@ int main( int argc, char *argv[] )
   return 0;
 }
 */
+#endif

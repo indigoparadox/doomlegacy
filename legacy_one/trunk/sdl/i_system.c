@@ -203,7 +203,7 @@ static int lastmousex = 0;
 static int lastmousey = 0;
 
 #ifdef LMOUSE2
-extern void I_GetMouse2Event();
+extern void I_GetMouse2Event(void);
 #endif
 
 // current modifier key status
@@ -211,7 +211,7 @@ boolean shiftdown = false;
 boolean altdown = false;
 
 
-void I_GetEvent()
+void I_GetEvent(void)
 {
   SDL_Event inputEvent;
   SDLKey sym;
@@ -391,7 +391,7 @@ void I_GetEvent()
 
 // [WDJ] 8/2012 Grab mouse re-enabled as option menu item.
 
-static void doGrabMouse()
+static void doGrabMouse(void)
 {
   if( cv_grabinput.value && !devparm )
   {
@@ -406,7 +406,7 @@ static void doGrabMouse()
   }
 }
 
-void doUngrabMouse()
+void doUngrabMouse(void)
 {
   if(SDL_GRAB_ON == SDL_WM_GrabInput(SDL_GRAB_QUERY))
   {
@@ -446,7 +446,7 @@ void I_StartupMouse(void)
 
 
 /// Initialize joysticks and print information.
-void I_JoystickInit()
+void I_JoystickInit(void)
 {
   // Joystick subsystem was initialized at the same time as video,
   // because otherwise it won't work. (don't know why, though ...)
@@ -476,7 +476,7 @@ void I_JoystickInit()
 
 
 /// Close all joysticks.
-void I_ShutdownJoystick()
+void I_ShutdownJoystick(void)
 {
   CONS_Printf("Shutting down joysticks.\n");
   int i;
@@ -492,7 +492,7 @@ void I_ShutdownJoystick()
 
 
 /// initialize SDL
-void I_SysInit()
+void I_SysInit(void)
 {
   CONS_Printf("Initializing SDL...\n");
 
@@ -517,7 +517,7 @@ void I_SysInit()
 //
 // I_OsPolling
 //
-void I_OsPolling()
+void I_OsPolling(void)
 {
   if (!graphics_started)
     return;
@@ -586,7 +586,7 @@ void I_GetMouse2Event() {
 //
 // I_ShutdownMouse2
 //
-void I_ShutdownMouse2() {
+void I_ShutdownMouse2(void) {
   if(fdmouse2!=-1) close(fdmouse2);
   mouse2_started = 0;
 }
@@ -757,7 +757,7 @@ void I_Error (const char *error, ...)
 }
 
 #define MAX_QUIT_FUNCS     16
-typedef void (*quitfuncptr)();
+typedef void (*quitfuncptr)(void);
 static quitfuncptr quit_funcs[MAX_QUIT_FUNCS] =
                { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
@@ -765,7 +765,7 @@ static quitfuncptr quit_funcs[MAX_QUIT_FUNCS] =
 //
 //  Adds a function to the list that need to be called by I_SystemShutdown().
 //
-void I_AddExitFunc(void (*func)())
+void I_AddExitFunc(void (*func)(void))
 {
    int c;
 
@@ -782,7 +782,7 @@ void I_AddExitFunc(void (*func)())
 //  Removes a function from the list that need to be called by
 //   I_SystemShutdown().
 //
-void I_RemoveExitFunc(void (*func)())
+void I_RemoveExitFunc(void (*func)(void))
 {
    int c;
 
@@ -805,7 +805,7 @@ void I_RemoveExitFunc(void (*func)())
 //
 //  NOTE : Shutdown user funcs. are effectively called in reverse order.
 //
-void I_ShutdownSystem()
+void I_ShutdownSystem(void)
 {
    int c;
 

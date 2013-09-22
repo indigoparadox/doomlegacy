@@ -590,7 +590,7 @@ static boolean PIT_CheckThing (mobj_t* thing)
         }
 
         // DarkWolf95: Don't damage other monsters
-	if( cv_monbehavior.value == 1
+	if( cv_monbehavior.value == 1  // coop
 	   && tm_thing->target->type != MT_PLAYER
 	   && thing->type != MT_PLAYER)
 	    goto ret_blocked;

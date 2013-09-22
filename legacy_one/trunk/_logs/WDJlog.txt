@@ -3413,9 +3413,14 @@ Now works in window and fullscreen, windows draw and Directx draw.
 Tested in 8bpp and native bpp.
 Has -win parameter to force windows drawing.
 
+*** W93_hw_translu
+patchfile = w93_6_hwtranslu.patch
+- committed revision 1046   by wesley johnson
+Fix hardware Boom 260 translucent draw of tagged linedefs.
+
 *** W93_screendeg
-patchfile = w93_6_screendeg.patch
-- committed revision 1045   by wesley johnson
+patchfile = w93_7_screendeg.patch
+- committed revision 1047   by wesley johnson
 Add a -screendeg command line option, which is a generalization of
 -left and -right.
 A few comments and some #ifdef around some unused code.

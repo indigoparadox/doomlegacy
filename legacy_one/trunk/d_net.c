@@ -1058,13 +1058,15 @@ extern boolean D_CheckNetGame (void)
         ret = true;
     if( !server && netgame )
         netgame = false;
-    server = true; // WTF? server always true???
-                   // BP: no ! The deault mode is server. Client is set elsewhere
-                   //     when the client execute connect command, i think
+    server = true; // The default mode is server.
+                   // Set to Client mode when connect to another server.
     doomcom->ticdup = 1;
     
     if (M_CheckParm ("-extratic"))
     {
+        // extratic causes redundant transmission of tics, to prevent
+	// retransmission of player movement
+	// Combination of the vanilla -extratic and -dup
         if( M_IsNextParm() )
             doomcom->extratics = atoi(M_GetNextParm());
         else
@@ -1074,6 +1076,8 @@ extern boolean D_CheckNetGame (void)
 
     if(M_CheckParm ("-bandwidth"))
     {
+        // set the expected network bandwith, in bytes per second
+	// default is 3K
         if(M_IsNextParm())
         {
             net_bandwidth = atoi(M_GetNextParm());
