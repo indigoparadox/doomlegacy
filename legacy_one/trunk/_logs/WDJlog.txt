@@ -3443,3 +3443,8 @@ This allows the messy
 to be specified as
   alias ps0 "playersprites 0; bind mouse_3 ps1"
 which is much easier to read.
+
+*** W93_docs
+patchfile = w93_9_docs.patch
+- committed revision 1048   by wesley johnson
+Updated the docs legacy.html and whatsnew.html.

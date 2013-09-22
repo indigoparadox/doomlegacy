@@ -2382,7 +2382,8 @@ void Help( void )
 	"-loadgame num   Load savegame num\n"  
 	"-episode 2      Goto episode 2, level 1\n"
 	"-skill 3        Skill 1 to 5\n"
-	"-warp 13        Goto map13 or episode 1, level 3\n"
+	"-warp 13        Goto map13\n"
+	"-warp 1 3       Goto episode 1 level 3\n"
 	"-nomonsters     No monsters\n"
 	"-respawn        Monsters respawn after killed\n"
 	"-coopmonsters   Monsters cooperate\n"
@@ -2441,14 +2442,15 @@ void Help( void )
 	"-nodownload     No download from server\n"
 	"-nofiles        Download all from server\n"
 	"-clientport x   Use port x for client\n"
-	"-udpport x      Use udp port x for client\n"
+	"-udpport x      Use udp port x for server (and client)\n"
 #ifdef USE_IPX
 	"-ipx            Use IPX\n"
 #endif
-	"-extratic       Send extra tics ??\n"
+	"-extratic x     Send redundant player movement\n"
 	"-debugfile file Log to debug file\n"
 	"-left           Left slaved view\n"
 	"-right          Right slaved view\n"
+	"-screendeg x    Slaved view at x degrees\n"
 	);
      break;
    case 'd': // demo
