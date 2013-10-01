@@ -118,7 +118,7 @@ void S_Init (int sfxVolume, int musicVolume);
 // Kills playing sounds at start of level,
 //  determines music if any, changes music.
 //
-void S_StopSounds();
+void S_StopSounds(void);
 void S_StartSounds(void);
 
 // [WDJ] Common routine for handling sfx names

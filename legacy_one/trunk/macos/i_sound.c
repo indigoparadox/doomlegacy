@@ -232,7 +232,7 @@ void I_GetSfx (sfxinfo_t*  sfx)
     int                 size;
     int                 paddedsize;
    
-    S_GetSfx( sfx );
+    S_GetSfxLump( sfx );  // lump to sfx
     sfxdata = (unsigned char*) sfx->data;
     if( ! sfxdata ) return;
     size = sfx->length;

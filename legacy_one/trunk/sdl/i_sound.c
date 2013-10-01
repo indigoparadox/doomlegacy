@@ -330,7 +330,8 @@ int I_StartSound(int sfxid, int vol, int sep, int pitch, int priority)
     // 16.16 fixed point
     chanp->step_remainder = 0;
     // balanced between age and priority
-    chanp->age_priority = sound_age + priority - 256;
+    // low priority (higher value) increases age
+    chanp->age_priority = sound_age - priority;  // age at start
     sound_age += 16;  // vrs priority 0..256
 
     // Separation, that is, orientation/stereo.
