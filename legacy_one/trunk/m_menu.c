@@ -3919,11 +3919,14 @@ static boolean M_ChangeStringCvar(int key, char ch)
 //
 boolean M_Responder (event_t* ev)
 {
-    int             i;
-    //static  tic_t   joywait = 0;
     static  boolean button_down = 0;
+    static  tic_t  mousewait = 0;
+    static  int  mousey = 0;
+    static  int  mousex = 0;
+	   
     menufunc_t routine;  // for some casting problem
 
+    int i;
     int key = KEY_NULL; // key pressed (if any)
     char ch = '\0';  // ASCII char it corresponds to
 
@@ -3952,6 +3955,11 @@ boolean M_Responder (event_t* ev)
 	       break;
 	    }
 	}
+        else
+        {
+	    // on key press, inhibit menu responses to the mouse for a while
+	    mousewait = I_GetTime() + TICRATE*2;  // 4 sec
+	}
         break;
      case ev_keyup:
         if( ev->data1 >= KEY_MOUSE1 && ev->data1 <= KEY_2MOUSE1 )
@@ -3960,10 +3968,6 @@ boolean M_Responder (event_t* ev)
      case ev_mouse:
         if( menuactive )
 	{
-	    static  tic_t  mousewait = 0;
-	    static  int  mousey = 0;
-	    static  int  mousex = 0;
-	   
 	    // [WDJ] This code only triggered when movement exceeded MENU_MOUSE_TRIG
 	    // so there is no need for mouse position recording.
 	    // Y movement overrides X movement, there can be ony one key.
