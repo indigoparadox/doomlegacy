@@ -122,7 +122,7 @@ extern planefunction_t  ceilingfunc_t;
 extern short            floorclip[MAXVIDWIDTH];
 extern short            ceilingclip[MAXVIDWIDTH];
 extern short            waterclip[MAXVIDWIDTH];   //added:18-02-98:WATER!
-extern fixed_t          frontscale[MAXVIDWIDTH];
+extern fixed_t          backscale[MAXVIDWIDTH];
 extern fixed_t          yslopetab[MAXVIDHEIGHT*4];
 
 extern fixed_t*         yslope;
