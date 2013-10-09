@@ -139,11 +139,8 @@
 // Stick with one demo version because of other ports, and have separate
 // fields record DoomLegacy specific version and enables.
 // This only changes the demo header, not the content.
-// DEMO144 writes demoversion 143 and up, and can read any DoomLegacy demo.
+// Writes demoversion 143 and up, and can read any DoomLegacy demo.
 // Older DoomLegacy demos are demo versions 111..143.
-#define DEMO144
-
-#define CURRENT_DEMOVERSION 143
 
 #include "doomincl.h"
 #include "command.h"
@@ -2139,6 +2136,11 @@ boolean G_Downgrade(int version)
 {
     int i;
 
+    if (verbose > 1)
+    {
+        fprintf(stderr,"Downgrade to version: %i\n", version);
+    }
+
     if (version<109)
         return false;
 
@@ -2219,11 +2221,6 @@ boolean G_Downgrade(int version)
        (version >= 133 && version < 200) // legacy demos that use mbf
        || (version > 203);  // MBF demo
 
-    if( version < 200 )  // not loaded by Boom, MBF, prboom demo
-    {
-        monster_friction = (version >= 144);
-    }
-
     friction_model =
        (gamemode == heretic)? FR_heretic
      : (gamemode == hexen)? FR_hexen
@@ -2235,6 +2232,7 @@ boolean G_Downgrade(int version)
 	: (version == 203)? FR_mbf
 	: FR_prboom  // prboom
        )
+     : ( demoplayback )? friction_model  // loaded by demo144 format
      : FR_legacy;  // new model, default
 
     // always true now, might be false in the future, if couldn't
@@ -2356,8 +2354,7 @@ void G_WriteDemoTiccmd (ticcmd_t* cmd,int playernum)
 
     if(cmd->angleturn != oldcmd[playernum].angleturn)
     {
-        *(short *)demo_p = cmd->angleturn;
-        demo_p +=2;
+        WRITE16(demo_p,cmd->angleturn);
         oldcmd[playernum].angleturn=cmd->angleturn;
         ziptic|=ZT_ANGLE;
     }
@@ -2371,8 +2368,7 @@ void G_WriteDemoTiccmd (ticcmd_t* cmd,int playernum)
 
     if(cmd->aiming != oldcmd[playernum].aiming)
     {
-        *(short *)demo_p = cmd->aiming;
-        demo_p+=2;
+        WRITE16(demo_p,cmd->aiming);
         oldcmd[playernum].aiming=cmd->aiming;
         ziptic|=ZT_AIMING;
     }
@@ -2417,30 +2413,39 @@ void G_RecordDemo (char* name)
 }
 
 
+extern consvar_t cv_monbehavior;
+
 void G_BeginRecording (void)
 {
     int             i;
+    int rec_version = VERSION;
+
+#if 0
+    // If ever need to record something other than VERSION
+    // make sure they agree this time.
+    if( rec_version != VERSION )
+    {
+        G_Downgrade( rec_version );
+    }
+#endif
 
     demo_p = demobuffer;
 
-#ifdef DEMO144
+    // write DL format (demo144) header
     *demo_p++ = 144;   // Mark all DoomLegacy demo as version 144.
     *demo_p++ = 'D';   // "DL" for DoomLegacy
     *demo_p++ = 'L';   
     *demo_p++ = 1;     // non-zero format version (demo144_format)
    		       // 0 would be an older version with new header.
     *demo_p++ = VERSION;  // version of doomlegacy that recorded it.
-    *demo_p++ = CURRENT_DEMOVERSION;  // actual DoomLegacy demoversion
+    *demo_p++ = rec_version;  // actual DoomLegacy demoversion recorded
     *demo_p++ = 0;     // demo subversion, when needed
-#else   
-    *demo_p++ = CURRENT_DEMOVERSION;
-#endif     
     *demo_p++ = gameskill;
     *demo_p++ = gameepisode;
     *demo_p++ = gamemap;
-    *demo_p++ = cv_deathmatch.value;     // just to be compatible with old demo (no more used)
-    *demo_p++ = cv_respawnmonsters.value;// just to be compatible with old demo (no more used)
-    *demo_p++ = cv_fastmonsters.value;   // just to be compatible with old demo (no more used)
+    *demo_p++ = cv_deathmatch.value;
+    *demo_p++ = cv_respawnmonsters.value;
+    *demo_p++ = cv_fastmonsters.value;
     *demo_p++ = nomonsters;
     *demo_p++ = consoleplayer;
     *demo_p++ = cv_timelimit.value;      // just to be compatible with old demo (no more used)
@@ -2454,7 +2459,6 @@ void G_BeginRecording (void)
           *demo_p++ = 0;
     }
    
-#ifdef DEMO144
     // more settings that affect playback
     *demo_p++ = cv_solidcorpse.value;
 #ifdef DOORDELAY_CONTROL
@@ -2470,10 +2474,13 @@ void G_BeginRecording (void)
     *demo_p++ = 0; 	// no instadeath
 #endif
     *demo_p++ = cv_monsterfriction.value;
+    *demo_p++ = friction_model;
+    *demo_p++ = cv_rndsoundpitch.value;  // uses M_Random
+    *demo_p++ = cv_monbehavior.value;
     
-    for( i=5; i<32; i++ )  *demo_p++ = 0;
-#endif
+    for( i=8; i<32; i++ )  *demo_p++ = 0;
 
+    *demo_p++ = 0x55;   // Sync mark, start of data
     memset(oldcmd,0,sizeof(oldcmd));
 }
 
@@ -2483,6 +2490,7 @@ byte pdss_settings_valid = 0;  // init not saved
 byte pdss_solidcorpse;
 byte pdss_instadeath;
 byte pdss_monsterfriction;
+byte pdss_monbehavior;
 byte pdss_rndsoundpitch;
 
 // The following are set by DemoAdapt:
@@ -2492,7 +2500,7 @@ byte pdss_rndsoundpitch;
 // deathmatch, multiplayer, nomonsters, respawnmonsters, fastmonsters
 // timelimit
 
-// The following are set by G_Downgrade:
+// The following are set by G_Downgrade and/or G_DoPlayDemo:
 // variable_friction, allow_pushers, monster_friction
 
 
@@ -2504,6 +2512,7 @@ void playdemo_save_settings( void )
         pdss_solidcorpse = cv_solidcorpse.value;
         pdss_instadeath = cv_instadeath.value;
         pdss_monsterfriction = cv_monsterfriction.value;
+        pdss_monbehavior = cv_monbehavior.value;
         pdss_rndsoundpitch = cv_rndsoundpitch.value; // calls M_Random
     }
     cv_rndsoundpitch.value = 1;  // normal in Boom, call M_Random
@@ -2516,6 +2525,7 @@ void playdemo_restore_settings( void )
         cv_solidcorpse.value = pdss_solidcorpse;
         cv_instadeath.value = pdss_instadeath;
         cv_monsterfriction.value = pdss_monsterfriction;
+        cv_monbehavior.value = pdss_monbehavior;
         cv_rndsoundpitch.value = pdss_rndsoundpitch; // calls M_Random
     }
     pdss_settings_valid = 0;  // so user can change settings between demos
@@ -2582,24 +2592,25 @@ void G_DoPlayDemo (char *defdemoname)
     // 109 = Doom 1.9, Doom2 1.9
     // 110 = Doom, published source code
     // 111..143 = Legacy
+    // 144 = Legacy DL format
     // 200 = Boom 2.00	(supported badly, no sync)
     // 201 = Boom 2.01  (supported badly, no sync)
     // 202 = Boom 2.02  (supported badly, no sync)
     // 203 = LxDoom or MBF  (supported badly, no sync)
     // 210..214 = prboom (supported badly, no sync)
     // Do not have version: Hexen, Heretic, Doom 1.2 and before
-#ifdef DEMO144
-    if( demoversion == 144 )  // Universal DoomLegacy demo format number
+    if( demoversion == 144 )  // DoomLegacy demo DL format number
     {
         if( READBYTE(demo_p) != 'D' )  goto broken_header;
         if( READBYTE(demo_p) != 'L' )  goto broken_header;
-        demo144_format = *demo_p++;  // non-zero
+        demo144_format = *demo_p++;  // DL format num, (1)
         demo_p++;  // recording legacy version number
-        demoversion = READBYTE(demo_p);  // DoomLegacy demoversion number
+        demoversion = READBYTE(demo_p);  // DoomLegacy DL demoversion number
         demo_p++;  // subversion, not used yet
+        // maybe DL header on old demo
+        if( demoversion < 111 )  goto broken_header;
         if( demoversion < 143 )  demo144_format = 0;
     }
-#endif
 #ifdef SHOW_DEMOVERSION
     CONS_Printf( "Demo Version %i.\n", (int)demoversion );
 #endif
@@ -2609,7 +2620,7 @@ void G_DoPlayDemo (char *defdemoname)
 
     if (demoversion < 109 || demoversion >= 215)
     {
-        CONS_Printf("\2ERROR: Incompatible demo (version %d). Legacy supports demo versions 109-%d.\n", demoversion, CURRENT_DEMOVERSION);
+        CONS_Printf("\2ERROR: Incompatible demo (version %d). Legacy supports demo versions 109-%d.\n", demoversion, VERSION);
         goto kill_demo;
     }
    
@@ -2646,6 +2657,8 @@ void G_DoPlayDemo (char *defdemoname)
     if (demoversion < VERSION)
         CONS_Printf ("\2Demo is from an older game version\n");
 
+    monster_friction = 0;  // default for demo
+
     if (demoversion < 143 || demoversion >= 200 )
     {
         // setting defaults
@@ -2657,6 +2670,7 @@ void G_DoPlayDemo (char *defdemoname)
         voodoo_mode = 0;  // Vanilla
         cv_instadeath.value = 0;  // Die
 #endif
+        cv_monbehavior.value = 0;  // do not notify NET
     }
 
     // header[1]: byte: skill level 0..4
@@ -2677,8 +2691,8 @@ void G_DoPlayDemo (char *defdemoname)
 #ifdef DEBUG_DEMO
     fprintf( stderr, " play mode/deathmatch %i.\n", (int)demo_p[0] );
 #endif
-    if (demoversion < 127 || boomdemo)
-        // push it in the console will be too late set
+    if (demoversion < 127 || demo144_format || boomdemo)
+        // store it, using the console will set it too late
         cv_deathmatch.value=*demo_p++;
     else
         demo_p++;  // legacy demo, ignore deathmatch
@@ -2690,16 +2704,16 @@ void G_DoPlayDemo (char *defdemoname)
         fprintf( stderr, " fast monsters %i.\n", (int)demo_p[2] );
 #endif
         // header[5]: byte: respawn boolean
-        if (demoversion < 128)
-	    // push it in the console will be too late set
+        if (demoversion < 128 || demo144_format)
+	    // store it, using the console will set it too late
 	    cv_respawnmonsters.value=*demo_p++;
         else
             demo_p++;  // legacy demo, ignore respawnmonsters
 
         // header[6]: byte: fast boolean
-        if (demoversion < 128)
+        if (demoversion < 128 || demo144_format)
         {
-	    // push it in the console will be too late set
+	    // store it, using the console will set it too late
 	    cv_fastmonsters.value=*demo_p++;
 	    cv_fastmonsters.func();
 	}
@@ -2845,7 +2859,6 @@ void G_DoPlayDemo (char *defdemoname)
     if( demoversion<131 )
         multiplayer = playeringame[1];
 
-#ifdef DEMO144
     // [WDJ]
     if( demo144_format )
     {
@@ -2868,12 +2881,17 @@ void G_DoPlayDemo (char *defdemoname)
         demo_p += 2; 	// no voodoo
 #endif
         cv_monsterfriction.value = *demo_p++;
+        friction_model = *demo_p++;
+        cv_rndsoundpitch.value = *demo_p++;  // uses M_Random
+        cv_monbehavior.value = *demo_p++;
 
         demo_p = demo_p_next;  // skip rest of settings
-#endif
+        if( *demo_p++ != 0x55 )  goto broken_header;  // Sync mark, start of data
     }
 
     memset(oldcmd,0,sizeof(oldcmd));
+
+    demoplayback = true;
 
     // don't spend a lot of time in loadlevel
     if(demoversion<127 || boomdemo)
@@ -2887,7 +2905,6 @@ void G_DoPlayDemo (char *defdemoname)
         // wait map command in the demo
         gamestate = wipegamestate = GS_WAITINGPLAYERS;
 
-    demoplayback = true;
     return;
 
 broken_header:   
