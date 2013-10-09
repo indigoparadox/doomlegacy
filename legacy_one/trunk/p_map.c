@@ -154,9 +154,6 @@ static int from_x, from_y;
 static int targ_x, targ_y;
 
 
-extern boolean infight; //DarkWolf95:November 21, 2003: Monsters Infight!
-extern consvar_t   cv_monbehavior;
-
 //
 // TELEPORT MOVE
 //
@@ -583,8 +580,9 @@ static boolean PIT_CheckThing (mobj_t* thing)
             if (thing->type != MT_PLAYER)
             {
                 // Explode, but do no damage.
-                // Let players missile other players.
-                if(!infight && !(cv_monbehavior.value == 2)) //DarkWolf95: Altered to use CVAR
+                // Boom - Let players missile other players. ??
+	        // [WDJ] these are monsters, not players.
+                if(cv_monbehavior.value != 2) //DarkWolf95: Altered to use CVAR
 		    goto ret_blocked;
             }
         }
