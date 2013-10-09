@@ -967,9 +967,21 @@ void G_DoLoadLevel (boolean resetplayer)
     }
 
     //BOT_InitLevelBots ();
+   
+    // [WDJ] Some demos specify a console player that does not exist.
+    // This happens before demoplayback is set.
+    // Have not been able to determine anything better to do.
+    if ( consoleplayer_ptr->weaponinfo == NULL )
+    {
+        G_AddPlayer( consoleplayer );  // to prevent segfaults
+        playeringame[consoleplayer] = true;  // needs an mobj
+    }
 
-    displayplayer = consoleplayer;          // view the guy you are playing
-    displayplayer_ptr = consoleplayer_ptr;
+    if( ! demoplayback )  // because demo sets it too
+    {
+        displayplayer = consoleplayer;          // view the guy you are playing
+        displayplayer_ptr = consoleplayer_ptr;
+    }
 
     if(!cv_splitscreen.value)
     {
@@ -991,6 +1003,8 @@ void G_DoLoadLevel (boolean resetplayer)
     memset(gamekeytapped, 0, sizeof(gamekeytapped));
     mousex = mousey = mouse2x = mouse2y = 0;
 
+    // [WDJ] In case demo is from other than player1 (from prboom, killough)
+    ST_Start();
     // clear hud messages remains (usually from game startup)
     HU_ClearFSPics();
     CON_ClearHUD ();
@@ -1005,7 +1019,8 @@ boolean G_Responder (event_t* ev)
 {
     // allow spy mode changes even during the demo
     if (gamestate == GS_LEVEL && ev->type == ev_keydown
-        && ev->data1 == KEY_F12 && (singledemo || !cv_deathmatch.value) )
+        && ev->data1 == KEY_F12
+	&& (singledemo || !cv_deathmatch.value) )
     {
         // spy mode
         do
@@ -2629,8 +2644,8 @@ void G_DoPlayDemo (char *defdemoname)
         // Read the "Boom" or "MBF" header line
         if( *demo_p == 0x1d )
         {
-	    unsigned char header[10];
-	    unsigned char compatibility;  // Boom 2.00 compatibility flags
+	    byte header[10];
+	    byte compatibility;  // Boom 2.00 compatibility flags
 	    demo_p ++;
 	    for ( i=0; i<9; i++ )
 	    {
@@ -2645,6 +2660,8 @@ void G_DoPlayDemo (char *defdemoname)
 	    fprintf( stderr, " compatibility 0x%x.\n", compatibility );
 #endif
 	    boomdemo = 1;
+	    boomsupport = ! compatibility;
+	    cv_rndsoundpitch.value = 1;  // normal in Boom, call M_Random
 	}
         else
         {
@@ -2724,6 +2741,7 @@ void G_DoPlayDemo (char *defdemoname)
 #ifdef DEBUG_DEMO
         fprintf( stderr, " no monsters %i.\n", (int)nomonsters );
 #endif
+        cv_rndsoundpitch.value = 0;
     }
 
     // header[8]: byte: viewing player 0..3, 0=player1
@@ -2777,8 +2795,9 @@ void G_DoPlayDemo (char *defdemoname)
 #endif
         // [9] demo insurance
         // [10..13] random number seed
-	//   Boom has random number generator per usage, all initialized
-	//   from this seed.  DoomLegacy does not have this.
+        //   When demo insurance, Boom has random number generator per usage,
+        //   all initialized from this seed.  DoomLegacy does not have this.
+	// Seed is not needed for the standard random number generators.
         if( demoversion >= 203 ) // MBF and prboom
         {
 	    // [14] monster infighting

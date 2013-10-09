@@ -644,6 +644,7 @@ void P_ChickenPlayerThink(player_t *player)
         {
                 return;
         }
+        // Heretic uses of P_Random
         if(!(pmo->momx+pmo->momy) && P_Random() < 160)
         { // Twitch view angle
                 pmo->angle += P_SignedRandom()<<19;
@@ -1487,6 +1488,7 @@ void P_ArtiTele(player_t *player)
     
     if(cv_deathmatch.value)
     {
+        // Heretic use of P_Random
         i = P_Random()%numdmstarts;
         mtp = deathmatchstarts[i];
     }

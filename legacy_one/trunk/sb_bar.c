@@ -209,13 +209,14 @@ void SB_Init(void)
 //
 //---------------------------------------------------------------------------
 
-void SB_Ticker(void)
+void SB_Heretic_Ticker(void)
 {
         int delta;
         int curHealth;
 
         if(leveltime&1)
         {
+	        // Heretic use of P_Random
                 ChainWiggle = M_Random()&1;
         }
         curHealth = consoleplayer_ptr->mo->health;

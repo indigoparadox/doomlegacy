@@ -800,7 +800,7 @@ void ST_Ticker (void)
 
     if( gamemode == heretic )
     {
-        SB_Ticker();
+        SB_Heretic_Ticker();
         return;
     }
 
