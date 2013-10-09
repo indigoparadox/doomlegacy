@@ -63,6 +63,8 @@ byte rndtable[256] = {
 
 static byte     rndindex = 0;
 static byte     prndindex = 0;
+static byte     arndindex = 0;  // ambience
+static byte     brndindex = 0;  // bots and other automation
 
 #ifndef DEBUGRANDOM
 
@@ -73,7 +75,7 @@ byte P_Random ()
 }
 
 // lot of code used P_Random()-P_Random() since C don't define 
-// evaluation order it is compiler depenent so this allow network play 
+// evaluation order it is compiler dependent so this allows network play 
 // between different compilers
 int P_SignedRandom ()
 {
@@ -107,6 +109,7 @@ byte M_Random (void)
 void M_ClearRandom (void)
 {
     rndindex = prndindex = 0;
+    arndindex = brndindex = 0;
 }
 
 // for savegame and join in game
@@ -120,3 +123,19 @@ void P_SetRandIndex(byte rindex)
 {
     prndindex = rindex;
 }
+
+// [WDJ]
+// separate so ambience does not affect demo playback
+byte A_Random (void)
+{
+    arndindex += 3;
+    return rndtable[arndindex];
+}
+
+// bots and other DoomLegacy automations
+byte B_Random (void)
+{
+    brndindex += 11;
+    return rndtable[brndindex];
+}
+

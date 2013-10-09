@@ -271,7 +271,7 @@ void P_AmbientSound(void)
                 switch(cmd)
                 {
                         case afxcmd_play:
-                                AmbSfxVolume = M_Random()>>2;
+                                AmbSfxVolume = A_Random()>>2;
                                 S_StartAmbientSound(*AmbSfxPtr++, AmbSfxVolume);
                                 break;
                         case afxcmd_playabsvol:
@@ -297,12 +297,12 @@ void P_AmbientSound(void)
                                 done = true;
                                 break;
                         case afxcmd_delayrand:
-                                AmbSfxTics = M_Random()&(*AmbSfxPtr++);
+                                AmbSfxTics = A_Random()&(*AmbSfxPtr++);
                                 done = true;
                                 break;
                         case afxcmd_end:
-                                AmbSfxTics = 6*TICRATE+M_Random();
-                                AmbSfxPtr = LevelAmbientSfx[M_Random()%AmbSfxCount];
+                                AmbSfxTics = 6*TICRATE+A_Random();
+                                AmbSfxPtr = LevelAmbientSfx[A_Random()%AmbSfxCount];
                                 done = true;
                                 break;
                         default:

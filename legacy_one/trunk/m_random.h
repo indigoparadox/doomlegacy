@@ -56,7 +56,9 @@ byte P_Random (void);
 int P_SignedRandom ();
 #endif
 
-
+// separate so to not affect demo playback
+byte A_Random (void);  // ambience
+byte B_Random (void);  // bots etc..
 
 // Fix randoms for demos.
 void M_ClearRandom (void);
