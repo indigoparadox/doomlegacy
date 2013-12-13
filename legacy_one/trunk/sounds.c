@@ -474,7 +474,12 @@ sfxinfo_t S_sfx[NUMSFX] =
   { "amb8"   ,  1, NULL, -1, -1, -1 },
   { "amb9"   ,  1, NULL, -1, -1, -1 },
   { "amb10"  ,  1, NULL, -1, -1, -1 },
-  { "amb11"  ,  1, NULL, -1, -1, -1 }
+  { "amb11"  ,  1, NULL, -1, -1, -1 },
+  { "menuud" ,  2, NULL, -1, -1, -1, SFX_single},
+  { "menuva" ,  2, NULL, -1, -1, -1, SFX_single},
+  { "menuen" ,  2, NULL, -1, -1, -1, SFX_single},
+  { "menuop" ,  2, NULL, -1, -1, -1, SFX_single},
+  { "menuac" ,  2, NULL, -1, -1, -1, SFX_single}
   // skin sounds free slots to add sounds at run time (Boris HACK!!!)
   // initialized to NULL
 };

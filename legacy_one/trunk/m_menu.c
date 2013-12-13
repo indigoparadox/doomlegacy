@@ -405,6 +405,88 @@ int       SkullBaseLump;
 // graphic name of skulls
 char      skullName[2][9] = {"M_SKULL1","M_SKULL2"};
 
+// [WDJ] menu sounds
+static short menu_sfx_updown = sfx_menuud;
+static short menu_sfx_val = sfx_menuva;
+static short menu_sfx_enter = sfx_menuen;
+static short menu_sfx_open = sfx_menuop;
+static short menu_sfx_esc = sfx_menuop;
+static short menu_sfx_action = sfx_menuac;
+
+CV_PossibleValue_t menusound_cons_t[] =
+  {{0,"Auto"}, {1,"Legacy"}, {2,"Doom"}, {3,"Heretic"}, {0,NULL}};
+void CV_menusound_OnChange(void);
+consvar_t cv_menusound = {"menusound", "1", CV_SAVE | CV_CALL, menusound_cons_t, CV_menusound_OnChange };
+
+void CV_menusound_OnChange(void)
+{
+    int menusound = cv_menusound.value;
+
+    switch ( gamemode )
+    {
+      case doom2_commercial:
+      case doom_shareware:
+      case doom_registered:
+      case ultdoom_retail:
+        if ( menusound == 0 || menusound == 3 )
+	   menusound = 2;
+        break;
+      case heretic:
+        if ( menusound == 0 || menusound == 2 )
+	   menusound = 3;
+        break;
+      case chexquest1:
+        if ( menusound == 0 || menusound == 3 )
+	   menusound = 1;
+        break;
+      default:
+        break;
+    }
+    switch ( menusound )
+    {
+      default:
+      case 0: // auto
+      case 1: // Legacy
+        menu_sfx_updown = sfx_menuud;
+        menu_sfx_val = sfx_menuva;
+        menu_sfx_enter = sfx_menuen;
+        menu_sfx_open = sfx_menuop;
+        menu_sfx_esc = sfx_menuop;
+        menu_sfx_action = sfx_menuac;
+        break;
+      case 2: // Doom
+        //Boom
+        // help, save, load, volume menu open = sfx_swtchn
+        // backspace = sfx_swtchn
+        // menu action = sfx_itemup
+        // next menu = sfx_swtchx
+        menu_sfx_updown = sfx_pstop;
+        menu_sfx_val = sfx_stnmov;
+        menu_sfx_enter = sfx_pistol;
+        menu_sfx_open = sfx_swtchn;
+        menu_sfx_esc = sfx_swtchx;
+        menu_sfx_action = sfx_swtchx;
+        break;
+      case 3: // Heretic
+        //heretic
+        // quit, chat val = sfx_chat;
+        // chat keys = sfx_keyup;
+        // info, save, load, volume menu open  = sfx_dorcls;
+        // enter, activate menu, deactivate menu = sfx_dorcls;
+        // escape = none;
+        // backspace = sfx_switch;
+        menu_sfx_updown = sfx_swtchx;  // sfx_switch
+        menu_sfx_val = sfx_keyup;
+        menu_sfx_enter = sfx_dorcls;
+        menu_sfx_open = sfx_dorcls;
+        menu_sfx_esc = sfx_menuva;  // none
+//        menu_sfx_action = sfx_chat;  // don't have sfx_chat
+        menu_sfx_action = sfx_menuac;
+        break;
+    } 
+}
+
+
 //
 // PROTOTYPES
 //
@@ -1285,14 +1367,14 @@ void M_HandleSetupMultiPlayer (int key)
     switch (key)
     {
       case KEY_DOWNARROW:
-        S_StartSound(NULL,sfx_pstop);
+        S_StartSound(NULL, menu_sfx_updown);
         if (itemOn+1 >= SetupMultiPlayerDef.numitems)
             itemOn = 0;
         else itemOn++;
         break;
 
       case KEY_UPARROW:
-        S_StartSound(NULL,sfx_pstop);
+        S_StartSound(NULL, menu_sfx_updown);
         if (!itemOn)
             itemOn = SetupMultiPlayerDef.numitems-1;
         else itemOn--;
@@ -1301,7 +1383,7 @@ void M_HandleSetupMultiPlayer (int key)
       case KEY_LEFTARROW:
         if (itemOn==2)       //player skin
         {
-            S_StartSound(NULL,sfx_stnmov);
+            S_StartSound(NULL, menu_sfx_val);
             myskin--;
         }
         break;
@@ -1309,25 +1391,25 @@ void M_HandleSetupMultiPlayer (int key)
       case KEY_RIGHTARROW:
         if (itemOn==2)       //player skin
         {
-            S_StartSound(NULL,sfx_stnmov);
+            S_StartSound(NULL, menu_sfx_val);
             myskin++;
         }
         break;
 
       case KEY_ENTER:
-        S_StartSound(NULL,sfx_stnmov);
+        S_StartSound(NULL, menu_sfx_enter);
         exitmenu = true;
         break;
 
       case KEY_ESCAPE:
-        S_StartSound(NULL,sfx_swtchx);
+        S_StartSound(NULL, menu_sfx_esc);
         exitmenu = true;
         break;
 
       case KEY_BACKSPACE:
         if ( (l=strlen(setupm_name))!=0 && itemOn==0)
         {
-            S_StartSound(NULL,sfx_stnmov);
+            S_StartSound(NULL, menu_sfx_val);
             setupm_name[l-1]=0;
         }
         break;
@@ -1338,7 +1420,7 @@ void M_HandleSetupMultiPlayer (int key)
         l = strlen(setupm_name);
         if (l<MAXPLAYERNAME-1)
         {
-            S_StartSound(NULL,sfx_stnmov);
+            S_StartSound(NULL, menu_sfx_val);
             setupm_name[l] = input_char;
             setupm_name[l+1] = 0;
         }
@@ -1609,6 +1691,7 @@ menuitem_t EffectsOptionsMenu[]=
     {IT_STRING | IT_CVAR,0,    "Sprites limit"    , &cv_spritelim     , 0},
     {IT_STRING | IT_CVAR,0,    "Screens Link"     , &cv_screenslink   , 0},
     {IT_STRING | IT_CVAR,0,    "Random sound pitch",&cv_rndsoundpitch , 0},
+    {IT_STRING | IT_CVAR,0,    "Menu Sounds",       &cv_menusound     , 0},
 #ifdef BOOM_GLOBAL_COLORMAP
     {IT_STRING | IT_CVAR,0,    "Boom Colormap"    , &cv_boom_colormap , 0},
 #endif
@@ -2001,16 +2084,17 @@ void M_SfxVol(int choice);
 void M_MusicVol(int choice);
 void M_CDAudioVol (int choice);
 
+// [WDJ] unique names, mostly unused
 enum
 {
-    sfx_vol,
-    sfx_empty1,
-    music_vol,
-    sfx_empty2,
-    cdaudio_vol,
-    sfx_empty3,
-    sound_end
-} sound_e;
+    SVM_sfx_vol,
+    SVM_sfx_empty1,
+    SVM_music_vol,
+    SVM_sfx_empty2,
+    SVM_cdaudio_vol,
+    SVM_sfx_empty3,
+    SVM_sound_end
+} SVM_sound_e;
 
 // DoomLegacy graphics from legacy.wad: M_CDVOL
 menuitem_t SoundMenu[]=
@@ -2029,7 +2113,7 @@ menu_t  SoundDef =
 {
     "M_SVOL",
     "Sound Volume",
-    sound_end,
+    SVM_sound_end,
     &OptionsDef,
     SoundMenu,
     M_DrawGenericMenu,
@@ -2448,21 +2532,21 @@ void M_HandleVideoMode (int key)
     switch( key )
     {
       case KEY_DOWNARROW:
-        S_StartSound(NULL,sfx_pstop);
+        S_StartSound(NULL, menu_sfx_updown);
         vidm_current++;
         if (vidm_current>=vidm_nummodes)
             vidm_current = 0;
         break;
 
       case KEY_UPARROW:
-        S_StartSound(NULL,sfx_pstop);
+        S_StartSound(NULL, menu_sfx_updown);
         vidm_current--;
         if (vidm_current<0)
             vidm_current = vidm_nummodes-1;
         break;
 
       case KEY_LEFTARROW:
-        S_StartSound(NULL,sfx_pstop);
+        S_StartSound(NULL, menu_sfx_val);
         vidm_current -= vidm_column_size;
         if (vidm_current<0)
             vidm_current = (vidm_column_size*3) + vidm_current;
@@ -2471,7 +2555,7 @@ void M_HandleVideoMode (int key)
         break;
 
       case KEY_RIGHTARROW:
-        S_StartSound(NULL,sfx_pstop);
+        S_StartSound(NULL, menu_sfx_val);
         vidm_current += vidm_column_size;
         if (vidm_current>=(vidm_column_size*3))
             vidm_current %= vidm_column_size;
@@ -2480,19 +2564,19 @@ void M_HandleVideoMode (int key)
         break;
 
       case KEY_ENTER:
-        S_StartSound(NULL,sfx_pstop);
+        S_StartSound(NULL, menu_sfx_enter);
         if (setmodeneeded<0) //in case the previous setmode was not finished
             setmodeneeded = modedescs[vidm_current].modenum;
         break;
 
       case KEY_ESCAPE:      //this one same as M_Responder
-        S_StartSound(NULL,sfx_swtchx);
+        S_StartSound(NULL, menu_sfx_esc);
 	M_Setup_prevMenu();
         return;
 
       case 'T':
       case 't':
-        S_StartSound(NULL,sfx_swtchx);
+        S_StartSound(NULL, menu_sfx_action);
         vidm_testing_cnt = TICRATE*5;
         vidm_previousmode = vid.modenum;
         if (setmodeneeded<0) //in case the previous setmode was not finished
@@ -2502,7 +2586,7 @@ void M_HandleVideoMode (int key)
       case 'D':
       case 'd':
         // current active mode becomes the default mode.
-        S_StartSound(NULL,sfx_swtchx);
+        S_StartSound(NULL, menu_sfx_action);
         SCR_SetDefaultMode ();
         return;
 
@@ -3338,7 +3422,7 @@ void M_QuickSaveResponse(int ch)
     if (ch == 'y')
     {
         M_DoSave( QUICKSAVE_INDEX ); // initiate game save, network message
-        S_StartSound(NULL,sfx_swtchx);
+        S_StartSound(NULL, menu_sfx_action);
     }
     else
     {
@@ -3354,7 +3438,7 @@ void M_QuickSave(void)
 {
     if (demoplayback || demorecording)
     {
-        S_StartSound(NULL,sfx_oof);
+        S_StartSound(NULL, sfx_oof);
         return;
     }
 
@@ -3389,7 +3473,7 @@ void M_QuickLoadResponse(int ch)
         // quickSaveSlot is known valid
         G_LoadGame( quickSaveSlot ); // initiate game load, network message
         M_ClearMenus (true);
-        S_StartSound(NULL,sfx_swtchx);
+        S_StartSound(NULL, menu_sfx_action);
     }
 }
 
@@ -3437,7 +3521,7 @@ void M_EndGame(int choice)
     choice = 0;
     if (demoplayback || demorecording)
     {
-        S_StartSound(NULL,sfx_oof);
+        S_StartSound(NULL, sfx_oof);
         return;
     }
 /*
@@ -3490,10 +3574,12 @@ void M_QuitResponse(int ch)
         return;
     if (!netgame)
     {
+#ifdef USE_QUITSOUNDS2
         //added:12-02-98: quitsounds are much more fun than quisounds2
-        //if (gamemode == doom2_commercial)
-        //    S_StartSound(NULL,quitsounds2[(gametic>>2)&7]);
-        //else
+        if (gamemode == doom2_commercial)
+            S_StartSound(NULL,quitsounds2[(gametic>>2)&7]);
+        else
+#endif
             S_StartSound(NULL,quitsounds[(gametic>>2)&7]);
 
         //added:12-02-98: do that instead of I_WaitVbl which does not work
@@ -3833,7 +3919,7 @@ void M_StopMessage(int choice)
     {
          M_SetupNextMenu(MessageDef.prevMenu); // NULLS callbacks, caller must fix
 //         M_Setup_prevMenu();  // A little too much re-setup
-         S_StartSound(NULL,sfx_swtchx);
+         S_StartSound(NULL, menu_sfx_action);
     }
 }
 
@@ -4065,14 +4151,14 @@ boolean M_Responder (event_t* ev)
             if (automapactive || chat_on || con_destlines)     // DIRTY !!!
                 return false;
             CV_SetValue (&cv_viewsize, cv_viewsize.value-1);
-            S_StartSound(NULL,sfx_stnmov);
+            S_StartSound(NULL, menu_sfx_enter);
             goto ret_true;
 
           case '=':        // Screen size up
             if (automapactive || chat_on || con_destlines)     // DIRTY !!!
                 return false;
             CV_SetValue (&cv_viewsize, cv_viewsize.value+1);
-            S_StartSound(NULL,sfx_stnmov);
+            S_StartSound(NULL, menu_sfx_enter);
             goto ret_true;
 
           case KEY_F1:            // Help key
@@ -4084,44 +4170,44 @@ boolean M_Responder (event_t* ev)
               currentMenu = &ReadDef1;
 
             itemOn = 0;
-            S_StartSound(NULL,sfx_swtchn);
+            S_StartSound(NULL, menu_sfx_open);
             goto ret_true;
 
           case KEY_F2:            // Save
             M_StartControlPanel();
-            S_StartSound(NULL,sfx_swtchn);
+            S_StartSound(NULL, menu_sfx_open);
             M_SaveGame(0);
             goto ret_true;
 
           case KEY_F3:            // Load
             M_StartControlPanel();
-            S_StartSound(NULL,sfx_swtchn);
+            S_StartSound(NULL, menu_sfx_open);
             M_LoadGame(0);
             goto ret_true;
 
           case KEY_F4:            // Sound Volume
             M_StartControlPanel ();
             currentMenu = &SoundDef;
-            itemOn = sfx_vol;
-            S_StartSound(NULL,sfx_swtchn);
+            itemOn = SVM_sfx_vol;
+            S_StartSound(NULL, menu_sfx_open);
             goto ret_true;
 
           //added:26-02-98: now F5 calls the Video Menu
           case KEY_F5:
-            S_StartSound(NULL,sfx_swtchn);
+            S_StartSound(NULL, menu_sfx_open);
             M_StartControlPanel();
             M_SetupNextMenu (&VidModeDef);
             //M_ChangeDetail(0);
             goto ret_true;
 
           case KEY_F6:            // Quicksave
-            S_StartSound(NULL,sfx_swtchn);
+            S_StartSound(NULL, menu_sfx_open);
             M_QuickSave();
             goto ret_true;
 
           //added:26-02-98: F7 changed to Options menu
           case KEY_F7:            // originally was End game
-            S_StartSound(NULL,sfx_swtchn);
+            S_StartSound(NULL, menu_sfx_open);
             M_StartControlPanel();
             M_SetupNextMenu (&OptionsDef);
             //M_EndGame(0);
@@ -4129,22 +4215,22 @@ boolean M_Responder (event_t* ev)
 
           case KEY_F8:            // Toggle messages
             CV_AddValue(&cv_showmessages,+1);
-            S_StartSound(NULL,sfx_swtchn);
+            S_StartSound(NULL, menu_sfx_open);
             goto ret_true;
 
           case KEY_F9:            // Quickload
-            S_StartSound(NULL,sfx_swtchn);
+            S_StartSound(NULL, menu_sfx_open);
             M_QuickLoad();
             goto ret_true;
 
           case KEY_F10:           // Quit DOOM
-            S_StartSound(NULL,sfx_swtchn);
+            S_StartSound(NULL, menu_sfx_open);
             M_QuitDOOM(0);
             goto ret_true;
 
           //added:10-02-98: the gamma toggle is now also in the Options menu
           case KEY_F11:
-            S_StartSound(NULL,sfx_swtchn);
+            S_StartSound(NULL, menu_sfx_open);
 #ifdef GAMMA_FUNCS
 	    // bring up the gamma menu
             M_StartControlPanel();
@@ -4157,7 +4243,7 @@ boolean M_Responder (event_t* ev)
           // Pop-up menu
           case KEY_ESCAPE:
             M_StartControlPanel ();
-            S_StartSound(NULL,sfx_swtchn);
+            S_StartSound(NULL, menu_sfx_open);
             goto ret_true;
         }
         return false;
@@ -4226,14 +4312,14 @@ boolean M_Responder (event_t* ev)
         {
 	    slotindex = itemOn-1;
 	    M_StartMessage("Delete Y/N?", delete_callback, MM_YESNO);
-	    goto ret_pstop;
+	    goto ret_action;
 	}
 #else
         if( delete_callback itemOn >= 0 )
         {
 	    slotindex = itemOn;
 	    M_StartMessage("Delete Y/N?", delete_callback, MM_YESNO);
-	    goto ret_pstop;
+	    goto ret_action;
 	}
 #endif
 	break;
@@ -4243,7 +4329,7 @@ boolean M_Responder (event_t* ev)
         if( scroll_callback && (scroll_index > 0))
         {
             scroll_callback( -6 );  // some functions need to correct
-	    goto ret_pstop;
+	    goto ret_updown;
 	}
         break;
 
@@ -4252,7 +4338,7 @@ boolean M_Responder (event_t* ev)
         if( scroll_callback && (scroll_index < (99-6)))
         {
             scroll_callback( 6 );
-	    goto ret_pstop;
+	    goto ret_updown;
 	}
         break;
 #endif
@@ -4264,7 +4350,7 @@ boolean M_Responder (event_t* ev)
 	    // scrolling menu scrolls preferentially
 	    scroll_index ++;
 	    scroll_callback( 1 );
-	    goto ret_pstop;
+	    goto ret_updown;
 	}
 #endif
         do
@@ -4273,7 +4359,7 @@ boolean M_Responder (event_t* ev)
                 itemOn = 0;
             else itemOn++;
         } while((currentMenu->menuitems[itemOn].status & IT_TYPE)==IT_SPACE);
-        goto ret_pstop;
+        goto ret_updown;
 
       case KEY_UPARROW:
 #if defined SAVEGAMEDIR || defined SAVEGAME99
@@ -4283,7 +4369,7 @@ boolean M_Responder (event_t* ev)
 	    scroll_index --;
 	    if( scroll_index < 0 )   scroll_index = 0;
 	    scroll_callback( -1 );  // some functions need to correct
-	    goto ret_pstop;
+	    goto ret_updown;
 	}
 #endif       
         do
@@ -4292,14 +4378,14 @@ boolean M_Responder (event_t* ev)
                 itemOn = currentMenu->numitems-1;
             else itemOn--;
         } while((currentMenu->menuitems[itemOn].status & IT_TYPE)==IT_SPACE);
-        goto ret_pstop;
+        goto ret_updown;
 
       case KEY_LEFTARROW:
         if (  routine &&
             ( (currentMenu->menuitems[itemOn].status & IT_TYPE) == IT_ARROWS
             ||(currentMenu->menuitems[itemOn].status & IT_TYPE) == IT_CVAR   ))
         {
-            S_StartSound(NULL,sfx_stnmov);
+            S_StartSound(NULL, menu_sfx_val);
             routine(0);
         }
         goto ret_true;
@@ -4309,7 +4395,7 @@ boolean M_Responder (event_t* ev)
             ( (currentMenu->menuitems[itemOn].status & IT_TYPE) == IT_ARROWS
             ||(currentMenu->menuitems[itemOn].status & IT_TYPE) == IT_CVAR   ))
         {
-            S_StartSound(NULL,sfx_stnmov);
+            S_StartSound(NULL, menu_sfx_val);
             routine(1);
         }
         goto ret_true;
@@ -4322,16 +4408,16 @@ boolean M_Responder (event_t* ev)
                 case IT_CVAR:
                 case IT_ARROWS:
                     routine(1);            // right arrow
-                    S_StartSound(NULL,sfx_stnmov);
+                    S_StartSound(NULL, menu_sfx_val);
                     break;
                 case IT_CALL:
                     routine(itemOn);
-                    S_StartSound(NULL,sfx_pistol);
+                    S_StartSound(NULL, menu_sfx_enter);
                     break;
                 case IT_SUBMENU:
                     currentMenu->lastOn = itemOn;
                     M_SetupNextMenu((menu_t *)currentMenu->menuitems[itemOn].itemaction);
-                    S_StartSound(NULL,sfx_pistol);
+                    S_StartSound(NULL, menu_sfx_enter);
                     break;
             }
         }
@@ -4343,13 +4429,12 @@ boolean M_Responder (event_t* ev)
         {
 	    M_Setup_prevMenu();
             itemOn = currentMenu->lastOn;
-	    S_StartSound(NULL,sfx_swtchx); // it´s a matter of taste which sound to choose
-            //S_StartSound(NULL,sfx_swtchn);
+	    S_StartSound(NULL, menu_sfx_open); // it´s a matter of taste which sound to choose
         }
 	else
 	{
 	    M_ClearMenus (true);
-	    S_StartSound(NULL,sfx_swtchx);
+	    S_StartSound(NULL, menu_sfx_esc);
 	    // Exit menus, return to demo or game
 	    if( ! Playing() )
 	        D_StartTitle();  // restart title screen and demo
@@ -4359,7 +4444,7 @@ boolean M_Responder (event_t* ev)
       case KEY_BACKSPACE:
         if((currentMenu->menuitems[itemOn].status)==IT_CONTROL)
         {
-            S_StartSound(NULL,sfx_stnmov);
+            S_StartSound(NULL, menu_sfx_val);
             // detach any keys associated to the game control
             G_ClearControlKeys (setupcontrols, currentMenu->menuitems[itemOn].alphaKey);
             goto ret_true;
@@ -4369,7 +4454,7 @@ boolean M_Responder (event_t* ev)
         {
             currentMenu = currentMenu->prevMenu;
             itemOn = currentMenu->lastOn;
-            S_StartSound(NULL,sfx_swtchn);
+            S_StartSound(NULL, menu_sfx_open);
         }
         goto ret_true;
 
@@ -4382,13 +4467,13 @@ boolean M_Responder (event_t* ev)
             if (currentMenu->menuitems[i].alphaKey == ch)
             {
                 itemOn = i;
-	        goto ret_pstop;
+	        goto ret_action;
             }
         for (i = 0;i <= itemOn;i++)
             if (currentMenu->menuitems[i].alphaKey == ch)
             {
                 itemOn = i;
-	        goto ret_pstop;
+	        goto ret_action;
             }
         break;
 
@@ -4397,8 +4482,12 @@ boolean M_Responder (event_t* ev)
 ret_true:   
     return true;
 
-ret_pstop:
-    S_StartSound(NULL,sfx_pstop);
+ret_action:
+    S_StartSound(NULL, menu_sfx_action);
+    return true;
+
+ret_updown:
+    S_StartSound(NULL, menu_sfx_updown);
     return true;
 }
 
@@ -4708,6 +4797,9 @@ void M_Init (void)
     CV_RegisterVar(&cv_nextmap );
     CV_RegisterVar(&cv_newdeathmatch);
     CV_RegisterVar(&cv_serversearch);
+    CV_RegisterVar(&cv_menusound);
+
+    CV_menusound_OnChange();
 }
 
 
@@ -4907,22 +4999,22 @@ void M_HandleFogColor(int key)
     switch( key )
     {
       case KEY_DOWNARROW:
-        S_StartSound(NULL,sfx_pstop);
+        S_StartSound(NULL, menu_sfx_updown);
         itemOn++;
         break;
 
       case KEY_UPARROW:
-        S_StartSound(NULL,sfx_pstop);
+        S_StartSound(NULL, menu_sfx_updown);
         itemOn--;
         break;
 
       case KEY_ESCAPE:
-        S_StartSound(NULL,sfx_swtchx);
+        S_StartSound(NULL, menu_sfx_esc);
         exitmenu = true;
         break;
 
       case KEY_BACKSPACE:
-        S_StartSound(NULL,sfx_stnmov);
+        S_StartSound(NULL, menu_sfx_val);
         strcpy(temp, cv_grfogcolor.string);
         strcpy(cv_grfogcolor.string, "000000");
         l = strlen(temp)-1;
@@ -4935,7 +5027,7 @@ void M_HandleFogColor(int key)
         if ((input_char >= '0' && input_char <= '9') ||
             (input_char >= 'a' && input_char <= 'f'))
 	{
-            S_StartSound(NULL,sfx_stnmov);
+            S_StartSound(NULL, menu_sfx_val);
             strcpy(temp, cv_grfogcolor.string);
             strcpy(cv_grfogcolor.string, "000000");
             l = strlen(temp);

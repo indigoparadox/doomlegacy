@@ -569,6 +569,12 @@ typedef enum
         sfx_amb10,
         sfx_amb11,
 
+    sfx_menuud,  // menu up down
+    sfx_menuva,  // menu value change
+    sfx_menuen,  // menu enter
+    sfx_menuop,  // menu open
+    sfx_menuac,  // menu action
+
     // free slots for S_AddSoundFx() at run-time --------------------
     sfx_freeslot0,
     //
