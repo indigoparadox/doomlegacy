@@ -54,7 +54,10 @@
 #define X_OK 0
 #endif
 
-#include "i_os2.h"
+// do not know why this port does not use the common qmus2mid through buffers
+//#define MIDI_FILE_TO_FILE
+
+#include "I_os2.h"
 
 // Timer stuff. Experimental.
 #include <time.h>
@@ -74,9 +77,13 @@
 #include "z_zone.h"
 
 
-
+#ifdef MIDI_FILE_TO_FILE
+#include "qmus2mid2.h"
+#else
+#include "qmus2mid.h"
 #define MIDBUFFERSIZE   128*1024L          // buffer size for Mus2Midi conversion  (ugly code)
 static  char*           pMus2MidData;      // buffer allocated at program start for Mus2Mid conversion
+#endif
 int                     music_started=0;
 
 // A quick hack to establish a protocol between
@@ -680,9 +687,11 @@ void I_InitMusic(void)
 
    if (nomusic)
       return;
-
+#ifdef MIDI_FILE_TO_FILE
+#else
    // initialisation of midicard by I_StartupSound
    pMus2MidData = (char *)Z_Malloc (MIDBUFFERSIZE,PU_STATIC,NULL);
+#endif
 
    I_AddExitFunc(I_ShutdownMusic);
    music_started = true;
@@ -775,12 +784,17 @@ int I_RegisterSong(void* data, int len)
 {
     int             iErrorCode;
     char*           pMidiFileData = NULL;       // MIDI music buffer to be played or NULL
-    int             iMus2MidSize;               // size of Midi output data
-   FILE* blah;
+    unsigned long   iMus2MidSize;               // size of Midi output data
+//   FILE* blah;
 
     if (nomusic)
         return 1;
-/*
+
+#ifdef MIDI_FILE_TO_FILE
+    I_SaveMemToFile (data, len, "doom.mus");
+    qmus2mid_file( "doom.mus", "doom.mid", 0, 89,64,1);
+#else
+
 #ifdef DEBUGMIDISTREAM
     CONS_Printf("I_RegisterSong: \n");
 #endif
@@ -822,10 +836,7 @@ int I_RegisterSong(void* data, int len)
     }
 #endif
     I_SaveMemToFile (pMidiFileData, iMus2MidSize, "doom.mid");
-*/
-
-    I_SaveMemToFile (data, len, "doom.mus");
-    qmus2mid( "doom.mus", "doom.mid", 0, 89,64,1);
+#endif
 
     OpenMIDI( pmData);
 

@@ -696,6 +696,7 @@ void I_UnRegisterSong(int handle)
 }
 
 
+// return handle (always 0)
 int I_RegisterSong(void* data, int len)
 {
 #ifdef HAVE_MIXER
@@ -704,10 +705,11 @@ int I_RegisterSong(void* data, int len)
 
   if (music.mus)
   {
-      I_Error("Two registered pieces of music simultaneously!\n");
+      I_SoftError("Two registered pieces of music simultaneously!\n");
+      return 0;
   }
 
-  if (memcmp(data, MUSMAGIC, 4) == 0)
+  if (memcmp(data, MUSHEADER, 4) == 0)
   {
       unsigned long midilength;  // per qmus2mid, SDL_RWFromConstMem wants int
       // convert mus to mid in memory with a wonderful function
@@ -727,7 +729,11 @@ int I_RegisterSong(void* data, int len)
   else
   {
       // MIDI, MP3, Ogg Vorbis, various module formats
+#ifdef OLD_SDL_MIXER
+      Midifile_OLD_SDL_MIXER( data, len );
+#else     
       music.rwop = SDL_RWFromConstMem(data, len);
+#endif   
   }
 
 #ifdef OLD_SDL_MIXER

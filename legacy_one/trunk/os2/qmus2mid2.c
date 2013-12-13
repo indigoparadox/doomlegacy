@@ -4,9 +4,62 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
 #include "qmus2mid2.h"
 
-int4 TRACKBUFFERSIZE = 65536L ;  /* 64 Ko */
+
+// MIDI
+#define MIDIHEADER    "MThd\000\000\000\006\000\001"
+  // length 6, format 1
+#define MIDICREATEPROG  "\000\377\002\026"
+  // 0x00, 0xff, 0x02, 0x16
+#define MIDIKEY  "\000\377\131\002\000\000"
+  // 0x00, 0xff, 0x59, 0x02, 0x00 0x00    // C major
+#define MIDITEMPO  "\000\377\121\003\011\243\032"
+  // 0x00, 0xff, 0x51, 0x03, 0x09, 0xa3, 0x1a   // usec/quarter_note
+#define MIDIEND  "\000\377\057\000"
+  // 0x00, 0xff, 0x2f, 0x00    // end of track, header
+#define MIDITRACKSRC  "\000\377\003\035"
+  // 0x00, 0xff, 0x03, 0x1d
+
+
+#ifdef MSDOG
+
+typedef unsigned short  int2;   /* is this appropriate for DOS ? */
+typedef unsigned long   int4;
+
+#else
+
+typedef unsigned short  int2;   /* a two-byte int, use short.*/
+typedef unsigned int    int4;   /* a four-byte int, use int unless int is
+                                  16 bits, then use long. Don't use long 
+                                  on an alpha.  */
+#endif
+
+
+typedef struct
+{
+  char        ID[4];            /* identifier "MUS" 0x1A */
+  int2        ScoreLength;
+  int2        ScoreStart;
+  int2        channels;         /* count of primary channels */
+  int2        SecChannels;      /* count of secondary channels (?) */
+  int2        InstrCnt;
+  int2        dummy;
+  /* variable-length part starts here */
+  int2        *instruments;
+} MUSheader;
+
+struct Track
+{
+  unsigned long  current;
+  char           vel;
+  long           DeltaTime;
+  unsigned char  LastEvent;
+  char           *data;            /* Primary data */
+};
+
+int4 track_buffersize = 65536L ;  /* 64 Ko */
 
 
 size_t fwrite2(const int2 *ptr, size_t size, FILE *file)
@@ -47,7 +100,7 @@ void TWriteByte( char MIDItrack, char byte, struct Track track[] )
   int4 pos ;
 
   pos = track[MIDItrack].current ;
-  if( pos < TRACKBUFFERSIZE )
+  if( pos < track_buffersize )
     track[MIDItrack].data[pos] = byte ;
   else
     {
@@ -86,20 +139,20 @@ void TWriteVarLen( int tracknum, register int4 value,
 
 int ReadMUSheader( MUSheader *MUSh, FILE *file )
 {
-  if( fread( MUSh->ID, 4, 1, file ) != 1 ) return COMUSFILE ;
+  if( fread( MUSh->ID, 4, 1, file ) != 1 ) return QM_COMUSFILE ;
   if( strncmp( MUSh->ID, MUSMAGIC, 4 ) ) 
-    return NOTMUSFILE ;
-  if( fread( &(MUSh->ScoreLength),  2, 1, file ) != 1 ) return COMUSFILE ;
-  if( fread( &(MUSh->ScoreStart),  2, 1, file ) != 1 ) return COMUSFILE ;
-  if( fread( &(MUSh->channels),  2, 1, file ) != 1 ) return COMUSFILE ;
-  if( fread( &(MUSh->SecChannels),  2, 1, file ) != 1 ) return COMUSFILE ;
-  if( fread( &(MUSh->InstrCnt),  2, 1, file ) != 1 ) return COMUSFILE ;
-  if( fread( &(MUSh->dummy),  2, 1, file ) != 1 ) return COMUSFILE ;
+    return QM_NOTMUSFILE ;
+  if( fread( &(MUSh->ScoreLength),  2, 1, file ) != 1 ) return QM_COMUSFILE ;
+  if( fread( &(MUSh->ScoreStart),  2, 1, file ) != 1 ) return QM_COMUSFILE ;
+  if( fread( &(MUSh->channels),  2, 1, file ) != 1 ) return QM_COMUSFILE ;
+  if( fread( &(MUSh->SecChannels),  2, 1, file ) != 1 ) return QM_COMUSFILE ;
+  if( fread( &(MUSh->InstrCnt),  2, 1, file ) != 1 ) return QM_COMUSFILE ;
+  if( fread( &(MUSh->dummy),  2, 1, file ) != 1 ) return QM_COMUSFILE ;
   MUSh->instruments = (int2 *) calloc(MUSh->InstrCnt, sizeof(int2)) ;
   if( fread( MUSh->instruments, 2, MUSh->InstrCnt, file ) != MUSh->InstrCnt )
     {
       free( MUSh->instruments ) ;
-      return COMUSFILE ;
+      return QM_COMUSFILE ;
     }
   free( MUSh->instruments ) ; /* suppress this line if you want to display
 				 instruments later */
@@ -109,7 +162,7 @@ int ReadMUSheader( MUSheader *MUSh, FILE *file )
 
 int WriteMIDheader( int2 ntrks, int2 division, FILE *file )
 {
-  fwrite( MIDIMAGIC , 10, 1, file ) ;
+  fwrite( MIDIHEADER , 10, 1, file ) ;
   fwrite2( &ntrks, 2, file) ;
   fwrite2( &division, 2, file ) ;
   return 0 ;
@@ -142,13 +195,13 @@ void WriteTrack( int tracknum, FILE *file, struct Track track[] )
 
   fwrite2( &size, 4, file ) ;
   if( !tracknum)
-    fwrite( TRACKMAGIC1 "Quick MUS->MID ! by S.Bacquet", 33, 1, file ) ;
+    fwrite( MIDITRACKSRC "Quick MUS->MID ! by S.Bacquet", 33, 1, file ) ;
   quot = (size_t) (track[tracknum].current / 4096) ;
   rem = (size_t) (track[tracknum].current - quot*4096) ;
   fwrite( track[tracknum].data, 4096, quot, file ) ;
   fwrite( ((const unsigned char *) track[tracknum].data)+4096*quot, rem,
                          1, file ) ;
-  fwrite( TRACKMAGIC2, 4, 1, file ) ;
+  fwrite( MIDIEND, 4, 1, file ) ;
 }
 
 
@@ -159,25 +212,25 @@ void WriteFirstTrack( FILE *file )
   size = 43 ;
   fwrite( "MTrk", 4, 1, file ) ;
   fwrite2( &size, 4, file ) ;
-  fwrite( TRACKMAGIC3 , 4, 1, file ) ;
+  fwrite( MIDICREATEPROG , 4, 1, file ) ;
   fwrite( "QMUS2MID (C) S.Bacquet", 22, 1, file ) ;
-  fwrite( TRACKMAGIC4, 6, 1, file ) ;
-  fwrite( TRACKMAGIC5, 7, 1, file ) ;
-  fwrite( TRACKMAGIC6, 4, 1, file ) ;
+  fwrite( MIDIKEY, 6, 1, file ) ;
+  fwrite( MIDITEMPO, 7, 1, file ) ;
+  fwrite( MIDIEND, 4, 1, file ) ;
 }
 
 int4 ReadTime( FILE *file )
 {
-  register int4 time = 0 ;
+  register int4 timev = 0 ;
   int byte ;
 
   do
     {
       byte = getc( file ) ;
-      if( byte != EOF ) time = (time << 7) + (byte & 0x7F) ;
+      if( byte != EOF ) timev = (timev << 7) + (byte & 0x7F) ;
     } while( (byte != EOF) && (byte & 0x80) ) ;
 
-  return time ;
+  return timev ;
 }
 
 char FirstChannelAvailable( signed char MUS2MIDchannel[] )
@@ -194,16 +247,16 @@ char FirstChannelAvailable( signed char MUS2MIDchannel[] )
 }
 
 
-int qmus2mid( const char *mus, const char *mid, int nodisplay, 
+int qmus2mid_file( const char *mus, const char *mid, int nodisplay, 
              int2 division, int BufferSize, int nocomp )
 {
+  static MUSheader MUSh ;
   struct Track track[16] ;
   int2 TrackCnt = 0 ;
   FILE *file_mus, *file_mid ;
   unsigned char et, MUSchannel, MIDIchannel, MIDItrack, NewEvent ;
   int i, event, data, r ;
-  static MUSheader MUSh ;
-  int4 DeltaTime, TotalTime = 0, time, min, n = 0 ;
+  int4 DeltaTime, TotalTime = 0, timev, min, n = 0 ;
   unsigned char MUS2MIDcontrol[15] = {
     0,                          /* Program change - not a MIDI control change */
     0x00,                       /* Bank select */
@@ -226,7 +279,7 @@ int qmus2mid( const char *mus, const char *mid, int nodisplay,
   struct stat file_data ;
 
   if( (file_mus = fopen( mus, "rb" )) == NULL )
-    return COMUSFILE ;
+    return QM_COMUSFILE ;
   stat( mus, &file_data ) ;
 
 
@@ -234,7 +287,7 @@ int qmus2mid( const char *mus, const char *mid, int nodisplay,
   /*  If I could have done differently...You know, DOS is DOS... */
 
   if( (file_mid = fopen( mid, "wb" )) == NULL )
-    return CWMIDFILE ;
+    return QM_CWMIDFILE ;
 
   r = ReadMUSheader( &MUSh, file_mus ) ;
   if( r )
@@ -245,7 +298,7 @@ int qmus2mid( const char *mus, const char *mid, int nodisplay,
   if( fseek( file_mus, MUSh.ScoreStart, SEEK_SET ) )
     {
       Close() ;
-      return MUSFILECOR ;
+      return QM_MUSFILECOR ;
     }
   if( !nodisplay )
     printf( "%s (%lu bytes) contains %d melodic channel%s.\n", mus,
@@ -254,7 +307,7 @@ int qmus2mid( const char *mus, const char *mid, int nodisplay,
   if( MUSh.channels > 15 )      /* <=> MUSchannels+drums > 16 */
     {
       Close() ;
-      return TOOMCHAN ;
+      return QM_TOOMCHAN ;
     }
 
   for( i = 0 ; i < 16 ; i++ )
@@ -268,7 +321,7 @@ int qmus2mid( const char *mus, const char *mid, int nodisplay,
     }
   if( BufferSize )
     {
-      TRACKBUFFERSIZE = ((int4) BufferSize) << 10 ;
+      track_buffersize = ((int4) BufferSize) << 10 ;
       if( !nodisplay )
         printf( "Track buffer size set to %d KB.\n", BufferSize ) ;
     }
@@ -288,11 +341,11 @@ int qmus2mid( const char *mus, const char *mid, int nodisplay,
           MIDIchannel = MUS2MIDchannel[MUSchannel ] = 
             (MUSchannel == 15 ? 9 : FirstChannelAvailable( MUS2MIDchannel)) ;
           MIDItrack   = MIDIchan2track[MIDIchannel] = TrackCnt++ ;
-          if( !(track[MIDItrack].data = (char *) malloc( TRACKBUFFERSIZE )) )
+          if( !(track[MIDItrack].data = (char *) malloc( track_buffersize )) )
             {
               FreeTracks( track ) ;
               Close() ;
-              return MEMALLOC ;
+              return QM_MEMALLOC ;
             }
         }
       else
@@ -393,7 +446,7 @@ int qmus2mid( const char *mus, const char *mid, int nodisplay,
         case 7 :
           FreeTracks( track ) ;
           Close() ;
-          return MUSFILECOR ;
+          return QM_MUSFILECOR ;
         default : break ;
         }
       if( last( event ) )
@@ -424,14 +477,14 @@ int qmus2mid( const char *mus, const char *mid, int nodisplay,
     {
       if( division != 89 )
         {
-          time = TotalTime / 140 ;
-          min = time / 60 ;
-          sec = (char) (time - min*60) ;
+          timev = TotalTime / 140 ;
+          min = timev / 60 ;
+          sec = (char) (timev - min*60) ;
           printf( "Playing time of the MUS file : %u'%.2u''.\n", min, sec ) ;
         }
-      time = (TotalTime * 89) / (140 * division) ;
-      min = time / 60 ;
-      sec = (char) (time - min*60) ;
+      timev = (TotalTime * 89) / (140 * division) ;
+      min = timev / 60 ;
+      sec = (char) (timev - min*60) ;
       if( division != 89 )
         printf( "                    MID file" ) ;
       else
@@ -488,19 +541,19 @@ int convert( const char *mus, const char *mid, int nodisplay, int div,
       printf( "ERROR : " ) ;
       switch( error )
         {
-        case NOTMUSFILE :
+        case QM_NOTMUSFILE :
           printf( "%s is not a MUS file.\n", mus ) ; break ;
-        case COMUSFILE :
+        case QM_COMUSFILE :
           printf( "Can't open %s for read.\n", mus ) ; break ;
-        case COTMPFILE :
+        case QM_COTMPFILE :
           printf( "Can't open temp file.\n" ) ; break  ;
-        case CWMIDFILE :
+        case QM_CWMIDFILE :
           printf( "Can't write %s (?).\n", mid ) ; break ;
-        case MUSFILECOR :
+        case QM_MUSFILECOR :
           printf( "%s is corrupted.\n", mus ) ; break ;
-        case TOOMCHAN :
+        case QM_TOOMCHAN :
           printf( "%s contains more than 16 channels.\n", mus ) ; break ;
-        case MEMALLOC :
+        case QM_MEMALLOC :
           printf( "Not enough memory.\n" ) ; break ;
         default : break ;
         }

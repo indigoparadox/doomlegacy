@@ -4,7 +4,7 @@
 
 #include "i_os2.h"
 #include "i_sound.h"
-#include "qmus2mid.h"
+#include "qmus2mid2.h"
 #include "debug.h"
 
 LONG APIENTRY DartEvent ( ULONG ulStatus,
@@ -193,7 +193,7 @@ int  RegisterMIDI( PWINDATA midiData, void* data, int len)
    blah = fopen( "doom.mus", "wb");
    fwrite( data, len, 1, blah);
    fclose( blah);
-   qmus2mid( "doom.mus", "doom.mid", 0, 89,64,1);
+   qmus2mid_file( "doom.mus", "doom.mid", 0, 89,64,1);
 
    OpenMIDI( midiData);
 */
