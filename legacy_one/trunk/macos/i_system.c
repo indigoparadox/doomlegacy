@@ -319,6 +319,7 @@ void I_Error (char *error, ...)
     D_QuitNetGame ();
     I_ShutdownMusic();
     I_ShutdownSound();
+    I_Sleep( 3000 );  // to see some messages
     I_ShutdownGraphics();
     I_ShutdownInput();
     

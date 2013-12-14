@@ -104,8 +104,6 @@
 #include "../i_video.h"
   // for rendermode != render_glide
 
-float   gr_patch_scalex;
-float   gr_patch_scaley;
 
 #ifdef WIN32
 #pragma pack(1)

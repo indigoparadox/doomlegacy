@@ -1008,6 +1008,7 @@ void ST_Drawer ( boolean refresh )
             ST_diffDraw();
     }
     else
+    {
         if( st_overlay )
         {
             if( !playerdeadview || cv_splitscreen.value)
@@ -1021,6 +1022,7 @@ void ST_Drawer ( boolean refresh )
                 ST_overlayDrawer ();
             }
         }
+    }
 }
 
 
@@ -1698,7 +1700,6 @@ void ST_overlayDrawer ()
                char buf[16];
                sprintf(buf, "%d/%d", plyr->killcount, totalkills);
                V_DrawString(SCX(318-V_StringWidth(buf)), SCY(1), V_NOSCALESTART, buf);
-
            }
            break;
 

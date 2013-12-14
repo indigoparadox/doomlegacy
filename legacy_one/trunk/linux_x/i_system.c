@@ -737,6 +737,7 @@ void I_Error (const char *error, ...)
     D_QuitNetGame ();
     I_ShutdownMusic();
     I_ShutdownSound();
+    I_Sleep( 3000 );  // to see some messages
     I_ShutdownGraphics();
     // shutdown everything else which was registered
     I_ShutdownSystem();

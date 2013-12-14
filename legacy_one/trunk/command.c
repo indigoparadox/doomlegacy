@@ -299,8 +299,10 @@ static char        *com_null_string = "";
 static char        *com_args = NULL;          // current command args or NULL
 
 void Got_NetVar(char **p,int playernum);
+
 //  Initialize command buffer and add basic commands
 //
+// Called only once
 void COM_Init (void)
 {
     int i;
@@ -922,7 +924,7 @@ static void Setvalue (consvar_t *var, char *valstr);
 //
 void CV_RegisterVar (consvar_t *variable)
 {
-    // first check to see if it has allready been defined
+    // first check to see if it has already been defined
     if (CV_FindVar (variable->name))
     {
         CONS_Printf ("Variable %s is already defined\n", variable->name);

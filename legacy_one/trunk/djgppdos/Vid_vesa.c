@@ -66,7 +66,6 @@ void VID_Command_ModeInfo_f (void);
 void VID_Command_ModeList_f (void);
 void VID_Command_Mode_f (void);
 
-consvar_t   cv_vidwait = {"vid_wait","1",CV_SAVE,CV_OnOff};
 
 #define VBEVERSION      2       // we need vesa2 or higher
 
@@ -235,15 +234,19 @@ int VID_GetModeForSize( int w, int h)
 /* ======================================================================== */
 //
 /* ======================================================================== */
-void    VID_Init (void)
+// only called once
+void VID_Init (void)
 {
     COM_AddCommand ("vid_nummodes", VID_Command_NumModes_f);
     COM_AddCommand ("vid_modeinfo", VID_Command_ModeInfo_f);
     COM_AddCommand ("vid_modelist", VID_Command_ModeList_f);
     COM_AddCommand ("vid_mode", VID_Command_Mode_f);
-    CV_RegisterVar (&cv_vidwait);
+}
 
-    //setup the videmodes list,
+// may be called more than once
+void VID_GetModes(void)
+{
+    // setup the videmodes list,
     // note that mode 0 must always be VGA mode 0x13
     pvidmodes = NULL;
     pcurrentmode = NULL;
@@ -254,12 +257,19 @@ void    VID_Init (void)
     // the game boots in 320x200 standard VGA, but
     // we need a highcolor mode to run the game in highcolor
     if (highcolor && numvidmodes==0)
-        I_Error ("No 15bit highcolor VESA2 video mode found, cannot run in highcolor.\n");
+    {
+        I_SoftError ("No highcolor VESA2 video mode found, cannot run in highcolor.\n");
+        highcolor = 0;
+        VID_VesaGetExtraModes ();
+    }
 
     // add the vga modes at the start of the modes list
     VGA_Init();
+}
 
 
+void VID_SetDefaultMode(void)
+{
 #ifdef DEBUG
     CONS_Printf("VID_SetMode(%d)\n",vid.modenum);
 #endif

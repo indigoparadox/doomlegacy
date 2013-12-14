@@ -119,8 +119,13 @@ typedef struct vesamodeinfo_s
 } vesamodeinfo_t;
 
 
-// setup standard VGA + VESA modes list, activate the default video mode.
+// init once
 void VID_Init (void);
+// setup standard VGA + VESA modes list
+// may be called more than once
+void VID_GetModes(void);
+// set the default video mode
+void VID_SetDefaultMode(void);
 // setup a video mode, this is to be called from the menu
 int  VID_SetMode (int modenum);
 

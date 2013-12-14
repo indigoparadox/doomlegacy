@@ -132,7 +132,7 @@
 
 // [WDJ] Interfaces to port video drivers, common to all
 
-rendermode_t    rendermode=render_soft;
+rendermode_e    rendermode=render_soft;
 
 byte  req_bitpp = 8;  // set by d_main checks on command line
 byte  req_drawmode = REQ_default;  // reqdrawmode_t
@@ -141,7 +141,8 @@ byte  graphics_started = 0; // Is used in console.c and screen.c
 
 // To disable fullscreen at startup; is set in VID_PrepareModeList
 boolean allow_fullscreen = false;
-
+boolean mode_fullscreen = false;
+  
 consvar_t cv_ticrate = { "vid_ticrate", "0", 0, CV_OnOff, NULL };
 // synchronize page flipping with screen refresh
 // unused and for compatibility reason
@@ -530,6 +531,7 @@ void CV_gammafunc_OnChange(void)
 // [WDJ] Init before calling port video driver
 // Common init to all port video drivers
 // Register video interface controls
+// Called once
 void V_Init_VideoControl( void )
 {
     CV_RegisterVar(&cv_vidwait);
@@ -540,7 +542,7 @@ void V_Init_VideoControl( void )
     CV_RegisterVar(&cv_black);
     CV_RegisterVar(&cv_bright);
     CV_RegisterVar(&cv_gammafunc);
-#endif   
+#endif
 }
 
 
@@ -2294,13 +2296,13 @@ int V_TextBHeight(char *text)
     return 16;
 }
 
-// V_Init
-// old software stuff, buffers are allocated at video mode setup
+// Setup Video and Drawing according to render and vidmode.
+// Software stuff, buffers are allocated at video mode setup
 // here we set the screens[x] pointers accordingly
 // WARNING :
 // - called at runtime (don't init cvar here)
 // Must be called after every video Init and SetMode
-void V_Init_Draw(void)
+void V_Setup_VideoDraw(void)
 {
     int i;
 
@@ -2319,7 +2321,11 @@ void V_Init_Draw(void)
     }
 #endif
 
-    if( vid.display == NULL ) return;  // allocation failed
+    if( vid.display == NULL )
+    {
+        GenPrintf( EMSG_warn, "V_Setup_VideoDraw: No display\n" );
+        return;  // allocation failed
+    }
 
     // [WDJ] screens usage
     // [0] = display or direct video
@@ -2339,7 +2345,7 @@ void V_Init_Draw(void)
 
     //!debug
 #ifdef DEBUG
-    CONS_Printf("V_Init done:\n");
+    CONS_Printf("V_Setup_VideoDraw:\n");
     for (i = 0; i < NUMSCREENS + 1; i++)
         CONS_Printf(" screens[%d] = %x\n", i, screens[i]);
 #endif
@@ -2371,7 +2377,7 @@ void V_Init_Draw(void)
         break;
 #endif
      default:
-        I_Error ("V_Init_Draw invalid bits per pixel: %d\n", vid.bitpp);
+        I_Error ("V_Setup_VideoDraw invalid bits per pixel: %d\n", vid.bitpp);
     }
     vid.widthbytes = vid.width * vid.bytepp;  // to save multiplies
 

@@ -128,7 +128,6 @@ char OglMacSurface(WindowRef *win, int w, int h, boolean fullscreen)
 	
     SetModelView(hOffset, vOffset, w, h);
     SetStates();
-    HWR_Startup();
 	
     I_OutputMsg("\tOglMacSurface done\n");
 

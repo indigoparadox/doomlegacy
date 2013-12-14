@@ -462,7 +462,7 @@ void I_JoystickInit(void)
   {
       SDL_Joystick *joy = SDL_JoystickOpen(i);
       joysticks[i] = joy;
-      if (devparm)
+      if (devparm || verbose > 1)
       {
 	  CONS_Printf(" Properties of joystick %d:\n", i);
 	  CONS_Printf("    %s.\n", SDL_JoystickName(i));
@@ -749,6 +749,7 @@ void I_Error (const char *error, ...)
     D_QuitNetGame ();
     I_ShutdownJoystick();
     I_ShutdownSound();
+    I_Sleep( 3000 );  // to see some messages
     I_ShutdownGraphics();
     // shutdown everything else which was registered
     I_ShutdownSystem();

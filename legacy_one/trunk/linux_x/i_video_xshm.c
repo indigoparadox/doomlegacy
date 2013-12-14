@@ -173,7 +173,7 @@ int XShmGetEventBase( Display* dpy );
 #include "st_stuff.h"
 #include "g_game.h"
 #include "i_video.h"
-  // cv_fullscreen, etc
+  // mode_fullscreen, etc
 #include "hardware/hw_main.h"
 #include "hardware/hw_drv.h"
 #include "hardware/hw_glob.h"
@@ -501,7 +501,7 @@ static void determineBPP(void)
       I_Error("Could not get list of pixmap formats");
    x_bytepp = (x_bitpp+7)/8;
    if( verbose )
-      fprintf(stderr,"Video depth %i, x_bitpp %i, x_bytepp %i\n", X_visualinfo.depth, x_bitpp, x_bytepp );
+      GenPrintf(EMSG_ver, "Video depth %i, x_bitpp %i, x_bytepp %i\n", X_visualinfo.depth, x_bitpp, x_bytepp );
    return;
 }
 
@@ -563,7 +563,7 @@ static void checkForShm(char *displayname) // FIXME: why do we need displayname 
         // even if it's available, make sure it's a local connection
         if(doShm && localDisplay) {
             doShm = true;
-            fprintf(stderr, "Using MITSHM extension\n");
+            GenPrintf(EMSG_info, "Using MITSHM extension\n");
         }
         else
             doShm = false;
@@ -743,7 +743,7 @@ static int xlatekey( boolean keydown )
 #endif       
         if (rc >= 'A' && rc <= 'Z')
             rc = rc - 'A' + 'a';
-//        fprintf(stderr,"Key: %X -> %X -> %X\n", keycode, (unsigned int)keysym, (unsigned int)rc);
+//        GenPrintf(EMSG_debug, "Key: %X -> %X -> %X\n", keycode, (unsigned int)keysym, (unsigned int)rc);
         break;
     }
 
@@ -1426,7 +1426,7 @@ static void grabsharedmemory(int size)
       {
         if (shminfo.shm_nattch)
         {
-          fprintf(stderr, "User %d appears to be running "
+          GenPrintf(EMSG_info, "User %d appears to be running "
                   "DOOM.  Is that wise?\n", shminfo.shm_cpid);
           key++;
         }
@@ -1436,7 +1436,7 @@ static void grabsharedmemory(int size)
           {
             rc = shmctl(id, IPC_RMID, 0);
             if (!rc)
-              fprintf(stderr,
+              GenPrintf(EMSG_info,
                       "Was able to kill my old shared memory\n");
             else
               I_Error("Was NOT able to kill my old shared memory");
@@ -1451,14 +1451,14 @@ static void grabsharedmemory(int size)
           }
           if (size >= shminfo.shm_segsz)
           {
-            fprintf(stderr,
+            GenPrintf(EMSG_info,
                     "will use %d's stale shared memory\n",
                     shminfo.shm_cpid);
             break;
           }
           else
           {
-            fprintf(stderr,
+            GenPrintf(EMSG_warn,
                     "warning: can't use stale "
                     "shared memory belonging to id %d, "
                     "key=0x%x\n",
@@ -1477,7 +1477,7 @@ static void grabsharedmemory(int size)
       id = shmget((key_t)key, size, IPC_CREAT|0777);
       if (id==-1)
       {
-        fprintf(stderr, "errno=%d\n", errno);
+        GenPrintf(EMSG_error, "errno=%d\n", errno);
         I_Error("Could not get any shared memory");
       }
       break;
@@ -1496,7 +1496,7 @@ static void grabsharedmemory(int size)
   image->data = X_shminfo.shmaddr = shmat(id, 0, 0);
   if(verbose)
   {
-      fprintf(stderr, "shared memory id=%d, addr=0x%x\n", id,
+      GenPrintf(EMSG_ver, "shared memory id=%d, addr=0x%x\n", id,
               (int) (image->data));
   }
   return;
@@ -1507,7 +1507,7 @@ int   VID_NumModes(void) {
 
     if(haveVoodoo)
         return NUM_VOODOOMODES;
-    else if(cv_fullscreen.value && vidmode_ext)
+    else if(mode_fullscreen && vidmode_ext)
         return num_vidmodes;
     else
         return MAXWINMODES;
@@ -1517,7 +1517,7 @@ char  *VID_GetModeName(int modenum) {
     static boolean displayWarning = true;
 
     // display a warning message if no lores modes are available under fullscreen
-    if(displayWarning && cv_fullscreen.value && vidmode_ext && !haveVoodoo) {
+    if(displayWarning && mode_fullscreen && vidmode_ext && !haveVoodoo) {
         displayWarning = false; // do it only once
 
         if(vidmodes[vidmap[lowest_vidmode]]->hdisplay >= HIRES_HORIZ ||
@@ -1535,7 +1535,7 @@ char  *VID_GetModeName(int modenum) {
                 voodooModes[modenum][0],
                 voodooModes[modenum][1]);
     }
-    else if(cv_fullscreen.value && vidmode_ext) { // fullscreen modes
+    else if(mode_fullscreen && vidmode_ext) { // fullscreen modes
         if(modenum >= num_vidmodes)
             return NULL;
 
@@ -1570,7 +1570,7 @@ int VID_GetModeForSize( int w, int h) {
         }
     }
     // scan fullscreen modes
-    else if(cv_fullscreen.value && vidmode_ext) {
+    else if(mode_fullscreen && vidmode_ext) {
         best_fit = -1;
 
         for (i = 0; i < num_vidmodes; i++) {
@@ -1593,6 +1593,7 @@ int VID_GetModeForSize( int w, int h) {
                 }
                 else { // if lowest fullscreen mode is too hires use lowest windowed mode
                     CV_SetValue(&cv_fullscreen, 0);
+		    mode_fullscreen = false;
                     VID_PrepareModeList();
                     best_fit = MAXWINMODES-1;
                 }
@@ -1838,7 +1839,8 @@ static int createWindow(boolean isWindowedMode, int modenum)
     vid.ybytes = vid.widthbytes;
     vid.screen_size = vid.ybytes * vid.height;
 
-    if(rendermode==render_soft) {
+    if(rendermode==render_soft)
+    {
 
       if (doShm)
       {
@@ -1905,19 +1907,18 @@ static int createWindow(boolean isWindowedMode, int modenum)
       {
 	  // can draw direct into image
 	  vid.display = vid.direct;
-	  fprintf(stderr, "Draw direct\n");
+	  GenPrintf(EMSG_info, "Draw direct\n");
       }
 #endif
       if( verbose )
       {
-	  fprintf(stderr, "Drawing %i bpp,  video at % i bpp\n", vid.bitpp, x_bitpp );
+	  GenPrintf(EMSG_ver, "Drawing %i bpp,  video at % i bpp\n", vid.bitpp, x_bitpp );
       }
       vid.fullscreen = ! isWindowedMode;
 
       // added for 1.27 19990220 by Kin
       graphics_started = 1;
     } else {
-      HWR_Startup();
       graphics_started = ((X_mainWindow==0)?0:1);
     }
     return 1;
@@ -1949,7 +1950,7 @@ void VID_PrepareModeList(void)
 
     if(haveVoodoo) // nothing to do
         return;
-   if(vidmode_ext && cv_fullscreen.value) {
+   if(vidmode_ext && mode_fullscreen) {
       // [WDJ] Submitted by pld-linux patch lib.  Handle larger number of vidmodes without crash.
       num_vidmodes = (num_fullvidmodes > MAX_NUM_VIDMODES)
                        ? MAX_NUM_VIDMODES : num_fullvidmodes;
@@ -2022,7 +2023,7 @@ int VID_SetMode(int modenum) {
         vid.width = voodooModes[modenum][0];
         vid.height = voodooModes[modenum][1];
     }
-    else if (cv_fullscreen.value && vidmode_ext) { // fullscreen
+    else if (mode_fullscreen && vidmode_ext) { // fullscreen
         if(modenum >= num_vidmodes)
             return -1;
 
@@ -2054,25 +2055,20 @@ int VID_SetMode(int modenum) {
     return 1;
 }
 
+// May be called more than once, to change modes and switches
 void I_StartupGraphics(void)
 {
     char      *displayname;
     void      *dlptr;
 
-    if(graphics_started)
-        return;
+    if( ! graphics_started)
+    { 
+        // FIXME: catch other signals as well?
+        signal(SIGINT, (void (*)(int)) I_Quit);
+        signal(SIGTERM, (void (*)(int)) I_Quit); // shutdown gracefully if terminated
 
-    if(dedicated)
-    {
-        rendermode = render_none;
-        return;
+        XSetErrorHandler( X_error_handler );
     }
-
-   // FIXME: catch other signals as well?
-    signal(SIGINT, (void (*)(int)) I_Quit);
-    signal(SIGTERM, (void (*)(int)) I_Quit); // shutdown gracefully if terminated
-
-    XSetErrorHandler( X_error_handler );
 
     // setup vid 19990110 by Kin
     vid.bytepp = 1; // not optimized yet...
@@ -2117,7 +2113,7 @@ void I_StartupGraphics(void)
 
        if(!dlptr)
        {
-           fprintf(stderr,"Error opening r_opengl.so!\n%s\n",dlerror());
+           GenPrintf(EMSG_error, "Error opening r_opengl.so!\n%s\n",dlerror());
            rendermode = render_soft;
        } else {
            HWD.pfnInit = dlsym(dlptr,"Init");
@@ -2165,17 +2161,17 @@ void I_StartupGraphics(void)
      case REQ_specific:
        if( x_bitpp != req_bitpp )
        {
-	   fprintf(stderr,"Not in %i bpp mode\n", req_bitpp );
+	   GenPrintf(EMSG_error, "Not in %i bpp mode\n", req_bitpp );
 	   goto abort_error;
        }
        break;
      case REQ_highcolor:
        if( x_bitpp == 15 || x_bitpp == 16 ) goto accept_bitpp;
-       fprintf(stderr,"Do not have highcolor mode, use 8bpp\n");
+       GenPrintf(EMSG_warn, "Do not have highcolor mode, use 8bpp\n");
        break;
      case REQ_truecolor:
        if( x_bitpp == 24 || x_bitpp == 32 ) goto accept_bitpp;
-       fprintf(stderr,"Do not have truecolor mode, use 8bpp\n");
+       GenPrintf(EMSG_warn, "Do not have truecolor mode, use 8bpp\n");
        break;
      case REQ_native:
       
@@ -2184,12 +2180,12 @@ void I_StartupGraphics(void)
        {
 	   vid.bitpp = x_bitpp;
 	   vid.bytepp = x_bytepp;
-	   fprintf(stderr, "Video %i bpp (%i bytes)\n", vid.bitpp, vid.bytepp);
+	   GenPrintf(EMSG_info, "Video %i bpp (%i bytes)\n", vid.bitpp, vid.bytepp);
        }
        else if( verbose )
        {
 	   // Use 8 bit and do the palette translation.
-	   fprintf(stderr,"%i bpp rejected\n", vid.bitpp );
+	   GenPrintf(EMSG_ver, "%i bpp rejected\n", vid.bitpp );
        }
      default:
        break;

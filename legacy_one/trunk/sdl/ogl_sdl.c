@@ -46,8 +46,6 @@
 
 #include "../hardware/r_opengl/r_opengl.h"
   // OpenGL, gl.h, glu.h
-#include "../hardware/hw_main.h"
-  // HWR_Startup()
 #include "v_video.h"
 
 
@@ -330,7 +328,6 @@ boolean OglSdlSurface(int w, int h, int isFullscreen)
     SetModelView(vid.width, vid.height);
     SetStates();
 
-    HWR_Startup();
     textureformatGL = (cbpp > 16)?GL_RGBA:GL_RGB5_A1;
 
 #if 1

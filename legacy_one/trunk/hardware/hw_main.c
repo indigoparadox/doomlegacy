@@ -4238,11 +4238,7 @@ void HWR_Startup(void)
 
     CONS_Printf("HWR_Startup()\n");
 
-    // setup MipPatch_t scaling
-    gr_patch_scalex = 1.0 / (float) vid.width;
-    gr_patch_scaley = 1.0 / (float) vid.height;
-
-    // initalze light lut translation
+    // initalize light lut translation
     InitLumLut();
 
     // do this once

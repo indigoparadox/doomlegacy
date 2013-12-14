@@ -50,11 +50,12 @@ typedef enum {
     render_d3d    = 3,
     render_opengl = 4, //Hurdler: the same for render_minigl
     render_none   = 5  // for dedicated server
-} rendermode_t;
+} rendermode_e;
 
-extern rendermode_t    rendermode;
+extern rendermode_e    rendermode;
 
 extern boolean  allow_fullscreen;  // controlled by i_video
+extern boolean  mode_fullscreen;   // can window before going to cv_fullscreen
 
 // added for OpenGL gamma correction
 extern consvar_t cv_grgammared;
@@ -94,6 +95,8 @@ void VID_Pause(int pause);
 
 int   VID_NumModes(void);
 char  *VID_GetModeName(int modenum);
+
+int  VID_GetModeForSize( int, int );  //vid_vesa.c
 
 void I_UpdateNoBlit (void);
 void I_FinishUpdate (void);

@@ -331,29 +331,33 @@ int set_vesa1_mode( int width, int height )
 //  Initialize video mode, setup dynamic screen size variables,
 //  and allocate screens.
 //
+// May be called more than once, to change modes and switches
 void I_StartupGraphics(void)
 {
-    //added:26-01-98: VID_Init() must be done only once,
-    //                use VID_SetMode() to change vid mode while in the game.
-    if( graphics_started )
-        return;
+    if( ! graphics_started )
+    {
+        //added:26-01-98: VID_Init() must be done only once,
+        //                use VID_SetMode() to change vid mode while in the game.
 
-    // remember the exact screen mode we were...
-    I_SaveOldVideoMode();
+        // remember the exact screen mode we were...
+        I_SaveOldVideoMode();
 
-    CONS_Printf("Vid_Init...");
+        CONS_Printf("Vid_Init...");
+       
+        VID_Init();
+
+        //gfx_use_vesa1 = false;
+
+        //added:03-01-98: register exit code for graphics
+        I_AddExitFunc(I_ShutdownGraphics);
+        graphics_started = true;
+    }
 
     // 0 for 256 color, else use highcolor modes
     highcolor = (req_drawmode == REQ_highcolor);
-
-    VID_Init();
-
-    //gfx_use_vesa1 = false;
-
-    //added:03-01-98: register exit code for graphics
-    I_AddExitFunc(I_ShutdownGraphics);
-    graphics_started = true;
-
+    VID_GetModes();
+    // set the default video mode
+    VID_SetDefaultMode();
 }
 
 // for debuging

@@ -56,7 +56,7 @@ rcsid[] = "$Id$";
 #include "doomstat.h"
 #include "i_system.h"
 #include "i_video.h"
-  // cv_fullscreen etc.
+  // mode_fullscreen etc.
 #include "v_video.h"
 #include "m_argv.h"
 #include "d_main.h"
@@ -193,31 +193,33 @@ void I_ShutdownGraphics(void)
 //
 void I_StartupGraphics(void)
 {
-   CONS_Printf("I_StartupGraphics\n");
+    CONS_Printf("I_StartupGraphics\n");
 
-   if (graphics_started)
-      return;
-
-   if (M_CheckParm( "-mgl")) {
+    if ( ! graphics_started )
+    {
+        if (M_CheckParm( "-mgl"))
+        {
 #if 0
-      if (!MGL_init("..\\..\\..\\", NULL))
-          MGL_fatalError("MGL init failed");
-      MGL_enableAllDrivers();
-      //if ((mglMode = MGL_findMode(SCREENWIDTH, SCREENHEIGHT, 8)) == -1)
-      //  MGL_fatalError("Graphics mode not found");
+	    if (!MGL_init("..\\..\\..\\", NULL))
+	        MGL_fatalError("MGL init failed");
+	    MGL_enableAllDrivers();
+	    //if ((mglMode = MGL_findMode(SCREENWIDTH, SCREENHEIGHT, 8)) == -1)
+	    //  MGL_fatalError("Graphics mode not found");
 #endif
-   } else {
-      InitDIVE( pmData);
-   }
+	} else {
+	    InitDIVE( pmData);
+	}
+        CV_RegisterVar (&cv_vidwait);
+        //added:03-01-98: register exit code for graphics
+        I_AddExitFunc(I_ShutdownGraphics);
+        graphics_started = true;
+    }
 
-   //setup the videmodes list,
-   CV_RegisterVar (&cv_vidwait);
-   VID_SetMode(0);
+    // Has fixed vidmode list
+    // set the default video mode
+    VID_SetMode(0);
 
-   //added:03-01-98: register exit code for graphics
-   I_AddExitFunc(I_ShutdownGraphics);
-   graphics_started = true;
-   CONS_Printf("I_StartupGraphics: DONE\n");
+    CONS_Printf("I_StartupGraphics: DONE\n");
 }
 
 //added:30-01-98: return number of video modes in pvidmodes list

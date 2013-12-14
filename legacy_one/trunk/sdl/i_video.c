@@ -77,7 +77,7 @@ static int testbpp = 0;
 
 #include "i_system.h"
 #include "v_video.h"
-  // cv_fullscreen, etc
+  // mode_fullscreen, etc
 #include "m_argv.h"
 #include "m_menu.h"
 #include "d_main.h"
@@ -117,6 +117,7 @@ static  SDL_Color    localPalette[256];
 static  int   numVidModes= 0;
 static  char  vidModeName[33][32]; // allow 33 different modes
 // Fullscreen modelist
+// modeList is not our memory to manage, do not free
 static  SDL_Rect   **modeList = NULL;  // fullscreen video modes
 static  int        firstEntry = 0; // first entry in modeList which is not bigger than 1600x1200
 static  byte       request_bitpp = 0;  // with modelist
@@ -384,7 +385,7 @@ void I_SetPalette(RGBA_t* palette)
 // return number of fullscreen + X11 modes
 int   VID_NumModes(void)
 {
-    if(cv_fullscreen.value)
+    if(mode_fullscreen)
         return numVidModes - firstEntry;
     else
         return MAXWINMODES;
@@ -392,7 +393,9 @@ int   VID_NumModes(void)
 
 char  *VID_GetModeName(int modeNum)
 {
-    if(cv_fullscreen.value) { // fullscreen modes
+    if(mode_fullscreen)
+    {
+        // fullscreen modes
         modeNum += firstEntry;
         if(modeNum >= numVidModes)
             return NULL;
@@ -401,7 +404,9 @@ char  *VID_GetModeName(int modeNum)
                 modeList[modeNum]->w,
                 modeList[modeNum]->h);
     }
-    else { // windowed modes
+    else
+    {
+        // windowed modes
         if(modeNum > MAXWINMODES)
             return NULL;
 
@@ -416,7 +421,7 @@ int VID_GetModeForSize(int w, int h)
 {
     int matchMode, i;
 
-    if(cv_fullscreen.value)
+    if(mode_fullscreen)
     {
         matchMode = numVidModes-1;  // default is smallest mode
 
@@ -559,7 +564,7 @@ int VID_SetMode(int modeNum)
 
     vid.recalc = true;
 
-    if(cv_fullscreen.value)
+    if(mode_fullscreen)
     {
         modeNum += firstEntry;
 
@@ -573,12 +578,12 @@ int VID_SetMode(int modeNum)
         }
         else // (render_soft == rendermode)
         {
-            if(!OglSdlSurface(req_width, req_height, cv_fullscreen.value))
+            if(!OglSdlSurface(req_width, req_height, mode_fullscreen))
 	        goto fail;
         }
         vid.modenum = modeNum-firstEntry;
     }
-    else //(cv_fullscreen.value)
+    else //(mode_fullscreen)
     {
         // not fullscreen
         req_width = windowedModes[modeNum][0];
@@ -591,12 +596,12 @@ int VID_SetMode(int modeNum)
         }
         else //(render_soft == rendermode)
         {
-            if(!OglSdlSurface(req_width, req_height, cv_fullscreen.value))
+            if(!OglSdlSurface(req_width, req_height, mode_fullscreen))
 	        goto fail;
         }
         vid.modenum = modeNum;
     }
-    vid.fullscreen = cv_fullscreen.value;
+    vid.fullscreen = mode_fullscreen;
     vid.widthbytes = vid.width * vid.bytepp;
 
     I_StartupMouse();
@@ -612,14 +617,17 @@ fail:
 }
 
 
+// May be called more than once, to change modes and switches
 void I_StartupGraphics()
 {
+    rendermode_e  old_rendermode = rendermode;
     SDL_PixelFormat    req_format;
     char * req_errmsg = NULL;
     byte  alt_request_bitpp = 0;
      
-    if(graphics_started)
-        return;
+    // if already started, then restart
+//    if(graphics_started)
+//        return;
 
     // Get video info for screen resolutions
     // even if I set vid.bytepp and highscreen properly it does seem to
@@ -816,16 +824,22 @@ found_modes:
 
        vid.width = 640; // hack to make voodoo cards work in 640x480
        vid.height = 480;
-       vid.fullscreen = cv_fullscreen.value;
+       vid.fullscreen = mode_fullscreen;
 
        if( verbose>1 )
-	  fprintf(stderr,"OglSdlSurface(%i,%i,%i)\n", vid.width, vid.height, cv_fullscreen.value);
-       if(!OglSdlSurface(vid.width, vid.height, cv_fullscreen.value))
+	  fprintf(stderr,"OglSdlSurface(%i,%i,%i)\n", vid.width, vid.height, mode_fullscreen);
+       if(!OglSdlSurface(vid.width, vid.height, mode_fullscreen))
            rendermode = render_soft;
+    }
+    else
+    {
+        rendermode = render_soft;
     }
 
     if(render_soft == rendermode)
     {
+        if (graphics_started && ( old_rendermode != render_soft ))
+	    OglSdlShutdown();  // for mode switch
         vid.fullscreen = 0;
         VID_SetMode_vid( vid.width, vid.height, surfaceFlags ); // window
         if(vidSurface == NULL)

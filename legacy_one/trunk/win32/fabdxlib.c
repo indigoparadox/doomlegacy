@@ -178,6 +178,8 @@ void FDX_create_main_instance (void)
     HRESULT hr;
     IDirectDraw* cDDr;
 
+    if( DDr2 )  return;  // already have main instance
+
     //
     // create an instance of DirectDraw object
     //

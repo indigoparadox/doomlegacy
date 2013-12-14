@@ -583,6 +583,7 @@ void I_Error (const char *error, ...)
         
     D_QuitNetGame ();
         
+    I_Sleep( 3000 );  // to see some messages
     // shutdown everything that was started !
     I_ShutdownSystem();
 

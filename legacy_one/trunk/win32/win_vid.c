@@ -150,6 +150,7 @@ static  int VID_SetDirectDrawMode (viddef_t *lvid, vmode_t *pcurrentmode);
 static  int VID_SetWindowedDisplayMode (viddef_t *lvid, vmode_t *pcurrentmode);
         vmode_t *VID_GetModePtr (int modenum);
 static  void VID_Init (void);
+static  void VID_GetModes (void);
 
 // judgecutor:
 extern void I_RestartSysMouse();
@@ -160,10 +161,21 @@ extern void I_RestartSysMouse();
 // Initialize video mode, setup dynamic screen size variables,
 // and allocate screens.
 // -----------------
+// May be called more than once, to change modes and switches
 void I_StartupGraphics(void)
 {
-    if (graphics_started)
-        return;
+    if( ! graphics_started )
+    {
+        VID_Init();
+
+        COM_AddCommand ("vid_nummodes", VID_Command_NumModes_f);
+        COM_AddCommand ("vid_modeinfo", VID_Command_ModeInfo_f);
+        COM_AddCommand ("vid_modelist", VID_Command_ModeList_f);
+        COM_AddCommand ("vid_mode", VID_Command_Mode_f);
+
+        //added:03-01-98: register exit code for graphics
+        I_AddExitFunc (I_ShutdownGraphics);
+    }
 
     // 0 for 256 color, else use highcolor modes
     highcolor = (req_drawmode == REQ_highcolor);
@@ -188,17 +200,10 @@ void I_StartupGraphics(void)
 //    if ( req_win )
 //        rendermode  = render_soft;
 
-    VID_Init();
+    VID_GetModes();
+    // set the startup screen in a window
+    VID_SetMode (0);
 
-    COM_AddCommand ("vid_nummodes", VID_Command_NumModes_f);
-    COM_AddCommand ("vid_modeinfo", VID_Command_ModeInfo_f);
-    COM_AddCommand ("vid_modelist", VID_Command_ModeList_f);
-    COM_AddCommand ("vid_mode", VID_Command_Mode_f);
-
-    CV_RegisterVar (&cv_vidwait);
-   
-    //added:03-01-98: register exit code for graphics
-    I_AddExitFunc (I_ShutdownGraphics);
     graphics_started = TRUE;
 }
 
@@ -594,6 +599,12 @@ static void WindowMode_Init(void)
 // Called from I_StartupGraphics
 void VID_Init (void)
 {
+    // initialize the appropriate display device
+}
+
+// May be called more than once, to change modes and switches
+void VID_GetModes (void)
+{
     vmode_t*    pv;
     int         iMode;
     char * req_errmsg = NULL;
@@ -612,7 +623,7 @@ void VID_Init (void)
        }else{
 	   // Use 8 bit and do the palette lookup.
 	   if( verbose )
-	       fprintf(stderr,"Native %i bpp rejected\n", vid.bitpp );
+	       GenPrintf(EMSG_ver, "Native %i bpp rejected\n", vid.bitpp );
 	   request_bitpp = 8;
        }
        break;
@@ -728,7 +739,7 @@ void VID_Init (void)
 	    if( request_bitpp == 8 )  break;
 	    if(req_drawmode == REQ_specific)
 	    {
-	        fprintf(stderr,"No %i bpp modes\n", req_bitpp );
+	        GenPrintf(EMSG_error, "No %i bpp modes\n", req_bitpp );
 	        goto abort_error;
 	    }
 	    if( alt_request_bitpp )
@@ -738,7 +749,7 @@ void VID_Init (void)
 		    request_bitpp = alt_request_bitpp;
 		    continue;
 		}
-	        fprintf(stderr,"No %s modes\n", req_errmsg );
+	        GenPrintf(EMSG_error, "No %s modes\n", req_errmsg );
 	        // win32 had -highcolor as binding, so do not change that behavior
 	        goto abort_error;
 	    }
@@ -768,9 +779,6 @@ found_modes:
         CONS_Printf ("%#02d: %dx%dx%dbpp (desc: '%s')\n",iMode,
                      pv->width,pv->height,pv->bytesperpixel,pv->name);
     }
-
-    // set the startup screen in a window
-    VID_SetMode (0);
     return;
 
 abort_error:
@@ -986,14 +994,6 @@ int VID_SetMode (int modenum)  //, unsigned char *palette)
         // we switch to fullscreen
         vid.fullscreen = fdx_fullscreen;
         DIB_mode = FALSE;
-#ifdef HWRENDER
-        if ( rendermode != render_soft )
-        {
-            // purge all patch graphics stored in software format
-            //Z_FreeTags ( PU_PURGELEVEL, PU_PURGELEVEL+100 );
-            HWR_Startup ();
-        }
-#endif
     }
 
     // judgecutor:

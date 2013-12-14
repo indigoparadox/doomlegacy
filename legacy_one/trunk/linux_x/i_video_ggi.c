@@ -452,6 +452,7 @@ int VID_GetModeForSize( int w, int h)
   return 0;
 }
 
+// May be called more than once, to change modes and switches
 void I_StartupGraphics(void)
 {
   char * req_errmsg = NULL;
