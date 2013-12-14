@@ -375,6 +375,7 @@ void CON_Register(void)
     COM_AddCommand ("bind", CONS_Bind_f);
 }
 
+// after FullGraphics
 void CON_VideoInit(void)
 {
     if(dedicated)
@@ -395,7 +396,7 @@ void CON_VideoInit(void)
     con_bordleft  = (pic_t*) W_CachePicName ("CBLEFT",PU_STATIC);
     con_bordright = (pic_t*) W_CachePicName ("CBRIGHT",PU_STATIC);
 
-    // set console full screen for game startup MAKE SURE VID_Init() done !!!
+    // set console full screen for game startup after FullGraphics
     con_destlines = vid.height;
     con_curlines = vid.height;
 
@@ -417,7 +418,6 @@ static void CON_InputInit (void)
         inputlines[i][0] = CON_PROMPTCHAR;
     inputline = 0;
     input_cx = 1;
-
 }
 
 

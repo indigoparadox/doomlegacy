@@ -331,33 +331,58 @@ int set_vesa1_mode( int width, int height )
 //  Initialize video mode, setup dynamic screen size variables,
 //  and allocate screens.
 //
-// May be called more than once, to change modes and switches
-void I_StartupGraphics(void)
+
+// Initialize the graphics system, with a initial window.
+void I_StartupGraphics( void )
 {
-    if( ! graphics_started )
+    modenum_t initial_mode = {MODE_window, 0};
+    // pre-init by V_Init_VideoControl
+
+    // remember the exact screen mode we were...
+    I_SaveOldVideoMode();
+   
+    //added:26-01-98: VID_Init() must be done only once,
+    //                use VID_SetMode() to change vid mode while in the game.
+    GenPrintf( EMSG_info, "Vid_Init...");
+    VID_Init();
+
+    //gfx_use_vesa1 = false;
+
+    //added:03-01-98: register exit code for graphics
+    I_AddExitFunc(I_ShutdownGraphics);
+
+    // set the startup window
+    VID_InitVGAModes();
+    if( VID_SetMode ( initial_mode ) < 0 )
     {
-        //added:26-01-98: VID_Init() must be done only once,
-        //                use VID_SetMode() to change vid mode while in the game.
+        initial_mode.index = 1;  // 320
+        if( VID_SetMode ( initial_mode ) < 0 )  goto abort_error;
+    };
 
-        // remember the exact screen mode we were...
-        I_SaveOldVideoMode();
+    graphics_started = true;
+    return;
 
-        CONS_Printf("Vid_Init...");
-       
-        VID_Init();
+abort_error:
+    // cannot return without a display screen
+    I_Error("StartupGraphics Abort\n");
+}
 
-        //gfx_use_vesa1 = false;
-
-        //added:03-01-98: register exit code for graphics
-        I_AddExitFunc(I_ShutdownGraphics);
-        graphics_started = true;
-    }
-
+// Called to start rendering graphic screen according to the request switches.
+// Fullscreen modes are possible.
+void I_RequestFullGraphics( byte select_fullscreen )
+{
+    modenum_t initial_mode = {MODE_window, 0};
     // 0 for 256 color, else use highcolor modes
     highcolor = (req_drawmode == REQ_highcolor);
     VID_GetModes();
-    // set the default video mode
-    VID_SetDefaultMode();
+
+    allow_fullscreen = true;
+    mode_fullscreen = select_fullscreen;  // initial startup
+
+    // set the startup screen
+    initial_mode = VID_GetModeForSize( vid.width, vid.height,
+				       (select_fullscreen ? MODE_fullscreen: MODE_window))
+    VID_SetMode ( initial_mode );
 }
 
 // for debuging

@@ -186,12 +186,8 @@ int XShmGetEventBase( Display* dpy );
 #include "r_data.h"
   // R_Init_color8_translate, color8
 
-void VID_PrepareModeList(void);
-
-// resolution threshold for hires mode
-#define HIRES_HORIZ (640)
-#define HIRES_VERT  (400)
-
+// Voodoo card has video switch, produces fullscreen 3d graphics,
+// and we cannot use window mode with it.
 static boolean haveVoodoo = false;  // have Voodoo card in hardware mode
 static boolean showkey=false; // force to no 19990118 by Kin
 
@@ -257,6 +253,7 @@ static int windowedModes[MAXWINMODES+1][2] = {
 
 #define NUM_VOODOOMODES (3)
 // These are modes for 3dfx voodoo graphics (loopthrough) cards
+// 1..
 static int voodooModes[NUM_VOODOOMODES][2] = {
     {800, 600},
     {640, 480},
@@ -324,7 +321,7 @@ static void vidmodes_to_vidmap( void )
 }
 
 // Set hardware vidmodes and vidmap, from X_display, X_screen
-static void determineVidModes(void)
+static void determine_VidModes(void)
 {
     if(vidmode_ext)
     {
@@ -1514,133 +1511,128 @@ static void grabsharedmemory(int size)
   return;
 }
 
-// return number of fullscreen + X11 modes
-int   VID_NumModes(void)
+// return number of fullscreen or window modes, for listing
+// modetype is of modetype_e
+range_t  VID_ModeRange( byte modetype )
 {
-
+    range_t  mrange = { 1, 1 };  // first is always 1
     if(haveVoodoo)
-        return NUM_VOODOOMODES;
-    else if(mode_fullscreen && vidmode_ext)
-        return num_vidmodes;
+        mrange.last = NUM_VOODOOMODES;
     else
-        return MAXWINMODES;
+        mrange.last = (modetype == MODE_fullscreen) ? num_vidmodes : MAXWINMODES;
+    return mrange;
 }
 
-char * VID_GetModeName(int modenum)
+// to display selection name of modes
+char * VID_GetModeName( modenum_t modenum )
 {
-    static boolean displayWarning = true;
     const char * mark_str = "";
     int mode_x, mode_y;
 
-    // display a warning message if no lores modes are available under fullscreen
-    if(displayWarning && mode_fullscreen && vidmode_ext && !haveVoodoo) {
-        displayWarning = false; // do it only once
-
-        if(vidmodes[vidmap[lowest_vidmode]]->hdisplay >= HIRES_HORIZ ||
-           vidmodes[vidmap[lowest_vidmode]]->vdisplay >= HIRES_VERT) {
-            // violation of hierarchical structure; use callback function instead?
-            M_StartMessage("You don't have lores modes\nin your XF86Config\n\nPlease read the FAQ\n",NULL,MM_NOTHING);
-        }
-    }
-
     if(haveVoodoo) { // voodoo modes
-        if(modenum >= NUM_VOODOOMODES)
-            return NULL;
+        int mi = modenum.index - 1;
+        if(mi >= NUM_VOODOOMODES)   goto fail;
 
         mark_str = "fx";
-        mode_x = voodooModes[modenum][0];
-        mode_y = voodooModes[modenum][1];
+        mode_x = voodooModes[mi][0];
+        mode_y = voodooModes[mi][1];
     }
-    else if(mode_fullscreen && vidmode_ext) { // fullscreen modes
-        if(modenum >= num_vidmodes)
-            return NULL;
+    else if( modenum.modetype == MODE_fullscreen ) { // fullscreen modes
+        int mi = modenum.index - 1;
+        if(mi >= num_vidmodes)   goto fail;
 
         mark_str = "";
-        mode_x = vidmodes[vidmap[modenum]]->hdisplay;
-        mode_y = vidmodes[vidmap[modenum]]->vdisplay;
+        mode_x = vidmodes[vidmap[mi]]->hdisplay;
+        mode_y = vidmodes[vidmap[mi]]->vdisplay;
     }
-    else { // X11 modes
-        if(modenum > MAXWINMODES)
-            return NULL;
+    else { // X11 window modes
+        int mi = modenum.index;
+        if(mi > MAXWINMODES)    goto fail;
 
         mark_str = "X11";
-        mode_x = windowedModes[modenum][0];
-        mode_y = windowedModes[modenum][1];
+        mode_x = windowedModes[mi][0];
+        mode_y = windowedModes[mi][1];
     }
     // form the string
-    snprintf( &vidModeName[modenum][0], MAX_LEN_VIDMODENAME, "%s %dx%d",
+    snprintf( &vidModeName[modenum.index][0], MAX_LEN_VIDMODENAME, "%s %dx%d",
 	      mark_str, mode_x, mode_y );
-    vidModeName[modenum][MAX_LEN_VIDMODENAME] = 0;
-    return &vidModeName[modenum][0];
+    vidModeName[modenum.index][MAX_LEN_VIDMODENAME] = 0;
+    return &vidModeName[modenum.index][0];
+
+ fail:
+    return NULL;
 }
 
 
-int VID_GetModeForSize( int w, int h)
+// rmodetype is of modetype_e
+// Returns MODE_NOP when none found
+modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
 {
-    static boolean first_override=true;
+    modenum_t  modenum = { MODE_NOP, 0 };
+    int bestdist = MAXINT;
+    int best, tdist, i;
 
-    int best_fit, i;
-
-    if(haveVoodoo) {
-        best_fit = 1; // standard mode if no other found
-        for (i = 0; i < NUM_VOODOOMODES; i++) {
-            if (w == voodooModes[i][0] &&
-                h == voodooModes[i][1]) {
-                best_fit = i;
-            }
+    if(haveVoodoo)
+    {
+        best = 1; // standard mode if no other found
+        for (i = 0; i < NUM_VOODOOMODES; i++)
+        {
+	    tdist = abs(voodooModes[i][0] - rw) + abs(voodooModes[i][1] - rh);
+	    // find closest dist
+	    if( bestdist > tdist )
+	    {
+	        bestdist = tdist;
+	        best = i;
+	        if( tdist == 0 )  break;   // found exact match
+	    }
         }
+        modenum.index = best + 1;  // 1..
+        modenum.modetype = MODE_voodoo;
     }
-    // scan fullscreen modes
-    else if(mode_fullscreen && vidmode_ext) {
-        best_fit = -1;
+    else if( rmodetype == MODE_fullscreen )
+    {   // scan fullscreen modes
+       
+        // If vidmode_ext == false, or all w,h are too large
+        // then will have num_vidmodes == 0
+        if( num_vidmodes == 0 )  goto done;
+        best = num_vidmodes-1;  // default is smallest mode
 
-        for (i = 0; i < num_vidmodes; i++) {
-            if (w == vidmodes[vidmap[i]]->hdisplay &&
-                h == vidmodes[vidmap[i]]->vdisplay) {
-                best_fit = i;
-            }
+        for (i = 0; i < num_vidmodes; i++)
+        {
+	    XF86VidModeModeInfo * vmm = vidmodes[vidmap[i]];
+	    tdist = abs(vmm->hdisplay - rw) + abs(vmm->vdisplay - rh);
+	    // find closest dist
+	    if( bestdist > tdist )
+	    {
+	        bestdist = tdist;
+	        best = i;
+	        if( tdist == 0 )  break;   // found exact match
+	    }
         }
-
-        // !!! first_override prevents switching to fullscreen is no lores modes are available and no matching mode is found at startup
-        // any other valid mode (windowed, match) disables first_override not to prevent the user from switching
-
-        if(best_fit == -1) { // no fitting vidmode found
-            if(first_override) { // overwrite lowest_vidmode setting the first time if resolution too high
-                first_override=false;
-
-                if(vidmodes[vidmap[lowest_vidmode]]->hdisplay *
-                   vidmodes[vidmap[lowest_vidmode]]->vdisplay < HIRES_HORIZ*HIRES_VERT) {
-                    best_fit = lowest_vidmode; // use lowest fullscreen mode if it is not too hires
-                }
-                else {
-		    // if lowest fullscreen mode is too hires use lowest windowed mode
-		    mode_fullscreen = false;
-                    VID_PrepareModeList();
-                    best_fit = MAXWINMODES-1;
-                }
-            }
-            else {
-                best_fit = lowest_vidmode;
-            }
-        }
-        else if(first_override)
-	    first_override = false; // disable first_override
+        modenum.index = best + 1;  // 1..
+        modenum.modetype = rmodetype;
     }
-
-    else { // windowed modes
-        best_fit = MAXWINMODES-1;
-
-        if(first_override) first_override = false; // disable first_override
-
-        for (i = 1; i <= MAXWINMODES; i++) {
-            if (w == windowedModes[i][0] &&
-                h == windowedModes[i][1]) {
-                best_fit = i;
-            }
+    else
+    {   // windowed modes, 1..
+        best = MAXWINMODES;  // default
+        for (i = 1; i <= MAXWINMODES; i++)
+        {
+	    tdist = abs(windowedModes[i][0] - rw) + abs(windowedModes[i][1] - rh);
+	    // find closest dist
+	    if( bestdist > tdist )
+	    {
+	        bestdist = tdist;
+	        best = i;
+	        if( tdist == 0 )  break;   // found exact match
+	    }
         }
+        modenum.index = best;  // 1..
+        modenum.modetype = rmodetype;
     }
-    return best_fit ;
+done:
+    return modenum;
 }
+
 
 static void destroyWindow(void)
 {
@@ -1692,7 +1684,7 @@ static void destroyWindow(void)
 }
 
 // Called multiple times
-static int createWindow(boolean isWindowedMode, int modenum)
+static int createWindow(boolean set_fullscreen, modenum_t modenum)
 {
     int                  oktodraw;
     unsigned long        attribmask;
@@ -1704,15 +1696,15 @@ static int createWindow(boolean isWindowedMode, int modenum)
     char                 *icon_name = window_name;
 
     // change to the mode
-    if(isWindowedMode && vidmode_ext) {
+    if( !set_fullscreen && vidmode_ext) {
         XF86VidModeSwitchToMode(X_display, X_screen, vidmodes[0]);
         vidmode_active = false;
     }
-    else if(isWindowedMode && !vidmode_ext) { // probably not necessary
+    else if(!set_fullscreen && !vidmode_ext) { // probably not necessary
         vidmode_active = false;
     }
     else {
-        XF86VidModeSwitchToMode(X_display, X_screen, vidmodes[vidmap[modenum]]);
+        XF86VidModeSwitchToMode(X_display, X_screen, vidmodes[vidmap[modenum.index-1]]);
         vidmode_active = true;
         // Move the viewport to top left
         XF86VidModeSetViewPort(X_display, X_screen, 0, 0);
@@ -1758,8 +1750,7 @@ static int createWindow(boolean isWindowedMode, int modenum)
                                  attribmask,
                                  &attribs);
 
-        if(!X_mainWindow)
-	    return 0;
+        if(!X_mainWindow)  goto fail;
 
         // create the GC
         valuemask = GCGraphicsExposures;
@@ -1771,9 +1762,7 @@ static int createWindow(boolean isWindowedMode, int modenum)
     } else {
         // Hardware renderer
         X_mainWindow = HWD.pfnHookXwin(X_display, vid.width, vid.height, vidmode_active);
-        if(X_mainWindow == 0) {
-	    return 0;
-	}
+        if(X_mainWindow == 0)   goto fail;
     }
 
     // moved here
@@ -1916,7 +1905,7 @@ static int createWindow(boolean isWindowedMode, int modenum)
       {
 	  GenPrintf(EMSG_ver, "Drawing %i bpp,  video at % i bpp\n", vid.bitpp, x_bitpp );
       }
-      vid.fullscreen = ! isWindowedMode;
+      vid.fullscreen = set_fullscreen;
 
       // added for 1.27 19990220 by Kin
       graphics_started = 1;
@@ -1924,6 +1913,9 @@ static int createWindow(boolean isWindowedMode, int modenum)
       graphics_started = ((X_mainWindow==0)?0:1);
     }
     return 1;
+   
+  fail:
+    return 0;
 }
 
 void VID_PrepareModeList(void)
@@ -1956,49 +1948,52 @@ void VID_PrepareModeList(void)
    return;
 }
 
-int VID_SetMode(int modenum) {
-
-    boolean   isWindowedMode;
+int VID_SetMode( modenum_t modenum )
+{
+    boolean set_fullscreen = (modenum.modetype == MODE_fullscreen);
 
     if(haveVoodoo) {
-        if(modenum >= NUM_VOODOOMODES)
-            return -1;
+        int mi = modenum.index - 1;
+        if(mi >= NUM_VOODOOMODES)   goto fail_end;
 
         destroyWindow();
-        isWindowedMode = true;
-        vid.width = voodooModes[modenum][0];
-        vid.height = voodooModes[modenum][1];
+        set_fullscreen = true;
+        vid.width = voodooModes[mi][0];
+        vid.height = voodooModes[mi][1];
     }
-    else if (mode_fullscreen && vidmode_ext) { // fullscreen
-        if(modenum >= num_vidmodes)
-            return -1;
+    else if (set_fullscreen) { // fullscreen
+        int mi = modenum.index - 1;
+        // If no vidmode_ext, then num_vidmodes == 0
+        if(mi >= num_vidmodes)   goto fail_end;
 
         destroyWindow();
-        isWindowedMode = false;
-        vid.width = vidmodes[vidmap[modenum]]->hdisplay;
-        vid.height = vidmodes[vidmap[modenum]]->vdisplay;
+        vid.width = vidmodes[vidmap[mi]]->hdisplay;
+        vid.height = vidmodes[vidmap[mi]]->vdisplay;
     }
     else { // X11
-        if(modenum >= MAXWINMODES)
-            return -1;
+        int mi = modenum.index;
+        if(mi >= MAXWINMODES)   goto fail_end;
 
         destroyWindow();
-        isWindowedMode = true;
-        vid.width = windowedModes[modenum][0];
-        vid.height = windowedModes[modenum][1];
+        vid.width = windowedModes[mi][0];
+        vid.height = windowedModes[mi][1];
     }
 
     vid.recalc = 1;
-    CONS_Printf("Setting mode: %dx%d\n", vid.width, vid.height);
+    GenPrintf( EMSG_info, "VID_SetMode(%s,%i) %dx%d\n",
+	       modetype_string[modenum.modetype], modenum.index, vid.width, vid.height);
 
-    if(!createWindow(isWindowedMode, modenum))
-        return 0;
+    if(!createWindow( set_fullscreen, modenum ))
+        return FAIL_create;
 
     I_StartupMouse();
 
     vid.modenum = modenum;
 
     return 1;
+
+ fail_end:
+    return FAIL_end;
 }
 
 // detect Voodoo card
@@ -2035,21 +2030,9 @@ void detect_Voodoo( void )
 // Called once. Init with basic error message screen.
 void I_StartupGraphics(void)
 {
+    modenum_t  initialmode = {MODE_window,0};  // the initial mode
+    // pre-init by V_Init_VideoControl
     char  *displayname;
-    int   default_vidmode;
-
-    // default size for startup
-    vid.width = INITIAL_WINDOW_WIDTH;
-    vid.height = INITIAL_WINDOW_HEIGHT;
-    vid.display = NULL;
-    vid.screen1 = NULL;
-    vid.buffer = NULL;
-    vid.recalc = true;
-    // setup vid 19990110 by Kin
-    vid.bytepp = 1; // not optimized yet...
-    vid.bitpp = 8;
-
-    rendermode = render_soft;
 
     // FIXME: catch other signals as well?
     signal(SIGINT, (void (*)(int)) I_Quit);
@@ -2082,10 +2065,10 @@ void I_StartupGraphics(void)
     determineColorMask();  // Set color offset and masks
     createColorMap();  // Create X_cmap and x_colormap2/3/4
 
-    default_vidmode = VID_GetModeForSize( vid.width, vid.height);
-    createWindow(true, // is windowed
-                 default_vidmode);
-
+    // window
+    initialmode = VID_GetModeForSize( vid.width, vid.height, MODE_window );
+    if( createWindow( false, initialmode) < 0 )  goto abort_error;
+   
     // startupscreen does not need a grabbed mouse
     doUngrabMouse();
 
@@ -2093,13 +2076,19 @@ void I_StartupGraphics(void)
     graphics_started = 1;
     if( verbose )
         GenPrintf(EMSG_ver, "StartupGraphics completed\n" );
+    return;
+
+abort_error:
+    // cannot return without a display screen
+    I_Error("StartupGraphics Abort\n");
 }
-   
+
+
 // Called to start rendering graphic screen according to the request switches.
 // Fullscreen modes are possible.
 void I_RequestFullGraphics( byte select_fullscreen )
 {
-    int   default_vidmode;
+    modenum_t  initialmode;
     void *dlptr;
 
     destroyWindow();
@@ -2192,7 +2181,7 @@ void I_RequestFullGraphics( byte select_fullscreen )
     // Set hardware vidmodes and vidmap, from X_display, X_screen
     checkVidModeExtension();  // Set vidmode_ext
 
-    determineVidModes();  // set allow_fullscreen
+    determine_VidModes();  // set allow_fullscreen
 
     findVisual();  // Set X_screen, X_visualinfo, X_visual, x_drawmode
 
@@ -2240,9 +2229,19 @@ void I_RequestFullGraphics( byte select_fullscreen )
     determineColorMask();  // Set color offset and masks
     createColorMap();  // Create X_cmap and x_colormap2/3/4
 
-    default_vidmode = VID_GetModeForSize( vid.width, vid.height);
-    createWindow(true, // is windowed
-                 default_vidmode);
+    if( select_fullscreen
+	&& ! haveVoodoo
+	&& num_vidmodes == 0)  // do we have any fullscreen modes at all?
+    {
+        // switch to windowed
+        select_fullscreen = 0;
+        GenPrintf(EMSG_info,"No modes below 1600x1200 available\nSwitching to windowed mode ...\n");
+    }
+
+    mode_fullscreen = select_fullscreen;
+    initialmode = VID_GetModeForSize( vid.width, vid.height,
+		   (select_fullscreen ? MODE_fullscreen: MODE_window));
+    createWindow( select_fullscreen, initialmode );
 
     // startupscreen does not need a grabbed mouse
     doUngrabMouse();
@@ -2251,12 +2250,12 @@ void I_RequestFullGraphics( byte select_fullscreen )
     graphics_started = 1;
 
     if( verbose )
-        GenPrintf(EMSG_ver, "StartupGraphics completed\n" );
+        GenPrintf(EMSG_ver, "RequestFullGraphics completed\n" );
     return;
 
 abort_error:
     // cannot return without a display screen
-    I_Error("StartupGraphics Abort\n");
+    I_Error("RequestFullGraphics Abort\n");
 }
 
 void I_ShutdownGraphics(void)

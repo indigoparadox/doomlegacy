@@ -48,8 +48,6 @@
   // For dynamic referencing of HW rendering functions
 #include "r_opengl.h"
 
-void VID_PrepareModeList(void);
-int VID_SetMode(int modeNum);
 
 struct modeDescription
 {
@@ -59,15 +57,14 @@ struct modeDescription
 
 RGBA_t  gamma_correction = {0x7F7F7F7F};
 
-char    vidModeName[33][32]; // allow 33 different modes
-
-// To disable fullscreen at startup; is set in VID_PrepareModeList
-int menu_height;
 
 WindowRef mainWindow = NULL;
 
-struct modeDescription modeList[20];
-int numModes;
+// all modes, used for window modes or fullscreen modes
+#define MAXVIDMODES  33
+char   vidModeName[MAXVIDMODES][32];
+struct modeDescription modeList[MAXVIDMODES];
+int nummodes = 0;
 
 #define MAXWINMODES 8
 // windowed video modes from which to choose from.
@@ -75,6 +72,7 @@ static int windowedModes[MAXWINMODES+1][2] = {
    // hidden from display
     {INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT},  // initial mode
    // public  1..
+    {MAXVIDWIDTH /*1600*/, MAXVIDHEIGHT/*1200*/},
     { 320,  200},
     { 400,  300},
     { 512,  384},
@@ -146,49 +144,56 @@ void VID_Pause(boolean pause)
         }*/
 }
 
-int   VID_NumModes(void)
+// modetype is of modetype_e
+range_t  VID_ModeRange( byte modetype )
 {
-    return numModes;
+    range_t  mrange = { 1, 1 };  // first is always 1
+    mrange.last = nummodes;  // fullscreen and window
+    return mrange;
 }
 
 //------------------------------
 // VID_GetModeName
 // Used in the video mode menu
-// Puts 'W' or 'F' before the size to
-// indicate window/fullscreen
-char  *VID_GetModeName(int modeNum)
+char * VID_GetModeName( modenum_t modenum )
 {
-    sprintf(&vidModeName[modeNum][0], "%ix%i", modeList[modeNum].w, modeList[modeNum].h);
+    sprintf(&vidModeName[modenum.index][0], "%ix%i", modeList[modenum.index].w, modeList[modenum.index].h);
 
-    return &vidModeName[modeNum][0];
+    return &vidModeName[modenum.index][0];
 }
 
-int VID_GetModeForSize(int w, int h)
+// rmodetype is of modetype_e
+// Returns MODE_NOP when none found
+modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
 {
-    int matchMode, i;
+    modenum_t  modenum = { MODE_NOP, 0 };
+    int bestdist = MAXINT;
+    int best, tdist, i;
 
-    matchMode=-1;
-    for(i=1; i<=MAXWINMODES; i++)
+    best = 5;  // default is mode (640x480)
+
+    if( nummodes == 0 )  goto done;
+    for(i=1; i<nummodes; i++)   // skip INITIAL_WINDOW
     {
-        if(modeList[i].w == w && modeList[i].h == h)
+        tdist = abs(modeList[i]->w - rw) + abs(modeList[i]->h - rh);
+        // find closest dist
+        if( bestdist > tdist )
         {
-            matchMode = i;
-            break;
-        }
+	    bestdist = tdist;
+	    best = i;
+	    if( tdist == 0 )  break;   // found exact match
+	}
     }
-    if(-1 == matchMode) // use smallest windowed mode (640x480)
-        matchMode = 3;
-
-    return matchMode;
+    modenum.index = best;  // 1..
+    modenum.modetype = rmodetype;
+done:
+    return modenum;
 }
 
 
 void VID_PrepareModeList(void)
 {
     int i;
-
-    if(graphics_started)
-        return;
 
     for (i=0;i<MAXWINMODES;i++)
     {
@@ -197,7 +202,7 @@ void VID_PrepareModeList(void)
         modeList[i].freq = 0;
     }
 
-    numModes = i;
+    nummodes = i;
 }
 
 void SetDSpMode(int w, int h, boolean enable)
@@ -227,9 +232,10 @@ void SetDSpMode(int w, int h, boolean enable)
     last_enable = enable;
 }
 
-int VID_SetMode(int modeNum)
+// Returns FAIL_end, FAIL_create, of status_return_e, 1 on success;
+int VID_SetMode(modenum_t modenum)
 {
-    CONS_Printf("VID_SetMode(%i)\n",modeNum);
+    boolean set_fullscreen = (modenum.modetype == MODE_fullscreen);
 
     if (!graphics_started)
         cv_scr_depth.value = 16;            // quick hack as config hasn't been parsed
@@ -239,10 +245,14 @@ int VID_SetMode(int modeNum)
 
     vid.bitpp = 32;
     vid.bytepp = 4;
-    vid.width = modeList[modeNum].w;
-    vid.height = modeList[modeNum].h;
+    vid.width = modeList[modenum.index].w;
+    vid.height = modeList[modenum.index].h;
+    vid.widthbytes = vid.width * vid.bytepp;
+
+    GenPrintf( EMSG_info, "VID_SetMode(%s,%i) %dx%d\n",
+	       modetype_string[modenum.modetype], modenum.index, vid.width, vid.height);
+
     // OpenGL only
-    vid.widthbytes = 0;
     vid.direct_rowbytes = 0;
     vid.direct_size = 0;
     vid.ybytes = 0;
@@ -250,17 +260,29 @@ int VID_SetMode(int modeNum)
     vid.display = NULL;
     vid.screen1 = NULL;
 
+    SetDSpMode(vid.width, vid.height, set_fullscreen);
+
+    if( rendermode = render_opengl )
+    {
+        // OpenGL only
+        vid.direct_rowbytes = 0;
+        vid.direct_size = 0;
+        vid.ybytes = 0;
+        vid.screen_size = 0;
+        vid.display = NULL;
+        vid.screen1 = NULL;
+        OglMacSurface(&mainWindow, vid.width, vid.height, set_fullscreen);
+    }
+    else
+    {
+        // NOT FINISHED ???
+    }
+
     vid.recalc = true;
-    vid.modenum = modeNum;
-    vid.fullscreen = cv_fullscreen.value;
+    vid.modenum = modenum;
+    vid.fullscreen = set_fullscreen;
 
-    SetDSpMode(modeList[modeNum].w, modeList[modeNum].h, cv_fullscreen.value);
-
-    OglMacSurface(&mainWindow, vid.width, vid.height, cv_fullscreen.value);
-
-    CONS_Printf("    VID_SetMode done\n");
-
-    return modeNum;
+    return 1;
 }
 
 int GetTextureMemoryUsed(void)
@@ -268,18 +290,47 @@ int GetTextureMemoryUsed(void)
     return 0;
 }
 
-void I_StartupGraphics(void)
+// NOT FINISHED
+void I_FinishUpdate(void)
 {
+    if(rendermode==render_soft)
+    {
+    }
+    else
+    {
+        HWD.pfnFinishUpdate();
+    }
+}
+
+
+// Initialize the graphics system, with a initial window.
+void I_StartupGraphics( void )
+{
+    modenum_t  initialmode = {MODE_window,0};  // the initial mode
+    // pre-init by V_Init_VideoControl
+
     I_StartupMouse();
-
-    if(graphics_started)
-        return;
-
-    CONS_Printf("I_StartupGraphics...\n");
 
     VID_PrepareModeList();
 
-    menu_height = GetMBarHeight();
+    if( Set_VidMode( initialmode ) < 0 )   goto abort_error
+   
+    graphics_started = 1;
+    if( verbose )
+        GenPrintf(EMSG_ver, "StartupGraphics completed\n" );
+    return;
+
+abort_error:
+    // cannot return without a display screen
+    I_Error("StartupGraphics Abort\n");
+}
+
+
+// Called to start rendering graphic screen according to the request switches.
+// Fullscreen modes are possible.
+void I_RequestFullGraphics( byte select_fullscreen )
+{
+    modenum_t  initialmode;  // the initial mode
 
     HWD.pfnInit             = hwSym("Init");
     HWD.pfnFinishUpdate     = hwSym("FinishUpdate");
@@ -293,20 +344,28 @@ void I_StartupGraphics(void)
     HWD.pfnClearMipMapCache = hwSym("ClearMipMapCache");
     HWD.pfnSetSpecialState  = hwSym("SetSpecialState");
     HWD.pfnSetTransform     = hwSym("SetTransform");
-    HWD.pfnDrawMD2                      = hwSym("DrawMD2");
-    HWD.pfnSetPalette           = OglMacSetPalette;
+    HWD.pfnDrawMD2          = hwSym("DrawMD2");
+    HWD.pfnSetPalette       = OglMacSetPalette;
     HWD.pfnGetTextureUsed   = GetTextureMemoryUsed;
 
-    VID_SetMode(3);
-
     textureformatGL = GL_RGBA;
-    graphics_started = 1;
     rendermode = render_opengl;
 
-    CV_RegisterVar (&cv_vidwait);
-    CONS_Printf("\tI_StartupGraphics done\n");
+    allow_fullscreen = true;
+    mode_fullscreen = select_fullscreen;  // initial startup
+
+    initialmode = VID_GetModeForSize( vid.width, vid.height,
+		   (select_fullscreen ? MODE_fullscreen: MODE_window));
+
+    VID_SetMode( initialmode );
+
+    graphics_started = 1;
+
+    if( verbose )
+        GenPrintf(EMSG_ver, "RequestFullGraphics completed\n" );
     return;
 }
+
 
 void I_ShutdownGraphics(void)
 {

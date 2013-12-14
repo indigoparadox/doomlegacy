@@ -77,7 +77,6 @@
 #include "g_game.h"
 
 boolean showkey=0; // force to no 19990118 by Kin
-int vid_modenum = 0; // index for vid mode list 19990119 by Kin
 
 #ifdef EXPAND_BUFFER_ENABLE
 // incomplete and unused
@@ -266,13 +265,13 @@ void I_GetEvent(void)
       doom_ev.type = ev_keydown;
       if (I_GIITranslateKey(&ggi_ev.key, &doom_ev) >0 )
         D_PostEvent(&doom_ev);
-      //fprintf(stderr,"p:%4x\n",doom_ev.data1);
+      //GenPrintf( EMSG_debug,"p:%4x\n",doom_ev.data1);
       break;
     case evKeyRelease:
       doom_ev.type = ev_keyup;
       if (I_GIITranslateKey(&ggi_ev.key, &doom_ev) >0 )
         D_PostEvent(&doom_ev);
-      //fprintf(stderr,"r:%4x\n",doom_ev.data1);
+      //GenPrintf( EMSG_debug,"r:%4x\n",doom_ev.data1);
       break;
     case evPtrRelative:
       m_x += ggi_ev.pmove.x;
@@ -385,7 +384,7 @@ void I_ShutdownGraphics(void)
   ggiExit();
 }
 
-#define MAX_GGIMODES 18
+#define MAX_GGIMODES 19
 
 const ggi_coord temp_res[MAX_GGIMODES]= {
         {320,200},
@@ -409,64 +408,85 @@ const ggi_coord temp_res[MAX_GGIMODES]= {
         {1600,1200}
 };
 
-ggi_coord real_res[MAX_GGIMODES+1];
+int num_vidmodes;  // number of vidmodes
+ggi_mode vidmodes[MAX_GGIMODES+1];      // the ggi mode
+ggi_coord vidmode_res[MAX_GGIMODES+1];  // the actual resolution
 char vidname[MAX_GGIMODES+1][10];
-ggi_mode vidmodes[MAX_GGIMODES+1];
-int rescount;
 
-// dummy for test 19990221 by Kin
-int   VID_NumModes(void)
+// return number of fullscreen or window modes, for listing
+// modetype is of modetype_e
+range_t  VID_ModeRange( byte modetype )
 {
-  return rescount;
+    range_t  mrange = { 1, 1 };  // first is always 1
+    mrange.last = num_vidmodes;
+    return mrange;
 }
 
-char  *VID_GetModeName(int modenum)
+
+char * VID_GetModeName( modenum_t modenum )
 {
-  return vidname[modenum];
+    // fullscreen modes  1..
+    return vidname[modenum.index-1];
 }
 
-int VID_GetModeForSize( int w, int h)
+modenum_t  VID_GetModeForSize( int w, int h, byte modetype )
 {
-  int i;
-
-  for (i=0; i<rescount;i++) {
-    if(real_res[i].x==w) {
-      if(real_res[i].y==h) {
-        return i;
+  modenum_t  modenum = { MODE_NOP, 0 };
+  int bestdist = MAXINT;
+  int best, tdist, i;
+   
+  if( modetype == MODE_fullscreen )
+  {
+      // fullscreen modes
+      // find exact match
+      for (i=0; i<num_vidmodes;i++) {
+	  if(vidmode_res[i].x==w && vidmode_res[i].y==h )  goto found_i;
       }
-    }
-  }
 
-  for (i=0; i<rescount;i++) {
-    if(real_res[i].x>=w) {
-      if(real_res[i].y>=h) {
-        break;
+      // find next larger
+      for (i=0; i<num_vidmodes;i++) {
+	  if(vidmode_res[i].x>=w  &&  vidmode_res[i].y>=h )  goto found_i;
       }
-    }
   }
+  // not found
+  return modenum;
 
-  if(i<rescount) {
-    return i;
-  }
-
-  return 0;
+found_i:
+  modenum.index = i + 1;
+  modenum.modetype = modetype;
+  return modenum;
 }
 
-// May be called more than once, to change modes and switches
+// Called once. Init with basic error message screen.
 void I_StartupGraphics(void)
 {
-  char * req_errmsg = NULL;
-  byte  request_bitpp = 0;
-  byte  alt_request_bitpp = 0;
-  int i;
-
-  fprintf(stderr, "I_StartupGraphics:");
+    // pre-init by V_Init_VideoControl
 
   if (ggiInit())
     I_Error("Failed to initialise GGI\n");
 
   if (!(screen = ggiOpen(NULL))) // Open default visual
     I_Error("Failed to get default visual\n");
+
+  // ??? No window mode
+  
+  vid.recalc = true;
+  graphics_started = 1;
+  if( verbose )
+      GenPrintf(EMSG_ver, "StartupGraphics completed\n" );
+  return;
+}
+
+
+// Called to start rendering graphic screen according to the request switches.
+// Fullscreen modes are possible.
+void I_RequestFullGraphics( byte select_fullscreen )
+{
+  char * req_errmsg = NULL;
+  byte  request_bitpp = 0;
+  byte  alt_request_bitpp = 0;
+  int i;
+
 
 #ifdef MULTIPLY_ENABLE
   { // Check for screen enlargement
@@ -494,7 +514,7 @@ void I_StartupGraphics(void)
      }else{
 	 // Use 8 bit and do the palette lookup.
 	 if( verbose )
-	     fprintf(stderr,"Native %i bpp rejected\n", vid.bitpp );
+	     GenPrintf( EMSG_ver,"Native %i bpp rejected\n", vid.bitpp );
 	 request_bitpp = 8;
      }
      break;
@@ -528,40 +548,42 @@ void I_StartupGraphics(void)
        : (request_bpp==24)? GT_24BIT
        : (request_bpp==32)? GT_32BIT ;
     // check available modes
-    rescount=0;
+    num_vidmodes=0;
     for(i=0;i<MAX_GGIMODES;i++) {
-      if(!ggiCheckSimpleMode(screen,temp_res[i].x,temp_res[i].y,2,
-			     gt_parm, &vidmodes[rescount]))
+      ggi_mode * vmp = &vidmodes[num_vidmodes];
+      int rx = temp_res[i];
+      int ry = temp_res[i];
+      if(!ggiCheckSimpleMode(screen, rx,ry, 2, gt_parm, vmp))
       {
-	memcpy(&real_res[rescount],&temp_res[i],sizeof(ggi_coord));
-        sprintf(vidname[rescount],"%4dx%4d",temp_res[i].x,temp_res[i].y);
-        fprintf(stderr,"mode %s\n",vidname[rescount]);
-        rescount++;
+	memcpy(&vidmode_res[num_vidmodes],&temp_res[i],sizeof(ggi_coord));
+        sprintf(vidname[num_vidmodes],"%dx%d",rx,ry);
+        GenPrintf( EMSG_info,"mode %s\n",vidname[num_vidmodes]);
+        num_vidmodes++;
       } else {
-        if(GT_DEPTH(vidmodes[rescount].graphtype)==(highcolor?15:8)) {
-          //if((vidmodes[rescount].visible.x>temp_res[i-1].x &&
-          //    vidmodes[rescount].visible.x<temp_res[i+1].x &&
-          //    vidmodes[rescount].visible.y>=temp_res[i-1].y) ||
-          //   (vidmodes[rescount].visible.y>temp_res[i-1].y &&
-          //    vidmodes[rescount].visible.y<temp_res[i+1].y &&
-          //    vidmodes[rescount].visible.x>=temp_res[i-1].x)) {
-          if(vidmodes[rescount].visible.x==temp_res[i].x &&
-             vidmodes[rescount].visible.y==temp_res[i].y) {
-            real_res[rescount].x = vidmodes[rescount].visible.x;
-            real_res[rescount].y = vidmodes[rescount].visible.y;
-            sprintf(vidname[rescount],"%4dx%4d",
-                    real_res[rescount].x,real_res[rescount].y);
-            fprintf(stderr,"suggested mode %s\n",vidname[rescount]);
-            rescount++;
+        if(GT_DEPTH(vmp->graphtype)==(highcolor?15:8)) {
+          //if((vmp->.visible.x>temp_res[i-1].x &&
+          //    vmp->visible.x<temp_res[i+1].x &&
+          //    vmp->visible.y>=temp_res[i-1].y) ||
+          //   (vmp->visible.y>temp_res[i-1].y &&
+          //    vmp->visible.y<temp_res[i+1].y &&
+          //    vmp->visible.x>=temp_res[i-1].x)) {
+          if(vmp->visible.x==rx &&
+             vmp->visible.y==ry) {
+            vidmode_res[num_vidmodes].x = vmp->visible.x;
+            vidmode_res[num_vidmodes].y = vmp->visible.y;
+            sprintf(vidname[num_vidmodes],"%dx%d",
+                    vidmode_res[num_vidmodes].x,vidmode_res[num_vidmodes].y);
+            GenPrintf( EMSG_info,"suggested mode %s\n",vidname[num_vidmodes]);
+            num_vidmodes++;
           }
         }
       }
     }
-    if( rescount )  goto found_modes;
+    if( num_vidmodes )  goto found_modes;
     if( request_bitpp == 8 )  break;
     if(req_drawmode == REQ_specific)
     {
-      fprintf(stderr,"No %i bpp modes\n", req_bitpp );
+      GenPrintf( EMSG_warn,"No %i bpp modes\n", req_bitpp );
       goto abort_error;
     }
     if( alt_request_bitpp )
@@ -571,12 +593,13 @@ void I_StartupGraphics(void)
 	request_bitpp = alt_request_bitpp;
 	continue;
       }
-      fprintf(stderr,"No %s modes\n", req_errmsg );
+      GenPrintf( EMSG_warn,"No %s modes\n", req_errmsg );
     }
     request_bitpp = 8;  // default last attempt
   }
-  if(!rescount) {
-    I_Error("No video modes available!");
+  if(num_vidmodes == 0) {
+    GenPrintf( EMSG_error, "No video modes available!");
+    goto abort_error;
   }
 
 found_modes:
@@ -593,24 +616,31 @@ found_modes:
   ggiSetEventMask(screen, ev_mask);
   // added for 1.27 19990220 by Kin
   graphics_started = 1;
+  if( verbose )
+        GenPrintf(EMSG_ver, "StartupGraphics completed\n" );
   return;
 
 abort_error:
     // cannot return without a display screen
-    I_Error("StartupGraphics Abort\n");
+    I_Error("RequestFullGraphics Abort\n");
 }
 
-int VID_SetMode(int modenum)
+
+
+int VID_SetMode(modenum_t modenum)
 {
-  if (ggiSetMode(screen,&vidmodes[modenum])) {
-    I_Error("Failed to set mode");
-//    return 0;
+  int mi = modenum_index - 1;
+  if( mi >= num_vidmodes || mi < 0 )   goto fail_end;
+
+  if (ggiSetMode(screen,&vidmodes[mi])) {
+    I_SoftError("Failed to set mode");
+    return  FAIL_create;
   }
    
   // Commit to the new mode
 
-  vid.width = real_res[modenum].x;
-  vid.height = real_res[modenum].y;
+  vid.width = vidmode_res[mi].x;
+  vid.height = vidmode_res[mi].y;
   vid.widthbytes = vid.width * vid.bytepp;
   vid.ybytes = vid.width * vid.bytepp;
   vid.screen_size = vid.ybytes * vid.height;
@@ -638,4 +668,7 @@ int VID_SetMode(int modenum)
   //out_buffer = (byte*)screens[0];
 #endif
   return 1;
+
+fail_end:
+  return FAIL_end;
 }

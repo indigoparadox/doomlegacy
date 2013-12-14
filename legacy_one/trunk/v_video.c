@@ -537,7 +537,20 @@ void V_Init_VideoControl( void )
     // default size for startup
     vid.width = INITIAL_WINDOW_WIDTH;
     vid.height = INITIAL_WINDOW_HEIGHT;
+   
+    vid.display = NULL;
+    vid.screen1 = NULL;
+    vid.buffer = NULL;
+    vid.recalc = true;
 
+    vid.bytepp = 1; // not optimized yet...
+    vid.bitpp = 8;
+
+    vid.modenum = (modenum_t){ MODE_window, 0 };
+    mode_fullscreen = false;
+
+    rendermode = render_soft;
+   
     CV_RegisterVar(&cv_vidwait);
     CV_RegisterVar(&cv_ticrate);
     // Needs be done for config loading
@@ -2024,6 +2037,7 @@ void V_DrawCharacter(int x, int y, byte c)
          return;
     }
 
+    // hufont only has uppercase
     c = toupper(c) - HU_FONTSTART;
     if (c >= HU_FONTSIZE)
         return;
@@ -2100,6 +2114,7 @@ void V_DrawString(int x, int y, int option, char *string)
             continue;
         }
 
+        // hufont only has uppercase
         c = toupper(c) - HU_FONTSTART;
         if (c < 0 || c >= HU_FONTSIZE)
         {
@@ -2157,6 +2172,7 @@ void V_DrawCenteredString(int x, int y, int option, char *string)
             continue;
         }
 
+        // hufont only has uppercase
         c = toupper(c) - HU_FONTSTART;
         if (c < 0 || c >= HU_FONTSIZE)
         {
@@ -2195,6 +2211,7 @@ int V_StringWidth(char *string)
     // variable width font, total up chars in string
     for (i = 0; i < ln; i++)
     {
+        // hufont only has uppercase
         c = toupper(string[i]) - HU_FONTSTART;
         if (c < 0 || c >= HU_FONTSIZE)
             w += 4;
@@ -2237,6 +2254,7 @@ void V_DrawTextB(char *text, int x, int y)
         }
         else
         {
+	    // FontB only has uppercase
             p = W_CachePatchNum(FontBBaseLump + toupper(c) - 33, PU_CACHE);  // endian fix
             V_DrawScaledPatch(x, y, p);
             x += p->width - 1;
@@ -2258,6 +2276,7 @@ void V_DrawTextBGray(char *text, int x, int y)
         }
         else
         {
+	    // FontB only has uppercase
             p = W_CachePatchNum(FontBBaseLump + toupper(c) - 33, PU_CACHE);  // endian fix
             V_DrawMappedPatch(x, y, p, graymap);
             x += p->width - 1;
@@ -2288,6 +2307,7 @@ int V_TextBWidth(char *text)
         }
         else
         {
+	    // FontB only has uppercase
             p = W_CachePatchNum(FontBBaseLump + toupper(c) - 33, PU_CACHE);  // endian fix
             width += p->width - 1;
         }
@@ -2383,7 +2403,6 @@ void V_Setup_VideoDraw(void)
      default:
         I_Error ("V_Setup_VideoDraw invalid bits per pixel: %d\n", vid.bitpp);
     }
-    vid.widthbytes = vid.width * vid.bytepp;  // to save multiplies
 
 #ifdef ENABLE_DRAWEXT
     //fab highcolor

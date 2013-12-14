@@ -345,6 +345,7 @@ int W_LoadWadFile (char *filename)
 }
 
 
+
 // !!!NOT CHECKED WITH NEW WAD SYSTEM
 //
 // W_Reload
@@ -1008,6 +1009,8 @@ uint64_t  W_lump_checksum( void* lumpptr )
 }
 
 
+#if 0
+// Makes DOS assumptions
 // --------------------------------------------------------------------------
 // W_Profile
 // --------------------------------------------------------------------------
@@ -1182,3 +1185,4 @@ int W_AddFile (char *filename)
     return 1;
 }
 */
+#endif

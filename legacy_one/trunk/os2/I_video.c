@@ -77,11 +77,6 @@ static int windowedModes[MAXWINMODES+1][2] = {
    {1600, 1200},
 };
 
-int   VID_NumModes( void);
-int   VID_GetModeForSize( int w, int h);
-char* VID_GetModeName( int modenum);
-int   VID_SetMode( int modenum);
-
 
 //
 // I_StartFrame
@@ -195,77 +190,117 @@ void I_ShutdownGraphics(void)
 //
 void I_StartupGraphics(void)
 {
-    CONS_Printf("I_StartupGraphics\n");
+    modenum_t  initialmode = {MODE_window,0};  // the initial mode
+    // pre-init by V_Init_VideoControl
 
-    if ( ! graphics_started )
+    if (M_CheckParm( "-mgl"))
     {
-        if (M_CheckParm( "-mgl"))
-        {
 #if 0
-	    if (!MGL_init("..\\..\\..\\", NULL))
+        if (!MGL_init("..\\..\\..\\", NULL))
 	        MGL_fatalError("MGL init failed");
-	    MGL_enableAllDrivers();
+        MGL_enableAllDrivers();
 	    //if ((mglMode = MGL_findMode(SCREENWIDTH, SCREENHEIGHT, 8)) == -1)
 	    //  MGL_fatalError("Graphics mode not found");
 #endif
-	} else {
-	    InitDIVE( pmData);
-	}
-        CV_RegisterVar (&cv_vidwait);
-        //added:03-01-98: register exit code for graphics
-        I_AddExitFunc(I_ShutdownGraphics);
-        graphics_started = true;
+    } else {
+        InitDIVE( pmData);
     }
+    CV_RegisterVar (&cv_vidwait);
+    //added:03-01-98: register exit code for graphics
+    I_AddExitFunc(I_ShutdownGraphics);
+    graphics_started = true;
 
     // Has fixed vidmode list
     // set the default video mode
-    VID_SetMode(0);
+    if( VID_SetMode(0) < 0 )  goto abort_error;
 
-    CONS_Printf("I_StartupGraphics: DONE\n");
+    if( verbose )
+        GenPrintf(EMSG_ver, "StartupGraphics completed\n" );
+    return;
+
+abort_error:
+    // cannot return without a display screen
+    I_Error("StartupGraphics Abort\n");
 }
 
-//added:30-01-98: return number of video modes in pvidmodes list
-int VID_NumModes(void)
+// Called to start rendering graphic screen according to the request switches.
+// Fullscreen modes are possible.
+void I_RequestFullGraphics( byte select_fullscreen )
 {
-    return MAXWINMODES;
+    modenum_t  initialmode;
+
+    mode_fullscreen = select_fullscreen;
+    initialmode = VID_GetModeForSize( vid.width, vid.height, select_fullscreen );
+    VID_SetMode( initialmode );
+
+    graphics_started = true;
+    vid.recalc = true;
+
+    if( verbose )
+        GenPrintf(EMSG_ver, "StartupGraphics completed\n" );
+    return;
+
+abort_error:
+    // cannot return without a display screen
+    I_Error("RequestFullGraphics Abort\n");
+}
+   
+// return number of fullscreen or window modes, for listing
+// modetype is of modetype_e
+range_t  VID_ModeRange( byte modetype )
+{
+    range_t  mrange = { 1, 1 };  // first is always 1
+    mrange.last = MAXWINMODES;
+    return mrange;
 }
 
-//added:03-02-98: return a video mode number from the dimensions
-int VID_GetModeForSize( int w, int h)
+// rmodetype is of modetype_e
+// Returns MODE_NOP when none found
+modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
 {
-    int i;
-
-   CONS_Printf("VID_GetModeForSize: %dx%d\n", w, h);
-
-    for (i=1; i<=MAXWINMODES;i++)
-        if(windowedModes[i][0]==w && windowedModes[i][1]==h)
-            return i;
-
-   CONS_Printf("VID_GetModeForSize: %dx%d not found\n", w, h);
-
-    return 0;
+    modenum_t  modenum = { MODE_NOP, 0 };
+    int bestdist = MAXINT;
+    int best, tdist, i;
+    
+    // fullscreen and windowed modes, 1..
+    best = 2;  // default
+    for (i = 0; i <= MAXWINMODES; i++)
+    {
+        tdist = abs(windowedModes[i][0] - rw) + abs(windowedModes[i][1] - rh);
+        // find closest dist
+        if( bestdist > tdist )
+        {
+	    bestdist = tdist;
+	    best = i;
+	    if( tdist == 0 )  break;   // found exact match
+	}
+    }
+    modenum.index = best;  // 1..
+    modenum.modetype = rmodetype;
+done:
+    return modenum;
 }
 
 //added:30-01-98:return the name of a video mode
-char *VID_GetModeName (int modenum)
+char * VID_GetModeName( modenum_t modenum )
 {
-   sprintf( vidModeName[modenum], "%dx%d",
-            windowedModes[modenum][0],
-            windowedModes[modenum][1]);
-   //CONS_Printf("VID_GetModeName: %s\n", vidModeName[modenum]);
-   return vidModeName[modenum];
+   int mi = modenum.index;
+   sprintf( vidModeName[mi], "%dx%d",
+            windowedModes[mi][0],
+            windowedModes[mi][1]);
+   return vidModeName[mi];
 }
 
 // ========================================================================
 // Sets a video mode
 // ========================================================================
-int VID_SetMode (int modenum)  //, unsigned char *palette)
+int VID_SetMode( modenum_t modenum )
 {
-   CONS_Printf("VID_SetMode(%d)\n", modenum);
+    boolean set_fullscreen = (modenum.modetype == MODE_fullscreen);
 
-   if (modenum >= MAXWINMODES) {
-       printf("VID_SetMode modenum >= MAXWINMODES\n");
-       return -1;
+   if (modenum.index > MAXWINMODES) {
+       GenPrintf( EMSG_error, "VID_SetMode modenum %i >= MAXWINMODES\n", modenum.index);
+       return FAIL_end;
    }
 /*
    if (pmData->pbBuffer) { // init code only once
@@ -274,10 +309,10 @@ int VID_SetMode (int modenum)  //, unsigned char *palette)
    }
 */
    // initialize vidbuffer size for setmode
-   vid.width  = windowedModes[modenum][0];
-   vid.height = windowedModes[modenum][1];
+   vid.width  = windowedModes[modenum.index][0];
+   vid.height = windowedModes[modenum.index][1];
    //vid.aspect = pcurrentmode->aspect;
-   printf("VID_SetMode %dx%d\n", vid.width, vid.height);
+   GenPrintf( EMSG_info, "Setting mode: %dx%d\n", vid.width, vid.height);
 
    // adjust window size
    pmData->ulWidth = vid.width;
@@ -296,7 +331,7 @@ int VID_SetMode (int modenum)  //, unsigned char *palette)
 
    //added:20-01-98: recalc all tables and realloc buffers based on
    //                vid values.
-   vid.recalc   = 1;
+   vid.recalc = 1;
    vid.bytepp = 1;
    vid.bitpp = 8;
    vid.drawmode = DRAW8PAL;
@@ -307,6 +342,5 @@ int VID_SetMode (int modenum)  //, unsigned char *palette)
    vid.screen1 = vid.buffer + vid.screen_size;
    vid.modenum  = modenum;
 
-   printf("VID_SetMode(%d) DONE\n", modenum);
    return 1;
 }

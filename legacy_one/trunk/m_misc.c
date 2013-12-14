@@ -224,6 +224,9 @@ char * FIL_Filename_of( char * nstr )
     return &nstr[i+1];
 }
 
+#if 0
+// [WDJ] Unused, was only used in old W_AddFile, makes DOS assumptions
+// Uppercase only
 //  Creates a resource name (max 8 chars 0 padded) from a file path
 //
 void FIL_ExtractFileBase ( char*  path,  char* dest )
@@ -253,6 +256,7 @@ void FIL_ExtractFileBase ( char*  path,  char* dest )
         *dest++ = toupper((int)*src++);
     }
 }
+#endif
 
 
 //  Returns true if a filename extension is found

@@ -88,7 +88,19 @@ typedef enum {false, true} boolean;
 
 
 typedef uint8_t    byte;
-typedef uint32_t  tic_t;
+typedef uint32_t   tic_t;
+
+// Return values
+// Positive are positive indicators
+// 0 is NULL result
+// Negative are failure indicators
+typedef enum {
+    FAIL = -1,   // general fail
+    FAIL_end = -2,  // end of valid input
+    FAIL_invalid_input = -3,  // invalid input to the function
+    FAIL_create = -100,
+    FAIL_memory = -101,
+} status_return_e;
 
 
 #ifdef __APPLE_CC__

@@ -143,6 +143,9 @@ const static Uint32  surfaceFlags_fullscreen = SDL_HWSURFACE|SDL_HWPALETTE|SDL_D
 #define MAXWINMODES (8)
 // windowed video modes from which to choose from.
 static int windowedModes[MAXWINMODES+1][2] = {
+   // hidden from display
+    {INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT},  // initial mode
+   // public  1..
     {MAXVIDWIDTH /*1600*/, MAXVIDHEIGHT/*1200*/},
     {1280, 1024},
     {1024, 768},
@@ -150,9 +153,7 @@ static int windowedModes[MAXWINMODES+1][2] = {
     {640, 480},
     {512, 384},
     {400, 300},
-    {320, 200},
-   // hidden from display
-    {INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT}  // initial mode
+    {320, 200}
 };
 
 
@@ -383,76 +384,90 @@ void I_SetPalette(RGBA_t* palette)
 }
 
 
-// return number of fullscreen + X11 modes
-int   VID_NumModes(void)
+// modetype is of modetype_e
+range_t  VID_ModeRange( byte modetype )
 {
-    if(mode_fullscreen)
-        return numVidModes - firstEntry;
-    else
-        return MAXWINMODES;
+    range_t  mrange = { 1, 1 };  // first is always 1
+    mrange.last = (modetype == MODE_fullscreen) ?
+     numVidModes - firstEntry  // fullscreen
+     : MAXWINMODES;  // windows
+    return mrange;
 }
 
-char  *VID_GetModeName(int modeNum)
+char * VID_GetModeName( modenum_t modenum )
 {
-    if(mode_fullscreen)
+    if( modenum.modetype == MODE_fullscreen )
     {
-        // fullscreen modes
-        modeNum += firstEntry;
-        if(modeNum >= numVidModes)
-            return NULL;
+        // fullscreen modes  1..
+        int mi = modenum.index - 1 + firstEntry;
+        if(mi >= numVidModes)   goto fail;
 
-        sprintf(&vidModeName[modeNum][0], "%dx%d",
-                modeList[modeNum]->w,
-                modeList[modeNum]->h);
+        sprintf(&vidModeName[modenum.index][0], "%dx%d",
+                modeList[mi]->w,
+                modeList[mi]->h);
     }
     else
     {
-        // windowed modes
-        if(modeNum > MAXWINMODES)
-            return NULL;
+        // windowed modes  1.., sometimes 0
+        if(modenum.index > MAXWINMODES)   goto fail;
 
-        sprintf(&vidModeName[modeNum][0], "win %dx%d",
-                windowedModes[modeNum][0],
-                windowedModes[modeNum][1]);
+        sprintf(&vidModeName[modenum.index][0], "win %dx%d",
+                windowedModes[modenum.index][0],
+                windowedModes[modenum.index][1]);
     }
-    return &vidModeName[modeNum][0];
+    return &vidModeName[modenum.index][0];
+fail:
+    return NULL;
 }
 
-int VID_GetModeForSize(int w, int h)
+// rmodetype is of modetype_e
+// Returns MODE_NOP when none found
+modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
 {
-    int matchMode, i;
+    modenum_t  modenum = { MODE_NOP, 0 };
+    int bestdist = MAXINT;
+    int best, tdist, i;
 
-    if(mode_fullscreen)
+    if( rmodetype == MODE_fullscreen )
     {
-        matchMode = numVidModes-1;  // default is smallest mode
+        if( numVidModes == 0 )  goto done;
+        best = numVidModes-1;  // default is smallest mode
 
+        // search SDL modelist
         for(i=firstEntry; i<numVidModes; i++)
         {
-            if(modeList[i]->w == w &&
-               modeList[i]->h == h)
-            {
-                matchMode = i;
-                break;
-            }
+	    tdist = abs(modeList[i]->w - rw) + abs(modeList[i]->h - rh);
+	    // find closest dist
+	    if( bestdist > tdist )
+	    {
+	        bestdist = tdist;
+	        best = i;
+	        if( tdist == 0 )  break;   // found exact match
+	    }
         }
-        matchMode -= firstEntry;
+        modenum.index = best - firstEntry + 1;  // 1..
     }
     else
     {
-        matchMode = MAXWINMODES-1;  // default is smallest mode
+        best = MAXWINMODES;  // default is smallest mode
 
-        for(i=0; i<MAXWINMODES; i++)
+        // window mode index returned 1..
+        for(i=1; i<=MAXWINMODES; i++)
         {
-            if(windowedModes[i][0] == w &&
-               windowedModes[i][1] == h)
-            {
-                matchMode = i;
-                break;
-            }
+	    tdist = abs(windowedModes[i][0] - rw) + abs(windowedModes[i][1] - rh);
+	    // find closest dist
+	    if( bestdist > tdist )
+	    {
+	        bestdist = tdist;
+	        best = i;
+	        if( tdist == 0 )  break;   // found exact match
+	    }
         }
+        modenum.index = best; // 1..
     }
-
-    return matchMode;
+    modenum.modetype = rmodetype;
+done:
+    return modenum;
 }
 
 
@@ -559,21 +574,25 @@ static void  VID_SetMode_vid( int req_width, int req_height, int reqflags )
  
 
 // SDL version of VID_SetMode
-int VID_SetMode(int modeNum)
+// Returns FAIL_end, FAIL_create, of status_return_e, 1 on success;
+int VID_SetMode(modenum_t modenum)
 {
     int req_width, req_height;
-    CONS_Printf("VID_SetMode(%i)\n",modeNum);
+    boolean set_fullscreen = (modenum.modetype == MODE_fullscreen);
+
+    GenPrintf( EMSG_info, "VID_SetMode(%s,%i)\n",
+	       modetype_string[modenum.modetype], modenum.index);
 
     doUngrabMouse();
 
     vid.recalc = true;
 
-    if(mode_fullscreen)
+    if( set_fullscreen )
     {
-        modeNum += firstEntry;
-
-        req_width = modeList[modeNum]->w;
-        req_height = modeList[modeNum]->h;
+        // fullscreen
+        int mi = modenum.index - 1 + firstEntry;
+        req_width = modeList[mi]->w;
+        req_height = modeList[mi]->h;
 
         if(render_soft == rendermode)
         {
@@ -582,16 +601,17 @@ int VID_SetMode(int modeNum)
         }
         else // (render_soft == rendermode)
         {
-            if(!OglSdlSurface(req_width, req_height, mode_fullscreen))
+            if(!OglSdlSurface(req_width, req_height, true))
 	        goto fail;
         }
-        vid.modenum = modeNum-firstEntry;
     }
-    else //(mode_fullscreen)
+    else
     {
-        // not fullscreen
-        req_width = windowedModes[modeNum][0];
-        req_height = windowedModes[modeNum][1];
+        // not fullscreen, window, 1..
+	// modenum == 0 is INITIAL_WINDOW_WIDTH
+        int mi = modenum.index;
+        req_width = windowedModes[mi][0];
+        req_height = windowedModes[mi][1];
 
         if(render_soft == rendermode)
         {
@@ -600,12 +620,12 @@ int VID_SetMode(int modeNum)
         }
         else //(render_soft == rendermode)
         {
-            if(!OglSdlSurface(req_width, req_height, mode_fullscreen))
+            if(!OglSdlSurface(req_width, req_height, 0))
 	        goto fail;
         }
-        vid.modenum = modeNum;
     }
-    vid.fullscreen = mode_fullscreen;
+    vid.modenum = modenum;
+    vid.fullscreen = set_fullscreen;
     vid.widthbytes = vid.width * vid.bytepp;
 
     I_StartupMouse();
@@ -617,10 +637,12 @@ int VID_SetMode(int modeNum)
 
 fail:
     I_Error("VID_SetMode failed to provide display\n");
-    return 0;   // dummy
+    return  FAIL_create;
 }
 
 
+// Voodoo card has video switch, produces fullscreen 3d graphics,
+// and we cannot use window mode with it.
 boolean  have_voodoo = false;
 
 // Have to determine how to detect a voodoo card
@@ -636,24 +658,14 @@ boolean detect_voodoo( void )
 
 
 // Initialize the graphics system, with a initial window.
-void I_StartupGraphics()
+void I_StartupGraphics( void )
 {
-    int  imode;
+    modenum_t  initialmode = {MODE_window,0};  // the initial mode
+    // pre-init by V_Init_VideoControl
 
-    // default size for startup
-    vid.width = INITIAL_WINDOW_WIDTH;
-    vid.height = INITIAL_WINDOW_HEIGHT;
-   
-    vid.display = NULL;
-    vid.screen1 = NULL;
-    vid.buffer = NULL;
-    vid.recalc = true;
-
-    mode_fullscreen = 0;
     request_bitpp = 8;
-    imode = MAXWINMODES;  // the initial mode
    
-    if( VID_SetMode( imode ) == 0 )
+    if( VID_SetMode( initialmode ) <= 0 )
        goto abort_error;
 
     SDL_ShowCursor(SDL_DISABLE);
@@ -676,9 +688,6 @@ void I_RequestFullGraphics( byte select_fullscreen )
     SDL_PixelFormat    req_format;
     char * req_errmsg = NULL;
     byte  alt_request_bitpp = 0;
-
-//    if(graphics_started)
-//        return;
 
     // Get video info for screen resolutions
     // even if I set vid.bytepp and highscreen properly it does seem to
@@ -830,7 +839,6 @@ found_modes:
        GenPrintf( EMSG_ver, "\nFound %d Video Modes at %i bpp\n", numVidModes, vid.bitpp);
 
     allow_fullscreen = true;
-
     mode_fullscreen = select_fullscreen;  // initial startup
 
 // [WDJ] To be safe, make it conditional
@@ -873,6 +881,7 @@ found_modes:
 	   vid.height = 480;
        }
        vid.fullscreen = mode_fullscreen;
+       vid.widthbytes = vid.width * vid.bytepp;
 
        if( verbose>1 )
 	  GenPrintf( EMSG_ver, "OglSdlSurface(%i,%i,%i)\n", vid.width, vid.height, mode_fullscreen);
@@ -886,8 +895,9 @@ found_modes:
 
     if(render_soft == rendermode)
     {
-        vid.fullscreen = 0;
-        VID_SetMode_vid( vid.width, vid.height, surfaceFlags ); // window
+        modenum_t initialmode = VID_GetModeForSize(vid.width, vid.height,
+		   (select_fullscreen ? MODE_fullscreen: MODE_window));
+        VID_SetMode( initialmode );
         if(vidSurface == NULL)
         {
             GenPrintf( EMSG_error,"Could not set vidmode\n");

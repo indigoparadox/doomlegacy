@@ -116,11 +116,14 @@ static  char        names[MAX_EXTRA_MODES][10];
 
 //static  int     totalvidmem;
 
-int     numvidmodes;   //total number of DirectDraw display modes
-vmode_t *pvidmodes;    //start of videomodes list.
-vmode_t *pcurrentmode; // the current active videomode.
-
-static int VID_SetWindowedDisplayMode (viddef_t *lvid, vmode_t *pcurrentmode);
+// All vidmodes are in the same list, all can be window modes.
+// The first vidmodes are special modes, for window only.
+// The DirectDraw vidmodes can be fullscreen or window.
+int     num_all_vidmodes = 0;   // total number of display modes
+int     num_full_vidmodes = 0;  // total number of DirectDraw display modes
+vmode_t * all_vidmodes = NULL;  // start of videomodes list (window and fullscreen)
+vmode_t * full_vidmodes = NULL; // start of fullscreen (DirectDraw, opengl) vidmodes
+vmode_t * currentmode_p = NULL; // the current active videomode.
 
 // this holds description of the startup video mode,
 // the resolution is 320x200, windowed on the desktop
@@ -131,22 +134,42 @@ vmode_t specialmodes[NUMSPECIALMODES] = {
             "Initial",
             INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT,
             INITIAL_WINDOW_WIDTH, 1,     // rowbytes, bytes per pixel
-            1, 2,  // windowed, numpages
+            MODE_window, 2,  // windowed, numpages
             NULL,
             VID_SetWindowedDisplayMode,
             0          // misc
         },
-        {
+        {   // original startup mode at mode 1
             NULL,
-            "320x200W", //faB: W to make sure it's the windowed mode
+            "320x200",
             320, 200,   //(200.0/320.0)*(320.0/240.0),
             320, 1,     // rowbytes, bytes per pixel
-            1, 2,       // windowed (TRUE), numpages
+            MODE_window, 2,  // windowed, numpages
             NULL,
             VID_SetWindowedDisplayMode,
             0          // misc
         }
 };
+
+// ---------------
+// WindowMode_Init
+// mode 0 and 1 are used for windowed console startup (works on all computers with no DirectX)
+// ---------------
+static void WindowMode_Init(void)
+{
+    // do not include Mode 0 (INITIAL) in count
+    all_vidmodes = &specialmodes[0];
+    num_all_vidmodes = NUMSPECIALMODES-1;
+}
+
+static void append_full_vidmodes( vmode_t newmodes, int nummodes )
+{
+    full_vidmodes = newmodes;
+    specialmodes[NUMSPECIALMODES-1].next = newmodes;
+	    
+    num_full_vidmodes += nummodes;
+    num_all_vidmodes += nummodes;
+}
 
 
 // ------
@@ -156,117 +179,14 @@ static  void VID_Command_NumModes_f (void);
 static  void VID_Command_ModeInfo_f (void);
 static  void VID_Command_ModeList_f (void);
 static  void VID_Command_Mode_f     (void);
-static  int VID_SetDirectDrawMode (viddef_t *lvid, vmode_t *pcurrentmode);
-static  int VID_SetWindowedDisplayMode (viddef_t *lvid, vmode_t *pcurrentmode);
-        vmode_t *VID_GetModePtr (int modenum);
-static  void VID_Init (void);
-static  void VID_GetModes (void);
+static  int VID_SetDirectDrawMode (viddef_t *lvid, vmode_t * newmode);
+static  int VID_SetWindowedDisplayMode (viddef_t *lvid, vmode_t * newmode);
+        vmode_t *VID_GetModePtr (modenum_t modenum);
 
 // judgecutor:
 extern void I_RestartSysMouse();
 
 
-// -----------------
-// I_StartupGraphics
-// Initialize video mode, setup dynamic screen size variables,
-// and allocate screens.
-// -----------------
-// May be called more than once, to change modes and switches
-void I_StartupGraphics(void)
-{
-    if( ! graphics_started )
-    {
-        VID_Init();
-
-        COM_AddCommand ("vid_nummodes", VID_Command_NumModes_f);
-        COM_AddCommand ("vid_modeinfo", VID_Command_ModeInfo_f);
-        COM_AddCommand ("vid_modelist", VID_Command_ModeList_f);
-        COM_AddCommand ("vid_mode", VID_Command_Mode_f);
-
-        //added:03-01-98: register exit code for graphics
-        I_AddExitFunc (I_ShutdownGraphics);
-    }
-
-    // 0 for 256 color, else use highcolor modes
-    highcolor = (req_drawmode == REQ_highcolor);
-
-#ifdef HWRENDER   
-    if (M_CheckParm ("-3dfx"))
-        rendermode = render_glide;
-    else if (M_CheckParm ("-glide"))
-        rendermode = render_glide;
-    else if (M_CheckParm ("-opengl"))
-        rendermode = render_opengl;
-    else if (M_CheckParm ("-minigl")) // MiniGL is considered like ...
-        rendermode = render_opengl;   // ... OpenGL in the main code
-    else if (M_CheckParm ("-d3d"))
-        rendermode = render_d3d;
-    else
-#endif
-        rendermode = render_soft;
-
-    // if '-win' is specified on the command line, do not add DirectDraw modes
-    req_win = M_CheckParm ("-win");
-//    if ( req_win )
-//        rendermode  = render_soft;
-
-    VID_GetModes();
-    // set the startup screen in a window
-    VID_SetMode (0);
-
-    graphics_started = TRUE;
-}
-
-
-// ------------------
-// I_ShutdownGraphics
-// Close the screen, restore previous video mode.
-// ------------------
-void I_ShutdownGraphics (void)
-{
-    if (!graphics_started)
-        return;
-
-    CONS_Printf ("I_ShutdownGraphics()\n");
-
-    // release windowed startup stuff
-    if (hDC_main) {
-        ReleaseDC (hWnd_main, hDC_main);
-        hDC_main = NULL;
-    }
-    if (bmi_main) {
-        GlobalFree (bmi_main);
-        bmi_main = NULL;
-    }
-
-#ifdef HWRENDER
-    if ( rendermode != render_soft )
-    {
-        // Hurdler: swap des deux lignes comme ça on close
-        //          l'environnement OpenGL/glide après avoir 
-        //          vidé la cache ce qui est bcp plus propre
-        HWR_Shutdown ();      //free stuff from the hardware renderer
-        HWD.pfnShutdown ();   //close 3d card display
-        Shutdown3DDriver ();  //free the driver DLL
-    }
-#endif
-
-    // free the last video mode screen buffers
-    if (vid.buffer) {
-        GlobalFree (vid.buffer);
-        vid.buffer = NULL;
-        vid.display = NULL;
-    }
-
-    if ( rendermode == render_soft )
-    {
-        //HWD.pfnShutdown ();
-        //ShutdownSoftDriver ();
-        FDX_CloseDirectDraw ();
-    }
-
-    graphics_started = FALSE;
-}
 
 
 // ------------
@@ -450,39 +370,62 @@ outportb( 0x03c9 , (b>>2) & 0x3f );       // B
 
 
 //
-// return number of video modes in pvidmodes list
+// return number of video modes in vidmodes lists
 //
-int VID_NumModes(void)
+// modetype is of modetype_e
+range_t  VID_ModeRange( byte modetype )
 {
-    return numvidmodes - NUMSPECIALMODES;   //faB: dont accept the windowed mode 0
+    range_t  mrange = { 1, 1 };
+    // INITIAL_WINDOW mode 0 is not included
+    if(modetype == MODE_fullscreen)
+    {   // fullscreen  2..
+        mrange.first = NUMSPECIALMODES;
+        mrange.last = mrange.first + num_full_vidmodes;
+    }
+    else
+    {   // window   1..
+        mrange.last = num_all_vidmodes;
+    }
+    return mrange;
 }
 
 
 // return a video mode number from the dimensions
-// returns any available video mode if the mode was not found
-int VID_GetModeForSize( unsigned int w, unsigned int h)
+// returns closest available video mode if the mode was not found
+// rmodetype is of modetype_e
+// Returns {MODE_NOP, 0} when none found
+modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
 {
-    vmode_t *pv;
-    int     modenum;
+    modenum_t  modenum = { MODE_NOP, 0 };
+    int mi = 1;
+    int tdist = MAXINT;
+    int bestdist;
+    vmode_t * best;
+    vmode_t * pv = all_vidmodes;
 
-#if NUMSPECIALMODES > 1
-#error "fix this : pv must point the first fullscreen mode in vidmodes list"
-#endif
-    // skip the 1st special mode so that it finds only fullscreen modes
-    pv = pvidmodes->pnext;
-    for (modenum=1; pv!=NULL; pv=pv->pnext,modenum++ )
+    if( modetype == MODE_fullscreen )
     {
-        if( pv->width ==w &&
-            pv->height==h )
-            return modenum;
+        if( num_full_vidmodes == 0 )  goto done;
+        mi += NUMSPECIALMODES;  // fullscreen modes start after
+        pv = full_vidmodes;
     }
+    for ( ; pv!=NULL; pv=pv->next )
+    {
+        tdist = abs(pv->width - rw) + abs(pv->height - rh);
+        // find closest dist
+        if( bestdist > tdist )
+        {
+	    bestdist = tdist;
+	    best = i;
+	    if( tdist == 0 )  break;   // found exact match
+	}
+	mi++;
+    }
+    modenum.index = mi;
+    modenum.modetype = rmodetype;
 
-    // if not found, return the first mode avaialable,
-    // preferably a full screen mode (all modes after the 'specialmodes')
-    if (numvidmodes > NUMSPECIALMODES)
-        return NUMSPECIALMODES;         // use first full screen mode
-
-    return 0;   // no fullscreen mode, use windowed mode
+done:
+    return modenum;
 }
 
 
@@ -491,9 +434,13 @@ int VID_GetModeForSize( unsigned int w, unsigned int h)
 //
 static  int     nummodes=0;
 
+// Called from FDX_EnumDisplayModes through DirectX EnumDisplayModes
 static BOOL VID_DDModes_callback (int width, int height, int bpp)
 {
-    CONS_Printf ("mode %d x %d x %d bpp\n", width, height, bpp);
+    vmode_t * nmp;
+
+    if( verbose > 1 )
+       GenPrintf( EMSG_ver, "mode %d x %d x %d bpp\n", width, height, bpp);
 
     // skip all unwanted modes
     if (highcolor && (bpp != 15))
@@ -511,8 +458,8 @@ static BOOL VID_DDModes_callback (int width, int height, int bpp)
     // check if we have space for this mode
     if (nummodes>=MAX_EXTRA_MODES)
     {
-        CONS_Printf ("mode skipped (too many)\n");
-        return FALSE;
+        GenPrintf( EMSG_warn, "mode skipped (too many)\n");
+        return FALSE;  // stop
     }
 
         //DEBUG: test without 320x200 standard mode
@@ -520,49 +467,26 @@ static BOOL VID_DDModes_callback (int width, int height, int bpp)
         //    goto skip;
 
     // store mode info
-    extra_modes[nummodes].pnext = &extra_modes[nummodes+1];
-    if (width > 999)
-    {
-        if (height > 999)
-        {
-            sprintf (&names[nummodes][0], "%4dx%4d", width, height);
-            names[nummodes][9] = 0;
-        }
-        else
-        {
-            sprintf (&names[nummodes][0], "%4dx%3d", width, height);
-            names[nummodes][8] = 0;
-        }
-    }
-    else
-    {
-        if (height > 999)
-        {
-            sprintf (&names[nummodes][0], "%3dx%4d", width, height);
-            names[nummodes][8] = 0;
-        }
-        else
-        {
-            sprintf (&names[nummodes][0], "%3dx%3d", width, height);
-            names[nummodes][7] = 0;
-        }
-    }
+    nmp = & extra_modes[nummodes];
+    nmp->next = &extra_modes[nummodes+1];
+    // [WDJ] Same print for all, easier to read in columns without extra spaces
+    snprintf (&names[nummodes][0], 10, "%dx%d", width, height);
+    names[nummodes][9] = 0;
+    nmp->name = &names[nummodes][0];
+    nmp->width = width;
+    nmp->height = height;
 
-    extra_modes[nummodes].name = &names[nummodes][0];
-    extra_modes[nummodes].width = width;
-    extra_modes[nummodes].height = height;
-
-    // exactly, the current FinishUdpate() gets the rowbytes itself after locking the video buffer
+    // exactly, the current FinishUpdate() gets the rowbytes itself after locking the video buffer
     // so for now we put anything here
-    extra_modes[nummodes].rowbytes = width;
-    extra_modes[nummodes].windowed = false;
-    extra_modes[nummodes].misc = 0;         // unused
-    extra_modes[nummodes].pextradata = NULL;
-    extra_modes[nummodes].setmode = VID_SetDirectDrawMode;
+    nmp->rowbytes = width;
+    nmp->modetype = MODE_either;
+    nmp->misc = 0;         // unused
+    nmp->extradata = NULL;
+    nmp->setmode_func = VID_SetDirectDrawMode;
 
-    extra_modes[nummodes].numpages = 2;     // double-buffer (but this value is not used)
+    nmp->numpages = 2;     // double-buffer (but this value is not used)
 
-    extra_modes[nummodes].bytesperpixel = (bpp+1)>>3;
+    nmp->bytesperpixel = (bpp+1)>>3;
 
     nummodes++;
 skip:
@@ -576,28 +500,14 @@ skip:
 void VID_GetExtraModes (void)
 {
     nummodes = 0;
-    FDX_EnumDisplayModes (VID_DDModes_callback);
+    FDX_EnumDisplayModes (VID_DDModes_callback);   // fabdxlib
 
     // add the extra modes (non 320x200) at the start of the mode list (if there are any)
     if (nummodes)
     {
-        extra_modes[nummodes-1].pnext = NULL;
-        pvidmodes = &extra_modes[0];
-        numvidmodes += nummodes;
+        extra_modes[nummodes-1].next = NULL;
+        append_full_vidmodes( &extra_modes[0], nummodes );
     }
-}
-
-
-// ---------------
-// WindowMode_Init
-// Add windowed modes to the start of the list,
-// mode 0 is used for windowed console startup (works on all computers with no DirectX)
-// ---------------
-static void WindowMode_Init(void)
-{
-    specialmodes[NUMSPECIALMODES-1].pnext = pvidmodes;
-    pvidmodes = &specialmodes[0];
-    numvidmodes += NUMSPECIALMODES;
 }
 
 
@@ -610,12 +520,24 @@ static void WindowMode_Init(void)
 void VID_Init (void)
 {
     // initialize the appropriate display device
+
+    // setup the videmodes list,
+    // note that mode 0 must always be VGA mode 0x13
+    all_vidmodes = NULL;
+    full_vidmodes = NULL;
+    currentmode_p = NULL;
+    num_full_vidmodes = 0;
+    // we startup in windowed mode using DIB bitmap
+    // we will use DirectDraw when switching fullScreen and entering main game loop
+    DIB_mode = TRUE;
+    vid.fullscreen = FALSE;
 }
 
-// May be called more than once, to change modes and switches
+// Get Fullscreen modes, append to SPECIAL window modes
 void VID_GetModes (void)
 {
     vmode_t*    pv;
+    int  nummodes;
     int         iMode;
     char * req_errmsg = NULL;
     byte  alt_request_bitpp = 0;
@@ -657,20 +579,6 @@ void VID_GetModes (void)
        break;
     }
 
-    //setup the videmodes list,
-    // note that mode 0 must always be VGA mode 0x13
-    pvidmodes = NULL;
-    pcurrentmode = NULL;
-    numvidmodes = 0;
-
-    vid.buffer = NULL;
-    vid.display = NULL;
-
-    // we startup in windowed mode using DIB bitmap
-    // we will use DirectDraw when switching fullScreen and entering main game loop
-    DIB_mode = TRUE;
-    vid.fullscreen = FALSE;
-
     // initialize the appropriate display device
 #ifdef HWRENDER
     if ( rendermode != render_soft )
@@ -709,13 +617,14 @@ void VID_GetModes (void)
                 }
                 else
                 {   
-                    CONS_Printf("WARNING: This r_glide version is not supported, use it at your own risks.\n");
+                    GenPrintf( EMSG_warn, "WARNING: This r_glide version is not supported, use it at your own risks.\n");
                 }
             }
             // perform initialisations
             HWD.pfnInit ((I_Error_t)I_Error);
             // get available display modes for the device
-            HWD.pfnGetModeList (&pvidmodes, &numvidmodes);
+            HWD.pfnGetModeList (&pv, &nummodes);
+	    append_full_vidmodes( pv, nummodes ); // append to window modes
         }
         else
         {
@@ -740,12 +649,13 @@ void VID_GetModes (void)
         FDX_create_main_instance();
 
         // try the requested bpp, then alt, then 8bpp
-        for(;;)
+        for(;;)  // try request, alt, 8bpp, until modes found
         {
 	    // get available display modes for the device
 	    VID_GetExtraModes ();
-	    if(numvidmodes) goto found_modes;
+	    if(num_full_vidmodes) goto found_modes;
 
+	    // if modes not found
 	    if( request_bitpp == 8 )  break;
 	    if(req_drawmode == REQ_specific)
 	    {
@@ -770,30 +680,27 @@ void VID_GetModes (void)
 
     // the game boots in 320x200 standard VGA, but
     // we need a highcolor mode to run the game in highcolor
-    if (request_bitpp>8 && numvidmodes==0)
+    if (request_bitpp>8 && num_full_vidmodes==0)
         I_Error ("No highcolor/truecolor VESA2 video mode found, cannot run in highcolor/truecolor.\n");
 
 found_modes:
     vid.bitpp = request_bitpp;
     vid.bytepp = (request_bitpp + 7) >> 3;
 
-    // add windowed mode at the start of the list, very important!
-    WindowMode_Init();
-
-    if (numvidmodes==0)
-        I_Error ("No display modes available.\n");
+    if (num_full_vidmodes==0)
+        I_SoftError ("No display modes available.\n");
 
     //DEBUG
-    for (iMode=0,pv=pvidmodes; pv; pv=pv->pnext,iMode++)
+    for (iMode=1,pv=full_vidmodes; pv; pv=pv->next)
     {
-        CONS_Printf ("%#02d: %dx%dx%dbpp (desc: '%s')\n",iMode,
+        GenPrintf( EMSG_debug, "%#02d: %dx%dx%dbpp (desc: '%s')\n",iMode++,
                      pv->width,pv->height,pv->bytesperpixel,pv->name);
     }
     return;
 
 abort_error:
-    // cannot return without a display screen
-    I_Error("StartupGraphics/VID_Init Abort\n");
+    I_SoftError("VID_GetModes Abort\n");
+    return;
 }
 
 
@@ -804,23 +711,21 @@ abort_error:
 // - we can display error message boxes for startup errors
 // - we can set the last used resolution only once, when entering the main game loop
 // --------------------------
-static int VID_SetWindowedDisplayMode (viddef_t *lvid, vmode_t *pcurrentmode)
+static int VID_SetWindowedDisplayMode (viddef_t *lvid, vmode_t newmode_p)
 {
     int     screen_width, screen_height;
     int     window_width, window_height;
     //RECT    Rect;
 
 #ifdef DEBUG
-    CONS_Printf("VID_SetWindowedDisplayMode()\n");
+    GenPrintf( EMSG_debug, "VID_SetWindowedDisplayMode()\n");
 #endif
 
     WndNumpages = 1;      // not used
-    lvid->direct = NULL;  // DOS remains
-    lvid->buffer = NULL;
 
     // allocate screens
     if (!VID_FreeAndAllocVidbuffer (lvid))
-        return -1;
+        return FAIL_memory;
 
     // lvid->buffer should be NULL here!
 
@@ -867,135 +772,143 @@ static int VID_SetWindowedDisplayMode (viddef_t *lvid, vmode_t *pcurrentmode)
 // ========================================================================
 // Returns a vmode_t from the video modes list, given a video mode number.
 // ========================================================================
-vmode_t *VID_GetModePtr (int modenum)
+// Return NULL on fail
+static
+vmode_t * VID_GetModePtr (modenum_t modenum)
 {
-    vmode_t *pv;
+    // first mode in all_vidmodes is the HIDDEN INITIAL_WINDOW
+    vmode_t *pv = all_vidmodes;  // window
+    int mi = modenum.index;      // 0..
 
-    pv = pvidmodes;
-    if (!pv)
-        I_Error ("VID_error : No video mode found\n");
-
-    while (modenum--)
+    if ( modenum.modetype == MODE_fullscreen )
     {
-        pv = pv->pnext;
-        if (!pv)
-            I_Error ("VID_error : Mode not available\n");
+        pv = full_vidmodes;
+        mi = modenum.index - NUMSPECIALMODES;  // 2..
+    }
+    if (!pv || mi < 0 )  goto fail;
+
+    while (mi--)
+    {
+        pv = pv->next;
+        if (!pv)  goto fail;
     }
     return pv;
+fail:
+    return NULL;
 }
 
 
 //
 // return the name of a video mode
 //
-char* VID_GetModeName (int modenum)
+char * VID_GetModeName( modenum_t modenum )
 {
-    return (VID_GetModePtr(modenum))->name;
+    // fullscreen and window modes  1..
+    vmode_t *pv = VID_GetModePtr(modenum);
+    return (pv)? pv->name : NULL;
 }
 
 
 // ========================================================================
 // Sets a video mode
 // ========================================================================
-int VID_SetMode (int modenum)  //, unsigned char *palette)
+// Returns FAIL_end, FAIL_create, of status_return_e, 1 on success;
+int VID_SetMode (modenum_t modenum)
 {
     int     stat;
-    vmode_t *pnewmode, *poldmode;
+    vmode_t *newmode_p, *oldmode_p;
+    viddef_t oldvid = vid;   // to back out
+    boolean  set_fullscreen = (modenum.modetype == MODE_fullscreen);
+    range_t  range = VID_ModeRange( modenum.modetype );
 
-    CONS_Printf("VID_SetMode(%d)\n",modenum);
+    GenPrintf( EMSG_info, "VID_SetMode(%d,%d)\n", modenum.modetype, modenum.index);
 
-    //faB: if mode 0 (windowed) we must not be fullscreen already,
-    //     if other mode, check it is not mode 0 and existing
-    if ((modenum != 0) || (vid.fullscreen))
+    if ((modenum.index > range.last) || (modenum.index < range.first))
     {
-        if ((modenum > numvidmodes) || (modenum < NUMSPECIALMODES))
+        if (currentmode_p == NULL)
+	    modenum.index = 0;    // revert to the default base vid mode
+        else
         {
-            if (pcurrentmode == NULL)
-                modenum = 0;    // revert to the default base vid mode
-            else
-            {
-                //nomodecheck = TRUE;
-                I_Error ("Unknown video mode: %d\n", modenum);
-                //nomodecheck = FALSE;
-                return 0;
-            }
+	    I_SoftError ("Unknown video mode\n");
+	    return  FAIL_end;
         }
     }
 
-    pnewmode = VID_GetModePtr (modenum);
+    newmode_p = VID_GetModePtr (modenum);
+    if( newmode_p == NULL )
+       return  FAIL_end;
 
     // dont switch to the same display mode
-    if (pnewmode == pcurrentmode)
-        return 1;
+    if (newmode_p == currentmode_p)   goto done;
 
     // initialize the new mode
-    poldmode = pcurrentmode;
-    pcurrentmode = pnewmode;
+    oldmode_p = currentmode_p;
+    currentmode_p = newmode_p;
 
-    // initialize vidbuffer size for setmode
-    vid.width  = pcurrentmode->width;
-    vid.height = pcurrentmode->height;
-    //vid.aspect = pcurrentmode->aspect;                // aspect ratio might be needed later for 3dfx version..
-    vid.direct_rowbytes = pcurrentmode->rowbytes;
-    vid.bytepp = pcurrentmode->bytesperpixel;
+    // initialize vidbuffer size for setmode_func
+    vid.width  = currentmode_p->width;
+    vid.height = currentmode_p->height;
+    vid.bytepp = currentmode_p->bytesperpixel;
     vid.bitpp = (vid.bytepp==1)? 8:15;
-    vid.drawmode = (vid.bytepp==1)? DRAW8PAL:DRAW15;
 #ifdef HWRENDER
     //hurdler: 15/10/99: added
-    if (modenum) { // if not 320x200 windowed mode
+    if (modenum.index)  // if not 320x200 windowed mode
+    {
         // it's actually a hack
-        if ( (rendermode == render_opengl) || (rendermode == render_d3d) ) {
+        if ( (rendermode == render_opengl) || (rendermode == render_d3d) )
+        {
             // don't accept depth < 16 for OpenGL mode (too much ugly)
             if (cv_scr_depth.value<16)
                 CV_SetValue (&cv_scr_depth,  16);
             vid.bitpp = cv_scr_depth.value;
             vid.bytepp = cv_scr_depth.value/8;
-            vid.fullscreen = cv_fullscreen.value;
-            pcurrentmode->bytesperpixel = vid.bytepp;
-            pcurrentmode->windowed = ! vid.fullscreen;
+            vid.fullscreen = set_fullscreen;
+            currentmode_p->bytesperpixel = vid.bytepp;
+            currentmode_p->modetype = modenum.modetype;  // redundant
         }
     }
 #endif
-    vid.widthbytes = vid.width * vid.bytepp;
-    vid.direct_size = vid.direct_rowbytes * vid.height;
 
-    stat = (*pcurrentmode->setmode) (&vid, pcurrentmode);
+    stat = (*pcurrentmode->setmode_func) (&vid, pcurrentmode);
       // sets vid.direct, vid.buffer, vid.display, vid.ybytes, vid.screen_size, vid.screen1
-
-    if (stat < 1)
+      // SetRes for opengl modes in hardware/r_opengl/ogl_win.c
+      // VID_SetDirectDrawMode for DD modes
+      // VID_SetWindowedDisplayMode for basic window modes
+    if (stat < 0)
     {
-        if (stat == 0)
+        if (stat == FAIL_create)
         {
-            // harware could not setup mode
-            //if (!VID_SetMode (vid.modenum))
-            //        I_Error ("VID_SetMode: couldn't set video mode (hard failure)");
-            I_Error ("Couldn't set video mode %d (%dx%d %d bits)\n", modenum, vid.width, vid.height, vid.bitpp);
+            // hardware could not setup mode
+            I_SoftError ("Fail set video mode %d (%dx%d %d bits)\n", modenum.index, vid.width, vid.height, vid.bitpp);
         }
-        else
-            if (stat == -1)
-            {
-                I_Error ("Not enough mem for VID_SetMode\n");
-
-                // not enough memory; just put things back the way they were
-                /*pcurrentmode = poldmode;
-                vid.width = pcurrentmode->width;
-                vid.height = pcurrentmode->height;
-                vid.rowbytes = pcurrentmode->rowbytes;
-                vid.bytepp  = pcurrentmode->bytesperpixel;
-                vid.bitpp = vid.bytepp * 8;
-                return 0;*/
-            }
+        else if (stat == FAIL_memory)
+        {
+	    I_SoftError ("Not enough mem for VID_SetMode\n");
+	}
+        if( oldvid.display )
+        {
+	    // restore previous state
+	    currentmode_p = oldmode_p;
+	    // cannot just copy oldvid because of buffer pointers that
+	    // are no longer valid
+	    vid.width  = oldvid.width;
+	    vid.height = oldvid.height;
+	    vid.bytepp = oldvid.bytepp;
+	    vid.bitpp = oldvid.bitpp;
+	    (*pcurrentmode->setmode_func) (&vid, pcurrentmode);
+	    return FAIL_create;
+	}
     }
 
+    vid.drawmode = (vid.bytepp==1)? DRAW8PAL:DRAW15;
+    vid.widthbytes = vid.width * vid.bytepp;
+    vid.direct_rowbytes = currentmode_p->rowbytes;
+    vid.direct_size = vid.direct_rowbytes * vid.height;
     vid.modenum = modenum;
 
-    // tell game engine to recalc all tables and realloc buffers based on
-    // new vid values
-    vid.recalc = 1;
-
-    if ( modenum < NUMSPECIALMODES )
+    if ( ! set_fullscreen )
     {
-        // we are in startup windowed mode
+        // we are in a windowed mode
         vid.fullscreen = false;
         DIB_mode = TRUE;
     }
@@ -1006,8 +919,13 @@ int VID_SetMode (int modenum)  //, unsigned char *palette)
         DIB_mode = FALSE;
     }
 
+    // tell game engine to recalc all tables and realloc buffers based on
+    // new vid values
+    vid.recalc = 1;
+
     // judgecutor:
     I_RestartSysMouse();
+ done:
     return 1;
 }
 
@@ -1047,7 +965,7 @@ BOOL    VID_FreeAndAllocVidbuffer (viddef_t *lvid)
     lvid->screen1 = lvid->buffer + lvid->screen_size;
 
 #ifdef DEBUG
-    CONS_Printf("VID_FreeAndAllocVidbuffer done, vidbuffersize: %x\n",vidbuffersize);
+    GenPrintf( EMSG_debug, "VID_FreeAndAllocVidbuffer done, vidbuffersize: %x\n",vidbuffersize);
 #endif
     return TRUE;
 }
@@ -1055,15 +973,13 @@ BOOL    VID_FreeAndAllocVidbuffer (viddef_t *lvid)
 
 // ========================================================================
 // Set video mode routine for DirectDraw display modes
-// Out: 1 ok,
-//      0 hardware could not set mode,
-//     -1 no mem
+// Out: 1 ok, FAIL negative codes
 // ========================================================================
-static int VID_SetDirectDrawMode (viddef_t *lvid, vmode_t *pcurrentmode)
+static int VID_SetDirectDrawMode (viddef_t *lvid, vmode_t * newmode)
 {
 
 #ifdef DEBUG
-    CONS_Printf("VID_SetDirectDrawMode...\n");
+    GenPrintf( EMSG_debug, "VID_SetDirectDrawMode...\n");
 #endif
 
     // DD modes do double-buffer page flipping, but the game engine doesn't need this..
@@ -1076,18 +992,152 @@ static int VID_SetDirectDrawMode (viddef_t *lvid, vmode_t *pcurrentmode)
 
     // clean up any old vid buffer lying around, alloc new if needed
     if (!VID_FreeAndAllocVidbuffer (lvid))
-        return -1;                  //no mem
+        return FAIL_memory;                  //no mem
 
     //added:20-01-98: should clear video mem here
 
     if (! FDX_InitDDMode(hWnd_main, lvid->width, lvid->height, lvid->bitpp, lvid->fullscreen))
-        return 0;               // could not set mode
+        return FAIL_create;     // could not set mode
 
     // this is NOT used with DirectDraw modes, game engine should never use this directly
     // but rather render to memory bitmap buffer
     lvid->direct = NULL;
 
     return 1;
+}
+
+
+// ========================================================================
+//                     VIDEO STARTUP and SHUTDOWN
+// ========================================================================
+
+
+// -----------------
+// I_StartupGraphics
+// Initialize video mode, setup dynamic screen size variables,
+// and allocate screens.
+// -----------------
+// Initialize the graphics system, with a initial window.
+void I_StartupGraphics(void)
+{
+    modenum_t initial_mode = {MODE_window, 0};
+    // pre-init by V_Init_VideoControl
+
+    VID_Init();
+
+    COM_AddCommand ("vid_nummodes", VID_Command_NumModes_f);
+    COM_AddCommand ("vid_modeinfo", VID_Command_ModeInfo_f);
+    COM_AddCommand ("vid_modelist", VID_Command_ModeList_f);
+    COM_AddCommand ("vid_mode", VID_Command_Mode_f);
+
+    //added:03-01-98: register exit code for graphics
+    I_AddExitFunc (I_ShutdownGraphics);
+
+    // set the startup window
+    WindowMode_Init();
+    if( VID_SetMode ( initial_mode ) < 0 )
+    {
+        initial_mode.index = 1;  // 320
+        if( VID_SetMode ( initial_mode ) < 0 )  goto abort_error;
+    };
+
+    graphics_started = TRUE;
+    return;
+
+abort_error:
+    // cannot return without a display screen
+    I_Error("StartupGraphics Abort\n");
+}
+
+
+// Called to start rendering graphic screen according to the request switches.
+// Fullscreen modes are possible.
+void I_RequestFullGraphics( byte select_fullscreen )
+{
+    modenum_t initial_mode = {MODE_window, 0};
+    // 0 for 256 color, else use highcolor modes
+    highcolor = (req_drawmode == REQ_highcolor);
+
+#ifdef HWRENDER   
+    if (M_CheckParm ("-3dfx"))
+        rendermode = render_glide;
+    else if (M_CheckParm ("-glide"))
+        rendermode = render_glide;
+    else if (M_CheckParm ("-opengl"))
+        rendermode = render_opengl;
+    else if (M_CheckParm ("-minigl")) // MiniGL is considered like ...
+        rendermode = render_opengl;   // ... OpenGL in the main code
+    else if (M_CheckParm ("-d3d"))
+        rendermode = render_d3d;
+    else
+#endif
+        rendermode = render_soft;
+
+    // if '-win' is specified on the command line, do not add DirectDraw modes
+    req_win = M_CheckParm ("-win");
+//    if ( req_win )
+//        rendermode  = render_soft;
+
+    VID_GetModes();
+
+    allow_fullscreen = true;
+    mode_fullscreen = select_fullscreen;  // initial startup
+
+    // set the startup screen
+    initial_mode = VID_GetModeForSize( vid.width, vid.height,
+		   (select_fullscreen ? MODE_fullscreen: MODE_window));
+    VID_SetMode ( initial_mode );
+}
+
+
+// ------------------
+// I_ShutdownGraphics
+// Close the screen, restore previous video mode.
+// ------------------
+void I_ShutdownGraphics (void)
+{
+    if (!graphics_started)
+        return;
+
+    GenPrintf( EMSG_info, "I_ShutdownGraphics()\n");
+
+    // release windowed startup stuff
+    if (hDC_main) {
+        ReleaseDC (hWnd_main, hDC_main);
+        hDC_main = NULL;
+    }
+    if (bmi_main) {
+        GlobalFree (bmi_main);
+        bmi_main = NULL;
+    }
+
+#ifdef HWRENDER
+    if ( rendermode != render_soft )
+    {
+        // Hurdler: swap des deux lignes comme ça on close
+        //          l'environnement OpenGL/glide après avoir 
+        //          vidé la cache ce qui est bcp plus propre
+        HWR_Shutdown ();      //free stuff from the hardware renderer
+        HWD.pfnShutdown ();   //close 3d card display
+        Shutdown3DDriver ();  //free the driver DLL
+    }
+#endif
+
+    // free the last video mode screen buffers
+    if (vid.buffer) {
+        GlobalFree (vid.buffer);
+        vid.buffer = NULL;
+        vid.display = NULL;
+    }
+
+    if ( rendermode == render_soft )
+    {
+        //HWD.pfnShutdown ();
+        //ShutdownSoftDriver ();
+        FDX_CloseDirectDraw ();
+    }
+
+    graphics_started = FALSE;
 }
 
 
@@ -1103,7 +1153,7 @@ static  void VID_Command_NumModes_f (void)
     int     nummodes;
 
     nummodes = VID_NumModes ();
-    CONS_Printf ("%d video mode(s) available(s)\n", nummodes);
+    GenPrintf( EMSG_info, "%d video mode(s) available(s)\n", nummodes);
 }
 
 
@@ -1121,18 +1171,18 @@ static  void VID_Command_ModeInfo_f (void)
 
     if (modenum >= VID_NumModes() || modenum<1) //faB: dont accept the windowed mode 0
     {
-        CONS_Printf ("No such video mode\n");
+        GenPrintf( EMSG_warn, "No such video mode\n");
         return;
     }
 
     pv = VID_GetModePtr (modenum);
 
-    CONS_Printf("%s\n", VID_GetModeName (modenum));
-    CONS_Printf("width : %d\n"
+    GenPrintf( EMSG_info, "%s\n", VID_GetModeName (modenum));
+    GenPrintf( EMSG_info, "width : %d\n"
                 "height: %d\n", pv->width, pv->height);
     if (rendermode==render_soft)
     {
-        CONS_Printf("bytes per scanline: %d\n"
+        GenPrintf( EMSG_info, "bytes per scanline: %d\n"
                     "bytes per pixel: %d\n"
                     "numpages: %d\n",
                     pv->rowbytes,
@@ -1160,9 +1210,9 @@ static  void VID_Command_ModeList_f (void)
         pinfo = VID_GetModeName (i);
 
         if (pv->bytesperpixel==1)
-            CONS_Printf ("%d: %s\n", i, pinfo);
+            GenPrintf( EMSG_info, "%d: %s\n", i, pinfo);
         else
-            CONS_Printf ("%d: %s (hicolor)\n", i, pinfo);
+            GenPrintf( EMSG_info, "%d: %s (hicolor)\n", i, pinfo);
     }
 }
 
@@ -1175,15 +1225,17 @@ static  void VID_Command_Mode_f (void)
 
     if (COM_Argc()!=2)
     {
-        CONS_Printf ("vid_mode <modenum> : set video mode\n");
+        GenPrintf( EMSG_warn, "vid_mode <modenum> : set video mode\n");
         return;
     }
 
     modenum = atoi(COM_Argv(1));
 
     if (modenum >= VID_NumModes() || modenum<1) //faB: dont accept the windowed mode 0
-        CONS_Printf ("No such video mode\n");
+        GenPrintf( EMSG_warn, "No such video mode\n");
     else
+    {
         // request vid mode change
         setmodeneeded = modenum+1;
+    }
 }

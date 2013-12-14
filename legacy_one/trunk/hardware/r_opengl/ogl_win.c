@@ -348,6 +348,7 @@ EXPORT void HWRAPI( GetModeList ) ( vmode_t** pvidmodes, int* numvidmodes )
 {
     int  i;
 
+#if 0
 /*
     faB test code
 
@@ -369,7 +370,7 @@ EXPORT void HWRAPI( GetModeList ) ( vmode_t** pvidmodes, int* numvidmodes )
         if( Tmp.dmBitsPerPel==16 )
         {
             video_modes[iMode].pnext = &video_modes[iMode+1];
-            video_modes[iMode].windowed = 0;                    // fullscreen is the default
+            video_modes[iMode].modetype = MODE_either;  // fullscreen is the default
             video_modes[iMode].misc = 0;
             video_modes[iMode].name = (char *)malloc(12);
             sprintf(video_modes[iMode].name, "%dx%d", Tmp.dmPelsWidth, Tmp.dmPelsHeight);
@@ -386,6 +387,7 @@ EXPORT void HWRAPI( GetModeList ) ( vmode_t** pvidmodes, int* numvidmodes )
         }
     (*numvidmodes) = iMode;
 */
+#endif
 
     // classic video modes (fullscreen/windowed)
     int res[][2] = {
@@ -393,6 +395,7 @@ EXPORT void HWRAPI( GetModeList ) ( vmode_t** pvidmodes, int* numvidmodes )
                     { 640,  400}, { 640,  480}, { 800,  600}, {1024,  768},
                     {1152,  864}, {1280,  960}, {1280, 1024}, {1600, 1200} };
 
+    int numres = sizeof(res) / sizeof(res[0]);
     HDC bpphdc;
     int iBitsPerPel;
 
@@ -403,25 +406,27 @@ EXPORT void HWRAPI( GetModeList ) ( vmode_t** pvidmodes, int* numvidmodes )
 
     ReleaseDC( NULL, bpphdc );
 
-    (*pvidmodes) = &video_modes[0];
-    (*numvidmodes) = sizeof(res) / sizeof(res[0]);
-    for( i=0; i<(*numvidmodes); i++ )
+    for( i=0; i<numres; i++ )
     {
-        video_modes[i].pnext = &video_modes[i+1];
-        video_modes[i].windowed = 0; // fullscreen is the default
-        video_modes[i].misc = 0;
-        video_modes[i].name = (char *)malloc(12);
-        sprintf(video_modes[i].name, "%dx%d", res[i][0], res[i][1]);
-        DBG_Printf ("Mode: %s\n", video_modes[i].name);
-        video_modes[i].width = res[i][0];
-        video_modes[i].height = res[i][1];
-        video_modes[i].bytesperpixel = iBitsPerPel/8;
-        video_modes[i].rowbytes = res[i][0] * video_modes[i].bytesperpixel;
-        video_modes[i].pextradata = NULL;
-        video_modes[i].setmode = SetRes;
+        vmode_t * vmp = & video_modes[i];
+        vmp->width = res[i][0];
+        vmp->height = res[i][1];
+        vmp->name = (char *)malloc(12);
+        sprintf(vmp->name, "%dx%d", vmp->width, vmp->height);
+        DBG_Printf ("Mode: %s\n", vmp->name);
+        vmp->bytesperpixel = iBitsPerPel/8;
+        vmp->rowbytes = vmp->width * vmp->bytesperpixel;
+        vmp->misc = 0;
+        vmp->extradata = NULL;
+        vmp->modetype = MODE_either; // fullscreen is the default
+        vmp->setmode_func = SetRes;
+        // link
+        if( i > 0 )
+           video_modes[i-1].next = vmp;
     }
-
-    video_modes[(*numvidmodes)-1].pnext = NULL;
+    video_modes[numres-1].next = NULL;
+    (*pvidmodes) = &video_modes[0];
+    (*numvidmodes) = numres;
 }
 
 

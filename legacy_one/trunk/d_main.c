@@ -439,7 +439,7 @@ void D_Display(void)
     redrawsbar = false;
 
     //added:21-01-98: check for change of screen size (video mode)
-    if (setmodeneeded >= 0)
+    if ( setmodeneeded.modetype )
     {
         SCR_SetMode();  // change video mode
         //added:26-01-98: NOTE! setsizeneeded is set by SCR_Recalc()
@@ -2150,6 +2150,7 @@ void D_DoomMain()
         CONS_Printf("RequestFullGraphics...\n");
         I_RequestFullGraphics( cv_fullscreen.value );
         SCR_Recalc();
+        V_SetPalette (0);  // on new screen
 
 #ifdef HWRENDER
         if( rendermode != render_soft )
@@ -2200,9 +2201,11 @@ void D_DoomMain()
         autostart = true;
     }
 
+    // [WDJ] This triggers the first draw to the screen,
+    // debug it here instead of waiting for CONS_Printf in BloodTime_OnChange
+    CONS_Printf( "Register...\n" );
     D_RegisterClientCommands(); //Hurdler: be sure that this is called before D_CheckNetGame
 
-    // [WDJ] This triggers the first draw to the screen
     D_RegisterMiscCommands();	//[WDJ] more than just DeathMatch
     ST_AddCommands();
     T_AddCommands();

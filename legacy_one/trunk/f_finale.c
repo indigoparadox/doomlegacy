@@ -402,6 +402,7 @@ void F_TextWrite (void)
             continue;
         }
 
+        // hufont only has uppercase
         c = toupper(c) - HU_FONTSTART;
         if (c < 0 || c> HU_FONTSIZE)
         {
