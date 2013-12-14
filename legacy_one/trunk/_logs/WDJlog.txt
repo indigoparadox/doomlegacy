@@ -3579,3 +3579,10 @@ current is 1.2.11.
 Direct reads of the file will succeed, but SDL_LoadMUS() will fail, with
 file or directory not found.
 Add messages to report the cause of the problem.
+
+*** W95_font1
+patchfile = w95_6_font1.patch
+- committed revision 1064   by wesley johnson
+Added font1, a fixed width bit mapped font with a default palette,
+that can be drawn before loading wads, and without font graphics or
+palette from any wads. It is only for software render.

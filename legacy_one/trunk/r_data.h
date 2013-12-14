@@ -208,6 +208,7 @@ extern union color8_u  color8;
 extern uint16_t*  hicolormaps;
 void R_Init_color8_translate ( RGBA_t * palette );
 
+byte NearestColor(byte r, byte g, byte b);
 
 // translucency tables
 

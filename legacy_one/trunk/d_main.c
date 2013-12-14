@@ -1668,6 +1668,8 @@ void D_DoomMain()
 
     D_Make_legacytitle();
 
+    use_font1 = 1;  // until PLAYPAL and fonts loaded
+
     //added:18-02-98:keep error messages until the final flush(stderr)
     if (setvbuf(stderr, NULL, _IOFBF, 1000))
         GenPrintf(EMSG_warn,"setvbuf didnt work\n");
@@ -2127,6 +2129,7 @@ void D_DoomMain()
 
     // we need the font of the console
     CONS_Printf(text[HU_INIT_NUM]);
+    // switch off use_font1 when hu_font is loaded
     HU_Init();
 
     COM_Init();

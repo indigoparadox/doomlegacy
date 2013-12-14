@@ -168,7 +168,8 @@ void HU_Init(void)
     RegisterNetXCmd(XD_SAY,Got_Saycmd);
 
     // cache the heads-up font for entire game execution
-    j = gamemode == heretic ? 1 : HU_FONTSTART;
+    use_font1 = 0;
+    j = (gamemode == heretic) ? 1 : HU_FONTSTART;
     for (i=0; i<HU_FONTSIZE; i++)
     {
         if( raven )
@@ -176,6 +177,13 @@ void HU_Init(void)
         else
             sprintf(buffer, "STCFN%.3d", j);
         j++;
+        if( W_CheckNumForName( buffer ) < 0 )
+	{
+	    // font not found
+	    hu_font[i] = NULL;
+	    use_font1 = 1;
+	    continue;
+	}
         hu_font[i] = (patch_t *) W_CachePatchName(buffer, PU_STATIC); // endian fix
     }
 
