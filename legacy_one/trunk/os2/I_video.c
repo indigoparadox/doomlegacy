@@ -63,8 +63,10 @@ rcsid[] = "$Id$";
 
 #define MAXWINMODES (8)
 static char vidModeName[MAXWINMODES][32];
-static int windowedModes[MAXWINMODES][2] = {
-   // first is default mode
+static int windowedModes[MAXWINMODES+1][2] = {
+   // hidden from display
+   {INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT},  // initial mode
+   // public  1..
    { 320,  200},
    { 400,  300},
    { 512,  384},
@@ -235,7 +237,7 @@ int VID_GetModeForSize( int w, int h)
 
    CONS_Printf("VID_GetModeForSize: %dx%d\n", w, h);
 
-    for (i=0; i<MAXWINMODES;i++)
+    for (i=1; i<=MAXWINMODES;i++)
         if(windowedModes[i][0]==w && windowedModes[i][1]==h)
             return i;
 

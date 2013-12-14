@@ -4582,7 +4582,8 @@ void M_Drawer (void)
     V_SetupDraw( 0 | V_SCALEPATCH | V_SCALESTART | V_CENTER0 );
 
     // now that's more readable with a faded background (yeah like Quake...)
-    V_DrawFadeScreen ();
+    if ( reg_colormaps )  // not before colormaps loaded
+        V_DrawFadeScreen ();
 
     // menu drawing
     if (currentMenu->drawroutine)

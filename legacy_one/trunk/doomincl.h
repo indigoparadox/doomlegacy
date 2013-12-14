@@ -76,6 +76,7 @@ typedef enum {
 } EMSG_e;
 
 extern  byte  EMSG_flags;  // EMSG_e
+extern  byte  fatal_error;
 
 // i_system.h
 void  I_Error (const char *error, ...);

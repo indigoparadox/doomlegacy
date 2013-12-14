@@ -124,8 +124,18 @@ static int VID_SetWindowedDisplayMode (viddef_t *lvid, vmode_t *pcurrentmode);
 
 // this holds description of the startup video mode,
 // the resolution is 320x200, windowed on the desktop
-#define NUMSPECIALMODES  1
+#define NUMSPECIALMODES  2
 vmode_t specialmodes[NUMSPECIALMODES] = {
+        {   // 0 mode, HIDDEN
+            & specialmodes[1],
+            "Initial",
+            INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT,
+            INITIAL_WINDOW_WIDTH, 1,     // rowbytes, bytes per pixel
+            1, 2,  // windowed, numpages
+            NULL,
+            VID_SetWindowedDisplayMode,
+            0          // misc
+        },
         {
             NULL,
             "320x200W", //faB: W to make sure it's the windowed mode

@@ -241,7 +241,10 @@ static unsigned char x_blue_offset = 0;
 
 // maximum number of windowed modes for X11 (see windowedModes[][])
 #define MAXWINMODES (8)
-static int windowedModes[MAXWINMODES][2] = {
+static int windowedModes[MAXWINMODES+1][2] = {
+   // hidden from display
+   {INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT},  // initial mode
+   // public  1..
    {1600, 1200},
    {1280, 1024},
    {1024,  768},
@@ -249,14 +252,16 @@ static int windowedModes[MAXWINMODES][2] = {
    { 640,  480},
    { 512,  384},
    { 400,  300},
-   { 320,  200}};
+   { 320,  200}
+};
 
 #define NUM_VOODOOMODES (3)
 // These are modes for 3dfx voodoo graphics (loopthrough) cards
 static int voodooModes[NUM_VOODOOMODES][2] = {
     {800, 600},
     {640, 480},
-    {512, 384}};
+    {512, 384}
+};
 
 static boolean vidmode_ext; // Are videmode extensions available?
 static boolean vidmode_active = false;
@@ -1627,7 +1632,7 @@ int VID_GetModeForSize( int w, int h)
 
         if(first_override) first_override = false; // disable first_override
 
-        for (i = 0; i < MAXWINMODES; i++) {
+        for (i = 1; i <= MAXWINMODES; i++) {
             if (w == windowedModes[i][0] &&
                 h == windowedModes[i][1]) {
                 best_fit = i;
@@ -2027,16 +2032,15 @@ void detect_Voodoo( void )
 }
 
 
-// May be called more than once, to change modes and switches
+// Called once. Init with basic error message screen.
 void I_StartupGraphics(void)
 {
     char  *displayname;
-//    int  default_vidmode;
-    void      *dlptr;
+    int   default_vidmode;
 
     // default size for startup
-    vid.width = BASEVIDWIDTH;
-    vid.height = BASEVIDHEIGHT;
+    vid.width = INITIAL_WINDOW_WIDTH;
+    vid.height = INITIAL_WINDOW_HEIGHT;
     vid.display = NULL;
     vid.screen1 = NULL;
     vid.buffer = NULL;
@@ -2047,17 +2051,60 @@ void I_StartupGraphics(void)
 
     rendermode = render_soft;
 
-    if( ! graphics_started)
-    { 
-        // FIXME: catch other signals as well?
-        signal(SIGINT, (void (*)(int)) I_Quit);
-        signal(SIGTERM, (void (*)(int)) I_Quit); // shutdown gracefully if terminated
+    // FIXME: catch other signals as well?
+    signal(SIGINT, (void (*)(int)) I_Quit);
+    signal(SIGTERM, (void (*)(int)) I_Quit); // shutdown gracefully if terminated
 
-        XSetErrorHandler( X_error_handler );
-    }
+    XSetErrorHandler( X_error_handler );
 
     // subject to -display switch
     displayname = initDisplay();  // Set X_display
+
+    findVisual();  // Set X_screen, X_visualinfo, X_visual, x_drawmode
+
+    determineBPP(); // Sets x_bitpp and x_bytepp from X_visualinfo.depth
+
+    checkForShm();  // Set doShm
+
+    if( V_CanDraw( x_bitpp ))
+    {
+        vid.bitpp = x_bitpp;
+        vid.bytepp = x_bytepp;
+        GenPrintf(EMSG_info, "Video %i bpp (%i bytes)\n", vid.bitpp, vid.bytepp);
+    }
+    else if( verbose )
+    {
+        // Use 8 bit and do the palette translation.
+        vid.bitpp = 8;
+        vid.bytepp = 1;
+        GenPrintf(EMSG_ver, "%i bpp rejected\n", x_bitpp );
+    }
+    determineColorMask();  // Set color offset and masks
+    createColorMap();  // Create X_cmap and x_colormap2/3/4
+
+    default_vidmode = VID_GetModeForSize( vid.width, vid.height);
+    createWindow(true, // is windowed
+                 default_vidmode);
+
+    // startupscreen does not need a grabbed mouse
+    doUngrabMouse();
+
+    vid.recalc = true;
+    graphics_started = 1;
+    if( verbose )
+        GenPrintf(EMSG_ver, "StartupGraphics completed\n" );
+}
+   
+// Called to start rendering graphic screen according to the request switches.
+// Fullscreen modes are possible.
+void I_RequestFullGraphics( byte select_fullscreen )
+{
+    int   default_vidmode;
+    void *dlptr;
+
+    destroyWindow();
+
+    // setup vid 19990110 by Kin
 
     if(M_CheckParm("-opengl")) {
         // only set MESA_GLX_FX if not set by set user
@@ -2133,7 +2180,7 @@ void I_StartupGraphics(void)
            HWD.pfnGetRenderVersion = dlsym(dlptr, "GetRenderVersion");
 
            // check gl renderer lib
-           if (HWD.pfnGetRenderVersion() != VERSION)
+           if (HWD.pfnGetRenderVersion() != DOOMLEGACY_COMPONENT_VERSION)
            {
                I_Error ("The version of the renderer doesn't match the version of the executable\nBe sure you have installed Doom Legacy properly.\n");
            }
@@ -2193,9 +2240,9 @@ void I_StartupGraphics(void)
     determineColorMask();  // Set color offset and masks
     createColorMap();  // Create X_cmap and x_colormap2/3/4
 
-//    default_vidmode = VID_GetModeForSize( vid.width, vid.height);
+    default_vidmode = VID_GetModeForSize( vid.width, vid.height);
     createWindow(true, // is windowed
-                 0);   // dummy modenum
+                 default_vidmode);
 
     // startupscreen does not need a grabbed mouse
     doUngrabMouse();

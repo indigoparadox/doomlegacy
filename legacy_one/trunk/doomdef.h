@@ -125,6 +125,11 @@
 // This may be overridden for some ports.
 #define USE_IPX
 
+// Set the initial window size (width).
+// Expected sizes are 320x200, 640x480, 800x600, 1024x768.
+#define INITIAL_WINDOW_WIDTH   800
+#define INITIAL_WINDOW_HEIGHT  600
+
 // =========================================================================
 
 // Name of local directory for config files and savegames

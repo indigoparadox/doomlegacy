@@ -162,12 +162,9 @@ void SCR_SetMode (void)
 #ifdef DEBUG_WINDOWED
     {
       // Disable fullscreen so can switch to debugger at breakpoints.
-      int cvfs = cv_fullscreen.value; // preserve config.cfg
-      cv_fullscreen.value = 0;
       mode_fullscreen = false;
       int modenum = VID_GetModeForSize(800,600);  // debug window
       VID_SetMode(modenum);
-      cv_fullscreen.value = cvfs;
       vid.modenum = setmodeneeded; // fix the display
     }
 #else
@@ -183,7 +180,7 @@ void SCR_SetMode (void)
     //  setup the right draw routines for either 8bpp or 16bpp
     //
     //CONS_Printf ("SCR_SetMode : vid.bitpp is %d\n", vid.bitpp);
-    // set the apprpriate drawer for the sky (tall or short)
+    // set the appropriate drawer for the sky (tall or short)
     // vid.bitpp is already protected by V_Setup_VideoDraw
     switch( vid.bitpp )
     {
@@ -421,7 +418,7 @@ void SCR_Recalc (void)
 
     // patch the asm code depending on vid buffer rowbytes
 #ifdef USEASM
-    ASM_PatchRowBytes(vid.width);
+    ASM_PatchRowBytes(vid.ybytes);
 #endif
 
     // toggle off automap because some screensize-dependent values will

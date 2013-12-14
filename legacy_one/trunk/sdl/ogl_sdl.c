@@ -74,7 +74,7 @@ void  mac_cgl_error( char * str, int cglerr )
    if( cglerr )
    {
       const char * errstr = CGLErrorString ( cglerr );
-      fprintf(stderr,"%s has CGL error: %s\n", str, errstr );
+      GenPrintf( EMSG_error,"%s has CGL error: %s\n", str, errstr );
    }
 }
 
@@ -88,9 +88,9 @@ void  mac_report_context_var( char * str, GLint varid, int num )
     else
     {
       if( num == 1 )
-	 fprintf(stderr, "  %s = %i\n", paar[0] );
+	 GenPrintf( EMSG_info, "  %s = %i\n", paar[0] );
       else
-	 fprintf(stderr, "  %s = %i,%i,%i,%i\n", paar[0], parr[1], parr[2], parr[3] );
+	 GenPrintf( EMSG_info, "  %s = %i,%i,%i,%i\n", paar[0], parr[1], parr[2], parr[3] );
     }
 }
 
@@ -99,7 +99,7 @@ void mac_init( void )
 {
    CGLGetVersion ( & majorver, & minorver );
 #ifdef DEBUG_MAC   
-   fprintf(stderr, "Found CGL Version  %i.%i\n", majorver, minorver );
+   GenPrintf( EMSG_info, "Found CGL Version  %i.%i\n", majorver, minorver );
 #endif
 }
 
@@ -109,11 +109,11 @@ void mac_check_context( char * str )
    cglcon = CGLGetCurrentContext();
    if( cglcon )
    {
-      fprintf(stderr, "%s: CGL reports existing context %p\n", str, cglcon );
+      GenPrintf( EMSG_debug, "%s: CGL reports existing context %p\n", str, cglcon );
    }
    else
    {
-      fprintf(stderr, "%s: CGL reports no current context\n", str);
+      GenPrintf( EMSG_debug, "%s: CGL reports no current context\n", str);
    }
 }
 #endif
@@ -136,7 +136,7 @@ void  mac_set_context( void )
       cglerr = CGLCreateContext ( cglpix, NULL, &cglcon );
       mac_cgl_error( "Create CGL context", cglerr );
       
-      fprintf(stderr, "Created CGL context %p\n", cglcon );
+      GenPrintf( EMSG_info, "Created CGL context %p\n", cglcon );
       
       created_context = 1;
    }
@@ -145,11 +145,11 @@ void  mac_set_context( void )
    {
       cglerr = CGLSetCurrentContext ( cglcon );
       mac_cgl_error( "Set CGL Context", cglerr );
-      fprintf(stderr," GL_RENDERER = %s\n", glGetString(GL_RENDERER) );
-      fprintf(stderr," GL_VENDOR = %s\n", glGetString(GL_VENDOR) );
-      fprintf(stderr," GL_VERSION = %s\n", glGetString(GL_VERSION) );
+      GenPrintf( EMSG_info," GL_RENDERER = %s\n", glGetString(GL_RENDERER) );
+      GenPrintf( EMSG_info," GL_VENDOR = %s\n", glGetString(GL_VENDOR) );
+      GenPrintf( EMSG_info," GL_VERSION = %s\n", glGetString(GL_VERSION) );
 
-      fprintf(stderr, "CGL Context values\n" );
+      GenPrintf( EMSG_info, "CGL Context values\n" );
       mac_report_context_var( "SwapRectangle", kCGLCPSwapRectangle, 4 );
       mac_report_context_var( "SwapInterval", kCGLCPSwapInterval, 1 );
       mac_report_context_var( "SurfaceBackingSize", kCGLCPSurfaceBackingSize, 1 );
@@ -183,6 +183,7 @@ static SDL_Surface *vidSurface = NULL;  // OGL gets separate ptr
 #endif
 
 
+
 // Called by VID_SetMode
 // SDL-OpenGL version of VID_SetMode
 boolean OglSdlSurface(int w, int h, int isFullscreen)
@@ -191,7 +192,7 @@ boolean OglSdlSurface(int w, int h, int isFullscreen)
     int cbpp;  // bits per pixel
 
 #ifdef DEBUG_MAC
-    fprintf(stderr, "Detect: "
+    GenPrintf( EMSG_debug, "Detect: "
 # ifdef __MACOSX__
 	    " __MACOSX__ "
 # endif
@@ -267,7 +268,7 @@ boolean OglSdlSurface(int w, int h, int isFullscreen)
 
     if( verbose>1 )
     {
-        fprintf(stderr,"OpenGL SDL_SetVideoMode(%i,%i,%i,0x%X)  %s\n",
+        GenPrintf( EMSG_ver,"OpenGL SDL_SetVideoMode(%i,%i,%i,0x%X)  %s\n",
 		w, h, 16, surfaceFlags,
 		(surfaceFlags&SDL_FULLSCREEN)?"Fullscreen":"Window");
     }
@@ -279,13 +280,13 @@ boolean OglSdlSurface(int w, int h, int isFullscreen)
     if( verbose )
     {
         int32_t vflags = vidSurface->flags;
-        fprintf(stderr,"  OpenGL Got %ix%i, %i bpp, %i bytes\n",
+        GenPrintf( EMSG_ver,"  OpenGL Got %ix%i, %i bpp, %i bytes\n",
 		vidSurface->w, vidSurface->h,
 		vidSurface->format->BitsPerPixel, vidSurface->format->BytesPerPixel );
-        fprintf(stderr,"  HW-surface= %x, HW-palette= %x, HW-accel= %x, Doublebuf= %x, Async= %x \n",
+        GenPrintf( EMSG_ver,"  HW-surface= %x, HW-palette= %x, HW-accel= %x, Doublebuf= %x, Async= %x \n",
 		vflags&SDL_HWSURFACE, vflags&SDL_HWPALETTE, vflags&SDL_HWACCEL, vflags&SDL_DOUBLEBUF, vflags&SDL_ASYNCBLIT );
         if(SDL_MUSTLOCK(vidSurface))
-	    fprintf(stderr,"  Notice: MUSTLOCK video surface\n" );
+	    GenPrintf( EMSG_ver,"  Notice: MUSTLOCK video surface\n" );
     }
     vid.bitpp = vidSurface->format->BitsPerPixel;
     vid.bytepp = vidSurface->format->BytesPerPixel;
@@ -294,10 +295,10 @@ boolean OglSdlSurface(int w, int h, int isFullscreen)
 
 #ifdef MAC_SDL   
 #ifdef DEBUG_MAC
-    fprintf(stderr, " vid set: height=%i, width=%i\n", vid.height, vid.width );
+    GenPrintf( EMSG_debug, " vid set: height=%i, width=%i\n", vid.height, vid.width );
     if( vidSurface->pitch != (vid.width * vid.bytepp))
     {
-        fprintf(stderr," Notice: Unusual buffer width = %i, where width x bytes = %i\n",
+        GenPrintf( EMSG_debug," Notice: Unusual buffer width = %i, where width x bytes = %i\n",
 		vidSurface->pitch, (vid.width * vid.bytepp) );
     }
     mac_check_context( "OglSdlSurface gl call" );
@@ -305,7 +306,7 @@ boolean OglSdlSurface(int w, int h, int isFullscreen)
     mac_set_context();
 
 #ifdef DEBUG_MAC     
-    fprintf(stderr, " glClear: height=%i, width=%i\n", h, w );
+    GenPrintf( EMSG_debug, " glClear: height=%i, width=%i\n", h, w );
 #endif
 
     glClearColor(0.0,0.0,0.0,0.0);
@@ -314,7 +315,7 @@ boolean OglSdlSurface(int w, int h, int isFullscreen)
 
 #ifdef MAC_SDL   
 #ifdef DEBUG_MAC     
-    fprintf(stderr, " SDL_GL_SwapBuffers: height=%i, width=%i\n", h, w );
+    GenPrintf( EMSG_debug, " SDL_GL_SwapBuffers: height=%i, width=%i\n", h, w );
 #endif
     // [WDJ] SDL_GL_SwapBuffers is required here to prevent crashes on Mac.
     // Do not know why.  (From Edge)
@@ -322,7 +323,7 @@ boolean OglSdlSurface(int w, int h, int isFullscreen)
 #endif
 
 #ifdef DEBUG_MAC     
-    fprintf(stderr, " SetModelView: height=%i, width=%i\n", h, w );
+    GenPrintf( EMSG_debug, " SetModelView: height=%i, width=%i\n", h, w );
 #endif
     // Moved these after, from Edge, which does not crash on Mac
     SetModelView(vid.width, vid.height);

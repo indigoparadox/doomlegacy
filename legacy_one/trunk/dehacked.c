@@ -2196,6 +2196,7 @@ void DEH_LoadDehackedLump(int lump)
 
 // [WDJ] Before any changes, save all comparison info, so that multiple
 // DEH files and lumps can be handled without interfering with each other.
+// Called once
 void DEH_Init(void)
 {
   int i;

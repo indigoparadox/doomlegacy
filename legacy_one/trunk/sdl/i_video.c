@@ -93,9 +93,6 @@ static int testbpp = 0;
 #include "ogl_sdl.h"
 
 
-// maximum number of windowed modes (see windowedModes[][])
-#define MAXWINMODES (8)
-
 //Hudler: 16/10/99: added for OpenGL gamma correction
 RGBA_t  gamma_correction = {0x7F7F7F7F};
 
@@ -142,8 +139,10 @@ const static Uint32  surfaceFlags_fullscreen = SDL_HWSURFACE|SDL_HWPALETTE|SDL_D
 #endif
 
 
+// maximum number of windowed modes
+#define MAXWINMODES (8)
 // windowed video modes from which to choose from.
-static int windowedModes[MAXWINMODES][2] = {
+static int windowedModes[MAXWINMODES+1][2] = {
     {MAXVIDWIDTH /*1600*/, MAXVIDHEIGHT/*1200*/},
     {1280, 1024},
     {1024, 768},
@@ -151,7 +150,9 @@ static int windowedModes[MAXWINMODES][2] = {
     {640, 480},
     {512, 384},
     {400, 300},
-    {320, 200}
+    {320, 200},
+   // hidden from display
+    {INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT}  // initial mode
 };
 
 
@@ -372,7 +373,7 @@ void I_SetPalette(RGBA_t* palette)
 #if defined(MAC_SDL) && defined( DEBUG_MAC )
     if( ! SDL_SetColors(vidSurface, localPalette, 0, 256) )
     {
-        fprintf(stderr,"Error: SDL_SetColors failed to set all colors\n");
+        GenPrintf( EMSG_error,"Error: SDL_SetColors failed to set all colors\n");
     }
 #else
     SDL_SetColors(vidSurface, localPalette, 0, 256);
@@ -467,7 +468,7 @@ static void  VID_SetMode_vid( int req_width, int req_height, int reqflags )
         SDL_FreeSurface(vidSurface);
         vidSurface = NULL;
     }
-    free(vid.buffer);
+    free(vid.buffer); // was malloc
     vid.display = NULL;
     vid.buffer = NULL;
     vid.direct = NULL;
@@ -475,9 +476,11 @@ static void  VID_SetMode_vid( int req_width, int req_height, int reqflags )
     vid.height = req_height;
    
     if( verbose>1 )
-        fprintf(stderr,"SDL_SetVideoMode(%i,%i,%i,0x%X)  %s\n",
+    {
+        GenPrintf( EMSG_ver,"SDL_SetVideoMode(%i,%i,%i,0x%X)  %s\n",
 		vid.width, vid.height, request_bitpp, reqflags,
 		(reqflags&SDL_FULLSCREEN)?"Fullscreen":"Window");
+    }
 
     vidSurface = SDL_SetVideoMode(vid.width, vid.height, request_bitpp, reqflags);
     if(vidSurface == NULL)
@@ -486,17 +489,17 @@ static void  VID_SetMode_vid( int req_width, int req_height, int reqflags )
     if( verbose )
     {
         int32_t vflags = vidSurface->flags;
-        fprintf(stderr,"  Got %ix%i, %i bpp, %i bytes\n",
+        GenPrintf( EMSG_ver,"  Got %ix%i, %i bpp, %i bytes\n",
 		vidSurface->w, vidSurface->h,
 		vidSurface->format->BitsPerPixel, vidSurface->format->BytesPerPixel );
-        fprintf(stderr,"  HW-surface= %x, HW-palette= %x, HW-accel= %x, Doublebuf= %x, Async= %x \n",
+        GenPrintf( EMSG_ver,"  HW-surface= %x, HW-palette= %x, HW-accel= %x, Doublebuf= %x, Async= %x \n",
 		vflags&SDL_HWSURFACE, vflags&SDL_HWPALETTE, vflags&SDL_HWACCEL, vflags&SDL_DOUBLEBUF, vflags&SDL_ASYNCBLIT );
         if(SDL_MUSTLOCK(vidSurface))
-	    fprintf(stderr,"  Notice: MUSTLOCK video surface\n" );
+	    GenPrintf( EMSG_ver,"  Notice: MUSTLOCK video surface\n" );
     }
     if( vidSurface->w != vid.width || vidSurface->h != vid.height )
     {
-        fprintf(stderr,"  Adapting to VideoMode: requested %ix%i, got %ix%i\n",
+        GenPrintf( EMSG_ver,"  Adapting to VideoMode: requested %ix%i, got %ix%i\n",
 		vid.width, vid.height,
 		vidSurface->w, vidSurface->h );
         vid.width = vidSurface->w;
@@ -504,7 +507,7 @@ static void  VID_SetMode_vid( int req_width, int req_height, int reqflags )
     }
     if( vidSurface->format->BitsPerPixel != request_bitpp )
     {
-        fprintf(stderr,"  Notice: requested %i bpp, got %i bpp\n",
+        GenPrintf( EMSG_ver,"  Notice: requested %i bpp, got %i bpp\n",
 		request_bitpp, vidSurface->format->BitsPerPixel );
     }
 
@@ -551,6 +554,7 @@ static void  VID_SetMode_vid( int req_width, int req_height, int reqflags )
     vid.buffer = malloc(vid.screen_size * NUMSCREENS);
     vid.display = vid.buffer;
     vid.screen1 = vid.buffer + vid.screen_size;
+    vid.recalc = true;
 }
  
 
@@ -617,15 +621,62 @@ fail:
 }
 
 
-// May be called more than once, to change modes and switches
+boolean  have_voodoo = false;
+
+// Have to determine how to detect a voodoo card
+// If anyone ever tries a voodoo card again, they will have to fix this.
+boolean detect_voodoo( void )
+{
+    char vb[1024];
+    SDL_VideoDriverName( vb, 1022 );
+    if( strstr( "Voodoo", vb ) != NULL )
+       have_voodoo = true;
+    return have_voodoo;
+}
+
+
+// Initialize the graphics system, with a initial window.
 void I_StartupGraphics()
 {
-    rendermode_e  old_rendermode = rendermode;
+    int  imode;
+
+    // default size for startup
+    vid.width = INITIAL_WINDOW_WIDTH;
+    vid.height = INITIAL_WINDOW_HEIGHT;
+   
+    vid.display = NULL;
+    vid.screen1 = NULL;
+    vid.buffer = NULL;
+    vid.recalc = true;
+
+    mode_fullscreen = 0;
+    request_bitpp = 8;
+    imode = MAXWINMODES;  // the initial mode
+   
+    if( VID_SetMode( imode ) == 0 )
+       goto abort_error;
+
+    SDL_ShowCursor(SDL_DISABLE);
+    I_StartupMouse();
+//    doUngrabMouse();
+
+    graphics_started = 1;
+    return;
+
+abort_error:
+    // cannot return without a display screen
+    I_Error("StartupGraphics Abort\n");
+}
+
+
+// Called to start rendering graphic screen according to the request switches.
+// Fullscreen modes are possible.
+void I_RequestFullGraphics( byte select_fullscreen )
+{
     SDL_PixelFormat    req_format;
     char * req_errmsg = NULL;
     byte  alt_request_bitpp = 0;
-     
-    // if already started, then restart
+
 //    if(graphics_started)
 //        return;
 
@@ -647,13 +698,13 @@ void I_StartupGraphics()
     {
         if( verbose )
         {
-	    fprintf(stderr,"SDL video info = { %i bits, %i bytes }\n",
+	    GenPrintf( EMSG_ver,"SDL video info = { %i bits, %i bytes }\n",
 		videoInfo->vfmt->BitsPerPixel, videoInfo->vfmt->BytesPerPixel );
 	    if( verbose > 1 )
             {
-	      fprintf(stderr," HW_surfaces= %i, blit_hw= %i, blit_sw = %i\n",
+	      GenPrintf( EMSG_ver," HW_surfaces= %i, blit_hw= %i, blit_sw = %i\n",
 		videoInfo->hw_available, videoInfo->blit_hw, videoInfo->blit_sw );
-	      fprintf(stderr," video_mem= %i K\n",
+	      GenPrintf( EMSG_ver," video_mem= %i K\n",
 		videoInfo->video_mem );
 	    }
 	}
@@ -668,12 +719,12 @@ void I_StartupGraphics()
 	    }
 	    // Use 8 bit and let SDL do the palette lookup.
 	    if( verbose )
-	        fprintf(stderr,"Native %i bpp rejected\n", vid.bitpp );
+	        GenPrintf( EMSG_ver,"Native %i bpp rejected\n", vid.bitpp );
 	}
     }
     else
     {
-        fprintf(stderr,"No SDL video info, use default\n" );
+        GenPrintf( EMSG_info,"No SDL video info, use default\n" );
     }
 
     switch(req_drawmode)
@@ -722,7 +773,7 @@ get_modelist:
         if( request_bitpp == 8 )  break;
         if(req_drawmode == REQ_specific)
         {
-	   fprintf(stderr,"No %i bpp modes\n", req_bitpp );
+	   GenPrintf( EMSG_info,"No %i bpp modes\n", req_bitpp );
 	   goto abort_error;
         }
         if( alt_request_bitpp )
@@ -732,18 +783,18 @@ get_modelist:
 	       request_bitpp = alt_request_bitpp;
 	       continue;
 	    }
-	    fprintf(stderr,"No %s modes\n", req_errmsg );
+	    GenPrintf( EMSG_info,"No %s modes\n", req_errmsg );
 	}
         request_bitpp = 8;  // default last attempt
     }
     // requested modes failed, and 8bpp failed
-    fprintf(stderr,"Draw 8bpp using palette, SDL must convert to %i bpp video modes\n", videoInfo->vfmt->BitsPerPixel );
+    GenPrintf( EMSG_info,"Draw 8bpp using palette, SDL must convert to %i bpp video modes\n", videoInfo->vfmt->BitsPerPixel );
     request_NULL = 1;
     modeList = SDL_ListModes(NULL, surfaceFlags_fullscreen);
     if(modeList == NULL)
     {
         // should not happen with fullscreen modes
-        fprintf(stderr, "No usable fullscreen video modes.\n");
+        GenPrintf( EMSG_error, "No usable fullscreen video modes.\n");
         goto abort_error;
     }
 
@@ -759,7 +810,7 @@ found_modes:
         if( verbose )
         {
 	    // list the modes
-	    fprintf( stderr, "%s %ix%i",
+	    GenPrintf( EMSG_ver, "%s %ix%i",
 		     (((numVidModes&0x03)==0)?(numVidModes)?"\nModes ":"Modes ":""),
 		     modeList[numVidModes]->w, modeList[numVidModes]->h );
 	}
@@ -776,18 +827,11 @@ found_modes:
     // Mode List has been prepared
 
     if( verbose )
-       fprintf(stderr, "\nFound %d Video Modes at %i bpp\n", numVidModes, vid.bitpp);
-    //CONS_Printf("Found %d Video Modes\n", numVidModes);
+       GenPrintf( EMSG_ver, "\nFound %d Video Modes at %i bpp\n", numVidModes, vid.bitpp);
 
     allow_fullscreen = true;
 
-    // default size for startup
-    vid.width = BASEVIDWIDTH;
-    vid.height = BASEVIDHEIGHT;
-    vid.recalc = true;
-    vid.display = NULL;
-    vid.screen1 = NULL;
-    vid.buffer = NULL;
+    mode_fullscreen = select_fullscreen;  // initial startup
 
 // [WDJ] To be safe, make it conditional
 #ifdef MAC_SDL
@@ -817,17 +861,21 @@ found_modes:
        HWD.pfnGetRenderVersion = hwSym("GetRenderVersion");
 
        // check gl renderer lib
-       if (HWD.pfnGetRenderVersion() != DOOMLEGACY_COMPONENT_VERSION)
+       if (HWD.pfnGetRenderVersion() != DOOMLEGACY_COMPONENT_VERSION )
        {
-           I_Error ("The version of the renderer doesn't match the version of the executable\nBe sure you have installed Doom Legacy properly.\n");
+           I_Error ("The version of the renderer doesn't match the version of the executable\nBe sure you have installed DoomLegacy properly.\n");
        }
 
-       vid.width = 640; // hack to make voodoo cards work in 640x480
-       vid.height = 480;
+       // keep voodoo fixes from messing with the initial window size
+       if( detect_voodoo() )
+       {
+	   vid.width = 640; // hack to make voodoo cards work in 640x480
+	   vid.height = 480;
+       }
        vid.fullscreen = mode_fullscreen;
 
        if( verbose>1 )
-	  fprintf(stderr,"OglSdlSurface(%i,%i,%i)\n", vid.width, vid.height, mode_fullscreen);
+	  GenPrintf( EMSG_ver, "OglSdlSurface(%i,%i,%i)\n", vid.width, vid.height, mode_fullscreen);
        if(!OglSdlSurface(vid.width, vid.height, mode_fullscreen))
            rendermode = render_soft;
     }
@@ -838,20 +886,15 @@ found_modes:
 
     if(render_soft == rendermode)
     {
-        if (graphics_started && ( old_rendermode != render_soft ))
-	    OglSdlShutdown();  // for mode switch
         vid.fullscreen = 0;
         VID_SetMode_vid( vid.width, vid.height, surfaceFlags ); // window
         if(vidSurface == NULL)
         {
-            fprintf(stderr,"Could not set vidmode\n");
+            GenPrintf( EMSG_error,"Could not set vidmode\n");
             goto abort_error;
         }
     }
-
-    SDL_ShowCursor(SDL_DISABLE);
     I_StartupMouse();
-//    doUngrabMouse();
 
     graphics_started = 1;
 
@@ -862,7 +905,7 @@ found_modes:
 
 abort_error:
     // cannot return without a display screen
-    I_Error("StartupGraphics Abort\n");
+    I_Error("RequestFullGraphics Abort\n");
 }
 
 
@@ -884,9 +927,10 @@ void I_ShutdownGraphics()
     {
         OglSdlShutdown();
     }
+    graphics_started = 0;
 
 #if defined(MAC_SDL) && defined( DEBUG_MAC )
-    fprintf(stderr,"SDL_Quit()\n");  // [WDJ] DEBUG:
+    GenPrintf( EMSG_info,"SDL_Quit()\n");  // [WDJ] DEBUG:
 #endif
     SDL_Quit();
 }

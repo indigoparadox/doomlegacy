@@ -82,9 +82,18 @@ static vmode_t      vesa_modes[MAX_VESA_MODES] = {{NULL, NULL}};
 static vesa_extra_t vesa_extra[MAX_VESA_MODES];
 
 //this is the only supported non-vesa mode : standard 320x200x256c.
-#define NUMVGAVIDMODES  1
+#define NUMVGAVIDMODES  2
 int VGA_InitMode (viddef_t *lvid, vmode_t *pcurrentmode);
 static vmode_t      vgavidmodes[NUMVGAVIDMODES] = {
+  { // 0 mode, HIDDEN
+    & specialmodes[1],
+    "Initial",
+    INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT,
+    INITIAL_WINDOW_WIDTH, 1,     // rowbytes, bytes per pixel
+    0, 1,  // windowed, numpages
+    NULL,
+    VGA_InitMode
+  },
   {
     NULL,
     "320x200",
@@ -193,6 +202,7 @@ int VID_NumModes(void)
 //added:21-03-98: return info on video mode
 char *VID_ModeInfo (int modenum, char **ppheader)
 {
+    // first mode in all_vidmodes is the HIDDEN INITIAL_WINDOW
     static char *badmodestr = "Bad video mode number\n";
     vmode_t     *pv;
 

@@ -80,8 +80,12 @@ boolean V_CanDraw( byte bitpp );
 
 // ---------------------------------------------
 
-void I_StartupGraphics (void);          //setup video mode
-void I_ShutdownGraphics(void);          //restore old video mode
+// Initial windowed graphics
+void I_StartupGraphics (void);
+// Full game playing graphics, with hardware drawing, and options
+void I_RequestFullGraphics( byte select_fullscreen );
+// Restore original video mode.
+void I_ShutdownGraphics(void);
 
 // Takes full 8 bit values.
 void I_SetPalette (RGBA_t* palette);

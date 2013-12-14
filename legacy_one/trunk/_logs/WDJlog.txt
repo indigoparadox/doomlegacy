@@ -3628,3 +3628,12 @@ General revision of much of r_opengl dll and i_video_xshm.
 Fixed compile of r_opengl dll due to variables, and made its log file
 work (it cannot access any main program functions or variables).
 
+*** W95_startscreen
+patchfile = w95_10_startscreen.patch
+- committed revision 1068   by wesley johnson
+Reorganize the video startup.
+I_StartGraphics makes a basic window that can display error messages.
+I_RequestFullGraphics makes the transition to fullscreen, hardware modes,
+opengl, and video depth selected by command line switches.
+Introduce INITIAL_WINDOW size (800x600), which can be selected in doomdef.h.
+This usually is large enough to actually read error messages.

@@ -534,6 +534,10 @@ void CV_gammafunc_OnChange(void)
 // Called once
 void V_Init_VideoControl( void )
 {
+    // default size for startup
+    vid.width = INITIAL_WINDOW_WIDTH;
+    vid.height = INITIAL_WINDOW_HEIGHT;
+
     CV_RegisterVar(&cv_vidwait);
     CV_RegisterVar(&cv_ticrate);
     // Needs be done for config loading

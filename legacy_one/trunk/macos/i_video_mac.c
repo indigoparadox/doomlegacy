@@ -71,7 +71,10 @@ int numModes;
 
 #define MAXWINMODES 8
 // windowed video modes from which to choose from.
-static int windowedModes[MAXWINMODES][2] = {
+static int windowedModes[MAXWINMODES+1][2] = {
+   // hidden from display
+    {INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT},  // initial mode
+   // public  1..
     { 320,  200},
     { 400,  300},
     { 512,  384},
@@ -79,7 +82,8 @@ static int windowedModes[MAXWINMODES][2] = {
     { 800,  600},
     {1024,  768},
     {1280, 1024},
-    {1600, 1200}};
+    {1600, 1200}
+};
 
 void I_UpdateNoBlit(void){}
 void I_ReadScreen(byte* scr){}
@@ -164,7 +168,7 @@ int VID_GetModeForSize(int w, int h)
     int matchMode, i;
 
     matchMode=-1;
-    for(i=0; i<MAXWINMODES; i++)
+    for(i=1; i<=MAXWINMODES; i++)
     {
         if(modeList[i].w == w && modeList[i].h == h)
         {

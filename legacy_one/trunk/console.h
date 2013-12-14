@@ -40,6 +40,8 @@
 #endif
 
 void CON_Init (void);
+void CON_Register (void);
+void CON_VideoInit (void);
 
 boolean CON_Responder (event_t *ev);
 
@@ -64,7 +66,8 @@ extern byte*   graymap;
 void CON_ClearHUD (void);       // clear heads up messages
 
 void CON_Ticker (void);
-void CON_Drawer (void);
+void CON_Drawer (void);       // full feature
+void CON_DrawConsole (void);  // text to console
 void CONS_Error (char *msg);       // print out error msg, and wait a key
 
 // force console to move out
