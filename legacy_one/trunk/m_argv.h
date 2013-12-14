@@ -60,4 +60,15 @@ char *M_GetNextParm(void);
 // Find a Response File
 void M_FindResponseFile (void);
 
+#ifdef LAUNCHER
+void M_Remove_Param( int i );
+void M_Remove_matching_Param( char * p1, char * p2 );
+// add a param from Launcher, p2 is optional
+void M_Add_Param( char * p1, char * p2 );
+// add two param from Launcher, or remove them if p2==NULL or empty string
+void M_Change_2Param( char * p1, char * p2 );
+// Clear all param from Add_Param
+void M_Clear_Add_Param( void );
+#endif
+
 #endif //M_ARGV_H

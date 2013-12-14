@@ -39,6 +39,8 @@
   // doomtype
 #include "w_wad.h"
   // for MAX_WADFILES
+#include "command.h"
+  // consvar_t
 
 
 // make sure not to write back the config until it's been correctly loaded
@@ -47,6 +49,11 @@ extern tic_t      rendergametic;
 // to make savegamename and directories
 extern char * legacyhome;
 extern int  legacyhome_len;
+extern char *doomwaddir;
+
+extern consvar_t cv_home, cv_doomwaddir, cv_iwad;
+
+extern byte  init_sequence;  // = 0 on first init
 
 // for dedicated server
 extern boolean dedicated;

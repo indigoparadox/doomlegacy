@@ -1003,8 +1003,11 @@ void CONS_Printf_va (const char *fmt, va_list ap)
     if( ! con_started )  goto done;
     if( EMSG_flags & EMSG_error )
     {
+#ifndef LAUNCHER
+        // Blocks error to Launcher fatal error display
         // errors to CON unless no con_video yet
         if( ! con_video )  goto done;
+#endif
     }
     else if( ! (EMSG_flags & EMSG_CONS) )  goto done;  // no CONS flag
    

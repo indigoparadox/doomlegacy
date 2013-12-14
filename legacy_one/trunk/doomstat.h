@@ -165,6 +165,11 @@ typedef struct
     gamemode_e	gamemode;
 } game_desc_t;
 
+#ifdef LAUNCHER
+// game desc for Launcher
+game_desc_t *  D_GameDesc( int i );
+#endif
+
 
 // ===================================================
 // Game Mode - identify IWAD as shareware, retail etc.

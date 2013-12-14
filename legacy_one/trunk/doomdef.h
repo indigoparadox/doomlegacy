@@ -130,6 +130,13 @@
 #define INITIAL_WINDOW_WIDTH   800
 #define INITIAL_WINDOW_HEIGHT  600
 
+// [WDJ] Built-in Launcher
+#define LAUNCHER
+// especially for Window 7,8
+#if defined( WIN32 ) && !defined( LAUNCHER )
+#define LAUNCHER
+#endif
+
 // =========================================================================
 
 // Name of local directory for config files and savegames

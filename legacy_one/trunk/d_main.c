@@ -334,6 +334,12 @@ int   legacyhome_len;
 char *doomwaddir = NULL;
 char *defdir = NULL;  // default dir
 
+#ifdef LAUNCHER
+consvar_t cv_home = {"home", "", CV_HIDEN, NULL};
+consvar_t cv_doomwaddir = {"doomwaddir", "", CV_HIDEN, NULL};
+consvar_t cv_iwad = {"iwad", "", CV_HIDEN, NULL};
+#endif
+
 
 #if defined(__APPLE__) && defined(__MACH__)
 // [WDJ] This is very likely only for a development setup using an .app folder
@@ -1021,6 +1027,18 @@ void D_AddFile(char *filename)
 }
 
 
+#ifdef LAUNCHER
+static void D_ClearFiles( void )
+{
+    int i;
+    for (i = 0; startupwadfiles[i]; i++)
+    {
+        free( startupwadfiles[i] );
+        startupwadfiles[i] = NULL;
+    }
+}
+#endif
+
 
 // ==========================================================================
 // Identify the Doom version, and IWAD file to use.
@@ -1177,8 +1195,14 @@ game_desc_t  game_desc_table[ NUM_GDESC ] =
 	GD_iwad_pref, GDESC_other, doom2_commercial }
 };
 
-
-
+#ifdef LAUNCHER
+// Lookup game by table index
+game_desc_t *  D_GameDesc( int i )
+{
+    if ( i<0 || i > NUM_GDESC-1 )   return NULL;
+    return  &game_desc_table[i];
+}
+#endif
 
 
 // Check all lump names in lumpnames list, count is limited to 8
@@ -1444,6 +1468,10 @@ void IdentifyVersion()
         else
             snprintf(pathiwad, _MAX_PATH-1, "%s/%s", doomwaddir, s);
         pathiwad[_MAX_PATH-1] = '\0';
+#ifdef LAUNCHER       
+        CV_Set( & cv_iwad, pathiwad );  // for launcher
+        cv_iwad.flags &= ~CV_MODIFIED;
+#endif
 
         if ( access(pathiwad, R_OK) < 0 )  goto iwad_failure;
 
@@ -1493,7 +1521,7 @@ void IdentifyVersion()
         // use pathiwad to output wad path from Check_wad_filenames
         if( Check_wad_filenames( gamedesc_index, pathiwad ) )
 	    goto got_iwad;
-        I_SoftError("%s/%s not found\n",
+        I_SoftError("IWAD %s/%s not found\n",
 		    doomwaddir, game_desc_table[gamedesc_index].iwad_filename[0]);
         goto fatal_err;
     }
@@ -1796,6 +1824,7 @@ void D_DoomMain()
     CONS_Printf(text[Z_INIT_NUM]);
     // Cannot Init nor register cv_ vars until after Z_Init and some
     // other systems are init first.
+    // -mb cannot be changed by Launcher, use Response File instead
     Z_Init();
 
     // Init once
@@ -1819,12 +1848,39 @@ void D_DoomMain()
     M_Init();    // init menu
     CON_Register();
 
+#ifdef LAUNCHER
+    CV_RegisterVar(&cv_home);
+    CV_RegisterVar(&cv_doomwaddir);
+    CV_RegisterVar(&cv_iwad);
+    CV_Set( &cv_doomwaddir, doomwaddir ? doomwaddir : "" );
+    cv_doomwaddir.flags &= ~CV_MODIFIED;
+#endif
+
     // Before this line are initializations that are run only one time.
     //---------------------------------------------------- 
     // After this line is code that deals with configuration,
     // game and wad selection, and finding files and directories.
     // It may retry some actions and may execute functions multiple times.
 
+#ifdef LAUNCHER   
+// ----------- launcher restarts here 
+restart_command:
+
+    fatal_error = 0;
+    verbose = 0;  // verbose may be changed by launcher
+    if (M_CheckParm("-v"))
+    {
+      verbose = 1;
+    }
+    if (M_CheckParm("-v2"))
+    {
+      verbose = 2;
+    }
+    dedicated = M_CheckParm("-dedicated") != 0;
+
+    if( legacyhome && legacyhome != DEFHOME )
+       free( legacyhome );  // from previous
+#endif
 
     EMSG_flags = EMSG_text | EMSG_log | EMSG_CONS;
 
@@ -1845,9 +1901,15 @@ void D_DoomMain()
     // userhome section
     {
         char * userhome = NULL;
+#ifdef LAUNCHER
+        byte   userhome_parm = 0;
+#endif
         if (M_CheckParm("-home") && M_IsNextParm())
         {
             userhome = M_GetNextParm();
+#ifdef LAUNCHER
+            userhome_parm = 1;
+#endif
 	}
         else
         {
@@ -1868,6 +1930,15 @@ void D_DoomMain()
                 userhome = strdup(defdir);  // malloc
             }
 	}
+
+#ifdef LAUNCHER       
+        if( ! userhome_parm || init_sequence == 0 )
+        {
+	    // save the input userhome for the Laucher, unless it came from -home
+	    CV_Set( &cv_home, userhome );
+	    cv_home.flags &= ~CV_MODIFIED;
+	}
+#endif
 
 #if defined(__APPLE__) && defined(__MACH__) && defined( EXT_MAC_DIR_SPEC )
 	//[segabor] ... ([WDJ] MAC port has vars handy)
@@ -2096,6 +2167,43 @@ void D_DoomMain()
    
     EMSG_flags = EMSG_text | EMSG_log | EMSG_CONS;
 
+
+#ifdef LAUNCHER   
+    if ( fatal_error || init_sequence == 1 || (init_sequence == 0 && myargc < 2 ))
+    {
+        // [WDJ] Invoke built-in launcher command line
+#if 0
+# if 0
+        setmodeneeded = VID_GetModeForSize(800,600);
+#endif
+        V_SetPalette(0);
+        SCR_SetMode();      // change video mode
+        SCR_Recalc();
+#endif
+        if ( fatal_error )
+        {
+	    CONS_Printf("Fatal error display: (press ESC to continue).\n");
+            con_destlines = BASEVIDHEIGHT;
+	    do
+	    {
+	        CON_DrawConsole();
+	        I_OsPolling();
+	        D_ProcessEvents ();  // menu and console responder
+	        CON_Ticker ();
+	        I_UpdateNoBlit();
+	        I_FinishUpdate();       // page flip or blit buffer
+	    } while( con_destlines>0 );
+        }
+        init_sequence = 1;
+        M_LaunchMenu();  // changes init_sequence > 1 to exit restart loop
+
+        // restart
+        Clear_SoftError();
+        D_ClearFiles();
+        GenPrintf( EMSG_info|EMSG_CONS, "Launcher restart:\n");
+        goto restart_command;
+    }
+#endif
 
     //--------------------------------------------------------- 
     // After this line are committed to the game and video port selected.
