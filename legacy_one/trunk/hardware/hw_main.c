@@ -4665,7 +4665,9 @@ void HWR_RenderSorted( void )
 #ifdef DEBUG_DRAWSORTED   
 	    if( tranwall_dist < 0 )  neg_dist_cnt++;
 #else
-	    if( tranwall_dist < -200.0 )  break;
+	    // [WDJ] this test has been culling left side visible walls
+//	    if( tranwall_dist < -200.0 )  break;
+	    if( tranwall_dist < -2000.0 )  break;
 	       // farther back and cannot even contribute light
 #endif
 	    // transparent wall
@@ -4689,7 +4691,7 @@ void HWR_RenderSorted( void )
 	    else
 	    {
 	        lw_p = NULL;
-	        tranwall_dist = -1000.0;
+	        tranwall_dist = -10000.0;
 	    }
         }
         else
