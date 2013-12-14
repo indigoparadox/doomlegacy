@@ -131,12 +131,19 @@
 #ifdef LINUX
 #define DEFAULTDIR1 ".doomlegacy"
 #define DEFAULTDIR2 ".legacy"
-#else
+#endif
+#ifdef __APPLE__
+#define DEFAULTDIR1 ".doomlegacy"
+#define DEFAULTDIR2 ".legacy"
+#endif
 #ifdef PC_DOS
 #define DEFAULTDIR1 "dmlegacy"
-#else
+#define DEFAULTDIR2 "legacy"
+#endif
+#ifndef DEFAULTDIR1
 #define DEFAULTDIR1 "doomlegacy"
 #endif
+#ifndef DEFAULTDIR2
 #define DEFAULTDIR2 "legacy"
 #endif
 
@@ -156,7 +163,9 @@
 
 // Legacy wad for Mac
 //#define  LEGACYWADDIR  ".app"
-#define  LEGACYWADDIR  "/usr/local/share/games/legacy"
+#define  LEGACYWADDIR  "/usr/local/share/games/doomlegacy"
+#else
+#define  LEGACYWADDIR  "/usr/local/share/games/doomlegacy"
 #endif
 
 // =========================================================================

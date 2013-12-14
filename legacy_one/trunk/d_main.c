@@ -331,6 +331,7 @@ byte    demo_ctrl;
 char *legacyhome = NULL;
 int   legacyhome_len;
 static char *doomwaddir = NULL;
+char *defdir = NULL;  // default dir
 
 
 #if defined(__APPLE__) && defined(__MACH__)
@@ -1309,31 +1310,45 @@ void IdentifyVersion()
     // find legacy.wad, IWADs
     // and... Doom LEGACY !!! :)
     char *legacywad;
-#if defined(__APPLE__) && defined(__MACH__)
-#ifdef EXT_MAC_DIR_SPEC
+#if defined(__APPLE__) && defined(__MACH__) && defined( EXT_MAC_DIR_SPEC )
     //[segabor]: on Mac OS X legacy.wad is within .app folder
-    legacywad = mac_legacy_wad;
-#else
-    // [WDJ]: on Mac OS X find legacy.wad
+    // for uniformity, use the strdup at found_legacy_wad
+    cat_filename(pathiwad, "", mac_legacy_wad );
+    if( access( mac_legacy_wad, R_OK) == 0 )    goto found_legacy_wad;
+    // check other locations
+#endif
+
+    // [WDJ]: find legacy.wad
+    // pathiwad must be MAX_WADPATH to be used by cat_filename
 #ifdef LEGACYWADDIR
     // [WDJ] Try LEGACYWADDIR first
-    if( ! access( LEGACYWADDIR , R_OK)) {
-      // [WDJ] legacy.wad is in shared directory
-      legacywad = malloc(strlen(LEGACYWADDIR) + 1 + 10 + 1);
-      cat_filename(legacywad, LEGACYWADDIR, "legacy.wad");
+    if( access( LEGACYWADDIR , R_OK) == 0 )
+    {
+        // [WDJ] legacy.wad is in shared directory
+        cat_filename(pathiwad, LEGACYWADDIR, "legacy.wad");
+        if( access( pathiwad, R_OK) == 0 )   goto found_legacy_wad;
     }
     else
 #endif
-    { 
-      // [WDJ] legacy.wad is with other wads
-      legacywad = malloc(strlen(doomwaddir) + 1 + 10 + 1);
-      cat_filename(legacywad, doomwaddir, "legacy.wad");
+
+    if( defdir && ( access( defdir, R_OK) == 0 ) )
+    {
+        // [WDJ] legacy.wad is with doomlegacy
+        cat_filename(pathiwad, defdir, "legacy.wad");
+        if( access( pathiwad, R_OK) == 0 )   goto found_legacy_wad;
     }
-#endif
-#else
-    cat_filename(pathiwad, doomwaddir, "legacy.wad");  // must be MAX_WADPATH
+    if( doomwaddir && ( access( doomwaddir, R_OK) == 0 ) )
+    { 
+        // [WDJ] legacy.wad is with other wads
+        cat_filename(pathiwad, doomwaddir, "legacy.wad");
+        if( access( pathiwad, R_OK) == 0 )   goto found_legacy_wad;
+    }
+    CONS_Error( "legacy.wad not found\n" );  // for the msg
+    I_Error( "legacy.wad not found\n" );  // fatal exit
+   
+   
+ found_legacy_wad:
     legacywad = strdup( pathiwad );  // malloc
-#endif
 
     if( verbose )
     {
@@ -1419,7 +1434,7 @@ void IdentifyVersion()
             snprintf(pathiwad, _MAX_PATH-1, "%s/%s", doomwaddir, s);
         pathiwad[_MAX_PATH-1] = '\0';
 
-        if (access(pathiwad, R_OK))  goto iwad_failure;
+        if ( access(pathiwad, R_OK) < 0 )  goto iwad_failure;
 
 	char *filename = FIL_Filename_of( pathiwad );
         if ( gamedesc_index == NUM_GDESC ) // check forcing switch
@@ -1516,14 +1531,13 @@ void IdentifyVersion()
     }
     if( gamedesc.support_wad )
        D_AddFile( gamedesc.support_wad );
-#ifndef __MACH__
+cleanup_ret:
     free(legacywad);  // from strdup, free local copy of name
-#endif
     return;
    
 iwad_failure:
     I_Error("%s not found\n", pathiwad);
-    return;
+    goto cleanup_ret;
 }
 
 /* ======================================================================== */
@@ -1545,34 +1559,35 @@ void D_Titlebar(const char *title1, const char *title2)
     cputs(title2);
     normvideo();
     gotoxy(1, 3);
-
 }
 #endif
+
+#define MAX_TITLE_LEN   80
+static char legacytitle[MAX_TITLE_LEN+1];  // length of line
 
 //added:11-01-98:
 //
 //  Center the title string, then add the date and time of compilation.
 //
-static const char *D_MakeTitleString(const char *s)
+static void D_Make_legacytitle(void)
 {
-  static char banner[81];
-  memset(banner, ' ', sizeof(banner));
-
+  const char *s = VERSION_BANNER;
   int i;
 
-  for (i = (80 - strlen(s)) / 2; *s; )
-    banner[i++] = *s++;
+  memset(legacytitle, ' ', sizeof(legacytitle));
+
+  for (i = (MAX_TITLE_LEN - strlen(s)) / 2; *s; )  // center
+    legacytitle[i++] = *s++;
 
   const char *u = __DATE__;
   for (i = 0; i < 11; i++)
-    banner[i + 1] = u[i]; 
+    legacytitle[i + 1] = u[i]; 
 
   u = __TIME__;
   for (i = 0; i < 8; i++)
-    banner[i + 71] = u[i];
+    legacytitle[i + 71] = u[i];
 
-  banner[80] = '\0';
-  return banner;
+  legacytitle[MAX_TITLE_LEN] = '\0';
 }
 
 
@@ -1636,7 +1651,7 @@ void D_DoomMain()
 {
     int p;
     char file[FILENAME_SIZE];
-    char defdir[_MAX_PATH];  // default dir
+    char dirbuf[_MAX_PATH ];
     byte defdir_stat = 0;
 
     int startepisode;
@@ -1651,7 +1666,7 @@ void D_DoomMain()
     sprintf(VERSION_BANNER, "Doom Legacy %d.%d.%d %s", VERSION/100, VERSION%100, REVISION, VERSIONSTRING);
     demoversion = VERSION;
 
-    const char *legacy = D_MakeTitleString(VERSION_BANNER);
+    D_Make_legacytitle();
 
     //added:18-02-98:keep error messages until the final flush(stderr)
     if (setvbuf(stderr, NULL, _IOFBF, 1000))
@@ -1664,7 +1679,7 @@ void D_DoomMain()
     // some basic commandline options
     if (M_CheckParm("--version"))
     {
-      printf("%s\n", legacy);
+      printf("%s\n", legacytitle);
       exit(0);
     }
 
@@ -1679,20 +1694,22 @@ void D_DoomMain()
    
     if (M_CheckParm("--help") || M_CheckParm("-h"))
     {
-      printf("%s\n", legacy);
+      printf("%s\n", legacytitle);
       Help();
       exit(0);
     }
 
-    CONS_Printf("%s\n", legacy);
+    CONS_Printf("%s\n", legacytitle);
 
     // Find or make a default dir that is not root dir
     // get the current directory (possible problem on NT with "." as current dir)
-    if (getcwd(defdir, _MAX_PATH) != NULL)
+    if (getcwd(dirbuf, _MAX_PATH) != NULL)
     {
-        if( strlen(defdir) > 4 )
+        if( (strlen(dirbuf) > 4)
+	    || (strcmp( dirbuf, "." ) == 0) )   // systems that pass "."
         {
-            defdir_stat=1;
+	    defdir = strdup( dirbuf );
+	    defdir_stat = 1;
             if( verbose )
                 GenPrintf(EMSG_ver,"Current directory: %s\n", defdir);
         }
@@ -1709,7 +1726,7 @@ void D_DoomMain()
         // Legacy is not compatible with other port config and savegames,
         // so do not put such in old doom "c:\\doomdata".
         // Substitute CDROM for doomwaddir, but not legacyhome.
-        if( defdir_stat )
+        if( defdir )
             doomwaddir = ""; // wads from cur dir
         defdir_stat = 0; // do not let legacyhome use current dir
     }
@@ -1779,20 +1796,18 @@ void D_DoomMain()
             if( defdir_stat )
             {
                 // have working default dir
-                // legacyhome cannot be "", because save games can end up in root directory
+                // userhome cannot be "", because save games can end up in root directory
                 userhome = strdup(defdir);  // malloc
             }
 	}
 
-#ifdef __APPLE__
-#undef DEFAULTDIR
-#define DEFAULTDIR ".legacy"
-#endif
 #if defined(__APPLE__) && defined(__MACH__) && defined( EXT_MAC_DIR_SPEC )
 	//[segabor] ... ([WDJ] MAC port has vars handy)
 //	sprintf(configfile, "%s/DooMLegacy.cfg", mac_user_home);
 	cat_filename( configfile, mac_user_home, "DooMLegacy.cfg" );
 	sprintf(savegamename, "%s/Saved games/Game %%d.doomSaveGame", mac_user_home);
+        if ( ! userhome)
+	    userhome = mac_user_home;
         // legacyhome = mac_user_home;
 	// Needs slash
         legacyhome = (char*) malloc( strlen(userhome) + 3 );
@@ -1802,18 +1817,17 @@ void D_DoomMain()
         // Make the home directory
         if (userhome)
         {
-#if 1
 	    // [WDJ] find directory, .doomlegacy, or .legacy
 	    char dirpath[ MAX_WADPATH ];
 
 	    // form directory filename, with slash (for savegamename)
 	    cat_filename( dirpath, userhome, DEFAULTDIR1 SLASH );
 	    // if it exists then use it
-	    if( ! access(dirpath, R_OK) == 0 )
+	    if( access(dirpath, R_OK) < 0 )  // not found
 	    {
 	        // not there, try 2nd choice
 	        cat_filename( dirpath, userhome, DEFAULTDIR2 SLASH );
-	        if( ! access(dirpath, R_OK) == 0 )
+	        if( access(dirpath, R_OK) < 0 )  // not found
 	        {
 		    // not there either, then make primary default dir
 		    cat_filename( dirpath, userhome, DEFAULTDIR1 SLASH );
@@ -1822,19 +1836,13 @@ void D_DoomMain()
             // make subdirectory in userhome
             // example: "/home/user/.doomlegacy/"
 	    legacyhome = strdup( dirpath );  // malloc
-#else
-            // make subdirectory in userhome
-	    legacyhome = (char*) malloc( strlen(userhome) + strlen(DEFAULTDIR1) + 5 );
-            // example: "/home/user/.legacy/"
-            sprintf(legacyhome, "%s" SLASH DEFAULTDIR SLASH, userhome);
-#endif
         }
         else
         {
             // default absolute path, do not set to ""
             legacyhome = DEFHOME;
         }
-        if( ! access(legacyhome, R_OK) == 0 )
+        if( access(legacyhome, R_OK) < 0 )  // not found
         {
 	    I_mkdir( legacyhome, 0700);
 	}
