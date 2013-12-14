@@ -817,7 +817,7 @@ found_modes:
        HWD.pfnGetRenderVersion = hwSym("GetRenderVersion");
 
        // check gl renderer lib
-       if (HWD.pfnGetRenderVersion() != VERSION)
+       if (HWD.pfnGetRenderVersion() != DOOMLEGACY_COMPONENT_VERSION)
        {
            I_Error ("The version of the renderer doesn't match the version of the executable\nBe sure you have installed Doom Legacy properly.\n");
        }

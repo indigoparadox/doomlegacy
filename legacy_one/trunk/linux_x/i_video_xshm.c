@@ -174,6 +174,8 @@ int XShmGetEventBase( Display* dpy );
 #include "g_game.h"
 #include "i_video.h"
   // mode_fullscreen, etc
+#include "screen.h"
+  // DRAW8PAL
 #include "hardware/hw_main.h"
 #include "hardware/hw_drv.h"
 #include "hardware/hw_glob.h"
@@ -186,43 +188,21 @@ int XShmGetEventBase( Display* dpy );
 
 void VID_PrepareModeList(void);
 
-// [WDJ] Call direct, because of Xlib typed parameters
-Window  HookXwin(Display *dsp,int width,int height, boolean vidmode_active);
-
-// maximum number of windowed modes for X11 (see windowedModes[][])
-#define MAXWINMODES (8)
-#define NUM_VOODOOMODES (3)
-
 // resolution threshold for hires mode
 #define HIRES_HORIZ (640)
 #define HIRES_VERT  (400)
 
-// [WDJ] Submitted by pld-linux patch lib.  Handle larger number of vidmodes without crash.
-#define MAX_NUM_VIDMODES (100)
-
-
-static boolean haveVoodoo = false;
-
+static boolean haveVoodoo = false;  // have Voodoo card in hardware mode
 static boolean showkey=false; // force to no 19990118 by Kin
-static boolean vidmode_ext; // Are videmode extensions available?
-static boolean vidmode_active;
-static int num_fullvidmodes;
-static int num_vidmodes = 0;
-static int lowest_vidmode;
-
-static XF86VidModeModeInfo **vidmodes;
-// [WDJ] Submitted by pld-linux patch lib.  Handle larger number of vidmodes without crash.
-static char vidModeName[MAX_NUM_VIDMODES][32]; // allow MAX_NUM_VIDMODES different modes
-static int vidmap[MAX_NUM_VIDMODES];
 
 static Display*        X_display=NULL;
 static Window          X_mainWindow=0;
 static Colormap        X_cmap;
+static XVisualInfo     X_visualinfo;
 static Visual*         X_visual;
 static GC              X_gc;
 static XEvent          X_event;
 static int             X_screen;
-static XVisualInfo     X_visualinfo;
 static XSizeHints      X_size;
 static XWMHints        X_wm;
 static XClassHint      X_class;
@@ -232,24 +212,21 @@ static XImage*         image = NULL;
 static Window   dummy;
 static int      dont_care;
 
-static boolean localDisplay = true;
+static boolean  localDisplay = true;
 
 // MIT SHared Memory extension.
-boolean         doShm;
+static boolean  doShm;
 
-XShmSegmentInfo X_shminfo;
-int             X_shmeventtype;
+static XShmSegmentInfo  X_shminfo;
+static int      X_shmeventtype;
 
 // Mouse handling.
-boolean         Mousegrabbed = false;
-
-event_t event;
+static boolean  Mousegrabbed = false;
 
 // X visual mode
 static byte     x_drawmode=DRAW8PAL;
 static int      x_bitpp=8;
 static int      x_bytepp=1;
-static int      x_pseudo=1;
 static uint16_t* x_colormap2 = 0;
 static unsigned char* x_colormap3 = 0;
 static unsigned long* x_colormap4 = 0;
@@ -262,6 +239,8 @@ static unsigned char x_blue_offset = 0;
 
 // X11 video modes from which to choose from.
 
+// maximum number of windowed modes for X11 (see windowedModes[][])
+#define MAXWINMODES (8)
 static int windowedModes[MAXWINMODES][2] = {
    {1600, 1200},
    {1280, 1024},
@@ -272,74 +251,95 @@ static int windowedModes[MAXWINMODES][2] = {
    { 400,  300},
    { 320,  200}};
 
+#define NUM_VOODOOMODES (3)
 // These are modes for 3dfx voodoo graphics (loopthrough) cards
 static int voodooModes[NUM_VOODOOMODES][2] = {
     {800, 600},
     {640, 480},
     {512, 384}};
 
+static boolean vidmode_ext; // Are videmode extensions available?
+static boolean vidmode_active = false;
+static XF86VidModeModeInfo **vidmodes;
+static int num_fullvidmodes = 0;  // num in vidmodes
+static int lowest_vidmode = 0;
+
+// [WDJ] Submitted by pld-linux patch lib.  Handle larger number of vidmodes without crash.
+#define MAX_NUM_VIDMODES (100)
+#define MAX_LEN_VIDMODENAME    32
+// [WDJ] Submitted by pld-linux patch lib.  Handle larger number of vidmodes without crash.
+// allow MAX_NUM_VIDMODES different modes
+static char vidModeName[MAX_NUM_VIDMODES][MAX_LEN_VIDMODENAME+1];
+static int num_vidmodes = 0;      // num in vidmap, limited to MAX_NUM_VIDMODES
+static int vidmap[MAX_NUM_VIDMODES];
+
+// sort vidmodes into vidmap
+// excluding those too large for our limits
+static void vidmodes_to_vidmap( void )
+{
+    boolean finished = false;  // bubble sort done
+    int i;
+   
+    // initialize mapping
+    // exclude modes which are too large (to prevent X-Server problems)
+    num_vidmodes = 0;
+    for(i=0; i<num_fullvidmodes; i++)
+    {
+        if(vidmodes[i]->hdisplay <= MAXVIDWIDTH
+	   && vidmodes[i]->vdisplay <= MAXVIDHEIGHT)
+        {
+	    // only init vidmap when mode sizes are within our limits
+	    vidmap[num_vidmodes++] = i;
+	    // limit num of modes at usage of index
+	    if( num_vidmodes >= MAX_NUM_VIDMODES )
+	        break;
+	}
+    }
+   
+    // bubble sort modes, largest first
+    do
+    {
+        finished = true;
+
+        for(i=0; i<num_vidmodes-1; i++)
+        {
+	    int e1 = vidmap[i];
+	    int e2 = vidmap[i+1];
+	    // compare h*w of [i] with [i+1]
+	    if(vidmodes[e1]->hdisplay * vidmodes[e1]->vdisplay <
+	       vidmodes[e2]->hdisplay * vidmodes[e2]->vdisplay)
+	    {
+	        // swap entries
+	        vidmap[i] = e2;
+	        vidmap[i+1] = e1;
+	        finished = false;
+	    }
+	}
+    } while(!finished);
+}
+
+// Set hardware vidmodes and vidmap, from X_display, X_screen
 static void determineVidModes(void)
 {
-   int i, firstEntry;
-   boolean finished;
-   int lowest_vidmode;
+    if(vidmode_ext)
+    {
+        // get fullscreen modes to vidmodes
+        XF86VidModeGetAllModeLines(X_display, X_screen, &num_fullvidmodes, &vidmodes);
 
-   if(vidmode_ext) {
-       // get fullscreen modes
-       XF86VidModeGetAllModeLines(X_display, X_screen, &num_fullvidmodes, &vidmodes);
-       // [WDJ] Submitted by pld-linux patch lib.  Handle larger number of vidmodes without crash.
-       num_vidmodes = (num_fullvidmodes > MAX_NUM_VIDMODES)
-                        ? MAX_NUM_VIDMODES : num_fullvidmodes;
+        vidmodes_to_vidmap();
 
-       // initialize mapping
-       for(i=0; i<num_vidmodes; i++)
-           vidmap[i] = i;
-
-       // bubble sort modes
-       do {
-           int temp;
-
-           finished = true;
-
-           for(i=0; i<num_vidmodes-1; i++) {
-               if(vidmodes[vidmap[i  ]]->hdisplay * vidmodes[vidmap[i  ]]->vdisplay <
-                  vidmodes[vidmap[i+1]]->hdisplay * vidmodes[vidmap[i+1]]->vdisplay) {
-
-                   temp = vidmap[i];
-                   vidmap[i] = vidmap[i+1];
-                   vidmap[i+1] = temp;
-
-                   finished = false;
-               }
-           }
-       } while(!finished);
-
-       // exclude modes which are too large (to prevent X-Server problems)
-       firstEntry = num_vidmodes;
-       for(i=0; i<num_vidmodes; i++) {
-           if(vidmodes[vidmap[i]]->hdisplay <= windowedModes[0][0] &&
-              vidmodes[vidmap[i]]->vdisplay <= windowedModes[0][1]) {
-
-               firstEntry = i;
-               break;
-           }
-       }
-
-       // copy modes
-       for(i=0; i<num_vidmodes-firstEntry; i++) {
-           vidmap[i] = vidmap[i+firstEntry];
-       }
-       num_vidmodes -= firstEntry;
-
-       lowest_vidmode = num_vidmodes - 1;
-   }
-   else {
-       num_vidmodes = 0;
-   }
-   return;
+        lowest_vidmode = num_vidmodes - 1;
+        allow_fullscreen = true;
+    }
+    else
+    {
+        num_vidmodes = 0;
+    }
+    return;
 }
 
 
+// Set vidmode_ext
 static void checkVidModeExtension(void)
 {
    int MajorVersion, MinorVersion;
@@ -361,24 +361,26 @@ static void checkVidModeExtension(void)
    return;
 }
 
+
+// Set X_screen, X_visualinfo, X_visual, x_drawmode
 static void findVisual(void)
 {
    // classes of interest are PseudoColor (dynamic colormap), TrueColor (static colormap)
    X_screen = DefaultScreen(X_display); // screen number, usually 0
    if (XMatchVisualInfo(X_display, X_screen, 8, PseudoColor, &X_visualinfo))
-      { x_drawmode = DRAW8PAL; x_pseudo = 1; }
+      { x_drawmode = DRAW8PAL; }
    else if
       (XMatchVisualInfo(X_display, X_screen, 15, TrueColor, &X_visualinfo))
-      { x_drawmode = DRAW15; x_pseudo = 0; }
+      { x_drawmode = DRAW15; }
    else if
       (XMatchVisualInfo(X_display, X_screen, 16, TrueColor, &X_visualinfo))
-      { x_drawmode = DRAW16; x_pseudo = 0; }
+      { x_drawmode = DRAW16; }
    else if
       (XMatchVisualInfo(X_display, X_screen, 24, TrueColor, &X_visualinfo))
-      { x_drawmode = DRAW24; x_pseudo = 0; }
+      { x_drawmode = DRAW24; }
    else if
       (XMatchVisualInfo(X_display, X_screen, 32, TrueColor, &X_visualinfo))
-      { x_drawmode = DRAW32; x_pseudo = 0; }
+      { x_drawmode = DRAW32; }
    else
       I_Error("no supported visual found");
    X_visual = X_visualinfo.visual;
@@ -386,9 +388,9 @@ static void findVisual(void)
    return;
 }
 
+// Set color offset and masks from X_visual and x_drawmode
 static void determineColorMask(void)
 {
-
    x_red_mask = X_visual->red_mask;
    x_green_mask = X_visual->green_mask;
    x_blue_mask = X_visual->blue_mask;
@@ -477,10 +479,11 @@ static void determineColorMask(void)
    return;
 }
 
+// Sets x_bitpp and x_bytepp from X_visualinfo.depth
 static void determineBPP(void)
 {
    int count;
-   XPixmapFormatValues* X_pixmapformats;
+   XPixmapFormatValues* X_pixmapformats;  // temp
 
    X_pixmapformats = XListPixmapFormats(X_display,&count);
 
@@ -488,7 +491,8 @@ static void determineBPP(void)
    if (X_pixmapformats) {
       int i;
       x_bitpp=0;
-      for (i=0;i<count;i++) {
+      // search pixmapformats for the depth
+      for (i=0; i<count; i++) {
          if (X_pixmapformats[i].depth == X_visualinfo.depth) {
             x_bitpp = X_pixmapformats[i].bits_per_pixel;
 	    break;
@@ -516,6 +520,7 @@ int X_error_handler( Display * d, XErrorEvent * ev )
 }
 
 
+// Set X_display
 static char * initDisplay(void)
 {
     int pnum;
@@ -554,7 +559,8 @@ static char * initDisplay(void)
     return displayname;
 }
 
-static void checkForShm(char *displayname) // FIXME: why do we need displayname ??
+// Set doShm
+static void checkForShm( void )
 {
     if(rendermode==render_soft) {
         // check for the MITSHM extension
@@ -573,11 +579,14 @@ static void checkForShm(char *displayname) // FIXME: why do we need displayname 
     return;
 }
 
+// Create X_cmap and x_colormap2/3/4, from x_drawnmode, x_bytepp
 static void createColorMap()
 {
-   if (x_pseudo)
+   if (x_drawmode == DRAW8PAL)
+   {
       X_cmap = XCreateColormap(X_display, RootWindow(X_display, X_screen),
                                X_visual, AllocAll);
+   }
    else if (x_bytepp==2)
    {
 #if defined( ENABLE_DRAW15 ) || defined( ENABLE_DRAW16 )
@@ -628,13 +637,10 @@ static int alt_keyboard_MapTable[256] =
 //
 //  Translates the key currently in X_event
 //
-static int xlatekey( boolean keydown )
+static int xlatekey( KeyCode keycode, boolean keydown )
 {
-    KeyCode keycode;
     KeySym keysym;
     int rc;
-
-    keycode = X_event.xkey.keycode;
 
 #ifdef ALT_KEYMAPPING
     if( con_keymap ) {
@@ -741,8 +747,6 @@ static int xlatekey( boolean keydown )
         if (rc >= XK_space && rc <= XK_asciitilde)
             rc = rc - XK_space + ' ';
 #endif       
-        if (rc >= 'A' && rc <= 'Z')
-            rc = rc - 'A' + 'a';
 //        GenPrintf(EMSG_debug, "Key: %X -> %X -> %X\n", keycode, (unsigned int)keysym, (unsigned int)rc);
         break;
     }
@@ -751,13 +755,17 @@ static int xlatekey( boolean keydown )
       fprintf(stdout,"Key: %d\n", rc);
 
     return rc;
-
 }
 
-int to_ASCII( int kcch )
+int to_ASCII( int kcch, boolean shiftdown )
 {
-   // SDL does this by  -> Unicode -> ASCII
-   return  (kcch <= 0x7F) ? kcch : 0; // ASCII key
+    // SDL does this by  -> Unicode -> ASCII
+    if( shiftdown )
+    {
+        if( kcch >= 'a' && kcch <= 'z' )
+	   kcch = kcch - 'a' + 'A';   // to uppercase
+    }
+    return  (kcch <= 0x7F) ? kcch : 0; // ASCII key
 }
 
 
@@ -802,15 +810,15 @@ void I_GetEvent(void)
     {
       case KeyPress:
         event.type = ev_keydown;
-        event.data1 = xlatekey(1);
-        event.data2 = to_ASCII(event.data1);
+        event.data1 = xlatekey(X_event.xkey.keycode, 1);
+        event.data2 = to_ASCII(event.data1, shiftdown);
         D_PostEvent(&event);
         break;
 
       case KeyRelease:
         event.type = ev_keyup;
-        event.data1 = xlatekey(0);
-        event.data2 = to_ASCII(event.data1);
+        event.data1 = xlatekey(X_event.xkey.keycode, 0);
+        event.data2 = to_ASCII(event.data1, shiftdown);
         D_PostEvent(&event);
         break;
 
@@ -1182,7 +1190,6 @@ void I_UpdateNoBlit(void)
 //
 void I_FinishUpdate(void)
 {
-
   if(rendermode==render_soft) {
 
     // cv_vidwait.value not used, X11 handles its own vsync, no controls
@@ -1390,7 +1397,7 @@ void I_SetPalette(RGBA_t* palette)
 {
     if( rendermode == render_soft )
     {
-        if (x_pseudo)
+        if (x_drawmode == DRAW8PAL)
             UploadNewPalette(X_cmap, palette);
         else
             EmulateNewPalette(palette);
@@ -1503,7 +1510,8 @@ static void grabsharedmemory(int size)
 }
 
 // return number of fullscreen + X11 modes
-int   VID_NumModes(void) {
+int   VID_NumModes(void)
+{
 
     if(haveVoodoo)
         return NUM_VOODOOMODES;
@@ -1513,8 +1521,11 @@ int   VID_NumModes(void) {
         return MAXWINMODES;
 }
 
-char  *VID_GetModeName(int modenum) {
+char * VID_GetModeName(int modenum)
+{
     static boolean displayWarning = true;
+    const char * mark_str = "";
+    int mode_x, mode_y;
 
     // display a warning message if no lores modes are available under fullscreen
     if(displayWarning && mode_fullscreen && vidmode_ext && !haveVoodoo) {
@@ -1531,31 +1542,36 @@ char  *VID_GetModeName(int modenum) {
         if(modenum >= NUM_VOODOOMODES)
             return NULL;
 
-        sprintf(&vidModeName[modenum][0], "fx %dx%d",
-                voodooModes[modenum][0],
-                voodooModes[modenum][1]);
+        mark_str = "fx";
+        mode_x = voodooModes[modenum][0];
+        mode_y = voodooModes[modenum][1];
     }
     else if(mode_fullscreen && vidmode_ext) { // fullscreen modes
         if(modenum >= num_vidmodes)
             return NULL;
 
-        sprintf(&vidModeName[modenum][0], "%dx%d",
-                vidmodes[vidmap[modenum]]->hdisplay,
-                vidmodes[vidmap[modenum]]->vdisplay);
+        mark_str = "";
+        mode_x = vidmodes[vidmap[modenum]]->hdisplay;
+        mode_y = vidmodes[vidmap[modenum]]->vdisplay;
     }
     else { // X11 modes
         if(modenum > MAXWINMODES)
             return NULL;
 
-        sprintf(&vidModeName[modenum][0], "X11 %dx%d",
-                windowedModes[modenum][0],
-                windowedModes[modenum][1]);
+        mark_str = "X11";
+        mode_x = windowedModes[modenum][0];
+        mode_y = windowedModes[modenum][1];
     }
+    // form the string
+    snprintf( &vidModeName[modenum][0], MAX_LEN_VIDMODENAME, "%s %dx%d",
+	      mark_str, mode_x, mode_y );
+    vidModeName[modenum][MAX_LEN_VIDMODENAME] = 0;
     return &vidModeName[modenum][0];
 }
 
 
-int VID_GetModeForSize( int w, int h) {
+int VID_GetModeForSize( int w, int h)
+{
     static boolean first_override=true;
 
     int best_fit, i;
@@ -1591,8 +1607,8 @@ int VID_GetModeForSize( int w, int h) {
                    vidmodes[vidmap[lowest_vidmode]]->vdisplay < HIRES_HORIZ*HIRES_VERT) {
                     best_fit = lowest_vidmode; // use lowest fullscreen mode if it is not too hires
                 }
-                else { // if lowest fullscreen mode is too hires use lowest windowed mode
-                    CV_SetValue(&cv_fullscreen, 0);
+                else {
+		    // if lowest fullscreen mode is too hires use lowest windowed mode
 		    mode_fullscreen = false;
                     VID_PrepareModeList();
                     best_fit = MAXWINMODES-1;
@@ -1602,7 +1618,8 @@ int VID_GetModeForSize( int w, int h) {
                 best_fit = lowest_vidmode;
             }
         }
-        else if(first_override) first_override = false; // disable first_override
+        else if(first_override)
+	    first_override = false; // disable first_override
     }
 
     else { // windowed modes
@@ -1669,6 +1686,7 @@ static void destroyWindow(void)
    return;
 }
 
+// Called multiple times
 static int createWindow(boolean isWindowedMode, int modenum)
 {
     int                  oktodraw;
@@ -1697,25 +1715,16 @@ static int createWindow(boolean isWindowedMode, int modenum)
     if(rendermode==render_soft) {
         // setup attributes for main window
         if (vidmode_active) {
-#if 1       
             // [WDJ] Submitted by pld-linux: Do not force CWColormap, it may be a truecolor mode.
 	    attribmask = CWSaveUnder | CWBackingStore |
 	         CWEventMask | CWOverrideRedirect;
-#else       
-	    attribmask = CWColormap | CWSaveUnder | CWBackingStore |
-	         CWEventMask | CWOverrideRedirect;
-#endif
 
 	    attribs.override_redirect = True;
 	    attribs.backing_store = NotUseful;
 	    attribs.save_under = False;
 	} else {
-#if 1       
 	    // [WDJ] Submitted by pld-linux: Do not force CWColormap, it may be a truecolor mode.
 	    attribmask = CWBorderPixel | CWEventMask;
-#else      
-	    attribmask = CWBorderPixel | CWColormap | CWEventMask;
-#endif
 	}
 
         attribs.event_mask = KeyPressMask | KeyReleaseMask
@@ -1724,16 +1733,12 @@ static int createWindow(boolean isWindowedMode, int modenum)
 #endif
 	    | ExposureMask | StructureNotifyMask;
 
-#if 1
         // [WDJ] Submitted by pld-linux: Do not force CWColormap, it may be a truecolor mode.
-        // Only in x_pseudo does X handle the colormap, not in TrueColor where we do.
-        if (x_pseudo) {
+        // Only in DRAW8PAL does X handle the colormap, not in TrueColor where we do.
+        if (x_drawmode == DRAW8PAL) {
 	    attribmask |= CWColormap;
 	    attribs.colormap = X_cmap;
 	}
-#else
-        attribs.colormap = X_cmap;
-#endif      
         attribs.border_pixel = 0;
 
         // create the main window
@@ -1759,10 +1764,8 @@ static int createWindow(boolean isWindowedMode, int modenum)
                      valuemask,
                      &xgcvalues );
     } else {
-      // Hardware renderer
-//      X_mainWindow = HWD.pfnHookXwin(X_display, vid.width, vid.height, vidmode_active);
-        // [WDJ] Call direct
-        X_mainWindow = HookXwin(X_display, vid.width, vid.height, vidmode_active);
+        // Hardware renderer
+        X_mainWindow = HWD.pfnHookXwin(X_display, vid.width, vid.height, vidmode_active);
         if(X_mainWindow == 0) {
 	    return 0;
 	}
@@ -1841,10 +1844,8 @@ static int createWindow(boolean isWindowedMode, int modenum)
 
     if(rendermode==render_soft)
     {
-
       if (doShm)
       {
-
         X_shmeventtype = XShmGetEventBase(X_display) + ShmCompletion;
 
         // create the image
@@ -1859,8 +1860,6 @@ static int createWindow(boolean isWindowedMode, int modenum)
 
         grabsharedmemory(image->bytes_per_line * image->height);
 
-
-
         if (!image->data)
         {
             perror("");
@@ -1870,7 +1869,6 @@ static int createWindow(boolean isWindowedMode, int modenum)
         // get the X server to attach to it
         if (!XShmAttach(X_display, &X_shminfo))
             I_Error("XShmAttach() failed in InitGraphics()");
-
       }
       else
       {
@@ -1883,7 +1881,6 @@ static int createWindow(boolean isWindowedMode, int modenum)
                              vid.width, vid.height,
                              8*x_bytepp,
                              vid.width*x_bytepp );
-
       }
 
       // [WDJ] Draw 8pp and translate to other bpp in FinishUpdate
@@ -1926,83 +1923,27 @@ static int createWindow(boolean isWindowedMode, int modenum)
 
 void VID_PrepareModeList(void)
 {
-   int i, firstEntry;
-   boolean finished;
-
-    static boolean isVoodooChecked = false;
-    char *rendererString, *voodooString;
-
     if(dedicated)
         return;
 
-    // I cannot detect the Voodoo earlier, so I try to catch it here
-    if(!isVoodooChecked) {
-        if(rendermode == render_opengl) {
-            rendererString = HWD.pfnGetRenderer();
-            voodooString = strstr(rendererString, "Voodoo_Graphics"); // FIXME: if Mesa ever decides to change the this spotword, we're deep in the shit
-
-            if(voodooString != NULL) {
-                haveVoodoo = true;
-            }
-        }
-        isVoodooChecked = true;
-    }
-
     if(haveVoodoo) // nothing to do
         return;
-   if(vidmode_ext && mode_fullscreen) {
-      // [WDJ] Submitted by pld-linux patch lib.  Handle larger number of vidmodes without crash.
-      num_vidmodes = (num_fullvidmodes > MAX_NUM_VIDMODES)
-                       ? MAX_NUM_VIDMODES : num_fullvidmodes;
-
-      // initialize mapping
-      for(i=0; i<num_vidmodes; i++)
-         vidmap[i] = i;
-
-      // bubble sort modes
-      do {
-         int temp;
-
-         finished = true;
-
-         for(i=0; i<num_vidmodes-1; i++) {
-            if(vidmodes[vidmap[i  ]]->hdisplay * vidmodes[vidmap[i  ]]->vdisplay <
-               vidmodes[vidmap[i+1]]->hdisplay * vidmodes[vidmap[i+1]]->vdisplay) {
-
-               temp = vidmap[i];
-               vidmap[i] = vidmap[i+1];
-               vidmap[i+1] = temp;
-
-               finished = false;
-            }
-         }
-      } while(!finished);
-
-      // exclude modes which are too large (to prevent X-Server problems)
-      firstEntry = num_vidmodes;
-      for(i=0; i<num_vidmodes; i++) {
-          if(vidmodes[vidmap[i]]->hdisplay <= MAXVIDWIDTH && // FIXME: get rid of "magic" numbers
-             vidmodes[vidmap[i]]->vdisplay <= MAXVIDHEIGHT) {
-              firstEntry = i;
-              break;
-         }
-      }
-
-      // copy modes
-      for(i=0; i<num_vidmodes-firstEntry; i++) {
-         vidmap[i] = vidmap[i+firstEntry];
-      }
-      num_vidmodes -= firstEntry;
-
-      if(num_vidmodes > 0) { // do we have any fullscreen modes at all?
-          lowest_vidmode = num_vidmodes - 1;
-      }
-      else {
-          CV_SetValue(&cv_fullscreen, 0);
-          CONS_Printf("Only modes below 1600x1200 available\nSwitching to windowed mode ...\n");
-      }
+    if(vidmode_ext && mode_fullscreen)
+    {
+        vidmodes_to_vidmap();      
+        if(num_vidmodes > 0)  // do we have any fullscreen modes at all?
+        {
+            lowest_vidmode = num_vidmodes - 1;
+	}
+        else
+        {
+	    // switch to windowed
+            mode_fullscreen = 0;
+            GenPrintf(EMSG_info,"No modes below 1600x1200 available\nSwitching to windowed mode ...\n");
+	}
    }
-   else {
+   else
+   {
        num_vidmodes = 0;
    }
    allow_fullscreen = true;
@@ -2055,11 +1996,56 @@ int VID_SetMode(int modenum) {
     return 1;
 }
 
+// detect Voodoo card
+void detect_Voodoo( void )
+{
+    static boolean isVoodooChecked = false;
+    char *renderer_str, *voodoo_detect;
+    // I cannot detect the Voodoo earlier, so I try to catch it here
+    if(!isVoodooChecked) {
+        if(rendermode == render_opengl) {
+            renderer_str = HWD.pfnGetRenderer();
+	    if( verbose )
+	    {
+	       GenPrintf(EMSG_ver, "%s\n", renderer_str );
+	    }
+	    // FIXME: if Mesa ever decides to change the this spotword, we're deep in the shit
+	    voodoo_detect = strstr(renderer_str, "Voodoo_Graphics");
+	    if( ! voodoo_detect )
+	        voodoo_detect = strstr(renderer_str, "Voodoo");
+            if(voodoo_detect != NULL)
+	    {
+                haveVoodoo = true;
+	        if( verbose )
+	        {
+		    GenPrintf(EMSG_ver, "Voodoo card detected\n" );
+		}
+            }
+        }
+        isVoodooChecked = true;
+    }
+}
+
+
 // May be called more than once, to change modes and switches
 void I_StartupGraphics(void)
 {
-    char      *displayname;
+    char  *displayname;
+//    int  default_vidmode;
     void      *dlptr;
+
+    // default size for startup
+    vid.width = BASEVIDWIDTH;
+    vid.height = BASEVIDHEIGHT;
+    vid.display = NULL;
+    vid.screen1 = NULL;
+    vid.buffer = NULL;
+    vid.recalc = true;
+    // setup vid 19990110 by Kin
+    vid.bytepp = 1; // not optimized yet...
+    vid.bitpp = 8;
+
+    rendermode = render_soft;
 
     if( ! graphics_started)
     { 
@@ -2070,15 +2056,8 @@ void I_StartupGraphics(void)
         XSetErrorHandler( X_error_handler );
     }
 
-    // setup vid 19990110 by Kin
-    vid.bytepp = 1; // not optimized yet...
-    vid.bitpp = 8;
-
-    // default size for startup
-    vid.width = 320;
-    vid.height = 200;
-
-    displayname = initDisplay();
+    // subject to -display switch
+    displayname = initDisplay();  // Set X_display
 
     if(M_CheckParm("-opengl")) {
         // only set MESA_GLX_FX if not set by set user
@@ -2113,12 +2092,27 @@ void I_StartupGraphics(void)
 
        if(!dlptr)
        {
-           GenPrintf(EMSG_error, "Error opening r_opengl.so!\n%s\n",dlerror());
+	   // to get first error messages
+           dlopen("./r_opengl.so",RTLD_NOW | RTLD_GLOBAL);
+           GenPrintf(EMSG_error, "Error opening r_opengl.so\n%s\n", dlerror());
+#if 0	  
+	   {
+	       // [WDJ] Troubleshoot why cannot open it
+	       char * cwd2 = getcwd( NULL, 0 );  // malloc
+	       GenPrintf(EMSG_error, "CWD: %s \n", cwd2 );
+	       free( cwd2 );
+	       char * readperm = (access( "r_opengl.so", R_OK ) == 0 )? "OK": "NOT PERMITTED";
+	       char * execperm = (access( "r_opengl.so", X_OK ) == 0 )? "OK": "NOT PERMITTED";
+	       GenPrintf(EMSG_error, "Access r_opengl.so: READ %s, EXECUTE %s\n", readperm, execperm );
+	   }
+#endif	  
+	   // Fail to software rendering
            rendermode = render_soft;
        } else {
+	   // linkage to dll r_opengl.so
            HWD.pfnInit = dlsym(dlptr,"Init");
            HWD.pfnShutdown = dlsym(dlptr,"Shutdown");
-//           HWD.pfnHookXwin = dlsym(dlptr,"HookXwin");
+           HWD.pfnHookXwin = dlsym(dlptr,"HookXwin");
            HWD.pfnSetPalette = dlsym(dlptr,"SetPalette");
            HWD.pfnFinishUpdate = dlsym(dlptr,"FinishUpdate");
            HWD.pfnDraw2DLine = dlsym(dlptr,"Draw2DLine");
@@ -2144,17 +2138,20 @@ void I_StartupGraphics(void)
                I_Error ("The version of the renderer doesn't match the version of the executable\nBe sure you have installed Doom Legacy properly.\n");
            }
        }
+       // requires HWD.pfnGetRenderer
+       detect_Voodoo();
     }
 
-    checkVidModeExtension();
+    // Set hardware vidmodes and vidmap, from X_display, X_screen
+    checkVidModeExtension();  // Set vidmode_ext
 
-    determineVidModes();
+    determineVidModes();  // set allow_fullscreen
 
-    findVisual();
+    findVisual();  // Set X_screen, X_visualinfo, X_visual, x_drawmode
 
-    determineBPP();
+    determineBPP(); // Sets x_bitpp and x_bytepp from X_visualinfo.depth
 
-    checkForShm(displayname);
+    checkForShm();  // Set doShm
 
     switch(req_drawmode)
     {
@@ -2185,16 +2182,18 @@ void I_StartupGraphics(void)
        else if( verbose )
        {
 	   // Use 8 bit and do the palette translation.
-	   GenPrintf(EMSG_ver, "%i bpp rejected\n", vid.bitpp );
+	   vid.bitpp = 8;
+	   vid.bytepp = 1;
+	   GenPrintf(EMSG_ver, "%i bpp rejected\n", x_bitpp );
        }
      default:
        break;
     }
 
-    determineColorMask();
+    determineColorMask();  // Set color offset and masks
+    createColorMap();  // Create X_cmap and x_colormap2/3/4
 
-    createColorMap();
-
+//    default_vidmode = VID_GetModeForSize( vid.width, vid.height);
     createWindow(true, // is windowed
                  0);   // dummy modenum
 
@@ -2204,6 +2203,8 @@ void I_StartupGraphics(void)
     vid.recalc = true;
     graphics_started = 1;
 
+    if( verbose )
+        GenPrintf(EMSG_ver, "StartupGraphics completed\n" );
     return;
 
 abort_error:

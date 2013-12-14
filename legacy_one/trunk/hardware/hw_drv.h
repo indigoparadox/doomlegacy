@@ -115,13 +115,11 @@ EXPORT void HWRAPI( Shutdown ) (void) ;
 EXPORT void    HWRAPI( GetModeList ) (vmode_t** pvidmodes, int* numvidmodes) ;
 #endif
 
-#if 0
-// [WDJ] Remove this, and make the call direct, there is only ONE possible caller.
 #ifdef VID_X11
+// [WDJ] Must use same dll HWRAPI interface.
 #include <X11/Xlib.h>
   // just to get Window and Display typedef
 EXPORT Window  HWRAPI( HookXwin ) (Display*,int,int,boolean) ;
-#endif
 #endif
 
 EXPORT void HWRAPI( SetPalette ) (RGBA_t* pal, RGBA_t *gamma);

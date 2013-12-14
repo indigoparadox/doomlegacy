@@ -55,7 +55,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <GL/glx.h>
 
 #include "r_opengl.h"
@@ -65,6 +64,10 @@
 //                                                                    GLOBALS
 // **************************************************************************
 
+// [WDJ] These vars are only accessible by dlsym function calls of the dll.
+// Other accesses will create separate local copies.
+// Direct calls of the dll functions will create separate local copies.
+// Attempts to access global vars of the main program will fail at dlopen.
 static GLXContext ctx   = NULL;
 static Display *dpy     = NULL;
 static Window win       = 0; // metzgermeister: No pointer!
@@ -80,33 +83,14 @@ static  vmode_t     video_modes[MAX_VIDEO_MODES];
 //                                                                  FUNCTIONS
 // **************************************************************************
 
-#if 0
-// [WDJ] This is already defined in i_main
-#ifdef DEBUG_TO_FILE
-FILE * logstream = NULL;
-#endif
-
-// [WDJ] These are already defined in glibc
-EXPORT void _init() {
-#ifdef DEBUG_TO_FILE
-  logstream = fopen("ogllog.txt", O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
-#endif
-}
-
-EXPORT void _fini() {
-#ifdef DEBUG_TO_FILE
-   if(logstream) fclose(logstream);
-#endif
-}
-#endif
-
 //
 // FAB --- SORRY, THIS SHOULD BE UPDATED LIKE ABOVE, PLUS THE LINUX ADDS
 //
-//EXPORT Window HWRAPI( HookXwin ) (Display *dsp,int width,int height, boolean vidmode_active)
-
-//[WDJ] Call direct, has Xwindows specific parameters
-Window  HookXwin(Display *dsp,int width,int height, boolean vidmode_active)
+// [WDJ] Must use the same HWRAPI interface, and call, or else the static
+// global variables set in this function, are not the same variables used in
+// the other functions of this dll.  There are no compile errors.
+// Called on any createWindow
+EXPORT Window HWRAPI( HookXwin ) (Display *dsp,int width,int height, boolean vidmode_active)
 {
     int scrnum;
     int attrib[] = { GLX_RGBA,
@@ -223,6 +207,7 @@ EXPORT void HWRAPI( Shutdown ) ( void )
        glXDestroyContext(dpy,ctx);
     }
     DBG_Printf ("HWRAPI Shutdown(DONE)\n");
+    DBG_close(); // shutdown log
 }
 
 

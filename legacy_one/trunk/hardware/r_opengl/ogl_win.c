@@ -92,7 +92,6 @@
 #ifdef DEBUG_OGL_TO_FILE
 static unsigned long nb_frames=0;
 static clock_t my_clock;
-HANDLE ogl_logstream;
 #endif
 
 static  HDC     hDC   = NULL;       // the window's device context
@@ -122,13 +121,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,      // handle to DLL module
         case DLL_PROCESS_ATTACH:
          // Initialize once for each new process.
          // Return FALSE to fail DLL load.
-#ifdef DEBUG_OGL_TO_FILE
-            ogl_logstream = INVALID_HANDLE_VALUE;
-            ogl_logstream = CreateFile ("ogllog.txt", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
-                                     FILE_ATTRIBUTE_NORMAL/*|FILE_FLAG_WRITE_THROUGH*/, NULL);
-            if (ogl_logstream == INVALID_HANDLE_VALUE)
-                return FALSE;
-#endif
             break;
 
         case DLL_THREAD_ATTACH:
@@ -141,12 +133,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,      // handle to DLL module
 
         case DLL_PROCESS_DETACH:
          // Perform any necessary cleanup.
-#ifdef DEBUG_OGL_TO_FILE
-            if ( ogl_logstream != INVALID_HANDLE_VALUE ) {
-                CloseHandle ( ogl_logstream );
-                ogl_logstream  = INVALID_HANDLE_VALUE;
-            }
-#endif
             break;
     }
 
@@ -466,6 +452,7 @@ EXPORT void HWRAPI( Shutdown ) ( void )
     }
 
     DBG_Printf ("HWRAPI Shutdown(DONE)\n");
+    DBG_close(); // shutdown log
 }
 
 //extern int num_drawn_poly;

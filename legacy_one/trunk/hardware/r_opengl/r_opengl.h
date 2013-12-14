@@ -85,8 +85,10 @@
 #define MIN(x,y) ( ((x)<(y)) ? (x) : (y) )
 #define MAX(x,y) ( ((x)>(y)) ? (x) : (y) )
 
-#undef DEBUG_TO_FILE            // maybe defined in previous *.h
-#define DEBUG_TO_FILE           // output debugging msgs to ogllog.txt
+// maybe defined in previous *.h
+#undef DEBUG_TO_FILE
+// output debugging msgs to ogllog.txt
+#define DEBUG_TO_FILE   "ogllog.txt"
 
 #ifndef MINI_GL_COMPATIBILITY
 //    #define USE_PALETTED_TEXTURE
@@ -106,6 +108,7 @@ typedef int             HANDLE;
 void DBG_Printf(LPCTSTR lpFmt, ...);                                          
 // [WDJ] Print a long string as multiple lines of LOGLINELEN
 void DBG_Print_lines( const char * longstr );
+void DBG_close( void );
 
 void Flush(void);
 int  isExtAvailable(char *extension);

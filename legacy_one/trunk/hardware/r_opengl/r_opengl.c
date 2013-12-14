@@ -179,7 +179,6 @@
 #include <math.h>
 
 #include "doomincl.h"
-  // logstream
 #include "r_opengl.h"
 
 // ==========================================================================
@@ -278,6 +277,18 @@ static const GLfloat    byte2float[256] = {
 
 
 static I_Error_t I_Error_GL = NULL;
+//static byte gl_verbose = 0;
+#ifdef DEBUG_TO_FILE
+static FILE * ogl_log = NULL;
+static boolean log_enable = true;
+#endif
+
+void DBG_close( void )
+{
+#ifdef DEBUG_TO_FILE
+    if(ogl_log) fclose(ogl_log);
+#endif
+}
 
 
 // -----------------+
@@ -303,14 +314,24 @@ void DBG_Printf( LPCTSTR lpFmt, ... )
     dbgbuf[DBG_BUF_SIZE-1] = '\0'; // term, when length limited
     va_end(ap);
 
-#ifdef LOGMESSAGES
-    if (logstream)
-      fputs(dbgbuf, logstream);
+    // [WDJ] As a library routine, cannot access var or func of calling program.
+    // So this uses separate file handling.
+    // Accesses of logstream or verbose will compile but it prevents the
+    // lib from loading at dlopen.
+    if( log_enable && ! ogl_log )
+    {
+        // open on first usage
+        printf( "Open log: %s\n", DEBUG_TO_FILE );
+        ogl_log = fopen( DEBUG_TO_FILE, "w" );
+        log_enable = false;
+    }
+    if( ogl_log )
+    {
+        fputs(dbgbuf, ogl_log);
+    }
 #endif
 
-#endif
-
-    if(verbose > 1)
+//    if(verbose > 1)
     {
       va_start(ap, lpFmt);
       vprintf( lpFmt, ap );
@@ -344,12 +365,15 @@ void  DBG_Print_lines( const char * longstr )
     }
 }
 
+static byte enable_card_display = 1;
+
 // [WDJ] Query the GL hardware strings
 // set oglflags and gl_extensions
 // Do not call before initializing GL
 void Query_GL_info( int ogltest )
 {
-    DBG_Printf("Vendor     : %s\n", glGetString(GL_VENDOR) );
+    if( enable_card_display )
+       DBG_Printf("Vendor     : %s\n", glGetString(GL_VENDOR) );
 //#define DUP_RENDERER_STR
 #ifdef DUP_RENDERER_STR
     // unnecessary dup
@@ -357,7 +381,8 @@ void Query_GL_info( int ogltest )
 #else
     const char * renderer = (char*) glGetString(GL_RENDERER);
 #endif
-    DBG_Printf("Renderer   : %s\n", renderer );
+    if( enable_card_display )
+       DBG_Printf("Renderer   : %s\n", renderer );
     // BP: disable advanced features that don't work on some hardware
     if( strstr(renderer, "810" ) )   oglflags |= GLF_NOZBUFREAD;
     // Win: Hurdler: Now works on G400 with bios 1.6 and certified drivers 6.04
@@ -368,13 +393,18 @@ void Query_GL_info( int ogltest )
 #ifdef DUP_RENDERER_STR
     free(renderer);
 #endif
-    DBG_Printf("Version    : %s\n", glGetString(GL_VERSION) );
-    // [WDJ] Extensions string is indefinite long
-    DBG_Printf("Extensions : \n" );
     gl_extensions = glGetString(GL_EXTENSIONS);  // passed to isExtAvailable
-    DBG_Print_lines( (char*)gl_extensions );
 
-    DBG_Printf("oglflags   : 0x%X\n", oglflags );
+    if( enable_card_display )
+    {
+        DBG_Printf("Version    : %s\n", glGetString(GL_VERSION) );
+        // [WDJ] Extensions string is indefinite long
+        DBG_Printf("Extensions : \n" );
+        DBG_Print_lines( (char*)gl_extensions );
+
+        DBG_Printf("oglflags   : 0x%X\n", oglflags );
+        enable_card_display = 0;  // only once
+    }
 }
 
 
@@ -563,8 +593,13 @@ int isExtAvailable(char *extension)
 // -----------------+
 EXPORT boolean HWRAPI( Init ) (I_Error_t FatalErrorFunction)
 {
+    // param needed
+    // gl_verbose = verbose;
+    // VERSION_BANNER
+    // VERSION        
     I_Error_GL = FatalErrorFunction;
-    DBG_Printf ("%s, %s\n", DRIVER_STRING, VERSION_BANNER);
+//    DBG_Printf ("%s, %s\n", DRIVER_STRING, VERSION_BANNER);
+    DBG_Printf ("%s\n", DRIVER_STRING);
     return 1;
 }
 
@@ -1360,15 +1395,29 @@ EXPORT int  HWRAPI( GetTextureUsed ) (void)
 
 EXPORT int  HWRAPI( GetRenderVersion ) (void)
 {
-    return VERSION;
+#if 1
+    // version of component compile
+    return DOOMLEGACY_COMPONENT_VERSION;
+#else
+    // version of renderer
+    int vernum = 0;
+    const char * verstr = glGetString(GL_VERSION);
+    if( verstr )
+       vernum = atoi( verstr );
+    return vernum;
+#endif
 }
 
 // Only i_video_xshm is using this API,
 // all the other ports call glGetString, and set oglflags accordingly
 EXPORT char *HWRAPI( GetRenderer ) (void)
 {
-  strncpy(rendererString, (const char *)glGetString(GL_RENDERER), 255);
-  rendererString[255] = '\0';
+    const char * renstr = glGetString(GL_RENDERER);
+  
+    rendererString[0] = '\0';
+    if( renstr )
+       strncpy(rendererString, renstr, 255);
+    rendererString[255] = '\0';
 
-  return rendererString;
+    return rendererString;
 }
