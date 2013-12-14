@@ -1919,7 +1919,7 @@ void R_RenderSegLoop (void)
 	// The cause of the overflow many times seems to be the step value.
         if( bottomfrac < topfrac ) {
 	   // Uncomment to see which map areas cause this overflow.
-//	   fprintf(stderr,"Overflow break: bottomfrac(%i) < topfrac(%i)\n", bottomfrac, topfrac );
+//	   GenPrintf(EMSG_debug,"Overflow break: bottomfrac(%i) < topfrac(%i)\n", bottomfrac, topfrac );
 	   break;
 	}
     }
@@ -2514,7 +2514,7 @@ void R_StoreWallRange( int   start, int   stop)
     if( bottomfrac < topfrac )
     {
        // enable print to see where this happens
-//       fprintf(stderr,"Overflow mult: bottomfrac(%i) < topfrac(%i)\n", bottomfrac, topfrac );
+//     GenPrintf(EMSG_debug,"Overflow mult: bottomfrac(%i) < topfrac(%i)\n", bottomfrac, topfrac );
        return;
     }
 
@@ -2707,7 +2707,7 @@ void R_StoreWallRange( int   start, int   stop)
     if( bottomfrac < topfrac )
     {
        // Enable to see where this happens.
-//       fprintf(stderr,"Overflow in call: bottomfrac(%i) < topfrac(%i)\n", bottomfrac, topfrac );
+//       GenPrintf(EMSG_debug,"Overflow in call: bottomfrac(%i) < topfrac(%i)\n", bottomfrac, topfrac );
        return;
     }
 

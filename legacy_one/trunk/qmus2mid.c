@@ -458,7 +458,7 @@ int qmus2mid (byte *mus,  // input mus
 
 #if 0
     if (et != MUS_EV_SCOREEND)
-      fprintf(stderr,"QMUS end without score end\n");
+      GenPrintf(EMSG_warn,"QMUS end without score end\n");
 #endif
 
     WriteMIDheader( TrackCnt+1, division, &file_mid );

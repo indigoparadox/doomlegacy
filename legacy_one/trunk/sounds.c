@@ -562,7 +562,8 @@ void S_RemoveSoundFx (int id)
         id<=sfx_lastfreeslot &&
         S_sfx[id].name)
     {
-        fprintf(stderr, "RemoveSoundFx: %s\n", S_sfx[id].name );
+        if( verbose > 1 )
+	    GenPrintf(EMSG_ver, "RemoveSoundFx: %s\n", S_sfx[id].name );
         S_FreeSfx(&S_sfx[id]);
         Z_Free(S_sfx[id].name);
         S_sfx[id].lumpnum=-1;

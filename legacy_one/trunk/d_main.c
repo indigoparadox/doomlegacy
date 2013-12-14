@@ -293,7 +293,8 @@ int pagetic;
 static char * pagename = "TITLEPIC";
 
 //  PROTOS
-void Help(void);
+static void Help(void);
+static void Clear_SoftError(void);
 void HereticPatchEngine(void);
 //void Chex1PatchEngine(void);
 
@@ -709,7 +710,7 @@ void D_DoomLoop(void)
     COM_BufAddText("exec autoexec.cfg\n");
 
     // end of loading screen: CONS_Printf() will no more call FinishUpdate()
-    con_startup = false;
+    con_self_refresh = false;
 
     oldentertics = I_GetTime();
 
@@ -1298,7 +1299,7 @@ boolean  Check_wad_filenames( int gmi, char * pathiwad )
 void IdentifyVersion()
 {
     char pathiwad[_MAX_PATH + 16];
-    // fprintf(stderr, "MAX_PATH: %i\n", _MAX_PATH);
+    // GenPrintf(EMSG_debug, "MAX_PATH: %i\n", _MAX_PATH);
 
     boolean  other_names = 0;	// indicates -iwad other names
 
@@ -1336,7 +1337,7 @@ void IdentifyVersion()
 
     if( verbose )
     {
-        fprintf(stderr, "Doomwaddir: %s\n" "Legacy.wad: %s\n", doomwaddir, legacywad );
+        GenPrintf(EMSG_ver, "Doomwaddir: %s\n" "Legacy.wad: %s\n", doomwaddir, legacywad );
     }
 
     /*
@@ -1654,7 +1655,7 @@ void D_DoomMain()
 
     //added:18-02-98:keep error messages until the final flush(stderr)
     if (setvbuf(stderr, NULL, _IOFBF, 1000))
-        CONS_Printf("setvbuf didnt work\n");
+        GenPrintf(EMSG_warn,"setvbuf didnt work\n");
     setbuf(stdout, NULL);       // non-buffered output
 
     // get parameters from a response file (eg: doom3 @parms.txt)
@@ -1693,7 +1694,7 @@ void D_DoomMain()
         {
             defdir_stat=1;
             if( verbose )
-                fprintf(stderr,"Current directory: %s\n", defdir);
+                GenPrintf(EMSG_ver,"Current directory: %s\n", defdir);
         }
     }
 
@@ -1743,6 +1744,8 @@ void D_DoomMain()
 #endif
 #endif
 
+    EMSG_flags = EMSG_text | EMSG_log;
+
     // identify the main IWAD file to use
     IdentifyVersion();
     modifiedgame = false;
@@ -1769,7 +1772,7 @@ void D_DoomMain()
         if (!userhome)
         {
             if(verbose)
-                fprintf(stderr, "Please set $HOME to your home directory, or use -home switch\n");
+                GenPrintf(EMSG_ver, "Please set $HOME to your home directory, or use -home switch\n");
             // Try to use current directory and defaults
 
             // use absolute default directory, not root
@@ -1877,8 +1880,8 @@ void D_DoomMain()
 
     if( verbose )
     {
-        fprintf(stderr, "Config: %s\n", configfile );
-        fprintf(stderr, "Savegames: %s\n", savegamename );
+        GenPrintf(EMSG_ver, "Config: %s\n", configfile );
+        GenPrintf(EMSG_ver, "Savegames: %s\n", savegamename );
     }
 
     // add any files specified on the command line with -file wadfile
@@ -2108,6 +2111,8 @@ void D_DoomMain()
     CONS_Printf("I_StartupGraphics...\n");
     I_StartupGraphics();
 
+    EMSG_flags = EMSG_log | EMSG_CONS;
+
     //--------------------------------------------------------- CONSOLE
     // setup loading screen
     SCR_Startup();
@@ -2118,6 +2123,7 @@ void D_DoomMain()
 
     COM_Init();
     CON_Init();
+    EMSG_flags |= EMSG_CONS;  // all msgs to CON buffer
 
     D_RegisterClientCommands(); //Hurdler: be sure that this is called before D_CheckNetGame
 
@@ -2305,52 +2311,66 @@ void D_DoomMain()
             D_StartTitle();     // start up intro loop
 
     }
+    Clear_SoftError();
 }
 
 
 // Print error and continue game [WDJ] 1/19/2009
 #define SoftError_listsize   8
-static char *  SE_msg[SoftError_listsize];
-static int     SE_val[SoftError_listsize];	// assume there are int, we only want to compare
+static const char *  SE_msg[SoftError_listsize];
+static uint32_t      SE_val[SoftError_listsize]; // we only want to compare
 static int  SE_msgcnt = 0;
 static int  SE_next_msg_slot = 0;
 
+byte  EMSG_flags = EMSG_text | EMSG_log;  // EMSG_e
+
+static void Clear_SoftError(void)
+{
+   SE_msgcnt = 0;
+}
+
+
 // Print out error and continue program.  Maintains list of errors and
 // does not repeat error messages in recent history.
-void I_SoftError (char *error, ...)
+void I_SoftError (const char *errmsg, ...)
 {
     va_list     argptr;
     int		index, errval;
+    byte        save_emsg_flags = EMSG_flags;
 
     // Message first.
-    va_start (argptr,error);
-    errval = *(int*) argptr;	// sample it as an int, no matter what
-//  fprintf(stderr,"errval=%d\n", errval );   // debug
+    va_start (argptr,errmsg);
+    errval = va_arg( argptr, uint32_t ) ; // sample it as an int, no matter what
+    va_end (argptr);
+//  GenPrintf(EMSG_debug,"errval=%d\n", errval );   // debug
     for( index = 0; index < SE_msgcnt; index ++ ){
-       if( error == SE_msg[index] ){
+       if( errmsg == SE_msg[index] ){
 	  if( errval == SE_val[index] ) goto done;	// it is a repeat msg
        }
     }
     // save comparison info
-    SE_msg[SE_next_msg_slot] = error;
+    SE_msg[SE_next_msg_slot] = errmsg;
     SE_val[SE_next_msg_slot] = errval;
     SE_next_msg_slot++;
     if( SE_next_msg_slot >= SoftError_listsize )  SE_next_msg_slot = 0;  // wrap
     if( SE_msgcnt < SoftError_listsize ) SE_msgcnt++;  // limit
-    // print msg
+    // Error, always prints EMSG_text
+    // print msg to stderr (text)
+    va_start (argptr,errmsg);
     fprintf (stderr, "Warn: ");
-    vfprintf (stderr,error,argptr);
-//    fprintf (stderr, "\n");
-done:   
+    vfprintf (stderr,errmsg,argptr);
+    // fprintf (stderr, "\n");
+    EMSG_flags = (EMSG_flags & ~EMSG_text) | EMSG_error;  // dont print text twice
+    CONS_Printf_va( errmsg, argptr );  // handles EMSG_CONS
     va_end (argptr);
 
+done:   
     fflush( stderr );
-
-   
+    EMSG_flags = save_emsg_flags;
 }
 
 
-void Help( void )
+static void Help( void )
 {
   char * np = M_GetNextParm();
    

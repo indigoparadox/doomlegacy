@@ -304,7 +304,7 @@ int W_LoadWadFile (char *filename)
         int t=I_GetTime();
         md5_stream (fhandle, wadfile->md5sum);
         if( devparm )
-            CONS_Printf("md5 calc for %s took %f second\n",
+            GenPrintf(EMSG_dev, "md5 calc for %s took %f second\n",
                         wadfile->filename,(float)(I_GetTime()-t)/TICRATE);
     }
     fclose(fhandle);

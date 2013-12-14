@@ -33,6 +33,7 @@
 #define PARANOIA                // do some test that never happens but maybe
 #define LOGMESSAGES             // write message in log.txt (win32 and Linux only for the moment)
 #define LOGLINELEN  80
+#define SHOW_DEBUG_MESSAGES
 
 // [WDJ] Machine speed limitations.
 // Leave undefined for netplay, or make sure all machines have same setting.

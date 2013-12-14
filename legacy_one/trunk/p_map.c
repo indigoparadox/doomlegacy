@@ -2831,7 +2831,7 @@ boolean PIT_GetSectors(line_t* ld)
 //[WDJ] DEBUG
   if( ld->slopetype > ST_NEGATIVE || ld->slopetype < ST_HORIZONTAL )
   {
-      fprintf( stderr, "PIT_GetSectors, bad line_t\n" );
+      GenPrintf(EMSG_warn, "PIT_GetSectors, bad line_t\n" );
       return false;
   }
 

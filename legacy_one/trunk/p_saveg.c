@@ -231,9 +231,9 @@ int  P_Savegame_Closefile( boolean writeflag )
 {
     int errflag = 0;
 #ifdef SAVEBUF_REPORT_MIN_FREE
-    fprintf( stderr, "Report savebuffer min free: %i, buffer used: %i\n", savebuf_min_free, (savebuffer_size-savebuf_min_free));
+    GenPrintf(EMSG_info, "Report savebuffer min free: %i, buffer used: %i\n", savebuf_min_free, (savebuffer_size-savebuf_min_free));
     if( writeflag )
-        fprintf( stderr, "                 max write: %i, sync=%i\n", savebuf_max_write, max_write_sync);
+        GenPrintf(EMSG_info, "                 max write: %i, sync=%i\n", savebuf_max_write, max_write_sync);
 #endif
     if( savebuffer )
     {
@@ -295,9 +295,9 @@ void SG_Writebuf( void )
 #ifdef SAVEBUF_REPORT_BUFFINC
 #ifdef __MINGW32__
         // MinGW does not understand %z
-        fprintf(stderr, "Savegame buffer realloc of %u bytes.\n", (int)newsize);
+        GenPrintf(EMSG_info, "Savegame buffer realloc of %u bytes.\n", (int)newsize);
 #else
-        fprintf(stderr, "Savegame buffer realloc of %zu bytes.\n", newsize);
+        GenPrintf(EMSG_info, "Savegame buffer realloc of %zu bytes.\n", newsize);
 #endif
 #endif
         goto done;
@@ -3053,7 +3053,7 @@ void P_LoadNetVars( void )
 	    if( save_p[0] == SYNC_sync && save_p[1] == SYNC_misc ) break;
         Got_NetVar((char**)&save_p, 0);
     }
-//    fprintf(stderr, "Loaded %d netvars\n", count ); // [WDJ] DEBUG
+//    GenPrintf(EMSG_info, "Loaded %d netvars\n", count ); // [WDJ] DEBUG
 }
 
 // =======================================================================
