@@ -617,6 +617,10 @@ void Free_OLD_SDL_MIXER( void )
     remove( midiname );
 }
 
+
+#include <errno.h>
+extern int errno;
+
 void Midifile_OLD_SDL_MIXER( byte* midibuf, unsigned long midilength )
 {
     midifile = fopen( midiname, "wb" );
@@ -626,10 +630,14 @@ void Midifile_OLD_SDL_MIXER( byte* midibuf, unsigned long midilength )
 	  fclose( midifile );
           if(verbose)
               fprintf( stderr, "Midifile written: %s size=%li\n", midiname, midilength );
-	 
+
+          // wants file to have .MID extension, but mkstemp file cannot have extension
 	  music.mus = Mix_LoadMUS( midiname );
           if( music.mus == NULL )
+          {
 	     I_SoftError("Music load file failed\n");
+	     perror( "Mix_LoadMUS fails when not cd to doomlegacy directory" );
+	  }
     }
 }
 #endif
