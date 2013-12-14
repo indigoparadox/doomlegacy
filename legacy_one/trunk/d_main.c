@@ -2225,6 +2225,7 @@ void D_DoomMain()
 
     CONS_Printf(text[M_INIT_NUM]);
     M_Init();
+    M_Configure();
 
     CONS_Printf(text[R_INIT_NUM]);
     R_Init();
