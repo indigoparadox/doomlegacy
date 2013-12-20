@@ -1412,11 +1412,11 @@ EXPORT int  HWRAPI( GetRenderVersion ) (void)
 // all the other ports call glGetString, and set oglflags accordingly
 EXPORT char *HWRAPI( GetRenderer ) (void)
 {
-    const char * renstr = glGetString(GL_RENDERER);
+    const GLubyte * renstr = glGetString(GL_RENDERER);
   
     rendererString[0] = '\0';
     if( renstr )
-       strncpy(rendererString, renstr, 255);
+       strncpy(rendererString, (char*)renstr, 255);
     rendererString[255] = '\0';
 
     return rendererString;

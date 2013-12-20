@@ -207,6 +207,7 @@ static XImage*         image = NULL;
 
 static Window   dummy;
 static int      dont_care;
+static unsigned int      dont_care_ui;
 
 static boolean  localDisplay = true;
 
@@ -1057,7 +1058,7 @@ static void doGrabMouse(void)
         XQueryPointer(X_display, X_mainWindow, &dummy, &dummy,
                       &dont_care, &dont_care,
                       &lastmousex, &lastmousey,
-                      &dont_care);
+                      &dont_care_ui);
 #endif
         disableScreensaver();
     }
@@ -1208,7 +1209,7 @@ void I_FinishUpdate(void)
 	    }
 	}
         else
-	    VID_BlitLinearScreen ( vid.display, image->data, vid.widthbytes,
+	    VID_BlitLinearScreen ( vid.display, (byte*)image->data, vid.widthbytes,
 				   vid.height, vid.ybytes, vid.direct_rowbytes );
     }
     // colormap transformation dependent upon X server color depth
@@ -1830,7 +1831,7 @@ static int createWindow(boolean set_fullscreen, modenum_t modenum)
     XQueryPointer(X_display, X_mainWindow, &dummy, &dummy,
                   &dont_care, &dont_care,
                   &lastmousex, &lastmousey,
-                  &dont_care);
+                  &dont_care_ui);
 
     vid.widthbytes = vid.width * vid.bytepp;
     vid.ybytes = vid.widthbytes;
@@ -1891,7 +1892,7 @@ static int createWindow(boolean set_fullscreen, modenum_t modenum)
       vid.direct_size = vid.screen_size;
 #else
       // Direct is video
-      vid.direct = image->data;
+      vid.direct = (byte*)image->data;
       vid.direct_rowbytes = vid.width * x_bytepp;
       vid.direct_size = vid.direct_rowbytes * vid.height;
       if( x_bytepp == vid.bytepp && vid.direct_rowbytes == vid.widthbytes )

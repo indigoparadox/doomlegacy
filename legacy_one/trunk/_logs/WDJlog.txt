@@ -3669,3 +3669,8 @@ patchfile = w95_13_gltranswall.patch
 A negative distance test has been culling visible left walls (chain link).
 The test is increased to -2000.0 to eliminate this with known walls.
 Walls should not be longer than 1000.
+
+*** W96_gcc4
+patchfile = w96_1_gcc4.patch
+- committed revision 10??   by wesley johnson
+Compile fixes for gcc4.x complaints.

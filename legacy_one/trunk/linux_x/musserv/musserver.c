@@ -36,10 +36,12 @@
 #include "usleep.h"
 #endif
 
+typedef unsigned char  byte;
+
 extern int use_dev;
 extern int seqfd;
 extern int mixfd;
-unsigned char *musicdata;
+byte *musicdata;
 int doomver;
 int verbose = 0;
 int qid;
@@ -55,7 +57,7 @@ int pcheck = 0;
 // readwad.c
 extern int read_wad_dir_music(FILE *wadfile, int version);
 extern int readmus(int lumpnum);
-extern int playmus(char *musdata, unsigned int mussize, int play_once);
+extern int playmus(byte *musdata, unsigned int mussize, int play_once);
 extern void seq_setup(int pref_dev, int dev_num);
 extern void read_genmidi(FILE *wadfile);
 extern void list_devs(void);
