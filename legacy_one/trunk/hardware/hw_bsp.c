@@ -144,7 +144,7 @@ void HWR_InitPolyPool (void)
     if ( (pnum=M_CheckParm("-polypoolsize")) )
         POLYPOOLSIZE = atoi(myargv[pnum+1])*1024; // (in kb)
 
-    CONS_Printf ("HWR_InitPolyPool() : allocating %d bytes\n", POLYPOOLSIZE);
+    GenPrintf( EMSG_info, "HWR_InitPolyPool() : allocating %d bytes\n", POLYPOOLSIZE);
     gr_polypool = (byte*) malloc (POLYPOOLSIZE);
     if (!gr_polypool)
         I_Error ("HWR_InitPolyPool() : couldn't malloc polypool\n");
@@ -676,8 +676,9 @@ static void WalkBSPNode (int bspnum, poly_t* poly, unsigned short* leafnode, fix
             // - the BSP is complet !! (there just can have subsector without segs) (i am not sure of this point)
 
             // do we have a valid polygon ?
-            if (poly && poly->numpts > 2) {
-                CONS_Printf ("Adding a new subsector !!!\n");
+            if (poly && poly->numpts > 2)
+	    {
+	        GenPrintf( EMSG_info, "Poly: Adding a new subsector !!!\n");
                 if (addsubsector == numsubsectors + NEWSUBSECTORS)
                     I_Error ("WalkBSPNode : not enough addsubsectors\n");
                 else if (addsubsector > 0x7fff)
@@ -889,9 +890,7 @@ int SolveTProblem (void)
     if (cv_grsolvetjoin.value == 0)
         return 0;
 
-    CONS_Printf("Solving T-joins. This may take a while. Please wait...\n");
-    CON_Drawer (); //let the user know what we are doing
-    I_FinishUpdate ();              // page flip or blit buffer
+    GenPrintf( EMSG_all | EMSG_now, "Solving T-joins. This may take a while. Please wait...\n");
 
     numsplitpoly=0;
 
@@ -1006,10 +1005,8 @@ void HWR_CreatePlanePolygons (int bspnum)
 
     fixed_t     rootbbox[4];
 
-    CONS_Printf("Creating polygons, please wait...\n");
+    GenPrintf( EMSG_all | EMSG_now, "Creating polygons, please wait...\n");
     ls_percent = ls_count = 0; // reset the loading status
-    CON_Drawer (); //let the user know what we are doing
-    I_FinishUpdate ();              // page flip or blit buffer
 
     HWR_ClearPolys ();
     

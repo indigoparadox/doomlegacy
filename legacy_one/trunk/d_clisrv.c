@@ -757,6 +757,7 @@ static void CL_ConnectToServer()
     oldtic=I_GetTime()-1;
     asksent=-TICRATE/2;
     SL_ClearServerList(servernode);
+    // loop until connected or user escapes
     do {
         switch(cl_mode) {
             case CLM_searching :
@@ -850,9 +851,10 @@ static void CL_ConnectToServer()
         }
         Net_AckTicker();
 
-        // call it only one by tic
+        // call it only once every tic
         if( oldtic!=I_GetTime() )
         {
+	    // user response handler
             int key;
 
             I_OsPolling();

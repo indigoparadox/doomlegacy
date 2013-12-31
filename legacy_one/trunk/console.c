@@ -1019,8 +1019,9 @@ void CONS_Printf_va (const char *fmt, va_list ap)
     con_scrollup = 0;
 
     // if not in display loop, force screen update
-    if ( graphics_started && con_self_refresh )
+    if ( con_self_refresh || (EMSG_flags & EMSG_now) )
     {
+        if( ! graphics_started )   goto done;
         // have graphics, but do not have refresh loop running
 #if defined(WIN_NATIVE) || defined(OS2_NATIVE) 
         // show startup screen and message using only 'software' graphics
@@ -1034,8 +1035,9 @@ void CONS_Printf_va (const char *fmt, va_list ap)
         I_FinishUpdate ();              // page flip or blit buffer
 #endif
     }
-    else if ( graphics_started && ! con_video && vid.display )
+    else if ( ! con_video )
     {
+        if( ! graphics_started || ! vid.display )   goto done;
         // messages before graphics
         CON_DrawConsole ();
         I_FinishUpdate ();
