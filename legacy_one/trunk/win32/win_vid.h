@@ -48,7 +48,7 @@ extern vmode_t *pvidmodes;      //start of videomodes list.
 
 
 // setup a video mode, this is to be called from the menu
-int  VID_SetMode (int modenum);
+int  VID_SetMode (modenum_t modenum);
 
 BOOL    VID_FreeAndAllocVidbuffer (viddef_t *lvid);
 

@@ -1465,13 +1465,15 @@ static void I_ShutdownMusic(void)
     // Free our stream buffers
     for( idx = 0; idx < NUM_STREAM_BUFFERS; idx++ )
     {
-            if( ciStreamBuffers[idx].mhBuffer.lpData )
-            {
-	        // MinGW could not handle expr in GlobalFreePtr
-	        void * dp = ciStreamBuffers[idx].mhBuffer.lpData;
-                GlobalFreePtr( dp );
-                ciStreamBuffers[idx].mhBuffer.lpData = NULL;
-            }
+        if( ciStreamBuffers[idx].mhBuffer.lpData )
+        {
+	    // MinGW could not handle expr in GlobalFreePtr
+	    void * dp = ciStreamBuffers[idx].mhBuffer.lpData;
+	    // [WDJ] MinGW fix, GlobalFreePtr() without the test is an error
+            if( GlobalFreePtr( dp ) )  // returns BOOL that MinGW insists that we handle
+            {};
+            ciStreamBuffers[idx].mhBuffer.lpData = NULL;
+        }
     }
 
     if (hStream)
