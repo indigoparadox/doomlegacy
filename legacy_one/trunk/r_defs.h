@@ -635,6 +635,10 @@ typedef struct lightmap_s
     struct lightmap_s   *next;
 } lightmap_t;
 
+#ifdef HWRENDER
+# include "hardware/hw_poly.h"
+#endif
+
 //
 // The LineSeg.
 //
@@ -670,12 +674,15 @@ typedef struct
     sector_t*   frontsector;  // sidedef sector, the segment sector/subsector, required
     sector_t*   backsector;   // side of linedef away from sector, optional
 
+#ifdef HWRENDER   
+    polyvertex_t  *pv1, *pv2; // float polygon vertex
     // length of the seg : used by the hardware renderer
     float       length;
 
     //Hurdler: 04/12/2000: added for static lightmap
     // hardware renderer
     lightmap_t  *lightmaps;
+#endif
 
     // SoM: Why slow things down by calculating lightlists for every
     // thick side.

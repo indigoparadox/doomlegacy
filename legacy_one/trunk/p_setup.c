@@ -378,6 +378,7 @@ void P_LoadSegs (int lump)
         // used for the hardware render
         if (rendermode != render_soft)
         {
+	    li->pv1 = li->pv2 = NULL;
             li->length = P_SegLength (li);
             //Hurdler: 04/12/2000: for now, only used in hardware mode
             li->lightmaps = NULL; // list of static lightmap for this seg
@@ -1532,8 +1533,7 @@ boolean P_SetupLevel (int           episode,
 {
     int         i;
 
-    // with any pending console messages to screen
-    GenPrintf( EMSG_all | EMSG_now, "Setup Level, Map %i\n", map );
+    GenPrintf( EMSG_all | EMSG_now, "Setup Level\n" );
 
     //Initialize sector node list.
     P_Initsecnode();

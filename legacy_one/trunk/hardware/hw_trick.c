@@ -547,17 +547,14 @@ static boolean areToptexturesMissing(sector_t *thisSector)
 
 	frontSector = thisElem->line->frontsector;
 	backSector  = thisElem->line->backsector;
+        if( ! backSector || ! frontSector )
+	   continue;
 
 	if(frontSector == backSector) // skip damn renderer tricks here
 	{
 	    continue;
 	}
 
-	if(frontSector == NULL || backSector == NULL)
-	{
-	    continue;
-	}
-	
 	sdr = &sides[thisElem->line->sidenum[0]];
 	sdl = &sides[thisElem->line->sidenum[1]];
 
@@ -606,16 +603,14 @@ static boolean areBottomtexturesMissing(sector_t *thisSector)
 
 	frontSector = thisElem->line->frontsector;
 	backSector  = thisElem->line->backsector;
+        if( ! backSector || ! frontSector )
+	   continue;
 	
 	if(frontSector == backSector) // skip damn renderer tricks here
 	{
 	   continue;
 	}
 
-	if(frontSector == NULL || backSector == NULL)
-	{
-	    continue;
-	}
 	sdr = &sides[thisElem->line->sidenum[0]];
 	sdl = &sides[thisElem->line->sidenum[1]];
 	

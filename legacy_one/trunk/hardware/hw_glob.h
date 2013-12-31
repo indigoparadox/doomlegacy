@@ -57,40 +57,10 @@
 
 #include "hw_defs.h"
 #include "hw_main.h"
+#include "hw_poly.h"
 
 // the original aspect ratio of Doom graphics isn't square
 #define ORIGINAL_ASPECT     (320.0f/200.0f)
-
-// -----------
-// structures
-// -----------
-
-// a vertex of a Doom 'plane' polygon
-typedef struct {
-    float   x;
-    float   y;
-} polyvertex_t;
-
-// a convex 'plane' polygon, clockwise order
-typedef struct {
-    int          numpts;
-    polyvertex_t pts[0];
-} poly_t;
-
-// holds extra info for 3D render, for each subsector in subsectors[]
-typedef struct {
-    poly_t*     planepoly;  // the generated convex polygon
-} extrasubsector_t;
-
-
-typedef struct
-{ 
-    extrasubsector_t    *xsub;
-    fixed_t             fixedheight;
-    int                 lightlevel;
-    int                 lumpnum;
-    int                 alpha;
-} planeinfo_t;
 
 
 // needed for sprite rendering
@@ -117,7 +87,7 @@ typedef struct gr_vissprite_s
 // --------
 // hw_bsp.c
 // --------
-extern  extrasubsector_t*   extrasubsectors;
+extern  poly_subsector_t*   poly_subsectors;
 extern  int                 addsubsector;
 
 void HWR_InitPolyPool (void);
@@ -129,7 +99,7 @@ void HWR_FreePolyPool (void);
 // --------
 void HWR_InitTextureCache (void);
 void HWR_FreeTextureCache (void);
-void HWR_FreeExtraSubsectors (void);
+void HWR_Free_poly_subsectors (void);
 
 void HWR_GetFlat (int flatlumpnum);
 MipTexture_t * HWR_GetTexture (int tex, uint32_t drawflags);

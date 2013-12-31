@@ -366,7 +366,7 @@ static void HWR_AddSprites(sector_t* sec, int lightlevel);
 static void HWR_AddSprites(sector_t * sec);
 #endif
 static void HWR_ProjectSprite(mobj_t * thing);
-static void HWR_Add3DWater(int lumpnum, extrasubsector_t * xsub, fixed_t fixedheight, int lightlevel, int alpha);
+static void HWR_Add3DWater(int lumpnum, poly_subsector_t * xsub, fixed_t fixedheight, int lightlevel, int alpha);
 static void HWR_Render3DWater();
 #ifdef DRAW_SORTED
 static void HWR_RenderSorted( void );
@@ -691,7 +691,7 @@ static vxtx3d_t planeVerts[MAXPLANEVERTICES];
 // -----------------+
 // Called from HWR_Subsector, HWR_Render3DWater
 static
-void HWR_RenderPlane(extrasubsector_t * xsub, fixed_t fixedheight,
+void HWR_RenderPlane(poly_subsector_t * xsub, fixed_t fixedheight,
 		     FBITFIELD PolyFlags, extracolormap_t* planecolormap,
 		     int lightlevel, int lumpnum)    // SoM: 3D floors ect.
 {
@@ -853,7 +853,7 @@ void HWR_RenderPlane(extrasubsector_t * xsub, fixed_t fixedheight,
 // this don't draw anything it only update the z-buffer so there isn't problem with
 // wall/things upper that sky (map12)
 // Called from HWR_Subsector
-static void HWR_RenderSkyPlane(extrasubsector_t * xsub, fixed_t fixedheight)
+static void HWR_RenderSkyPlane(poly_subsector_t * xsub, fixed_t fixedheight)
 //                              FBITFIELD         PolyFlags )
 {
     polyvertex_t *pv;
@@ -920,10 +920,17 @@ void HWR_DrawSegsSplats(FSurfaceInfo_t * pSurfin)
     vxtx3d_t vxtx[4];
 
     M_ClearBox(segbbox);
-    M_AddToBox(segbbox, ((polyvertex_t *) gr_curline->v1)->x * FIXED_TO_FLOAT_MULT,
-	       ((polyvertex_t *) gr_curline->v1)->y / FIXED_TO_FLOAT_MULT);
-    M_AddToBox(segbbox, ((polyvertex_t *) gr_curline->v2)->x / FIXED_TO_FLOAT_MULT,
-	       ((polyvertex_t *) gr_curline->v2)->y / FIXED_TO_FLOAT_MULT);
+    // make box from fixed_t vertex
+#if 1
+    M_AddToBox(segbbox, gr_curline->v1->x, gr_curline->v1->y );
+    M_AddToBox(segbbox, gr_curline->v2->x, gr_curline->v2->y );
+#else
+    // convert polyvertex_t back to fixed_t
+    M_AddToBox(segbbox, gr_curline->pv1->x / FIXED_TO_FLOAT_MULT,
+	       gr_curline->pv1->y / FIXED_TO_FLOAT_MULT);
+    M_AddToBox(segbbox, gr_curline->pv2->x / FIXED_TO_FLOAT_MULT,
+	       gr_curline->pv2->y / FIXED_TO_FLOAT_MULT);
+#endif
 
     // splat are drawn by line but this func is called for eatch segs of a line
     /*
@@ -1446,10 +1453,10 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
     worldtop = gr_frontsector->ceilingheight;
     worldbottom = gr_frontsector->floorheight;
 
-    vs.x = ((polyvertex_t *) gr_curline->v1)->x;
-    vs.y = ((polyvertex_t *) gr_curline->v1)->y;
-    ve.x = ((polyvertex_t *) gr_curline->v2)->x;
-    ve.y = ((polyvertex_t *) gr_curline->v2)->y;
+    vs.x = gr_curline->pv1->x;
+    vs.y = gr_curline->pv1->y;
+    ve.x = gr_curline->pv2->x;
+    ve.y = gr_curline->pv2->y;
 
     //
     // clip the wall segment to solidsegs
@@ -1528,9 +1535,9 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
     {
         int lightnum = LightLevelToLum(gr_frontsector->lightlevel);
 
-        if (((polyvertex_t *) gr_curline->v1)->y == ((polyvertex_t *) gr_curline->v2)->y && lightnum >= (255 / LIGHTLEVELS))
+        if ((vs.y == ve.y) && lightnum >= (255 / LIGHTLEVELS))
             lightnum -= (255 / LIGHTLEVELS);
-        else if (((polyvertex_t *) gr_curline->v1)->x == ((polyvertex_t *) gr_curline->v2)->x && lightnum < 255 - (255 / LIGHTLEVELS))
+        else if ((vs.x == ve.x) && lightnum < 255 - (255 / LIGHTLEVELS))
             lightnum += (255 / LIGHTLEVELS);
 
         // store Surface->FlatColor to modulate wall texture
@@ -2063,18 +2070,19 @@ static void HWR_ClipSolidWallSegment(int first, int last)
 //            HWR_StoreWallRange(first, last);
             HWR_StoreWallRange(0.0, 1.0);
 
-            next = newend;
+            next = newend;  // use empty at newend
             newend++;
 
+	    // shuffle up clipposts, start to newend-1
             while (next != start)
             {
                 *next = *(next - 1);
                 next--;
             }
+	    // insert at start
             next->first = first;
             next->last = last;
-            printsolidsegs();
-            return;
+	    goto done;
         }
 
         // There is a fragment above *start.
@@ -2087,7 +2095,8 @@ static void HWR_ClipSolidWallSegment(int first, int last)
         }
         else
         {
-            highfrac = HWR_ClipViewSegment(start->first + 1, (polyvertex_t *) gr_curline->v1, (polyvertex_t *) gr_curline->v2);
+            highfrac = HWR_ClipViewSegment(start->first + 1,
+					   gr_curline->pv1, gr_curline->pv2);
             HWR_StoreWallRange(0.0, highfrac);
         }
         // Now adjust the clip size.
@@ -2096,10 +2105,8 @@ static void HWR_ClipSolidWallSegment(int first, int last)
 
     // Bottom contained in start?
     if (last <= start->last)
-    {
-        printsolidsegs();
-        return;
-    }
+     	goto done;
+
     next = start;
     while (last >= (next + 1)->first - 1)
     {
@@ -2113,8 +2120,10 @@ static void HWR_ClipSolidWallSegment(int first, int last)
         }
         else
         {
-            lowfrac = HWR_ClipViewSegment(next->last - 1, (polyvertex_t *) gr_curline->v1, (polyvertex_t *) gr_curline->v2);
-            highfrac = HWR_ClipViewSegment((next + 1)->first + 1, (polyvertex_t *) gr_curline->v1, (polyvertex_t *) gr_curline->v2);
+            lowfrac = HWR_ClipViewSegment(next->last - 1,
+					  gr_curline->pv1, gr_curline->pv2);
+            highfrac = HWR_ClipViewSegment((next + 1)->first + 1,
+					  gr_curline->pv1, gr_curline->pv2);
             HWR_StoreWallRange(lowfrac, highfrac);
         }
         next++;
@@ -2152,7 +2161,8 @@ static void HWR_ClipSolidWallSegment(int first, int last)
         }
         else
         {
-            lowfrac = HWR_ClipViewSegment(next->last - 1, (polyvertex_t *) gr_curline->v1, (polyvertex_t *) gr_curline->v2);
+            lowfrac = HWR_ClipViewSegment(next->last - 1,
+					  gr_curline->pv1, gr_curline->pv2);
             HWR_StoreWallRange(lowfrac, 1);
         }
     }
@@ -2164,11 +2174,7 @@ static void HWR_ClipSolidWallSegment(int first, int last)
     // because start now covers their area.
   crunch:
     if (next == start)
-    {
-        printsolidsegs();
-        // Post just extended past the bottom of one post.
-        return;
-    }
+	goto done;  // Post just extended past the bottom of one post.
 
     while (next++ != newend)
     {
@@ -2177,7 +2183,11 @@ static void HWR_ClipSolidWallSegment(int first, int last)
     }
 
     newend = start;
-    printsolidsegs();
+ 
+  done:
+    if( cv_grbeta.value == 2 )
+       printsolidsegs();  // debug
+    return;
 }
 
 //
@@ -2215,7 +2225,8 @@ static void HWR_ClipPassWallSegment(int first, int last)
         }
         else
         {
-            highfrac = HWR_ClipViewSegment(min(start->first + 1, start->last), (polyvertex_t *) gr_curline->v1, (polyvertex_t *) gr_curline->v2);
+            highfrac = HWR_ClipViewSegment(min(start->first + 1, start->last),
+					   gr_curline->pv1, gr_curline->pv2);
             HWR_StoreWallRange(0.0, highfrac);
         }
     }
@@ -2235,8 +2246,10 @@ static void HWR_ClipPassWallSegment(int first, int last)
         }
         else
         {
-            lowfrac = HWR_ClipViewSegment(max(start->last - 1, start->first), (polyvertex_t *) gr_curline->v1, (polyvertex_t *) gr_curline->v2);
-            highfrac = HWR_ClipViewSegment(min((start + 1)->first + 1, (start + 1)->last), (polyvertex_t *) gr_curline->v1, (polyvertex_t *) gr_curline->v2);
+            lowfrac = HWR_ClipViewSegment(max(start->last - 1, start->first),
+					  gr_curline->pv1, gr_curline->pv2);
+            highfrac = HWR_ClipViewSegment(min((start + 1)->first + 1, (start + 1)->last),
+					  gr_curline->pv1, gr_curline->pv2);
             HWR_StoreWallRange(lowfrac, highfrac);
         }
         start++;
@@ -2267,7 +2280,8 @@ static void HWR_ClipPassWallSegment(int first, int last)
         }
         else
         {
-            lowfrac = HWR_ClipViewSegment(max(start->last - 1, start->first), (polyvertex_t *) gr_curline->v1, (polyvertex_t *) gr_curline->v2);
+            lowfrac = HWR_ClipViewSegment(max(start->last - 1, start->first),
+					  gr_curline->pv1, gr_curline->pv2);
             HWR_StoreWallRange(lowfrac, 1.0);
         }
     }
@@ -2313,7 +2327,7 @@ static void HWR_ClearClipSegs(void)
 // Notes            : gr_cursectorlight is set to the current subsector -> sector -> light value
 //                  : ( it may be mixed with the wall's own flat colour in the future ... )
 // -----------------+
-static void HWR_AddLine(seg_t * line)
+static void HWR_AddLine(seg_t * lineseg)
 {
     int x1;
     int x2;
@@ -2325,11 +2339,18 @@ static void HWR_AddLine(seg_t * line)
     // SoM: Backsector needs to be run through R_FakeFlat
     sector_t tempsec;
 
-    gr_curline = line;
+    gr_curline = lineseg;
 
     // OPTIMIZE: quickly reject orthogonal back sides.
-    angle1 = R_PointToAngle(((polyvertex_t *) line->v1)->x * FRACUNIT, ((polyvertex_t *) line->v1)->y * FRACUNIT);
-    angle2 = R_PointToAngle(((polyvertex_t *) line->v2)->x * FRACUNIT, ((polyvertex_t *) line->v2)->y * FRACUNIT);
+#if 1
+    // angle calc uses fixed_t math
+    angle1 = R_PointToAngle( lineseg->v1->x, lineseg->v1->y );
+    angle2 = R_PointToAngle( lineseg->v2->x, lineseg->v2->y );
+#else
+    // convert polyvertex_t back to fixed_t
+    angle1 = R_PointToAngle(((polyvertex_t *) lineseg->v1)->x * FRACUNIT, ((polyvertex_t *) lineseg->v1)->y * FRACUNIT);
+    angle2 = R_PointToAngle(((polyvertex_t *) lineseg->v2)->x * FRACUNIT, ((polyvertex_t *) lineseg->v2)->y * FRACUNIT);
+#endif
 
     // Clip to view edges.
     span = angle1 - angle2;
@@ -2370,8 +2391,8 @@ static void HWR_AddLine(seg_t * line)
         float fx1, fx2, fy1, fy2;
         //BP: test with a better projection than viewangletox[R_PointToAngle(angle)]
         // do not enable this at release 4 mul and 2 div
-        fx1 = ((polyvertex_t *) (line->v1))->x - gr_viewx;
-        fy1 = ((polyvertex_t *) (line->v1))->y - gr_viewy;
+        fx1 = lineseg->pv1->x - gr_viewx;
+        fy1 = lineseg->pv1->y - gr_viewy;
         fy2 = (fx1 * gr_viewcos + fy1 * gr_viewsin);
         if (fy2 < 0)
             // the point is back
@@ -2379,8 +2400,8 @@ static void HWR_AddLine(seg_t * line)
         else
             fx1 = gr_windowcenterx + (fx1 * gr_viewsin - fy1 * gr_viewcos) * gr_centerx / fy2;
 
-        fx2 = ((polyvertex_t *) (line->v2))->x - gr_viewx;
-        fy2 = ((polyvertex_t *) (line->v2))->y - gr_viewy;
+        fx2 = ((polyvertex_t *) (lineseg->v2))->x - gr_viewx;
+        fy2 = ((polyvertex_t *) (lineseg->v2))->y - gr_viewy;
         fy1 = (fx2 * gr_viewcos + fy2 * gr_viewsin);
         if (fy1 < 0)
             // the point is back
@@ -2408,7 +2429,7 @@ static void HWR_AddLine(seg_t * line)
         return;
     }
 */
-    gr_backsector = line->backsector;
+    gr_backsector = lineseg->backsector;
 
     // Single sided line?
     if (!gr_backsector)
@@ -2607,8 +2628,8 @@ static int doomwaterflat;       //set by R_InitFlats hack
 // Called from HWR_RenderBSPNode
 static void HWR_Subsector(int num)
 {
-    int count;
-    seg_t *line;
+    int segcount;
+    seg_t * lineseg;
     subsector_t *sub;
     sector_t tempsec;           //SoM: 4/7/2000
     int floorlightlevel;
@@ -2639,17 +2660,17 @@ static void HWR_Subsector(int num)
         // sector
         gr_frontsector = sub->sector;
         // how many linedefs
-        count = sub->numlines;
+        segcount = sub->numlines;
         // first line seg
-        line = &segs[sub->firstline];
+        lineseg = &segs[sub->firstline];
     }
     else
     {
         // there are no segs but only planes
         sub = &subsectors[0];
         gr_frontsector = sub->sector;
-        count = 0;
-        line = NULL;
+        segcount = 0;
+        lineseg = NULL;
     }
 
     //SoM: 4/7/2000: Test to make Boom water work in Hardware mode.
@@ -2738,7 +2759,7 @@ static void HWR_Subsector(int num)
             if (sub->validcount != validcount)
             {
                 HWR_GetFlat(levelflats[gr_frontsector->floorpic].lumpnum);
-                HWR_RenderPlane(&extrasubsectors[num], locFloorHeight, PF_Occlude,
+                HWR_RenderPlane(&poly_subsectors[num], locFloorHeight, PF_Occlude,
 				floorcolormap, floorlightlevel,
 				levelflats[gr_frontsector->floorpic].lumpnum);
             }
@@ -2746,7 +2767,7 @@ static void HWR_Subsector(int num)
         else
         {
 #ifdef POLYSKY
-            HWR_RenderSkyPlane(&extrasubsectors[num], locFloorHeight);
+            HWR_RenderSkyPlane(&poly_subsectors[num], locFloorHeight);
 #endif
             cv_grsky.value = true;
         }
@@ -2759,7 +2780,7 @@ static void HWR_Subsector(int num)
             if (sub->validcount != validcount)
             {
                 HWR_GetFlat(levelflats[gr_frontsector->ceilingpic].lumpnum);
-                HWR_RenderPlane(&extrasubsectors[num], locCeilingHeight, PF_Occlude,
+                HWR_RenderPlane(&poly_subsectors[num], locCeilingHeight, PF_Occlude,
 				ceilingcolormap, ceilinglightlevel,
 				levelflats[gr_frontsector->ceilingpic].lumpnum);
             }
@@ -2767,7 +2788,7 @@ static void HWR_Subsector(int num)
         else
         {
 #ifdef POLYSKY
-            HWR_RenderSkyPlane(&extrasubsectors[num], locCeilingHeight);
+            HWR_RenderSkyPlane(&poly_subsectors[num], locCeilingHeight);
 #endif
             cv_grsky.value = true;
         }
@@ -2797,7 +2818,7 @@ static void HWR_Subsector(int num)
                 if (fff->flags & (FF_TRANSLUCENT | FF_FOG))   // SoM: Flags are more efficient
                 {
                     light = R_GetPlaneLight_viewz(gr_frontsector, *fff->bottomheight);
-                    HWR_Add3DWater(levelflats[*fff->bottompic].lumpnum, &extrasubsectors[num],
+                    HWR_Add3DWater(levelflats[*fff->bottompic].lumpnum, &poly_subsectors[num],
 				   *fff->bottomheight, *gr_frontsector->lightlist[light].lightlevel,
 				   fff->alpha);
                 }
@@ -2805,7 +2826,7 @@ static void HWR_Subsector(int num)
                 {
                     HWR_GetFlat(levelflats[*fff->bottompic].lumpnum);
                     light = R_GetPlaneLight_viewz(gr_frontsector, *fff->bottomheight);
-                    HWR_RenderPlane(&extrasubsectors[num], *fff->bottomheight,
+                    HWR_RenderPlane(&poly_subsectors[num], *fff->bottomheight,
 				    PF_Occlude, NULL,
 				    *gr_frontsector->lightlist[light].lightlevel,
 				    levelflats[*fff->bottompic].lumpnum);
@@ -2820,7 +2841,7 @@ static void HWR_Subsector(int num)
                 if (fff->flags & (FF_TRANSLUCENT | FF_FOG))
                 {
                     light = R_GetPlaneLight_viewz(gr_frontsector, *fff->topheight);
-                    HWR_Add3DWater(levelflats[*fff->toppic].lumpnum, &extrasubsectors[num],
+                    HWR_Add3DWater(levelflats[*fff->toppic].lumpnum, &poly_subsectors[num],
 				   *fff->topheight, *gr_frontsector->lightlist[light].lightlevel,
 				   fff->alpha);
                 }
@@ -2828,7 +2849,7 @@ static void HWR_Subsector(int num)
                 {
                     HWR_GetFlat(levelflats[*fff->toppic].lumpnum);
                     light = R_GetPlaneLight_viewz(gr_frontsector, *fff->topheight);
-                    HWR_RenderPlane(&extrasubsectors[num], *fff->topheight,
+                    HWR_RenderPlane(&poly_subsectors[num], *fff->topheight,
 				    PF_Occlude, NULL,
 				    *gr_frontsector->lightlist[light].lightlevel,
 				    levelflats[*fff->toppic].lumpnum);
@@ -2844,7 +2865,7 @@ static void HWR_Subsector(int num)
 // on vient de tracer le sol et le plafond
 // on trace à présent d'abord les sprites et ensuite les murs
 // hurdler: faux: on ajoute seulement les sprites, le murs sont tracés d'abord
-    if (line != NULL)
+    if (lineseg != NULL)
     {
         // draw sprites first , coz they are clipped to the solidsegs of
         // subsectors more 'in front'
@@ -2863,10 +2884,10 @@ static void HWR_Subsector(int num)
         //         without talking about the overdraw of course.
         sub->sector->validcount = validcount;   //TODO: fix that in a better way
 
-        while (count--)
+        while (segcount--)
         {
-            HWR_AddLine(line);
-            line++;
+            HWR_AddLine(lineseg);
+            lineseg++;
         }
     }
 
@@ -2880,7 +2901,7 @@ static void HWR_Subsector(int num)
         if (wh > gr_frontsector->floorheight && wh < gr_frontsector->ceilingheight)
         {
             HWR_GetFlat(doomwaterflat);
-            HWR_RenderPlane(&extrasubsectors[num], wh, PF_Translucent,
+            HWR_RenderPlane(&poly_subsectors[num], wh, PF_Translucent,
 			    NULL, gr_frontsector->lightlevel, doomwaterflat);
         }
     }
@@ -4271,7 +4292,7 @@ void HWR_Startup(void)
 void HWR_Shutdown(void)
 {
     CONS_Printf("HWR_Shutdown()\n");
-    HWR_FreeExtraSubsectors();
+    HWR_Free_poly_subsectors();
     HWR_FreePolyPool();
     HWR_FreeTextureCache();
 }
@@ -4331,7 +4352,7 @@ static int planeinfo_len = 0;  // num allocated
 #define PLANE_MERGE_SORT
 
 // Add translucent plane, called for each plane visible
-void HWR_Add3DWater(int lumpnum, extrasubsector_t * xsub, fixed_t fixedheight, int lightlevel, int alpha)
+void HWR_Add3DWater(int lumpnum, poly_subsector_t * xsub, fixed_t fixedheight, int lightlevel, int alpha)
 {
     if (numplanes >= planeinfo_len)
     {
