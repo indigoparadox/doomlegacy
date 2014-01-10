@@ -351,7 +351,6 @@ typedef enum {
   IT_DISABLED =   (IT_SPACE  | IT_GRAYPATCH),
 } menu_control_e;
 
-extern consvar_t   cv_monbehavior;
 
 
 typedef void (*menufunc_t)(int choice);
@@ -1894,7 +1893,8 @@ void M_GameOption(int choice)
 menuitem_t AdvOptionsMenu[]=
 {
     {IT_STRING | IT_CVAR,0,"Gravity"             ,&cv_gravity            ,0},
-    {IT_STRING | IT_CVAR,0,"Monster friction"    ,&cv_monsterfriction    ,0},
+    {IT_STRING | IT_CVAR,0,"Monster friction"    ,&cv_monsterfriction    ,0},  // [WDJ]
+    {IT_STRING | IT_CVAR,0,"Monster door stuck"  ,&cv_doorstuck          ,0},  // [WDJ]
 #ifdef VOODOO_DOLL
     {IT_STRING | IT_CVAR,0,"Voodoo mode"         ,&cv_voodoo_mode        ,0},  // [WDJ]
     {IT_STRING | IT_CVAR,0,"Insta-death"         ,&cv_instadeath         ,0},  // [WDJ]

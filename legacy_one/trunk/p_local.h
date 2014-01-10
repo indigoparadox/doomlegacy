@@ -150,8 +150,6 @@ extern consvar_t cv_viewheight; // p_mobj.c
 
 //26-07-98: p_mobj.c
 extern  consvar_t cv_gravity;
-extern  consvar_t cv_monsterfriction;    // p_enemy
-extern  consvar_t cv_monbehavior;
 
 #ifdef DOORDELAY_CONTROL
 // [WDJ] 1/15/2009 support control of door and event delay. see p_doors.c
@@ -266,6 +264,10 @@ mobj_t *P_SPMAngle ( mobj_t* source, mobjtype_t type, angle_t angle );
 //
 // P_ENEMY
 //
+
+extern  consvar_t cv_monbehavior;
+extern  consvar_t cv_monsterfriction;
+extern  consvar_t cv_doorstuck;
 
 // when pushing a line 
 //#define MAXSPECIALCROSS 16

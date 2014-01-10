@@ -240,8 +240,6 @@ consvar_t cv_allowexitlevel = { "allowexitlevel", "1", CV_NETVAR, CV_YesNo, NULL
 
 consvar_t cv_netstat = { "netstat", "0", 0, CV_OnOff };
 
-extern consvar_t   cv_monbehavior;
-
 // =========================================================================
 //                           CLIENT STARTUP
 // =========================================================================
@@ -303,7 +301,6 @@ void D_RegisterClientCommands(void)
     CV_RegisterVar(&cv_itemrespawn);
     CV_RegisterVar(&cv_respawnmonsters);
     CV_RegisterVar(&cv_respawnmonsterstime);
-	CV_RegisterVar(&cv_monbehavior);
     CV_RegisterVar(&cv_fastmonsters);
     CV_RegisterVar(&cv_predictingmonsters);     //added by AC for predmonsters
     CV_RegisterVar(&cv_splats);
