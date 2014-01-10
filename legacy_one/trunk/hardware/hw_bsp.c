@@ -724,6 +724,7 @@ static void WalkBSPNode (int bspnum, poly_t* poly, unsigned short* leafnode, fix
                 sprintf(s, "%d%%", (++ls_percent)<<1);
                 x = BASEVIDWIDTH/2;
                 y = BASEVIDHEIGHT/2;
+	        V_SetupDraw( 0 | V_SCALESTART | V_SCALEPATCH | V_CENTERSCREEN );
                 M_DrawTextBox(x-58, y-8, 13, 1);
                 V_DrawString(x-50, y, V_WHITEMAP, "Loading...");
                 V_DrawString(x+50-V_StringWidth(s), y, V_WHITEMAP, s);

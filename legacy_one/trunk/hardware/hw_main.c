@@ -2729,14 +2729,14 @@ static void HWR_Subsector(int num)
 	// adapted to local vars, and may still need a little tuning
 //        light = R_GetPlaneLight(gr_frontsector, gr_frontsector->floorheight);
         light = R_GetPlaneLight(gr_frontsector, locFloorHeight);
-        if(gr_frontsector->floorlightsec == -1)
+        if(gr_frontsector->floorlightsec < 0)
         {
 	  floorlightlevel = *gr_frontsector->lightlist[light].lightlevel;
           floorcolormap = gr_frontsector->lightlist[light].extra_colormap;
         }
 //        light = R_GetPlaneLight(gr_frontsector, gr_frontsector->ceilingheight);
         light = R_GetPlaneLight(gr_frontsector, locCeilingHeight);
-        if(gr_frontsector->ceilinglightsec == -1)
+        if(gr_frontsector->ceilinglightsec < 0)
         {
 	  ceilinglightlevel = *gr_frontsector->lightlist[light].lightlevel;
           ceilingcolormap = gr_frontsector->lightlist[light].extra_colormap;

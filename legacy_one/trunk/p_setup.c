@@ -1533,7 +1533,8 @@ boolean P_SetupLevel (int           episode,
 {
     int         i;
 
-    GenPrintf( EMSG_all | EMSG_now, "Setup Level\n" );
+    GenPrintf( (verbose? (EMSG_ver|EMSG_now) : (EMSG_CONS|EMSG_now)),
+	       "Setup Level\n" );
 
     //Initialize sector node list.
     P_Initsecnode();
