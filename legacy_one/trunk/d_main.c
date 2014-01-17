@@ -1085,7 +1085,7 @@ game_desc_t  game_desc_table[ NUM_GDESC ] =
 // Free wads should get their own gamemode identity
 // GDESC_freedoom: FreeDoom project, DoomII replacement
    { "FreeDoom", NULL, "freedoom",
-        {"freedoom.wad","doom2.wad",NULL}, NULL,
+        {"freedoom2.wad", "freedoom.wad","doom2.wad"}, NULL,
 	{"FREEDOOM", NULL}, LN_MAP01, 0,
 	0, GDESC_freedoom, doom2_commercial },
 // GDESC_freedm: FreeDM project, DoomII deathmatch
@@ -1100,7 +1100,7 @@ game_desc_t  game_desc_table[ NUM_GDESC ] =
 	GD_idwad, GDESC_doom2, doom2_commercial },
 // GDESC_freedoom_ultimate: FreeDoom project, Ultimate Doom replacement
    { "Ultimate FreeDoom", NULL, "freedu",
-	{"freedu.wad","doomu.wad","doom.wad"}, NULL,
+	{"freedoom1.wad", "freedu.wad","doomu.wad"}, NULL,
 	{"FREEDOOM", "E4M1"}, LN_E1M1+LN_E2M2, 0,
 	0, GDESC_freedoom_ultimate, ultdoom_retail },
 // GDESC_ultimate: Doom1 1995, doomuwad
@@ -1131,7 +1131,7 @@ game_desc_t  game_desc_table[ NUM_GDESC ] =
 	GD_idwad, GDESC_tnt, doom2_commercial },
 // GDESC_blasphemer: FreeDoom project, DoomII replacement
    { "Blasphemer", NULL, "blasphem",
-	{"blasphemer.wad","blasphem.wad","heretic.wad"}, NULL,
+	{"BLASPHEM.WAD","blasphem.wad","heretic.wad"}, NULL,
 	{"BLASPHEM", NULL}, LN_E1M1+LN_TITLE, 0,
 	0, GDESC_blasphemer, heretic },
 // GDESC_heretic: Heretic
@@ -1173,7 +1173,7 @@ game_desc_t  game_desc_table[ NUM_GDESC ] =
    { "Ultimate mode", NULL, "ultimode",
 	{"doomu.wad","doom.wad",NULL}, NULL,
 	{ NULL, NULL}, LN_E1M1, 0,
-	0, GDESC_ultimate, doom_registered },
+	0, GDESC_ultimate, ultdoom_retail },
 // GDESC_doom_mode: DoomI replacement
    { "Doom mode", NULL, "doommode",
         {"doom1.wad","doom.wad",NULL}, NULL,
