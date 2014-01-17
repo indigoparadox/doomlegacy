@@ -62,7 +62,7 @@
 // Debugging unfinished MAC_SDL
 //#define DEBUG_MAC  1
 
-#define TESTBPP
+//#define TESTBPP
 #ifdef TESTBPP
 // [WDJ] Test drawing in a testbpp mode, using native mode conversion.
 static int testbpp = 0;
