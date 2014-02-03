@@ -295,6 +295,8 @@ boolean OglSdlSurface(int w, int h, int isFullscreen)
     vid.bytepp = vidSurface->format->BytesPerPixel;
     vid.width = vidSurface->w;
     vid.height = vidSurface->h;
+    vid.ybytes = vidSurface->pitch;
+    vid.recalc = true;
 
 #ifdef DEBUG_SDL
     GenPrintf( EMSG_debug, " vid set: height=%i, width=%i\n", vid.height, vid.width );
@@ -319,6 +321,11 @@ boolean OglSdlSurface(int w, int h, int isFullscreen)
 #ifdef MAC_SDL
     glClearColor(0.0,0.0,0.0,0.0);
 #endif
+#ifdef DEBUG_WIN
+    V_SetPalette(0);
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+#endif
+
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
 #ifdef DEBUG_SDL
@@ -328,6 +335,9 @@ boolean OglSdlSurface(int w, int h, int isFullscreen)
 #ifdef MAC_SDL   
     // [WDJ] SDL_GL_SwapBuffers is required here to prevent crashes on Mac.
     // Do not know why.  (From Edge)
+    SDL_GL_SwapBuffers();
+#endif
+#ifdef DEBUG_WIN
     SDL_GL_SwapBuffers();
 #endif
 

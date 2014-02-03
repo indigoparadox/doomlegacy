@@ -279,8 +279,9 @@ ifeq ($(SMIF), SDL)
     # Extracted from sdl-config script
     ifdef CC_MINGW
       OPTS+=-D_GNU_SOURCE=1 -Dmain=SDL_main
-      OPTINC+=-"I/SDL/include/SDL"
+      OPTINC+=-I/SDL/include/SDL
 #      OPTINC+=-I/mingw/include/SDL
+#      OPTINC+=-I/mingw/include
       LIBS+=-L/SDL/lib
 #      LIBS+=-L/mingw/lib
 #      LIBS+=-L/windows/system32

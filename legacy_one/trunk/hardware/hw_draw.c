@@ -159,10 +159,10 @@ void HWR_DrawPatch (MipPatch_t* gpatch, int x, int y, int option)
     if( option & V_NOSCALESTART )
         sdupx = sdupy = 2.0f;
 
-    v[0].x = v[3].x = (x*sdupx-gpatch->leftoffset*pdupx)/vid.width - 1;
-    v[2].x = v[1].x = (x*sdupx+(gpatch->width-gpatch->leftoffset)*pdupx)/vid.width - 1;
-    v[0].y = v[1].y = 1-(y*sdupy-gpatch->topoffset*pdupy)/vid.height;
-    v[2].y = v[3].y = 1-(y*sdupy+(gpatch->height-gpatch->topoffset)*pdupy)/vid.height;
+    v[0].x = v[3].x = ((x*sdupx) - (gpatch->leftoffset*pdupx))/vid.width - 1;
+    v[2].x = v[1].x = ((x*sdupx) + ((gpatch->width-gpatch->leftoffset)*pdupx))/vid.width - 1;
+    v[0].y = v[1].y = 1-((y*sdupy) - (gpatch->topoffset*pdupy))/vid.height;
+    v[2].y = v[3].y = 1-((y*sdupy) + ((gpatch->height-gpatch->topoffset)*pdupy))/vid.height;
 
     v[0].z = v[1].z = v[2].z = v[3].z = 1.0f;
 
@@ -181,8 +181,10 @@ void HWR_DrawPatch (MipPatch_t* gpatch, int x, int y, int option)
 	    BLENDMODE | PF_Modulated | PF_Clip | PF_NoZClip | PF_NoDepthTest);
     }
     else
+    {
         HWD.pfnDrawPolygon( NULL, v, 4,
 	    BLENDMODE | PF_Clip | PF_NoZClip | PF_NoDepthTest);
+    }
 }
 
 // Draws a patch 2x as small SSNTails 06-10-2003
@@ -262,8 +264,10 @@ void HWR_DrawMappedPatch (MipPatch_t* gpatch, int x, int y, int option, byte *co
 	    BLENDMODE | PF_Modulated | PF_Clip | PF_NoZClip | PF_NoDepthTest);
     }
     else
+    {
         HWD.pfnDrawPolygon( NULL, v, 4,
 	    BLENDMODE | PF_Clip | PF_NoZClip | PF_NoDepthTest);
+    }
 }
 
 void HWR_DrawPic(int x, int y, int lumpnum)
@@ -297,7 +301,7 @@ void HWR_DrawPic(int x, int y, int lumpnum)
     // if I'm right !?
     // But then, the question is: why not 0 instead of PF_Masked ?
     // or maybe PF_Environment ??? (like what I said above)
-    // BP: PF_Environment don't change anything ! and 0 is undifined
+    // BP: PF_Environment don't change anything ! and 0 is undefined
     if (cv_grtranslucenthud.value != 255)
     {
         FSurfaceInfo_t Surf;
@@ -307,8 +311,10 @@ void HWR_DrawPic(int x, int y, int lumpnum)
 	    BLENDMODE | PF_Modulated | PF_NoDepthTest | PF_Clip | PF_NoZClip);
     }
     else
+    {
         HWD.pfnDrawPolygon( NULL, v, 4,
 	    BLENDMODE | PF_NoDepthTest | PF_Clip | PF_NoZClip);
+    }
 }
 
 // ==========================================================================
@@ -319,6 +325,7 @@ void HWR_DrawPic(int x, int y, int lumpnum)
 // --------------------------------------------------------------------------
 // Fills a box of pixels using a flat texture as a pattern
 // --------------------------------------------------------------------------
+// Scaled to (320,200), (0,0) at upper left
 void HWR_DrawFlatFill (int x, int y, int w, int h, int flatlumpnum)
 {
     vxtx3d_t  v[4];
@@ -398,18 +405,22 @@ void HWR_DrawFlatFill (int x, int y, int w, int h, int flatlumpnum)
 //  | /|
 //  |/ |
 //  0--1
+// height=0 is full height, otherwise relative to vid.height
 void HWR_FadeScreenMenuBack( unsigned long color, long alpha, int height )
 {
     vxtx3d_t  v[4];
     FSurfaceInfo_t Surf;
 
     // setup some neat-o translucency effect
-    if (!height) //cool hack 0 height is full height
-        height = vid.height;
+
+    // [WDJ] Draws undersized on Matrox on Win32, when it works at all.
+    // Many fixes tried, none worked.
+    // Exact use of example code may be required, and glGenTextures.
+    // May require turning off accel polygon draw.
 
     v[0].x = v[3].x = -1.0f;
     v[2].x = v[1].x =  1.0f;
-    v[0].y = v[1].y =  1.0f-((height<<1)/(float)vid.height);
+    v[0].y = v[1].y = -1.0f;
     v[2].y = v[3].y =  1.0f;
     v[0].z = v[1].z = v[2].z = v[3].z = 1.0f;
 
@@ -419,7 +430,13 @@ void HWR_FadeScreenMenuBack( unsigned long color, long alpha, int height )
     v[2].tow = v[3].tow = 0.0f;
 
     Surf.FlatColor.rgba = UINT2RGBA(color);
-    Surf.FlatColor.s.alpha = alpha * ((float)height / vid.height);    //calum: varies console alpha
+    if( height > 0 )
+    {
+        // [WDJ] bugginess of this calc when height==vid.height plagued win32.
+        float hf = ((float)height)/(float)vid.height;
+        v[0].y = v[1].y = 1.0f - ( 2.0 * hf );  // -1.0 .. 1.0
+        Surf.FlatColor.s.alpha = alpha * hf;    //calum: varies console alpha
+    }
     HWD.pfnDrawPolygon( &Surf, v, 4,
         PF_NoTexture|PF_Modulated|PF_Translucent|PF_NoDepthTest);
 }
@@ -584,6 +601,7 @@ void HWR_drawAMline( fline_t* fl, int color )
 // -----------------+
 // HWR_DrawFill     : draw flat coloured rectangle, with no texture
 // -----------------+
+// Scaled to (320,200), (0,0) at upper left
 void HWR_DrawFill( int x, int y, int w, int h, int color )
 {
     vxtx3d_t  v[4];

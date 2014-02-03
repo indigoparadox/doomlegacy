@@ -185,10 +185,6 @@
 //                                                                  CONSTANTS
 // ==========================================================================
 
-// With OpenGL 1.1+, the first texture should be 1
-#define NOTEXTURE_NUM     1     // small white texture
-#define FIRST_TEX_AVAIL   (NOTEXTURE_NUM + 1)
-
 #define N_PI_DEMI  (1.5707963268f)                  // PI/2
 
 #define ASPECT_RATIO            (1.0f)  //(320.0f/200.0f)
@@ -203,7 +199,11 @@ float   NEAR_CLIPPING_PLANE =   0.9f;
 
 static char rendererString[256] = "Not Probed Yet";
 
-static  GLuint      NextTexAvail    = FIRST_TEX_AVAIL;
+// With OpenGL 1.1+, the first texture should be 1
+// [WDJ] glGenTexture identifies the first texture available, it changes
+
+static  GLuint      next_texture_id = 0;
+static  GLuint      no_texture_id   = 0;  // small white texture
 static  GLuint      tex_downloaded  = 0;
 static  GLfloat     fov             = 90.0;
 static  GLuint      tint_color_id   = 0;  // Imitate the special object palette tints
@@ -408,16 +408,29 @@ void VIDGL_Query_GL_info( int ogltest )
 }
 
 
+// [WDJ] Linux seems to work even without the White_texture, but Win32 fails
+// with any variation from the example procedures.
+#ifndef LINUX
+#define LITTLE_WHITE_TEXTURE
+#endif
+
+#ifdef LITTLE_WHITE_TEXTURE
+// Bind little white RGBA texture to ID no_texture_id.
+static FUINT  White_texture[8*8];
+#endif
+
 // -----------------+
 // SetNoTexture     : Disable texture
 // -----------------+
 static void SetNoTexture( void )
 {
     // Set small white texture.
-    if( tex_downloaded != NOTEXTURE_NUM )
+    if( tex_downloaded != no_texture_id )
     {
-        glBindTexture( GL_TEXTURE_2D, NOTEXTURE_NUM );
-        tex_downloaded = NOTEXTURE_NUM;
+        // SetNoTexture is invoked by GenPrint, so cannot use GenPrint here.
+//        fprintf( stderr, "Set NoTexture\n" );
+        tex_downloaded = no_texture_id;
+        glBindTexture( GL_TEXTURE_2D, no_texture_id );
     }
 }
 
@@ -462,10 +475,6 @@ void VIDGL_Set_GL_Model_View( GLint w, GLint h )
 // Called after VIDGL_Set_GL_Model_View
 void VIDGL_Set_GL_States( void )
 {
-    // Bind little white RGBA texture to ID NOTEXTURE_NUM.
-    FUINT Data[8*8];
-    int i;
-
     DBG_Printf( "VIDGL_Set_GL_States()\n" );
 
     // Hurdler: not necessary, is it?
@@ -494,14 +503,28 @@ void VIDGL_Set_GL_States( void )
     CurrentPolyFlags = 0xffffffff;
     SetBlend(0);
 
-    for(i=0; i<64; i++ )
-        Data[i] = 0xffFFffFF;       // white pixel
+#ifdef LITTLE_WHITE_TEXTURE
+    // init White_texture
+//    memset( White_texture, 0xFF, 8*8*sizeof(White_texture[0]));
+    memset( White_texture, 0xFF, sizeof(White_texture));
+#endif
 
-    tex_downloaded = -1;
-    SetNoTexture();
-    //glBindTexture( GL_TEXTURE_2D, NOTEXTURE_NUM );
-    //tex_downloaded = NOTEXTURE_NUM;
-    //glTexImage2D( GL_TEXTURE_2D, 0, 4, 8, 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, Data );
+    next_texture_id = 0;
+    glGenTextures( 1, &next_texture_id );
+    no_texture_id = next_texture_id ++;
+    if( verbose>1 )
+      fprintf( stderr, "VIDGL_Set_GL_States: no_texture_id = %i\n", no_texture_id );
+
+#ifdef LITTLE_WHITE_TEXTURE
+    // Direct
+    tex_downloaded = no_texture_id;
+    glBindTexture( GL_TEXTURE_2D, no_texture_id );
+    glTexImage2D( GL_TEXTURE_2D, 0, 4, 8, 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, White_texture );
+//    fprintf( stderr, "VIDGL_Set_GL_States: White_texture set\n" );
+#else
+    tex_downloaded = -1;  // init to invalid
+//    SetNoTexture();
+#endif
 
     glPolygonOffset(-1.0, -1.0);
 
@@ -553,7 +576,15 @@ void VIDGL_Flush_GL_textures( void )
         gr_cachehead = gr_cachehead->nextmipmap;
     }
     gr_cachetail = gr_cachehead = NULL; //Hurdler: well, gr_cachehead is already NULL
-    NextTexAvail = FIRST_TEX_AVAIL;
+#if 1
+    next_texture_id = no_texture_id + 1; // reset texture id usage
+#else
+    glGenTextures( 1, &next_texture_id );  // restart texture id usage
+    // no_texture_id might move
+    no_texture_id = next_texture_id++;
+    glBindTexture( GL_TEXTURE_2D, no_texture_id );
+    glTexImage2D( GL_TEXTURE_2D, 0, 4, 8, 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, White_texture );
+#endif
     tex_downloaded = 0;
 }
 
@@ -824,6 +855,7 @@ EXPORT void HWRAPI( SetBlend ) ( FBITFIELD PolyFlags )
         {
             if (oglflags & GLF_NOTEXENV)
             { // [smite] FIXME this was only for LINUX but why?
+	      // WIN32: if not present, menu shading draws only the corner (rest is black), and menu is grayed
                 if ( !(PolyFlags & PF_Modulated) )
                     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
             }
@@ -893,7 +925,7 @@ EXPORT void HWRAPI( SetTexture ) ( FTextureInfo_t *pTexInfo )
         RGBA_t          *ptex = tex;
         int             w, h;
 
-        //DBG_Printf ("DownloadMipmap %d %x\n",NextTexAvail,pTexInfo->grInfo.data);
+        //DBG_Printf ("DownloadMipmap %d %x\n", next_texture_id,pTexInfo->grInfo.data);
 
         w = pTexInfo->width;
         h = pTexInfo->height;
@@ -978,9 +1010,9 @@ EXPORT void HWRAPI( SetTexture ) ( FTextureInfo_t *pTexInfo )
         else
             DBG_Printf ("SetTexture(bad format) %d\n", pTexInfo->grInfo.format);
 
-        pTexInfo->downloaded = NextTexAvail++;
-        tex_downloaded = pTexInfo->downloaded;
-        glBindTexture( GL_TEXTURE_2D, pTexInfo->downloaded );
+        tex_downloaded = next_texture_id++;
+        pTexInfo->downloaded = tex_downloaded;
+        glBindTexture( GL_TEXTURE_2D, tex_downloaded );
 
 #ifdef MINI_GL_COMPATIBILITY
         //if (pTexInfo->grInfo.format==GR_TEXFMT_ALPHA_INTENSITY_88)

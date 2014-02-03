@@ -1635,7 +1635,7 @@ void V_DrawFadeScreen(void)
 #ifdef HWRENDER // not win32 only 19990829 by Kin
     if (rendermode != render_soft)
     {
-        HWR_FadeScreenMenuBack(0x01010160, (0xff/2), 0);  //faB: hack, 0 means full height :o
+        HWR_FadeScreenMenuBack(0x01010160, 0x80, 0);  //faB: hack, 0 means full height :o
         return;
     }
 #endif

@@ -275,7 +275,7 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
 		       ((pixelalpha_t*)dest)->alpha = alpha;
 		       break;
                     case 3 :
-		       ((RGBA_t*)dest)->s.red   = V_GetColor(texel).s.red;
+                       ((RGBA_t*)dest)->s.red   = V_GetColor(texel).s.red;
                        ((RGBA_t*)dest)->s.green = V_GetColor(texel).s.green;
                        ((RGBA_t*)dest)->s.blue  = V_GetColor(texel).s.blue;
                        break;
