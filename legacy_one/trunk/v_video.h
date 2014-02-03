@@ -271,6 +271,9 @@ void V_DrawPerspView (byte *viewbuffer, int aiming);
 void VID_BlitLinearScreen (byte *srcptr, byte *destptr, int width,
                            int height, int srcrowbytes, int destrowbytes);
 
+// clear to black
+void V_ClearDisplay( void );
+  
 // [WDJ] 2012-02-06 Draw functions for all bpp, bytepp, and padded lines.
 
 // [WDJ] Common calc of the display buffer address for an x and y

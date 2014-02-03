@@ -2261,6 +2261,7 @@ restart_command:
         I_RequestFullGraphics( cv_fullscreen.value );
         SCR_Recalc();
         V_SetPalette (0);  // on new screen
+        V_ClearDisplay();
 
 #ifdef HWRENDER
         if( rendermode != render_soft )

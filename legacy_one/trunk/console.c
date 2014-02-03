@@ -1029,6 +1029,7 @@ void CONS_Printf_va (const char *fmt, va_list ap)
         CON_DrawBackpic (con_backpic, 0, vid.width);    // put console background
         I_LoadingScreen ( txt );
 #else
+        V_ClearDisplay();
         // here we display the console background and console text
         // (no hardware accelerated support for these versions)
         CON_Drawer ();
@@ -1259,11 +1260,7 @@ void CON_DrawConsole (void)
     // draw console background
     if (!con_video)
     {
-        if( screens[0] )
-        {
-	    // minimal video support
-	    memset( screens[0], 0, vid.screen_size );  // clear to black
-	}
+        V_ClearDisplay();
     }
     else
     if (cons_backpic.value || con_forcepic)

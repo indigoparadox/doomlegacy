@@ -782,6 +782,24 @@ void VID_BlitLinearScreen(byte * srcptr, byte * destptr, int width, int height, 
 }
 #endif
 
+// clear to black
+void V_ClearDisplay( void )
+{
+#ifdef HWRENDER   
+    if( rendermode != render_soft )
+    {
+        // Scaled
+        HWR_DrawFill(0, 0, 320, 200, 0);
+//        HWR_DrawFill(0, 0, vid.width, vid.height, 0);
+    }
+    else
+#endif
+    {
+        if( vid.display )
+	   memset( vid.display, 0, vid.screen_size );
+    }
+}
+
 // [WDJ] parameterized draw, used by V_DrawScaled, V_DrawMapped
 drawinfo_t  V_drawinfo;
   

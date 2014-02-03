@@ -2486,7 +2486,7 @@ void M_DrawVideoMode(void)
 		        mdp->iscur = (dmode.modetype == vid.modenum.modetype
 				      && dmode.index == vid.modenum.index );
                     }
-		    dup = 1;
+                    dup = 1;
                     break;
                 }
             }
@@ -5212,7 +5212,7 @@ void M_LaunchMenu( void )
 
     do
     {
-        memset( screens[0], 0, vid.screen_size );  // clear to black
+        V_ClearDisplay();
         I_OsPolling();
         D_ProcessEvents ();  // menu responder
         M_Drawer(); // menu drawer
