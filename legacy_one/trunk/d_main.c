@@ -2564,6 +2564,14 @@ void I_SoftError (const char *errmsg, ...)
     if( SE_next_msg_slot >= SoftError_listsize )  SE_next_msg_slot = 0;  // wrap
     if( SE_msgcnt < SoftError_listsize ) SE_msgcnt++;  // limit
     // Error, always prints EMSG_text
+#if 1
+    EMSG_flags = EMSG_flags | EMSG_error;  // ensure print to error
+    fprintf (stderr, "Warn: ");
+    va_start (argptr,errmsg);
+    CONS_Printf_va( errmsg, argptr );  // handles EMSG_CONS
+    va_end (argptr);
+#else
+    // [WDJ] Keep getting msg printed twice to stderr
     // print msg to stderr (text)
     va_start (argptr,errmsg);
     fprintf (stderr, "Warn: ");
@@ -2572,6 +2580,7 @@ void I_SoftError (const char *errmsg, ...)
     EMSG_flags = (EMSG_flags & ~EMSG_text) | EMSG_error;  // dont print text twice
     CONS_Printf_va( errmsg, argptr );  // handles EMSG_CONS
     va_end (argptr);
+#endif
 
 done:   
     fflush( stderr );
