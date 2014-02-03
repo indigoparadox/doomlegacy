@@ -126,8 +126,9 @@ char OglMacSurface(WindowRef *win, int w, int h, boolean fullscreen)
     glClear(GL_COLOR_BUFFER_BIT);
     aglSwapBuffers(ctx);        //clears screen to black
 	
-    SetModelView(hOffset, vOffset, w, h);
-    SetStates();
+//    SetModelView(hOffset, vOffset, w, h);
+    VIDGL_Set_GL_Model_View(w, h);
+    VIDGL_Set_GL_States();
 	
     I_OutputMsg("\tOglMacSurface done\n");
 

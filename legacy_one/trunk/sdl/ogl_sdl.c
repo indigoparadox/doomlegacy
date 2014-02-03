@@ -37,6 +37,8 @@
 
 // Debugging unfinished MAC_SDL
 //#define DEBUG_MAC  1
+//#define DEBUG_SDL
+//#define DEBUG_WIN
 
 // Because of WINVER redefine, before any include that could define WINVER
 #include "doomincl.h"
@@ -215,6 +217,7 @@ boolean OglSdlSurface(int w, int h, int isFullscreen)
 #endif
     }
 
+    // These flags do not affect the GL attributes, only the 2d blitting.
     if(isFullscreen)
     {
 #ifdef MAC_SDL
@@ -293,46 +296,53 @@ boolean OglSdlSurface(int w, int h, int isFullscreen)
     vid.width = vidSurface->w;
     vid.height = vidSurface->h;
 
-#ifdef MAC_SDL   
-#ifdef DEBUG_MAC
+#ifdef DEBUG_SDL
     GenPrintf( EMSG_debug, " vid set: height=%i, width=%i\n", vid.height, vid.width );
     if( vidSurface->pitch != (vid.width * vid.bytepp))
     {
         GenPrintf( EMSG_debug," Notice: Unusual buffer width = %i, where width x bytes = %i\n",
 		vidSurface->pitch, (vid.width * vid.bytepp) );
     }
+#endif
+
+#ifdef MAC_SDL   
+#ifdef DEBUG_MAC
     mac_check_context( "OglSdlSurface gl call" );
 #endif
     mac_set_context();
+#endif
 
-#ifdef DEBUG_MAC     
+#ifdef DEBUG_SDL     
     GenPrintf( EMSG_debug, " glClear: height=%i, width=%i\n", h, w );
 #endif
 
+#ifdef MAC_SDL
     glClearColor(0.0,0.0,0.0,0.0);
 #endif
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
-#ifdef MAC_SDL   
-#ifdef DEBUG_MAC     
+#ifdef DEBUG_SDL
     GenPrintf( EMSG_debug, " SDL_GL_SwapBuffers: height=%i, width=%i\n", h, w );
 #endif
+
+#ifdef MAC_SDL   
     // [WDJ] SDL_GL_SwapBuffers is required here to prevent crashes on Mac.
     // Do not know why.  (From Edge)
     SDL_GL_SwapBuffers();
 #endif
 
-#ifdef DEBUG_MAC     
-    GenPrintf( EMSG_debug, " SetModelView: height=%i, width=%i\n", h, w );
+#ifdef DEBUG_SDL     
+    GenPrintf( EMSG_debug, " VIDGL_Set_GL_Model_View: height=%i, width=%i\n", h, w );
 #endif
+
     // Moved these after, from Edge, which does not crash on Mac
-    SetModelView(vid.width, vid.height);
-    SetStates();
+    VIDGL_Set_GL_Model_View(vid.width, vid.height);
+    VIDGL_Set_GL_States();
 
     textureformatGL = (cbpp > 16)?GL_RGBA:GL_RGB5_A1;
 
 #if 1
-    Query_GL_info( -1 ); // all tests
+    VIDGL_Query_GL_info( -1 ); // all tests
 #endif
     return true;
 }
@@ -369,5 +379,5 @@ void OglSdlSetPalette(RGBA_t *palette, RGBA_t *gamma)
     }
     // on a changé de palette, il faut recharger toutes les textures
     // jaja, und noch viel mehr ;-)
-    Flush();
+    VIDGL_Flush_GL_textures();
 }

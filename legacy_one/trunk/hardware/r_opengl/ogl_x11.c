@@ -108,7 +108,7 @@ EXPORT Window HWRAPI( HookXwin ) (Display *dsp,int width,int height, boolean vid
 
     if (ctx != NULL) {        // si ce n'est pas la premiere fois qu'on
 	// this flush destroys textures with the UTAH DRI driver !?
-        //Flush(); // Flush here, otherwise textures will be trashed after resolution change
+        //VIDGL_Flush_GL_textures(); // Flush here, otherwise textures will be trashed after resolution change
         //glXMakeCurrent(NULL, NULL); // initialise l'environnement OpenGL, il
         glXDestroyContext(dpy,ctx);// faut d'abord supprimer l'ancien
         ctx = NULL; 
@@ -160,7 +160,7 @@ EXPORT Window HWRAPI( HookXwin ) (Display *dsp,int width,int height, boolean vid
                         mask, 
                         &attr);
     XMapWindow(dsp, win);
-    //SetupPixelFormat();
+    //VIDGL_Setup_GL_PixelFormat();
     if ((ctx=glXCreateContext(dpy,vis,NULL,True))==NULL) {
         DBG_Printf("glXCreateContext() FAILED\n");
         return 0;
@@ -170,7 +170,7 @@ EXPORT Window HWRAPI( HookXwin ) (Display *dsp,int width,int height, boolean vid
         return 0;
     }
 
-    Query_GL_info( GLF_NOTEXENV ); // Linux specific test
+    VIDGL_Query_GL_info( GLF_NOTEXENV ); // Linux specific test
 
     screen_depth = vis->depth;
     if( screen_depth > 16)
@@ -178,13 +178,13 @@ EXPORT Window HWRAPI( HookXwin ) (Display *dsp,int width,int height, boolean vid
     else
         textureformatGL = GL_RGB5_A1;
 
-    SetModelView( width, height );
-    SetStates();
+    VIDGL_Set_GL_Model_View( width, height );
+    VIDGL_Set_GL_States();
 
     // we need to clear the depth buffer. Very important!!!
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
-    //Flush(); // peut être qu'il faut mettre çà dans resize ou create
+    //VIDGL_Flush_GL_textures(); // peut être qu'il faut mettre çà dans resize ou create
 
     //lvid->buffer = NULL;   // unless we use the software view
     //lvid->direct = NULL;   // direct access to video memory, old DOS crap
@@ -202,7 +202,7 @@ EXPORT void HWRAPI( Shutdown ) ( void )
     DBG_Printf ("HWRAPI Shutdown()\n");
 
     if(ctx != NULL) {
-       Flush();
+       VIDGL_Flush_GL_textures();
        //glXMakeCurrent(NULL,0,0);
        glXDestroyContext(dpy,ctx);
     }
@@ -239,5 +239,5 @@ EXPORT void HWRAPI( SetPalette ) ( RGBA_t *pal, RGBA_t *gamma )
         myPaletteData[i].s.alpha = pal[i].s.alpha;
     }
     // on a changé de palette, il faut recharger toutes les textures
-    Flush();
+    VIDGL_Flush_GL_textures();
 }

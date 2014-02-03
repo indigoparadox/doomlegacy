@@ -260,7 +260,7 @@ typedef enum {
     HWD_SET_FOG_DENSITY,
     HWD_SET_FOV,
     HWD_SET_POLYGON_SMOOTH,
-    HWD_SET_PALETTECOLOR,
+    HWD_SET_TINT_COLOR,  // damage and special object palette
     HWD_SET_TEXTUREFILTERMODE,
     HWD_NUMSTATE,
     // [WDJ] Stifle compiler complaints

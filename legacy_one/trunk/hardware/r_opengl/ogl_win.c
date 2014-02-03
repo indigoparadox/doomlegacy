@@ -141,7 +141,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,      // handle to DLL module
 
 
 // -----------------+
-// SetupPixelFormat : Set the device context's pixel format
+// VIDGL_SetupPixelFormat : Set the device context's pixel format
 // Note             : Because we currently use only the desktop's BPP format, all the
 //                  : video modes in Doom Legacy OpenGL are of the same BPP, thus the
 //                  : PixelFormat is set only once.
@@ -149,7 +149,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,      // handle to DLL module
 //                  : doesn't work. (ultimately for different pixel formats, we
 //                  : should close the window, and re-create it)
 // -----------------+
-int SetupPixelFormat( int WantColorBits, int WantStencilBits, int WantDepthBits )
+int VIDGL_SetupPixelFormat( int WantColorBits, int WantStencilBits, int WantDepthBits )
 {
     static DWORD iLastPFD = 0;
     int nPixelFormat;
@@ -187,7 +187,7 @@ int SetupPixelFormat( int WantColorBits, int WantStencilBits, int WantDepthBits 
     else
         iLastPFD = iPFD;
 
-    DBG_Printf( "SetupPixelFormat() - %d ColorBits - %d StencilBits - %d DepthBits\n",
+    DBG_Printf( "VIDGL_SetupPixelFormat() - %d ColorBits - %d StencilBits - %d DepthBits\n",
                 WantColorBits, WantStencilBits, WantDepthBits );
 
 
@@ -207,14 +207,14 @@ int SetupPixelFormat( int WantColorBits, int WantStencilBits, int WantDepthBits 
 
 
 // -----------------+
-// SetRes           : Set a display mode
+// VIDGL_SetVidMode : Set a display mode
 // Notes            : pcurrentmode is actually not used
 // -----------------+
-int SetRes( viddef_t *lvid, vmode_t *pcurrentmode )
+int VIDGL_SetVidMode( viddef_t *lvid, vmode_t *pcurrentmode )
 {
     BOOL WantFullScreen = !(lvid->u.windowed);  //(lvid->u.windowed ? 0 : CDS_FULLSCREEN );
 
-    DBG_Printf ("SetMode(): %dx%d %d bits (%s)\n",
+    DBG_Printf ("VIDGL_SetVidMode(): %dx%d %d bits (%s)\n",
                 lvid->width, lvid->height, lvid->bpp*8,
                 WantFullScreen ? "fullscreen" : "windowed");
 
@@ -222,15 +222,15 @@ int SetRes( viddef_t *lvid, vmode_t *pcurrentmode )
 
     // BP : why flush texture ?
     //      if important flush also the first one (white texture) and restore it !
-    Flush();    // Flush textures.
+    Flush_GL_textures();    // Flush textures.
 
 // TODO: if not fullscreen, skip display stuff and just resize viewport stuff ...
 
     // Exit previous mode
     //if( hGLRC ) //Hurdler: TODO: check if this is valid
-    //    UnSetRes();
+    //    VIDGL_UnSetVidMode();
 
-        // Change display settings.
+    // Change display settings.
     if( WantFullScreen )
     {
         DEVMODE dm;
@@ -267,14 +267,14 @@ int SetRes( viddef_t *lvid, vmode_t *pcurrentmode )
         int res;
 
         // Set res.
-        res = SetupPixelFormat( lvid->bpp*8, 0, 16 );
+        res = VIDGL_SetupPixelFormat( lvid->bpp*8, 0, 16 );
         if( res==0 )
            return 0;
         else if ( res==1 )
         {
             // Exit previous mode
             if( hGLRC )
-                UnSetRes();
+                VIDGL_UnSetVidMode();
             hGLRC = wglCreateContext( hDC );
             if( !hGLRC )
             {
@@ -292,10 +292,10 @@ int SetRes( viddef_t *lvid, vmode_t *pcurrentmode )
     // Get info and extensions.
     //Hurdler: we cannot do that before intialising gl context
     // Hurdler: Now works on G400 with bios 1.6 and certified drivers 6.04
-    Query_GL_info( GLF_NOZBUFREAD );
+    VIDGL_Query_GL_info( GLF_NOZBUFREAD );
 
 #ifdef USE_PALETTED_TEXTURE
-    usePalettedTexture = isExtAvailable("GL_EXT_paletted_texture");
+    usePalettedTexture = VIDGL_isExtAvailable("GL_EXT_paletted_texture");
     if( usePalettedTexture )
     {
         glColorTableEXT=(PFNGLCOLORTABLEEXTPROC)wglGetProcAddress("glColorTableEXT");
@@ -310,8 +310,8 @@ int SetRes( viddef_t *lvid, vmode_t *pcurrentmode )
     else
         textureformatGL = GL_RGB5_A1;
 
-    SetModelView( lvid->width, lvid->height );
-    SetStates();
+    VIDGL_Set_GL_Model_View( lvid->width, lvid->height );
+    VIDGL_SetStates();
     // we need to clear the depth buffer. Very important!!!
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
@@ -325,11 +325,11 @@ int SetRes( viddef_t *lvid, vmode_t *pcurrentmode )
 
 
 // -----------------+
-// UnSetRes         : Restore the original display mode
+// VIDGL_UnSetVidMode : Restore the original display mode
 // -----------------+
-void UnSetRes( void )
+void VIDGL_UnSetVidMode( void )
 {
-    DBG_Printf( "UnSetRes()\n" );
+    DBG_Printf( "VIDGL_UnSetVidMode()\n" );
 
     wglMakeCurrent( hDC, NULL );
     wglDeleteContext( hGLRC );
@@ -419,7 +419,7 @@ EXPORT void HWRAPI( GetModeList ) ( vmode_t** pvidmodes, int* numvidmodes )
         vmp->misc = 0;
         vmp->extradata = NULL;
         vmp->modetype = MODE_either; // fullscreen is the default
-        vmp->setmode_func = SetRes;
+        vmp->setmode_func = VIDGL_SetVidMode;
         // link
         if( i > 0 )
            video_modes[i-1].next = vmp;
@@ -444,11 +444,11 @@ EXPORT void HWRAPI( Shutdown ) ( void )
                     nb_frames, nb_centiemes/100.0f, (100*nb_frames)/(double)nb_centiemes);
 #endif
 
-    Flush();
+    Flush_GL_textures();
 
     // Exit previous mode
     if( hGLRC )
-        UnSetRes();
+        VIDGL_UnSetVidMode();
 
     if( hDC )
     {
@@ -508,7 +508,7 @@ EXPORT void HWRAPI( SetPalette ) ( RGBA_t* pal, RGBA_t *gamma )
     }
 #endif
     // on a changé de palette, il faut recharger toutes les textures
-    Flush();
+    Flush_GL_textures();
 }
 
 #endif

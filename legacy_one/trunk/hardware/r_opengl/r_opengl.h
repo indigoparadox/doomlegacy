@@ -110,18 +110,24 @@ void DBG_Printf(LPCTSTR lpFmt, ...);
 void DBG_Print_lines( const char * longstr );
 void DBG_close( void );
 
-void Flush(void);
-int  isExtAvailable(char *extension);
-int  SetRes(viddef_t *lvid, vmode_t *pcurrentmode);
-void UnSetRes(void);
-boolean SetupPixelFormat(int WantColorBits, int WantStencilBits, int WantDepthBits);
-void SetModelView(GLint w, GLint h);
-void SetStates(void);
+// r_opengl functions
+int  VIDGL_isExtAvailable(char *extension);
+void VIDGL_Set_GL_Model_View(GLint w, GLint h);
+void VIDGL_Set_GL_States(void);
+void VIDGL_Flush_GL_textures(void);
 
 // [WDJ] Query the GL hardware strings
 // sets oglflags and gl_extensions
 // Do not call before initializing GL
-void Query_GL_info( int ogltest );
+void VIDGL_Query_GL_info( int ogltest );
+
+#ifdef WIN32
+// Win32 functions to manipulate window attributes
+// Only implemented in ogl_win.c
+int  VIDGL_SetVidMode(viddef_t *lvid, vmode_t *pcurrentmode);
+void VIDGL_UnSetVidMode(void);
+boolean VIDGL_SetupPixelFormat(int WantColorBits, int WantStencilBits, int WantDepthBits);
+#endif
 
 // ==========================================================================
 //                                                                     GLOBAL

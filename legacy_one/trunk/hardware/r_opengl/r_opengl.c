@@ -206,8 +206,8 @@ static char rendererString[256] = "Not Probed Yet";
 static  GLuint      NextTexAvail    = FIRST_TEX_AVAIL;
 static  GLuint      tex_downloaded  = 0;
 static  GLfloat     fov             = 90.0;
-static  GLuint      pal_col         = 0;
-static  RGBA_float_t  const_pal_col;
+static  GLuint      tint_color_id   = 0;  // Imitate the special object palette tints
+static  RGBA_float_t  tint_rgb;
 static  FBITFIELD   CurrentPolyFlags;
 
 static  FTextureInfo_t*  gr_cachetail = NULL;
@@ -370,7 +370,7 @@ static byte enable_card_display = 1;
 // [WDJ] Query the GL hardware strings
 // set oglflags and gl_extensions
 // Do not call before initializing GL
-void Query_GL_info( int ogltest )
+void VIDGL_Query_GL_info( int ogltest )
 {
     if( enable_card_display )
        DBG_Printf("Vendor     : %s\n", glGetString(GL_VENDOR) );
@@ -393,7 +393,7 @@ void Query_GL_info( int ogltest )
 #ifdef DUP_RENDERER_STR
     free(renderer);
 #endif
-    gl_extensions = glGetString(GL_EXTENSIONS);  // passed to isExtAvailable
+    gl_extensions = glGetString(GL_EXTENSIONS);  // passed to VIDGL_isExtAvailable
 
     if( enable_card_display )
     {
@@ -423,12 +423,12 @@ static void SetNoTexture( void )
 
 
 // -----------------+
-// SetModelView     :
+// VIDGL_Set_GL_Model_View  :
 // -----------------+
 // Called by ogl_sdl:OglSdlSurface or ogl_mac:OglMacSurface
-void SetModelView( GLint w, GLint h )
+void VIDGL_Set_GL_Model_View( GLint w, GLint h )
 {
-    DBG_Printf( "SetModelView(): %dx%d\n", w, h );
+    DBG_Printf( "VIDGL_Set_GL_Model_View(): %dx%d\n", w, h );
 
     screen_width = w;
     screen_height = h;
@@ -456,17 +456,17 @@ void SetModelView( GLint w, GLint h )
 
 
 // -----------------+
-// SetStates        : Set permanent states
+// VIDGL_Set_GL_States : Set permanent states
 // -----------------+
 // Called by ogl_sdl:OglSdlSurface or ogl_mac:OglMacSurface
-// Called after SetModelView
-void SetStates( void )
+// Called after VIDGL_Set_GL_Model_View
+void VIDGL_Set_GL_States( void )
 {
     // Bind little white RGBA texture to ID NOTEXTURE_NUM.
     FUINT Data[8*8];
     int i;
 
-    DBG_Printf( "SetStates()\n" );
+    DBG_Printf( "VIDGL_Set_GL_States()\n" );
 
     // Hurdler: not necessary, is it?
     //glShadeModel( GL_SMOOTH );      // iterate vertice colors
@@ -525,12 +525,12 @@ void SetStates( void )
 
 
 // -----------------+
-// Flush            : flush OpenGL textures
-//                  : Clear list of downloaded mipmaps
+// VIDGL_Flush_GL_textures : flush OpenGL textures
+//                   : Clear list of downloaded mipmaps
 // -----------------+
-void Flush( void )
+void VIDGL_Flush_GL_textures( void )
 {
-    //DBG_Printf ("HWR_Flush()\n");
+    //DBG_Printf ("VIDGL_Flush_GL_textures()\n");
 
     while( gr_cachehead )
     {
@@ -559,10 +559,10 @@ void Flush( void )
 
 
 // -----------------+
-// isExtAvailable   : Look if an OpenGL extension is available
+// VIDGL_isExtAvailable : Look if an OpenGL extension is available
 // Returns          : true if extension available
 // -----------------+
-int isExtAvailable(char *extension)
+int VIDGL_isExtAvailable(char *extension)
 {
     const GLubyte   *start;
     GLubyte         *where, *terminator;
@@ -610,7 +610,7 @@ EXPORT boolean HWRAPI( Init ) (I_Error_t FatalErrorFunction)
 EXPORT void HWRAPI( ClearMipMapCache ) ( void )
 {
     // DBG_Printf ("HWR_Flush(exe)\n");
-    Flush();
+    VIDGL_Flush_GL_textures();
 }
 
 
@@ -760,6 +760,7 @@ EXPORT void HWRAPI( Draw2DLine ) ( v2d_t * v1, v2d_t * v2, RGBA_t Color )
 //             is it faster when pixels are discarded ?
 EXPORT void HWRAPI( SetBlend ) ( FBITFIELD PolyFlags )
 {
+    // SetBlend is invoked by GenPrint, so cannot use GenPrint here.
     FBITFIELD   Xor = CurrentPolyFlags^PolyFlags;
     if( Xor & ( PF_Blending|PF_Occlude|PF_NoTexture|PF_Modulated|PF_NoDepthTest|PF_Decal|PF_Invisible|PF_NoAlphaTest ) )
     {
@@ -912,6 +913,7 @@ EXPORT void HWRAPI( SetTexture ) ( FTextureInfo_t *pTexInfo )
         {
             GLubyte *pImgData;
             int i, j;
+            RGBA_t  t2;
 
             pImgData = (GLubyte *)pTexInfo->grInfo.data;
             for( j=0; j<h; j++ )
@@ -921,17 +923,17 @@ EXPORT void HWRAPI( SetTexture ) ( FTextureInfo_t *pTexInfo )
                     if ( (*pImgData==HWR_PATCHES_CHROMAKEY_COLORINDEX) &&
                          (pTexInfo->tfflags & TF_CHROMAKEYED) )
                     {
-                        tex[w*j+i].s.red   = 0;
-                        tex[w*j+i].s.green = 0;
-                        tex[w*j+i].s.blue  = 0;
-                        tex[w*j+i].s.alpha = 0;
+                        t2.s.red   = 0;
+                        t2.s.green = 0;
+                        t2.s.blue  = 0;
+                        t2.s.alpha = 0;
                     }
                     else
                     {
-                        tex[w*j+i].s.red   = myPaletteData[*pImgData].s.red;
-                        tex[w*j+i].s.green = myPaletteData[*pImgData].s.green;
-                        tex[w*j+i].s.blue  = myPaletteData[*pImgData].s.blue;
-                        tex[w*j+i].s.alpha = myPaletteData[*pImgData].s.alpha;
+                        t2.s.red   = myPaletteData[*pImgData].s.red;
+                        t2.s.green = myPaletteData[*pImgData].s.green;
+                        t2.s.blue  = myPaletteData[*pImgData].s.blue;
+                        t2.s.alpha = myPaletteData[*pImgData].s.alpha;
                     }
 
                     pImgData++;
@@ -939,10 +941,10 @@ EXPORT void HWRAPI( SetTexture ) ( FTextureInfo_t *pTexInfo )
                     if( pTexInfo->grInfo.format == GR_TEXFMT_AP_88 )
                     {
                         if( !(pTexInfo->tfflags & TF_CHROMAKEYED) )
-                            tex[w*j+i].s.alpha = *pImgData;
+                            t2.s.alpha = *pImgData;
                         pImgData++;
                     }
-
+                    tex[w*j+i] = t2;
                 }
             }
         }
@@ -956,18 +958,20 @@ EXPORT void HWRAPI( SetTexture ) ( FTextureInfo_t *pTexInfo )
         {
             GLubyte *pImgData;
             int i, j;
+            RGBA_t  t2;
 
             pImgData = (GLubyte *)pTexInfo->grInfo.data;
             for( j=0; j<h; j++ )
             {
                 for( i=0; i<w; i++)
                 {
-                    tex[w*j+i].s.red   = *pImgData;
-                    tex[w*j+i].s.green = *pImgData;
-                    tex[w*j+i].s.blue  = *pImgData;
+                    t2.s.red   = *pImgData;
+                    t2.s.green = *pImgData;
+                    t2.s.blue  = *pImgData;
                     pImgData++;
-                    tex[w*j+i].s.alpha = *pImgData;
+                    t2.s.alpha = *pImgData;
                     pImgData++;
+                    tex[w*j+i] = t2;
                 }
             }
         }
@@ -1067,6 +1071,7 @@ EXPORT void HWRAPI( DrawPolygon ) ( FSurfaceInfo_t  *pSurf,
 
     //num_drawn_poly += iNumPts-2;
 
+    // DrawPolygon is invoked by GenPrint, so cannot use GenPrint here.
 #ifdef MINI_GL_COMPATIBILITY
     if (PolyFlags & PF_Corona) 
         PolyFlags &= ~PF_NoDepthTest;
@@ -1080,10 +1085,12 @@ EXPORT void HWRAPI( DrawPolygon ) ( FSurfaceInfo_t  *pSurf,
     // If Modulated, mix the surface colour to the texture
     if( (CurrentPolyFlags & PF_Modulated) && pSurf)
     {
-        if (pal_col) { // hack for non-palettized mode
-            c.red   = (const_pal_col.red  +byte2float[pSurf->FlatColor.s.red])  /2.0f;
-            c.green = (const_pal_col.green+byte2float[pSurf->FlatColor.s.green])/2.0f;
-            c.blue  = (const_pal_col.blue +byte2float[pSurf->FlatColor.s.blue]) /2.0f;
+        if (tint_color_id)
+        {
+	    // Imitate the damage, and special object palette tints
+            c.red   = (tint_rgb.red   + byte2float[pSurf->FlatColor.s.red])  /2.0f;
+            c.green = (tint_rgb.green + byte2float[pSurf->FlatColor.s.green])/2.0f;
+            c.blue  = (tint_rgb.blue  + byte2float[pSurf->FlatColor.s.blue]) /2.0f;
             c.alpha = byte2float[pSurf->FlatColor.s.alpha];
         }
         else
@@ -1130,9 +1137,12 @@ EXPORT void HWRAPI( DrawPolygon ) ( FSurfaceInfo_t  *pSurf,
         glReadPixels( (int)px-4, (int)py, 8, 8, GL_DEPTH_COMPONENT, GL_FLOAT, buf );
         //DBG_Printf("DepthBuffer: %f %f\n", buf[0][0], buf[3][3]);
 
+        // count pixels that are closer
         for (i=0; i<8; i++)
+        {
             for (j=0; j<8; j++)
                 scalef += (pz > buf[i][j]+0.00005f) ? 0 : 1;
+	}
 
         // quick test for screen border (not 100% correct, but looks ok)
         if (px < 4) scalef -= 8*(4-px);
@@ -1178,11 +1188,11 @@ EXPORT void HWRAPI( SetSpecialState ) (hwd_specialstate_e IdState, int Value)
             break;
         }
 
-        case HWD_SET_PALETTECOLOR: {
-            pal_col = Value;
-            const_pal_col.blue  = byte2float[((Value>>16)&0xff)];
-            const_pal_col.green = byte2float[((Value>>8)&0xff)];
-            const_pal_col.red   = byte2float[((Value)&0xff)];
+        case HWD_SET_TINT_COLOR: {
+            tint_color_id = Value;
+            tint_rgb.blue  = byte2float[((Value>>16)&0xff)];
+            tint_rgb.green = byte2float[((Value>>8)&0xff)];
+            tint_rgb.red   = byte2float[((Value)&0xff)];
             break;
         }
 
@@ -1254,7 +1264,7 @@ EXPORT void HWRAPI( SetSpecialState ) (hwd_specialstate_e IdState, int Value)
                     min_filter = GL_LINEAR;
                     break;
             }
-            Flush(); //??? if we want to change filter mode by texture, remove this
+            VIDGL_Flush_GL_textures(); //??? if we want to change filter mode by texture, remove this
 
         default:
             break;
