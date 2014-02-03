@@ -3781,3 +3781,10 @@ patchfile = w96_14_linux_event.patch
 Update Linux event loop to be same as in SDL, to eliminate compiler
 complaints.
 
+*** W96_alpha5
+patchfile = w96_15_alpha5.patch
+- committed revision 1088   by wesley johnson
+Revert VERSION and docs to 1.44 alpha5.
+Fix check on legacy wadversion to accept 1.44 and 1.45.
+The legacy.wad remains at 1.45.
+
