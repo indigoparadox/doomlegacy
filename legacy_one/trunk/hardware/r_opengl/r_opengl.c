@@ -331,7 +331,7 @@ void DBG_Printf( LPCTSTR lpFmt, ... )
     }
 #endif
 
-//    if(verbose > 1)
+//    if(gl_verbose > 1)
     {
       va_start(ap, lpFmt);
       vprintf( lpFmt, ap );
@@ -512,8 +512,10 @@ void VIDGL_Set_GL_States( void )
     next_texture_id = 0;
     glGenTextures( 1, &next_texture_id );
     no_texture_id = next_texture_id ++;
-    if( verbose>1 )
+#if 0   
+//    if( gl_verbose>1 )
       fprintf( stderr, "VIDGL_Set_GL_States: no_texture_id = %i\n", no_texture_id );
+#endif
 
 #ifdef LITTLE_WHITE_TEXTURE
     // Direct
