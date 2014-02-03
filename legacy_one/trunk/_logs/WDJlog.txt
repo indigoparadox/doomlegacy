@@ -3775,3 +3775,9 @@ OpenGL drawing everything in Red and Yellow was only fixed by
 disabling Matrox polygon accell.
 May still be an open issue, so some DEBUG_WIN code is still present.
 
+*** W96_linux_event
+patchfile = w96_14_linux_event.patch
+- committed revision 1087   by wesley johnson
+Update Linux event loop to be same as in SDL, to eliminate compiler
+complaints.
+

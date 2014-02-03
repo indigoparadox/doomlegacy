@@ -206,19 +206,21 @@ void I_OutputMsg (char *fmt, ...)
 
 int I_GetKey (void) 
 {
-    // Warning: I_GetKey emties the event queue till next keypress
+    // Warning: I_GetKey empties the event queue till next keypress
     event_t*    ev;
     int rc=0;
     
     // return the first keypress from the event queue
-    for ( ; eventtail != eventhead ; eventtail = (++eventtail)&(MAXEVENTS-1) )
+    for ( ; eventtail != eventhead ;  )
     {
         ev = &events[eventtail];
         if(ev->type == ev_keydown)
         {
             rc = ev->data1;
-            continue;
         }
+
+	eventtail++;
+	eventtail = eventtail & (MAXEVENTS-1);
     }
     
     return rc; 
