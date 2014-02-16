@@ -57,13 +57,13 @@
   The original Doom and Heretic IWAD files
   (doom.wad from Doom, doomu.wad from Ultimate Doom,
   doom2.wad from Doom2, tnt.wad or plutonia.wad from Final Doom,
-  heretic.wad from Heretic), which are still
+  heretic.wad from Heretic) are still
   copyrighted products and available commercially.
 </p>
 <p>
   There are also some free replacement IWADs which can be used instead.
   <a href="http://www.nongnu.org/freedoom/">FreeDoom</a> (doom2.wad or freedoom.wad) is a free substitute for Doom2.
-  <a href="http://www.jeshimoth.com/jutegyte/blasphemer/">Blasphemer</a>
+  <a href="https://code.google.com/p/blasphemer/">Blasphemer</a>
   (heretic.wad) is a free substitute for Heretic, but it does
   not have monsters yet (it needs volunteers to work on it!).
   The Legacy engine will recognize and play Chexquest (chex.wad),
@@ -71,7 +71,7 @@
 </p>
 <p>
   In addition to the now
-  fundamental <a href="http://doom.wikia.com/wiki/Boom">Boom</a>
+  fundamental and de-facto-standard <a href="http://doom.wikia.com/wiki/Boom">Boom</a>
   extensions, Legacy also has implemented among other things
   3D floors, swimmable water and other special effects using extended
   linedef codes, and supports the FraggleScript scripting language.
@@ -98,8 +98,8 @@
   </li>
 </ul>
 <p>
-  We hope that this new version brings you a lot of enjoyment.
-  Have much fun!!
+  We hope that this new release brings you a lot of enjoyment.
+  Have fun!!
 </p>
 <p>-The Doom Legacy Team</p>
 
@@ -121,66 +121,65 @@
   
 </p>
 <h3>Linux</h3>
-  Choose a legacy game directory that all players can use, like /usr/local/games/legacy.
-  Install the tar file contents to the legacy game directory, which needs to include the
-  doomlegacy binary, legacy.wad, autoexec.cfg.  The tar file will also install the legacy docs there.
-  You can also put there any wad files you want to play.
 <p>
-  The iwad files can be in a separate directory (such as /usr/local/games/legacy/wads).
-  You can set DOOMWADDIR with that wad directory path, in a login script, or a game starting script.
-  If DOOMWADDIR is not set, then DoomLegacy will look for the directories:
-  "/usr/local/share/games/doomwads" and "/usr/local/games/doomwads".
+  Choose an installation directory that all players can use, like <b>/usr/local/games/doomlegacy</b>.
+  Unpack the tar file contents here. The installation directory needs to include the
+  doomlegacy binary, legacy.wad, and autoexec.cfg.  The tar file will
+  also install the Doom Legacy docs there.
+</p>
 <p>
-  Otherwise, for known game wads (Doom, Doom2, TNT, etc) in other directories, make soft links in the legacy game directory
-  to the actual wad files, so that when a -game switch is used, DoomLegacy can find the iwad.
+  The IWAD files should go in a separate directory that can be shared
+  between all Doom source ports (such as <b>/usr/local/share/games/doomwads</b>).
+  You can set the <b>DOOMWADDIR</b> environment variable to point this directory in a login script or a game starting script.
+  If <b>DOOMWADDIR</b> is not set, Doom Legacy will try the
+  directories <b>/usr/local/share/games/doomwads</b>,
+  and <b>/usr/local/games/doomwads</b>,
+  and the installation directory.
+</p>
+<p>
+  You can also make soft links in the abovementioned IWAD directory to
+  point to the actual IWAD files.
   The valid file names can be found in docs/technical/wad_selection.txt.
-<br>
-<pre>
-  > ln -s wads/idgames/doom1.wad  doom1.wad
-  > ln -s wads/idgames/doom2.wad  doom2.wad
-  > ln -s wads/idgames/doomu.wad  doomu.wad
-  > ln -s wads/idgames/plutonia.wad  plutonia.wad
-  > ln -s wads/idgames/tnt.wad  tnt.wad
-  > ln -s wads/freedoom-iwad-0.7/doom2.wad  freedoom.wad
-  > ln -s wads/freedoom-iwad-0.9/freedoom2.wad  freedoom2.wad
-</pre>
+</p>
+<div class="code">$ ln -s wads/idgames/doom1.wad  doom1.wad
+$ ln -s wads/idgames/doom2.wad  doom2.wad
+$ ln -s wads/idgames/doomu.wad  doomu.wad
+$ ln -s wads/idgames/plutonia.wad  plutonia.wad
+$ ln -s wads/idgames/tnt.wad  tnt.wad
+$ ln -s wads/freedoom-iwad-0.7/doom2.wad  freedoom.wad
+$ ln -s wads/freedoom-iwad-0.9/freedoom2.wad  freedoom2.wad
+</div>
 <p>
-  If just the pwad files are in a separate directory (such as pwad/),
-  then there are no extra steps.
-<pre>
-  > doomlegacy -file pwad/ANDYDM.WAD
-  > doomlegacy -file pwad/Twilight/TWILIGHT.DEH pwad/Twilight/TWILIGHT.WAD
-</pre>
-  DoomLegacy will use the HOME environment variable, which is usually set by your Linux login, to find your home directory.  It makes a .legacy directory there, where it will keep config.cfg and all your saved games.
-  If HOME is not set, DoomLegacy will look for directory
-  "/usr/local/games/legacyhome", and if that is not present then will
-  use the current directory.  In the HOME directory, it will make a hidden directory, ".legacy",
-  within which it will save config and savegames.
-<pre>
-  Overriding by using the -home and -config switches, examples:
-  > doomlegacy -home ~/doomstuff -game plutonia
-  > doomlegacy -home ~/doom -config ~/doom/plutconfig.cfg -game plutonia
-</pre>
-<pre>
-  DoomLegacy execution examples:
-  > doomlegacy -game tnt
-  > doomlegacy -game plutonia -file pwad/pl2/PL2.WAD
-  > doomlegacy -iwad freedoom.wad -file new_map13.wad
-</pre>
+  Doom Legacy will use the <b>HOME</b> environment variable, which is
+  usually set by your Linux login, to find your home directory.
+  It will make a hidden directory named <b>.doomlegacy</b> there for
+  storing your configuration files and saved games.
+  If <b>HOME</b> is not set, Doom Legacy will look for
+  <b>/usr/local/games/legacyhome</b>, and if that is not present then will
+  use the current directory.
+  This behavior can be overridden by using the -home and -config switches:
+</p>
+<div class="code">$ doomlegacy -home ~/doomstuff -game plutonia
+$ doomlegacy -home ~/doom -config ~/doom/plutconfig.cfg -game plutonia
+</div>
 <p>
-  Script files can also be used to start DoomLegacy.
-<pre>
-  create dm8 script file
-    #!/bin/sh
-    cd /usr/local/games/legacy/
-    USER="Shotgun-wizard"
-    DOOMWADDIR=wads
-    doomlegacy -iwad doom2.wad -file DM8.WAD
- > chmod u+x dm8
- > dm8
-</pre>
+  PWAD and DeHackEd files can be included using the -file switch. Examples:
+</p>
+<div class="code">$ doomlegacy -game tnt
+$ doomlegacy -game plutonia -file pwad/pl2/PL2.WAD
+$ doomlegacy -iwad freedoom.wad -file new_map13.wad
+$ doomlegacy -file pwad/Twilight/TWILIGHT.DEH pwad/Twilight/TWILIGHT.WAD
+</div>
+<p>
+  Script files can also be used to start Doom Legacy:
+</p>
+<div class="code">#!/bin/sh
+cd /usr/local/games/legacy/
+USER="Shotgun-wizard"
+DOOMWADDIR=wads
+doomlegacy -iwad doom2.wad -file DM8.WAD
+</div>
 
-<p>
 <h3>Windows</h3>
 <p>
   It is important to change to the directory where doomlegacy resides.  Support files,
@@ -192,7 +191,7 @@
   as the doomwaddir.  Set DOOMWADDIR in a batch file to specify a different wad directory.
 <p>
   A "legacy" directory will be created in your home directory for savegames and saved config files.
-  Set the environment variable "HOME" in a batch file, or use the -home switch
+  Set the environment variable "<b>HOME</b>" in a batch file, or use the -home switch
   when starting DoomLegacy.
   Otherwise, it will check if the default home directory exists, "\legacyhome".
   If none are present, then it will use the current directory for home, but only if it is not root, "c:\".
