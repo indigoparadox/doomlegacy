@@ -265,8 +265,10 @@ void FIL_ExtractFileBase ( char*  path,  char* dest )
 boolean FIL_CheckExtension (char *in)
 {
     while (*in++)
+    {
         if (*in=='.')
             return true;
+    }
 
     return false;
 }
@@ -434,7 +436,7 @@ void M_SaveConfig (char *filename)
 // ==========================================================================
 
 
-
+// PCX file format
 typedef struct
 {
     char                manufacturer;

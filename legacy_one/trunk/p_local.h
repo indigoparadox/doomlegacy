@@ -420,6 +420,7 @@ void  DemoAdapt_p_floor( void );
 // heretic specific
 extern int ceilmovesound;
 extern int doorclosesound;
+extern int ArtifactFlash;
 
 #define TELEFOGHEIGHT  (32*FRACUNIT)
 extern mobjtype_t      PuffType;

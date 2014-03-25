@@ -713,7 +713,9 @@ void D_Display(void)
 // =========================================================================
 
 tic_t rendergametic, oldentertics;
-boolean supdate;
+#ifdef CLIENTPREDICTION2
+boolean spirit_update;
+#endif
 
 //#define SAVECPU_EXPERIMENTAL
 
@@ -765,7 +767,7 @@ void D_DoomLoop(void)
         // process tics (but maybe not if realtic==0)
         TryRunTics(realtics);
 #ifdef CLIENTPREDICTION2
-        if (singletics || supdate)
+        if (singletics || spirit_update)
 #else
         if (singletics || gametic > rendergametic)
 #endif
@@ -777,7 +779,9 @@ void D_DoomLoop(void)
             S_UpdateSounds();   // move positional sounds
             // Update display, next frame, with current state.
             D_Display();
-            supdate = false;
+#ifdef CLIENTPREDICTION2
+            spirit_update = false;
+#endif
         }
         else if (rendertimeout < entertic)      // in case the server hang or netsplit
             D_Display();

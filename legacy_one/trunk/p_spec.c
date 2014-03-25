@@ -3534,8 +3534,7 @@ static void Add_WallScroller(fixed_t dx, fixed_t dy, const line_t *l,
   {
     d = x, x = y, y = d;
   }
-  d = FixedDiv(x, finesine[(tantoangle[FixedDiv(y,x) >> DBITS] + ANG90)
-                          >> ANGLETOFINESHIFT]);
+  d = FixedDiv(x, sine_ANG( tantoangle[FixedDiv(y,x) >> DBITS] + ANG90 ) );
   x = -FixedDiv(FixedMul(dy, l->dy) + FixedMul(dx, l->dx), d);
   y = -FixedDiv(FixedMul(dx, l->dy) - FixedMul(dy, l->dx), d);
   Add_Scroller(SCROLL_side, x, y, control, *l->sidenum, accel);

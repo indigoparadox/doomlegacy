@@ -1314,11 +1314,11 @@ void G_PlayerReborn (int player)
     char        favoritweapon[NUMWEAPONS];
     boolean     originalweaponswitch;
     boolean     autoaim;
-    int         skin;                           //Fab: keep same skin
+    int         skin;   //Fab: keep same skin
 #ifdef CLIENTPREDICTION2
     mobj_t      *spirit;
 #endif
-    bot_t*		bot;	//added by AC for acbot
+    bot_t*      bot;	//added by AC for acbot
 
     memcpy (frags,players[player].frags,sizeof(frags));
     addfrags = players[player].addfrags;
@@ -1362,6 +1362,7 @@ void G_PlayerReborn (int player)
     p->health = initial_health;
     if( gamemode == heretic )
     {
+        // wand start
         p->weaponinfo = wpnlev1info;
         p->readyweapon = p->pendingweapon = wp_goldwand;
         p->weaponowned[wp_staff] = true;
@@ -1370,6 +1371,7 @@ void G_PlayerReborn (int player)
     }
     else
     {
+        // pistol start
         p->weaponinfo = doomweaponinfo;
         p->readyweapon = p->pendingweapon = wp_pistol;
         p->weaponowned[wp_fist] = true;

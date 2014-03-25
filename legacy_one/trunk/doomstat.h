@@ -292,8 +292,10 @@ extern  int     totalsecret;
 //  WAD, partly set at startup time.
 
 extern  tic_t           gametic;
+
 #ifdef CLIENTPREDICTION2
 extern  tic_t           localgametic;
+extern  boolean         spirit_update;
 #else
 #define localgametic  leveltime
 #endif
@@ -342,5 +344,6 @@ extern  int             bodyqueslot;
 //extern  ticcmd_t        localcmds[BACKUPTICS];
 
 extern  ticcmd_t        netcmds[BACKUPTICS][MAXPLAYERS];
+extern int   ticruned, ticmiss;
 
 #endif //__D_STATE__
