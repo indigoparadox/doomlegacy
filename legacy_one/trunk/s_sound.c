@@ -1242,11 +1242,8 @@ int S_AdjustSoundParams(mobj_t * listener, mobj_t * source, int *vol, int *sep, 
     else
     {
 #endif
-
-        angle >>= ANGLETOFINESHIFT;
-
         // stereo separation
-        *sep = 128 - (FixedMul(S_STEREO_SWING, finesine[angle]) >> FRACBITS);
+        *sep = 128 - (FixedMul(S_STEREO_SWING, sine_ANG(angle)) >> FRACBITS);
 
 #ifdef SURROUND
     }

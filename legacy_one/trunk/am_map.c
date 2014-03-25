@@ -1314,12 +1314,12 @@ void AM_rotate ( fixed_t* x, fixed_t* y, angle_t a )
     fixed_t tmpx;
 
     tmpx =
-        FixedMul(*x,finecosine[a>>ANGLETOFINESHIFT])
-        - FixedMul(*y,finesine[a>>ANGLETOFINESHIFT]);
+        FixedMul( *x, cosine_ANG(a) )
+        - FixedMul( *y, sine_ANG(a) );
 
     *y   =
-        FixedMul(*x,finesine[a>>ANGLETOFINESHIFT])
-        + FixedMul(*y,finecosine[a>>ANGLETOFINESHIFT]);
+        FixedMul( *x, sine_ANG(a) )
+        + FixedMul( *y, cosine_ANG(a) );
 
     *x = tmpx;
 }

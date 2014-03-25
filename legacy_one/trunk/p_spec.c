@@ -3984,9 +3984,8 @@ boolean PIT_PushThing(mobj_t* thing)
             pushangle = R_PointToAngle2(thing->x,thing->y,sx,sy);
             if (tmpusher->source->type == MT_PUSH)
                 pushangle += ANG180;    // away
-            pushangle >>= ANGLETOFINESHIFT;
-            thing->momx += FixedMul(speed,finecosine[pushangle]);
-            thing->momy += FixedMul(speed,finesine[pushangle]);
+            thing->momx += FixedMul(speed, cosine_ANG(pushangle));
+            thing->momy += FixedMul(speed, sine_ANG(pushangle));
 	}
     }
     return true;

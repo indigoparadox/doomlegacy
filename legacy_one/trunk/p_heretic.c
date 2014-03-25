@@ -126,7 +126,6 @@ boolean P_SeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax)
         int dir;
         int dist;
         angle_t delta;
-        angle_t angle;
         mobj_t *target;
 
         target = actor->tracer;
@@ -156,9 +155,9 @@ boolean P_SeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax)
         { // Turn counter clockwise
                 actor->angle -= delta;
         }
-        angle = actor->angle>>ANGLETOFINESHIFT;
-        actor->momx = FixedMul(actor->info->speed, finecosine[angle]);
-        actor->momy = FixedMul(actor->info->speed, finesine[angle]);
+        int angf = ANGLE_TO_FINE(actor->angle);
+        actor->momx = FixedMul(actor->info->speed, finecosine[angf]);
+        actor->momy = FixedMul(actor->info->speed, finesine[angf]);
         if(actor->z+actor->height < target->z ||
                 target->z+target->height < actor->z)
         { // Need to seek vertically
@@ -213,9 +212,11 @@ mobj_t *P_SpawnMissileAngle(mobj_t *source, mobjtype_t type,
         }
         mo->target = source; // Originator
         mo->angle = angle;
-        angle >>= ANGLETOFINESHIFT;
-        mo->momx = FixedMul(mo->info->speed, finecosine[angle]);
-        mo->momy = FixedMul(mo->info->speed, finesine[angle]);
+        // This one spot does not pull common expressions well, explicit is smaller.
+        int angf = ANGLE_TO_FINE( angle );
+        fixed_t speed = mo->info->speed;
+        mo->momx = FixedMul(speed, finecosine[angf]);
+        mo->momy = FixedMul(speed, finesine[angf]);
         mo->momz = momz;
         return(P_CheckMissileSpawn(mo) ? mo : NULL);
 }

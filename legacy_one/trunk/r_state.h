@@ -171,7 +171,12 @@ extern consvar_t        cv_allowmlook;
 // ?
 extern angle_t          clipangle;
 
-extern int              viewangle_to_x[FINEANGLES/2];
+// Table content is -FINE_ANG90 to +FINE_ANG90.
+// Lookup as viewangle_to_x[viewangle + FINE_ANG90].
+// Maps the visible view angles to screen X coordinates.
+extern int              viewangle_to_x[FINE_ANG180];
+// The lowest viewangle that maps back to x.
+// Maps (0 to screenwidth) to range (clipangle to -clipangle).
 extern angle_t          x_to_viewangle[MAXVIDWIDTH+1];
 //extern fixed_t                finetangent[FINEANGLES/2];
 
