@@ -298,7 +298,7 @@ void HereticPatchEngine(void)
     S_sfx[sfx_itmbk].priority = 10;
 
     // conflicting number for doomednum
-    // so desable doom mobjs and enabled heretic's one
+    // so disable doom mobjs and enable heretic's one
     mobjinfo[MT_SHOTGUY].doomednum = -1;
     mobjinfo[MT_MINOTAUR].doomednum = 9;
 

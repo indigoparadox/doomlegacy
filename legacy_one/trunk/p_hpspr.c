@@ -435,7 +435,8 @@ void A_BeakAttackPL1(player_t *player, pspdef_t *psp)
         damage = 1+(P_Random()&3);
         angle = player->mo->angle;
         slope = P_AimLineAttack(player->mo, angle, MELEERANGE);
-//      PuffType = MT_BEAKPUFF;
+        // [WDJ] When PuffType is not set will get extraneous player mobj created.
+        PuffType = MT_BEAKPUFF;  // param to P_SpawnPuff via LineAttack
         P_LineAttack(player->mo, angle, MELEERANGE, slope, damage);
         // lar_linetarget returned by P_LineAttack
         if(lar_linetarget)
@@ -463,7 +464,7 @@ void A_BeakAttackPL2(player_t *player, pspdef_t *psp)
         damage = HITDICE(4);
         angle = player->mo->angle;
         slope = P_AimLineAttack(player->mo, angle, MELEERANGE);
-        PuffType = MT_BEAKPUFF;
+        PuffType = MT_BEAKPUFF;  // param to P_SpawnPuff via LineAttack
         P_LineAttack(player->mo, angle, MELEERANGE, slope, damage);
         // lar_linetarget returned by P_LineAttack
         if(lar_linetarget)

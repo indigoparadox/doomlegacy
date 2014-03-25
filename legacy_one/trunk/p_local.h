@@ -244,6 +244,14 @@ void P_RespawnWeapons(void);
 
 mobj_t*  P_SpawnMobj ( fixed_t x, fixed_t y, fixed_t z, mobjtype_t type );
 
+// Morph control flags
+typedef enum {
+   MM_testsize = 0x01,
+   MM_telefog  = 0x02
+} morphmobj_e;
+// Change the type and info, but keep the location and player.
+boolean P_MorphMobj( mobj_t * mo, mobjtype_t type, int mmflags, int keepflags );
+
 void    P_RemoveMobj (mobj_t* th);
 boolean P_SetMobjState (mobj_t* mobj, statenum_t state);
 void    P_MobjThinker (mobj_t* mobj);
