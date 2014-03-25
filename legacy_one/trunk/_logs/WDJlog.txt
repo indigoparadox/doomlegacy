@@ -3843,4 +3843,11 @@ patchfile = w97_4_hw_fineangle.patch
 - committed revision 1095   by wesley johnson
 Extend the FINEANGLE patches to the hardware code.
 
+*** W97_hw_distance_angle
+patchfile = w97_5_hw_distangle.patch
+- committed revision 1096   by wesley johnson
+Extend the distangle patches to the hardware code.
+This does not have much effect because the OpenGL renderer has another
+distance limit.  It does not draw the far distant walls at all.
+
 

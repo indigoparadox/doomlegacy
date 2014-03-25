@@ -457,7 +457,7 @@ void CV_filtermode_ONChange(void)
 // Fineangles in the SCREENWIDTH wide window.
 #define FIELDOFVIEW      ANG90
 
-angle_t gr_clipangle;
+angle_t gr_clipangle, gr_clipangle_x_2;
 
 // The gr_viewangle_to_x[viewangle + FINE_ANG90] lookup
 // maps the visible view angles to screen X coordinates,
@@ -2329,12 +2329,9 @@ static void HWR_ClearClipSegs(void)
 // -----------------+
 static void HWR_AddLine(seg_t * lineseg)
 {
-    int x1;
-    int x2;
-    angle_t angle1;
-    angle_t angle2;
+    int x1, x2;
+    angle_t angle1, angle2;
     angle_t span;
-    angle_t tspan;
 
     // SoM: Backsector needs to be run through R_FakeFlat
     sector_t tempsec;
@@ -2344,8 +2341,9 @@ static void HWR_AddLine(seg_t * lineseg)
     // OPTIMIZE: quickly reject orthogonal back sides.
 #if 1
     // angle calc uses fixed_t math
-    angle1 = R_PointToAngle( lineseg->v1->x, lineseg->v1->y );
-    angle2 = R_PointToAngle( lineseg->v2->x, lineseg->v2->y );
+    // Angles here increase to the left.
+    angle1 = R_PointToAngle( lineseg->v1->x, lineseg->v1->y );  // left
+    angle2 = R_PointToAngle( lineseg->v2->x, lineseg->v2->y );  // right
 #else
     // convert polyvertex_t back to fixed_t
     angle1 = R_PointToAngle(((polyvertex_t *) lineseg->v1)->x * FRACUNIT, ((polyvertex_t *) lineseg->v1)->y * FRACUNIT);
@@ -2353,7 +2351,7 @@ static void HWR_AddLine(seg_t * lineseg)
 #endif
 
     // Clip to view edges.
-    span = angle1 - angle2;
+    span = angle1 - angle2;  // normally span > 0, (angle1 > angle2)
 
     // backface culling : span is < ANG180 if ang1 > ang2 : the seg is facing
     if (span >= ANG180)
@@ -2361,28 +2359,28 @@ static void HWR_AddLine(seg_t * lineseg)
 
     // Global angle needed by segcalc.
     //rw_angle1 = angle1;
+    // view relative is left 0x20000000, middle 0, right 0xe0000000
     angle1 -= dup_viewangle;
     angle2 -= dup_viewangle;
 
-    tspan = angle1 + gr_clipangle;
-    if (tspan > 2 * gr_clipangle)
+    // angle1, angle2 may range from ANG270 to ANG90, unsigned.
+    // Because of angle wrap, must contrive tests away from 0.
+    // Trying to use signed tests, like prboom, did not work well.
+    if ((gr_clipangle + angle1) > gr_clipangle_x_2) // (angle1 > clipangle)
     {
-        tspan -= 2 * gr_clipangle;
-
         // Totally off the left edge?
-        if (tspan >= span)
-            return;
+        if ((angle1 - gr_clipangle) >= span)  // (angle1 - clipangle) >= (angle1 - angle2)
+            return;    // angle2 >= clipangle
 
         angle1 = gr_clipangle;
     }
-    tspan = gr_clipangle - angle2;
-    if (tspan > 2 * gr_clipangle)
-    {
-        tspan -= 2 * gr_clipangle;
 
-        // Totally off the left edge?
-        if (tspan >= span)
-            return;
+    if ((gr_clipangle - angle2) > gr_clipangle_x_2)  // (angle2 < -clipangle)
+    {
+        // Totally off the right edge?
+        if ((-angle2 - gr_clipangle) >= span)  //  (-angle2 - clipangle) >= (angle1 - angle2)
+            return;    // angle1 <= -clipangle
+
         angle2 = -gr_clipangle;
     }
 
@@ -2413,13 +2411,9 @@ static void HWR_AddLine(seg_t * lineseg)
         x2 = fx2 + 0.5;
     }
 #else
-    // The seg is in the view range,
-    // but not necessarily visible.
-    angle1 = (angle1 + ANG90) >> ANGLETOFINESHIFT;
-    angle2 = (angle2 + ANG90) >> ANGLETOFINESHIFT;
-
-    x1 = gr_viewangle_to_x[angle1];
-    x2 = gr_viewangle_to_x[angle2];
+    // The seg is in the view range, but not necessarily visible.
+    x1 = gr_viewangle_to_x[ ANGLE_TO_FINE(angle1+ANG90) ];  // left
+    x2 = gr_viewangle_to_x[ ANGLE_TO_FINE(angle2+ANG90) ];  // right
 #endif
     // Does not cross a pixel?
 //    if (x1 == x2)
@@ -2530,19 +2524,10 @@ extern int checkcoord[12][4];   //r_bsp.c
 static boolean HWR_CheckBBox(fixed_t * bspcoord)
 {
     int boxpos;
-
-    fixed_t x1;
-    fixed_t y1;
-    fixed_t x2;
-    fixed_t y2;
-
-    angle_t angle1;
-    angle_t angle2;
+    fixed_t x1, y1, x2, y2;
+    angle_t angle1, angle2;
     angle_t span;
-    angle_t tspan;
-
-    int sx1;
-    int sx2;
+    int sx1, sx2;
 
     // Find the corners of the box
     // that define the edges from current viewpoint.
@@ -2569,46 +2554,39 @@ static boolean HWR_CheckBBox(fixed_t * bspcoord)
     y2 = bspcoord[checkcoord[boxpos][3]];
 
     // check clip list for an open space
-    angle1 = R_PointToAngle(x1, y1) - dup_viewangle;
-    angle2 = R_PointToAngle(x2, y2) - dup_viewangle;
+    // Angles here increase to the left.
+    angle1 = R_PointToAngle(x1, y1) - dup_viewangle;  // left
+    angle2 = R_PointToAngle(x2, y2) - dup_viewangle;  // right
 
-    span = angle1 - angle2;
+    span = angle1 - angle2;  // normally span > 0, (angle1 > angle2)
 
     // Sitting on a line?
     if (span >= ANG180)
         return true;
 
-    tspan = angle1 + gr_clipangle;
-
-    if (tspan > 2 * gr_clipangle)
+    // angle1, angle2 may range from ANG270 to ANG90, unsigned.
+    // Because of angle wrap, must contrive tests away from 0.
+    if ((gr_clipangle + angle1) > gr_clipangle_x_2) // (angle1 > clipangle)
     {
-        tspan -= 2 * gr_clipangle;
-
         // Totally off the left edge?
-        if (tspan >= span)
-            return false;
+        if ((angle1 - gr_clipangle) >= span)  // (angle1 - clipangle) >= (angle1 - angle2)
+            return false;    // angle2 >= clipangle
 
         angle1 = gr_clipangle;
     }
-    tspan = gr_clipangle - angle2;
-    if (tspan > 2 * gr_clipangle)
+    if ((gr_clipangle - angle2) > gr_clipangle_x_2)  // (angle2 < -clipangle)
     {
-        tspan -= 2 * gr_clipangle;
-
-        // Totally off the left edge?
-        if (tspan >= span)
-            return false;
+        // Totally off the right edge?
+        if ((-angle2 - gr_clipangle) >= span)  //  (-angle2 - clipangle) >= (angle1 - angle2)
+            return false;    // angle1 <= -clipangle
 
         angle2 = -gr_clipangle;
     }
 
-    // Find the first clippost
-    //  that touches the source post
+    // Find the first clippost that touches the source post
     //  (adjacent pixels are touching).
-    angle1 = (angle1 + ANG90) >> ANGLETOFINESHIFT;
-    angle2 = (angle2 + ANG90) >> ANGLETOFINESHIFT;
-    sx1 = gr_viewangle_to_x[angle1];
-    sx2 = gr_viewangle_to_x[angle2];
+    sx1 = gr_viewangle_to_x[ ANGLE_TO_FINE(angle1 + ANG90) ];
+    sx2 = gr_viewangle_to_x[ ANGLE_TO_FINE(angle2 + ANG90) ];
 
     // Does not cross a pixel.
     if (sx1 == sx2)
@@ -3092,6 +3070,7 @@ void HWR_InitTextureMapping(void)
     }
 
     gr_clipangle = gr_x_to_viewangle[0];
+    gr_clipangle_x_2 = gr_clipangle + gr_clipangle;
 }
 
 // ==========================================================================
