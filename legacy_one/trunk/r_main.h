@@ -70,6 +70,7 @@ extern int              viewwindowy;
 
 extern mobj_t*		viewmobj;
 
+extern angle_t          clipangle, clipangle_x_2;
 
 extern int              centerx;
 extern int              centery;
