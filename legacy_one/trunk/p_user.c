@@ -95,16 +95,17 @@ int	 extramovefactor = 0;
 //
 void P_Thrust(player_t *player, angle_t angle, fixed_t move)
 {
+    mobj_t * pmo = player->mo;
 #if 0
     // friction and movefactor are now sector attributes
-    if(player->mo->subsector->sector->special == 15  // heretic ice
-       && !(player->powers[pw_flight] && (player->mo->z > player->mo->floorz)))
+    if(pmo->subsector->sector->special == 15  // heretic ice
+       && !(player->powers[pw_flight] && (pmo->z > pmo->floorz)))
     {
         move>>=2;  // Friction_Low
     }
 #endif   
-    player->mo->momx += FixedMul(move, cosine_ANG(angle));
-    player->mo->momy += FixedMul(move, sine_ANG(angle));
+    pmo->momx += FixedMul(move, cosine_ANG(angle));
+    pmo->momy += FixedMul(move, sine_ANG(angle));
 }
 
 #ifdef BOB_MOM
