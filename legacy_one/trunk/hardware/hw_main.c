@@ -459,16 +459,16 @@ void CV_filtermode_ONChange(void)
 
 angle_t gr_clipangle;
 
-// The viewangletox[viewangle + FINEANGLES/4] lookup
+// The gr_viewangle_to_x[viewangle + FINE_ANG90] lookup
 // maps the visible view angles to screen X coordinates,
 // flattening the arc to a flat projection plane.
 // There will be many angles mapped to the same X.
-int gr_viewangletox[FINEANGLES / 2];
+int gr_viewangle_to_x[FINE_ANG180];
 
-// The xtoviewangleangle[] table maps a screen pixel
+// The gr_x_to_viewangle[] table maps a screen pixel
 // to the lowest viewangle that maps back to x ranges
 // from clipangle to -clipangle.
-angle_t gr_xtoviewangle[MAXVIDWIDTH + 1];
+angle_t gr_x_to_viewangle[MAXVIDWIDTH + 1];
 
 // ==========================================================================
 //                                                                    GLOBALS
@@ -1249,7 +1249,7 @@ float HWR_ClipViewSegment(int x, polyvertex_t * v1, polyvertex_t * v2)
     float v1dx, v1dy;
     float v2dx, v2dy;
 
-    angle_t clipangle = gr_xtoviewangle[x];
+    angle_t clipangle = gr_x_to_viewangle[x];
 
     // a segment of a polygon
     v1x = v1->x;
@@ -1259,8 +1259,8 @@ float HWR_ClipViewSegment(int x, polyvertex_t * v1, polyvertex_t * v2)
 
     // the clipping line
     clipangle = clipangle + dup_viewangle;      //back to normal angle (non-relative)
-    v2dx = FIXED_TO_FLOAT( finecosine[clipangle >> ANGLETOFINESHIFT] );
-    v2dy = FIXED_TO_FLOAT( finesine[clipangle >> ANGLETOFINESHIFT] );
+    v2dx = FIXED_TO_FLOAT( cosine_ANG(clipangle) );
+    v2dy = FIXED_TO_FLOAT( sine_ANG(clipangle) );
 
     den = v2dy * v1dx - v2dx * v1dy;
     if (den == 0)
@@ -2389,7 +2389,7 @@ static void HWR_AddLine(seg_t * lineseg)
 #if 0
     {
         float fx1, fx2, fy1, fy2;
-        //BP: test with a better projection than viewangletox[R_PointToAngle(angle)]
+        //BP: test with a better projection than viewangle_to_x[R_PointToAngle(angle)]
         // do not enable this at release 4 mul and 2 div
         fx1 = lineseg->pv1->x - gr_viewx;
         fy1 = lineseg->pv1->y - gr_viewy;
@@ -2418,8 +2418,8 @@ static void HWR_AddLine(seg_t * lineseg)
     angle1 = (angle1 + ANG90) >> ANGLETOFINESHIFT;
     angle2 = (angle2 + ANG90) >> ANGLETOFINESHIFT;
 
-    x1 = gr_viewangletox[angle1];
-    x2 = gr_viewangletox[angle2];
+    x1 = gr_viewangle_to_x[angle1];
+    x2 = gr_viewangle_to_x[angle2];
 #endif
     // Does not cross a pixel?
 //    if (x1 == x2)
@@ -2607,8 +2607,8 @@ static boolean HWR_CheckBBox(fixed_t * bspcoord)
     //  (adjacent pixels are touching).
     angle1 = (angle1 + ANG90) >> ANGLETOFINESHIFT;
     angle2 = (angle2 + ANG90) >> ANGLETOFINESHIFT;
-    sx1 = gr_viewangletox[angle1];
-    sx2 = gr_viewangletox[angle2];
+    sx1 = gr_viewangle_to_x[angle1];
+    sx2 = gr_viewangle_to_x[angle2];
 
     // Does not cross a pixel.
     if (sx1 == sx2)
@@ -3008,10 +3008,10 @@ static void HWR_RenderSubsectors (void)
 // ==========================================================================
 
 #ifdef NO_MLOOK_EXTENDS_FOV
-angle_t fineanglefov = FIELDOFVIEW;
+static angle_t anglefov = FIELDOFVIEW;
 #endif
 
-//BP : exactely the same as R_InitTextureMapping
+//BP : exactly the same as R_InitTextureMapping
 // Called from r_main:R_ExecuteSetViewSize
 void HWR_InitTextureMapping(void)
 {
@@ -3027,31 +3027,32 @@ void HWR_InitTextureMapping(void)
     angle_t clipanglefov;
     static angle_t oldclipanglefov = 0;
 
-    clipanglefov = fineanglefov + 2 * abs((int) aimingangle);
-    if (clipanglefov == oldclipanglefov)
+    clipanglefov = anglefov + 2 * abs((int) aimingangle);
+    if (clipanglefov == oldclipanglefov)  // same as before
         return;
     oldclipanglefov = clipanglefov;
-    clipanglefov >>= ANGLETOFINESHIFT;
-    if (clipanglefov >= ((angle_t) ANG180 - (angle_t) ANGLE_1) >> ANGLETOFINESHIFT)
-        clipanglefov = (ANG180 - ANGLE_1) >> ANGLETOFINESHIFT;
+    int fov_angf = ANGLE_TO_FINE( clipanglefov );
+    if (fov_angf >= ANGLE_TO_FINE(ANG180 - ANGLE_1))
+        fov_angf = ANGLE_TO_FINE(ANG180 - ANGLE_1);
 
-    CONS_Printf("HW_InitTextureMapping() %d %d %d\n", clipanglefov, aimingangle >> ANGLETOFINESHIFT, fineanglefov >> ANGLETOFINESHIFT);
+    CONS_Printf("HW_InitTextureMapping() %d %d %d\n",
+		fov_angf, ANGLE_TO_FINE(aimingangle), ANGLE_TO_FINE(anglefov) );
 #else
-#define clipanglefov (FIELDOFVIEW>>ANGLETOFINESHIFT)
+#define fov_angf  ANGLE_TO_FINE(FIELDOFVIEW)
 #endif
     grviewwidth = vid.width;
     grcenterx = grviewwidth / 2;
     grcenterxfrac = grcenterx << FRACBITS;
 
-    // Use tangent table to generate viewangletox:
-    //  viewangletox will give the next greatest x
+    // Use tangent table to generate viewangle_to_x:
+    //  viewangle_to_x will give the next greatest x
     //  after the view angle.
     //
     // Calc focallength
     //  so FIELDOFVIEW angles covers SCREENWIDTH.
-    focallength = FixedDiv(grcenterxfrac, finetangent[FINEANGLES / 4 + clipanglefov / 2]);
+    focallength = FixedDiv(grcenterxfrac, finetangent[(fov_angf/2) + FINE_ANG90]);
 
-    for (i = 0; i < FINEANGLES / 2; i++)
+    for (i = 0; i < FINE_ANG180; i++)
     {
         if (finetangent[i] > FRACUNIT * 2)
             t = -1;
@@ -3067,30 +3068,30 @@ void HWR_InitTextureMapping(void)
             else if (t > grviewwidth + 1)
                 t = grviewwidth + 1;
         }
-        gr_viewangletox[i] = t;
+        gr_viewangle_to_x[i] = t;
     }
 
-    // Scan viewangletox[] to generate xtoviewangle[]:
-    //  xtoviewangle will give the smallest view angle
+    // Scan viewangle_to_x[] to generate x_to_viewangle[]:
+    //  x_to_viewangle will give the smallest view angle
     //  that maps to x.
     for (x = 0; x <= grviewwidth; x++)
     {
         i = 0;
-        while (gr_viewangletox[i] > x)
+        while (gr_viewangle_to_x[i] > x)
             i++;
-        gr_xtoviewangle[x] = (i << ANGLETOFINESHIFT) - ANG90;
+        gr_x_to_viewangle[x] = (i << ANGLETOFINESHIFT) - ANG90;
     }
 
-    // Take out the fencepost cases from viewangletox.
-    for (i = 0; i < FINEANGLES / 2; i++)
+    // Take out the fencepost cases from viewangle_to_x.
+    for (i = 0; i < FINE_ANG180; i++)
     {
-        if (gr_viewangletox[i] == -1)
-            gr_viewangletox[i] = 0;
-        else if (gr_viewangletox[i] == grviewwidth + 1)
-            gr_viewangletox[i] = grviewwidth;
+        if (gr_viewangle_to_x[i] == -1)
+            gr_viewangle_to_x[i] = 0;
+        else if (gr_viewangle_to_x[i] == grviewwidth + 1)
+            gr_viewangle_to_x[i] = grviewwidth;
     }
 
-    gr_clipangle = gr_xtoviewangle[0];
+    gr_clipangle = gr_x_to_viewangle[0];
 }
 
 // ==========================================================================
@@ -3401,7 +3402,7 @@ static void HWR_AddSprites(sector_t * sec)
 // HWR_ProjectSprite
 //  Generates a vissprite for a thing if it might be visible.
 // --------------------------------------------------------------------------
-// BP why not use xtoviewangle/viewangletox like in bsp ?....
+// BP why not use x_to_viewangle/viewangle_to_x like in bsp ?....
 static void HWR_ProjectSprite(mobj_t * thing)
 {
     gr_vissprite_t *vis;
@@ -3799,12 +3800,14 @@ void HWR_DrawSkyBackground(player_t * player)
     v[0].z = v[1].z = v[2].z = v[3].z = 4.0f;
 
 #define WRAPANGLE (ANGLE_MAX/4)
-    angle = ((dup_viewangle + gr_xtoviewangle[0]) % WRAPANGLE);
+    angle = ((dup_viewangle + gr_x_to_viewangle[0]) % WRAPANGLE);
 
     v[0].sow = v[3].sow = 1.0 + ((float) angle) / (WRAPANGLE - 1);
     v[2].sow = v[1].sow = ((float) angle) / (WRAPANGLE - 1);
 
-    f = 40 + 200 * FIXED_TO_FLOAT( finetangent[(2048 - ((int) aimingangle >> (ANGLETOFINESHIFT + 1))) & FINEMASK] );
+    f = 40 + 200 * FIXED_TO_FLOAT(
+        finetangent[(FINE_ANG90 - ((int) aimingangle >> (ANGLETOFINESHIFT + 1))) & FINEMASK] );
+        // finetangent_ANG( -(aimingangle/2) )
     if (f < 0)
         f = 0;
     if (f > 240 - 127)
@@ -3944,13 +3947,13 @@ void HWR_RenderPlayerView(int viewnumber, player_t * player)
     gr_viewcos = FIXED_TO_FLOAT( viewcos );
 
     // viewludsin( aimingangle ) instead of viewsin( viewangle )
-    gr_viewludsin = FIXED_TO_FLOAT(finecosine[aimingangle >> ANGLETOFINESHIFT]);
-    gr_viewludcos = FIXED_TO_FLOAT(-finesine[aimingangle >> ANGLETOFINESHIFT]);
+    gr_viewludsin = FIXED_TO_FLOAT(cosine_ANG(aimingangle));
+    gr_viewludcos = FIXED_TO_FLOAT(-sine_ANG(aimingangle));
 
     //04/01/2000: Hurdler: added for T&L
     //                     It should replace all other gr_viewxxx when finished
-    atransform.anglex = (float) (aimingangle >> ANGLETOFINESHIFT) * (360.0f / (float) FINEANGLES);
-    atransform.angley = (float) (viewangle >> ANGLETOFINESHIFT) * (360.0f / (float) FINEANGLES);
+    atransform.anglex = (float) ANGLE_TO_FINE(aimingangle) * (360.0f / (float) FINEANGLES);
+    atransform.angley = (float) ANGLE_TO_FINE(viewangle) * (360.0f / (float) FINEANGLES);
     atransform.x = gr_viewx;    // FIXED_TO_FLOAT( viewx )
     atransform.y = gr_viewy;    // FIXED_TO_FLOAT( viewy )
     atransform.z = gr_viewz;    // FIXED_TO_FLOAT( viewz )

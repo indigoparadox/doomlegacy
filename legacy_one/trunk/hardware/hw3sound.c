@@ -271,7 +271,7 @@ void HW3S_FillSourceParameters(mobj_t           *origin,
                                source3D_data_t  *data, 
                                channel_type_t   c_type)
 {
-    fixed_t an;
+    int angf;
     fixed_t x, y, z;
     
     if (origin && origin != players[displayplayer].mo)
@@ -291,9 +291,9 @@ void HW3S_FillSourceParameters(mobj_t           *origin,
 
         if (c_type == CT_ATTACK)
         {
-            an = origin->angle >> ANGLETOFINESHIFT;
-            x += FixedMul(16*FRACUNIT, finecosine[an]);
-            y += FixedMul(16*FRACUNIT, finesine[an]);
+            angf = ANGLE_TO_FINE(origin->angle);
+            x += FixedMul(16*FRACUNIT, finecosine[angf]);
+            y += FixedMul(16*FRACUNIT, finesine[angf]);
             z += origin->height >> 1;
         }
 
@@ -537,7 +537,7 @@ void S_StartAmbientSound(int sfx_id, int volume)
 BOOL HW3S_Init(I_Error_t FatalErrorFunction, snddev_t *snd_dev)
 {
     int                succ;
-    int                an;
+    int                angf;
     source3D_data_t    source_data; 
   
     if (HW3DS.pfnStartup(FatalErrorFunction, snd_dev))
@@ -572,13 +572,13 @@ BOOL HW3S_Init(I_Error_t FatalErrorFunction, snddev_t *snd_dev)
         // relative to listener
         ZeroMemory(&ambient_sdata, sizeof(ambient_sdata));
 
-        an = (ANG180 + ANG90/3) >> ANGLETOFINESHIFT;
+        angf = ANGLE_TO_FINE(ANG180 + ANG90/3);
 
         ambient_sdata.left.head_relative = 1;
         ambient_sdata.left.pos.x 
-            = FIXED_TO_FLOAT(FixedMul((MIN_DISTANCE * FRACUNIT), finecosine[an]));
+            = FIXED_TO_FLOAT(FixedMul((MIN_DISTANCE * FRACUNIT), finecosine[angf]));
         ambient_sdata.left.pos.y 
-            = FIXED_TO_FLOAT(FixedMul((MIN_DISTANCE * FRACUNIT), finesine[an]));
+            = FIXED_TO_FLOAT(FixedMul((MIN_DISTANCE * FRACUNIT), finesine[angf]));
         ambient_sdata.left.max_distance = MAX_DISTANCE;
         ambient_sdata.left.min_distance = MIN_DISTANCE;
         
