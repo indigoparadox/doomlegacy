@@ -273,7 +273,7 @@ static int   slotindex;  // MSLOT, used for reading and editing slot desc, 0..5
 static int   quicksave_slotid; // -1,-2, 0..5 or 0..99 (savegameid)
 
 #if defined SAVEGAMEDIR || defined SAVEGAME99
-#define     QUICKSAVE_INDEX   (SAVEGAME_NUM_MSLOT+1)
+#define     QUICKSAVE_INDEX   SAVEGAME_NUM_MSLOT
 static int     scroll_index = 0;  // scroll position
 static void    (*scroll_callback)(int amount) = NULL; // call to scroll
 static void    (*delete_callback)(int ch) = NULL; // call to delete
