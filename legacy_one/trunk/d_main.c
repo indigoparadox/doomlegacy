@@ -276,16 +276,9 @@
 #endif
 
 // Version number: major.minor.revision
-#if 1
-// alpha5
-const int  VERSION  = 144; // major*100 + minor
-const int  REVISION = 0;   // for bugfix releases, should not affect compatibility. has nothing to do with svn revisions.
-static const char VERSIONSTRING[] = "alpha5 (rev " SVN_REV ")";
-#else
 const int  VERSION  = 145; // major*100 + minor
 const int  REVISION = 0;   // for bugfix releases, should not affect compatibility. has nothing to do with svn revisions.
 static const char VERSIONSTRING[] = "beta1 (rev " SVN_REV ")";
-#endif
 char VERSION_BANNER[80];
 
 // [WDJ] change this if legacy.wad is changed
