@@ -113,8 +113,8 @@ typedef struct
 //                         DYNAMIC WAD LOADING
 // =========================================================================
 
-#define WADFILENUM(lump)       (lump>>16)   // wad file number in upper word
-#define LUMPNUM(lump)          (lump&0xffff)    // lump number for this pwad
+#define WADFILENUM(lump)       ((lump)>>16)   // wad file number in upper word
+#define LUMPNUM(lump)          ((lump)&0xffff)    // lump number for this pwad
 
 // MAX_WADPATH moved to doomdef.h, for other users
 #define MAX_WADFILES  32       // maximum of wad files used at the same time
