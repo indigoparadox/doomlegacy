@@ -1196,7 +1196,7 @@ void R_LoadTextures (void)
     for (i=0 ; i<nummappatches ; i++)
     {
         strncpy (name,name_p+i*8, 8);
-        patch_to_num[i] = W_CheckNumForName (name);
+        patch_to_num[i] = W_Check_Namespace( name, LNS_patch );
     }
     Z_Free (pnames);
 
