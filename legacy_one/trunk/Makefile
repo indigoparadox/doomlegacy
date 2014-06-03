@@ -313,7 +313,7 @@ ifeq ($(SMIF), SDL)
   endif
 
   OPTS+=-DHWRENDER -DSDL
-  OPTINC+=-I.
+  OPTINC+=-Isrc
 
   ifdef HAVE_MIXER
     OPTS+=-DHAVE_MIXER
@@ -367,7 +367,7 @@ ifeq ($(SMIF), LINUX_X11)
   ifdef X11_GGI
     # GGI
     OPTS+=-DVID_GGI
-    OPTINC:=-I.
+    OPTINC:=-Isrc
     LDFLAGS:=
     LIBS:=-lggi -lm
     # name of the exefile
@@ -377,7 +377,7 @@ ifeq ($(SMIF), LINUX_X11)
   else
     # standard X11
     OPTS+=$(POLL_POINTER)
-    OPTINC+=-I. -I/usr/X11R6/include
+    OPTINC+=-Isrc -I/usr/X11R6/include
     LDFLAGS:=-L/usr/X11R6/lib
     LIBS:=-lGL -lGLU -lXext -lX11 -lm -ldl -lXxf86vm
 
@@ -422,7 +422,7 @@ ifeq ($(SMIF), FREEBSD_X11)
   ifdef X11_GGI
     # GGI
     OPTS+=-DVID_GGI
-    OPTINC+=-I. -I/usr/local/include
+    OPTINC+=-Isrc -I/usr/local/include
     LDFLAGS:=
     LIBS:=-lggi -lm -lipx
     # name of the exefile
@@ -432,7 +432,7 @@ ifeq ($(SMIF), FREEBSD_X11)
   else
     # standard X11
     OPTS+=$(POLL_POINTER)
-    OPTINC+=-I. -I/usr/X11R6/include
+    OPTINC+=-Isrc -I/usr/X11R6/include
     LDFLAGS:=-L/usr/X11R6/lib
     LIBS:=-lXext -lX11 -lm -lXxf86vm -lipx -lkvm -pthread
     # name of the exefile
@@ -457,7 +457,7 @@ ifeq ($(SMIF), OS2_NATIVE)
   PROFILEMODE=1
 # options (separate OS2 library and OS2_NATIVE video)
   OPTS:=-D__OS2__ -DOS2_NATIVE
-  OPTINC+=-Zmt -I.. -I. -Ios2
+  OPTINC+=-Zmt -Isrc -Ios2
 
 #  DEBUGLIBS:=
   LIBS:=-g $(INTERFACE)/I_pm.def -lmmpm2 -lsocket
@@ -506,7 +506,7 @@ ifeq ($(SMIF), WIN32_NATIVE)
 
 # options (separate WIN32 library, and WIN_NATIVE video)
   OPTS:=-DWIN32 -DWIN_NATIVE
-  OPTINC+=-g -I.
+  OPTINC+=-g -Isrc
   ifdef DDINC
     OPTINC+=$(DDINC)
   endif
@@ -557,7 +557,7 @@ ifeq ($(SMIF), DJGPPDOS_NATIVE)
 
 # options
   OPTS:=-DPC_DOS
-  OPTINC+=-g -I.
+  OPTINC+=-g -Isrc
 
 #  DEBUGLIBS:=
   LIBS:=-lalleg -lsocket
@@ -734,7 +734,7 @@ ifdef EXT_SMIF
 endif
 	$(MAKE) dirs
 	@ echo "-------------------------------------------------------------------------------" \
-	&& echo "Edit $(BUILD)\make_options file with OS selection, before running make again," \
+	&& echo "Edit $(BUILD)/make_options file with OS selection, before running make again," \
 	&& echo "or use make command line options every time." \
 	&& echo "-------------------------------------------------------------------------------"
 	stop  # stop make, by error if necessary
@@ -885,57 +885,57 @@ endif
 
 vpath %.o $(O)
 
-$(O)/*.o : doomdef.h
+#$(O)/*.o : doomdef.h
 
-$(O)/r_draw.o : r_draw.c r_draw8.c r_draw16.c r_draw24.c r_draw32.c
+$(O)/r_draw.o : src/r_draw.c src/r_draw8.c src/r_draw16.c src/r_draw24.c src/r_draw32.c
 
 
 # common obj rules
 
-$(O)/%.o: %.c
+$(O)/%.o: src/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(O)/%.o: $(INTERFACE)/%.c
+$(O)/%.o: src/$(INTERFACE)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(O)/%.o: hardware/%.c
+$(O)/%.o: src/hardware/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # OS2 rules
 ifeq ($(SMIF), OS2_NATIVE)
-$(O)/%.res: os2/%.rc
-	rc.exe -i .\\os2 -r $< $@
+$(O)/%.res: src/os2/%.rc
+	rc.exe -i src/os2 -r $< $@
 endif
 
 
 # OpenGL rules
 ifeq ($(SMIF), SDL)
-$(O)/r_opengl.o: hardware/r_opengl/r_opengl.c hardware/r_opengl/r_opengl.h
+$(O)/r_opengl.o: src/hardware/r_opengl/r_opengl.c src/hardware/r_opengl/r_opengl.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 ifdef MAC
 # Mac must have Objective-C main for SDL
-$(O)/SDLmain.o : sdl/SDLmain.m
+$(O)/SDLmain.o : src/sdl/SDLmain.m
 	$(CC) -x objective-c $(CFLAGS) $(FRAMEWORK) -c $< -o $@
 endif
 
 else 
 # LINUX_X11, FREEBSD_X11 at least
-$(O)/r_opengl.o: hardware/r_opengl/r_opengl.c hardware/r_opengl/r_opengl.h
+$(O)/r_opengl.o: src/hardware/r_opengl/r_opengl.c src/hardware/r_opengl/r_opengl.h
 	$(CC) $(CFLAGS) -shared -nostartfiles -c $< -o $@
 endif
 
 
-$(O)/ogl_x11.o:  hardware/r_opengl/ogl_x11.c hardware/r_opengl/r_opengl.h
+$(O)/ogl_x11.o:  src/hardware/r_opengl/ogl_x11.c src/hardware/r_opengl/r_opengl.h
 	$(CC) $(CFLAGS) -shared -nostartfiles -I/usr/X11R6/include -c $< -o $@ 
 
 
 # assembly rules
 ifdef USEASM
-$(O)/tmap.o: tmap.nas
+$(O)/tmap.o: src/tmap.nas
 	nasm -o $@ -f $(NASMFORMAT) $<
 
-$(O)/vid_copy.o: vid_copy.s
+$(O)/vid_copy.o: src/vid_copy.s
 	$(CC) $(OPTS) $(OPTINC) $(SFLAGS) -x assembler-with-cpp -c $< -o $@
 endif
 
@@ -989,25 +989,25 @@ ifdef INTERFACE
 depend: $(DD)/$(INTERFACE).dep
 endif
 
-$(DD)/main1.dep : a*.c b*.c c*.c
-$(DD)/main3.dep : q*.c s*.c
-$(DD)/main4.dep : f*.c g*.c h*.c
-$(DD)/main5.dep : v*.c z*.c i*.c
-$(DD)/main_d.dep : d*.c
-$(DD)/main_m.dep : m*.c
-$(DD)/main_p.dep : p*.c
-$(DD)/main_r.dep : r*.c
-$(DD)/main_t.dep : t*.c
+$(DD)/main1.dep : src/a*.c src/b*.c src/c*.c
+$(DD)/main3.dep : src/q*.c src/s*.c
+$(DD)/main4.dep : src/f*.c src/g*.c src/h*.c
+$(DD)/main5.dep : src/v*.c src/z*.c src/i*.c
+$(DD)/main_d.dep : src/d*.c
+$(DD)/main_m.dep : src/m*.c
+$(DD)/main_p.dep : src/p*.c
+$(DD)/main_r.dep : src/r*.c
+$(DD)/main_t.dep : src/t*.c
 # none: e*.c j*.c k*.c l*.c n*.c o*.c
-$(DD)/hard1.dep : hardware/*.c
-$(DD)/hard2.dep : hardware/*/*.c
-# $(INTERFACE).dep : $(INTERFACE)/*.c
-$(DD)/djgppdos.dep : djgppdos/*.c
-$(DD)/linux_x.dep : linux_x/*.c linux_x/musserv/*.c linux_x/sndserv/*.c
-$(DD)/os_2.dep : os2/*.c
-$(DD)/macos.dep : macos/*.c
-$(DD)/sdl.dep : sdl/*.c
-$(DD)/win32.dep : win32/*.c
+$(DD)/hard1.dep : src/hardware/*.c
+$(DD)/hard2.dep : src/hardware/*/*.c
+# $(INTERFACE).dep : src/$(INTERFACE)/*.c
+$(DD)/djgppdos.dep : src/djgppdos/*.c
+$(DD)/linux_x.dep : src/linux_x/*.c src/linux_x/musserv/*.c src/linux_x/sndserv/*.c
+$(DD)/os_2.dep : src/os2/*.c
+$(DD)/macos.dep : src/macos/*.c
+$(DD)/sdl.dep : src/sdl/*.c
+$(DD)/win32.dep : src/win32/*.c
 
 FIXDEP=1
 
