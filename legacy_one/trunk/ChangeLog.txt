@@ -1,3 +1,0 @@
-2009-09-23  smite-meister
-  * Initial SVN import from CVS module doomlegacy
-  * Bump version number to 1.44

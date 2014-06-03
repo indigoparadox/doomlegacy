@@ -3,7 +3,7 @@
 # $Id$
 # GNU Make makefile for Doom Legacy (legacy@newdoom.com)
 #
-# Copyright (C) 1998-2013 by Doom Legacy Team.
+# Copyright (C) 1998-2014 by Doom Legacy Team.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -120,9 +120,13 @@
 # Until can find test for presence of svn, this is best that can be done.
 #SVN_ENABLE=1
 
-# Subdirectories for objects and binaries
-O=../objs
-BIN=../bin
+# Subdirectories for binaries and build intermediates
+BIN = bin
+BUILD = build
+O  = $(BUILD)/objs
+DD = $(BUILD)/dep
+WD = $(BUILD)/wad
+
 
 # Warning flags
 WFLAGS=-Wall
@@ -146,7 +150,7 @@ ifdef CC_WATCOM
 endif
 
 # Put user settings in this file, and they will be included with every invocation
-include ../make_options
+-include $(BUILD)/make_options
 
 # Customize to your debugging environment.
 ifdef DEBUG
@@ -696,41 +700,41 @@ endif
 endif
 
 
-# File ../make_options does not exist on first make
+# File $(BUILD)/make_options does not exist on first make
 # create dummy make_options file and dirs
 # create dirs without triggering a remake of make_options (a PHONY always triggers)
-../make_options :
+$(BUILD)/make_options :
 	@ echo "-------------------------------------------------------------------------------" \
 	&& echo "Initializing DoomLegacy make" \
 	&& echo "-------------------------------------------------------------------------------"
 ifdef DOSFILE
-	@echo # DoomLegacy Make options  > "../make_options"
+	@echo # DoomLegacy Make options  > "$(BUILD)/make_options"
 else
-	@echo \# DoomLegacy Make options  > "../make_options"
+	@echo "# DoomLegacy Make options"  > "$(BUILD)/make_options"
 endif
-	@echo # >> "../make_options"
-	@echo MAKE_OPTIONS_PRESENT=1  >> "../make_options"
+	@echo # >> "$(BUILD)/make_options"
+	@echo MAKE_OPTIONS_PRESENT=1  >> "$(BUILD)/make_options"
 ifdef WIN98
-	@echo WIN98=1  >> "../make_options"
+	@echo WIN98=1  >> "$(BUILD)/make_options"
 endif
 ifdef WIN32
-	@echo WIN32=1  >> "../make_options"
+	@echo WIN32=1  >> "$(BUILD)/make_options"
 endif
 ifdef WINNT
-	@echo WINNT=1  >> "../make_options"
+	@echo WINNT=1  >> "$(BUILD)/make_options"
 endif
 ifdef DOS
-	@echo DOS=1  >> "../make_options"
+	@echo DOS=1  >> "$(BUILD)/make_options"
 endif
 ifdef OS2
-	@echo OS2=1  >> "../make_options"
+	@echo OS2=1  >> "$(BUILD)/make_options"
 endif
 ifdef EXT_SMIF
-	@echo SMIF=$(EXT_SMIF)  >> "../make_options"
+	@echo SMIF=$(EXT_SMIF)  >> "$(BUILD)/make_options"
 endif
 	$(MAKE) dirs
 	@ echo "-------------------------------------------------------------------------------" \
-	&& echo "Edit ..\make_options file with OS selection, before running make again," \
+	&& echo "Edit $(BUILD)\make_options file with OS selection, before running make again," \
 	&& echo "or use make command line options every time." \
 	&& echo "-------------------------------------------------------------------------------"
 	stop  # stop make, by error if necessary
@@ -741,26 +745,26 @@ dirs :
 ifdef DOSFILE
 	@echo "Making dirs (WIN32/OS2/DOS)"
 	mkdir "$(BIN)"
-	mkdir "../objs"
-	mkdir "../dep"
+	mkdir "$(O)"
+	mkdir "$(DD)"
 else
 	@echo "Making dirs (Linux/BSD)"
 	mkdir -p $(BIN)
-	mkdir -p ../objs
-	mkdir -p ../dep
+	mkdir -p $(O)
+	mkdir -p $(DD)
 endif
 
 
 # Win32/OS2/DOS sees "/" as a switch, "\" is an escape to make
 clean:
 ifdef DOSFILE
-	@echo "Removing dep"
-	- $(RM) ..\dep\*.dep
+	@echo "Removing dependencies"
+	- $(RM) $(DD)\*.dep
 	@echo "Removing obj  $(O_WIN)"
 	- $(RM) $(O_WIN)\*.o
 else
-	@echo "Removing dep"
-	- $(RM) ../dep/*
+	@echo "Removing dependencies"
+	- $(RM) $(DD)/*
 	@echo "Removing obj  $(O)"
 	- $(RM) $(O)/*.o
 endif
@@ -776,12 +780,12 @@ endif
 
 
 # As all intermediates are kept outside of dist, there is nothing extra to do
-# except to remove ../make_options
+# except to remove $(BUILD)/make_options
 distclean: clean
 ifdef DOSFILE
-	- $(RM) ..\make_options
+	- $(RM) $(BUILD)\make_options
 else
-	- $(RM) ../make_options
+	- $(RM) $(BUILD)/make_options
 endif
 
 
@@ -801,21 +805,15 @@ ifdef WAD
 	@echo "Building a new legacy.wad using an old version $(WAD)..."
 ifdef DOSFILE
 	@echo "Untested"
-	- mkdir "..\wad"
-	cd "..\wad" ; \
-	&& "..\..\common\bin\wadtool" -x $(WAD) ; \
-	&& copy "..\trunk\resources\*" . ; \
-	&& "..\..\common\bin\wadtool" -c legacy.wad legacy.wad.inventory ; \
-	&& move legacy.wad $(BIN) ; \
-	&& $(RM) *.txt *.h *.lmp
+	@mkdir "$(WD)"
+	$(BIN)\wadtool.exe -x $(WAD) -d $(WD)
+	copy resources\* $(WD)
+	$(BIN)\wadtool.exe -c $(BIN)\legacy.wad -d $(WD) resources\legacy.wad.inventory
 else
-	- mkdir -p "../wad"
-	cd ../wad ; \
-	../../common/bin/wadtool -x $(WAD) ; \
-	cp ../trunk/resources/* . ; \
-	../../common/bin/wadtool -c legacy.wad legacy.wad.inventory ; \
-	mv legacy.wad $(BIN) ; \
-	rm *.txt *.h *.lmp
+	@mkdir -p $(WD)
+	$(BIN)/wadtool.exe -x $(WAD) -d $(WD)
+	cp resources/* $(WD)
+	$(BIN)/wadtool.exe -c $(BIN)/legacy.wad -d $(WD) resources/legacy.wad.inventory
 endif
 	@echo "Finished building legacy.wad."
 else
@@ -979,49 +977,49 @@ Makefile:
 ifndef FORCE_AUTO_DEP
 # This PHONY disables automatic dep file generation when a file changes.
 # Define FORCE_AUTO_DEP to have automatic dep file generation.
-.PHONY : ../dep/*.dep
+.PHONY : $(DD)/*.dep
 endif
 
 .PHONY : depend  main_depend  interface_depend
-depend:  ../dep/main1.dep ../dep/main3.dep ../dep/main4.dep ../dep/main5.dep \
-../dep/main_d.dep ../dep/main_m.dep ../dep/main_p.dep \
-../dep/main_r.dep ../dep/main_t.dep \
-../dep/hard1.dep ../dep/hard2.dep
+depend:  $(DD)/main1.dep $(DD)/main3.dep $(DD)/main4.dep $(DD)/main5.dep \
+$(DD)/main_d.dep $(DD)/main_m.dep $(DD)/main_p.dep \
+$(DD)/main_r.dep $(DD)/main_t.dep \
+$(DD)/hard1.dep $(DD)/hard2.dep
 ifdef INTERFACE
-depend: ../dep/$(INTERFACE).dep
+depend: $(DD)/$(INTERFACE).dep
 endif
 
-../dep/main1.dep : a*.c b*.c c*.c
-../dep/main3.dep : q*.c s*.c
-../dep/main4.dep : f*.c g*.c h*.c
-../dep/main5.dep : v*.c z*.c i*.c
-../dep/main_d.dep : d*.c
-../dep/main_m.dep : m*.c
-../dep/main_p.dep : p*.c
-../dep/main_r.dep : r*.c
-../dep/main_t.dep : t*.c
+$(DD)/main1.dep : a*.c b*.c c*.c
+$(DD)/main3.dep : q*.c s*.c
+$(DD)/main4.dep : f*.c g*.c h*.c
+$(DD)/main5.dep : v*.c z*.c i*.c
+$(DD)/main_d.dep : d*.c
+$(DD)/main_m.dep : m*.c
+$(DD)/main_p.dep : p*.c
+$(DD)/main_r.dep : r*.c
+$(DD)/main_t.dep : t*.c
 # none: e*.c j*.c k*.c l*.c n*.c o*.c
-../dep/hard1.dep : hardware/*.c
-../dep/hard2.dep : hardware/*/*.c
+$(DD)/hard1.dep : hardware/*.c
+$(DD)/hard2.dep : hardware/*/*.c
 # $(INTERFACE).dep : $(INTERFACE)/*.c
-../dep/djgppdos.dep : djgppdos/*.c
-../dep/linux_x.dep : linux_x/*.c linux_x/musserv/*.c linux_x/sndserv/*.c
-../dep/os_2.dep : os2/*.c
-../dep/macos.dep : macos/*.c
-../dep/sdl.dep : sdl/*.c
-../dep/win32.dep : win32/*.c
+$(DD)/djgppdos.dep : djgppdos/*.c
+$(DD)/linux_x.dep : linux_x/*.c linux_x/musserv/*.c linux_x/sndserv/*.c
+$(DD)/os_2.dep : os2/*.c
+$(DD)/macos.dep : macos/*.c
+$(DD)/sdl.dep : sdl/*.c
+$(DD)/win32.dep : win32/*.c
 
 FIXDEP=1
 
 %.dep :
 	@echo "Making dependencies $(@F)"
 ifdef DOSFILE
-	$(CC) $(CFLAGS) -MM $^ > ..\dep\$(@F)
+	$(CC) $(CFLAGS) -MM $^ > $(DD)\$(@F)
 else
-	$(CC) $(CFLAGS) -MM $^ > ../dep/$(@F)
+	$(CC) $(CFLAGS) -MM $^ > $(DD)/$(@F)
 ifdef FIXDEP	
-	sed -e "s!^[a-zA-Z0-9_]*\.o:!\$$\(O)/&!" ../dep/$(@F) > ../dep/sed.dep
-	mv ../dep/sed.dep ../dep/$(@F)
+	sed -e "s!^[a-zA-Z0-9_]*\.o:!\$$\(O)/&!" $(DD)/$(@F) > $(DD)/sed.dep
+	mv $(DD)/sed.dep $(DD)/$(@F)
 endif
 endif
 
@@ -1029,19 +1027,19 @@ endif
 # Stop update of include files when clean
 ifdef MAKE_OPTIONS_PRESENT
 ifdef INCLUDE_DEPS
-include ../dep/main1.dep
-include ../dep/main3.dep
-include ../dep/main4.dep
-include ../dep/main5.dep
-include ../dep/main_d.dep
-include ../dep/main_p.dep
-include ../dep/main_m.dep
-include ../dep/main_r.dep
-include ../dep/main_t.dep
-include ../dep/hard1.dep
-include ../dep/hard2.dep
+include $(DD)/main1.dep
+include $(DD)/main3.dep
+include $(DD)/main4.dep
+include $(DD)/main5.dep
+include $(DD)/main_d.dep
+include $(DD)/main_p.dep
+include $(DD)/main_m.dep
+include $(DD)/main_r.dep
+include $(DD)/main_t.dep
+include $(DD)/hard1.dep
+include $(DD)/hard2.dep
 ifdef INTERFACE
- include ../dep/$(INTERFACE).dep
+ include $(DD)/$(INTERFACE).dep
 endif
 endif
 endif
