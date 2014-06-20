@@ -2808,6 +2808,13 @@ void A_SpawnFly (mobj_t* mo)
         return; // still flying
 
     targ = mo->target;
+    if( targ == NULL )
+    {
+        // Happens if save game with cube flying.
+	// targ should be the previous braintarget.
+        int bt = ((braintargeton == 0)? numbraintargets : braintargeton) - 1;
+        targ = braintargets[bt];
+    }
 
     // First spawn teleport fog.
     fog = P_SpawnMobj (targ->x, targ->y, targ->z, MT_SPAWNFIRE);
