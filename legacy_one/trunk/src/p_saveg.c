@@ -111,6 +111,9 @@
 
 #include "p_saveg.h"
 
+#define MIN_READSAVE_VERSION  144
+#define MAX_READSAVE_VERSION  VERSION
+
 byte * save_p;
 boolean  save_game_abort = 0;
 
@@ -3195,6 +3198,7 @@ void  term_header_line( char * infodest )
 boolean P_Read_Savegame_Header( savegame_info_t * infop)
 {
     char * reason;
+    int sg_version;
 
     // Read header
     save_game_abort = 0;	// all sync reads will check this
@@ -3226,7 +3230,9 @@ boolean P_Read_Savegame_Header( savegame_info_t * infop)
 
     // binary header data
     reason = "version";
-    if( READ16( save_p ) != VERSION )  goto wrong;
+    sg_version = READ16( save_p );
+    if( sg_version < MIN_READSAVE_VERSION )  goto wrong;
+    if( sg_version > MAX_READSAVE_VERSION )  goto wrong;
     reason = "endian";
     if( READBYTE( save_p ) != sg_big_endian )  goto wrong;
     reason = "padding";
