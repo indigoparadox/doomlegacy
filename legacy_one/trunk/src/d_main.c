@@ -2104,7 +2104,7 @@ restart_command:
     }
 #endif
 #endif
-   
+
     // load wad, including the main wad file
     W_InitMultipleFiles(startupwadfiles);
     
@@ -2366,6 +2366,10 @@ restart_command:
     if (!M_CheckParm("-nocd") && ! dedicated )
       I_InitCD();
 #endif
+
+    // Affects only the game started at the command line.
+    nomonsters = M_CheckParm("-nomonsters");
+
     if (M_CheckParm("-respawn"))
       COM_BufAddText("respawnmonsters 1\n");
     if (M_CheckParm("-coopmonsters"))
