@@ -575,16 +575,15 @@ static boolean PIT_CheckThing (mobj_t* thing)
 
             if (thing->type != MT_PLAYER)
             {
-                // Explode, but do no damage.
                 // Boom - Let players missile other players. ??
 	        // [WDJ] these are monsters, not players.
-                if(cv_monbehavior.value != 2) //DarkWolf95: Altered to use CVAR
-		    goto ret_blocked;
+                if( monster_infight != INFT_infight )  // when not infighting
+		    goto ret_blocked;  // Explode, but do no damage.
             }
         }
 
         // DarkWolf95: Don't damage other monsters
-	if( cv_monbehavior.value == 1  // coop
+	if( (monster_infight == INFT_coop)  // monster coop
 	   && tm_thing->target->type != MT_PLAYER
 	   && thing->type != MT_PLAYER)
 	    goto ret_blocked;
@@ -1740,7 +1739,7 @@ boolean PTR_AimTraverse (intercept_t* in)
         return true;                    // can't shoot self
 
     // DarkWolf95: Don't damage other monsters
-    if( cv_monbehavior.value == 1
+    if( (monster_infight == INFT_coop)  // monster coop
 	&& la_shootthing->type != MT_PLAYER
 	&& th->type != MT_PLAYER)
     {
@@ -2048,7 +2047,7 @@ boolean PTR_ShootTraverse (intercept_t* in)
         return true;            // corpse or something
 
     // DarkWolf95: Don't damage other monsters
-    if( cv_monbehavior.value == 1
+    if( (monster_infight == INFT_coop)  // monster coop
 	&& la_shootthing->type != MT_PLAYER
 	&& th->type != MT_PLAYER)
     {

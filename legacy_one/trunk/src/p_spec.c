@@ -166,6 +166,7 @@ byte  monster_friction = 1;  // MBF demo flag
 byte  mbf_support = 1;  // [WDJ] MBF enable
 			// similar to prboom mbf_features, but as a flag
 byte  monster_infight = 0; //DarkWolf95:November 21, 2003: Monsters Infight!
+byte  monster_infight_deh = 0; // DEH input.
 
 // [WDJ]
 friction_model_e  friction_model = FR_legacy;

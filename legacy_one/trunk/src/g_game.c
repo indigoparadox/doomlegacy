@@ -2698,7 +2698,7 @@ void G_DoPlayDemo (char *defdemoname)
         cv_instadeath.value = 0;  // Die
 #endif
         cv_monbehavior.value = 0;  // do not notify NET
-        monster_infight = 0;
+        monster_infight = INFT_none;
     }
 
     // header[1]: byte: skill level 0..4
@@ -2824,8 +2824,8 @@ void G_DoPlayDemo (char *defdemoname)
 	    // [25] monkeys
 	    // [26..57] comp vector x32
 	    // [58] force old BSP
-	    monster_infight = demo_p[14];
-	    cv_monbehavior.value = ( monster_infight ) ? 2:0;  // do not notify NET
+	    monster_infight = demo_p[14]; // monster_infight from demo is 0/1
+	    cv_monbehavior.value = (monster_infight)? 2:0;  // do not notify NET
 	    monster_friction = demo_p[22];
 	}
         demo_p += (demoversion == 200)? 256 : 64;  // option area size
