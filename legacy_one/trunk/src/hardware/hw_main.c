@@ -319,6 +319,7 @@
 #include "../r_splats.h"
 #include "../t_func.h"
 
+
 // [WDJ] new DrawSorted for sprites and translucent/transparent walls
 #define DRAW_SORTED
 // old draw routines, likely to be removed later
@@ -1423,6 +1424,7 @@ void HWR_SplitWall(sector_t * sector, vxtx3d_t * vxtx, int texnum,
 // Anything between means the wall segment has been clipped with solidsegs,
 //  reducing wall overdraw to a minimum
 //
+// Called from HWR_ClipSolidWallSegment, HWR_ClipPassWallSegment
 static void HWR_StoreWallRange(float startfrac, float endfrac)
 {
     vxtx3d_t vxtx[4];
@@ -1666,9 +1668,10 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
         midtexnum = texturetranslation[gr_sidedef->midtexture];
         if (midtexnum)
         {
-            int blendmode = PF_Masked;
+            int  clip_disable = (gr_linedef->flags & ML_DONTDRAW);
             fixed_t opentop, openbottom, polytop, polybottom;
 
+            blendmode = PF_Masked;
             if(gr_linedef->translu_eff)  // Boom 260: make translucent
             {
 	        blendmode = HWR_TranstableToAlpha(gr_linedef->translu_eff, &Surf);
@@ -1714,7 +1717,10 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                 miptex = HWR_GetTexture(midtexnum, Surf.texflags);
 
 	        if (miptex && (miptex->mipmap.tfflags & TF_TRANSPARENT))
-		     blendmode = PF_Environment;
+	        {
+		    blendmode = PF_Environment;
+		    clip_disable = 1;  // full height, no (h-l) clipping
+		}
 	    }
 
 #if 1
@@ -1756,15 +1762,17 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                 polytop = opentop + gr_sidedef->rowoffset;
                 polybottom = polytop - textureheight[midtexnum];
             }
-            if ((gr_frontsector->ceilingheight == gr_backsector->ceilingheight) || (gr_linedef->flags & ML_DONTDRAW))
+            if ((gr_frontsector->ceilingheight == gr_backsector->ceilingheight)
+		|| clip_disable )
                 h = polytop;
             else
-                h = polytop < opentop ? polytop : opentop;
+                h = (polytop < opentop) ? polytop : opentop;
 
-            if ((gr_frontsector->floorheight == gr_backsector->floorheight) || (gr_linedef->flags & ML_DONTDRAW))
+            if ((gr_frontsector->floorheight == gr_backsector->floorheight)
+		|| clip_disable )
                 l = polybottom;
             else
-                l = polybottom > openbottom ? polybottom : openbottom;
+                l = (polybottom > openbottom) ? polybottom : openbottom;
 
             if (EN_drawtextured)
             {
@@ -2047,7 +2055,7 @@ void printsolidsegs(void)
 
 //
 //
-//
+// Called from HWR_AddLine
 static void HWR_ClipSolidWallSegment(int first, int last)
 {
     cliprange_t *next;
@@ -2193,6 +2201,7 @@ static void HWR_ClipSolidWallSegment(int first, int last)
 //
 //  handle LineDefs with upper and lower texture (windows)
 //
+// Called from HWR_AddLine
 static void HWR_ClipPassWallSegment(int first, int last)
 {
     cliprange_t *start;
@@ -2327,6 +2336,7 @@ static void HWR_ClearClipSegs(void)
 // Notes            : gr_cursectorlight is set to the current subsector -> sector -> light value
 //                  : ( it may be mixed with the wall's own flat colour in the future ... )
 // -----------------+
+// Called from HWR_Subsector.
 static void HWR_AddLine(seg_t * lineseg)
 {
     int x1, x2;
@@ -2603,6 +2613,7 @@ static boolean HWR_CheckBBox(fixed_t * bspcoord)
 // Notes            : Sets gr_cursectorlight to the light of the parent sector, to modulate wall textures
 // -----------------+
 static int doomwaterflat;       //set by R_InitFlats hack
+
 // Called from HWR_RenderBSPNode
 static void HWR_Subsector(int num)
 {
@@ -2917,6 +2928,8 @@ static boolean HWR_CheckHackBBox(fixed_t * bb)
 // BP: big hack for a test in lighning ref:1249753487AB
 int *bbox;
 
+// Recursive walk through BSP tree.
+// Called from HWR_RenderPlayerView.
 static void HWR_RenderBSPNode(int bspnum)
 {
     node_t *bsp;

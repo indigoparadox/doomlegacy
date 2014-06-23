@@ -235,7 +235,7 @@ static void HWR_FreePoly (poly_t* poly)
 // Return interception along bsp line (partline),
 // with the polygon segment
 
-// return the division in partline div fields
+// Return the division in partline div fields.
 // divfrac = how far along partline vector is crossing pt
 static boolean fracdivline (fdivline_t* partline, polyvertex_t* v1, polyvertex_t* v2)
 {
@@ -424,8 +424,10 @@ static void SplitPoly (fdivline_t* dlnp,        //splitting parametric line
     // the right sectors)
     if (ps<0)
     {
-        //I_Error ("SplitPoly: did not split polygon (%d %d)\n"
-        //         "debugpos %d",ps,pe,debugpos);
+#if 0       
+        GenPrintf( EMSG_debug,
+		   "SplitPoly: did not split polygon (%d %d)\n" ,ps,pe);
+#endif
 
         // this eventually happens with 'broken' BSP's that accept
         // linedefs where each side point the same sector, that is:
@@ -440,16 +442,26 @@ static void SplitPoly (fdivline_t* dlnp,        //splitting parametric line
 
     if (ps>=0 && pe<0)
     {
-        //I_Error ("SplitPoly: only one point for split line (%d %d)",ps,pe);
+#if 0       
+        GenPrintf( EMSG_debug,
+		   "SplitPoly: only one point for split line (%d %d)",ps,pe);
+#endif
         *frontpoly = poly;
         *backpoly  = NULL;
         return;
     }
     if (pe<=ps)
-        I_Error ("SplitPoly: invalid splitting line (%d %d)",ps,pe);
+    {
+#if 0       
+        GenPrintf( EMSG_debug, "SplitPoly: invalid splitting line (%d %d)",ps,pe);
+#endif
+        *frontpoly = poly;
+        *backpoly  = NULL;
+        return;
+    }
 
-    // number of points on each side, _not_ counting those
-    // that may lie just one the line
+    // Number of points on each side, _not_ counting those
+    // that may lie just on the line.
     nptback  = pe - ps - pe_online;
     nptfront = poly->numpts - pe_online - ps_online - nptback;
 
@@ -504,10 +516,11 @@ static void SplitPoly (fdivline_t* dlnp,        //splitting parametric line
 }
 
 
-// use each seg of the poly as a partition line, keep only the
+
+// Use each seg of the poly as a partition line, keep only the
 // part of the convex poly to the front of the seg (that is,
-// the part inside the sector), the part behind the seg, is
-// the void space and is cut out
+// the part inside the sector). The part behind the seg, is
+// the void space and is cut out.
 //
 // Called from: HWR_SubsecPoly
 static poly_t* CutOutSubsecPoly (seg_t* lseg, int segcount, poly_t* poly)
@@ -614,13 +627,18 @@ static poly_t* CutOutSubsecPoly (seg_t* lseg, int segcount, poly_t* poly)
                 HWR_FreePoly(poly);
                 poly = temppoly;
             }
-            //hmmm... maybe we should NOT accept this, but this happens
-            // only when the cut is not needed it seems (when the cut
-            // line is aligned to one of the borders of the poly, and
-            // only some times..)
             else
+	    {
+	        //hmmm... maybe we should NOT accept this, but this happens
+	        // only when the cut is not needed it seems (when the cut
+	        // line is aligned to one of the borders of the poly, and
+	        // only some times..)
                 skipcut++;
-            //    I_Error ("CutOutPoly: only one point for split line (%d %d) %d",ps,pe,debugpos);
+#if 0	   
+	        GenPrintf( EMSG_error,
+		      "CutOutPoly: only one point for split line (%d %d)",ps,pe);
+#endif
+	    }
         }
     }
     return poly;
@@ -628,7 +646,7 @@ static poly_t* CutOutSubsecPoly (seg_t* lseg, int segcount, poly_t* poly)
 
 
 // At this point, the poly should be convex and the exact
-// layout of the subsector, it is not always the case,
+// layout of the subsector.  It is not always the case,
 // so continue to cut off the poly into smaller parts with
 // each seg of the subsector.
 //
@@ -652,8 +670,8 @@ static void HWR_SubsecPoly (int ssindex, poly_t* poly)
     }
 }
 
-// the bsp divline does not have enough precision 
-// search for the segs source of this divline
+// The bsp divline does not have enough precision.
+// Search for the segs source of this divline.
 void SearchDivline(node_t* bsp, fdivline_t *divline)
 {
 #if 0
@@ -671,6 +689,8 @@ static int ls_count = 0;
 static int ls_percent = 0;
 
 // poly : the convex polygon that encloses all child subsectors
+// Recursive
+// Called from HWR_CreatePlanePolygons at load time.
 static void WalkBSPNode (int bspnum, poly_t* poly, unsigned short* leafnode, fixed_t *bbox)
 {
     node_t*     bsp;
@@ -1059,8 +1079,8 @@ void AdjustSegs(void)
 }
 
 
-// call this routine after the BSP of a Doom wad file is loaded,
-// and it will generate all the convex polys for the hardware renderer
+// Call this routine after the BSP of a Doom wad file is loaded,
+// and it will generate all the convex polys for the hardware renderer.
 // Called from P_SetupLevel
 void HWR_CreatePlanePolygons (int bspnum)
 {
@@ -1117,7 +1137,7 @@ void HWR_CreatePlanePolygons (int bspnum)
     rootpv->x = FIXED_TO_FLOAT( rootbbox[BOXRIGHT ] );
     rootpv->y = FIXED_TO_FLOAT( rootbbox[BOXBOTTOM] );  //ll
 
-    WalkBSPNode (bspnum, rootp, NULL,rootbbox);
+    WalkBSPNode (bspnum, rootp, NULL, rootbbox);
 
     i=SolveTProblem ();
     //CONS_Printf("%d point div a polygon line\n",i);
