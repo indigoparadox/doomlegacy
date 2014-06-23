@@ -1095,7 +1095,7 @@ void W_Profile (void)
         else
         {
             block = (memblock_t *) ( (byte *)ptr - sizeof(memblock_t));
-            if (block->tag < PU_PURGELEVEL)
+            if (block->memtag < PU_PURGELEVEL)
                 ch = 'S';
             else
                 ch = 'P';
