@@ -991,6 +991,7 @@ void CONS_Printf_va (const char *fmt, va_list ap)
     {
         // Errors to terminal, and before graphics
         I_OutputMsg ("%s",txt);
+        fflush(NULL);
     }
 
 #if 0
