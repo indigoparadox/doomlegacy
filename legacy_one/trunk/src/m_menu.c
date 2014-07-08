@@ -637,7 +637,8 @@ void M_DrawGenericMenu(void)
 		           if( use_font1 )
 		           {
 			       char * sp = cv->string;
-			       M_DrawTextBox(x+8,y+12,MAXSTRINGLENGTH,1);
+			       // Setup is centered, but this needs left justify.
+			       M_DrawTextBox(-BASEVIDWIDTH/2,y+12,BASEVIDWIDTH/7,1);
 			       while( *sp && w > BASEVIDWIDTH - 8 )
 			       {
 				   w -= fip->xinc;
@@ -3813,7 +3814,10 @@ void M_DrawTextBox (int x, int y, int width, int lines)
     return;
 
   grey_bar:
-    V_DrawFill(x,y, width*fip->xinc, lines*fip->yinc, ci_grey );
+    // Message box centers string, using 8 bit width assumption.
+    // For now, correct the position.
+//    V_DrawFill(x,y, width*fip->xinc, lines*fip->yinc, ci_grey );
+    V_DrawFill(x/8, y, width*fip->xinc, lines*fip->yinc, ci_grey );
     goto done;
 }
 
