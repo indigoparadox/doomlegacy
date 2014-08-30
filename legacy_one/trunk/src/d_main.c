@@ -2105,8 +2105,13 @@ restart_command:
 #endif
 #endif
 
-    // load wad, including the main wad file
-    W_InitMultipleFiles(startupwadfiles);
+    // Load wad, including the main wad file.
+    if( W_InitMultipleFiles(startupwadfiles) == 0 )
+    {
+       // Some wad failed to load.
+       if( !M_CheckParm( "-noloadfail" ) )
+	 fatal_error = true;
+    }
     
     if ( !M_CheckParm("-nocheckwadversion") )
         D_CheckWadVersion();
@@ -2208,7 +2213,7 @@ restart_command:
         goto restart_command;
     }
 #endif
-
+    
     //--------------------------------------------------------- 
     // After this line are committed to the game and video port selected.
     // Use I_Error.
@@ -2222,6 +2227,11 @@ restart_command:
         "plutonia.wad, heretic.wad, or heretic1.wad from any shareware\n"
 	"or commercial version of Doom or Heretic, or some other IWAD!\n"
 	"Cannot use legacy.wad, nor a PWAD, for an IWAD.\n" );
+    }
+
+    if( fatal_error )
+    {
+        I_Error ( "Shutdown due to fatal error.\n" );
     }
 
     //---------------------------------------------------- READY SCREEN
