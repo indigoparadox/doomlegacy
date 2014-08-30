@@ -4066,3 +4066,8 @@ This can be overridden by the -noloadfail switch.
 patchfile = w100_18_version1451.patch
 - commit revision 1132
 Update version numbers for 1.45.1.
+
+*** W100_docs3
+patchfile = w100_19_docs3.patch
+- commit revision 1133
+Update docs for latest patches and version 1.45.1.
