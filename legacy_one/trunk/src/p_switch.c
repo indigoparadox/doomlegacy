@@ -54,9 +54,12 @@
 #include "p_local.h"
 #include "s_sound.h"
 #include "r_main.h"
-#include "w_wad.h" //SoM: 3/22/2000
+#include "w_wad.h"
+  // SoM: 3/22/2000
 #include "z_zone.h"
 #include "t_script.h"
+#include "m_swap.h"
+  // LE_SWAP16
 
 //
 // CHANGE THE TEXTURE OF A WALL SWITCH TO ITS OPPOSITE

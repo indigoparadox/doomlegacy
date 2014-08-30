@@ -4046,3 +4046,10 @@ as in the launcher menu, and the quit message from it.
 There are several assumptions made by menu functions and conflicting
 requirements, so have to correct the positioning in the few places where
 the font1 and the grey box have unique code.
+
+*** W100_swap
+patchfile = w100_16_swap.patch
+- commit revision 1130
+For big endian machines, was missing in two places the reference to
+include m_swap.h.
+Fixes bug 617 as suggested by Alexey Dokuchaev.
