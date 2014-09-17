@@ -1592,6 +1592,7 @@ cleanup_ret:
 iwad_failure:
     I_SoftError("IWAD %s not found\n", pathiwad);
 fatal_err:
+    D_AddFile(legacywad);  // To prevent additional errors.
     fatal_error = 1;
     goto cleanup_ret;
 }
