@@ -42,6 +42,9 @@
 //
 //-----------------------------------------------------------------------------
 
+#ifndef WIN_NATIVE
+# error r_minigl is WIN_NATIVE only
+#endif
 
 // tell r_opengl.cpp to compile for MiniGL Drivers
 #define MINI_GL_COMPATIBILITY   

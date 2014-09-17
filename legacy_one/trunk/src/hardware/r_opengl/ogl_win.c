@@ -80,6 +80,10 @@
 
 #ifdef __WIN32__
 
+#ifndef WIN_NATIVE
+# error ogl_win is WIN_NATIVE only
+#endif
+
 #include <windows.h>
 #include <time.h>
 #include "r_opengl.h"

@@ -43,6 +43,10 @@
 
 //#define DEBUG_SDS3D_TO_FILE
 
+#ifndef WIN_NATIVE
+# error s_ds3d is WIN_NATIVE only
+#endif
+
 #define INITGUID
 #include <windows.h>
 #include <cguid.h>
@@ -54,13 +58,8 @@
 
 #include "../../m_fixed.h"
 
-#ifdef WIN_NATIVE
 #include "../../win32/win_main.h"
   // hWndMain
-#else
-// Making dependencies hits this.
-// #error s_ds3d is WIN_NATIVE only
-#endif
 
 // Internal sound stack
 typedef struct stack_snd_s

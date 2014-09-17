@@ -70,6 +70,10 @@
 //output debugging msgs to r_glide.log
 //#define DEBUG_GLIDE_TO_FILE
 
+#ifndef WIN_NATIVE
+# error r_glide is WIN_NATIVE only
+#endif
+
 #include <windows.h>
 #include <glide.h>
 #include <math.h>

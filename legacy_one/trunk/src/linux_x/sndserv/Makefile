@@ -36,7 +36,7 @@
 #ESD demon
 # HAVE_ESD=1
 
-CC=gcc
+#CC=gcc
 CFLAGS=-O2 -march=pentium -Wall -DNORMALUNIX -DLINUX
 LDFLAGS=
 LIBS=-lm
@@ -86,8 +86,9 @@ endif
 
 #############################################
 
-O:=../../$(BASEOBJ)/$(SUBDIR)
-BIN:=../../$(BASEBIN)
+# Export BASEOBJ, BASEBIN from parent Make.
+O:=$(BASEOBJ)/$(SUBDIR)
+BIN:=$(BASEBIN)
 
 
 HWOUTOBJ	:=	linux.o

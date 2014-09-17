@@ -48,6 +48,9 @@
 //
 //-----------------------------------------------------------------------------
 
+#ifndef WIN_NATIVE
+# error r_d3d is WIN_NATIVE only
+#endif
 
 #include <windows.h>
 #pragma warning (disable : 4244)

@@ -11,7 +11,7 @@
 # MUS_OS=SCOUW7
 
 
-CC	= gcc
+#CC	= gcc
 CFLAGS	= -I. -Wall -O2 -march=pentium
 LDFLAGS	=
 #LDFLAGS	= -static
@@ -57,8 +57,9 @@ endif
 # Nothing below this line should be changed #
 #############################################
 
-O:=../../$(BASEOBJ)/$(SUBDIR)
-BIN:=../../$(BASEBIN)
+# Export BASEOBJ, BASEBIN from parent Make.
+O:=$(BASEOBJ)/$(SUBDIR)
+BIN:=$(BASEBIN)
 
 MUSOBJLIST:=musserver.o readwad.o playmus.o sequencer.o $(OPTOBJ)
 MUSOBJ:=$(addprefix $(O)/, $(MUSOBJLIST))

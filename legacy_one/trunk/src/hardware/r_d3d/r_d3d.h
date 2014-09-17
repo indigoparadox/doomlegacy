@@ -32,6 +32,10 @@
 #ifndef R_D3D_H
 #define R_D3D_H
 
+#ifndef WIN_NATIVE
+# error r_d3d is WIN_NATIVE only
+#endif
+
 #include "doomtype.h"
   // RGBA_t
 #include "gl2d3d.h"
