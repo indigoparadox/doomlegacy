@@ -203,7 +203,7 @@ void T_RunScript(int scriptnum, mobj_t * t_trigger )
 }
 
 
-
+#if 0
 // T_RunThingScript:
 // identical to T_RunScript but runs a script
 // from the thingscript list rather than the
@@ -224,6 +224,7 @@ void T_RunThingScript(int n, mobj_t * t_trigger )
   
   run_script(script);*/
 }
+#endif
 
 
 

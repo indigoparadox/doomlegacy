@@ -4084,7 +4084,7 @@ Fixed names and comments of draw to reflect true nature of the centering.
 Changed selection names to V_CENTERMENU and V_CENTERHORZ.
 Fixed HU Pic allocation, support functions, and added accurate comments.
 
-*** W101_clang
+*** W101_clang_compile
 patchfile = w101_2_clang.patch
 - commit revision 1135
 Fix Makefile for compiling using the clang compiler.
@@ -4116,4 +4116,17 @@ directories, using canned scripts.  The current directory is compiled.
 Running the Makefile from outside the src puts the src directory name in the
 dependency files, which is inconvienent when compiling sequential updates
 kept in separate src directories.
+
+*** W101_command_buffer
+patchfile = w101_3_command.patch
+- commit revision 1136
+Fixes bug #619, where Chexquest Newmaps command keys that run scripts for
+the book are not getting executed.
+There was a latent bug in the VS_Print function that is used to append text
+to the command buffer.  With each append it accumulated an extra character
+of length in the buffer.  This affected the positioning of the next append.
+After two appends, it would be leaving some of the previous garbage in the
+buffer between the commands, which could be 0.  This made it erratic when
+there were more than two commands in one tic.
+This fix removes the term 0 from the command string before appending.
 
