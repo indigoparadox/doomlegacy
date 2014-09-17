@@ -1002,6 +1002,7 @@ void G_DoLoadLevel (boolean resetplayer)
     memset(gamekeydown, 0, sizeof(gamekeydown));
     memset(gamekeytapped, 0, sizeof(gamekeytapped));
     mousex = mousey = mouse2x = mouse2y = 0;
+    I_StartupMouse( true );  // play mode
 
     // [WDJ] In case demo is from other than player1 (from prboom, killough)
     ST_Start();

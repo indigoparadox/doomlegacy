@@ -1088,13 +1088,18 @@ void doUngrabMouse(void)
 }
 
 
-void I_StartupMouse(void)
+// Called on video mode change, usemouse change, mousemotion change,
+// and game paused.
+//   play_mode : enable mouse containment during play
+void I_StartupMouse( boolean play_mode )
 {
-    if(vidmode_active || (haveVoodoo && !M_CheckParm("-winvoodoo"))) {
+    if( ( vidmode_active && play_mode )
+       || (haveVoodoo && !M_CheckParm("-winvoodoo"))) {
         doGrabMouse();
     }
-    else {
-        if(cv_usemouse.value) {
+    else
+    {
+        if( cv_usemouse.value && play_mode ) {
             doGrabMouse();
         }
         else {
@@ -1987,7 +1992,7 @@ int VID_SetMode( modenum_t modenum )
     if(!createWindow( set_fullscreen, modenum ))
         return FAIL_create;
 
-    I_StartupMouse();
+    I_StartupMouse( false );
 
     vid.modenum = modenum;
 

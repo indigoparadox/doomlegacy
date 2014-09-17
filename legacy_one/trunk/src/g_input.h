@@ -169,5 +169,7 @@ void  G_Controldefault(void);
 void  G_SaveKeySetting(FILE *f);
 void  G_CheckDoubleUsage(int keynum);
 
+// Called for cv_usemouse, cv_grabinput, cv_mouse_motion
+void  CV_mouse_OnChange( void );
 
 #endif

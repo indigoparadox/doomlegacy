@@ -628,7 +628,7 @@ int VID_SetMode(modenum_t modenum)
     vid.fullscreen = set_fullscreen;
     vid.widthbytes = vid.width * vid.bytepp;
 
-    I_StartupMouse();
+    I_StartupMouse( false );
 
 #if defined(MAC_SDL) && defined( DEBUG_MAC )
     SDL_Delay( 2 * 1000 );  // [WDJ] DEBUG: to see if errors are due to startup or activity
@@ -669,7 +669,7 @@ void I_StartupGraphics( void )
        goto abort_error;
 
     SDL_ShowCursor(SDL_DISABLE);
-    I_StartupMouse();
+    I_StartupMouse( false );
 //    doUngrabMouse();
 
     graphics_started = 1;
@@ -904,7 +904,7 @@ found_modes:
             goto abort_error;
         }
     }
-    I_StartupMouse();
+    I_StartupMouse( false );
 
     graphics_started = 1;
 

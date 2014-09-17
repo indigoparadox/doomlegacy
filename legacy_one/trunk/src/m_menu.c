@@ -4643,6 +4643,8 @@ void M_StartControlPanel (void)
     }
 
     CON_ToggleOff ();   // dirty hack : move away console
+
+    I_StartupMouse( false );  // menu mode
 }
 
 //
@@ -4660,6 +4662,7 @@ void M_ClearMenus (boolean callexitmenufunc)
     }
 
     menuactive = 0;
+    I_StartupMouse( !paused );  // play mode if not paused
 }
 
 

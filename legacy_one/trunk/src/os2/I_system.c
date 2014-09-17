@@ -83,7 +83,10 @@ boolean mouse_enabled = false;
 boolean joystick_detected;
 
 void I_InitJoystick (void) {}
-void I_StartupMouse(void) {}
+// Called on video mode change, usemouse change, mousemotion change,
+// and game paused.
+//   play_mode : enable mouse containment during play
+void I_StartupMouse( boolean play_mode ) {};
 void I_StartupMouse2(void) {}
 void I_StartupTimer(void) {}
 void I_StartupKeyboard (void) {}

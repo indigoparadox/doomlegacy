@@ -265,16 +265,19 @@ void I_StartupMouse2 (void)
 {
 }
 
-void I_StartupMouse(void)
+// Called on video mode change, usemouse change, mousemotion change,
+// and game paused.
+//   play_mode : enable mouse containment during play
+void I_StartupMouse( boolean play_mode )
 {	
-	if (ISpConfigured)
+    if (ISpConfigured)
 		return;
 	
-	CONS_Printf("I_StartupMouse...\n");
+    CONS_Printf("I_StartupMouse...\n");
 		
-	ISpConfigured = true;
+    ISpConfigured = true;
 	
-	CONS_Printf("\tI_StartupMouse done\n");
+    CONS_Printf("\tI_StartupMouse done\n");
 }
 
 void I_ShutdownInput(void)

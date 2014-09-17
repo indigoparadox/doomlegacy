@@ -597,9 +597,10 @@ void I_StartupMouse2()
 }
 #endif
 
-//  Initialise the mouse. Doesnt need to be shutdown.
+//  Initialise the mouse. Does not need to be shutdown.
 //
-void I_StartupMouse (void)
+//   play_mode : enable mouse containment during play
+void I_StartupMouse ( boolean play_mode )
 {
     __dpmi_regs r;
 
@@ -610,6 +611,8 @@ void I_StartupMouse (void)
         I_ShutdownMouse2();
         return;
     }
+
+    // The mouse cannot escape the window, so play_mode has no effect.
 
     //detect mouse presence
     r.x.ax=0;
@@ -689,7 +692,7 @@ void I_GetEvent (void)
         int xmickeys,ymickeys,buttons;
         static int lastbuttons=0;
 
-        r.x.ax=0x0b;           // ask the mouvement not the position
+        r.x.ax=0x0b;           // ask for the movement, not the position
         __dpmi_int(0x33,&r);
         xmickeys=(signed short)r.x.cx;
         ymickeys=(signed short)r.x.dx;

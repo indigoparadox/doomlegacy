@@ -309,7 +309,7 @@ void I_StartupGraphics( void )
     modenum_t  initialmode = {MODE_window,0};  // the initial mode
     // pre-init by V_Init_VideoControl
 
-    I_StartupMouse();
+    I_StartupMouse( false );
 
     VID_PrepareModeList();
 

@@ -126,7 +126,10 @@ uint64_t I_GetDiskFreeSpace(void);
 char *I_GetUserName(void);
 int  I_mkdir(const char *dirname, int unixright);
 
-void I_StartupMouse(void);
+// Called on video mode change, usemouse change, mousemotion change,
+// and game paused.
+//   play_mode : enable mouse containment during play
+void I_StartupMouse( boolean play_mode );
 void I_StartupMouse2(void);
 void doUngrabMouse(void);
 

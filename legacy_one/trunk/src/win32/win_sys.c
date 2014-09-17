@@ -771,7 +771,10 @@ static void create_device_intf ( REFGUID         pguid,
 //  Initialise the mouse.
 //
 static void I_ShutdownMouse (void);
-void I_StartupMouse (void)
+// Called on video mode change, usemouse change, mousemotion change,
+// and game paused.
+//   play_mode : enable mouse containment during play
+void I_StartupMouse( boolean play_mode )
 {
     // this gets called when cv_usemouse is initted
     // for the win32 version, we want to startup the mouse later

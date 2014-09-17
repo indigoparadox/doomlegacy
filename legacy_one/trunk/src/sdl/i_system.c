@@ -331,6 +331,7 @@ void I_GetEvent(void)
 		      lastmouse_warp = 0;
 		      break;  // skip PostEvent
 		  }
+
 		  // Warp the pointer back to the middle of the window
 		  //  or we cannot move any further when it reaches a border.
 		  if ((inputEvent.motion.x < mouse_x_min) ||
@@ -415,30 +416,39 @@ void doUngrabMouse(void)
 }
 
 // Called on video mode change, usemouse change, mousemotion change,
-// and game paused
-void I_StartupMouse(void)
+// and game paused.
+//   play_mode : enable mouse containment during play
+void I_StartupMouse( boolean play_mode )
 {
     vid_center_x = vid.width >> 1;
     vid_center_y = vid.height >> 1;
-    // Guard band at window border: 20%=51, 25%=64, 30%=76
-    mouse_x_min = (vid.width * 64) >> 8;
-    mouse_x_max = vid.width - mouse_x_min;
-    mouse_y_min = (vid.height * 64) >> 8;
-    mouse_y_max = vid.height - mouse_y_min;
     lastmousex = vid_center_x;
     lastmousey = vid_center_y;
-    if(cv_usemouse.value && ! paused)
+    if( cv_usemouse.value && play_mode )
     {
+        // Enable mouse containment during play.
         SDL_Event inputEvent;
         // warp to center
         SDL_WarpMouse(vid_center_x, vid_center_y);
         // remove the mouse event by reading the queue
         SDL_PollEvent(&inputEvent);
 
+        // Guard band at window border: 20%=51, 25%=64, 30%=76
+        mouse_x_min = (vid.width * 64) >> 8;
+        mouse_x_max = vid.width - mouse_x_min;
+        mouse_y_min = (vid.height * 64) >> 8;
+        mouse_y_max = vid.height - mouse_y_min;
+
         doGrabMouse();
     }
     else
     {
+        // Disable Guard band.
+        mouse_x_min = -1;
+        mouse_x_max = 20000;
+        mouse_y_min = -1;
+        mouse_y_max = 20000;
+
         doUngrabMouse();
     }
     return;
