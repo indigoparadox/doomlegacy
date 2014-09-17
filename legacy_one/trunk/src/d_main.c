@@ -827,7 +827,7 @@ void D_PageDrawer(char *lumpname)
     byte *dest;  // within screen buffer
 
     // [WDJ] Draw patch for all bpp, bytepp, and padded lines.
-    V_SetupDraw( 0 | V_SCALESTART | V_SCALEPATCH | V_CENTERSCREEN );
+    V_SetupDraw( 0 | V_SCALESTART | V_SCALEPATCH | V_CENTERHORZ );
 
     // software mode which uses generally lower resolutions doesn't look
     // good when the pic is scaled, so it fills space around with a pattern,

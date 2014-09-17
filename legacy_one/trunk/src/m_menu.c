@@ -3742,7 +3742,7 @@ void M_DrawTextBox (int x, int y, int width, int lines)
     int      step,boff;
 
     // Draw to screen0, scaled
-    V_SetupDraw( 0 | V_SCALESTART | V_SCALEPATCH | V_CENTERSCREEN );
+    V_SetupDraw( 0 | V_SCALESTART | V_SCALEPATCH | V_CENTERHORZ );
 	      
     if( gamemode == heretic )
     {
@@ -4609,7 +4609,7 @@ void M_Drawer (void)
         return;
 
     // center the scaled graphics for the menu,
-    V_SetupDraw( 0 | V_SCALEPATCH | V_SCALESTART | V_CENTER0 );
+    V_SetupDraw( 0 | V_SCALEPATCH | V_SCALESTART | V_CENTERMENU );
 
     // now that's more readable with a faded background (yeah like Quake...)
     if ( reg_colormaps )  // not before colormaps loaded
@@ -4619,7 +4619,7 @@ void M_Drawer (void)
     if (currentMenu->drawroutine)
         currentMenu->drawroutine();      // call current menu Draw routine
 
-    V_SetupDraw( 0 | V_SCALEPATCH | V_SCALESTART | V_CENTERSCREEN );  // restore
+    V_SetupDraw( 0 | V_SCALEPATCH | V_SCALESTART | V_CENTERHORZ );  // restore
 
 }
 

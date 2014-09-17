@@ -1948,7 +1948,7 @@ static void WI_loadData(void)
         memset(screens[1], 0, vid.screen_size);
   
         // Draw background on screen1
-        V_SetupDraw( 1 | V_SCALESTART | V_SCALEPATCH | V_CENTERSCREEN ); // screen 1
+        V_SetupDraw( 1 | V_SCALESTART | V_SCALEPATCH | V_CENTERHORZ ); // screen 1
         V_DrawScaledPatch(0, 0, W_CachePatchName(bgname, PU_CACHE));
         V_SetupDraw( V_drawinfo.prev_screenflags );  // restore
     }
@@ -2167,7 +2167,7 @@ static void WI_unloadData(void)
 void WI_Drawer (void)
 {
     // all WI is draw screen0
-    V_SetupDraw( 0 | V_SCALESTART | V_SCALEPATCH | V_CENTERSCREEN );
+    V_SetupDraw( 0 | V_SCALESTART | V_SCALEPATCH | V_CENTERHORZ );
 
     switch (state)
     {

@@ -416,6 +416,7 @@ void SCR_Recalc (void)
     }
 
     //added:18-02-98: calculate centering offset for the scaled menu
+    // Adds a left margin for CENTERMENU
     vid.centerofs = (((vid.height%BASEVIDHEIGHT)/2) * vid.width) +
                     (vid.width%BASEVIDWIDTH)/2;
 

@@ -854,7 +854,7 @@ void F_Draw_interpic_Name( char * name )
 void F_Drawer (void)
 {
     // Draw to screen0, scaled
-    V_SetupDraw( 0 | V_SCALESTART | V_SCALEPATCH | V_CENTERSCREEN );
+    V_SetupDraw( 0 | V_SCALESTART | V_SCALEPATCH | V_CENTERHORZ );
 
     if (finalestage == 2)
     {
