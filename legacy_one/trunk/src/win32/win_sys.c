@@ -581,7 +581,7 @@ void I_Error (const char *error, ...)
     if (demorecording)
         G_CheckDemoStatus();
         
-    D_QuitNetGame ();
+    D_Quit_NetGame();
         
     I_Sleep( 3000 );  // to see some messages
     // shutdown everything that was started !
@@ -620,7 +620,7 @@ void I_Quit (void)
     //added:03-01-98: maybe it needs that the ticcount continues,
     // or something else that will be finished by ShutdownSystem()
     // so I do it before.
-    D_QuitNetGame ();
+    D_Quit_NetGame();
         
     // shutdown everything that was started !
     I_ShutdownSystem();

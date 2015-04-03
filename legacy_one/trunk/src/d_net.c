@@ -1025,10 +1025,11 @@ void Internal_FreeNodenum(int nodenum)
 }
 
 //
-// D_CheckNetGame
+// D_Startup_NetGame
 // Works out player numbers among the net participants
 //
-boolean D_CheckNetGame (void)
+// Returns true when a network connection is made.
+boolean D_Startup_NetGame(void)
 {
     boolean ret=false;
 

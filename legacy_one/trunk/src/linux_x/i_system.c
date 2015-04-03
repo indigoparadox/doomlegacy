@@ -664,7 +664,7 @@ void I_Quit (void)
   //        but sometimes we forget and use 'F10'.. so save here too.
     if (demorecording)
         G_CheckDemoStatus();
-    D_QuitNetGame ();
+    D_Quit_NetGame();
     I_ShutdownMusic();
     I_ShutdownSound();
 #ifdef CDMUS
@@ -736,7 +736,7 @@ void I_Error (const char *error, ...)
     if (demorecording)
         G_CheckDemoStatus();
 
-    D_QuitNetGame ();
+    D_Quit_NetGame();
     I_ShutdownMusic();
     I_ShutdownSound();
     I_Sleep( 3000 );  // to see some messages

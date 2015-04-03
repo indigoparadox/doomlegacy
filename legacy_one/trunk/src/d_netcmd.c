@@ -1028,7 +1028,7 @@ void Got_NetXCmd_SaveGamecmd(char **cp, int playernum)
 
 void Command_ExitGame_f(void)
 {
-    D_QuitNetGame();
+    D_Quit_NetGame();
     CL_Reset();
     D_StartTitle();
 }

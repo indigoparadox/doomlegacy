@@ -185,7 +185,7 @@ void I_Quit (void)
     if (demorecording)
         G_CheckDemoStatus();
 
-    D_QuitNetGame ();
+    D_Quit_NetGame();
 
     // shutdown everything that was started !
     I_ShutdownSystem();
@@ -374,7 +374,7 @@ void I_Error (char *error, ...)
     if (demorecording)
         G_CheckDemoStatus();
 
-    D_QuitNetGame ();
+    D_Quit_NetGame();
 
     I_Sleep( 3000 );  // to see some messages
     // shutdown everything that was started !

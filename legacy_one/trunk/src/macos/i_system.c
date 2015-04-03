@@ -263,7 +263,7 @@ void I_Quit (void)
     if (demorecording)
         G_CheckDemoStatus();
     W_Shutdown();
-    D_QuitNetGame ();
+    D_Quit_NetGame();
     I_ShutdownMusic();
     I_ShutdownSound();
 #ifdef CDMUS
@@ -316,7 +316,7 @@ void I_Error (char *error, ...)
     if (demorecording)
         G_CheckDemoStatus();
     W_Shutdown();
-    D_QuitNetGame ();
+    D_Quit_NetGame();
     I_ShutdownMusic();
     I_ShutdownSound();
     I_Sleep( 3000 );  // to see some messages

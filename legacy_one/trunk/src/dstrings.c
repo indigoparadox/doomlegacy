@@ -563,7 +563,7 @@ char *text[NUMTEXT] = {
     "R_Init: Init DOOM refresh daemon - ", // R_INIT
     "\nP_Init: Init Playloop state.\n", // P_INIT
     "I_Init: Setting up machine state.\n", // I_INIT
-    "D_CheckNetGame: Checking network game status.\n", // D_CHECKNET
+    "D_Startup_NetGame: Checking network game status.\n", // D_CHECKNET
     "S_Init: Setting up sound.\n", // S_SETSOUND
     "HU_Init: Setting up heads up display.\n", // HU_INIT
     "ST_Init: Init status bar.\n", // ST_INIT

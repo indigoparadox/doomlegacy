@@ -299,8 +299,8 @@ boolean Game_Playing( void );
 
 
 // Broadcasts special packets to other players
-// to notify of game exit
-void    D_QuitNetGame (void);
+// to notify of game exit.
+void    D_Quit_NetGame (void);
 
 // How many ticks to run.
 void    TryRunTics (tic_t realtic);

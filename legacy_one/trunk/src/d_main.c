@@ -2329,7 +2329,7 @@ restart_command:
     // [WDJ] This triggers the first draw to the screen,
     // debug it here instead of waiting for CONS_Printf in BloodTime_OnChange
     CONS_Printf( "Register...\n" );
-    D_Register_ClientCommands(); //Hurdler: be sure that this is called before D_CheckNetGame
+    D_Register_ClientCommands(); //Hurdler: be sure that this is called before D_Setup_NetGame
 
     D_Register_MiscCommands();	//[WDJ] more than just DeathMatch
     ST_AddCommands();
@@ -2448,7 +2448,7 @@ restart_command:
 
     // init all NETWORK
     CONS_Printf(text[D_CHECKNET_NUM]);
-    if (D_CheckNetGame())
+    if (D_Startup_NetGame())
         autostart = true;
 
     // check for a driver that wants intermission stats
@@ -2526,7 +2526,8 @@ restart_command:
             pagename = "TITLEPIC";
             gamestate = GS_DEDICATEDSERVER;
         }
-        else if (autostart || netgame || M_CheckParm("+connect") || M_CheckParm("-connect"))
+        else if (autostart || netgame
+		 || M_CheckParm("+connect") || M_CheckParm("-connect"))
         {
             //added:27-02-98: reset the current version number
             G_Downgrade(VERSION);
