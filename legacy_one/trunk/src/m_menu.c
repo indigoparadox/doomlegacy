@@ -4626,11 +4626,13 @@ boolean M_Responder (event_t* ev)
         goto ret_true;
 
       default:
-#if 0       
+#if 1
 	// any other key: if a letter, try to find the corresponding menuitem
 	if (!isalpha(ch))
-	  goto ret_true;
+#else
+        if( ch == 0 )
 #endif
+	  goto ret_true;
 
         // from itemOn to bottom
         for (i = itemOn+1;i < currentMenu->numitems;i++)
