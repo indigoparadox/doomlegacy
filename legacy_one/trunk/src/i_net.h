@@ -75,7 +75,7 @@ typedef struct
 
     // Info common to all nodes.
     // Console is always node 0.
-    uint16_t            numnodes;
+    uint16_t            num_player_netnodes;
     // Flag: 1 = no duplication, 2-5 = dup for slow nets.
     uint16_t            unused_ticdup;
     // Number of extratics in each packet.
