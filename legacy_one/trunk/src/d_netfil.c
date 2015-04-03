@@ -296,6 +296,8 @@ boolean Send_RequestFile(void)
     return HSendPacket(servernode,true,0,p-netbuffer->u.textcmd);
 }
 
+// By Server.
+// PT_REQUESTFILE
 // Received request filepak. Put the files to the send queue.
 void Got_RequestFilePak(int nnode)
 {
@@ -667,7 +669,7 @@ void Got_Filetxpak(void)
 
     if(++stat_cnt==4)
     {
-        Net_SendAcks(servernode);
+        Net_Send_AcksPacket(servernode);
         stat_cnt=0;
     }
 
@@ -698,7 +700,7 @@ void CloseNetFile(void)
         }
     }
 
-    // remove FILEFRAGMENT from acknledge list
+    // Remove FILEFRAGMENT from ackpaks.
     Net_AbortPacketType(PT_FILEFRAGMENT);
 }
 
