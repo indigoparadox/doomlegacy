@@ -438,6 +438,7 @@ void D_Register_ClientCommands(void)
 //                            CLIENT STUFF
 // =========================================================================
 
+// By Client.
 //  name, color, or skin has changed
 //
 void Send_NameColor(void)

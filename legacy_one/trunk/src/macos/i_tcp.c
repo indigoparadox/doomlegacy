@@ -456,6 +456,7 @@ boolean I_InitTcpNetwork( void )
 {
     char     serverhostname[255];
     boolean  ret=0;
+    int      num;
     
     // initilize the driver
     I_InitTcpDriver(); 
@@ -474,14 +475,19 @@ boolean I_InitTcpNetwork( void )
         // FIXME: for dedicated server, numnodes needs to be set to 0 upon start
 	// [WDJ] Network is little-endian
         if( M_IsNextParm() )
-            doomcom->numnodes=LE_SWAP16(atoi(M_GetNextParm()));
+        {
+            num = atoi(M_GetNextParm());
+	    if( num < 0 )
+	       num = 0;
+	    if( num > MAXNETNODES)
+               num = MAXNETNODES;
+	}
+        else if (dedicated)
+            num=0;
         else
-            doomcom->numnodes=LE_SWAP16(1);
+            num=1;
 
-        if (LE_SWAP16(doomcom->numnodes)<1)
-            doomcom->numnodes=LE_SWAP16(1);
-        if (LE_SWAP16(doomcom->numnodes)>MAXNETNODES)
-            doomcom->numnodes=LE_SWAP16(MAXNETNODES);
+        doomcom->numnodes = LE_SWAP16(num);
 
         // server
         servernode = 0;
