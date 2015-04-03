@@ -67,7 +67,7 @@
 #include "st_stuff.h"
 #include "hu_stuff.h"
 #include "z_zone.h"
-#include "d_main.h"
+//#include "d_main.h"
 
 
 

@@ -38,8 +38,8 @@
 
 extern int sock_port;
 
+void I_Init_TCP_Network(void);
 
-boolean I_Init_TCP_Network(void);
 //Hurdler: temporary addition for master server
 void I_Init_TCP_Driver(void);
 void I_Shutdown_TCP_Driver(void);

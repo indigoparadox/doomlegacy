@@ -255,6 +255,8 @@ extern consvar_t cv_server1;
 extern consvar_t cv_server2;
 extern consvar_t cv_server3;
 extern consvar_t cv_downloadfiles;
+extern consvar_t cv_wait_players;
+extern consvar_t cv_wait_timeout;
 
 //#define PACKET_BASE_SIZE     ((int)&( ((netbuffer_t *)0)->u))
 #define PACKET_BASE_SIZE     offsetof(netbuffer_t, u)

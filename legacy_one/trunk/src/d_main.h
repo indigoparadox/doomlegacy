@@ -55,9 +55,6 @@ extern consvar_t cv_home, cv_doomwaddir, cv_iwad;
 
 extern byte  init_sequence;  // = 0 on first init
 
-// for dedicated server
-extern boolean dedicated;
-
 // Background color fades for FS
 extern unsigned long fadecolor;
 extern int fadealpha;

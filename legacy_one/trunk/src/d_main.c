@@ -314,7 +314,7 @@ boolean singletics = false;     // timedemo
 boolean nomusic;
 boolean nosoundfx; // had clash with WATCOM i86.h nosound() function
 
-boolean dedicated = false;
+boolean dedicated = false;  // dedicated server
 
 byte    verbose = 0;
 
@@ -2242,6 +2242,7 @@ restart_command:
     dedicated = M_CheckParm("-dedicated") != 0;
     if( dedicated )
     {
+        nodrawers = true;
         I_ShutdownGraphics();
         EMSG_flags = EMSG_log;
     }

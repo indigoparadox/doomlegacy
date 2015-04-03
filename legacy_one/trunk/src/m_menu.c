@@ -525,8 +525,8 @@ void M_OpenGLOption(int choice);
 menu_t MainDef,SingleMultiDef,TwoPlayerDef,MultiPlayerDef,SetupMultiPlayerDef,
        EpiDef,NewDef,OptionsDef,VidModeDef,ControlDef,SoundDef,
        ReadDef2,ReadDef1,SaveDef,LoadDef,ControlDef2,GameOptionDef,
-       AdvOptionsDef,EffectsOptionsDef,
-       NetOptionDef,VideoOptionsDef,MouseOptionsDef,ServerOptionsDef;
+       AdvOptionsDef,EffectsOptionsDef,VideoOptionsDef,MouseOptionsDef,
+       NetOptionDef,ConnectOptionDef,ServerOptionsDef,MPOptionDef;
 
 
 //===========================================================================
@@ -1023,13 +1023,26 @@ consvar_t cv_monsters = {"monsters" ,"0",CV_HIDEN,CV_YesNo};
 consvar_t cv_nextmap  = {"nextmap"  ,"1",CV_HIDEN,map_cons_t};
 extern CV_PossibleValue_t deathmatch_cons_t[];
 consvar_t cv_newdeathmatch  = {"newdeathmatch"  ,"3",CV_HIDEN,deathmatch_cons_t};
+CV_PossibleValue_t wait_players_cons_t[]=   {{0,"MIN"}, {32,"MAX"}, {0,NULL}};
+consvar_t cv_wait_players = {"wait_players" ,"1",CV_HIDEN,wait_players_cons_t};
+CV_PossibleValue_t wait_timeout_cons_t[]=   {{0,"MIN"}, {120,"MAX"}, {0,NULL}};
+consvar_t cv_wait_timeout = {"wait_timeout" ,"0",CV_HIDEN,wait_timeout_cons_t};
 
 static boolean StartSplitScreenGame = false;
 
 void M_StartServer( int choice )
 {
+    M_ClearMenus(true);
+
     netgame = true;
     multiplayer = true;
+    if( choice == 9 )
+    {
+        dedicated = true;
+        nodrawers = true;
+        I_ShutdownGraphics();
+    }
+
     COM_BufAddText(va("stopdemo;splitscreen %d;deathmatch %d;map \"%s\" -monsters %d skill %d\n", 
                       StartSplitScreenGame, cv_newdeathmatch.value, 
                       cv_nextmap.string, cv_monsters.value, cv_skill.value));
@@ -1040,7 +1053,6 @@ void M_StartServer( int choice )
     {
         COM_BufAddText ( va("%s \"%s\"", cv_skin2.name, skins[cv_skin2.value].name));
     }
-    M_ClearMenus(true);
 }
 
 menuitem_t  ServerMenu[] =
@@ -1049,12 +1061,15 @@ menuitem_t  ServerMenu[] =
     {IT_STRING | IT_CVAR,0,"Skill"           ,&cv_skill            ,0},
     {IT_STRING | IT_CVAR,0,"Monsters"        ,&cv_monsters         ,0},
     {IT_STRING | IT_CVAR,0,"Deathmatch Type" ,&cv_newdeathmatch    ,0},
-                         
+    {IT_STRING | IT_CVAR,0,"Wait Players"    ,&cv_wait_players     ,0},
+    {IT_STRING | IT_CVAR,0,"Wait Timeout"    ,&cv_wait_timeout     ,0},
     {IT_STRING | IT_CVAR,0,"Internet Server" ,&cv_internetserver   ,0},
     {IT_STRING | IT_CVAR
      | IT_CV_STRING     ,0,"Server Name"     ,&cv_servername       ,0},
     {IT_WHITESTRING | IT_CALL | IT_YOFFSET,
-	                 0,"Start"           ,M_StartServer        ,120}
+	                 0,"Start"           ,M_StartServer        ,110}, // 8
+    {IT_WHITESTRING | IT_CALL | IT_YOFFSET,
+	                 0,"Dedicated"       ,M_StartServer        ,120}  // 9
 };
 
 menu_t  ServerDef =
@@ -1099,10 +1114,12 @@ enum {
 // DoomLegacy graphics from legacy.wad: M_STSERV, M_CONNEC, M_2PLAYR, M_SETUPA, M_SETUPB
 menuitem_t MultiPlayerMenu[] =
 {
+    // BIG font menu. BIG font does not work, lump is missing.
+    // Cannot put all three options here.
     {IT_CALL | IT_PATCH,"M_2PLAYR","TWO PLAYER GAME",M_TwoPlayerMenu ,'n'},
     {IT_CALL | IT_PATCH,"M_SETUPA","SETUP PLAYER 1" ,M_SetupMultiPlayer ,'s'},
     {IT_CALL | IT_PATCH,"M_SETUPB","SETUP PLAYER 2" ,M_SetupMultiPlayer2 ,'t'},
-    {IT_CALL | IT_PATCH,"M_OPTION","OPTIONS"        ,M_NetOption ,'o'},
+    {IT_SUBMENU | IT_PATCH,"M_OPTION","OPTIONS"     ,&MPOptionDef ,'o'},
     {IT_CALL | IT_PATCH,"M_CONNEC","CONNECT SERVER" ,M_ConnectMenu ,'c'},
     {IT_CALL | IT_PATCH,"M_STSERV","CREATE SERVER"  ,M_StartServerMenu ,'a'},
     {IT_CALL | IT_PATCH,"M_ENDGAM","END GAME"       ,M_EndGame ,'e'}
@@ -1680,6 +1697,7 @@ menuitem_t OptionsMenu[]=
 
     {IT_SUBMENU | IT_WHITESTRING | IT_YOFFSET, 0,"Effects Options...",&EffectsOptionsDef ,60},
     {IT_CALL    | IT_WHITESTRING,0,"Game Options..."  ,M_GameOption       ,0},
+    {IT_SUBMENU | IT_WHITESTRING,0,"Connect Options...",&ConnectOptionDef ,0},
     {IT_CALL    | IT_WHITESTRING,0,"Network Options...",M_NetOption     ,0},
     {IT_SUBMENU | IT_WHITESTRING,0,"Server Options...",&ServerOptionsDef  ,0},
     {IT_SUBMENU | IT_WHITESTRING,0,"Sound Volume..."  ,&SoundDef          ,0},
@@ -1894,7 +1912,7 @@ void M_GameOption(int choice)
 {
     if(!server)
     {
-        M_SimpleMessage("You are not the server\nYou can't change the options\n");
+        M_SimpleMessage("You are not the server\nYou cannot change game options\n");
         return;
     }
     M_SetupNextMenu(&GameOptionDef);
@@ -1936,7 +1954,7 @@ void M_AdvOption(int choice)
 {
     if(!server)
     {
-        M_SimpleMessage("You are not the server\nYou can't change the options\n");
+        M_SimpleMessage("You are not the server\nYou cannot change adv options\n");
         return;
     }
     M_SetupNextMenu(&AdvOptionDef);
@@ -1970,7 +1988,7 @@ menu_t  NetOptionDef =
     "M_OPTTTL",
     "Net Options",
     sizeof(NetOptionsMenu)/sizeof(menuitem_t),
-    &MultiPlayerDef,
+    &MPOptionDef,
     NetOptionsMenu,
     M_DrawGenericMenu,
     60,40,
@@ -1981,12 +1999,44 @@ void M_NetOption(int choice)
 {
     if(!server)
     {
-        M_SimpleMessage("You are not the server\nYou can't change the options\n");
+        M_SimpleMessage("You are not the server\nYou cannot change network options\n");
         return;
     }
     NetOptionDef.prevMenu = currentMenu;
     M_SetupNextMenu(&NetOptionDef);
 }
+
+//===========================================================================
+//                    Connect OPTIONS MENU
+//===========================================================================
+
+
+menuitem_t ConnectOptionMenu[]=
+{
+    {IT_STRING | IT_CVAR,0,"Download files", &cv_downloadfiles , 0},
+    {IT_STRING | IT_CVAR | IT_CV_STRING,0,"Server 1", &cv_server1 , 0},
+    {IT_STRING | IT_CVAR | IT_CV_STRING,0,"Server 2", &cv_server2 , 0},
+    {IT_STRING | IT_CVAR | IT_CV_STRING,0,"Server 3", &cv_server3 , 0},
+};
+
+menu_t  ConnectOptionDef =
+{
+    "M_OPTTTL",
+    "Connect Options",
+    sizeof(ConnectOptionMenu)/sizeof(menuitem_t),
+    &MPOptionDef,
+    ConnectOptionMenu,
+    M_DrawGenericMenu,
+    60,40,
+    0
+};
+
+void M_ConnectOption(int choice)
+{
+    ConnectOptionDef.prevMenu = currentMenu;
+    M_SetupNextMenu(&ConnectOptionDef);
+}
+
 
 //===========================================================================
 //                        Server OPTIONS MENU
@@ -2005,12 +2055,38 @@ menu_t  ServerOptionsDef =
     "M_OPTTTL",
     "Server Options",
     sizeof(ServerOptionsMenu)/sizeof(menuitem_t),
-    &OptionsDef,
+    &MPOptionDef,
     ServerOptionsMenu,
     M_DrawGenericMenu,
     28,40,
     0
 };
+
+//===========================================================================
+//                    MultiPlayer OPTIONS MENU
+//===========================================================================
+
+
+menuitem_t MPOptionMenu[]=
+{
+    {IT_SUBMENU | IT_WHITESTRING,0,"Connect Options...",&ConnectOptionDef ,0},
+    {IT_CALL    | IT_WHITESTRING,0,"Network Options...",M_NetOption       ,0},
+    {IT_SUBMENU | IT_WHITESTRING,0,"Server Options...",&ServerOptionsDef  ,0},
+    {IT_CALL    | IT_WHITESTRING,0,"Game Options..."  ,M_GameOption       ,0},
+};
+
+menu_t  MPOptionDef =
+{
+    "M_OPTTTL",
+    "MultiPlayer Options",
+    sizeof(MPOptionMenu)/sizeof(menuitem_t),
+    &MultiPlayerDef,
+    MPOptionMenu,
+    M_DrawGenericMenu,
+    60,40,
+    0
+};
+
 
 //===========================================================================
 //                          Read This! MENU 1
@@ -3440,7 +3516,7 @@ void M_SaveGame (int choice)
 {
     if(demorecording)
     {
-        M_SimpleMessage("You can't save while recording demos\n\nPress a key\n");
+        M_SimpleMessage("You cannot save while recording demos\n\nPress a key\n");
         return;
     }
 
@@ -4684,6 +4760,7 @@ void M_SetupNextMenu(menu_t *menudef)
         if( !currentMenu->quitroutine())
             return; // we can't quit this menu (also used to set parameter from the menu)
     }
+    // Menu history
     currentMenu = menudef;
     itemOn = currentMenu->lastOn;
 
@@ -4722,11 +4799,9 @@ void  M_Setup_prevMenu( void )
 //
 // M_Ticker
 //
+// Call once per tic.
 void M_Ticker (void)
 {
-    if(dedicated)
-	return;
-    
     if (--skullAnimCounter <= 0)
     {
         whichSkull ^= 1;
@@ -4762,6 +4837,8 @@ void M_Init (void)
     CV_RegisterVar(&cv_monsters);
     CV_RegisterVar(&cv_nextmap );
     CV_RegisterVar(&cv_newdeathmatch);
+    CV_RegisterVar(&cv_wait_players);
+    CV_RegisterVar(&cv_wait_timeout);
     CV_RegisterVar(&cv_serversearch);
     CV_RegisterVar(&cv_downloadfiles);
     CV_RegisterVar(&cv_menusound);
@@ -5089,7 +5166,7 @@ void M_OpenGLOption(int choice)
     if (rendermode != render_soft )
         M_SetupNextMenu(&OpenGLOptionDef);
     else
-        M_SimpleMessage("You are in software mode\nYou can't change the options\n");
+        M_SimpleMessage("You are in software mode\nYou cannot change GL options\n");
 }
 
 

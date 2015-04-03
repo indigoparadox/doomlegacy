@@ -1131,7 +1131,7 @@ handled:
 //
 void G_Ticker (void)
 {
-    ULONG       i;
+    int         i;
     int         buf;
     ticcmd_t*   cmd;
 

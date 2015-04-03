@@ -534,13 +534,11 @@ void CON_ToggleOff (void)
 
 //  Console ticker : handles console move in/out, cursor blinking
 //
+// Call once per tic.
 void CON_Ticker (void)
 {
     int    i;
 
-    if(dedicated)
-	return;
-    
     // cursor blinking
     con_tick++;
     con_tick &= 7;
