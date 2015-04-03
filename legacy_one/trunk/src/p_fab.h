@@ -49,7 +49,7 @@ void Translucency_OnChange(void);  // update translucent info
 void P_SetTranslucencies (void);
 
 // [WDJ] All misc init
-// add commands for deathmatch rules and style (like more blood) :)
-void D_RegisterMiscCommands (void);
+// Add commands for deathmatch rules and style (like more blood) :)
+void D_Register_MiscCommands (void);
 
 #endif

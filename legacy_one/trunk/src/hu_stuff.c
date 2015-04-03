@@ -147,7 +147,7 @@ static void HU_DrawTip();
 void Command_Say_f (void);
 void Command_Sayto_f (void);
 void Command_Sayteam_f (void);
-void Got_Saycmd(char **p,int playernum);
+void Got_NetXCmd_Saycmd(char **p, int playernum);
 
 // Initialise Heads up
 // once at game startup.
@@ -165,7 +165,7 @@ void HU_Init(void)
     COM_AddCommand ("say"    , Command_Say_f);
     COM_AddCommand ("sayto"  , Command_Sayto_f);
     COM_AddCommand ("sayteam", Command_Sayteam_f);
-    RegisterNetXCmd(XD_SAY,Got_Saycmd);
+    Register_NetXCmd(XD_SAY, Got_NetXCmd_Saycmd);
 
     // cache the heads-up font for entire game execution
     use_font1 = 0;
@@ -260,7 +260,7 @@ void Command_Say_f (void)
         strcat(&buf[1]," ");
         strcat(&buf[1],COM_Argv(i));
     }
-    SendNetXCmd(XD_SAY,buf,strlen(buf+1)+2);
+    Send_NetXCmd(XD_SAY, buf, strlen(buf+1)+2);
        // +2 because 1 for buf[0] and the other for null terminated string
 }
 
@@ -284,7 +284,7 @@ void Command_Sayto_f (void)
         strcat(&buf[1]," ");
         strcat(&buf[1],COM_Argv(i));
     }
-    SendNetXCmd(XD_SAY,buf,strlen(buf+1)+2);
+    Send_NetXCmd(XD_SAY, buf, strlen(buf+1)+2);
 }
 
 void Command_Sayteam_f (void)
@@ -305,7 +305,7 @@ void Command_Sayteam_f (void)
         strcat(&buf[1]," ");
         strcat(&buf[1],COM_Argv(i));
     }
-    SendNetXCmd(XD_SAY,buf,strlen(buf+1)+2);
+    Send_NetXCmd(XD_SAY, buf, strlen(buf+1)+2);
         // +2 because 1 for buf[0] and the other for null terminated string
 }
 
@@ -313,7 +313,7 @@ void Command_Sayteam_f (void)
 //                        0      all
 //                       -1->-32 say team -numplayer of the sender
 
-void Got_Saycmd(char **p,int playernum)
+void Got_NetXCmd_Saycmd(char **p, int playernum)
 {
     char to;
     to=*(*p)++;

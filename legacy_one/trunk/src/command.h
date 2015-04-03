@@ -179,7 +179,7 @@ void  CV_SaveVariables (FILE *f);
 // load/save gamesate (load and save option and for network join in game)
 void CV_SaveNetVars( char **p );
 void CV_LoadNetVars( char **p );
-void Got_NetVar(char **p,int playernum);
+void Got_NetXCmd_NetVar(char **p, int playernum);
 
 consvar_t *CV_FindVar (char *name);
 

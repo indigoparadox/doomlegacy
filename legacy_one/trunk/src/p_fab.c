@@ -315,7 +315,7 @@ void BloodTime_OnChange (void)
 
 
 // [WDJ] All misc init
-void D_RegisterMiscCommands (void)
+void D_Register_MiscCommands (void)
 {
     // add commands for deathmatch rules and style (like more blood) :)
     CV_RegisterVar (&cv_solidcorpse);                 //p_enemy

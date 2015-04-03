@@ -169,7 +169,7 @@ void Command_AddBot(void)
 	}
 
 
-	SendNetXCmd(XD_ADDBOT,&buf,1);
+	Send_NetXCmd(XD_ADDBOT, &buf, 1);
 }
 
 void B_AddCommands()

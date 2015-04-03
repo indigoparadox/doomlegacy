@@ -101,8 +101,8 @@ typedef enum
 extern consvar_t  play_mode;
 #endif
 
-// register sound vars and commands at game startup
-void S_RegisterSoundStuff (void);
+// Register sound vars and commands at game startup.
+void S_Register_SoundStuff (void);
 
 
 //

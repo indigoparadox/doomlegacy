@@ -532,7 +532,7 @@ SOCKET UDP_Socket (void)
     }
 
     // ip + udp
-    packetheaderlength=20 + 8; // for stats
+    net_packetheader_length = 20 + 8; // for stats
 
     clientaddress[0].ip.sin_family      = AF_INET;
     clientaddress[0].ip.sin_port        = htons(sock_port);
@@ -598,7 +598,7 @@ SOCKET IPX_Socket (void)
     }
 
     // ipx header
-    packetheaderlength=30; // for stats
+    net_packetheader_length=30; // for stats
 
     // setup broadcast adress to BROADCASTADDR entry
 #ifdef LINUX

@@ -637,19 +637,20 @@ void D_Display(void)
         {
             char s[50];
             Net_GetNetStat();
-            sprintf(s, "get %d b/s", getbps);
+            sprintf(s, "recv %d b/s", netstat_recv_bps);
             V_DrawString(BASEVIDWIDTH - V_StringWidth(s), BASEVIDHEIGHT - ST_HEIGHT - 40, V_WHITEMAP, s);
-            sprintf(s, "send %d b/s", sendbps);
+            sprintf(s, "send %d b/s", netstat_send_bps);
             V_DrawString(BASEVIDWIDTH - V_StringWidth(s), BASEVIDHEIGHT - ST_HEIGHT - 30, V_WHITEMAP, s);
-            sprintf(s, "GameMiss %.2f%%", gamelostpercent);
+            sprintf(s, "GameMiss %.2f%%", netstat_gamelost_percent);
             V_DrawString(BASEVIDWIDTH - V_StringWidth(s), BASEVIDHEIGHT - ST_HEIGHT - 20, V_WHITEMAP, s);
-            sprintf(s, "SysMiss %.2f%%", lostpercent);
+            sprintf(s, "SysMiss %.2f%%", netstat_lost_percent);
             V_DrawString(BASEVIDWIDTH - V_StringWidth(s), BASEVIDHEIGHT - ST_HEIGHT - 10, V_WHITEMAP, s);
         }
 
 #ifdef TILTVIEW
         //added:12-02-98: tilt view when marine dies... just for fun
-        if (gamestate == GS_LEVEL && cv_tiltview.value && displayplayer_ptr->playerstate == PST_DEAD)
+        if (gamestate == GS_LEVEL && cv_tiltview.value
+	    && displayplayer_ptr->playerstate == PST_DEAD)
         {
             V_DrawTiltView(screens[0]);
         }
@@ -984,7 +985,7 @@ void D_DoAdvanceDemo(void)
 // Called by Command_ExitGame_f
 // Called by CL_ConnectToServer when cannot join server, or aborting
 // Called by Got_KickCmd, when player kicked from game
-// Called by GetPackets, upon server shutdown, timeout, or refused (NACK)
+// Called by Net_Packet_Handler, upon server shutdown, timeout, or refused (NACK)
 // Called by G_InitNew, when aborting game because cannot downgrade
 // Called by M_Responder and M_Setup_prevMenu, when exiting menu and not playing game
 void D_StartTitle(void)
@@ -2328,15 +2329,15 @@ restart_command:
     // [WDJ] This triggers the first draw to the screen,
     // debug it here instead of waiting for CONS_Printf in BloodTime_OnChange
     CONS_Printf( "Register...\n" );
-    D_RegisterClientCommands(); //Hurdler: be sure that this is called before D_CheckNetGame
+    D_Register_ClientCommands(); //Hurdler: be sure that this is called before D_CheckNetGame
 
-    D_RegisterMiscCommands();	//[WDJ] more than just DeathMatch
+    D_Register_MiscCommands();	//[WDJ] more than just DeathMatch
     ST_AddCommands();
     T_AddCommands();
     B_AddCommands();    //added by AC for acbot
     P_Info_AddCommands();
-    R_RegisterEngineStuff();
-    S_RegisterSoundStuff();
+    R_Register_EngineStuff();
+    S_Register_SoundStuff();
     CV_RegisterVar(&cv_screenslink);
 
     CONS_Printf(text[W_INIT_NUM]);

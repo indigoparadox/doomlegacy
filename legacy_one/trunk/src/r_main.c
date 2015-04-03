@@ -1214,7 +1214,7 @@ void R_SetupFrame (player_t* player)
         aimingangle=player->aiming;
         viewangle = viewmobj->angle+viewangleoffset;
 
-        if(!demoplayback && player->playerstate!=PST_DEAD && !drone)
+        if(!demoplayback && player->playerstate!=PST_DEAD && !cl_drone)
         {
             if(player== consoleplayer_ptr)
             {
@@ -1533,7 +1533,7 @@ void R_RenderPlayerView (player_t* player)
 //                    ENGINE COMMANDS & VARS
 // =========================================================================
 
-void R_RegisterEngineStuff (void)
+void R_Register_EngineStuff (void)
 {
     //26-07-98
     CV_RegisterVar (&cv_gravity);

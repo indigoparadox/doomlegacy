@@ -241,7 +241,7 @@ int S_AdjustSoundParams(mobj_t * listener, mobj_t * source, int *vol, int *sep, 
 
 static void S_StopChannel(int cnum);
 
-void S_RegisterSoundStuff(void)
+void S_Register_SoundStuff(void)
 {
     if (dedicated)
         return;

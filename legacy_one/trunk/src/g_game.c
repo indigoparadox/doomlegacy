@@ -598,16 +598,20 @@ boolean G_InventoryResponder(player_t *ply, int gc[num_gamecontrols][2], event_t
       {
 	  if( keyup_armed )  // [WDJ] Only if the keydown was not intercepted by some other responder
 	  {
-                if( ply->st_inventoryTics )
-                    ply->st_inventoryTics = 0;
-                else if( ply->inventory[ply->inv_ptr].count>0 )
-		{
-                        if( ply == consoleplayer_ptr )
-                            SendNetXCmd(XD_USEARTEFACT, &ply->inventory[ply->inv_ptr].type, 1);
-                        else
-                            SendNetXCmd2(XD_USEARTEFACT, &ply->inventory[ply->inv_ptr].type, 1);
-		}
-	        return true;	// [WDJ] same as other event intercepts
+	      if( ply->st_inventoryTics )
+	         ply->st_inventoryTics = 0;
+	      else if( ply->inventory[ply->inv_ptr].count>0 )
+	      {
+		  if( ply == consoleplayer_ptr )
+		  {
+		      Send_NetXCmd( XD_USEARTIFACT,
+				   &ply->inventory[ply->inv_ptr].type, 1);
+		  } else {
+		      Send_NetXCmd2( XD_USEARTIFACT,
+				    &ply->inventory[ply->inv_ptr].type, 1);
+		  }
+	      }
+	      return true;	// [WDJ] same as other event intercepts
 	  }
       }
       else if( ev->data1 == gc[gc_invprev][0] || ev->data1 == gc[gc_invprev][1] ||

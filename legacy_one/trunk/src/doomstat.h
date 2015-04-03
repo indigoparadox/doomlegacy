@@ -344,6 +344,7 @@ extern  int             bodyqueslot;
 //extern  ticcmd_t        localcmds[BACKUPTICS];
 
 extern  ticcmd_t        netcmds[BACKUPTICS][MAXPLAYERS];
-extern int   ticruned, ticmiss;
+// Collect stats for netstat.
+extern int   stat_tic_moved, stat_tic_miss;
 
 #endif //__D_STATE__

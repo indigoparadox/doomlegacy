@@ -312,7 +312,7 @@ void setup_net_savegame( void )
 
 // flags for items in the menu
 typedef enum {
-// menu handle (what we do when key is pressed
+// menu handle (what we do when key is pressed)
   IT_TYPE =  0x000E,   // field
 // TYPE field values
   IT_SPACE =      0,   // no handling
@@ -744,7 +744,7 @@ void M_Choose_to_quit_Response(int ch)
 	for( i=100; i>0; i-- )
         {
 	    COM_BufExecute(); // subject to com_wait and other delays
-	    if( ! Playing()  ) break;
+	    if( ! Game_Playing()  ) break;
 	    // It must be not-playing before re-invoking the menu.
 	}
 #endif       
@@ -754,10 +754,10 @@ void M_Choose_to_quit_Response(int ch)
 }
 
 // [WDJ] Ask user to quit, if they already have a game in-progess.
-// return 1 if already playing, and rejects quitting.
+// Return 1 if already playing, and rejects quitting.
 boolean  M_already_playing( boolean check_netgame )
 {
-    if( Playing() )
+    if( Game_Playing() )
     {
         M_StartMessage(ALLREADYPLAYING, M_Choose_to_quit_Response, MM_YESNO);
         return 1;
@@ -883,7 +883,8 @@ void M_Connect( int choice )
     // do not call menuexitfunc 
     M_ClearMenus(false);
 
-    COM_BufAddText(va("connect node %d\n", serverlist[choice-FIRSTSERVERLINE].node));
+    COM_BufAddText(va("connect node %d\n",
+		      serverlist[choice-FIRSTSERVERLINE].server_node));
     setup_net_savegame();
 }
 
@@ -928,7 +929,7 @@ void M_DrawConnectMenu( void )
     for( i=0;i<serverlistcount && i+FIRSTSERVERLINE<sizeof(ConnectMenu)/sizeof(menuitem_t);i++ )
     {
         V_DrawString (currentMenu->x,currentMenu->y+(FIRSTSERVERLINE+i)*STRINGHEIGHT,0,serverlist[i].info.servername);
-        p = va("%d", serverlist[i].info.time);
+        p = va("%d", serverlist[i].info.trip_time);  // ping time
         V_DrawString (currentMenu->x+200-V_StringWidth(p),currentMenu->y+(FIRSTSERVERLINE+i)*STRINGHEIGHT,0,p);
         p = va("%d/%d  %d", serverlist[i].info.numberofplayer,
                             serverlist[i].info.maxplayer,
@@ -4513,7 +4514,7 @@ boolean M_Responder (event_t* ev)
 	    M_ClearMenus (true);
 	    S_StartSound(NULL, menu_sfx_esc);
 	    // Exit menus, return to demo or game
-	    if( ! Playing() )
+	    if( ! Game_Playing() )
 	        D_StartTitle();  // restart title screen and demo
 	}
         goto ret_true;
@@ -4705,7 +4706,7 @@ void  M_Setup_prevMenu( void )
     {
        M_ClearMenus (true);
        // Exit menus, return to demo or game
-       if( ! Playing() )
+       if( ! Game_Playing() )
 	   D_StartTitle();  // restart title screen and demo
     }
 }

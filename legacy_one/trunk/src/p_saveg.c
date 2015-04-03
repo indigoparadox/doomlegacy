@@ -3054,7 +3054,7 @@ void P_LoadNetVars( void )
     {
         if( count>=mincnt )
 	    if( save_p[0] == SYNC_sync && save_p[1] == SYNC_misc ) break;
-        Got_NetVar((char**)&save_p, 0);
+        Got_NetXCmd_NetVar((char**)&save_p, 0);
     }
 //    GenPrintf(EMSG_info, "Loaded %d netvars\n", count ); // [WDJ] DEBUG
 }

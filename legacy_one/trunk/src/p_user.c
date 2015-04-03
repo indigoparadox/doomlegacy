@@ -327,9 +327,10 @@ void P_MovePlayer (player_t* player)
     pmo->angle += (cmd->angleturn<<16);
 #endif
 
-    ticruned++;
+    stat_tic_moved++;
     if( (cmd->angleturn & TICCMD_RECEIVED) == 0)
-        ticmiss++;
+        stat_tic_miss++;
+
     // Do not let the player control movement
     //  if not onground.
     onground = (pmo->z <= pmo->floorz) 
