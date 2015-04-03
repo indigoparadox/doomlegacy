@@ -428,7 +428,23 @@ byte    (*SOCK_hashaddr) (mysockaddr_t *a);
 #endif
 
 
-// Return net node.  When nodes full, return 255.
+// Set address and port of utility net nodes.
+//  saddr: IP address in network byte order
+//  port: port number in host byte order
+void UDP_Bind_Node( int nnode, unsigned int saddr, unsigned int port )
+{
+    clientaddress[nnode].ip.sin_family      = AF_INET;
+    clientaddress[nnode].ip.sin_port        = htons(port);
+    clientaddress[nnode].ip.sin_addr.s_addr = saddr;
+#ifdef NODE_ADDR_HASHING
+    node_hash[nnode] = UDP_hashaddr( &clientaddress[nnode] );
+#else
+    node_hash[nnode] = 1;
+#endif
+}
+
+
+  // Return net node.  When nodes full, return 255.
 static byte get_freenode( void )
 {
     byte nn;

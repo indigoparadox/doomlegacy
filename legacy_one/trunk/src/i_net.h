@@ -150,6 +150,12 @@ extern boolean (*I_NetOpenSocket) (void);
 // Close the network socket, and all net node connections.
 extern void    (*I_NetCloseSocket) (void);
 
+// Set address and port of special nodes.
+//  saddr: IP address in network byte order
+//  port: port number in host byte order
+void UDP_Bind_Node( int nnode, unsigned int saddr, unsigned int port );
+
+
 boolean I_InitNetwork (void);
 
 #endif
