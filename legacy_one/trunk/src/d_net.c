@@ -851,6 +851,7 @@ static void DebugPrintpacket(char *header)
 //
 // HSendPacket
 //
+//  packetlength : number of bytes in u part of packet
 extern boolean HSendPacket(int   node,boolean reliable ,byte acknum,int packetlength)
 {
 

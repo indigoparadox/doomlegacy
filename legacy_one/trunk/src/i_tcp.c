@@ -825,7 +825,7 @@ boolean I_InitTcpNetwork( void )
             doomcom->numnodes=MAXNETNODES;
 
         // server
-        servernode = 0;
+        servernode = 0;  // server set to self
         // FIXME:
         // ??? and now ?
         // server on a big modem ??? 4*isdn

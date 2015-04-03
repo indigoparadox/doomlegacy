@@ -262,7 +262,7 @@ extern consvar_t cv_playdemospeed;
 extern boolean   server;
 extern uint16_t  software_MAXPACKETLENGTH;
 extern boolean   acceptnewnode;
-extern char      servernode;
+extern byte      servernode;  // the server net node, 255=none
 
 extern boolean   cl_drone;  // is a drone client
 
