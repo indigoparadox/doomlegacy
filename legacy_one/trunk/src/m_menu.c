@@ -2761,7 +2761,7 @@ menu_t  DirDef =
 
 
 // Draw the current DIR line above list
-inline void draw_dir_line( int line_y )
+static void draw_dir_line( int line_y )
 {
     V_DrawString( DirDef.x, line_y, 0, "DIR");
     M_DrawSaveLoadBorder( DirDef.x+32, line_y, 0);

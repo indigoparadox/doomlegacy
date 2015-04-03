@@ -223,7 +223,7 @@ float gamma_lookup_table[25] = {
    0.50		// doom gamma table 5
 };
 
-inline float gamma_lookup( int ind )
+static inline float gamma_lookup( int ind )
 {
    return gamma_lookup_table[ ind + 12 ];
 }
