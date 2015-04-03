@@ -72,14 +72,17 @@ extern consvar_t cv_masterserver;
 extern consvar_t cv_servername;
 extern consvar_t cv_internetserver;
 
-char *GetMasterServerPort(void);
-char *GetMasterServerIP(void);
+char * MS_Get_MasterServerPort(void);
+char * MS_Get_MasterServerIP(void);
 
-void RegisterServer(int, int);
-void UnregisterServer(void);
+// MasterServer address is in cv_masterserver.
+void MS_RegisterServer(void);
+void MS_UnregisterServer(void);
 
-void SendPingToMasterServer(void);
+void MS_SendPing_MasterServer( tic_t cur_time );
 
-msg_server_t *GetShortServersList(void);
+msg_server_t * MS_Get_ShortServersList(void);
+
+void MS_Register_Commands(void);
 
 #endif
