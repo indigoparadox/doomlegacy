@@ -62,5 +62,7 @@ boolean teamingame(int teamnum);
 void WI_drawRanking(char *title, int x, int y, fragsort_t *fragtable,
                     int scorelines, boolean large, int white);
 
+// For startup wait, and deathmatch wait.
+void WI_draw_wait( int net_nodes, int wait_nodes, int wait_tics );
 
 #endif

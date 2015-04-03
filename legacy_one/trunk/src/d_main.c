@@ -509,7 +509,12 @@ void D_Display(void)
         case GS_DEDICATEDSERVER:
         case GS_DEMOSCREEN:
             D_PageDrawer(pagename);
+            break;
+
         case GS_WAITINGPLAYERS:
+            D_WaitPlayer_Drawer();
+            break;
+
         case GS_NULL:
             break;
     }
@@ -2526,7 +2531,7 @@ restart_command:
         if (dedicated && server)
         {
             pagename = "TITLEPIC";
-            gamestate = GS_DEDICATEDSERVER;
+            gamestate = GS_WAITINGPLAYERS;
         }
         else if (autostart || netgame
 		 || M_CheckParm("+connect") || M_CheckParm("-connect"))

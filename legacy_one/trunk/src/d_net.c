@@ -1034,6 +1034,7 @@ static char *packettypename[NUMPACKETTYPE]={
     "TEXTCMD2",
     "CLIENTJOIN",
     "NODETIMEOUT",
+    "WAITINFO",
 
 };
 
