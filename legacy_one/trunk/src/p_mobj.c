@@ -2804,8 +2804,8 @@ mobj_t *P_SpawnMissile(mobj_t * source, mobj_t * dest, mobjtype_t type)
     dist = P_CheckMissileSpawn(th);
     if (demoversion < 131)
         return th;
-    else
-        return dist ? th : NULL;
+
+    return dist ? th : NULL;
 }
 
 //
@@ -2899,8 +2899,8 @@ mobj_t *P_SPMAngle(mobj_t * source, mobjtype_t type, angle_t angle)
 
     if (demoversion < 131)
         return th;
-    else
-        return slope ? th : NULL;
+
+    return slope ? th : NULL;
 }
 
 
