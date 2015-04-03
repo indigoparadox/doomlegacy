@@ -1366,7 +1366,7 @@ boolean D_Startup_NetGame(void)
         doomcom->consoleplayer = 0;
         doomcom->extratics = 0;
 
-        netgame = I_InitTcpNetwork();
+        netgame = I_Init_TCP_Network();
     }
     if( netgame )
         netgame_ok = true;
@@ -1457,7 +1457,7 @@ boolean D_Startup_NetGame(void)
     }
 #endif
 
-    D_ClientServerInit();
+    D_Init_ClientServer();
 
     return netgame_ok;
 }

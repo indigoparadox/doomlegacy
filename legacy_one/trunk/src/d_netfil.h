@@ -97,13 +97,21 @@ typedef enum {
 checkfiles_e  CL_CheckFiles(void);
 boolean  CL_Load_ServerFiles(void);
 
-//void SendFile(byte to_node, char *filename, char fileid);
-void SendData(byte to_node, byte *data, uint32_t size, TAH_e tah, char fileid);
+//void SV_SendFile(byte to_node, char *filename, char fileid);
+void SV_SendData(byte to_node, byte *data, uint32_t size, TAH_e tah, char fileid);
 
+extern int Filetx_file_cnt;  // to enable call of Filetx_Ticker
 void Filetx_Ticker(void);
 void Got_Filetxpak(void);
 
-boolean Send_RequestFile(void);
+typedef enum {
+   RFR_success,
+   RFR_send_fail,
+   RFR_nodownload,
+   RFR_insufficient_space // Does not seem to be used.
+} reqfile_e;
+
+reqfile_e  Send_RequestFile(void);
 void Got_RequestFilePak(byte nnode);
 
 

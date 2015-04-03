@@ -212,7 +212,9 @@ struct Copy_CVarMS_t
 
 #if defined( WIN32) || defined( __OS2__) || defined( SOLARIS)
 // it seems windows doesn't define that... maybe some other OS? OS/2
-int inet_aton(const char *hostname, struct in_addr *addr)
+static inline
+int inet_aton(const char *hostname,
+	      /* OUT */ struct in_addr *addr)
 {
     // [WDJ] This cannot handle 255.255.255.255, which == INADDR_NONE.
     return ( (addr->s_addr=inet_addr(hostname)) != INADDR_NONE );
@@ -628,7 +630,7 @@ static int MS_Connect(char *ip_addr, char *str_port, int async_flag)
    
     memset(&ms_addr, 0, sizeof(ms_addr));
     ms_addr.sin_family = AF_INET;
-    I_InitTcpDriver(); // this is done only if not already done
+    I_Init_TCP_Driver(); // this is done only if not already done
 
     // TCP connection socket.
     ms_socket_fd = socket(AF_INET, SOCK_STREAM, 0);
