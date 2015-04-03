@@ -557,7 +557,7 @@ void UnregisterServer()
 
     CloseConnection();
 #ifdef NEWCODE
-    I_NetFreeNodenum( msnode );
+    I_NetFreeNode( msnode );
 #endif
 }
 

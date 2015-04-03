@@ -76,8 +76,8 @@ typedef enum
 
 static int doomatic;
 
-void External_Driver_Get(void);
-void External_Driver_Send(void);
+boolean External_Driver_Get(void);
+boolean External_Driver_Send(void);
 void External_Driver_FreeNode(int nodenum);
 
 boolean External_Driver_OpenSocket()
@@ -85,7 +85,7 @@ boolean External_Driver_OpenSocket()
     I_NetGet  = External_Driver_Get;
     I_NetSend = External_Driver_Send;
     I_NetCloseSocket = NULL;
-    I_NetFreeNodenum = External_Driver_FreeNode;
+    I_NetFreeNode = External_Driver_FreeNode;
     
     return true;
 }
@@ -134,7 +134,9 @@ boolean I_InitNetwork (void)
     return true;
 }
 
-void External_Driver_Get(void)
+// Return packet into doomcom struct.
+// Return true when got packet.  Error in net_error.
+boolean  External_Driver_Get(void)
 {
     __dpmi_regs r;
 
@@ -144,15 +146,21 @@ void External_Driver_Get(void)
     if(doomatic && !doomcom->drone)
     {
         doomcom->remotenode = -1;
-        return;
+        net_error = NE_empty;
+        return false;
     }
 
     __dpmi_int(doomcom->intnum,&r);
     if(doomatic && doomcom->remotenode==-2)
+    {
         I_Error("Doomatic error :%s\n",doomcom->data);
+    }
+    return true;
 }
 
-void External_Driver_Send(void)
+// Send packet from within doomcom struct.
+// Return true when packet has been sent.  Error in net_error.
+boolean  External_Driver_Send(void)
 {
     __dpmi_regs r;
 
@@ -173,6 +181,7 @@ void External_Driver_Send(void)
         doomcom->command=CMD_SEND;
         __dpmi_int(doomcom->intnum,&r);
     }
+    return true;
 }
 
 void External_Driver_FreeNode(int nodenum)
