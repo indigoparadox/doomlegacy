@@ -74,7 +74,7 @@ boolean HGetPacket(void);
 // Returns true when a network connection is made.
 boolean D_Startup_NetGame(void);
 void    D_CloseConnection( void );
-void    Net_UnAcknowledgPacket(int node);
+void    Net_Cancel_Packet_Ack(int nnode);
 void    Net_CloseConnection(int node);
 void    Net_AbortPacketType(char packettype);
 void    Net_SendAcks(int node);
