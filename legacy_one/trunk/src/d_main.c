@@ -878,8 +878,9 @@ void D_PageDrawer(char *lumpname)
 // Called by G_CheckDemoStatus when timing or playing a demo
 void D_AdvanceDemo(void)
 {
-    // [WDJ] do not start a demo when a menu is open
-    if( !(demo_ctrl & DEMO_seq_disabled) && ! menuactive )
+    // [WDJ] do not start a demo when a menu or console is open
+    if( !(demo_ctrl & DEMO_seq_disabled) && ! menuactive
+        && ! console_open )
         demo_ctrl = DEMO_seq_advance;    // flag to trigger D_DoAdvanceDemo
 }
 
@@ -997,8 +998,8 @@ void D_StartTitle(void)
     paused = false;
     demo_ctrl = 0;  // enable screens and seq demos
     demosequence = -1;
-    D_AdvanceDemo();
     CON_ToggleOff();
+    D_AdvanceDemo();
 }
 
 

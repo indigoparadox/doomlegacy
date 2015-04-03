@@ -45,6 +45,8 @@ void CON_VideoInit (void);
 
 boolean CON_Responder (event_t *ev);
 
+extern boolean console_open;  // console is open, no demos
+
 // set true when screen size has changed, to adapt console
 extern boolean con_recalc;
 

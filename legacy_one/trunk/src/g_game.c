@@ -2937,12 +2937,14 @@ void G_DoPlayDemo (char *defdemoname)
         precache = false;
         G_InitNew (skill, G_BuildMapName(episode, map),true);
         precache = true;
-        CON_ToggleOff (); // will be done at the end of map command
     }
     else
+    {
         // wait map command in the demo
         gamestate = wipegamestate = GS_WAITINGPLAYERS;
+    }
 
+    CON_ToggleOff (); // may be also done at the end of map command
     return;
 
 broken_header:   
