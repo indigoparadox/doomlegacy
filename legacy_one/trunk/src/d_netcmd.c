@@ -492,6 +492,7 @@ void Got_NetXCmd_NameColor(char **cp, int playernum)
     if (p->mo)
         p->mo->flags = (p->mo->flags & ~MF_TRANSLATION) | ((p->skincolor) << MF_TRANSSHIFT);
 
+    // Players 0..(MAXPLAYERS-1) are init as Player 1 ..
     // name
     if (demoversion >= 128)
     {

@@ -72,7 +72,7 @@ boolean Net_AllAckReceived(void);
 
 // if reliable return true if packet sent, 0 else
 boolean HSendPacket(int to_node, boolean reliable, byte acknum, int packetlength);
-boolean HGetPacket(void);
+boolean HGetPacket (void);
 // Returns true when a network connection is made.
 boolean D_Startup_NetGame(void);
 void    D_CloseConnection( void );

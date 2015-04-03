@@ -43,7 +43,6 @@
 #ifndef D_PLAYER_H
 #define D_PLAYER_H
 
-
 // The player data structure depends on a number
 // of other structs: items (internal inventory),
 // animation states (closely tied to the sprites
@@ -145,8 +144,8 @@ typedef struct player_s
     boolean             backpack;
 
     // Frags, kills of other players.
-    USHORT              addfrags;   // player have killed a player but is gone
-    USHORT              frags[MAXPLAYERS];
+    uint16_t            addfrags;   // player have killed a player but is gone
+    uint16_t            frags[MAXPLAYERS];
     weapontype_t        readyweapon;
 
     // Is wp_nochange if not changing.
@@ -247,11 +246,10 @@ typedef struct
     int         sitems;
     int         ssecret;
     int         stime;
-    USHORT      frags[MAXPLAYERS]; // added 17-1-98 more than 4 players
+    uint16_t    frags[MAXPLAYERS]; // added 17-1-98 more than 4 players
     int         score;  // current score on entry, modified on return
     // BP: unused for now but don't forget....
-    USHORT      addfrags;
-
+    uint16_t    addfrags;
 } wbplayerstruct_t;
 
 typedef struct

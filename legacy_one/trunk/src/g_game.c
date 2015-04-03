@@ -1308,11 +1308,11 @@ void G_PlayerReborn (int player)
 {
     player_t*   p;
     int         i;
-    USHORT      frags[MAXPLAYERS];
+    uint16_t    frags[MAXPLAYERS];
+    uint16_t    addfrags;
     int         killcount;
     int         itemcount;
     int         secretcount;
-    USHORT      addfrags;
 
     //from Boris
     int         skincolor;
