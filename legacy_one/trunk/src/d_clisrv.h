@@ -251,6 +251,9 @@ typedef struct
 extern  netbuffer_t*   netbuffer;        
 
 extern consvar_t cv_playdemospeed;
+extern consvar_t cv_server1;
+extern consvar_t cv_server2;
+extern consvar_t cv_server3;
 
 //#define PACKET_BASE_SIZE     ((int)&( ((netbuffer_t *)0)->u))
 #define PACKET_BASE_SIZE     offsetof(netbuffer_t, u)

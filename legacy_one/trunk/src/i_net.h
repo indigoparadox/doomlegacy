@@ -155,6 +155,9 @@ extern void    (*I_NetCloseSocket) (void);
 //  port: port number in host byte order
 void UDP_Bind_Node( int nnode, unsigned int saddr, unsigned int port );
 
+// Bind an inet or ipx address string to a net node.
+boolean  Bind_Node_str( int nnode, char * addrstr );
+
 
 boolean I_InitNetwork (void);
 

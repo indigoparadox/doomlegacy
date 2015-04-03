@@ -336,6 +336,9 @@ void D_Register_ClientCommands(void)
     CV_RegisterVar(&cv_timelimit);
     CV_RegisterVar(&cv_playdemospeed);
     CV_RegisterVar(&cv_netstat);
+    CV_RegisterVar(&cv_server1);
+    CV_RegisterVar(&cv_server2);
+    CV_RegisterVar(&cv_server3);
 
     COM_AddCommand("load", Command_Load_f);
     Register_NetXCmd(XD_LOADGAME, Got_NetXCmd_LoadGamecmd);
