@@ -571,7 +571,7 @@ void HWR_clearAutomap( void )
     //HWD.pfnSetBlend ( PF_NoOcclude );
 
     // minx,miny,maxx,maxy
-    HWD.pfnGClipRect( 0, 0, vid.width , vid.height - stbarheight, 0.9f );
+    HWD.pfnGClipRect( 0, 0, vid.width , vid.height - stbar_height, 0.9f );
     HWD.pfnClearBuffer( true, true, &fColor );
     HWD.pfnGClipRect( 0, 0, vid.width, vid.height, 0.9f );
 }

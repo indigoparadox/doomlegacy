@@ -73,11 +73,11 @@
 // Size of statusbar.
 #define ST_HEIGHT    32
 #define ST_WIDTH     320
-// heretic one's
-#define SBARHEIGHT      42                      // status bar height at bottom of screen
+// Heretic, status bar height at bottom of screen.
+#define H_STBAR_HEIGHT   42
 
 
-extern int stbarheight;     // when scaled
+extern int stbar_height;   // status bar, may be scaled
 
 //added:20-01-98: used now as a maximum video mode size for extra vesa modes.
 

@@ -616,11 +616,11 @@ void AM_LevelInit(void)
     // [WDJ] Would be correct for split screen and reduced screen size,
     // but automap does not obey split screen at this time, nor screen size.
     f_w = rdraw_viewwidth;   // was vid.width
-    f_h = rdraw_viewheight;  // was vid.height - stbarheight;
+    f_h = rdraw_viewheight;  // was vid.height - stbar_height;
 #else
     // Full screen automap, with its own status bar setting.
     f_w = vid.width;
-    f_h = vid.height - stbarheight;
+    f_h = vid.height - stbar_height;
 #endif
 
     if (rendermode == render_soft)
@@ -916,7 +916,7 @@ void AM_clearFB(int color)
         int dmapx, dmapy;
         byte *dest = screens[0];  // into screen buffer
         byte *src;
-#       define MAPLUMPHEIGHT (200-SBARHEIGHT)
+#       define MAPLUMPHEIGHT (200 - H_STBAR_HEIGHT)
         
         if(followplayer)
         {
@@ -1487,7 +1487,7 @@ void AM_Drawer (void)
     // mapname
     {
         int y;
-        y = BASEVIDHEIGHT-(gamemode == heretic ? SBARHEIGHT : ST_HEIGHT)-1;
+        y = BASEVIDHEIGHT - ((gamemode == heretic)? H_STBAR_HEIGHT : ST_HEIGHT)-1;
 
         V_DrawString( 20, y - V_StringHeight(P_LevelName()), 0, P_LevelName());
     }

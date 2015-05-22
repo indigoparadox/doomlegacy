@@ -3850,7 +3850,7 @@ void HWR_SetViewSize(int blocks)
     else
     {
         gr_viewwidth = (float) ((blocks * vid.width / 10) & ~7);
-        gr_viewheight = (float) ((blocks * (vid.height - stbarheight / 2) / 10) & ~1);
+        gr_viewheight = (float) ((blocks * (vid.height - stbar_height / 2) / 10) & ~1);
     }
 
     if (cv_splitscreen.value)
@@ -3868,8 +3868,8 @@ void HWR_SetViewSize(int blocks)
     }
     else
     {
-        gr_baseviewwindowy = (vid.height - stbarheight - gr_viewheight) / 2;
-        gr_basewindowcentery = (float) ((vid.height - stbarheight) / 2);
+        gr_baseviewwindowy = (vid.height - stbar_height - gr_viewheight) / 2;
+        gr_basewindowcentery = (float) ((vid.height - stbar_height) / 2);
     }
 
     gr_pspritexscale = gr_viewwidth / BASEVIDWIDTH;

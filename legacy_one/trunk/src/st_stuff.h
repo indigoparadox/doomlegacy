@@ -42,15 +42,15 @@
 #include "d_event.h"
 #include "d_player.h"
 
-                     //software mode : position according to resolution, not scaled
-                     //hardware mode : original coords, scaled to current resolution, correct aspect
-//#define ST_Y         (rendermode==render_soft ? vid.height - stbarheight : BASEVIDHEIGHT - ST_HEIGHT)
-extern int ST_Y;
-extern int fg_stbar;  // FG with status bar draw flags
-extern int st_x;
-extern boolean st_statusbar_on;
-extern int st_scalex;
-extern int st_scaley;
+//software mode : position according to resolution, not scaled
+//hardware mode : original coords, scaled to current resolution, correct aspect
+extern int stbar_fg;  // FG with status bar draw flags
+extern int stbar_x, stbar_y;  // status bar position
+extern int stbar_scalex, stbar_scaley;  // status bar scaling
+extern boolean  stbar_on;  // status bar active
+
+// Need this for SCR_Recalc() coz widgets coords change with resolutions.
+extern boolean  stbar_recalc;
 
 
 // update all global position variables (just above)
@@ -84,10 +84,6 @@ void ST_AddCommands (void);
 // force redraw
 void ST_Invalidate(void);
 
-
-
-// need this for SCR_Recalc() coz widgets coords change with resolutions
-extern boolean   st_recalc;
 
 // States for status bar code.
 typedef enum
@@ -126,12 +122,9 @@ int  ST_PlayerFrags (int playernum);
 //--------------------
 extern boolean    st_overlay;   // sb overlay on or off when fullscreen
 
-// heretic status bar
+// Heretic status bar
+void SB_Heretic_Init(void);
 void SB_Heretic_Ticker(void);
-
-void SB_Drawer( boolean refresh );
-boolean SB_Responder(event_t *event);
-void SB_Init(void);
-
+void SB_Heretic_Drawer( boolean refresh );
 
 #endif

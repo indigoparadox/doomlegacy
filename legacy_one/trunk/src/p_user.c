@@ -1459,7 +1459,7 @@ void P_PlayerUseArtifact(player_t *player, artitype_t arti)
 		   || player == displayplayer2_ptr ) // NULL when unused
                 {
                     S_StartSound(NULL, sfx_artiuse);
-                    ArtifactFlash = 4;
+                    H_ArtifactFlash = 4;
                 }
             }
             else

@@ -962,7 +962,7 @@ static void CheatGodFunc(player_t * player, Cheat_t * cheat)
     {
         P_SetMessage(player, TXT_CHEATGODOFF, false);
     }
-    st_recalc = true;
+    stbar_recalc = true;
 }
 
 static void CheatNoClipFunc(player_t * player, Cheat_t * cheat)

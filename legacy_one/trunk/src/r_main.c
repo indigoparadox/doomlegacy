@@ -906,10 +906,10 @@ void R_ExecuteSetViewSize (void)
         CV_SetValue (&cv_detaillevel,setdetail);
     }
 
-    stbarheight = gamemode == heretic ? SBARHEIGHT : ST_HEIGHT;
+    stbar_height = (gamemode == heretic)? H_STBAR_HEIGHT : ST_HEIGHT;
 
     if( cv_scalestatusbar.value || cv_viewsize.value>=11)
-        stbarheight *= (rendermode==render_soft) ? vid.dupy : vid.fdupy;
+        stbar_height *= (rendermode==render_soft)? vid.dupy : vid.fdupy;
 
     //added 01-01-98: full screen view, without statusbar
     if (cv_viewsize.value > 10)
@@ -923,7 +923,7 @@ void R_ExecuteSetViewSize (void)
         rdraw_scaledviewwidth = (cv_viewsize.value*vid.width/10)&~7;
         //added:05-02-98: make rdraw_viewheight multiple of 2 because sometimes
         //                a line is not refreshed by R_DrawViewBorder()
-        rdraw_viewheight = (cv_viewsize.value*(vid.height-stbarheight)/10)&~1;
+        rdraw_viewheight = (cv_viewsize.value * (vid.height - stbar_height) / 10)&~1;
     }
 
     // added 16-6-98:splitscreen
@@ -1021,7 +1021,7 @@ void R_ExecuteSetViewSize (void)
         HWR_SetViewSize (cv_viewsize.value);
 #endif
 
-    st_recalc = true;
+    stbar_recalc = true;
     am_recalc = true;
 }
 

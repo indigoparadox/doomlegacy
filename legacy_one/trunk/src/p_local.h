@@ -429,11 +429,12 @@ void  DemoAdapt_p_user( void );
 void  DemoAdapt_p_enemy( void );
 void  DemoAdapt_p_floor( void );
 
-
-// heretic specific
+// Alter for Doom or Heretic.
 extern int ceilmovesound;
 extern int doorclosesound;
-extern int ArtifactFlash;
+
+// Heretic specific
+extern int H_ArtifactFlash;
 
 #define TELEFOGHEIGHT  (32*FRACUNIT)
 extern mobjtype_t      PuffType;
