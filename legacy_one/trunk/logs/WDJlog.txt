@@ -4362,3 +4362,12 @@ Added directory switch to wadtool, to make it much easier to use in Makefile.
 Added reading lump by file name or lump name, so that an extracted wad
 can be rebuilt without having to change file names of the lumps.
 New files: tools/wadtool.cc
+
+*** W103_fixdep
+zipfile = w103_2_fixdep.zip
+- commit revision 1166
+Windows and DOS do not have sed, which is used to add the obj/
+directory to the dep file entries.
+The tool, fixdep, will do the same operation, making the dep files work
+on Windows and DOS.
+New files: tools/fixdep.c
