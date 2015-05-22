@@ -251,6 +251,7 @@
 
 #include "wi_stuff.h"
 #include "w_wad.h"
+#include "filesrch.h"
 
 #include "z_zone.h"
 #include "d_main.h"
@@ -1139,7 +1140,7 @@ void  Print_search_directories( byte emf, byte enables )
 //  search_depth:  if > 0 then search subdirectories to that depth
 // Return true when found, with the file path in the fbuf parameter.
 static
-boolean  Search_doomwaddir( char * filename,
+boolean  Search_doomwaddir( char * filename, int search_depth,
          /* OUT */  char * fbuf )
 {
     int wdi;
@@ -1154,6 +1155,16 @@ boolean  Search_doomwaddir( char * filename,
         // If it exists then use it.
         if( access(fbuf, R_OK) == 0 )
             return true;
+
+        if( search_depth )
+        {
+            filestatus_e  fstat;
+            strncpy( fbuf, filename, MAX_WADPATH );
+            fbuf[ MAX_WADPATH - 1 ] = 0;
+            fstat = filesearch( fbuf, doomwaddir[wdi], NULL, true, search_depth );
+            if( fstat == FS_FOUND )
+                return true;
+        }
     }
     return false;
 }
@@ -1534,7 +1545,6 @@ void IdentifyVersion()
 #endif
 
     // Search wad directories.
-    doomwaddir[1] = defdir_wads;
     doomwaddir[1] = progdir_wads;
     if( Search_doomwaddir( "legacy.wad", 0, /*OUT*/ pathiwad ) )
          goto found_legacy_wad;

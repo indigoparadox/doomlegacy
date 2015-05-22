@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
+// Portions Copyright (C) 1998-2015 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -14,99 +14,130 @@
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
+//
+// DESCRIPTION:
+//  Search directories, in depth, for a filename.
+//
 //-----------------------------------------------------------------------------
 
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "filesrch.h"
-#include "d_netfil.h"
+//#include "d_netfil.h"
 
 //
 // filesearch:
 //
 // ATTENTION : make sure there is enough space in filename to put a full path (255 or 512)
+//    filename must be buffer of MAX_WADPATH
 // if needmd5check==0 there is no md5 check
-// if changestring then filename will be change with the full path and name
+// if completepath then filename will be changed to the full path and name
 // maxsearchdepth==0 only search given directory, no subdirs
 // return FS_NOTFOUND
 //        FS_MD5SUMBAD;
 //        FS_FOUND
+#define MAX_SRCHPATH (MAX_WADPATH * 2)
 
 filestatus_e filesearch(char *filename, char *startpath, unsigned char *wantedmd5sum, boolean completepath, int maxsearchdepth)
 {
-    DIR **dirhandle;
+    DIR ** dirhandle_stack;  // (malloc)
+    DIR * dirhandle;
     struct dirent *dent;
     struct stat fstat;
-    int found=0;
-    char *searchname = strdup( filename);
+    char * searchname = strdup( filename);  // (malloc)
     filestatus_e retval = FS_NOTFOUND;
+    int remspace;
     int depthleft=maxsearchdepth;
-    char searchpath[1024];
-    int *searchpathindex;
+    int * index_stack;  // each directory in the searchpath  (malloc)
+    int cur_index;
+    char searchpath[MAX_SRCHPATH];
 
-    dirhandle = (DIR**) malloc( maxsearchdepth * sizeof( DIR*));
-    searchpathindex = (int*) malloc( maxsearchdepth * sizeof( int));
+    dirhandle_stack = (DIR**) malloc( maxsearchdepth * sizeof( DIR*));
+    if( dirhandle_stack == NULL )   goto error1_exit;
+    index_stack = (int*) malloc( maxsearchdepth * sizeof( int));
+    if( index_stack == NULL )   goto error2_exit;
     
-    strcpy( searchpath,startpath);
-    searchpathindex[--depthleft] = strlen( searchpath) + 1;
+    strncpy( searchpath, startpath, MAX_SRCHPATH-1 );
+    searchpath[MAX_SRCHPATH-1] = '\0';
+    cur_index = strlen( searchpath) + 1;
 
-    dirhandle[depthleft] = opendir( searchpath);
+    dirhandle = opendir( searchpath);
+    if( dirhandle == NULL )  goto error3_exit;
 
-    if(searchpath[searchpathindex[depthleft]-2] != '/')
+    // Initial stack
+    index_stack[--depthleft] = cur_index;
+    dirhandle_stack[ depthleft ] = dirhandle;
+
+    if(searchpath[cur_index-2] != '/')
     {
-        searchpath[searchpathindex[depthleft]-1] = '/';
-        searchpath[searchpathindex[depthleft]] = 0;
+        searchpath[cur_index-1] = '/';
+        searchpath[cur_index] = 0;
     }
     else
     {
-        searchpathindex[depthleft]--;
+        cur_index--;
     }
 
-    while( (!found) && (depthleft < maxsearchdepth))
+    while( depthleft < maxsearchdepth )
     {
-        searchpath[searchpathindex[depthleft]]=0;
-        dent = readdir( dirhandle[depthleft]);
-        if( dent)
+        searchpath[cur_index]=0;
+        dent = readdir( dirhandle );  // next dir entry
+        if( !dent)  // done with dir
         {
-            strcpy(&searchpath[searchpathindex[depthleft]],dent->d_name);
+            closedir( dirhandle );
+            // Pop stack to previous directory.
+            depthleft++;
+            cur_index = index_stack[depthleft];
+            dirhandle = dirhandle_stack[depthleft];
+            continue;
+        } 
+        if( dent->d_name[0]=='.' )
+        {
+            // ignore the "." and ".." entries, we don't want to scan uptree
+            if( dent->d_name[1]=='\0' )  continue;
+            if( dent->d_name[1]=='.' && dent->d_name[2]=='\0' )  continue;
         }
 
-        if( !dent)
-        {
-            closedir( dirhandle[depthleft++]);
-        } 
-        else if( dent->d_name[0]=='.' &&
-             (dent->d_name[1]=='\0' ||
-              (dent->d_name[1]=='.' &&
-               dent->d_name[2]=='\0')))
-        {
-            // we don't want to scan uptree
-        }
-        else if( stat(searchpath,&fstat) < 0) // do we want to follow symlinks? if not: change it to lstat
+        // append dir name
+        remspace = (MAX_SRCHPATH - 1) - cur_index;
+        strncpy(&searchpath[cur_index], dent->d_name, remspace);
+
+        if( stat(searchpath,&fstat) < 0) // do we want to follow symlinks? if not: change it to lstat
         {
             // was the file (re)moved? can't stat it
-        } 
-        else if( S_ISDIR(fstat.st_mode) && depthleft)
-        {
-            strcpy(&searchpath[searchpathindex[depthleft]],dent->d_name);
-            searchpathindex[--depthleft] = strlen(searchpath) + 1;
+	    continue;
+        }
 
-            if( !(dirhandle[depthleft] = opendir(searchpath)))
+        if( S_ISDIR(fstat.st_mode) )
+        {
+	    if( depthleft <= 0 )  continue;  // depth limited
+            remspace = (MAX_SRCHPATH - 1) - cur_index;
+            strncpy(&searchpath[cur_index], dent->d_name, remspace);
+
+            dirhandle = opendir(searchpath);
+            if( dirhandle == NULL )
             {
                 // can't open it... maybe no read-permissions
                 // go back to previous dir
-                depthleft++;
+                cur_index = index_stack[depthleft];
+                dirhandle = dirhandle_stack[depthleft];
+                continue;
             }
 
-            searchpath[searchpathindex[depthleft]-1]='/';
-            searchpath[searchpathindex[depthleft]]=0;
+            // Push stack to new directory.
+            cur_index = strlen(searchpath) + 1;
+            index_stack[--depthleft] = cur_index;
+            dirhandle_stack[depthleft] = dirhandle;
+
+            searchpath[cur_index-1]='/';
+            searchpath[cur_index]=0;
         }
         else if (!strcasecmp(searchname, dent->d_name))
         {
@@ -115,15 +146,21 @@ filestatus_e filesearch(char *filename, char *startpath, unsigned char *wantedmd
                 case FS_FOUND:
                     if(completepath)
                     {
-                        strcpy(filename,searchpath);
+                        strncpy(filename, searchpath, MAX_WADPATH-1);
+                        filename[MAX_WADPATH-1] = '\0';
                     }
+#if 0
+// [WDJ] This is used for "find if file exists",
+// which is not choice to return the dir name instead.
+// If this is ever needed, it requires a separate enable flag.
                     else
                     {
-                        strcpy(filename,dent->d_name);
+                        strncpy(filename, dent->d_name, MAX_WADPATH-1);
+                        filename[MAX_WADPATH-1] = '\0';
                     }
+#endif
                     retval=FS_FOUND;
-                    found=1;
-                    break;
+                    goto found_exit;
                 case FS_MD5SUMBAD:
                     retval = FS_MD5SUMBAD;
                     break;
@@ -134,11 +171,15 @@ filestatus_e filesearch(char *filename, char *startpath, unsigned char *wantedmd
         }
     }
 
-    for(; depthleft<maxsearchdepth; closedir(dirhandle[depthleft++]));
+found_exit:
+    for(; depthleft<maxsearchdepth; closedir(dirhandle_stack[depthleft++]));
 
+error3_exit:
+    free(index_stack);
+error2_exit:
+    free(dirhandle_stack);
+error1_exit:
     free(searchname);
-    free(searchpathindex);
-    free(dirhandle);
 
     return retval;
 }
