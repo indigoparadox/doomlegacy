@@ -1,8 +1,34 @@
+##########################################################
 # GNU Make makefile for Doom Legacy
 # Makefile for musserver 1.4
 #
-# Copyright (C) 1998-2013 by Doom Legacy Team.
+# Copyright (C) 1998-2015 by Doom Legacy Team.
 #
+# This Makefile requires exports from the Main Makefile and
+# CANNOT be executed on it own.
+#
+# commands:
+#  all  :  compile executable (default)
+#  dirs : create dep, objs, bin directories
+#  clean : delete objs and bin
+#  install: install binaries to INSTALL_DIR
+#  uninstall: install binaries from INSTALL_DIR
+##########################################################
+
+# SERV_BUILD_DIR is export from Main or Src Makefile
+ifndef SERV_BUILD_DIR
+  $(error SERV_BUILD_DIR not defined)
+endif
+
+# Invoke make with MAKE_OPTIONS= to specify another file or location.
+ifndef MAKE_OPTIONS
+  MAKE_OPTIONS = $(SERV_BUILD_DIR)make_options
+endif
+
+# Put user settings in this file, and they will be included with every
+# invocation of make.
+-include $(MAKE_OPTIONS)
+
 #openserver5
 # MUS_OS=SCOOS5
 #unixware2
@@ -57,24 +83,39 @@ endif
 # Nothing below this line should be changed #
 #############################################
 
-# Export BASEOBJ, BASEBIN from parent Make.
-O:=$(BASEOBJ)/$(SUBDIR)
-BIN:=$(BASEBIN)
+# Export SERV_BUILD_DIR from parent Make.
+BIN:=$(SERV_BUILD_DIR)bin
+O:=$(SERV_BUILD_DIR)objs/$(SUBDIR)
 
 MUSOBJLIST:=musserver.o readwad.o playmus.o sequencer.o $(OPTOBJ)
 MUSOBJ:=$(addprefix $(O)/, $(MUSOBJLIST))
 
-all: $(O)/musserver
+all: $(BIN)/musserver
 
-$(O)/musserver: $(MUSOBJ)
+$(BIN)/musserver: $(MUSOBJ)
 	${CC} ${CFLAGS} ${LDFLAGS} $(MUSOBJ) -o $(BIN)/musserver
 
 clean:
 	rm -f $(O)/*
 
+ifeq ("$(wildcard $(O))","")
+  # Missing obj dir
+  $(MUSOBJ) : | dirs
+endif
+
 dirs:
 	mkdir -p $(O)
 
 $(O)/%.o: %.c
-	@echo $(O),  $(O)
 	${CC} ${CFLAGS} -c $< -o $@
+
+#=======================================================
+# Install binaries
+
+install:
+	$(INSTALL) $(INSTALL_OPTS) -t $(INSTALL_DIR)  $(BIN)/musserver
+
+uninstall:
+	- cd $(INSTALL_DIR) && $(RMFILE) musserver
+
+##########################################################

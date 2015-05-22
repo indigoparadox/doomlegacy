@@ -1,0 +1,73 @@
+# DoomLegacy Make options for Linux, FreeBSD
+# See README_compiling.txt
+# Edit for OS, SMIF, and other compile options.
+#
+MAKE_OPTIONS_PRESENT=1
+
+# Select an OS: LINUX FREEBSD
+#  Linux works for all other *nix platforms, as far as we know.
+#  FreeBSD requires differences in the Makefile and code.
+OS=LINUX
+
+# Select a draw library:
+#  SDL: the SDL library is recommended and is the best maintained interface
+#  LINUX_X11: LINUX X11 native drawing
+#  FREEBSD_X11: FreeBSD X11 native drawing
+SMIF=SDL
+
+# SDL_Mixer library is a separate library from SDL
+HAVE_MIXER=1
+
+# Put other options here, see the src/Makefile or README_compiling.
+# Compiler select: GCC MINGW WATCOM CLANG
+# CC_SELECT=GCC
+# Enable CC_ENVIRONMENT to use the environment CC var.
+# CC_ENVIRONMENT=1
+# CC_EXPLICIT=clang
+
+# To enable debug code, with no fullscreen.
+# DEBUG=1
+
+# Might not have the CD music libraries.
+# CD_MUSIC=0
+
+# Have openserver and unixwave sound options.
+# Music options: none
+#   SCOOS5: openserver5
+#   SCOUW2: unixware2
+#   SCOUW7: unixware7
+# MUS_OS=
+# Have Esound on Linux native X11. Not needed for SDL.
+# HAVE_ESD=1
+
+# Linux or FreeBSD X11 GGI video interface libs.
+# X11_GGI=1
+
+# Uncomment if you want to use the POLL_POINTER hack in X11.
+# POLL_POINTER=-DPOLL_POINTER
+
+# If you have a slow computer you may want to try assembly, but the
+# assembly code is not often updated with the latest improvements.
+# USEASM=1
+
+# Other Make compile vars can be overridden too, see Makefile.
+
+# Install settings for install_sys
+# GROUP:=games
+# OWNER:=games
+# PREFIX:=/usr/local
+# INSTALL_SYS_DIR:=$(PREFIX)/bin
+# INSTALL_SHARE_DIR:=$(PREFIX)/share/games/doomlegacy
+
+# Install settings for install_games
+# INSTALL_GAMES_DIR:=$(PREFIX)/games/doomlegacy
+# INSTALL_SHARE_DIR:=$(PREFIX)/share/games/doomlegacy
+
+# Install settings for install_user
+# INSTALL_USER_DIR:=$(HOME)/games/doomlegacy
+
+# To override where the legacy.wad is installed.
+# INSTALL_LEGACYWAD_DIR:=$(PREFIX)/share/games/doomlegacy
+
+# Install files from legacy_common.
+# COMMON_DIR:=..\legacy_common

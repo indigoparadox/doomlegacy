@@ -4371,3 +4371,21 @@ directory to the dep file entries.
 The tool, fixdep, will do the same operation, making the dep files work
 on Windows and DOS.
 New files: tools/fixdep.c
+
+*** W103_makefile
+zipfile = w103_3_makefile.zip
+- commit revision 1167
+Heavily rewrote all Makefiles to reduce user errors and miss-information.
+Added Makefile to resources.
+Added error detections, error messages.
+Changed syntax of make_options.
+Now uses OS= for operating systems.
+Now uses CC_SELECT= for compiler select.
+Main Makefile now invokes sub-makefiles.
+Src makefile still has capability of being run directly, but other
+sub-Makefiles must be run from Main Makefile, as they use exported vars.
+Initial creation of make_options is now smarter and provides more informative.
+Created initial make_options for the various port targets.
+New files: make_options_nix, make_options_win, make_options_os2,
+make_options_dos, make_options_mac, tools/Makefile, resources/Makefile.
+
