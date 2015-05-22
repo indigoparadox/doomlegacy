@@ -4401,4 +4401,12 @@ Implement I_Get_Prog_Dir, for all ports, so can reliably get legacy.wad.
 On some ports this can use special system calls.  The fallback code
 looks at argv[0] and extracts the directory.
 
+*** W103_install_docs
+zipfile = w103_5_install_docs.zip
+- commit revision 1169
+Create a separate install document with the comprehensive information
+on installing.  This is more visible for someone looking for install
+information than having the information buried in legacy.html.
+New files: doc/INSTALL.html
+
 
