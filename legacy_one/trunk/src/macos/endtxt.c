@@ -11,10 +11,10 @@
 #include <stdlib.h>
 
 #include "doomincl.h"
+#include "i_system.h"
 #include "w_wad.h"
 #include "z_zone.h"
 #include "m_argv.h"
-#include "endtxt.h"
 
 void ShowEndTxt( void )
 {

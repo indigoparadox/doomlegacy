@@ -4422,4 +4422,8 @@ The header for endtext printing is now port independent, removing a
 header file from every port. The endtext code has been given a proper
 copyright and credit.
 
+- commit revision 1171
+Files removed: macos/endtxt.h sdl/endtxt.h linux_x/endtxt.h
+
+
 

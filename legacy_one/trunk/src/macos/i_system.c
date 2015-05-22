@@ -32,10 +32,10 @@
 #include "m_misc.h"
 #include "i_video.h"
 #include "i_sound.h"
+#include "i_system.h"
 #include "d_net.h"
 #include "g_game.h"
 #include "g_input.h"
-#include "endtxt.h"
 #include "i_joy.h"
 
 JoyType_t Joystick;
