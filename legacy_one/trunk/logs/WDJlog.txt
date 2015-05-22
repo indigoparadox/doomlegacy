@@ -4352,3 +4352,13 @@ patchfile = w102_24_cv_inc.patch
 - commit revision 1164
 Give the CV_Possible_t system an INC option.  This is used to increment the
 wait time in 5 second increments.
+
+*** W103_wadtool
+zipfile = w103_1_wadtool.zip
+- commit revision 1165
+Wadtool has been missing from the legacy 1.45 build.
+Copied and revised wadtool from legacy2.
+Added directory switch to wadtool, to make it much easier to use in Makefile.
+Added reading lump by file name or lump name, so that an extracted wad
+can be rebuilt without having to change file names of the lumps.
+New files: tools/wadtool.cc
