@@ -3711,6 +3711,7 @@ void M_QuitResponse(int ch)
     tic_t   dlyd_time;
     if (ch != 'y')
         return;
+
     if (!netgame)
     {
 #ifdef USE_QUITSOUNDS2
@@ -5351,7 +5352,7 @@ void M_LaunchMenu( void )
         M_Change_2Param( "-home", cv_home.string );
     // add doomwaddir
     if( (cv_doomwaddir.flags & CV_MODIFIED) && cv_doomwaddir.string )
-        doomwaddir = cv_doomwaddir.string;
+        doomwaddir[0] = cv_doomwaddir.string;
     // add config
     if(cv_config.flags & CV_MODIFIED)
         M_Change_2Param( "-config", cv_config.string );

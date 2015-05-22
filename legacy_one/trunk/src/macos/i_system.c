@@ -337,6 +337,63 @@ char *I_GetUserName(void)
     return getenv("USER");
 }
 
+
+// Get the directory of this program.
+//   defdir: the current directory
+//   dirbuf: a buffer of length MAX_WADPATH, 
+// Return true when success, dirbuf contains the directory.
+boolean I_Get_Prog_Dir( char * defdir, /*OUT*/ char * dirbuf )
+{
+    char * dnp;
+
+#ifdef __MACH__
+    // FIXME
+#  if 0
+    uint32_t  bufsize = MAX_WADPATH-1;
+    // [WDJ] Am missing a few details
+    if( _NSGetExecutablePath( dirbuf, & bufsize ) == 0 )   goto got_path;
+#  endif
+#endif
+
+    // The argv[0] method
+    char * arg0p = myargv[0];
+//    GenPrintf(EMSG_debug, "argv[0]=%s\n", arg0p );
+    // Linux, FreeBSD, Mac
+    if( arg0p[0] == '/' )
+    {
+        // argv[0] is an absolute path
+        strncpy( dirbuf, arg0p, MAX_WADPATH-1 );
+        dirbuf[MAX_WADPATH-1] = 0;
+        goto got_path;
+    }
+    // Linux, FreeBSD, Mac
+    else if( strchr( arg0p, '/' ) )
+    {
+        // argv[0] is relative to current dir
+        if( defdir )
+        {
+            cat_filename( dirbuf, defdir, arg0p );
+            goto got_path;
+        }
+    }
+    goto failed;
+   
+got_path:
+    // Get only the directory name
+    dnp = dirname( dirbuf );
+    if( dnp == NULL )  goto failed;
+    if( dnp != dirbuf )
+    {
+        cat_filename( dirbuf, "", dnp );
+    }
+    return true;
+
+failed:
+    dirbuf[0] = 0;
+    return false;
+}
+
+
 int  I_mkdir(const char *dirname, int unixright)
 {
     return mkdir(dirname, unixright);

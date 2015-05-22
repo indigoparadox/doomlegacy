@@ -71,7 +71,7 @@
 # ifdef FREEBSD
 #  include <sys/param.h>
 #  include <sys/mount.h>
-/*For meminfo*/
+   // meminfo
 #  include <sys/types.h>
 #  include <sys/sysctl.h>
 # elif defined( __MACH__ )
@@ -84,6 +84,9 @@
 #ifdef LMOUSE2
 #include <termios.h>
 #endif
+
+#include <libgen.h>
+  // dirname function
 
 #include "doomincl.h"
 #include "m_misc.h"
@@ -98,6 +101,7 @@
 
 #include "keys.h"
 #include "i_joy.h"
+#include "m_argv.h"
 
 #include "endtxt.h"
 
@@ -894,13 +898,132 @@ char *I_GetUserName(void)
 }
 
 
-int  I_mkdir(const char *dirname, int unixright)
+// Get the directory of this program.
+//   defdir: the current directory
+//   dirbuf: a buffer of length MAX_WADPATH, 
+// Return true when success, dirbuf contains the directory.
+boolean I_Get_Prog_Dir( char * defdir, /*OUT*/ char * dirbuf )
+{
+    int  len;
+    char * dnp;
+
+#ifdef LINUX
+# ifdef FREEBSD
+    len = readlink( "/proc/curproc/file", dirbuf, MAX_WADPATH-1 );
+    if( len > 1 )
+    {
+        dirbuf[len] = 0;  // readlink does not terminate string
+        goto got_path;
+    }
+# if 0
+    // Sysctl to get program path.
+    {
+        // FIXME
+        int mib[4];
+        mib[0] = CTL_KERN;
+        mib[1] = KERN_PROC;
+        mib[2] = KERN_PROC_PATHNAME;
+        mib[3] = -1;
+        sysctl(mib, 4, dirbuf, MAX_WADPATH-1, NULL, 0);
+    }
+# endif
+# elif defined( SOLARIS )
+    len = readlink( "/proc/self/path/a.out", dirbuf, MAX_WADPATH-1 );
+    if( len > 1 )
+    {
+        dirbuf[len] = 0;  // readlink does not terminate string
+        goto got_path;
+    }
+#  if 0
+    // [WDJ] Am missing a few details
+    getexecname();
+#  endif
+# elif defined( __MACH__ )
+#  if 0
+    uint32_t  bufsize = MAX_WADPATH-1;
+    // [WDJ] Am missing a few details
+    if( _NSGetExecutablePath( dirbuf, & bufsize ) == 0 )   goto got_path;
+#  endif
+# else
+    // Linux
+    len = readlink( "/proc/self/exe", dirbuf, MAX_WADPATH-1 );
+    if( len > 1 )
+    {
+        dirbuf[len] = 0;  // readlink does not terminate string
+        goto got_path;
+    }
+# endif
+#else
+# ifdef WIN32
+//    if(  )
+    {
+        // MS-Docs say Windows XP, but MinGW does not guard it.
+        len = GetModuleFileName( NULL, dirbuf, MAX_WADPATH-1 );
+        if( len > 1 )
+        {
+            dirbuf[len] = 0;  // does not terminate string ??
+            goto got_path;
+        }
+    }
+# endif
+#endif
+    // The argv[0] method
+    char * arg0p = myargv[0];
+//    GenPrintf(EMSG_debug, "argv[0]=%s\n", arg0p );
+#ifdef LINUX
+    // Linux, FreeBSD, Mac
+    if( arg0p[0] == '/' )
+#else
+    // Windows, DOS, OS2
+    if( arg0p[0] == '\\' )
+#endif
+    {
+        // argv[0] is an absolute path
+        strncpy( dirbuf, arg0p, MAX_WADPATH-1 );
+        dirbuf[MAX_WADPATH-1] = 0;
+        goto got_path;
+    }
+#ifdef LINUX
+    // Linux, FreeBSD, Mac
+    else if( strchr( arg0p, '/' ) )
+#else
+    // Windows, DOS, OS2
+    else if( strchr( arg0p, '/' ) || strchr( arg0p, '\\' ) )
+#endif
+    {
+        // argv[0] is relative to current dir
+        if( defdir )
+        {
+            cat_filename( dirbuf, defdir, arg0p );
+            goto got_path;
+        }
+    }
+    goto failed;
+   
+got_path:
+    // Get only the directory name
+    dnp = dirname( dirbuf );
+    if( dnp == NULL )  goto failed;
+    if( dnp != dirbuf )
+    {
+        cat_filename( dirbuf, "", dnp );
+    }
+    return true;
+
+failed:
+    dirbuf[0] = 0;
+    return false;
+}
+
+
+
+int  I_mkdir(const char * new_dirname, int unixright)
 {
 //[segabor]  ([WDJ] from 143beta_macosx)
 #if defined(LINUX) || defined(__MACH__)
-    return mkdir(dirname, unixright);
+    return mkdir(new_dirname, unixright);
 #else
-    return mkdir(dirname);
+    return mkdir(new_dirname);
 #endif
 }
 

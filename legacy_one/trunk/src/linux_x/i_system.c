@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
+// Portions Copyright (C) 1998-2015 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -131,6 +131,7 @@
 #endif
 #include "i_system.h"
 #include "i_joy.h"
+#include "m_argv.h"
 
 extern void D_PostEvent(event_t*);
 
@@ -829,6 +830,94 @@ char *I_GetUserName(void)
     return NULL;
   return username;
 }
+
+
+// Get the directory of this program.
+//   dirbuf: a buffer of length MAX_WADPATH, 
+// Return true when success, dirbuf contains the directory.
+boolean I_Get_Prog_Dir( char * defdir, /*OUT*/ char * dirbuf )
+{
+    int  len;
+    char * dnp;
+
+#ifdef FREEBSD
+    len = readlink( "/proc/curproc/file", dirbuf, MAX_WADPATH-1 );
+    if( len > 1 )
+    {
+        dirbuf[len] = 0;  // readlink does not terminate string
+        goto got_path;
+    }
+# if 0
+    // Sysctl to get program path.
+    {
+        // FIXME
+        int mib[4];
+        mib[0] = CTL_KERN;
+        mib[1] = KERN_PROC;
+        mib[2] = KERN_PROC_PATHNAME;
+        mib[3] = -1;
+        sysctl(mib, 4, dirbuf, MAX_WADPATH-1, NULL, 0);
+    }
+# endif
+#elif defined( SOLARIS )
+    len = readlink( "/proc/self/path/a.out", dirbuf, MAX_WADPATH-1 );
+    if( len > 1 )
+    {
+        dirbuf[len] = 0;  // readlink does not terminate string
+        goto got_path;
+    }
+#  if 0
+    // [WDJ] Am missing a few details
+    getexecname();
+#  endif
+#else
+    // Linux
+    len = readlink( "/proc/self/exe", dirbuf, MAX_WADPATH-1 );
+    if( len > 1 )
+    {
+        dirbuf[len] = 0;  // readlink does not terminate string
+        goto got_path;
+    }
+#endif
+
+    // The argv[0] method
+    char * arg0p = myargv[0];
+//    GenPrintf(EMSG_debug, "argv[0]=%s\n", arg0p );
+    // Linux, FreeBSD, Mac
+    if( arg0p[0] == '/' )
+    {
+        // argv[0] is an absolute path
+        strncpy( dirbuf, arg0p, MAX_WADPATH-1 );
+        dirbuf[MAX_WADPATH-1] = 0;
+        goto got_path;
+    }
+    // Linux, FreeBSD, Mac
+    else if( strchr( arg0p, '/' ) )
+    {
+        // argv[0] is relative to current dir
+        if( defdir )
+        {
+	    cat_filename( dirbuf, defdir, arg0p );
+	    goto got_path;
+	}
+    }
+    goto failed;
+   
+got_path:
+    // Get only the directory name
+    dnp = dirname( dirbuf );
+    if( dnp == NULL )  goto failed;
+    if( dnp != dirbuf )
+    {
+        cat_filename( dirbuf, "", dnp );
+    }
+    return true;
+
+failed:
+    dirbuf[0] = 0;
+    return false;
+}
+
 
 int  I_mkdir(const char *dirname, int unixright)
 {

@@ -49,7 +49,8 @@ extern tic_t      rendergametic;
 // to make savegamename and directories
 extern char * legacyhome;
 extern int  legacyhome_len;
-extern char *doomwaddir;
+#define MAX_NUM_DOOMWADDIR  28
+extern char *doomwaddir[MAX_NUM_DOOMWADDIR];
 
 extern consvar_t cv_home, cv_doomwaddir, cv_iwad;
 

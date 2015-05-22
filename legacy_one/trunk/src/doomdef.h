@@ -163,15 +163,61 @@
 #define DEFAULTDIR2 "legacy"
 #endif
 
-#if defined PC_DOS || defined WIN32
-#define DEFWADS1  "\\doomwads"
-#define DEFWADS2  "\\games\\doomwads"
-#define DEFHOME   "\\legacyhome"
+#if defined PC_DOS || defined WIN32 || defined OS2
+// HOME is ~
+// Allowed DEFWADS01..DEFWADS21
+#if 1
+#define DEFWADS01  "~\\games\\doom"
+#define DEFWADS02  "~\\games\\doomwads"
+#define DEFWADS03  "~\\games\\doomlegacy\\wads"
 #else
-#define DEFWADS1  "/usr/local/share/games/doomwads"
-#define DEFWADS2  "/usr/local/games/doomwads"
-#define DEFHOME   "/usr/local/games/legacyhome"
+#define DEFWADS01  "games\\doom"
+#define DEFWADS02  "games\\doomwads"
+#define DEFWADS03  "games\\doomlegacy\\wads"
 #endif
+#define DEFWADS04  "\\doomwads"
+#define DEFWADS05  "\\games\\doomwads"
+#define DEFWADS06  "\\games\\doom"
+//#define DEFWADS07  "\\games\\doom"
+//#define DEFWADS08  "\\games\\doom"
+#if defined WIN32 || defined OS2
+#define DEFWADS10  "\\Program Files\\doomlegacy\\wads"
+#endif
+
+// When cannot find user $(HOME), make a home in the executable dir.
+#ifdef PC_DOS
+#define DEFHOME    "DL_HOME"
+#else
+#define DEFHOME    "legacyhome"
+#endif
+//#define LEGACYWADDIR  ""
+
+#else
+// Linux, unix, FreeBSD, Mac
+// HOME is ~
+// Allowed DEFWADS01..DEFWADS21
+#define DEFWADS01  "~/games/doomlegacy/wads"
+#define DEFWADS02  "~/games/doomwads"
+#define DEFWADS03  "~/games/doom"
+#define DEFWADS04  "/usr/local/share/games/doomlegacy/wads"
+#define DEFWADS05  "/usr/local/share/games/doomwads"
+#define DEFWADS06  "/usr/local/share/games/doom"
+#define DEFWADS07  "/usr/local/games/doomlegacy/wads"
+#define DEFWADS08  "/usr/local/games/doomwads"
+#define DEFWADS09  "/usr/share/games/doom"
+#define DEFWADS10  "/usr/share/games/doomlegacy/wads"
+#define DEFWADS11  "/usr/share/games/doomwads"
+#define DEFWADS12  "/usr/games/doomlegacy/wads"
+#define DEFWADS13  "/usr/games/doomwads"
+
+#define DEFWADS16  "~/games/doomlegacy"
+#define DEFWADS17  "/usr/local/share/games/doomlegacy"
+#define DEFWADS18  "/usr/local/games/doomlegacy"
+#define DEFWADS19  "/usr/share/games/doomlegacy"
+#define DEFWADS20  "/usr/games/doomlegacy"
+
+// Linux, When cannot find user $(HOME), make a home in the executable dir.
+#define DEFHOME    "legacyhome"
 
 #if defined(__APPLE__) && defined(__MACH__)
 // Use defined Mac resources (app folder)
@@ -180,9 +226,18 @@
 // Legacy wad for Mac
 //#define  LEGACYWADDIR  ".app"
 #define  LEGACYWADDIR  "/usr/local/share/games/doomlegacy"
+
 #else
+// Linux, FreeBSD
 #define  LEGACYWADDIR  "/usr/local/share/games/doomlegacy"
+
 #endif
+
+#endif
+
+// How many subdirectories deep to search.
+#define  GAME_SEARCH_DEPTH   3
+#define  IWAD_SEARCH_DEPTH   5
 
 // =========================================================================
 
