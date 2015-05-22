@@ -293,6 +293,6 @@ void I_ShutdownInput(void)
 
 void I_StartTic(void)
 {
-    if (!graphics_started)
+    if ( graphics_state == VGS_off )
         return;
 }

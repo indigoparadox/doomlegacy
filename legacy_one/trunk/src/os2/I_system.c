@@ -75,7 +75,6 @@ JoyType_t Joystick;
 byte    mb_used = 12;
 
 // Do not execute cleanup code more than once. See Shutdown_xxx() routines.
-byte    graphics_started=0;
 byte    keyboard_started=0;
 byte    sound_started=0;
 boolean timer_started = false;
@@ -161,6 +160,8 @@ ULONG  I_GetTime (void)
 
 
 
+#if 0
+//[WDJ] Apparently abandoned
 //
 // I_Init
 //
@@ -170,7 +171,10 @@ void I_Init (void)
     I_InitMusic();
     //  I_InitGraphics();
 }
+#endif
 
+#if 0
+// Replaced by D_Quit_Save, I_Quit_System
 //
 // I_Quit
 //
@@ -208,6 +212,7 @@ void I_Quit (void)
    //_endthread();
    exit(0);
 }
+#endif
 
 // sleeps for the given amount of milliseconds
 void I_Sleep(unsigned int ms)
@@ -345,7 +350,9 @@ void I_OsPolling (void)
 //
 // I_Error
 //
+#if 0
 extern boolean demorecording;
+#endif
 
 void I_Error (char *error, ...)
 {
@@ -363,6 +370,9 @@ void I_Error (char *error, ...)
                   0, MB_OK | MB_INFORMATION );
     va_end (argptr);
 
+#if 1
+    D_Quit_Save( QUIT_panic );  // No save, safe shutdown
+#else
     //added:18-02-98: save one time is enough!
     //if (!errorcount)
     {
@@ -379,8 +389,15 @@ void I_Error (char *error, ...)
     I_Sleep( 3000 );  // to see some messages
     // shutdown everything that was started !
     I_ShutdownSystem();
+#endif
 
     exit(-1);
+}
+
+// The final part of I_Quit, system dependent.
+void I_Quit_System (void)
+{
+    exit(0);
 }
 
 
@@ -413,6 +430,8 @@ void I_AddExitFunc(void (*func)())
 }
 
 
+#if 0
+// Unused
 //  Removes a function from the list that need to be called by I_SystemShutdown().
 //
 void I_RemoveExitFunc(void (*func)())
@@ -430,6 +449,7 @@ void I_RemoveExitFunc(void (*func)())
         }
     }
 }
+#endif
 
 
 //  This stuff should get rid of the exception and page faults when
@@ -439,7 +459,6 @@ void  I_StartupSystem(void)
 {
 
     // some 'more globals than globals' things to initialize here ?
-    graphics_started = false;
     keyboard_started = false;
     sound_started = false;
     timer_started = false;
@@ -455,6 +474,12 @@ void  I_StartupSystem(void)
     signal(SIGINT , signal_handler);
 #endif
 
+}
+
+// Shutdown joystick and other interfaces, before I_ShutdownGraphics.
+void I_Shutdown_IO(void)
+{
+//    I_ShutdownJoystick();
 }
 
 //  Closes down everything. This includes restoring the initial

@@ -1,3 +1,17 @@
+//-----------------------------------------------------------------------------
+//
+// $Id$
+//
+// As Modifified: Copyright 2015 by Doom Legacy Team
+// Incorporated into the Doom Legacy program which is under
+// GNU General Public License.
+// Original is copyright and available under its original terms.
+//
+// DESCRIPTION:
+//      Quit game final screen text.
+//
+//-----------------------------------------------------------------------------
+
 /*
  * Function to write the Doom end message text
  *
@@ -14,13 +28,15 @@
 #include "w_wad.h"
 #include "z_zone.h"
 #include "m_argv.h"
-#include "endtxt.h"
 
-void ShowEndTxt( void )
+// [WDJ] Changed to public interface name.
+// Original name was ShowEndText.
+void I_Show_EndText( uint16_t * text )
 {
 	int i, j;
 	int att = 0;
 	int nlflag = 1;
+#if 0
 	unsigned short *text;
 //	char *col;
 
@@ -39,6 +55,7 @@ void ShowEndTxt( void )
 
 	/* get the lump with the text */
 	text = W_CacheLumpNum(W_GetNumForName("ENDOOM"), PU_CACHE);
+#endif
 
 	/* print 80x25 text and deal with the attributes too */
 	for (i=1; i<=80*25; i++) {

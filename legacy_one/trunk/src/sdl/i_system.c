@@ -103,8 +103,6 @@
 #include "i_joy.h"
 #include "m_argv.h"
 
-#include "endtxt.h"
-
 
 extern void D_PostEvent(event_t*);
 
@@ -207,7 +205,7 @@ static int lastmousex = 0;
 static int lastmousey = 0;
 
 #ifdef LMOUSE2
-extern void I_GetMouse2Event(void);
+static void I_GetMouse2Event(void);
 #endif
 
 // current modifier key status
@@ -396,7 +394,7 @@ void I_GetEvent(void)
 
 // [WDJ] 8/2012 Grab mouse re-enabled as option menu item.
 
-static void doGrabMouse(void)
+static void I_GrabMouse(void)
 {
   if( cv_grabinput.value && !devparm )
   {
@@ -411,7 +409,7 @@ static void doGrabMouse(void)
   }
 }
 
-void doUngrabMouse(void)
+void I_UngrabMouse(void)
 {
   if(SDL_GRAB_ON == SDL_WM_GrabInput(SDL_GRAB_QUERY))
   {
@@ -443,7 +441,7 @@ void I_StartupMouse( boolean play_mode )
         mouse_y_min = (vid.height * 64) >> 8;
         mouse_y_max = vid.height - mouse_y_min;
 
-        doGrabMouse();
+        I_GrabMouse();
     }
     else
     {
@@ -453,14 +451,14 @@ void I_StartupMouse( boolean play_mode )
         mouse_y_min = -1;
         mouse_y_max = 20000;
 
-        doUngrabMouse();
+        I_UngrabMouse();
     }
     return;
 }
 
 
 /// Initialize joysticks and print information.
-void I_JoystickInit(void)
+static void I_JoystickInit(void)
 {
   // Joystick subsystem was initialized at the same time as video,
   // because otherwise it won't work. (don't know why, though ...)
@@ -490,7 +488,7 @@ void I_JoystickInit(void)
 
 
 /// Close all joysticks.
-void I_ShutdownJoystick(void)
+static void I_ShutdownJoystick(void)
 {
   CONS_Printf("Shutting down joysticks.\n");
   int i;
@@ -514,7 +512,8 @@ void I_SysInit(void)
   if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0)
   {
       CONS_Printf(" Couldn't initialize SDL: %s\n", SDL_GetError());
-      I_Quit();
+      D_Quit_Save( QUIT_shutdown );
+      I_Quit_System();
   }
 
   // Window title
@@ -533,7 +532,7 @@ void I_SysInit(void)
 //
 void I_OsPolling(void)
 {
-  if (!graphics_started)
+  if ( graphics_state == VGS_off )
     return;
 
   I_GetEvent();
@@ -545,7 +544,8 @@ void I_OsPolling(void)
 //
 // I_GetMouse2Event
 //
-void I_GetMouse2Event() {
+static void I_GetMouse2Event()
+{
   static unsigned char mdata[5];
   static int i = 0,om2b = 0;
   int di,j,mlp,button;
@@ -600,7 +600,8 @@ void I_GetMouse2Event() {
 //
 // I_ShutdownMouse2
 //
-void I_ShutdownMouse2(void) {
+static void I_ShutdownMouse2(void)
+{
   if(fdmouse2!=-1) close(fdmouse2);
   mouse2_started = 0;
 }
@@ -610,7 +611,8 @@ void I_ShutdownMouse2(void) {
 //
 // I_StartupMouse2
 // 
-void I_StartupMouse2 (void) {
+void I_StartupMouse2 (void)
+{
 #ifdef LMOUSE2
   struct termios m2tio;
   int i,dtr,rts;
@@ -707,17 +709,19 @@ void I_Sleep(unsigned int ms)
   SDL_Delay(ms);
 }
 
+#if 0
+// Replaced by D_Quit_Save, I_Quit_System
 //
 // I_Quit
 //
 void I_Quit (void)
 {
-  // prevent recursive I_Quit()
-  static int quitting = 0;
+    // prevent recursive I_Quit()
+    static byte quitting = 0;
 
-  if (quitting) return;
+    if (quitting)   return;
+    quitting = 1;
 
-  quitting = 1;
   //added:16-02-98: when recording a demo, should exit using 'q' key,
   //        but sometimes we forget and use 'F10'.. so save here too.
     if (demorecording)
@@ -734,6 +738,12 @@ void I_Quit (void)
     I_ShutdownSystem();
     printf("\r");
     ShowEndTxt();
+}
+#endif
+
+// The final part of I_Quit, system dependent.
+void I_Quit_System (void)
+{
     exit(0);
 }
 
@@ -741,7 +751,9 @@ void I_Quit (void)
 //
 // I_Error
 //
+#if 0
 extern boolean demorecording;
+#endif
 
 void I_Error (const char *error, ...)
 {
@@ -756,6 +768,9 @@ void I_Error (const char *error, ...)
 
     fflush( stderr );
 
+#if 1
+    D_Quit_Save( QUIT_panic );  // No save, safe shutdown
+#else
     // Shutdown. Here might be other errors.
     if (demorecording)
         G_CheckDemoStatus();
@@ -767,6 +782,7 @@ void I_Error (const char *error, ...)
     I_ShutdownGraphics();
     // shutdown everything else which was registered
     I_ShutdownSystem();
+#endif
 
     exit(-1);
 }
@@ -793,6 +809,8 @@ void I_AddExitFunc(void (*func)(void))
 }
 
 
+#if 0
+// Unused
 //
 //  Removes a function from the list that need to be called by
 //   I_SystemShutdown().
@@ -811,6 +829,13 @@ void I_RemoveExitFunc(void (*func)(void))
          break;
       }
    }
+}
+#endif
+
+// Shutdown joystick and other interfaces, before I_ShutdownGraphics.
+void I_Shutdown_IO(void)
+{
+    I_ShutdownJoystick();
 }
 
 //

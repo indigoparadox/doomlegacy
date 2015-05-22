@@ -583,7 +583,7 @@ int VID_SetMode(modenum_t modenum)
     GenPrintf( EMSG_info, "VID_SetMode(%s,%i)\n",
 	       modetype_string[modenum.modetype], modenum.index);
 
-    doUngrabMouse();
+    I_UngrabMouse();
 
     vid.recalc = true;
 
@@ -647,7 +647,7 @@ boolean  have_voodoo = false;
 
 // Have to determine how to detect a voodoo card
 // If anyone ever tries a voodoo card again, they will have to fix this.
-boolean detect_voodoo( void )
+static boolean detect_voodoo( void )
 {
     char vb[1024];
     SDL_VideoDriverName( vb, 1022 );
@@ -665,14 +665,15 @@ void I_StartupGraphics( void )
 
     request_bitpp = 8;
    
+    graphics_state = VGS_startup;
     if( VID_SetMode( initialmode ) <= 0 )
        goto abort_error;
 
     SDL_ShowCursor(SDL_DISABLE);
     I_StartupMouse( false );
-//    doUngrabMouse();
+//    I_UngrabMouse();
 
-    graphics_started = 1;
+    graphics_state = VGS_active;
     return;
 
 abort_error:
@@ -906,7 +907,7 @@ found_modes:
     }
     I_StartupMouse( false );
 
-    graphics_started = 1;
+    graphics_state = VGS_fullactive;
 
 #if defined(MAC_SDL) && defined( DEBUG_MAC )
     SDL_Delay( 4 * 1000 );  // [WDJ] DEBUG: to see if errors are due to startup or activity
@@ -922,8 +923,10 @@ abort_error:
 void I_ShutdownGraphics()
 {
     // was graphics initialized anyway?
-    if (!graphics_started)
+    if( graphics_state <= VGS_shutdown )
         return;
+
+    graphics_state = VGS_shutdown;  // to catch some repeats due to errors
 
     if(render_soft == rendermode)
     {
@@ -937,7 +940,7 @@ void I_ShutdownGraphics()
     {
         OglSdlShutdown();
     }
-    graphics_started = 0;
+    graphics_state = VGS_off;
 
 #if defined(MAC_SDL) && defined( DEBUG_MAC )
     GenPrintf( EMSG_info,"SDL_Quit()\n");  // [WDJ] DEBUG:

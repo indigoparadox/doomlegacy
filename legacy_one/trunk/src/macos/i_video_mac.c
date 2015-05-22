@@ -237,7 +237,7 @@ int VID_SetMode(modenum_t modenum)
 {
     boolean set_fullscreen = (modenum.modetype == MODE_fullscreen);
 
-    if (!graphics_started)
+    if ( graphics_state == VGS_off )
         cv_scr_depth.value = 16;            // quick hack as config hasn't been parsed
                                             // (don't want to assume 32 bit available)
     if (cv_scr_depth.value<16)
@@ -309,13 +309,15 @@ void I_StartupGraphics( void )
     modenum_t  initialmode = {MODE_window,0};  // the initial mode
     // pre-init by V_Init_VideoControl
 
+    graphics_state = VGS_startup;
+
     I_StartupMouse( false );
 
     VID_PrepareModeList();
 
     if( Set_VidMode( initialmode ) < 0 )   goto abort_error
    
-    graphics_started = 1;
+    graphics_state = VGS_active;
     if( verbose )
         GenPrintf(EMSG_ver, "StartupGraphics completed\n" );
     return;
@@ -359,7 +361,7 @@ void I_RequestFullGraphics( byte select_fullscreen )
 
     VID_SetMode( initialmode );
 
-    graphics_started = 1;
+    graphics_state = VGS_fullactive;
 
     if( verbose )
         GenPrintf(EMSG_ver, "RequestFullGraphics completed\n" );
@@ -369,12 +371,15 @@ void I_RequestFullGraphics( byte select_fullscreen )
 
 void I_ShutdownGraphics(void)
 {
-        // was graphics initialized anyway?
-    if (!graphics_started)
-            return;
+    if( graphics_state <= VGS_shutdown )
+        return;
+
+    graphics_state = VGS_shutdown;  // to catch some repeats due to errors
 
     CONS_Printf("I_ShutdownGraphics\n");
     OglMacShutdown();
     DisposeWindow(mainWindow);
     ShowCursor();
+
+    graphics_state = VGS_off;
 }

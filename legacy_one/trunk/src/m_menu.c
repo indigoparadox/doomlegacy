@@ -3729,7 +3729,7 @@ void M_QuitResponse(int ch)
             while (dlyd_time > I_GetTime()) ;
         }
     }
-    I_Quit ();
+    I_Quit();  // No return
 }
 
 

@@ -256,8 +256,10 @@ void I_ShutdownGraphics (void)
 {
     __dpmi_regs r;
 
-    if( !graphics_started )
+    if( graphics_state <= VGS_shutdown )
         return;
+
+    graphics_state = VGS_shutdown;  // to catch some repeats due to errors
 
     // free the last video mode screen buffers
     if (vid.buffer)
@@ -280,7 +282,7 @@ void I_ShutdownGraphics (void)
        __dpmi_int(0x10,&r);
     }
 
-    graphics_started = false;
+    graphics_state = VGS_off;
 }
 
 
@@ -338,6 +340,7 @@ void I_StartupGraphics( void )
     modenum_t initial_mode = {MODE_window, 0};
     // pre-init by V_Init_VideoControl
 
+    graphics_state = VGS_startup;
     // remember the exact screen mode we were...
     I_SaveOldVideoMode();
    
@@ -359,7 +362,7 @@ void I_StartupGraphics( void )
         if( VID_SetMode ( initial_mode ) < 0 )  goto abort_error;
     };
 
-    graphics_started = true;
+    graphics_state = VGS_active;
     return;
 
 abort_error:
@@ -383,6 +386,7 @@ void I_RequestFullGraphics( byte select_fullscreen )
     initial_mode = VID_GetModeForSize( vid.width, vid.height,
 				       (select_fullscreen ? MODE_fullscreen: MODE_window))
     VID_SetMode ( initial_mode );
+    graphics_state = VGS_fullactive;
 }
 
 // for debuging

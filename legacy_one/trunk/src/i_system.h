@@ -45,8 +45,17 @@
   // ticcmd_t
 #include "d_event.h"
 
-
-extern byte graphics_started;
+// [WDJ] To inform and control graphics startup and shutdown.
+typedef enum {
+   VGS_off,  // Unusable
+   // Some querys allowed, but not full graphics.
+   VGS_shutdown, // Mostly used to detect shutdown loops due to errors.
+   VGS_startup,
+   // Usable graphics for most of program.
+   VGS_active,  // have minimal graphics
+   VGS_fullactive  // have full graphics
+} graphics_state_e;
+extern byte graphics_state;  // graphics_state_e
 
 
 // system initialization
@@ -97,7 +106,19 @@ ticcmd_t* I_BaseTiccmd (void);
 void I_Sleep(unsigned int ms);
 
 // Called by M_Responder when quit is selected, return code 0.
+typedef enum {
+   QUIT_normal,  // commanded quit
+   QUIT_shutdown,  // error quit
+   QUIT_panic    // I_Error or worse
+} quit_severity_e;
+// Quit without error (exit 0), no return, QUIT_normal.
 void I_Quit (void);
+// The system independent quit and save config.
+void D_Quit_Save ( quit_severity_e severity );
+// The final part of I_Quit, system dependent.
+void I_Quit_System (void);
+// Show the EndText, after the graphics are shutdown.
+void I_Show_EndText( uint16_t * endtext );
 
 void I_Error (const char *error, ...);
 
@@ -137,6 +158,9 @@ boolean I_Get_Prog_Dir( char * defdir, /*OUT*/ char * dirbuf );
 //   play_mode : enable mouse containment during play
 void I_StartupMouse( boolean play_mode );
 void I_StartupMouse2(void);
-void doUngrabMouse(void);
+void I_UngrabMouse(void);
+
+// Shutdown joystick and other interfaces, before I_ShutdownGraphics.
+void I_Shutdown_IO(void);
 
 #endif

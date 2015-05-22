@@ -124,8 +124,6 @@
 #include "g_game.h"
 #include "g_input.h"
 
-#include "endtxt.h"
-
 #ifdef __GNUG__
 #pragma implementation "i_system.h"
 #endif
@@ -297,12 +295,12 @@ void I_GetJoyEvent(void)
   }
 }
 
-void I_ShutdownJoystick(void)
+static void I_ShutdownJoystick(void)
 {
   int i;
   for( i=0; i<num_joysticks; i++ )
   {
-      if(joystk[i].fd != -1) {
+      if(joystk[i].fd != -1)
 	 close(joystk[i].fd);
       joystk[i].fd = -1;
   }
@@ -652,6 +650,8 @@ void I_Init (void)
 }
 #endif
 
+#if 0
+// Replaced by D_Quit_Save, I_Quit_System
 //
 // I_Quit
 //
@@ -679,6 +679,7 @@ void I_Quit (void)
     ShowEndTxt();
     exit(0);
 }
+#endif
 
 // sleeps for the given amount of milliseconds
 void I_Sleep(unsigned int ms)
@@ -718,7 +719,9 @@ byte*   I_AllocLow(int length)
 //
 // I_Error
 //
+#if 0
 extern boolean demorecording;
+#endif
 
 void I_Error (const char *error, ...)
 {
@@ -733,6 +736,9 @@ void I_Error (const char *error, ...)
 
     fflush( stderr );
 
+#if 1
+    D_Quit_Save( QUIT_panic );  // No save, safe shutdown
+#else
     // Shutdown. Here might be other errors.
     if (demorecording)
         G_CheckDemoStatus();
@@ -744,9 +750,18 @@ void I_Error (const char *error, ...)
     I_ShutdownGraphics();
     // shutdown everything else which was registered
     I_ShutdownSystem();
+#endif
     
     exit(-1);
 }
+
+// The final part of I_Quit, system dependent.
+void I_Quit_System (void)
+{
+    exit(0);
+}
+
+   
 
 #define MAX_QUIT_FUNCS     16
 typedef void (*quitfuncptr)();
@@ -770,6 +785,8 @@ void I_AddExitFunc(void (*func)())
 }
 
 
+#if 0
+// Unused
 //
 //  Removes a function from the list that need to be called by
 //   I_SystemShutdown().
@@ -789,7 +806,16 @@ void I_RemoveExitFunc(void (*func)())
       }
    }
 }
+#endif
 
+// Shutdown joystick and other interfaces, before I_ShutdownGraphics.
+void I_Shutdown_IO(void)
+{
+#ifdef LJOYSTICK
+    I_ShutdownJoystick();
+#endif
+}
+     
 //
 //  Closes down everything. This includes restoring the initial
 //  pallete and video mode, and removing whatever mouse, keyboard, and

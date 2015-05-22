@@ -174,14 +174,16 @@ void I_SetPalette (RGBA_t* palette)
 //
 void I_ShutdownGraphics(void)
 {
-   printf( "I_ShutdownGraphics\n");
+   if( graphics_state <= VGS_shutdown )
+       return;
 
-   if (!graphics_started)
-      return;
+   graphics_state = VGS_shutdown;  // to catch some repeats due to errors
+
+   printf( "I_ShutdownGraphics\n");
 
    ShutdownDIVE( pmData);
 
-   graphics_started = false;
+   graphics_state = VGS_off;
 }
 
 //
@@ -192,6 +194,8 @@ void I_StartupGraphics(void)
 {
     modenum_t  initialmode = {MODE_window,0};  // the initial mode
     // pre-init by V_Init_VideoControl
+
+    graphics_state = VGS_startup;
 
     if (M_CheckParm( "-mgl"))
     {
@@ -208,7 +212,7 @@ void I_StartupGraphics(void)
     CV_RegisterVar (&cv_vidwait);
     //added:03-01-98: register exit code for graphics
     I_AddExitFunc(I_ShutdownGraphics);
-    graphics_started = true;
+    graphics_state = VGS_active;
 
     // Has fixed vidmode list
     // set the default video mode
@@ -233,8 +237,8 @@ void I_RequestFullGraphics( byte select_fullscreen )
     initialmode = VID_GetModeForSize( vid.width, vid.height, select_fullscreen );
     VID_SetMode( initialmode );
 
-    graphics_started = true;
     vid.recalc = true;
+    graphics_state = VGS_fullactive;
 
     if( verbose )
         GenPrintf(EMSG_ver, "StartupGraphics completed\n" );

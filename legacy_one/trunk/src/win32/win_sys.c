@@ -83,7 +83,7 @@
 #include "../i_video.h"
 #include "../i_sound.h"
 #include "../i_system.h"
-  // graphics_started
+  // graphics_state
 #include "../i_joy.h"
 
 #include "../m_misc.h"
@@ -448,8 +448,10 @@ void I_StartupTimer(void)
 //                                        EXIT CODE, ERROR HANDLING
 // ===========================================================================
 
+#if 0
 int     errorcount = 0;  // control recursive errors
 int shutdowning= false;
+#endif
 
 #if defined(NDEBUG)
 //
@@ -543,6 +545,7 @@ void I_Error (const char *error, ...)
     va_list     argptr;
     char        txt[512];
 
+#if 0
     // added 11-2-98 recursive error detecting
     if(shutdowning)
     {
@@ -561,6 +564,7 @@ void I_Error (const char *error, ...)
         }
     }
     shutdowning=true;
+#endif
         
     // put message to stderr
     va_start (argptr,error);
@@ -570,6 +574,9 @@ void I_Error (const char *error, ...)
     CONS_Printf("I_Error(): %s\n",txt);
     //wsprintf (stderr, "I_Error(): %s\n", txt);
         
+#if 1
+    D_Quit_Save( QUIT_panic );  // No save, safe shutdown
+#else
     //added:18-02-98: save one time is enough!
     if (!errorcount)
     {
@@ -586,6 +593,7 @@ void I_Error (const char *error, ...)
     I_Sleep( 3000 );  // to see some messages
     // shutdown everything that was started !
     I_ShutdownSystem();
+#endif
 
 #ifdef LOGMESSAGES
     if( logstream )
@@ -602,6 +610,8 @@ void I_Error (const char *error, ...)
 }
 
 
+#if 0
+// Replaced by D_Quit_Save, I_Quit_System
 //
 // I_Quit : shutdown everything cleanly, in reverse order of Startup.
 //
@@ -643,7 +653,26 @@ void I_Quit (void)
     fflush(stderr);
     exit(0);
 }
+#endif
 
+// The final part of I_Quit, system dependent.
+void I_Quit_System (void)
+{
+#ifdef LOGMESSAGES
+    if( logstream )
+    {
+        fprintf (logstream,"I_Quit(): end of logstream.\n");
+        fclose( logstream );
+        logstream = NULL;
+    }
+#endif
+
+    // cause an error to test the exception handler
+    //i = *((unsigned long *)0x181596);
+
+    fflush(stderr);
+    exit(0);
+}
 
 
 
@@ -705,6 +734,8 @@ void I_AddExitFunc(void (*func)())
 }
 
 
+#if 0
+// Unused
 //  Removes a function from the list that need to be called by I_SystemShutdown().
 //
 void I_RemoveExitFunc(void (*func)())
@@ -722,6 +753,7 @@ void I_RemoveExitFunc(void (*func)())
         }
     }
 }
+#endif
 
 
 // ===========================================================================
@@ -2098,7 +2130,6 @@ void I_StartupSystem(void)
     HRESULT hr;
 
     // some 'more globals than globals' things to initialize here ?
-    graphics_started = false;
     keyboard_started = false;
     sound_started = false;
     timer_started = false;
@@ -2159,6 +2190,12 @@ void I_StartupSystem(void)
 }
 
 
+// Shutdown joystick and other interfaces, before I_ShutdownGraphics.
+void I_Shutdown_IO(void)
+{
+//    I_ShutdownJoystick();
+}
+
 //  Closes down everything. This includes restoring the initial
 //  palette and video mode, and removing whatever mouse, keyboard, and
 //  timer routines have been installed.
@@ -2192,6 +2229,17 @@ void I_SysInit(void)
     // d_main will next call I_StartupGraphics
 }
    
+
+// Show the EndText, after the graphics are shutdown.
+void I_Show_EndText( uint16_t * text )
+{
+#ifdef WIN98
+    puttext(1,1,80,25, (byte*)text);
+    gotoxy(1,24);
+    fflush(stderr);
+#endif
+}
+
 
 // ---------------
 // I_SaveMemToFile

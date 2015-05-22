@@ -1033,7 +1033,7 @@ static void enableScreensaver()
 
 }
 
-static void doGrabMouse(void)
+static void I_GrabMouse(void)
 {
     if(!X_display || cv_usemouse.value == 0 || M_CheckParm("-nomouse"))
         return;
@@ -1067,7 +1067,7 @@ static void doGrabMouse(void)
     return;
 }
 
-void doUngrabMouse(void)
+void I_UngrabMouse(void)
 {
     if(!X_display)
         return;
@@ -1095,15 +1095,15 @@ void I_StartupMouse( boolean play_mode )
 {
     if( ( vidmode_active && play_mode )
        || (haveVoodoo && !M_CheckParm("-winvoodoo"))) {
-        doGrabMouse();
+        I_GrabMouse();
     }
     else
     {
         if( cv_usemouse.value && play_mode ) {
-            doGrabMouse();
+            I_GrabMouse();
         }
         else {
-            doUngrabMouse();
+            I_UngrabMouse();
         }
     }
     return;
@@ -1642,7 +1642,7 @@ done:
 
 static void destroyWindow(void)
 {
-    doUngrabMouse();
+    I_UngrabMouse();
 
     if(rendermode==render_soft)
     {
@@ -1914,9 +1914,9 @@ static int createWindow(boolean set_fullscreen, modenum_t modenum)
       vid.fullscreen = set_fullscreen;
 
       // added for 1.27 19990220 by Kin
-      graphics_started = 1;
+      graphics_state = VGS_active;
     } else {
-      graphics_started = ((X_mainWindow==0)?0:1);
+      graphics_state = ((X_mainWindow==0)? VGS_off:VGS_active);
     }
     return 1;
    
@@ -2039,6 +2039,8 @@ void I_StartupGraphics(void)
     modenum_t  initialmode = {MODE_window,0};  // the initial mode
     // pre-init by V_Init_VideoControl
     char  *displayname;
+   
+    graphics_state = VGS_startup;
 
     // FIXME: catch other signals as well?
     signal(SIGINT, (void (*)(int)) I_Quit);
@@ -2076,10 +2078,11 @@ void I_StartupGraphics(void)
     if( createWindow( false, initialmode) < 0 )  goto abort_error;
    
     // startupscreen does not need a grabbed mouse
-    doUngrabMouse();
+    I_UngrabMouse();
 
     vid.recalc = true;
-    graphics_started = 1;
+    graphics_state = VGS_active;
+
     if( verbose )
         GenPrintf(EMSG_ver, "StartupGraphics completed\n" );
     return;
@@ -2098,6 +2101,7 @@ void I_RequestFullGraphics( byte select_fullscreen )
     void *dlptr;
 
     destroyWindow();
+    graphics_state = VGS_startup;
 
     // setup vid 19990110 by Kin
 
@@ -2250,10 +2254,10 @@ void I_RequestFullGraphics( byte select_fullscreen )
     createWindow( select_fullscreen, initialmode );
 
     // startupscreen does not need a grabbed mouse
-    doUngrabMouse();
+    I_UngrabMouse();
 
     vid.recalc = true;
-    graphics_started = 1;
+    graphics_state = VGS_fullactive;
 
     if( verbose )
         GenPrintf(EMSG_ver, "RequestFullGraphics completed\n" );
@@ -2266,20 +2270,26 @@ abort_error:
 
 void I_ShutdownGraphics(void)
 {
-  // was graphics initialized anyway?
-  if (!X_display)
+    if( graphics_state <= VGS_shutdown )
         return;
 
-  destroyWindow();
+    graphics_state = VGS_shutdown;  // to catch some repeats due to errors
 
-  // return to normal mode
-  if (vidmode_ext /*active*/) {
-      XF86VidModeSwitchToMode(X_display, X_screen, vidmodes[0]);
-  }
+    // was graphics initialized anyway?
+    if (!X_display)
+        return;
 
-  if(rendermode != render_soft) {
-      HWD.pfnShutdown();
-  }
+    destroyWindow();
 
-  XCloseDisplay(X_display);
+    // return to normal mode
+    if (vidmode_ext /*active*/) {
+        XF86VidModeSwitchToMode(X_display, X_screen, vidmodes[0]);
+    }
+
+    if(rendermode != render_soft) {
+        HWD.pfnShutdown();
+    }
+
+    XCloseDisplay(X_display);
+    graphics_state = VGS_off;
 }

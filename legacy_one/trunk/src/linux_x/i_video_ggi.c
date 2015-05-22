@@ -376,12 +376,19 @@ void I_SetPalette(RGBA_t* palette)
 
 void I_ShutdownGraphics(void)
 {
+  if( graphics_state <= VGS_shutdown )
+      return;
+
+  graphics_state = VGS_shutdown;  // to catch some repeats due to errors
+
   ggiRemoveFlags(screen, GGIFLAG_ASYNC);
 
   if (vid.buffer)
     free(vid.buffer);
 
   ggiExit();
+   
+  graphics_state = VGS_off;
 }
 
 #define MAX_GGIMODES 19
@@ -461,6 +468,7 @@ found_i:
 void I_StartupGraphics(void)
 {
     // pre-init by V_Init_VideoControl
+  graphics_state = VGS_startup;
 
   if (ggiInit())
     I_Error("Failed to initialise GGI\n");
@@ -471,7 +479,7 @@ void I_StartupGraphics(void)
   // ??? No window mode
   
   vid.recalc = true;
-  graphics_started = 1;
+  graphics_state = VGS_active;
   if( verbose )
       GenPrintf(EMSG_ver, "StartupGraphics completed\n" );
   return;
@@ -487,6 +495,7 @@ void I_RequestFullGraphics( byte select_fullscreen )
   byte  alt_request_bitpp = 0;
   int i;
 
+  graphics_state = VGS_startup;
 
 #ifdef MULTIPLY_ENABLE
   { // Check for screen enlargement
@@ -614,8 +623,9 @@ found_modes:
 
   // Mask events
   ggiSetEventMask(screen, ev_mask);
-  // added for 1.27 19990220 by Kin
-  graphics_started = 1;
+
+  graphics_state = VGS_fullactive;
+
   if( verbose )
         GenPrintf(EMSG_ver, "StartupGraphics completed\n" );
   return;

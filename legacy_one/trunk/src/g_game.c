@@ -3042,7 +3042,7 @@ boolean G_CheckDemoStatus (void)
     if (demoplayback)
     {
         if (singledemo)
-            I_Quit ();
+            I_Quit();  // No return
         G_StopDemo();
         D_AdvanceDemo ();
         return true;
@@ -3057,7 +3057,6 @@ boolean G_CheckDemoStatus (void)
 
         CONS_Printf("\2Demo %s recorded\n",demoname);
         return true;
-        //I_Quit ();
     }
 
     return false;

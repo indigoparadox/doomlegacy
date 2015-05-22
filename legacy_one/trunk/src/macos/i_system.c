@@ -175,7 +175,9 @@ ULONG I_GetFreeMem(ULONG *total)
 	return 0;  // no freemem
 }
 
+#if 0
 static int quiting=0; /* prevent recursive I_Quit() */
+#endif
 
 void I_Tactile(int on,int off,int total )
 {
@@ -248,9 +250,13 @@ void I_Init (void)
     
     I_StartupSound();
     I_InitMusic();
+#if 0   
     quiting = 0;
+#endif
 }
 
+#if 0
+// Replaced by D_Quit_Save, I_Quit_System
 //
 // I_Quit
 //
@@ -275,6 +281,7 @@ void I_Quit (void)
     I_OutputMsg("Nice knowing you...\n");
     ExitToShell();
 }
+#endif
 
 // sleeps for the given amount of milliseconds
 void I_Sleep(unsigned int ms)
@@ -312,6 +319,9 @@ void I_Error (char *error, ...)
         StandardAlert(kAlertStopAlert,"\pError:",(ConstStr255Param)txt,NULL,&res);
     }
 
+#if 1
+    D_Quit_Save( QUIT_panic );  // No save, safe shutdown
+#else
     // Shutdown. Here might be other errors.
     if (demorecording)
         G_CheckDemoStatus();
@@ -325,7 +335,27 @@ void I_Error (char *error, ...)
     
     I_OutputMsg("Error: %s. \n",txt);
     ExitToShell();
+#endif
 }
+
+// The final part of I_Quit, system dependent.
+void I_Quit_System (void)
+{
+    ExitToShell();
+}
+
+// Shutdown joystick and other interfaces, before I_ShutdownGraphics.
+void I_Shutdown_IO(void)
+{
+#ifdef LJOYSTICK
+    I_ShutdownJoystick();
+#endif
+}
+
+void I_ShutdownSystem(void)
+{
+}
+
 
 void I_GetDiskFreeSpace(long long *freespace) {
     // 10MB should be enough

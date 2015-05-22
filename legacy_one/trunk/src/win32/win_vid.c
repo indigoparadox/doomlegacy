@@ -354,7 +354,7 @@ void I_SetPalette (RGBA_t *palette)
         if( palette[7].s.green < 96 )
 	    mainpal[i].peGreen = 96;  // at least get green text on black
 #endif
-        if( graphics_started )
+        if( graphics_state >= VGS_active )
             FDX_SetDDPalette (mainpal);         // set DirectDraw palette
     }
 }
@@ -1028,6 +1028,8 @@ void I_StartupGraphics(void)
     modenum_t initial_mode = {MODE_window, 0};
     // pre-init by V_Init_VideoControl
 
+    graphics_state = VGS_startup;
+
     VID_Init();
 
     COM_AddCommand ("vid_nummodes", VID_Command_NumModes_f);
@@ -1045,7 +1047,7 @@ void I_StartupGraphics(void)
         if( VID_SetMode ( initial_mode ) < 0 )  goto abort_error;
     };
 
-    graphics_started = TRUE;
+    graphics_state = VGS_active;
     return;
 
 abort_error:
@@ -1091,6 +1093,8 @@ void I_RequestFullGraphics( byte select_fullscreen )
     initial_mode = VID_GetModeForSize( vid.width, vid.height,
 		   (select_fullscreen ? MODE_fullscreen: MODE_window));
     VID_SetMode ( initial_mode );
+
+    graphics_state = VGS_fullactive;
 }
 
 
@@ -1100,8 +1104,10 @@ void I_RequestFullGraphics( byte select_fullscreen )
 // ------------------
 void I_ShutdownGraphics (void)
 {
-    if (!graphics_started)
+    if( graphics_state <= VGS_shutdown )
         return;
+
+    graphics_state = VGS_shutdown;  // to catch some repeats due to errors
 
     GenPrintf( EMSG_info, "I_ShutdownGraphics()\n");
 
@@ -1141,7 +1147,7 @@ void I_ShutdownGraphics (void)
         FDX_CloseDirectDraw ();
     }
 
-    graphics_started = FALSE;
+    graphics_state = VGS_off;
 }
 
 

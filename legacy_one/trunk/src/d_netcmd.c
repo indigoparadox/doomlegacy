@@ -910,7 +910,7 @@ void Command_Version_f(void)
 //
 void Command_Quit_f(void)
 {
-    I_Quit();
+    I_Quit();  // No return
 }
 
 void FragLimit_OnChange(void)
