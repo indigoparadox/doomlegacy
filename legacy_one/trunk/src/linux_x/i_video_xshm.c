@@ -1876,7 +1876,7 @@ static int createWindow(boolean set_fullscreen, modenum_t modenum)
                              X_visual,
                              X_visualinfo.depth,
                              ZPixmap,
-                             0,
+                             0,  // offset
                              (char*)malloc(vid.width * vid.height * x_bytepp),
                              vid.width, vid.height,
                              8*x_bytepp,

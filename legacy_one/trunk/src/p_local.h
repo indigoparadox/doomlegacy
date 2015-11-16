@@ -272,9 +272,6 @@ mobj_t *P_SPMAngle ( mobj_t* source, mobjtype_t type, angle_t angle );
 //
 // P_ENEMY
 //
-extern  byte EN_mon_infight;   // monster to monster fighting
-extern  byte EN_mon_coop;  // monster coop
-
 extern  consvar_t cv_monbehavior;
 extern  consvar_t cv_monsterfriction;
 extern  consvar_t cv_doorstuck;

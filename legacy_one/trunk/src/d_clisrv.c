@@ -727,6 +727,7 @@ static void SV_Send_NetWait( void )
 	}
     }
 }
+
 void D_WaitPlayer_Drawer( void )
 {
     WI_draw_wait( num_netnodes, wait_nodes, wait_tics );
