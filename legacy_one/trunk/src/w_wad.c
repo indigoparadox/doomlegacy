@@ -838,7 +838,8 @@ void* W_CacheLumpName ( char* name, int tag )
 
 // Cache the patch with endian conversion
 // [WDJ] Only read patches using this function, hardware render too.
-inline void* W_CachePatchNum_Endian ( int lump, int tag )
+// [WDJ] Removed inline because is also called from in hardware/hw_cache.c.
+void* W_CachePatchNum_Endian ( int lump, int tag )
 {
 // __BIG_ENDIAN__ is defined on MAC compilers, not on WIN, nor LINUX
 #ifdef __BIG_ENDIAN__
