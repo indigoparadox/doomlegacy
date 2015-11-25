@@ -729,7 +729,7 @@ void HWR_WallLighting(vxtx3d_t *wlVerts)
         HWR_SetLight();
 
         // [WDJ] FIXME: Do not know why this is swap, it is not done for corona.
-	// Is hardware little-endian ??
+        // Is hardware little-endian ??
         Surf.FlatColor.rgba = LE_SWAP32(dynlights->p_lspr[j]->dynamic_color);
 #ifdef DL_HIGH_QUALITY
         Surf.FlatColor.s.alpha *= (1-dist_p2d/DL_SQRRADIUS(j));
@@ -795,7 +795,7 @@ void HWR_PlaneLighting(vxtx3d_t *clVerts, int nrClipVerts)
         HWR_SetLight();
 
         // [WDJ] FIXME: Do not know why this is swap, it is not done for corona.
-	// Is hardware little-endian ??
+        // Is hardware little-endian ??
         Surf.FlatColor.rgba = LE_SWAP32(dynlights->p_lspr[j]->dynamic_color);
 #ifdef DL_HIGH_QUALITY
         Surf.FlatColor.s.alpha *= (1-dist_p2d/DL_SQRRADIUS(j));
@@ -828,9 +828,9 @@ void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr)
     //CONS_Printf("sprite (type): %d (%s)\n", spr->type, sprnames[spr->type]);
     p_lspr = t_lspr[spr->mobj->sprite];
     if( (spr->mobj->state >= &states[S_EXPLODE1]
-	 && spr->mobj->state <= &states[S_EXPLODE3])
+         && spr->mobj->state <= &states[S_EXPLODE3])
      || (spr->mobj->state >= &states[S_FATSHOTX1]
-	 && spr->mobj->state <= &states[S_FATSHOTX3]))
+         && spr->mobj->state <= &states[S_FATSHOTX3]))
     {
         p_lspr = &lspr[ROCKETEXP_L];
     }
@@ -842,7 +842,7 @@ void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr)
         switch (p_lspr->type)
         {
             case LIGHT_SPR: 
-	        // dimming with distance
+                // dimming with distance
                 size  = p_lspr->corona_radius  * ((outVerts[0].z+120.0f)/950.0f); // d'ou vienne ces constante ?
                 break;
             case ROCKET_SPR: 
@@ -883,11 +883,11 @@ void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr)
 
         // put light little forward of the sprite so there is no 
         // z-blocking or z-fighting
-	if( cz > 0.5 )  // correction for side drift due to cz change
+        if( cz > 0.5 )  // correction for side drift due to cz change
         {  // -0.75 per unit of cz
-	   cx += cx * ((-6.0f) / cz);
-	   cy += cy * ((-6.0f) / cz);
-	}
+           cx += cx * ((-6.0f) / cz);
+           cy += cy * ((-6.0f) / cz);
+        }
         // need larger value to avoid z-blocking when look down
         cz -= 8.0f;  // larger causes more side-to-side drift
 
@@ -896,7 +896,7 @@ void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr)
         //     sa devrais pas marcher ... comprend pas :(
         //     (...) bon je croit que j'ai comprit il est tout pourit le code ?
         //           car comme l'offset est minime sa ce voit pas !
-	cy += p_lspr->light_yoffset;
+        cy += p_lspr->light_yoffset;
         light[0].x = light[3].x = cx - size;
         light[1].x = light[2].x = cx + size;
         light[0].y = light[1].y = cy - (size*1.33f); 
@@ -973,11 +973,11 @@ void HWR_DrawCoronas( void )
         // put light little forward the sprite so there is no 
         // z-buffer problem (coplanaire polygons)
         // BP: use PF_Decal do not help :(
-	if( cz > 0.5 )  // correction for side drift due to cz change
+        if( cz > 0.5 )  // correction for side drift due to cz change
         {
-	   cx += cx * ((-3.8f) / cz);
-	   cy += cy * ((-3.8f) / cz);
-	}
+           cx += cx * ((-3.8f) / cz);
+           cy += cy * ((-3.8f) / cz);
+        }
         cz = cz - 5.0f; 
 
         light[0].x = light[3].x = cx - size;
@@ -1042,14 +1042,14 @@ void HWR_DL_AddLightSprite(gr_vissprite_t *spr, MipPatch_t *mpatch)
     {
         LIGHT_POS(dynlights->nb).x = FIXED_TO_FLOAT( spr->mobj->x );
         LIGHT_POS(dynlights->nb).y = FIXED_TO_FLOAT( spr->mobj->z )
-	 + FIXED_TO_FLOAT( spr->mobj->height>>1 ) + p_lspr->light_yoffset;
+         + FIXED_TO_FLOAT( spr->mobj->height>>1 ) + p_lspr->light_yoffset;
         LIGHT_POS(dynlights->nb).z = FIXED_TO_FLOAT( spr->mobj->y );
 
         dynlights->mo[dynlights->nb] = spr->mobj;
         if( (spr->mobj->state>=&states[S_EXPLODE1]
-	     && spr->mobj->state<=&states[S_EXPLODE3])
+             && spr->mobj->state<=&states[S_EXPLODE3])
          || (spr->mobj->state>=&states[S_FATSHOTX1]
-	     && spr->mobj->state<=&states[S_FATSHOTX3]))
+             && spr->mobj->state<=&states[S_FATSHOTX3]))
         {
             p_lspr = &lspr[ROCKETEXP_L];
         }
