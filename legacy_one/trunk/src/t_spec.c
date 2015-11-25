@@ -142,14 +142,14 @@ int spec_elseif(boolean lastif)
   {
       // {} braces
       if( !testval )       // test false, skip to end of section
-	fs_src_cp = fs_current_section->end+1;
+        fs_src_cp = fs_current_section->end+1;
   }
   else    // elseif() without {} braces
   {
       if( testval )
       {
-	if(endtoken == num_tokens-1)  goto done;  // nothing to do
-	evaluate_expression(endtoken+1, num_tokens-1);
+        if(endtoken == num_tokens-1)  goto done;  // nothing to do
+        evaluate_expression(endtoken+1, num_tokens-1);
       }
   }
 done:
@@ -227,8 +227,8 @@ void spec_for( void )
       testval = intvalue(eval);
       if( !testval )
       {
-	  // test fail, stop looping
-	  fs_src_cp = fs_current_section->end + 1;
+          // test fail, stop looping
+          fs_src_cp = fs_current_section->end + 1;
       }
   }
   else
