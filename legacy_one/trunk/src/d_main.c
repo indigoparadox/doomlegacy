@@ -1501,6 +1501,7 @@ void IdentifyVersion()
     // GenPrintf(EMSG_debug, "MAX_PATH: %i\n", _MAX_PATH);
 
     boolean  other_names = 0;	// indicates -iwad other names
+    boolean  devgame = false;   // indicates -devgame <game>    
 
     int gamedesc_index = NUM_GDESC; // nothing
     int gmi;
@@ -1584,10 +1585,10 @@ void IdentifyVersion()
     // [WDJ] were too many chained ELSE. Figured it out once and used direct goto.
 
     // [WDJ] Old switches -shdev, -regdev, -comdev are now -devgame <game>
-    // Later is direct test of -devparm
-    devparm = M_CheckParm("-devgame");
+    // Earlier did direct test of -devparm, do not overwrite it.
+    devgame = M_CheckParm("-devgame");
     // [WDJ] search for one of the listed GDESC_ forcing switches
-    if ( devparm || M_CheckParm("-game") )
+    if ( devgame || M_CheckParm("-game") )
     {
         char *temp = M_GetNextParm();
         if( temp == NULL )
@@ -1609,9 +1610,9 @@ void IdentifyVersion()
         gamedesc_index = gmi;
         gamedesc = game_desc_table[gamedesc_index]; // copy the game descriptor
         // handle the recognized special -devgame switch
-        if( devparm )
+        if( devgame )
         {
-            // devparm = true;
+            devparm = true;
 #if 0
             strcpy(configfile, DEVDATA CONFIGFILENAME); // moved
             // [WDJ] Old, irrelevant, and it was interfering with new
@@ -2387,6 +2388,7 @@ restart_command:
 #endif
 
     // Load wad, including the main wad file.
+    // This will read DEH and BEX files.  Need devparm and verbose.
     if( W_InitMultipleFiles(startupwadfiles) == 0 )
     {
        // Some wad failed to load.
