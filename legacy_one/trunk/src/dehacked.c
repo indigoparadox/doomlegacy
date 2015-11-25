@@ -1004,7 +1004,7 @@ static void readtext(myfile_t* f, int len1, int len2 )
     if((len1 <= 6) && (len2 <= 6))  // sound effect names limited to 6 chars
     {
       // these names are strings, so compare them correctly
-      char str1[6];
+      char str1[8];  // make long enough for 0 term too
       strncpy( str1, s, len1 ); // copy name to proper string
       str1[len1] = '\0';
       // sound table

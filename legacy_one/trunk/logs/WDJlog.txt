@@ -4527,3 +4527,11 @@ Show a readable listing of DEH text replacement, for (devparm && verbose).
 ( -devparm -v )
 Make the deh_error function show DEH errors for any of
 devgame, devparm, or v (verbose) switches.
+
+*** W104_deh_text
+patchfile = w104_11_deh_text.patch
+- commit revision 1185
+Text replacement failed when string was 6 chars long because the
+search name str1 corrupted the stack, hitting the deh line buffer.
+Made search name longer to include term 0.
+
