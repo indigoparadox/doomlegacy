@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2012 by DooM Legacy Team.
+// Copyright (C) 1998-2015 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -132,9 +132,11 @@
 //                                                                      DEFINES
 //=============================================================================
 
-#define DL_SQRRADIUS(x)     dynlights->p_lspr[(x)]->dynamic_sqrradius
-#define DL_RADIUS(x)        dynlights->p_lspr[(x)]->dynamic_radius
-#define LIGHT_POS(i)        dynlights->position[(i)]
+// [WDJ] Makes debugging difficult when references like these are hidden.
+// Make them visible in the code.
+//#define DL_SQRRADIUS(x)     dynlights->p_lspr[(x)]->dynamic_sqrradius
+//#define DL_RADIUS(x)        dynlights->p_lspr[(x)]->dynamic_radius
+//#define LIGHT_POS(i)        dynlights->position[(i)]
 
 #define DL_HIGH_QUALITY
 //#define LIGHTMAPFLAGS  (PF_Masked|PF_Clip|PF_NoAlphaTest)  // debug see overdraw
@@ -197,93 +199,87 @@ typedef enum {
     NUMLIGHTS
 } lightspritenum_t;
 
-#define UNDEFINED_SPR   0x0 // actually just for testing
-#define CORONA_SPR      0x1 // a light source which only emit a corona
-#define DYNLIGHT_SPR    0x2 // a light source which is only used for dynamic lighting
-#define LIGHT_SPR       (DYNLIGHT_SPR|CORONA_SPR)
-#define ROCKET_SPR      (DYNLIGHT_SPR|CORONA_SPR|0x10)
-//#define MONSTER_SPR     4
-//#define AMMO_SPR        8
-//#define BONUS_SPR      16
+// Enum type  sprite_light_e  is defined in r_defs.h.
+// It defines SPLGT_xxx for the xxx_SPR names used in scripts.
 
 //Hurdler: now we can change those values via FS :)
 light_t lspr[NUMLIGHTS] = {
     // type       offset x,   y  coronas color, c_size,light color,l_radius, sqr radius computed at init
    // UNDEFINED: 0  
-    { UNDEFINED_SPR,  0.0f,   0.0f,        0x0,  24.0f,        0x0,   0.0f },
+    { SPLGT_none,     0.0f,   0.0f,        0x0,  24.0f,        0x0,   0.0f },
     // weapons
     // PLASMA_L
-    { DYNLIGHT_SPR,   0.0f,   0.0f, 0x60ff7750,  24.0f, 0x20f77760,  80.0f },
+    { SPLGT_dynamic,  0.0f,   0.0f, 0x60ff7750,  24.0f, 0x20f77760,  80.0f },
     // PLASMAEXP_L
-    { DYNLIGHT_SPR,   0.0f,   0.0f, 0x60ff7750,  24.0f, 0x40f77760, 120.0f },
+    { SPLGT_dynamic,  0.0f,   0.0f, 0x60ff7750,  24.0f, 0x40f77760, 120.0f },
     // ROCKET_L
-    {   ROCKET_SPR,   0.0f,   0.0f, 0x606060f0,  20.0f, 0x4020f7f7, 120.0f },
+    { SPLGT_rocket,   0.0f,   0.0f, 0x606060f0,  20.0f, 0x4020f7f7, 120.0f },
     // ROCKETEXP_L
-    { DYNLIGHT_SPR,   0.0f,   0.0f, 0x606060f0,  20.0f, 0x6020f7f7, 200.0f },
+    { SPLGT_dynamic,  0.0f,   0.0f, 0x606060f0,  20.0f, 0x6020f7f7, 200.0f },
     // BFG_L
-    { DYNLIGHT_SPR,   0.0f,   0.0f, 0x6077f777, 120.0f, 0x8060f060, 200.0f },
+    { SPLGT_dynamic,  0.0f,   0.0f, 0x6077f777, 120.0f, 0x8060f060, 200.0f },
     // BFGEXP_L
-    { DYNLIGHT_SPR,   0.0f,   0.0f, 0x6077f777, 120.0f, 0x6060f060, 400.0f },
+    { SPLGT_dynamic,  0.0f,   0.0f, 0x6077f777, 120.0f, 0x6060f060, 400.0f },
 
     // tall lights
     // BLUETALL_L
-    {    LIGHT_SPR,   0.0f,  27.0f, 0x80ff7070,  75.0f, 0x40ff5050, 100.0f },
+    { SPLGT_light,    0.0f,  27.0f, 0x80ff7070,  75.0f, 0x40ff5050, 100.0f },
     // GREENTALL_L
-    {    LIGHT_SPR,   0.0f,  27.0f, 0x5060ff60,  75.0f, 0x4070ff70, 100.0f },
+    { SPLGT_light,    0.0f,  27.0f, 0x5060ff60,  75.0f, 0x4070ff70, 100.0f },
     // REDTALL_L
-    {    LIGHT_SPR,   0.0f,  27.0f, 0x705070ff,  75.0f, 0x405070ff, 100.0f },
+    { SPLGT_light,    0.0f,  27.0f, 0x705070ff,  75.0f, 0x405070ff, 100.0f },
 
     // small lights
     // BLUESMALL_L
-    {    LIGHT_SPR,   0.0f,  14.0f, 0x80ff7070,  60.0f, 0x40ff5050, 100.0f },
+    { SPLGT_light,    0.0f,  14.0f, 0x80ff7070,  60.0f, 0x40ff5050, 100.0f },
     // GREENSMALL_L
-    {    LIGHT_SPR,   0.0f,  14.0f, 0x6070ff70,  60.0f, 0x4070ff70, 100.0f },
+    { SPLGT_light,    0.0f,  14.0f, 0x6070ff70,  60.0f, 0x4070ff70, 100.0f },
     // REDSMALL_L
-    {    LIGHT_SPR,   0.0f,  14.0f, 0x705070ff,  60.0f, 0x405070ff, 100.0f },
+    { SPLGT_light,    0.0f,  14.0f, 0x705070ff,  60.0f, 0x405070ff, 100.0f },
 
     // other lights
     // TECHLAMP_L
-    {    LIGHT_SPR,   0.0f,  33.0f, 0x80ffb0b0,  75.0f, 0x40ffb0b0, 100.0f },
+    { SPLGT_light,    0.0f,  33.0f, 0x80ffb0b0,  75.0f, 0x40ffb0b0, 100.0f },
     // TECHLAMP2_L
-    {    LIGHT_SPR,   0.0f,  26.0f, 0x80ffb0b0,  60.0f, 0x40ffb0b0, 100.0f },
+    { SPLGT_light,    0.0f,  26.0f, 0x80ffb0b0,  60.0f, 0x40ffb0b0, 100.0f },
     // COLUMN_L
-    {    LIGHT_SPR,   3.0f,  19.0f, 0x80b0f0f0,  60.0f, 0x40b0f0f0, 100.0f },
+    { SPLGT_light,    3.0f,  19.0f, 0x80b0f0f0,  60.0f, 0x40b0f0f0, 100.0f },
     // CANDLE_L
-    {    LIGHT_SPR,   0.0f,   6.0f, 0x60b0f0f0,  20.0f, 0x30b0f0f0,  30.0f },
+    { SPLGT_light,    0.0f,   6.0f, 0x60b0f0f0,  20.0f, 0x30b0f0f0,  30.0f },
     // CANDLEABRE_L
-    {    LIGHT_SPR,   0.0f,  30.0f, 0x60b0f0f0,  60.0f, 0x30b0f0f0, 100.0f },
+    { SPLGT_light,    0.0f,  30.0f, 0x60b0f0f0,  60.0f, 0x30b0f0f0, 100.0f },
     
     // monsters
     // REDBALL_L
-    { DYNLIGHT_SPR,   0.0f,   0.0f, 0x606060f0,   0.0f, 0x302070ff, 100.0f },
+    { SPLGT_dynamic,   0.0f,   0.0f, 0x606060f0,   0.0f, 0x302070ff, 100.0f },
     // GREENBALL_L
-    { DYNLIGHT_SPR,   0.0f,   0.0f, 0x6077f777, 120.0f, 0x3060f060, 100.0f },
+    { SPLGT_dynamic,   0.0f,   0.0f, 0x6077f777, 120.0f, 0x3060f060, 100.0f },
     // ROCKET2_L
-    { DYNLIGHT_SPR,   0.0f,   0.0f, 0x606060f0,  20.0f, 0x4020f7f7, 120.0f },
+    { SPLGT_dynamic,   0.0f,   0.0f, 0x606060f0,  20.0f, 0x4020f7f7, 120.0f },
 
     // weapons
     // FX03_L
-    { DYNLIGHT_SPR,   0.0f,   0.0f, 0x6077ff50,  24.0f, 0x2077f760,  80.0f },
+    { SPLGT_dynamic,   0.0f,   0.0f, 0x6077ff50,  24.0f, 0x2077f760,  80.0f },
     // FX17_L
-    { DYNLIGHT_SPR,   0.0f,   0.0f, 0x60ff7750,  24.0f, 0x40f77760,  80.0f },
+    { SPLGT_dynamic,   0.0f,   0.0f, 0x60ff7750,  24.0f, 0x40f77760,  80.0f },
     // FX00_L
-    { DYNLIGHT_SPR,   0.0f,   0.0f, 0x602020ff,  24.0f, 0x302020f7,  80.0f },
+    { SPLGT_dynamic,   0.0f,   0.0f, 0x602020ff,  24.0f, 0x302020f7,  80.0f },
     // FX08_L
-    {   ROCKET_SPR,   0.0f,   0.0f, 0x606060f0,  20.0f, 0x4020c0f7, 120.0f },
+    { SPLGT_rocket,    0.0f,   0.0f, 0x606060f0,  20.0f, 0x4020c0f7, 120.0f },
     // FX04_L
-    {   ROCKET_SPR,   0.0f,   0.0f, 0x606060f0,  20.0f, 0x2020c0f7, 120.0f },
+    { SPLGT_rocket,    0.0f,   0.0f, 0x606060f0,  20.0f, 0x2020c0f7, 120.0f },
     // FX02_L
-    {   ROCKET_SPR,   0.0f,   0.0f, 0x606060f0,  20.0f, 0x1720f7f7, 120.0f },
+    { SPLGT_rocket,    0.0f,   0.0f, 0x606060f0,  20.0f, 0x1720f7f7, 120.0f },
 
     //lights
     // WTRH_L
-    { DYNLIGHT_SPR,   0.0f,  68.0f, 0x606060f0,  60.0f, 0x4020a0f7, 100.0f },
+    { SPLGT_dynamic,   0.0f,  68.0f, 0x606060f0,  60.0f, 0x4020a0f7, 100.0f },
     // SRTC_L
-    { DYNLIGHT_SPR,   0.0f,  27.0f, 0x606060f0,  60.0f, 0x4020a0f7, 100.0f },
+    { SPLGT_dynamic,   0.0f,  27.0f, 0x606060f0,  60.0f, 0x4020a0f7, 100.0f },
     // CHDL_L
-    { DYNLIGHT_SPR,   0.0f,  -8.0f, 0x606060f0,  60.0f, 0x502070f7, 100.0f },
+    { SPLGT_dynamic,   0.0f,  -8.0f, 0x606060f0,  60.0f, 0x502070f7, 100.0f },
     // KFR1_L
-    { DYNLIGHT_SPR,   0.0f,  27.0f, 0x606060f0,  60.0f, 0x4020a0f7, 100.0f },
+    { SPLGT_dynamic,   0.0f,  27.0f, 0x606060f0,  60.0f, 0x4020a0f7, 100.0f },
 };
 
 
@@ -649,23 +645,25 @@ boolean SphereTouchBBox3D(vxtx3d_t *p1, vxtx3d_t *p2, v3d_t *p3, float r)
         minx=maxx;
         maxx=p1->x;
     }
+    if( minx-r > p3->x ) return false;
+    if( maxx+r < p3->x ) return false;
+
     if( miny>maxy )
     {
         miny=maxy;
         maxy=p2->y;
     }
+    if( miny-r > p3->y ) return false;
+    if( maxy+r < p3->y ) return false;
+
     if( minz>maxz )
     {
         minz=maxz;
         maxz=p2->z;
     }
-
-    if( minx-r > p3->x ) return false;
-    if( maxx+r < p3->x ) return false;
-    if( miny-r > p3->y ) return false;
-    if( maxy+r < p3->y ) return false;
     if( minz-r > p3->z ) return false;
     if( maxz+r < p3->z ) return false;
+
     return true;
 }
 
@@ -679,25 +677,32 @@ boolean SphereTouchBBox3D(vxtx3d_t *p1, vxtx3d_t *p2, v3d_t *p3, float r)
 void HWR_WallLighting(vxtx3d_t *wlVerts)
 {
     FSurfaceInfo_t  Surf;
+    light_t *       lsp;  // dynlights lspr
+    v3d_t *         light_pos;
     v3d_t           inter;
     int             i, j;
     float           dist_p2d, d[4], s;
 
     // dynlights->nb == 0 if cv_grdynamiclighting.value is not set
     for (j=0; j<dynlights->nb; j++) {
+        lsp = dynlights->p_lspr[j];
+        light_pos = & dynlights->position[j];
         // check bounding box first
-        if( SphereTouchBBox3D(&wlVerts[2], &wlVerts[0], &LIGHT_POS(j), DL_RADIUS(j))==false )
+        if( SphereTouchBBox3D(&wlVerts[2], &wlVerts[0], light_pos, lsp->dynamic_radius )
+	    ==false )
             continue;
+
         d[0] = wlVerts[2].x - wlVerts[0].x;
         d[1] = wlVerts[2].z - wlVerts[0].z;
-        d[2] = LIGHT_POS(j).x - wlVerts[0].x;
-        d[3] = LIGHT_POS(j).z - wlVerts[0].z;
+        d[2] = light_pos->x - wlVerts[0].x;
+        d[3] = light_pos->z - wlVerts[0].z;
         // backface cull
         if( d[2]*d[1] - d[3]*d[0] < 0 )
             continue;
+
         // check exact distance
-        dist_p2d = HWR_DistP2D(&wlVerts[2], &wlVerts[0],  &LIGHT_POS(j), &inter);
-        if (dist_p2d >= DL_SQRRADIUS(j))
+        dist_p2d = HWR_DistP2D(&wlVerts[2], &wlVerts[0], light_pos, &inter);
+        if (dist_p2d >= lsp->dynamic_sqrradius)
             continue;
 
         d[0] = sqrt((wlVerts[0].x-inter.x)*(wlVerts[0].x-inter.x)+(wlVerts[0].z-inter.z)*(wlVerts[0].z-inter.z));
@@ -717,13 +722,13 @@ void HWR_WallLighting(vxtx3d_t *wlVerts)
         }
         d[2] = d[1]; d[3] = d[0];
 #ifdef DL_HIGH_QUALITY
-        s = 0.5 / DL_RADIUS(j);
+        s = 0.5 / lsp->dynamic_radius;
 #else
-        s = 0.5 / sqrt(DL_SQRRADIUS(j)-dist_p2d);
+        s = 0.5 / sqrt(lsp->dynamic_sqrradius - dist_p2d);
 #endif
         for (i=0; i<4; i++) {
             wlVerts[i].sow = 0.5 + d[i]*s;
-            wlVerts[i].tow = 0.5 + (wlVerts[i].y-LIGHT_POS(j).y)*s*1.2f;
+            wlVerts[i].tow = 0.5 + (wlVerts[i].y - light_pos->y)*s*1.2f;
         }
 
         HWR_SetLight();
@@ -732,7 +737,7 @@ void HWR_WallLighting(vxtx3d_t *wlVerts)
         // Is hardware little-endian ??
         Surf.FlatColor.rgba = LE_SWAP32(dynlights->p_lspr[j]->dynamic_color);
 #ifdef DL_HIGH_QUALITY
-        Surf.FlatColor.s.alpha *= (1-dist_p2d/DL_SQRRADIUS(j));
+        Surf.FlatColor.s.alpha *= (1 - dist_p2d/lsp->dynamic_sqrradius);
 #endif
         if( !dynlights->mo[j]->state )
             return;
@@ -756,6 +761,8 @@ extern FTransform_t atransform;
 void HWR_PlaneLighting(vxtx3d_t *clVerts, int nrClipVerts)
 {
     FSurfaceInfo_t  Surf;
+    light_t *       lsp;  // dynlights lspr
+    v3d_t *         light_pos;
     float           dist_p2d, s;
     int     i, j;
     vxtx3d_t p1,p2;
@@ -768,28 +775,33 @@ void HWR_PlaneLighting(vxtx3d_t *clVerts, int nrClipVerts)
     p1.y=clVerts[0].y;
 
     for (j=0; j<dynlights->nb; j++) {
+        lsp = dynlights->p_lspr[j];
+        light_pos = & dynlights->position[j];
         // BP: The kickass Optimization: check if light touch bounding box
-        if( SphereTouchBBox3D(&p1, &p2, &dynlights->position[j], DL_RADIUS(j))==false )
+        if( SphereTouchBBox3D(&p1, &p2, light_pos, lsp->dynamic_radius)
+	    ==false )
             continue;
+
         // backface cull
         //Hurdler: doesn't work with new TANDL code
         if( (clVerts[0].y > atransform.z)       // true mean it is a ceiling false is a floor
-             ^ (LIGHT_POS(j).y < clVerts[0].y) ) // true mean light is down plane false light is up plane
+             ^ (light_pos->y < clVerts[0].y) ) // true mean light is down plane, false light is up plane
              continue;
-        dist_p2d = (clVerts[0].y-LIGHT_POS(j).y);
+
+        dist_p2d = (clVerts[0].y - light_pos->y);
         dist_p2d *= dist_p2d;
         // done in SphereTouchBBox3D
-        //if (dist_p2d >= DL_SQRRADIUS(j))
+        //if (dist_p2d >= lsp->dynamic_sqrradius)
         //    continue;
         
 #ifdef DL_HIGH_QUALITY
-        s = 0.5f / DL_RADIUS(j);
+        s = 0.5f / lsp->dynamic_radius;
 #else
-        s = 0.5f / sqrt(DL_SQRRADIUS(j)-dist_p2d);
+        s = 0.5f / sqrt(lsp->dynamic_sqrradius - dist_p2d);
 #endif
         for (i=0; i<nrClipVerts; i++) {
-            clVerts[i].sow = 0.5f + (clVerts[i].x-LIGHT_POS(j).x)*s;
-            clVerts[i].tow = 0.5f + (clVerts[i].z-LIGHT_POS(j).z)*s*1.2f;
+            clVerts[i].sow = 0.5f + (clVerts[i].x - light_pos->x)*s;
+            clVerts[i].tow = 0.5f + (clVerts[i].z - light_pos->z)*s*1.2f;
         }
 
         HWR_SetLight();
@@ -798,10 +810,11 @@ void HWR_PlaneLighting(vxtx3d_t *clVerts, int nrClipVerts)
         // Is hardware little-endian ??
         Surf.FlatColor.rgba = LE_SWAP32(dynlights->p_lspr[j]->dynamic_color);
 #ifdef DL_HIGH_QUALITY
-        Surf.FlatColor.s.alpha *= (1-dist_p2d/DL_SQRRADIUS(j));
+        Surf.FlatColor.s.alpha *= (1 - dist_p2d/lsp->dynamic_sqrradius);
 #endif
         if( !dynlights->mo[j]->state )
             return;
+
         // next state is null so fade out with alpha
         if( (dynlights->mo[j]->state->nextstate == S_NULL) )
             Surf.FlatColor.s.alpha *= (float)dynlights->mo[j]->tics/(float)dynlights->mo[j]->state->tics;
@@ -835,24 +848,29 @@ void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr)
         p_lspr = &lspr[ROCKETEXP_L];
     }
 
-    if ( cv_grcoronas.value && (p_lspr->type & CORONA_SPR) ) // it's an object which emits light
+    // Objects which emit light.
+    if ( cv_grcoronas.value && (p_lspr->splgt_flags & SPLGT_corona) )
     {
+        // Sprite has a corona, and coronas are enabled.
         float cx=0.0f, cy=0.0f, cz=0.0f; // gravity center
 
-        switch (p_lspr->type)
+        // Each of these types (flag combinations) has a corona.
+        switch (p_lspr->splgt_flags)
         {
-            case LIGHT_SPR: 
+            case SPLGT_light:
                 // dimming with distance
-                size  = p_lspr->corona_radius  * ((outVerts[0].z+120.0f)/950.0f); // d'ou vienne ces constante ?
+                // d'ou vienne ces constante ?
+                size  = p_lspr->corona_radius  * ((outVerts[0].z+120.0f)/950.0f);
                 break;
-            case ROCKET_SPR: 
+            case SPLGT_rocket:
                 p_lspr->corona_color = (((M_Random()>>1)&0xff)<<24)|0x0040ff;
-                // don't need a break
-            case CORONA_SPR: 
-                size  = p_lspr->corona_radius  * ((outVerts[0].z+60.0f)/100.0f); // d'ou vienne ces constante ?
+                // don't need a break, has corona too
+            case SPLGT_corona:
+                // d'ou vienne ces constante ?
+                size  = p_lspr->corona_radius  * ((outVerts[0].z+60.0f)/100.0f);
                 break;
             default:
-                I_SoftError("HWR_DoCoronasLighting: unknown light type %d", p_lspr->type);
+                I_SoftError("HWR_DoCoronasLighting: unknown light type %x", p_lspr->splgt_flags);
                 return;
         }
         if (size > p_lspr->corona_radius) 
@@ -922,6 +940,7 @@ void HWR_DrawCoronas( void )
     float           size;
     FSurfaceInfo_t  Surf;
     vxtx3d_t        light[4];
+    v3d_t *         light_pos;
     float           cx, cy, cz;
     light_t         * p_lspr;
 
@@ -931,13 +950,14 @@ void HWR_DrawCoronas( void )
     HWR_GetPic(coronalumpnum);  // TODO: use different coronas
     for( j=0;j<dynlights->nb;j++ )
     {
-        cx=LIGHT_POS(j).x;
-        cy=LIGHT_POS(j).y;
-        cz=LIGHT_POS(j).z; // gravity center
+        light_pos = & dynlights->position[j];
+        cx=light_pos->x;
+        cy=light_pos->y;
+        cz=light_pos->z; // gravity center
         p_lspr = dynlights->p_lspr[j];
         
         // it's an object which emits light
-        if ( !(p_lspr->type & CORONA_SPR) )
+        if ( !(p_lspr->splgt_flags & SPLGT_corona) )
             continue;
 
         transform_world_to_gr(&cx,&cy,&cz);
@@ -945,25 +965,26 @@ void HWR_DrawCoronas( void )
         // more realistique corona !
         if( cz>=255*8+250 )
             continue;
+
         Surf.FlatColor.rgba = p_lspr->corona_color;
         if( cz>250.0f )
             Surf.FlatColor.s.alpha = 0xff-((int)cz-250)/8;
         else
             Surf.FlatColor.s.alpha = 0xff;
 
-        switch (p_lspr->type)
+        switch (p_lspr->splgt_flags)
         {
-            case LIGHT_SPR:
+            case SPLGT_light:
                 size  = p_lspr->corona_radius  * ((cz+120.0f)/950.0f); // d'ou vienne ces constante ?
                 break;
-            case ROCKET_SPR:
+            case SPLGT_rocket:
                 Surf.FlatColor.s.alpha = (M_Random()>>1)&0xff;
                 // don't need a break
-            case CORONA_SPR:
+            case SPLGT_corona:
                 size  = p_lspr->corona_radius  * ((cz+60.0f)/100.0f); // d'ou vienne ces constante ?
                 break;
             default:
-                I_SoftError("HWR_DoCoronasLighting: unknown light type %d",p_lspr->type);
+                I_SoftError("HWR_DoCoronasLighting: unknown light type %d",p_lspr->splgt_flags);
                 continue;
         }
         if (size > p_lspr->corona_radius)
@@ -1020,11 +1041,13 @@ void HWR_SetLights(int viewnumber)
 // --------------------------------------------------------------------------
 void HWR_DL_AddLightSprite(gr_vissprite_t *spr, MipPatch_t *mpatch)
 {
-    light_t   *p_lspr;
+    v3d_t *    light_pos;
+    light_t *  p_lspr;
 
     //Hurdler: moved here because it's better ;-)
     if (!cv_grdynamiclighting.value)
         return;
+
 #ifdef PARANOIA
     if(!spr->mobj)
     {
@@ -1034,16 +1057,19 @@ void HWR_DL_AddLightSprite(gr_vissprite_t *spr, MipPatch_t *mpatch)
 #endif
     // check if sprite contain dynamic light
     p_lspr = t_lspr[spr->mobj->sprite];
-    //CONS_Printf("sprite (sprite): %d (%s): %d\n", spr->mobj->sprite, sprnames[spr->mobj->sprite], p_lspr->type);
-    if ( (p_lspr->type&DYNLIGHT_SPR)
-         && ((p_lspr->type!=LIGHT_SPR) || cv_grstaticlighting.value) 
+    //CONS_Printf("sprite (sprite): %d (%s): %d\n", spr->mobj->sprite, sprnames[spr->mobj->sprite], p_lspr->splgt_flags);
+    if ( (p_lspr->splgt_flags & SPLGT_dynamic)
+         && ((p_lspr->splgt_flags!=SPLGT_light) || cv_grstaticlighting.value) 
          && (dynlights->nb < DL_MAX_LIGHT) 
          && spr->mobj->state )
     {
-        LIGHT_POS(dynlights->nb).x = FIXED_TO_FLOAT( spr->mobj->x );
-        LIGHT_POS(dynlights->nb).y = FIXED_TO_FLOAT( spr->mobj->z )
-         + FIXED_TO_FLOAT( spr->mobj->height>>1 ) + p_lspr->light_yoffset;
-        LIGHT_POS(dynlights->nb).z = FIXED_TO_FLOAT( spr->mobj->y );
+        // Create a dynamic light.
+        // Dynamic light position.
+        light_pos = & dynlights->position[ dynlights->nb ];
+        light_pos->x = FIXED_TO_FLOAT( spr->mobj->x );
+        light_pos->y = FIXED_TO_FLOAT( spr->mobj->z )
+	 + FIXED_TO_FLOAT( spr->mobj->height>>1 ) + p_lspr->light_yoffset;
+        light_pos->z = FIXED_TO_FLOAT( spr->mobj->y );
 
         dynlights->mo[dynlights->nb] = spr->mobj;
         if( (spr->mobj->state>=&states[S_EXPLODE1]
@@ -1153,13 +1179,13 @@ static void HWR_StoreWallRange (int startfrac, int endfrac)
 
 
 // p1 et p2 c'est le deux bou du seg en float
-void HWR_BuildWallLightmaps(v3d_t *p1, v3d_t *p2, int lighnum, seg_t *line)
+void HWR_BuildWallLightmaps(v3d_t *p1, v3d_t *p2, int lightnum, seg_t *line)
 {
     lightmap_t *lp;
 
     // (...) calcul presit de la projection et de la distance
 
-//    if (dist_p2d >= DL_SQRRADIUS(lightnum))
+//    if (dist_p2d >= dynamic_light->p_lspr[lightnum]->dynamic_sqrradius)
 //        return;
 
     // (...) attention faire le backfase cull histoir de faire mieux que Q3 !
@@ -1205,9 +1231,14 @@ static void HWR_AddLightMapForLine( int lightnum, seg_t *line)
     p2.y=FIXED_TO_FLOAT( gr_curline->v2->y );
     p2.x=FIXED_TO_FLOAT( gr_curline->v2->x );
 
+#if 0   
     // check bbox of the seg
-//    if( CircleTouchBBox(&p1, &p2, &LIGHT_POS(lightnum), DL_RADIUS(lightnum))==false )    
-//        return;
+    if( CircleTouchBBox(&p1, &p2,
+			&dynlights->position[lightnum],
+			dynlights->p_lspr[lightnum]->dynamic_radius )
+	==false )    
+        return;
+#endif
 
     HWR_BuildWallLightmaps(&p1, &p2, lightnum, line);
 }
@@ -1234,8 +1265,14 @@ static void HWR_CheckSubsector( int num, fixed_t *bbox )
         sub = &subsectors[num];         // subsector
         for(lightnum=0; lightnum<dynlights->nb; lightnum++)
         {
-//            if( CircleTouchBBox(&p1, &p2, &LIGHT_POS(lightnum), DL_RADIUS(lightnum))==false )
-//                continue;
+#if 0   
+            // check bbox of the seg
+            if( CircleTouchBBox(&p1, &p2,
+                &dynlights->position[lightnum],
+                dynlights->p_lspr[lightnum]->dynamic_radius )
+                ==false )    
+                continue;
+#endif
 
             count = sub->numlines;          // how many linedefs
             line = &segs[sub->firstline];   // first line seg
@@ -1254,11 +1291,14 @@ static void HWR_CheckSubsector( int num, fixed_t *bbox )
 // --------------------------------------------------------------------------
 static void HWR_AddMobjLights(mobj_t *thing)
 {
-    if ( t_lspr[thing->sprite]->type & CORONA_SPR )
+    if ( t_lspr[thing->sprite]->splgt_flags & SPLGT_corona )
     {
-        LIGHT_POS(dynlights->nb).x = FIXED_TO_FLOAT( thing->x );
-        LIGHT_POS(dynlights->nb).y = FIXED_TO_FLOAT( thing->z ) + t_lspr[thing->sprite]->light_yoffset;
-        LIGHT_POS(dynlights->nb).z = FIXED_TO_FLOAT( thing->y );
+        // Sprite has a corona.
+	// Create a corona dynamic light.
+        v3d_t * light_pos = & dynlights->position[ dynlights->nb ];
+        light_pos->x = FIXED_TO_FLOAT( thing->x );
+        light_pos->y = FIXED_TO_FLOAT( thing->z ) + t_lspr[thing->sprite]->light_yoffset;
+        light_pos->z = FIXED_TO_FLOAT( thing->y );
         
         dynlights->p_lspr[dynlights->nb] = t_lspr[thing->sprite];
         

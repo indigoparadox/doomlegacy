@@ -47,7 +47,7 @@ extern byte cheat_mypos_seq[];
 extern byte cheat_amap_seq[];
 
 #ifdef HWRENDER
-                extern light_t lspr[];
+extern light_t lspr[];
 #endif
 
 void Chex1PatchEngine(void)
@@ -160,21 +160,22 @@ void Chex1PatchEngine(void)
 
         //coronas
 #ifdef HWRENDER
-                lspr[1].dynamic_color = 0xff000050;
-                lspr[2].dynamic_color = 0xff000050;
-                lspr[3].dynamic_color = 0xff4040f7;
-                lspr[4].dynamic_color = 0xff4040f7;
-                lspr[5].dynamic_color = 0xff4040f7;
-                lspr[6].dynamic_color = 0xff4040a0;
-                lspr[7].type = 0;
-                lspr[8].type = 0;
-                lspr[9].type = 0;
-                lspr[10].type = 0;
-                lspr[11].type = 0;
-                lspr[12].type = 0;
-                lspr[15].light_yoffset = 3.0f;	//light
-                lspr[16].type = 0;
-                lspr[17].type = 0;
+        // Alter Doom sprite light tables.
+        lspr[1].dynamic_color = 0xff000050;
+        lspr[2].dynamic_color = 0xff000050;
+        lspr[3].dynamic_color = 0xff4040f7;
+        lspr[4].dynamic_color = 0xff4040f7;
+        lspr[5].dynamic_color = 0xff4040f7;
+        lspr[6].dynamic_color = 0xff4040a0;
+        lspr[7].splgt_flags = 0;
+        lspr[8].splgt_flags = 0;
+        lspr[9].splgt_flags = 0;
+        lspr[10].splgt_flags = 0;
+        lspr[11].splgt_flags = 0;
+        lspr[12].splgt_flags = 0;
+        lspr[15].light_yoffset = 3.0f;	//light
+        lspr[16].splgt_flags = 0;
+        lspr[17].splgt_flags = 0;
 #endif
 
         //cheat codes
