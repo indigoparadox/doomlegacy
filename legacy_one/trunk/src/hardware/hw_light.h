@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2012 by DooM Legacy Team.
+// Copyright (C) 1998-2015 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -97,5 +97,43 @@ typedef struct {
     v3d_t      position[DL_MAX_LIGHT]; // actually maximum DL_MAX_LIGHT lights
     mobj_t     *mo[DL_MAX_LIGHT];
 } dynlights_t;
+
+// Defined constants for Fragglescript.
+typedef enum {
+    NOLIGHT = 0,
+    PLASMA_L,
+    PLASMAEXP_L,
+    ROCKET_L,
+    ROCKETEXP_L,
+    BFG_L,
+    BFGEXP_L,
+    BLUETALL_L,
+    GREENTALL_L,
+    REDTALL_L,
+    BLUESMALL_L,
+    GREENSMALL_L,
+    REDSMALL_L,
+    TECHLAMP_L,
+    TECHLAMP2_L,
+    COLUMN_L,
+    CANDLE_L,
+    CANDLEABRE_L,
+    REDBALL_L,
+    GREENBALL_L,
+    ROCKET2_L,
+    FX03_L,
+    FX17_L,
+    FX00_L,
+    FX08_L,
+    FX04_L,
+    FX02_L,
+    WTRH_L,
+    SRTC_L,
+    CHDL_L,
+    KFR1_L,
+    NUMLIGHTS
+} lightspritenum_t;
+
+extern light_t lspr[NUMLIGHTS];
 
 #endif
