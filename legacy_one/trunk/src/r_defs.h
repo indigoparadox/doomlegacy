@@ -479,12 +479,11 @@ typedef struct
     short       bottomtexture;
     short       midtexture;
 
+    //SoM: 3/6/2000: This is the special of the linedef this side belongs to.
+    short       linedef_special;
+
     // Sector the SideDef is facing.
     sector_t*   sector;
-
-    //SoM: 3/6/2000: This is the special of the linedef this side belongs to.
-    int         special;
-
 } side_t;
 
 
