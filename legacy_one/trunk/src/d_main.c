@@ -1609,6 +1609,8 @@ void IdentifyVersion()
         // switch forces the GDESC_ selection
         gamedesc_index = gmi;
         gamedesc = game_desc_table[gamedesc_index]; // copy the game descriptor
+        if (gamedesc.gameflags & GD_unsupported)  goto unsupported_wad;
+
         // handle the recognized special -devgame switch
         if( devgame )
         {
@@ -1775,11 +1777,7 @@ void IdentifyVersion()
     raven = (gamemode == heretic) || (gamemode == hexen);
     CONS_Printf("IWAD recognized: %s\n", gamedesc.gname);
 
-    if (gamedesc.gameflags & GD_unsupported)
-    {
-        I_SoftError("Doom Legacy currently does not support this game.\n");
-        goto fatal_err;
-    }
+    if (gamedesc.gameflags & GD_unsupported)  goto unsupported_wad;
 
     D_AddFile(pathiwad);
     D_AddFile(legacywad);  // So can replace some graphics with Legacy ones.
@@ -1796,6 +1794,10 @@ void IdentifyVersion()
 cleanup_ret:
     free(legacywad);  // from strdup, free local copy of name
     return;
+
+unsupported_wad:
+    I_SoftError("Doom Legacy currently does not support this game.\n");
+    goto fatal_err;
    
 fatal_err:
     if( legacywad )
