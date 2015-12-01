@@ -791,11 +791,11 @@ static void readframe(myfile_t* f, int deh_frame_id)
   int value;
 
   do{
-    if(myfgets(s,sizeof(s),f)!=NULL)
+    if(myfgets_nocom(s,sizeof(s),f)!=NULL)
     {
       if(s[0]=='\n') break;
       value=searchvalue(s);
-      // set the value in apropriet field
+      // set the value in appropriate field
       word1=strtok(s," ");
       word2=strtok(NULL," ");
 
@@ -819,7 +819,7 @@ static void readsound(myfile_t* f, int deh_sound_id)
   int value;
 
   do{
-    if(myfgets(s,sizeof(s),f)!=NULL)
+    if(myfgets_nocom(s,sizeof(s),f)!=NULL)
     {
       if(s[0]=='\n') break;
       value=searchvalue(s);
@@ -2044,6 +2044,7 @@ void DEH_LoadDehackedFile(myfile_t* f, byte bex_permission)
     myfgets(s,sizeof(s),f);
     if(s[0]=='\n' || s[0]=='#')  // skip blank lines and comments
       continue;
+
     word=strtok(s," ");  // first keyword
     if(word!=NULL)
     {
@@ -2131,6 +2132,7 @@ void DEH_LoadDehackedFile(myfile_t* f, byte bex_permission)
         else if(!strcasecmp(word,"Sprite"))
              {
                // "Sprite <num>"
+               // PrBoom does not support the DEH sprite block.
                if(i<NUMSPRITES && i>=0)
                {
                  if(myfgets(s,sizeof(s),f)!=NULL)
