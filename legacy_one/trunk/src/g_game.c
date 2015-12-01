@@ -350,34 +350,39 @@ char    player_names[MAXPLAYERS][MAXPLAYERNAME] =
 // TEAM STATE
 
 team_info_t*  team_info[MAXTEAMS];  // allocated
-short  num_teams = 0;
+byte  num_teams = 0;
 
+// Create the team if it does not exist.
 team_info_t*  get_team( int team_num )
 {
     if( team_num >= MAXTEAMS )
         return NULL;
 
+    // Create missing teams
     while( team_num >= num_teams )
     {
         team_info[num_teams] = Z_Malloc( sizeof(team_info_t), PU_STATIC, NULL);
+        team_info[num_teams]->name = NULL;
         num_teams++;
     }
     return team_info[team_num];
 }
 
-// set the team name, if the team exists
+// Set the team name.
+// Create the team if it does not exist.
 void  set_team_name( int team_num, char * str )
 {
-    // because of the complexity, for now, will create team at init
+    // Create the team if it does not exist.
+    // Because of the complexity, for now, will create team at init.
     get_team( team_num );
 
     if( team_num <= num_teams )
     {
         char * name = team_info[team_num]->name;
         if( name )
-	    Z_Free( name );
+            Z_Free( name );
         name = Z_Malloc( strlen(str)+6, PU_STATIC, NULL );
-	sprintf(name,"%s team", str);
+        sprintf(name,"%s team", str);
         team_info[team_num]->name = name;
     }
 }
@@ -385,7 +390,10 @@ void  set_team_name( int team_num, char * str )
 char * get_team_name( int team_num )
 {
     if( team_num <= num_teams )
-        return team_info[team_num]->name;
+    {
+        if( team_info[team_num]->name )
+            return team_info[team_num]->name;
+    }
     return "Unknown team";
 }
 

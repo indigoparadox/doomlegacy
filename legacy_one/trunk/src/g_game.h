@@ -76,7 +76,7 @@ typedef struct {
     char * name;  // always allocated string
 } PACKED_ATTR  team_info_t;
 extern team_info_t*  team_info[MAXTEAMS];
-extern short         num_teams;
+extern byte          num_teams;  // limited to MAXTEAMS (32)
 
 team_info_t*  get_team( int team_num );
 void  set_team_name( int team_num, char * str );
