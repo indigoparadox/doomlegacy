@@ -63,7 +63,8 @@ int find_operator(int start, int stop, char *value);
 
 void spec_brace( void )
 {
-  if(script_debug) CONS_Printf("brace\n");
+  if(script_debug)
+    CONS_Printf("brace\n");
   
   if(fs_bracetype != BRACKET_close)  // only deal with closing } braces
     goto done;

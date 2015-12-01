@@ -192,7 +192,7 @@ enum    // brace types: where current_section is a { or }
 };
 
 extern fs_value_t nullvar;
-extern int script_debug;
+extern byte script_debug;
 
 extern script_t * fs_current_script;
 extern mobj_t * fs_trigger_obj;

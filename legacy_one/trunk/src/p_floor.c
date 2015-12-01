@@ -723,7 +723,7 @@ int EV_DoFloor ( line_t* line, floor_e floortype )
               mfloor->old_sec_special = sec->oldspecial;
             }
             break;
-                  // Instant Lower SSNTails 06-13-2002
+          // Instant Lower SSNTails 06-13-2002
           case FT_instantLower:
             mfloor->direction = -1;
 //            mfloor->sector = sec;
@@ -805,12 +805,12 @@ int EV_BuildStairs ( line_t*  line, stair_e type )
   int                   rtn = 0;
   int                   secnum, new_secnum, old_secnum;
   int                   i;
-  boolean		crushing = false;  // crushing stairs
+  boolean               crushing = false;  // crushing stairs
     
   sector_t*             sec;
   sector_t*             tsec;
 
-  floormove_t*		mfloor;
+  floormove_t*          mfloor;
     
   fixed_t               stairsize;
   fixed_t               speed;

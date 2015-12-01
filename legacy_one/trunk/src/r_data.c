@@ -104,6 +104,7 @@
 #include "p_local.h"
 #include "r_data.h"
 #include "w_wad.h"
+  // numwadfiles
 #include "z_zone.h"
 #include "p_setup.h" //levelflats
 #include "v_video.h" //pLocalPalette
@@ -1408,8 +1409,6 @@ void R_InitExtraColormaps()
 lumplist_t*  flats;
 int          numflatlists;
 
-extern int   numwadfiles;
-
 
 void R_InitFlats ()
 {
@@ -1422,7 +1421,7 @@ void R_InitFlats ()
   flats = NULL;
   cfile = clump = 0;
 
-  for(;cfile < numwadfiles;cfile ++, clump = 0)
+  for(;cfile < numwadfiles; cfile ++, clump = 0)
   {
 #ifdef DEBUG_FLAT
     GenPrintf(EMSG_debug, "Flats in file %i\n", cfile );

@@ -627,7 +627,8 @@ static void HWR_GenerateFogTexture (int texnum, Mipmap_t * mipmap,
     int  i, x, y, fogb1, zc;
     unsigned int  fc_g, fc_r, fc_b;
     RGBA_t fc, fc_avg;
-    RGBA_t fogcolor = {.rgba=0x101010FF};
+    RGBA_t fogcolor = {.rgba=0x10101010};  // any endian
+    fogcolor.s.alpha = 0xFF;
    
     // must have original texture first
     MipTexture_t* base = HWR_GetTexture (texnum, 0);

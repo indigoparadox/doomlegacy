@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Portions Copyright (C) 1998-2012 by DooM Legacy Team.
+// Portions Copyright (C) 1998-2015 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -220,15 +220,17 @@ char*           spritename;
 //
 void R_InstallSpriteLump ( int           lumppat,     // graphics patch
                            short         spritelump_id, // spritelump_t
-                           unsigned      frame,
-                           unsigned      rotation,
+                           unsigned int  frame,
+                           unsigned int  rotation,
                            boolean       flipped )
 {
     int         r;
 
     if (frame >= 29 || rotation > 8)
+    {
         I_Error("R_InstallSpriteLump: "
                 "Bad frame characters in lump %i", spritelump_id);
+    }
 
     if ((int)frame > maxframe)
         maxframe = frame;
