@@ -56,8 +56,6 @@ extern  mapthing_t      *deathmatchstarts[MAX_DM_STARTS];
 extern  int             numdmstarts;
 //extern  mapthing_t**    deathmatch_p;
 
-extern int        lastloadedmaplumpnum; // for comparative savegame
-//
 // MAP used flats lookup table
 //
 typedef struct
@@ -74,6 +72,7 @@ typedef struct
 
 extern unsigned int    numlevelflats;
 extern levelflat_t*    levelflats;
+
 int P_AddLevelFlat (char* flatname);
 int P_PrecacheLevelFlats (void);
 char *P_FlatNameForNum(int num);
@@ -81,19 +80,38 @@ char *P_FlatNameForNum(int num);
 extern int             nummapthings;
 extern mapthing_t*     mapthings;
 
-// NOT called by W_Ticker. Fixme.
-boolean P_SetupLevel( int           episode,
-                      int           map,
-                      skill_t       skill,
-                      char*         mapname);
+// From P_SetupLevel
+extern int    level_lumpnum;  // for info and comparative savegame
+extern char*  level_mapname;  // to savegame and info
 
-boolean P_AddWadFile (char* wadfilename,char **firstmapname);
+// NOT called by W_Ticker. Fixme.
+//  to_episode : change to episode num
+//  to_map : change to map number
+//  to_skill : change to skill
+//  map_wadname : map command, load wad file
+boolean P_SetupLevel (int      to_episode,
+                      int      to_map,
+                      skill_t  to_skill,
+                      char*    map_wadname);
+
+
+typedef struct {
+  char *  mapname;  // map in string format
+  byte    episode;  // episode number
+  byte    map;      // map number
+} level_id_t;
+
+// Add a wadfile to the active wad files,
+// replace sounds, musics, patches, textures, sprites and maps
+//
+//  wadfilename : filename of wad to be loaded 
+//  firstmap_out : /*OUT*/  info about the first level map
+boolean P_AddWadFile (char* wadfilename, /*OUT*/ level_id_t * firstmap_out );
 
 subsector_t* R_PointInSubsector(fixed_t x, fixed_t y);
 
 
 extern boolean  newlevel;
 extern boolean  doom1level;
-extern char     *levelmapname;
 
 #endif

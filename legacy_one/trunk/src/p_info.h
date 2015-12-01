@@ -46,7 +46,7 @@
   // NUMWEAPONS
 #include "command.h"
 
-void P_LoadLevelInfo(int lumpnum);
+void P_LoadLevelInfo(void);
 
 void P_CleanLine(char *line);
 

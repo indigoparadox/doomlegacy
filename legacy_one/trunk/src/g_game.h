@@ -66,15 +66,12 @@
 #include "doomstat.h"
 #include "d_event.h"
 
-//added:11-02-98: yeah now you can change it!
-// changed to 2d array 19990220 by Kin
-extern char       player_names[MAXPLAYERS][MAXPLAYERNAME];
-
 // [WDJ] cannot write to const team_names
 // Created basic team record
 typedef struct {
     char * name;  // always allocated string
 } PACKED_ATTR  team_info_t;
+
 extern team_info_t*  team_info[MAXTEAMS];
 extern byte          num_teams;  // limited to MAXTEAMS (32)
 
@@ -82,12 +79,16 @@ team_info_t*  get_team( int team_num );
 void  set_team_name( int team_num, char * str );
 char * get_team_name( int team_num );
 
-
-extern  boolean nomonsters;             // checkparm of -nomonsters
-extern  char      gamemapname[MAX_WADPATH];
-
 extern  player_t  players[MAXPLAYERS];
 extern  boolean   playeringame[MAXPLAYERS];
+//added:11-02-98: yeah now you can change it!
+// changed to 2d array 19990220 by Kin
+extern char       player_names[MAXPLAYERS][MAXPLAYERNAME];
+
+
+
+extern  char      game_map_filename[MAX_WADPATH];
+extern  boolean   nomonsters;   // checkparm of -nomonsters
 
 // ======================================
 // DEMO playback/recording related stuff.

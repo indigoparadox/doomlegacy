@@ -220,16 +220,13 @@ void    G_DoWorldDone (void);
 //
 byte            demoversion;
 
-byte            gameepisode;
-byte            gamemap;
-char            gamemapname[MAX_WADPATH];      // an external wad filename
+byte            gameepisode;  // current game episode number  1..4
+byte            gamemap;      // current game map number 1..31
+char            game_map_filename[MAX_WADPATH];      // an external wad filename
 
 
 gamemode_e      gamemode = indetermined;       // Game Mode - identify IWAD as shareware, retail etc.
-#if 0
-// [WDJ] Replaced by gamedesc_id, GDESC_
-gamemission_t   gamemission = doom;
-#endif
+
 boolean         raven = false;
 language_t      language = english;          // Language.
 boolean         modifiedgame;                  // Set if homebrew PWAD stuff has been added.
@@ -971,7 +968,8 @@ void G_DoLoadLevel (boolean resetplayer)
         players[i].addfrags = 0;
     }
 
-    if (!P_SetupLevel (gameepisode, gamemap, gameskill, gamemapname[0] ? gamemapname:NULL) )
+    // game_map_filename is external wad
+    if (!P_SetupLevel (gameepisode, gamemap, gameskill, game_map_filename ))
     {
         // fail so reset game stuff
         Command_ExitGame_f();
@@ -2117,7 +2115,8 @@ void G_InitNew (skill_t skill, char* mapname, boolean resetplayer)
     if (FIL_CheckExtension(mapname))
     {
         // external map file
-        strncpy (gamemapname, mapname, MAX_WADPATH);
+        strncpy (game_map_filename, mapname, MAX_WADPATH);
+        // dummy values, to be set by P_SetupLevel.
         gameepisode = 1;
         gamemap = 1;
     }
@@ -2134,7 +2133,7 @@ void G_InitNew (skill_t skill, char* mapname, boolean resetplayer)
             return;
         }
 
-        gamemapname[0] = 0;             // means not an external wad file
+        game_map_filename[0] = 0;             // means not an external wad file
         if (gamemode==doom2_commercial)       //doom2
         {
             gamemap = atoi(mapname+3);  // get xx out of MAPxx

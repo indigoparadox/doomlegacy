@@ -150,6 +150,7 @@ typedef struct
 //   array[ 0.. numtextures-1 ] of texture_t*,
 //   but [0] is unusable because it conflicts with 0=no-texture.
 extern texture_t**     textures;
+extern int             numtextures;
 
 //extern lighttable_t    *colormaps;
 extern CV_PossibleValue_t Color_cons_t[];
