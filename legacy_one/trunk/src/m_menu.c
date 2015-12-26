@@ -1797,10 +1797,12 @@ menuitem_t VideoOptionsMenu[]=
      | IT_CV_SLIDER     ,0,    "Screen Size"      , &cv_viewsize      , 0},
     {IT_STRING | IT_CVAR,0,    "Scale Status Bar" , &cv_scalestatusbar, 0},
     {IT_STRING | IT_CVAR,0,    "Dark Back"        , &cv_darkback      , 0},
+    {IT_STRING | IT_CVAR,0,    "Console font"     , &cv_con_fontsize  , 0},
+    {IT_STRING | IT_CVAR,0,    "Message font"     , &cv_msg_fontsize  , 0},
     {IT_STRING | IT_CVAR,0,    "Show Ticrate"     , &cv_ticrate       , 0},
 #ifdef HWRENDER
     //17/10/99: added by Hurdler
-    {IT_CALL | IT_WHITESTRING | IT_YOFFSET, 0, "3D Card Options...", M_OpenGLOption    ,124},
+    {IT_CALL | IT_WHITESTRING | IT_YOFFSET, 0, "3D Card Options...", M_OpenGLOption    ,130},
 #endif
 };
 

@@ -2079,6 +2079,7 @@ restart_command:
        free( legacyhome );  // from previous
 #endif
 
+    V_SetupFont( 1, NULL, 0 );  // Startup font size
     EMSG_flags = EMSG_text | EMSG_log | EMSG_CONS;
 
     devparm |= M_CheckParm("-devparm");  // -devparm or -devgame

@@ -146,23 +146,23 @@ void HWR_DrawPatch (MipPatch_t* gpatch, int x, int y, int option)
 //  | /|
 //  |/ |
 //  0--1
-    float sdupx = vid.fdupx*2;
-    float sdupy = vid.fdupy*2;
-    float pdupx = vid.fdupx*2;
-    float pdupy = vid.fdupy*2;
+    float stx, sty, pdupx, pdupy;
 
     // make patch ready in hardware cache
     HWR_GetPatch (gpatch);
 
-    if( option & V_NOSCALEPATCH )
-        pdupx = pdupy = 2.0f;
-    if( option & V_NOSCALESTART )
-        sdupx = sdupy = 2.0f;
+    // V_SetupDraw now has fdupx, fdupy derived from V_SCALEPATCH.
+    pdupx = drawinfo.fdupx * 2.0;
+    pdupy = drawinfo.fdupy * 2.0;
 
-    v[0].x = v[3].x = ((x*sdupx) - (gpatch->leftoffset*pdupx))/vid.width - 1;
-    v[2].x = v[1].x = ((x*sdupx) + ((gpatch->width-gpatch->leftoffset)*pdupx))/vid.width - 1;
-    v[0].y = v[1].y = 1-((y*sdupy) - (gpatch->topoffset*pdupy))/vid.height;
-    v[2].y = v[3].y = 1-((y*sdupy) + ((gpatch->height-gpatch->topoffset)*pdupy))/vid.height;
+    // V_SetupDraw now has fdupx0, fdupy0 derived from V_SCALESTART.
+    stx = x * drawinfo.fdupx0 * 2.0;
+    sty = y * drawinfo.fdupy0 * 2.0;
+
+    v[0].x = v[3].x = (stx - (gpatch->leftoffset*pdupx))/vid.width - 1;
+    v[2].x = v[1].x = (stx + ((gpatch->width - gpatch->leftoffset)*pdupx))/vid.width - 1;
+    v[0].y = v[1].y = 1-(sty - (gpatch->topoffset*pdupy))/vid.height;
+    v[2].y = v[3].y = 1-(sty + ((gpatch->height - gpatch->topoffset)*pdupy))/vid.height;
 
     v[0].z = v[1].z = v[2].z = v[3].z = 1.0f;
 
@@ -177,6 +177,7 @@ void HWR_DrawPatch (MipPatch_t* gpatch, int x, int y, int option)
         FSurfaceInfo_t Surf;
         Surf.FlatColor.s.red = Surf.FlatColor.s.green = Surf.FlatColor.s.blue = 0xff;
         Surf.FlatColor.s.alpha = cv_grtranslucenthud.value;
+
         HWD.pfnDrawPolygon( &Surf, v, 4,
 	    BLENDMODE | PF_Modulated | PF_Clip | PF_NoZClip | PF_NoDepthTest);
     }
@@ -187,28 +188,31 @@ void HWR_DrawPatch (MipPatch_t* gpatch, int x, int y, int option)
     }
 }
 
+#if 0
+//[WDJ] 2012-02-06 DrawSmallPatch found to be unused
+
 // Draws a patch 2x as small SSNTails 06-10-2003
 void HWR_DrawSmallPatch (MipPatch_t* gpatch, int x, int y, int option, byte *colormap)
 {
     vxtx3d_t      v[4];
 
-    float sdupx = vid.fdupx;
-    float sdupy = vid.fdupy;
-    float pdupx = vid.fdupx;
-    float pdupy = vid.fdupy;
+    float stx, sty, pdupx, pdupy;
 
     // make patch ready in hardware cache
     HWR_GetMappedPatch (gpatch, colormap);
 
-    if( option & V_NOSCALEPATCH )
-        pdupx = pdupy = 2.0f;
-    if( option & V_NOSCALESTART )
-        sdupx = sdupy = 2.0f;
+    // V_SetupDraw now has fdupx, fdupy derived from V_SCALEPATCH.
+    pdupx = drawinfo.fdupx * 2.0;
+    pdupy = drawinfo.fdupy * 2.0;
 
-    v[0].x = v[3].x = (x*sdupx-gpatch->leftoffset*pdupx)/vid.width - 1;
-    v[2].x = v[1].x = (x*sdupx+(gpatch->width-gpatch->leftoffset)*pdupx)/vid.width - 1;
-    v[0].y = v[1].y = 1-(y*sdupy-gpatch->topoffset*pdupy)/vid.height;
-    v[2].y = v[3].y = 1-(y*sdupy+(gpatch->height-gpatch->topoffset)*pdupy)/vid.height;
+    // V_SetupDraw now has fdupx0, fdupy0 derived from V_SCALESTART.
+    stx = x * drawinfo.fdupx0 * 2.0;
+    sty = y * drawinfo.fdupy0 * 2.0;
+
+    v[0].x = v[3].x = (stx - gpatch->leftoffset*pdupx)/vid.width - 1;
+    v[2].x = v[1].x = (stx + (gpatch->width - gpatch->leftoffset)*pdupx)/vid.width - 1;
+    v[0].y = v[1].y = 1-(sty - gpatch->topoffset*pdupy)/vid.height;
+    v[2].y = v[3].y = 1-(sty + (gpatch->height - gpatch->topoffset)*pdupy)/vid.height;
 
     v[0].z = v[1].z = v[2].z = v[3].z = 1.0f;
 
@@ -221,6 +225,7 @@ void HWR_DrawSmallPatch (MipPatch_t* gpatch, int x, int y, int option, byte *col
     HWD.pfnDrawPolygon( NULL, v, 4,
 	BLENDMODE | PF_Clip | PF_NoZClip | PF_NoDepthTest);
 }
+#endif
 
 //
 // HWR_DrawMappedPatch(): Like HWR_DrawPatch but with translated color
@@ -229,23 +234,23 @@ void HWR_DrawMappedPatch (MipPatch_t* gpatch, int x, int y, int option, byte *co
 {
     vxtx3d_t      v[4];
 
-    float sdupx = vid.fdupx*2;
-    float sdupy = vid.fdupy*2;
-    float pdupx = vid.fdupx*2;
-    float pdupy = vid.fdupy*2;
+    float stx, sty, pdupx, pdupy;
 
     // make patch ready in hardware cache
     HWR_GetMappedPatch (gpatch, colormap);
 
-    if( option & V_NOSCALEPATCH )
-        pdupx = pdupy = 2.0f;
-    if( option & V_NOSCALESTART )
-        sdupx = sdupy = 2.0f;
+    // V_SetupDraw now has fdupx, fdupy derived from V_SCALEPATCH.
+    pdupx = drawinfo.fdupx * 2.0;
+    pdupy = drawinfo.fdupy * 2.0;
 
-    v[0].x = v[3].x = (x*sdupx-gpatch->leftoffset*pdupx)/vid.width - 1;
-    v[2].x = v[1].x = (x*sdupx+(gpatch->width-gpatch->leftoffset)*pdupx)/vid.width - 1;
-    v[0].y = v[1].y = 1-(y*sdupy-gpatch->topoffset*pdupy)/vid.height;
-    v[2].y = v[3].y = 1-(y*sdupy+(gpatch->height-gpatch->topoffset)*pdupy)/vid.height;
+    // V_SetupDraw now has fdupx0, fdupy0 derived from V_SCALESTART.
+    stx = x * drawinfo.fdupx0 * 2.0;
+    sty = y * drawinfo.fdupy0 * 2.0;
+    
+    v[0].x = v[3].x = (stx - gpatch->leftoffset*pdupx)/vid.width - 1;
+    v[2].x = v[1].x = (stx + (gpatch->width - gpatch->leftoffset)*pdupx)/vid.width - 1;
+    v[0].y = v[1].y = 1-(sty - gpatch->topoffset*pdupy)/vid.height;
+    v[2].y = v[3].y = 1-(sty + (gpatch->height - gpatch->topoffset)*pdupy)/vid.height;
 
     v[0].z = v[1].z = v[2].z = v[3].z = 1.0f;
 
