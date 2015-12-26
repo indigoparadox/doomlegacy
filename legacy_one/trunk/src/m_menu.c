@@ -1802,10 +1802,11 @@ menuitem_t VideoOptionsMenu[]=
     {IT_STRING | IT_CVAR
      | IT_CV_SLIDER     ,0,    "Screen Size"      , &cv_viewsize      , 0},
     {IT_STRING | IT_CVAR,0,    "Scale Status Bar" , &cv_scalestatusbar, 0},
+    {IT_STRING | IT_CVAR,0,    "Show Ticrate"     , &cv_ticrate       , 0},
     {IT_STRING | IT_CVAR,0,    "Wait Retrace"     , &cv_vidwait       , 0},
 #ifdef HWRENDER
     //17/10/99: added by Hurdler
-    {IT_CALL | IT_WHITESTRING | IT_YOFFSET, 0, "3D Card Options...", M_OpenGLOption    ,100},
+    {IT_CALL | IT_WHITESTRING | IT_YOFFSET, 0, "3D Card Options...", M_OpenGLOption    ,124},
 #endif
 };
 
