@@ -531,6 +531,7 @@ boolean WritePCXfile ( char*         filename,
 //
 void M_ScreenShot (void)
 {
+    // vid : from video setup
     int         i;
     byte*       linear;
     char        lbmname[MAX_WADPATH];

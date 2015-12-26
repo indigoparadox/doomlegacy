@@ -359,6 +359,7 @@ void F_Ticker (void)
 //
 void F_TextWrite (void)
 {
+    // vid : from video setup
     int         w;
     int         count;
     char*       ch;
@@ -627,6 +628,7 @@ void F_CastPrint (char* text)
 //
 void F_CastDrawer (void)
 {
+    // drawinfo : from V_SetupDraw
     spritedef_t*        sprdef;
     spriteframe_t*      sprframe;
     int                 lump;
@@ -646,9 +648,9 @@ void F_CastDrawer (void)
 
     // set draw effect flag for this draw only
     if (sprframe->flip[0])
-      V_drawinfo.effectflags = V_drawinfo.screen_effectflags | V_FLIPPEDPATCH;
+      drawinfo.effectflags = drawinfo.screen_effectflags | V_FLIPPEDPATCH;
     V_DrawScaledPatch (BASEVIDWIDTH>>1, 170, patch);
-    V_drawinfo.effectflags = V_drawinfo.screen_effectflags;  // restore
+    drawinfo.effectflags = drawinfo.screen_effectflags;  // restore
 }
 
 
@@ -660,6 +662,7 @@ void F_CastDrawer (void)
 // sx is x position in 320 width screen
 static void F_DrawPatchCol (int sx, patch_t* patch, int col )
 {
+    // vid : from video setup
     column_t*   column;
     byte*       source;
     byte*       desttop;  // within screen buffer
@@ -699,6 +702,7 @@ static void F_DrawPatchCol (int sx, patch_t* patch, int col )
 //
 void F_BunnyScroll (void)
 {
+    // vid : from video setup
     int         scrolled;
     int         sx;  // scroll offset
     patch_t*    p1;
@@ -776,7 +780,7 @@ void F_BunnyScroll (void)
 // Heretic
 void F_DemonScroll(void)
 {
-    
+    // vid : from video setup
     int scrolled;
 
     scrolled = (finalecount-70)/3;

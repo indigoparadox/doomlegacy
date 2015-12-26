@@ -164,7 +164,7 @@ typedef struct {
 } drawinfo_t;
 
 // current draw info
-extern drawinfo_t  V_drawinfo;
+extern drawinfo_t  drawinfo;
 
 // setup for draw screen, scaled, and centering
 // Can use saved V_drawinfo.screenflags or use V_drawinfo.prev_screenflags

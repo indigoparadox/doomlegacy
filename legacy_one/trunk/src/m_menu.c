@@ -3886,7 +3886,7 @@ void M_DrawTextBox (int x, int y, int width, int lines)
     
 
   done:   
-    V_SetupDraw( V_drawinfo.prev_screenflags );  // restore
+    V_SetupDraw( drawinfo.prev_screenflags );  // restore
    
     return;
 

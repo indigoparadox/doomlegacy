@@ -894,7 +894,8 @@ void AM_Ticker (void)
 //
 void AM_clearFB(int color)
 {
-#ifdef HWRENDER 
+    // vid : from video setup
+#ifdef HWRENDER
     if (rendermode != render_soft)
     {
         HWR_clearAutomap ();
@@ -1108,6 +1109,7 @@ void AM_drawFline_soft ( fline_t*       fl,
                          int            color )
 
 {
+    // vid : from video setup
     register int x, y;
     register int dx, dy;
     register int sx, sy;
@@ -1458,6 +1460,7 @@ void AM_drawMarks(void)
 
 void AM_drawCrosshair(int color)
 {
+    // vid : from video setup
     if( rendermode!=render_soft )
     {
         // BP: should be putpixel here

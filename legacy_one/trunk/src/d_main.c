@@ -508,6 +508,7 @@ consvar_t cv_screenslink = { "screenlink", "2", CV_SAVE, screenslink_cons_t };
 static
 void D_Display(void)
 {
+    // vid : from video setup
     static boolean menuactivestate = false;
     static gamestate_t oldgamestate = -1;
     static int borderdrawcount;
