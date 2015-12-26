@@ -55,7 +55,7 @@ struct runningscript_s
     WT_scriptwait,  // wait for script to finish
   } wait_type;
   int wait_data;  // data for wait: tagnum, counter, script number etc
-	
+
   // saved variables
   fs_variable_t *variables[VARIABLESLOTS];
   

@@ -379,7 +379,7 @@ typedef struct mobj_s
 
     // Nodes
     struct mobj_s*	nextnode;   // Next node object to chase after touching
-				    // current target (which must be MT_NODE).
+                                    // current target (which must be MT_NODE).
     struct mobj_s*	targetnode; // Target node to remember when encountering a player
     int			nodescript; // Script to run when this node is touched
     int			nodewait;   // How many ticks to wait at this node
