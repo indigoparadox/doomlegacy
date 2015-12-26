@@ -86,7 +86,6 @@ void P_AddThinker (thinker_t* thinker)
 }
 
 
-
 //
 // P_RemoveThinker
 // Deallocation is lazy -- it will not actually be freed
@@ -94,20 +93,18 @@ void P_AddThinker (thinker_t* thinker)
 //
 void P_RemoveThinker (thinker_t* thinker)
 {
-  // FIXME: NOP.
-  thinker->function.acv = (actionf_v)(-1);
+    // Setup an action function that does removal.
+    thinker->function.acp1 = (actionf_p1) T_RemoveThinker;
 }
 
-
-
-//
-// P_AllocateThinker
-// Allocates memory and adds a new thinker at the end of the list.
-//
-void P_AllocateThinker (thinker_t*      thinker)
+// Thinker function that removes the thinker.
+void T_RemoveThinker( thinker_t* remthink )
 {
+    // Unlink and delete the thinker
+    remthink->next->prev = remthink->prev;
+    remthink->prev->next = remthink->next;
+    Z_Free (remthink);  // mobj, etc.
 }
-
 
 
 //
@@ -116,26 +113,15 @@ void P_AllocateThinker (thinker_t*      thinker)
 void P_RunThinkers (void)
 {
     thinker_t*  currentthinker;
+    thinker_t*  next_thinker;
 
     currentthinker = thinkercap.next;
     while (currentthinker != &thinkercap)
     {
-        if ( currentthinker->function.acv == (actionf_v)(-1) )
-        {
-            void *removeit;
-            // time to remove it
-            currentthinker->next->prev = currentthinker->prev;
-            currentthinker->prev->next = currentthinker->next;
-            removeit = currentthinker;
-            currentthinker = currentthinker->next;
-            Z_Free (removeit);  // mobj, etc.
-        }
-        else
-        {
-            if (currentthinker->function.acp1)
-                currentthinker->function.acp1 (currentthinker);
-            currentthinker = currentthinker->next;
-        }
+        next_thinker = currentthinker->next;  // because of T_RemoveThinker
+        if (currentthinker->function.acp1)
+	    currentthinker->function.acp1 (currentthinker);
+        currentthinker = next_thinker;
     }
 }
 

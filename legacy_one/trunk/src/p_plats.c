@@ -328,7 +328,7 @@ void P_ActivateInStasis(int tag)
   }
 }
 
-//SoM: 3/7/2000: use Boom code insted.
+//SoM: 3/7/2000: use Boom code instead.
 int EV_StopPlat(line_t* line)
 {
   platlist_t *pl;

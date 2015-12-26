@@ -270,7 +270,7 @@ int  EV_DoCeiling ( line_t* line, ceiling_e type )
         ceiling = Z_Malloc (sizeof(*ceiling), PU_LEVSPEC, 0);
         P_AddThinker (&ceiling->thinker);
         sec->ceilingdata = ceiling;
-        ceiling->thinker.function.acp1 = (actionf_p1)T_MoveCeiling;
+        ceiling->thinker.function.acp1 = (actionf_p1) T_MoveCeiling;
         ceiling->sector = sec;
         ceiling->crush = false;
 
@@ -410,7 +410,7 @@ int EV_CeilingCrushStop(line_t* line)
     {
       ceiling->olddirection = ceiling->direction;
       ceiling->direction = 0;
-      ceiling->thinker.function.acv = (actionf_v)NULL;
+      ceiling->thinker.function.acv = NULL;
       rtn=1;
     }
   }

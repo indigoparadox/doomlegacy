@@ -1351,8 +1351,7 @@ void P_MobjThinker(mobj_t * mobj)
         P_XYMovement(mobj);
         checkedpos = true;
 
-        // FIXME: decent NOP/NULL/Nil function pointer please.
-        if ((mobj->thinker.function.acv == (actionf_v) (-1)))
+        if (mobj->thinker.function.acp1 == (actionf_p1) T_RemoveThinker)
             goto done;     // mobj was removed
     }
     if (mobj->flags2 & MF2_FLOATBOB)
@@ -1425,8 +1424,7 @@ void P_MobjThinker(mobj_t * mobj)
         else
             P_ZMovement(mobj);
 
-        // FIXME: decent NOP/NULL/Nil function pointer please.
-        if (mobj->thinker.function.acv == (actionf_v) (-1))
+        if (mobj->thinker.function.acp1 == (actionf_p1) T_RemoveThinker)
             goto done;     // mobj was removed
     }
     else
