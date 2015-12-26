@@ -66,22 +66,22 @@ int I_GetKey(void)
     KeyMap keymap;
     byte newBit;
     int i,n;
-	
+
     GetKeys ((unsigned long *) keymap);
-	
+
     for (i=0;i<4;i++)
     {
         if (keymap[i])
         {
-	    for (n=0;n<32;n++)
-	    {
-	        newBit = ((keymap[i] >> n) & 1);
-	        if (newBit)
-		    return scantokey[i*32+n];
-	    }
-	}
+            for (n=0;n<32;n++)
+            {
+                newBit = ((keymap[i] >> n) & 1);
+                if (newBit)
+                    return scantokey[i*32+n];
+            }
+        }
     }
-	   
+
     return 0;
 }
 
@@ -97,13 +97,13 @@ void I_OutputMsg (char *error, ...)
     static int wipe = 1;
     va_list     argptr;
     char        txt[1024];
-	
+
     va_start (argptr,error);
     vsprintf (txt,error,argptr);
     va_end   (argptr);
-	
+
     printf(txt);	// Woohoo! MacOSX command-line output!
-	
+
     if (wipe)
     {
         handle = open ("log.txt", O_WRONLY | O_APPEND | O_BINARY | O_TRUNC | O_CREAT, 0666);
@@ -114,7 +114,7 @@ void I_OutputMsg (char *error, ...)
    
     if (handle == -1)
         return;
-	
+
     write(handle, txt, strlen(txt));
     close(handle);
 #endif
@@ -128,51 +128,51 @@ void I_OutputMsg (char *error, ...)
 
 void GetApplicationFSSpec(FSSpec *me)
 {
-	ProcessInfoRec info;
-	ProcessSerialNumber psn = { 0,kCurrentProcess };
-	OSErr err;
+        ProcessInfoRec info;
+        ProcessSerialNumber psn = { 0,kCurrentProcess };
+        OSErr err;
 
-	GetCurrentProcess(&psn);
-	memset((char*)&info,0,sizeof(info));	
-	info.processInfoLength = sizeof(info);
-	info.processAppSpec = me;
-	err = GetProcessInformation(&psn,&info);
+        GetCurrentProcess(&psn);
+        memset((char*)&info,0,sizeof(info));	
+        info.processInfoLength = sizeof(info);
+        info.processAppSpec = me;
+        err = GetProcessInformation(&psn,&info);
 }
 #include <unistd.h>
 #include <fcntl.h>
 char *I_GetWadDir(void)
 {
-	FSSpec app_spec;
-	FSSpec app_dir_spec;
-	FSRef app_dir;
-	UInt32 len = 256;
-	char *path;
-	OSErr err;
-	
-	GetApplicationFSSpec(&app_spec);
-	
-	FSMakeFSSpec(app_spec.vRefNum, app_spec.parID, "", &app_dir_spec);
-	FSMakeFSSpec(app_dir_spec.vRefNum, app_dir_spec.parID, "", &app_spec);
-	FSMakeFSSpec(app_spec.vRefNum, app_spec.parID, "", &app_dir_spec);
-	FSMakeFSSpec(app_dir_spec.vRefNum, app_dir_spec.parID, "", &app_spec);
-		
-	err = FSpMakeFSRef(&app_spec, &app_dir);
-	
-	path = malloc(256);
-	err = FSRefMakePath(&app_dir, path, len);
-	
-	I_OutputMsg("You double-clicked me!\n");
-	
-	chdir(path);
-	
-	return path;
+        FSSpec app_spec;
+        FSSpec app_dir_spec;
+        FSRef app_dir;
+        UInt32 len = 256;
+        char *path;
+        OSErr err;
+
+        GetApplicationFSSpec(&app_spec);
+
+        FSMakeFSSpec(app_spec.vRefNum, app_spec.parID, "", &app_dir_spec);
+        FSMakeFSSpec(app_dir_spec.vRefNum, app_dir_spec.parID, "", &app_spec);
+        FSMakeFSSpec(app_spec.vRefNum, app_spec.parID, "", &app_dir_spec);
+        FSMakeFSSpec(app_dir_spec.vRefNum, app_dir_spec.parID, "", &app_spec);
+
+        err = FSpMakeFSRef(&app_spec, &app_dir);
+
+        path = malloc(256);
+        err = FSRefMakePath(&app_dir, path, len);
+
+        I_OutputMsg("You double-clicked me!\n");
+
+        chdir(path);
+
+        return path;
 }
 
 ULONG I_GetFreeMem(ULONG *total)
 {
   // add 0x01 to indicate guess
-	*total = MaxBlock() - 4*1024*1024;
-	return 0;  // no freemem
+        *total = MaxBlock() - 4*1024*1024;
+        return 0;  // no freemem
 }
 
 #if 0
@@ -216,24 +216,24 @@ ULONG  I_GetTime (void)
     static double baseTicks=0;
     static UInt32 hiTicks=0;
     double ticks;
-	
+
     Microseconds(&ftime);
-	
+
     ticks = ftime.lo/1000000.0f;
-	
+
     if (!baseTicks)
     {
         baseTicks = ticks;
         hiTicks = ftime.hi;
     }
-	
+
     if (hiTicks != ftime.hi)
     {
         baseTicks = 0;
     }
-	
+
     hiTicks = ftime.hi;
-	
+
     return (ticks - baseTicks) * TICRATE;
 }
 
@@ -244,9 +244,9 @@ void I_Init (void)
 {
     MenuBarHandle menuBar;
     
-	/*menuBar = GetNewMBar(rMenuBar);
+        /*menuBar = GetNewMBar(rMenuBar);
     SetMenuBar(menuBar);	
-	DisposeHandle(menuBar);*/
+        DisposeHandle(menuBar);*/
     
     I_StartupSound();
     I_InitMusic();
@@ -315,7 +315,7 @@ void I_Error (char *error, ...)
     {
         SInt16 res;
         c2pstr(txt);
-		
+
         StandardAlert(kAlertStopAlert,"\pError:",(ConstStr255Param)txt,NULL,&res);
     }
 
@@ -443,38 +443,41 @@ void I_LocateWad(void)
 #include <string.h>
 #include <stdlib.h>
 
-#include "filesrch.h"
 #include "d_netfil.h"
-//
-// filesearch:
-//
-// ATTENTION : make sure there is enough space in filename to put a full path (255 or 512)
-//    filename must be buffer of MAX_WADPATH
-// if needmd5check==0 there is no md5 check
-// if completepath then filename will be changed to the full path and name
-// maxsearchdepth==0 only search given directory, no subdirs
-// return FS_NOTFOUND
-//        FS_MD5SUMBAD;
-//        FS_FOUND
+
 #define MAX_SRCHPATH (MAX_WADPATH * 2)
 
-filestatus_e filesearch(char *filename, char *startpath, unsigned char *wantedmd5sum, boolean completepath, int maxsearchdepth)
+//
+// sys_filesearch:
+//
+//  filename : the filename to be found
+//  wantedmd5sum : NULL for no md5 check
+//  completepath : when not NULL, return the full path and name
+//      must be a buffer of MAX_WADPATH
+//  maxsearchdepth : dir depth, when 0 only search given directory
+// return FS_NOTFOUND
+//        FS_MD5SUMBAD
+//        FS_FOUND
+
+filestatus_e  sys_filesearch( const char * filename, const char * startpath,
+                              const byte * wantedmd5sum, int maxsearchdepth,
+                              /*OUT*/ char * completepath )
 {
+    filestatus_e retval = FS_NOTFOUND;
     DIR ** dirhandle_stack;  // (malloc)
     DIR * dirhandle;
+    int * index_stack;  // each directory in the searchpath  (malloc)
+    int depth=0;
     struct dirent *dent;
     struct stat fstat;
-    char * searchname = strdup( filename);  // (malloc)
-    filestatus_e retval = FS_NOTFOUND;
-    int remspace;
-    int depthleft=maxsearchdepth;
-    int * index_stack;  // each directory in the searchpath  (malloc)
-    int cur_index;
+    int cur_index, remspace;  // searchpath
     char searchpath[MAX_SRCHPATH];
 
-    dirhandle_stack = (DIR**) malloc( maxsearchdepth * sizeof( DIR*));
+    if( maxsearchdepth < 1 )
+       maxsearchdepth = 0;
+    dirhandle_stack = (DIR**) malloc( (maxsearchdepth+1) * sizeof( DIR*));
     if( dirhandle_stack == NULL )   goto error1_exit;
-    index_stack = (int*) malloc( maxsearchdepth * sizeof( int));
+    index_stack = (int*) malloc( (maxsearchdepth+1) * sizeof(int));
     if( index_stack == NULL )   goto error2_exit;
     
     strncpy( searchpath, startpath, MAX_SRCHPATH-1 );
@@ -485,8 +488,8 @@ filestatus_e filesearch(char *filename, char *startpath, unsigned char *wantedmd
     if( dirhandle == NULL )  goto error3_exit;
 
     // Initial stack
-    index_stack[--depthleft] = cur_index;
-    dirhandle_stack[ depthleft ] = dirhandle;
+    index_stack[0] = cur_index;
+    dirhandle_stack[0] = dirhandle;
 
     if(searchpath[cur_index-2] != '/')
     {
@@ -498,7 +501,7 @@ filestatus_e filesearch(char *filename, char *startpath, unsigned char *wantedmd
         cur_index--;
     }
 
-    while( depthleft < maxsearchdepth )
+    for(;;)
     {
         searchpath[cur_index]=0;
         dent = readdir( dirhandle );  // next dir entry
@@ -506,11 +509,11 @@ filestatus_e filesearch(char *filename, char *startpath, unsigned char *wantedmd
         {
             closedir( dirhandle );
             // Pop stack to previous directory.
-            depthleft++;
-            cur_index = index_stack[depthleft];
-            dirhandle = dirhandle_stack[depthleft];
+	    if( depth == 0 )  break;  // done
+            cur_index = index_stack[--depth];
+            dirhandle = dirhandle_stack[depth];
             continue;
-        } 
+        }
         if( dent->d_name[0]=='.' )
         {
             // ignore the "." and ".." entries, we don't want to scan uptree
@@ -518,7 +521,7 @@ filestatus_e filesearch(char *filename, char *startpath, unsigned char *wantedmd
             if( dent->d_name[1]=='.' && dent->d_name[2]=='\0' )  continue;
         }
 
-        // append dir name
+        // Form file name for stat.
         remspace = (MAX_SRCHPATH - 1) - cur_index;
         strncpy(&searchpath[cur_index], dent->d_name, remspace);
 
@@ -530,69 +533,49 @@ filestatus_e filesearch(char *filename, char *startpath, unsigned char *wantedmd
 
         if( S_ISDIR(fstat.st_mode) )
         {
-            if depthleft <= 0 )  continue;  // depth limited
-            remspace = (MAX_SRCHPATH - 1) - cur_index;
-            strncpy(&searchpath[cur_index], dent->d_name, remspace);
+            if( depth >= maxsearchdepth )  continue;  // depth limited
 
             dirhandle = opendir(searchpath);
             if( dirhandle == NULL )
             {
                 // can't open it... maybe no read-permissions
                 // go back to previous dir
-                cur_index = index_stack[depthleft];
-                dirhandle = dirhandle_stack[depthleft];
+                cur_index = index_stack[depth];
+                dirhandle = dirhandle_stack[depth];
                 continue;
             }
 
-            // Push stack to new directory.
+            // Push new directory to stack.
             cur_index = strlen(searchpath) + 1;
-            index_stack[--depthleft] = cur_index;
-            dirhandle_stack[depthleft] = dirhandle;
+            index_stack[++depth] = cur_index;
+            dirhandle_stack[depth] = dirhandle;
 
             searchpath[cur_index-1]='/';
             searchpath[cur_index]=0;
         }
-        else if (!strcasecmp(searchname, dent->d_name))
+        else if ( strcasecmp(filename, dent->d_name) == 0 )
         {
-            switch( checkfilemd5(searchpath, wantedmd5sum))
+            // Found the filename.
+            retval = checkfile_md5(searchpath, wantedmd5sum);
+            if( retval != FS_FOUND )  continue;
+
+            // FS_FOUND, Return the found file.
+	    if(completepath)
             {
-                case FS_FOUND:
-                    if(completepath)
-                    {
-                        strncpy(filename, searchpath, MAX_WADPATH-1);
-                        filename[MAX_WADPATH-1] = '\0';
-                    }
-#if 0
-// [WDJ] This is used for "find if file exists",
-// which is not choice to return the dir name instead.
-// If this is ever needed, it requires a separate enable flag.
-                    else
-                    {
-                        strncpy(filename, dent->d_name, MAX_WADPATH-1);
-                        filename[MAX_WADPATH-1] = '\0';
-                    }
-#endif
-                    retval=FS_FOUND;
-                    goto found_exit;
-                case FS_MD5SUMBAD:
-                    retval = FS_MD5SUMBAD;
-                    break;
-                default:
-                    // prevent some compiler warnings
-                    break;
+                strncpy(completepath, searchpath, MAX_WADPATH-1);
+                completepath[MAX_WADPATH-1] = '\0';
             }
+            // Close the open directories.
+            for(; depth >= 0; closedir(dirhandle_stack[depth--]));
+            break;
         }
     }
-
-found_exit:
-    for(; depthleft<maxsearchdepth; closedir(dirhandle_stack[depthleft++]));
 
 error3_exit:
     free(index_stack);
 error2_exit:
     free(dirhandle_stack);
 error1_exit:
-    free(searchname);
 
     return retval;
 }

@@ -36,24 +36,26 @@
 #endif
 #endif
 
-#include "../filesrch.h"
+#include "../d_netfil.h"
 #include "../m_misc.h"
 
 //
-// filesearch:
+// sys_filesearch:
 //
-// ATTENTION : make sure there is enough space in filename to put a full path (255 or 512)
-//    filename must be buffer of MAX_WADPATH
-// if needmd5check==0 there is no md5 check
-// if changestring then filename will be change with the full path and name
-// maxsearchdepth==0 only search given directory, no subdirs
+//  filename : the filename to be found
+//  wantedmd5sum : NULL for no md5 check
+//  completepath : when not NULL, return the full path and name
+//      must be a buffer of MAX_WADPATH
+//  maxsearchdepth : dir depth, when 0 only search given directory
 // return FS_NOTFOUND
-//        FS_MD5SUMBAD;
+//        FS_MD5SUMBAD
 //        FS_FOUND
 
-filestatus_e filesearch(char *filename, char *startpath, unsigned char *wantedmd5sum, 
-                        boolean changestring, int maxsearchdepth)
+filestatus_e  sys_filesearch( const char * filename, const char * startpath,
+                              const byte * wantedmd5sum, int maxsearchdepth,
+                              /*OUT*/ char * completepath )
 {
+    filestatus_e fs;
     struct _finddata_t dta;
     int    searchhandle;
     
@@ -61,12 +63,22 @@ filestatus_e filesearch(char *filename, char *startpath, unsigned char *wantedmd
     if(searchhandle!=-1)
     {
         // take care of gmt timestamp conversion
-        if( checkfilemd5(filename,wantedmd5sum) )
-                return FS_FOUND;
-        else
-                return FS_MD5SUMBAD; // found with differant date
+        fs = checkfile_md5(filename,wantedmd5sum);
+        if( (fs==FS_FOUND) && completepath )
+	{
+	    // completepath may be same buffer as filename
+	    char orig_name[MAX_WADPATH];
+	    strncpy( orig_name, filename, MAX_WADPATH-1 );
+	    orig_name[MAX_WADPATH-1] = '\0';
+	    cat_filename(completepath, dta.name, orig_name);
+	}
+        return fs;
     }
-    
+
+    if( maxsearchdepth < 1 )
+        return FS_NOTFOUND;
+
+    // Search subdirectories
     if((searchhandle=_findfirst("*.*",&dta))!=-1)
     {
         do
@@ -74,20 +86,14 @@ filestatus_e filesearch(char *filename, char *startpath, unsigned char *wantedmd
             if((dta.name[0]!='.') && (dta.attrib & _A_SUBDIR ))
             {
                 if( chdir(dta.name)==0 ) { // can fail if we haven't the right
-                    int found;
-                    found = filesearch(filename,NULL,wantedmd5sum,changestring,10);
+                    fs = sys_filesearch( filename, NULL, wantedmd5sum,
+					 maxsearchdepth-1,
+                                         /*OUT*/ completepath );
                     chdir("..");
-                    if( found )
+                    if( fs == FS_FOUND )
                     {
-                        if(changestring)
-		        {
-			    char orig_name[MAX_WADPATH];
-			    strncpy( orig_name, filename, MAX_WADPATH-1 );
-			    orig_name[MAX_WADPATH-1] = '\0';
-			    cat_filename(filename, dta.name, orig_name);
-			}
                         _findclose(searchhandle);
-                        return found;
+                        return fs;
                     }
                 }
             }

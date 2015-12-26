@@ -251,7 +251,6 @@
 
 #include "wi_stuff.h"
 #include "w_wad.h"
-#include "filesrch.h"
 
 #include "z_zone.h"
 #include "d_main.h"
@@ -1132,41 +1131,6 @@ void  Print_search_directories( byte emf, byte enables )
         if( doomwaddir[wdi] )
             GenPrintf(emf, " Doomwaddir[%i]: %s\n", wdi, doomwaddir[wdi] );
     }
-}
-
-// Search the search directories for the file.
-//  filename: the search file
-//  fbuf: the file name buffer, must be length _MAX_PATH
-//  search_depth:  if > 0 then search subdirectories to that depth
-// Return true when found, with the file path in the fbuf parameter.
-static
-boolean  Search_doomwaddir( char * filename, int search_depth,
-         /* OUT */  char * fbuf )
-{
-    int wdi;
-   
-    for( wdi=0; wdi<MAX_NUM_DOOMWADDIR; wdi++ )
-    {
-        if( doomwaddir[wdi] == NULL )  continue;
-        if( access( doomwaddir[wdi], X_OK ) )  continue;
-
-        // Form a full filename.
-        cat_filename( fbuf, doomwaddir[wdi], filename );
-        // If it exists then use it.
-        if( access(fbuf, R_OK) == 0 )
-            return true;
-
-        if( search_depth )
-        {
-            filestatus_e  fstat;
-            strncpy( fbuf, filename, MAX_WADPATH );
-            fbuf[ MAX_WADPATH - 1 ] = 0;
-            fstat = filesearch( fbuf, doomwaddir[wdi], NULL, true, search_depth );
-            if( fstat == FS_FOUND )
-                return true;
-        }
-    }
-    return false;
 }
 
 

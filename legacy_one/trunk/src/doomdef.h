@@ -236,7 +236,7 @@
 #endif
 
 // How many subdirectories deep to search.
-#define  GAME_SEARCH_DEPTH   3
+#define  GAME_SEARCH_DEPTH   4
 #define  IWAD_SEARCH_DEPTH   5
 
 // =========================================================================

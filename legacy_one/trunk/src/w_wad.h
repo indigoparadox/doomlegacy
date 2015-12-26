@@ -163,7 +163,7 @@ void W_Shutdown(void);
 
 // load and add a wadfile to the active wad files, return wad file number
 // (you can get wadfile_t pointer: the return value indexes wadfiles[])
-int     W_LoadWadFile (char *filename);
+int     W_LoadWadFile (const char *filename);
 
 //added 4-1-98 initmultiplefiles now return 1 if all ok 0 else
 //             so that it stops with a message if a file was not found
