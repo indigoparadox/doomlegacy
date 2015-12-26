@@ -4415,25 +4415,23 @@ err_numarg:
 }
 
 
+// Background color fades for FS
+uint32_t  fs_fadecolor;
+int       fs_fadealpha;
+
+
+
 // Background color fades
 // SetFade( red, green, blue, alpha )
 void SF_SetFade(void)
 {
-    int r = 0;
-    int g = 0;
-    int b = 0;
-    int alpha = 0;
-
     if (t_argc != 4)   goto err_numarg;
 
-    r = (unsigned long)t_argv[0].value.i;
-    g = (unsigned long)t_argv[1].value.i;
-    b = (unsigned long)t_argv[2].value.i;
-    alpha = t_argv[3].value.i;
-
     // Calculate the background color value
-    fadecolor = (256 * b) + (65536 * g) + (16777216 * r);
-    fadealpha = alpha;
+    // Before was (R,G,B,A) format, which got reversed to (A,B,G,R).
+//    fadecolor = (256 * b) + (65536 * g) + (16777216 * r);
+    fs_fadecolor = RGBA( t_argv[0].value.i, t_argv[1].value.i, t_argv[2].value.i, 0);
+    fs_fadealpha = t_argv[3].value.i;
 done:
     return;
 

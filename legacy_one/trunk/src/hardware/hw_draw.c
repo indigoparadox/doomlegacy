@@ -405,11 +405,15 @@ void HWR_DrawFlatFill (int x, int y, int w, int h, int flatlumpnum)
 //  | /|
 //  |/ |
 //  0--1
-// height=0 is full height, otherwise relative to vid.height
-void HWR_FadeScreenMenuBack( unsigned long color, long alpha, int height )
+// Relative to vid.height.
+//  color_rgba : rgba color
+//  alpha : 1 .. 255
+void HWR_FadeScreenMenuBack( uint32_t color_rgba, int alpha, int height )
 {
     vxtx3d_t  v[4];
     FSurfaceInfo_t Surf;
+
+    if( height <= 0 )   return;
 
     // setup some neat-o translucency effect
 
@@ -429,13 +433,18 @@ void HWR_FadeScreenMenuBack( unsigned long color, long alpha, int height )
     v[0].tow = v[1].tow = 1.0f;
     v[2].tow = v[3].tow = 0.0f;
 
-    Surf.FlatColor.rgba = UINT2RGBA(color);
-    if( height > 0 )
+    Surf.FlatColor.rgba = color_rgba;
+    // [WDJ] Constant alpha is more reliable.
+    Surf.FlatColor.s.alpha = alpha;
+
+    if( height < vid.height )
     {
         // [WDJ] bugginess of this calc when height==vid.height plagued win32.
         float hf = ((float)height)/(float)vid.height;
         v[0].y = v[1].y = 1.0f - ( 2.0 * hf );  // -1.0 .. 1.0
-        Surf.FlatColor.s.alpha = alpha * hf;    //calum: varies console alpha
+        // [WDJ] This would only give partial alpha, or overflow alpha.
+        // Too hard to fix right for such a small visual impact.
+//        Surf.FlatColor.s.alpha = alpha * hf;    //calum: varies console alpha
     }
     HWD.pfnDrawPolygon( &Surf, v, 4,
         PF_NoTexture|PF_Modulated|PF_Translucent|PF_NoDepthTest);
@@ -579,8 +588,8 @@ void HWR_clearAutomap( void )
 
 // -----------------+
 // HWR_drawAMline   : draw a line of the automap (the clipping is already done in automap code)
-// Arg              : color is a RGB 888 value
 // -----------------+
+//  color : palette index
 void HWR_drawAMline( fline_t* fl, int color )
 {
     v2d_t  v1, v2;
@@ -602,6 +611,7 @@ void HWR_drawAMline( fline_t* fl, int color )
 // HWR_DrawFill     : draw flat coloured rectangle, with no texture
 // -----------------+
 // Scaled to (320,200), (0,0) at upper left
+//  color : palette index
 void HWR_DrawFill( int x, int y, int w, int h, int color )
 {
     vxtx3d_t  v[4];

@@ -79,6 +79,10 @@ extern script_t  fs_levelscript;  // the stored scripts for the level
 extern runningscript_t  fs_runningscripts;  // currently running
 extern mobj_t *  fs_run_trigger;  // the trigger parameter on RunScript
 
+// Background color fades for FS
+extern uint32_t fs_fadecolor;  // RGBA
+extern int      fs_fadealpha;
+
 void T_AddCommands();
 
 #endif

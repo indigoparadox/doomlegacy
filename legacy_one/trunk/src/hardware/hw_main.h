@@ -92,7 +92,7 @@ void HWR_Shutdown (void);
 
 void HWR_clearAutomap (void);
 void HWR_drawAMline (fline_t* fl, int color);
-void HWR_FadeScreenMenuBack (unsigned long color, long alpha, int height);
+void HWR_FadeScreenMenuBack( uint32_t color_rgba, int alpha, int height );
 void HWR_RenderPlayerView (int viewnumber, player_t* player);
 void HWR_DrawViewBorder (int clearlines);
 void HWR_DrawFlatFill (int x, int y, int w, int h, int flatlumpnum);

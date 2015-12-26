@@ -4659,3 +4659,18 @@ patchfile = w104_25_gamma.patch
 Rename gamma_bright_black choice to be gamma_full, so it fits in the menu.
 Make it the default choice, which will minimize problems with
 existing config files.
+
+*** W104_dark
+patchfile = w104_26_dark.patch
+- commit revision 1200
+Create menu control with 3 darkness settings of the background and console.
+The dark setting darkens the background so the menu are easier to
+read against the background.  It also darkens the console background to
+make console text easier to read.
+Simplify the hardware background fade function, make it reliable.
+Implement a common Fade function that is used for background fade,
+console fade, and FS screen fade.  This fade function can fade with any
+alpha value and apply a low value color tint (but not high color values).
+Its 8bit palette draw is color limited to the only console green tint.
+FS screen fade now applies to software draw too (but no color with 8bit).
+Cleanup the FS fade function, and FS fade variables.

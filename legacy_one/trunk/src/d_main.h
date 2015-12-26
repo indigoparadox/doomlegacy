@@ -56,10 +56,6 @@ extern consvar_t cv_home, cv_doomwaddir, cv_iwad;
 
 extern byte  init_sequence;  // = 0 on first init
 
-// Background color fades for FS
-extern unsigned long fadecolor;
-extern int fadealpha;
-
 // the infinite loop of D_DoomLoop() called from win_main for windows version
 void D_DoomLoop (void);
 

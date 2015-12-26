@@ -1300,8 +1300,17 @@ void CON_DrawConsole (void)
             CON_DrawBackpic (con_bordleft,0,w);
             CON_DrawBackpic (con_bordright,x2,w);
         }
+        // translucent background
         //Hurdler: what's the correct value of w and x2 in hardware mode ???
-        V_DrawFadeConsBack (w,0,x2,con_curlines);     // translucent background
+#if 0
+        // Darken the borders too
+        if( cv_darkback.value )
+            V_DrawFadeConsBack (0, vid.width, con_curlines);
+        else
+            V_DrawFadeConsBack (w, x2, con_curlines);
+#else
+        V_DrawFadeConsBack (w, x2, con_curlines);
+#endif
     }
 
     // draw console text lines from bottom to top

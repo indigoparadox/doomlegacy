@@ -194,6 +194,7 @@
 #include "p_inter.h"
 #include "p_info.h"
 #include "byteptr.h"
+#include "t_script.h"
 
 #include "b_game.h"	//added by AC for acbot
 
@@ -273,10 +274,6 @@ boolean         precache = true;        // if true, load all graphics at start
 
 wbstartstruct_t wminfo;                 // parms for world map / intermission
 
-
-// Background color fades for FS
-unsigned long fadecolor;
-int fadealpha;
 
 
 void ShowMessage_OnChange(void);
@@ -951,7 +948,7 @@ void G_DoLoadLevel (boolean resetplayer)
 
     // Reset certain attributes
     // (should be in resetplayer 'if'?)
-    fadealpha = 0;
+    fs_fadealpha = 0;
     extramovefactor = 0;
     jumpgravity = (6*FRACUNIT/NEWTICRATERATIO);  // re-init
     consoleplayer_ptr->locked = false;
