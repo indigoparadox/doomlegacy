@@ -122,10 +122,8 @@ typedef struct player_s
     fixed_t             deltaviewheight;
     // bob effect
     fixed_t             bob;
-#ifdef BOB_MOM
     // bob momentum, adjusted for friction
     fixed_t		bob_momx, bob_momy;
-#endif
 
     //added:16-02-98: mouse aiming, where the guy is looking at!
     //                 It is updated with cmd->aiming.

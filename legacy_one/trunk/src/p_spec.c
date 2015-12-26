@@ -3347,9 +3347,7 @@ void P_SpawnSpecials (void)
 
     // [WDJ] Last so Boom friction linedef can override other sector frictions.
     P_SpawnFriction(NULL);  //New friction model using linedefs
-#ifdef BOOM_GLOBAL_COLORMAP
     BoomColormap_detect();
-#endif
 }
 
 

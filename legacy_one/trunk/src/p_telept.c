@@ -124,10 +124,9 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle)
             CL_ResetSpiritPosition(thing);
         }
 #endif
-#ifdef BOB_MOM
         // [WDJ] kill bob momentum or player will keep bobbing for a while
         player->bob_momx = player->bob_momy = 0;
-#endif
+
         // move chasecam at new player location
         if ( camera.chase == player )
             P_ResetCamera (player);

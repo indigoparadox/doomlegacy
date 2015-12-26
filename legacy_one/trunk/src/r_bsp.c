@@ -454,10 +454,9 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 	// else normal view
       }
       sec = tempsec;
-#ifdef BOOM_GLOBAL_COLORMAP
+
       if( EN_boom_colormap > 1 )
          colormapnum = -1; // Boom colormaps not visible until walk into sector
-#endif
   }
   else if (sec->model == SM_Legacy_water) //SoM: 3/20/2000
   {
