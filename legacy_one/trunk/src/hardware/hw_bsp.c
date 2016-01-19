@@ -371,7 +371,7 @@ static void SplitPoly (fdivline_t* dlnp,        //splitting parametric line
         // start & end points
         if ( fracdivline (dlnp, &poly->pts[i], &poly->pts[j]) )
         {
-	    // have dividing pt
+            // have dividing pt
             if (ps<0) {
                 // first point
                 ps = i;
@@ -379,7 +379,7 @@ static void SplitPoly (fdivline_t* dlnp,        //splitting parametric line
                 ps_frac = dlnp->divfrac;
             }
             else
-	    {
+            {
                 // the partition line can traverse a junction between two segments
                 // or the two points are so close, they can be considered as one
                 // thus, don't accept, since split 2 must be another vertex
@@ -400,7 +400,7 @@ static void SplitPoly (fdivline_t* dlnp,        //splitting parametric line
                         pe_frac = dlnp->divfrac;
                     }
                     else
-		    {
+                    {
                     // a frac, not same vertice as last one
                     // we already got pt2 so pt 2 is not on the line,
                     // so we probably got back to the start point
@@ -426,7 +426,7 @@ static void SplitPoly (fdivline_t* dlnp,        //splitting parametric line
     {
 #if 0       
         GenPrintf( EMSG_debug,
-		   "SplitPoly: did not split polygon (%d %d)\n" ,ps,pe);
+                   "SplitPoly: did not split polygon (%d %d)\n" ,ps,pe);
 #endif
 
         // this eventually happens with 'broken' BSP's that accept
@@ -444,7 +444,7 @@ static void SplitPoly (fdivline_t* dlnp,        //splitting parametric line
     {
 #if 0       
         GenPrintf( EMSG_debug,
-		   "SplitPoly: only one point for split line (%d %d)",ps,pe);
+                   "SplitPoly: only one point for split line (%d %d)",ps,pe);
 #endif
         *frontpoly = poly;
         *backpoly  = NULL;
@@ -544,13 +544,13 @@ static poly_t* CutOutSubsecPoly (seg_t* lseg, int segcount, poly_t* poly)
         line_t *line = lseg->linedef;
         if( lseg->side )
         {  // side 1
-	    v1 = line->v2;
-	    v2 = line->v1;
+            v1 = line->v2;
+            v2 = line->v1;
         }
         else
         {  // side 0
-	    v1 = line->v1;
-	    v2 = line->v2;
+            v1 = line->v1;
+            v2 = line->v2;
         }
         p1.x = FIXED_TO_FLOAT( v1->x );
         p1.y = FIXED_TO_FLOAT( v1->y );
@@ -567,14 +567,14 @@ static poly_t* CutOutSubsecPoly (seg_t* lseg, int segcount, poly_t* poly)
         pe = -1;
         for (i=0; i<poly->numpts; i++)
         {
-	    // i, j are one side of the poly
+            // i, j are one side of the poly
             j=i+1;
             if (j==poly->numpts)
                 j=0;
             
             if( fracdivline (&cutseg, &poly->pts[i], &poly->pts[j]) )
             {
-	        // have dividing pt
+                // have dividing pt
                 if (ps<0) {
                     ps = i;
                     vs = cutseg.divpt;
@@ -628,17 +628,17 @@ static poly_t* CutOutSubsecPoly (seg_t* lseg, int segcount, poly_t* poly)
                 poly = temppoly;
             }
             else
-	    {
-	        //hmmm... maybe we should NOT accept this, but this happens
-	        // only when the cut is not needed it seems (when the cut
-	        // line is aligned to one of the borders of the poly, and
-	        // only some times..)
+            {
+                //hmmm... maybe we should NOT accept this, but this happens
+                // only when the cut is not needed it seems (when the cut
+                // line is aligned to one of the borders of the poly, and
+                // only some times..)
                 skipcut++;
 #if 0	   
-	        GenPrintf( EMSG_error,
-		      "CutOutPoly: only one point for split line (%d %d)",ps,pe);
+                GenPrintf( EMSG_error,
+                      "CutOutPoly: only one point for split line (%d %d)",ps,pe);
 #endif
-	    }
+            }
         }
     }
     return poly;
@@ -714,9 +714,9 @@ static void WalkBSPNode (int bspnum, poly_t* poly, unsigned short* leafnode, fix
 
             // do we have a valid polygon ?
             if (poly && poly->numpts > 2)
-	    {
-	        if( verbose )
-		    GenPrintf( EMSG_ver, "Poly: Adding a new subsector !!!\n");
+            {
+                if( verbose )
+                    GenPrintf( EMSG_ver, "Poly: Adding a new subsector !!!\n");
                 if (addsubsector == numsubsectors + NEWSUBSECTORS)
                     I_Error ("WalkBSPNode : not enough addsubsectors\n");
                 else if (addsubsector > 0x7fff)
@@ -744,7 +744,7 @@ static void WalkBSPNode (int bspnum, poly_t* poly, unsigned short* leafnode, fix
                 sprintf(s, "%d%%", (++ls_percent)<<1);
                 x = BASEVIDWIDTH/2;
                 y = BASEVIDHEIGHT/2;
-	        V_SetupDraw( 0 | V_SCALESTART | V_SCALEPATCH | V_CENTERHORZ );
+                V_SetupDraw( 0 | V_SCALESTART | V_SCALEPATCH | V_CENTERHORZ );
                 M_DrawTextBox(x-58, y-8, 13, 1);
                 V_DrawString(x-50, y, V_WHITEMAP, "Loading...");
                 V_DrawString(x+50-V_StringWidth(s), y, V_WHITEMAP, s);
@@ -980,15 +980,15 @@ void AdjustSegs(void)
             continue;
         for(;segcount--;lseg++)
         {
-	    polyvertex_t sv1, sv2;  // seg v1, v2
+            polyvertex_t sv1, sv2;  // seg v1, v2
             float distv1,distv2,tmp;
 
-	    sv1.x = FIXED_TO_FLOAT( lseg->v1->x );
-	    sv1.y = FIXED_TO_FLOAT( lseg->v1->y );
-	    sv2.x = FIXED_TO_FLOAT( lseg->v2->x );
-	    sv2.y = FIXED_TO_FLOAT( lseg->v2->y );
+            sv1.x = FIXED_TO_FLOAT( lseg->v1->x );
+            sv1.y = FIXED_TO_FLOAT( lseg->v1->y );
+            sv2.x = FIXED_TO_FLOAT( lseg->v2->x );
+            sv2.y = FIXED_TO_FLOAT( lseg->v2->y );
             nearv1=nearv2=MYMAX;
-	    // find nearest existing poly pts to seg v1, v2 
+            // find nearest existing poly pts to seg v1, v2
             for(j=0;j<p->numpts;j++)
             {
                 distv1 = p->pts[j].x - sv1.x; 
@@ -1009,12 +1009,12 @@ void AdjustSegs(void)
                     nearv2 = distv2;
                 }
             }
-	    // close enough to be considered the same ?
+            // close enough to be considered the same ?
             if( nearv1<=NEARDIST*NEARDIST )
-	    {
+            {
                 // share vertice with segs
                 lseg->pv1 = &(p->pts[v1found]);
-	    }
+            }
             else
             {
                 // BP: here we can do better, using PointInSeg and compute
@@ -1027,9 +1027,9 @@ void AdjustSegs(void)
                 lseg->pv1 = p1;
             }
             if( nearv2<=NEARDIST*NEARDIST )
-	    {
+            {
                 lseg->pv2 = &(p->pts[v2found]);
-	    }
+            }
             else
             {
                 polyvertex_t *p2=HWR_AllocVertex();
@@ -1040,7 +1040,7 @@ void AdjustSegs(void)
 
             // recompute length 
             {
-	        // [WDJ] FIXED_TO_FLOAT_MULT used to add 1/2 of lsb of fixed_t fraction.
+                // [WDJ] FIXED_TO_FLOAT_MULT used to add 1/2 of lsb of fixed_t fraction.
                 float x=lseg->pv2->x - lseg->pv1->x + (0.5*FIXED_TO_FLOAT_MULT);
                 float y=lseg->pv2->y - lseg->pv1->y + (0.5*FIXED_TO_FLOAT_MULT);
                 lseg->length = sqrt(x*x+y*y)*FRACUNIT;
@@ -1056,25 +1056,25 @@ void AdjustSegs(void)
         lseg = &segs[i];
         if( verbose )
         {
-	    if( ! ( lseg->pv1 && lseg->pv2 ) )
-	    {
-	        GenPrintf( EMSG_ver, "Seg %i, not in any polygon.\n", i );
-	    }
+            if( ! ( lseg->pv1 && lseg->pv2 ) )
+            {
+                GenPrintf( EMSG_ver, "Seg %i, not in any polygon.\n", i );
+            }
         }
         if( ! lseg->pv1 )
         {
-	    polyvertex_t *p1=HWR_AllocVertex();
-	    p1->x=FIXED_TO_FLOAT( lseg->v1->x );
-	    p1->y=FIXED_TO_FLOAT( lseg->v1->y );
-	    lseg->pv1 = p1;
-	}
+            polyvertex_t *p1=HWR_AllocVertex();
+            p1->x=FIXED_TO_FLOAT( lseg->v1->x );
+            p1->y=FIXED_TO_FLOAT( lseg->v1->y );
+            lseg->pv1 = p1;
+        }
         if( ! lseg->pv2 )
         {
-	    polyvertex_t *p2=HWR_AllocVertex();
-	    p2->x=FIXED_TO_FLOAT( lseg->v2->x );
-	    p2->y=FIXED_TO_FLOAT( lseg->v2->y );
-	    lseg->pv2 = p2;
-	}
+            polyvertex_t *p2=HWR_AllocVertex();
+            p2->x=FIXED_TO_FLOAT( lseg->v2->x );
+            p2->y=FIXED_TO_FLOAT( lseg->v2->y );
+            lseg->pv2 = p2;
+        }
     }
 }
 

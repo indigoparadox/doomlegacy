@@ -179,12 +179,12 @@ void HWR_DrawPatch (MipPatch_t* gpatch, int x, int y, int option)
         Surf.FlatColor.s.alpha = cv_grtranslucenthud.value;
 
         HWD.pfnDrawPolygon( &Surf, v, 4,
-	    BLENDMODE | PF_Modulated | PF_Clip | PF_NoZClip | PF_NoDepthTest);
+            BLENDMODE | PF_Modulated | PF_Clip | PF_NoZClip | PF_NoDepthTest);
     }
     else
     {
         HWD.pfnDrawPolygon( NULL, v, 4,
-	    BLENDMODE | PF_Clip | PF_NoZClip | PF_NoDepthTest);
+            BLENDMODE | PF_Clip | PF_NoZClip | PF_NoDepthTest);
     }
 }
 
@@ -223,7 +223,7 @@ void HWR_DrawSmallPatch (MipPatch_t* gpatch, int x, int y, int option, byte *col
 
     // clip it since it is used for bunny scroll in doom I
     HWD.pfnDrawPolygon( NULL, v, 4,
-	BLENDMODE | PF_Clip | PF_NoZClip | PF_NoDepthTest);
+        BLENDMODE | PF_Clip | PF_NoZClip | PF_NoDepthTest);
 }
 #endif
 
@@ -266,12 +266,12 @@ void HWR_DrawMappedPatch (MipPatch_t* gpatch, int x, int y, int option, byte *co
         Surf.FlatColor.s.red = Surf.FlatColor.s.green = Surf.FlatColor.s.blue = 0xff;
         Surf.FlatColor.s.alpha = cv_grtranslucenthud.value;
         HWD.pfnDrawPolygon( &Surf, v, 4,
-	    BLENDMODE | PF_Modulated | PF_Clip | PF_NoZClip | PF_NoDepthTest);
+            BLENDMODE | PF_Modulated | PF_Clip | PF_NoZClip | PF_NoDepthTest);
     }
     else
     {
         HWD.pfnDrawPolygon( NULL, v, 4,
-	    BLENDMODE | PF_Clip | PF_NoZClip | PF_NoDepthTest);
+            BLENDMODE | PF_Clip | PF_NoZClip | PF_NoDepthTest);
     }
 }
 
@@ -313,12 +313,12 @@ void HWR_DrawPic(int x, int y, int lumpnum)
         Surf.FlatColor.s.red = Surf.FlatColor.s.green = Surf.FlatColor.s.blue = 0xff;
         Surf.FlatColor.s.alpha = cv_grtranslucenthud.value;
         HWD.pfnDrawPolygon( &Surf, v, 4,
-	    BLENDMODE | PF_Modulated | PF_NoDepthTest | PF_Clip | PF_NoZClip);
+            BLENDMODE | PF_Modulated | PF_NoDepthTest | PF_Clip | PF_NoZClip);
     }
     else
     {
         HWD.pfnDrawPolygon( NULL, v, 4,
-	    BLENDMODE | PF_NoDepthTest | PF_Clip | PF_NoZClip);
+            BLENDMODE | PF_NoDepthTest | PF_Clip | PF_NoZClip);
     }
 }
 
@@ -645,7 +645,7 @@ void HWR_DrawFill( int x, int y, int w, int h, int color )
     Surf.FlatColor = V_GetColor( color );
 
     HWD.pfnDrawPolygon( &Surf, v, 4,
-			PF_Modulated|PF_NoTexture| PF_NoDepthTest );
+                        PF_Modulated|PF_NoTexture| PF_NoDepthTest );
 }
 
 

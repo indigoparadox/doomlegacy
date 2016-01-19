@@ -142,7 +142,7 @@ filestatus_e  checkfile_md5( const char * filename, const byte * wantedmd5sum);
 //  completepath: the file name buffer, must be length MAX_WADPATH
 // Return true when found, with the file path in the completepath parameter.
 boolean  Search_doomwaddir( const char * filename, int search_depth,
-		 /* OUT */  char * completepath );
+                 /* OUT */  char * completepath );
 
 // Search the doom directories, with md5, restricted privilege.
 //  filename : the filename to be found
@@ -167,7 +167,7 @@ filestatus_e  findfile( const char * filename, const byte * wantedmd5sum,
 //        FS_MD5SUMBAD
 //        FS_FOUND
 filestatus_e sys_filesearch( const char * filename, const char * startpath,
-			     const byte * wantedmd5sum, int maxsearchdepth,
-			     /*OUT*/ char * completepath );
+                             const byte * wantedmd5sum, int maxsearchdepth,
+                             /*OUT*/ char * completepath );
 
 #endif // D_NETFIL_H
