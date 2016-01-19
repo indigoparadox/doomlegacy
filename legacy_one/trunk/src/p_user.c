@@ -1507,11 +1507,11 @@ boolean P_UseArtifact(player_t *player, artitype_t arti)
             goto ret_fail;
         break;
     case arti_health:
-        if(!P_GiveBody(player, 25))
+        if(!P_GiveHealth(player, 25))
             goto ret_fail;
         break;
     case arti_superhealth:
-        if(!P_GiveBody(player, 100))
+        if(!P_GiveHealth(player, 100))
             goto ret_fail;
         break;
     case arti_tomeofpower:

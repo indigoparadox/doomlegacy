@@ -1455,7 +1455,7 @@ void A_GauntletAttack(player_t *player, pspdef_t *psp)
     }
     if(player->powers[pw_weaponlevel2])
     {
-        P_GiveBody(player, damage>>1);
+        P_GiveHealth(player, damage>>1);
         S_StartSound(pmo, sfx_gntpow);
     }
     else
