@@ -81,15 +81,15 @@ fixed_t FixedDiv2 (fixed_t a, fixed_t b);
     fixed_t __cdecl FixedMul (fixed_t a, fixed_t b);
     fixed_t __cdecl FixedDiv2 (fixed_t a, fixed_t b);
 #else
-    #ifdef __WATCOMC__
-    #pragma aux FixedMul =  \
+#ifdef __WATCOMC__
+#   pragma aux FixedMul =  \
         "imul ebx",         \
         "shrd eax,edx,16"   \
         parm    [eax] [ebx] \
         value   [eax]       \
         modify exact [eax edx]
 
-    #pragma aux FixedDiv2 = \
+#   pragma aux FixedDiv2 = \
         "cdq",              \
         "shld edx,eax,16",  \
         "sal eax,16",       \
@@ -97,14 +97,29 @@ fixed_t FixedDiv2 (fixed_t a, fixed_t b);
         parm    [eax] [ebx] \
         value   [eax]       \
         modify exact [eax edx]
-    #else
+#else
     //DJGPP or linux
     //Hurdler: changed with the fix for gcc 2.95.x provided by cph
-        static inline fixed_t FixedMul (fixed_t a, fixed_t b)         //asm
-        {
+    static inline fixed_t FixedMul (fixed_t a, fixed_t b)         //asm
+    {
           fixed_t ret;
           int dummy;
 
+# if 1
+          // [WDJ] Clang does not accept %cc.
+	  // Gcc would accept with and without.
+          asm("  imull %3 ;"
+              "  shrdl $16,%1,%0 ;"
+              : "=a" (ret),          /* eax is always the result */
+                "=d" (dummy)            /* cphipps - fix compile problem with gcc-2.95.1
+                                           edx is clobbered, but it might be an input */
+              : "0" (a),                /* eax is also first operand */
+                "r" (b)                 /* second operand could be mem or reg before,
+                                           but gcc compile problems mean i can only us reg */
+              : "cc"                   /* edx and condition codes clobbered */
+              );
+# else
+          // [WDJ] This kept for any older asm that requires it.
           asm("  imull %3 ;"
               "  shrdl $16,%1,%0 ;"
               : "=a" (ret),          /* eax is always the result */
@@ -115,12 +130,13 @@ fixed_t FixedDiv2 (fixed_t a, fixed_t b);
                                            but gcc compile problems mean i can only us reg */
               : "%cc"                   /* edx and condition codes clobbered */
               );
+# endif
 
           return ret;
-        }
+    }
 
-        static inline fixed_t FixedDiv2 (fixed_t a, fixed_t b)
-        {
+    static inline fixed_t FixedDiv2 (fixed_t a, fixed_t b)
+    {
             fixed_t ret;
             asm (
                    "movl  %%eax,%%edx      \n" // these two instructions allow the next
@@ -134,8 +150,8 @@ fixed_t FixedDiv2 (fixed_t a, fixed_t b);
                  : "dx"
                  );
             return ret;
-        }
-    #endif
+    }
+#endif
 #endif
 #endif // useasm
 
