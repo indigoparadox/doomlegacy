@@ -2238,6 +2238,12 @@ void P_UnArchiveThinkers(void)
                 if (diff & MD_AMMO)
                     mobj->dropped_ammo_count = READ32(save_p);
 
+                // [WDJ] Fix old savegames for corpse health < 0.
+                if((mobj->flags & MF_CORPSE) && (mobj->health >= 0))
+                {
+                    mobj->health = -mobj->health - (mobj->info->spawnhealth/2);
+                }
+
                 // now set deductable field
                 // TODO : save this too
                 mobj->skin = NULL;
