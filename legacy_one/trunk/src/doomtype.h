@@ -134,6 +134,7 @@ typedef enum {
 # define ASMCALL
 #endif
 
+// [WDJ] This program uses strcasecmp, strncasecmp.
 #if defined( __MSC__) || defined( __OS2__)
     // Microsoft VisualC++
     #define strncasecmp             strnicmp
@@ -148,13 +149,6 @@ typedef enum {
         #define strncasecmp             strnicmp
         #define strcasecmp              strcmpi
     #endif
-#endif
-
-#if 0
-// [WDJ] changed all stricmp to strcasecmp
-// [smite] we should use standard funcs
-#define stricmp(x,y) strcasecmp(x,y)
-#define strnicmp(x,y,n) strncasecmp(x,y,n)
 #endif
 
 
