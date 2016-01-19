@@ -259,7 +259,8 @@ int W_LoadWadFile (const char *filename)
         nameonly(filenamebuf); // only search for the name
 
         // findfile returns dir+filename
-        fs = findfile(filenamebuf, NULL, /*OUT*/ filenamebuf);
+	// Owner security permissions.
+        fs = findfile(filenamebuf, NULL, false, /*OUT*/ filenamebuf);
         if( fs == FS_NOTFOUND )
         {
             CONS_Printf ("File %s not found.\n", filenamebuf);

@@ -690,7 +690,8 @@ void Command_Map_f(void)
     if (FIL_CheckExtension(MAPNAME))
     {
         // here check if file exist !!!
-        if (!findfile(MAPNAME, NULL, NULL))
+	// Owner security permissions.
+        if (!findfile(MAPNAME, NULL, false, NULL))
         {
             CONS_Printf("\2File %s' not found\n", MAPNAME);
             return;

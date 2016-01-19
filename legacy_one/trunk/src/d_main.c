@@ -432,6 +432,20 @@ extern char mac_user_home[FILENAME_SIZE];   // for config and savegames
 #endif
 #endif
 
+// Setup variable doomwaddir for owner usage.
+void  owner_wad_search_order( void )
+{
+    // Wad search order.
+    if( defdir_stat )
+    {
+        // Search current dir near first, for other wad searches.
+        doomwaddir[1] = defdir;
+    }
+    // Search progdir/wads early, for other wad searches.
+    doomwaddir[2] = progdir_wads;
+    // Search last, for other wad searches.
+    doomwaddir[MAX_NUM_DOOMWADDIR-1] = progdir;
+}
 
 
 
@@ -1542,16 +1556,7 @@ void IdentifyVersion()
         GenPrintf(EMSG_ver, "Legacy.wad: %s\n", legacywad );
     }
 
-    // Wad search order.
-    if( defdir_stat )
-    {
-        // Search current dir near first, for other wad searches.
-        doomwaddir[1] = defdir;
-    }
-    // Search progdir/wads early, for other wad searches.
-    doomwaddir[2] = progdir_wads;
-    // Search last, for other wad searches.
-    doomwaddir[MAX_NUM_DOOMWADDIR-1] = progdir;
+    owner_wad_search_order();
 
     /*
        French stuff.
@@ -1639,21 +1644,20 @@ void IdentifyVersion()
             goto fatal_err;
         }
 
-        if (s[0] == '/' || s[0] == '\\' || s[1] == ':')
+        const char * ipath = file_searchpath( s );
+        if( ipath )
         {
-            // Absolute path
-            snprintf(pathiwad, _MAX_PATH-1, "%s", s);
-            pathiwad[_MAX_PATH-1] = '\0';
+            // Absolute or relative path, no search.
+            cat_filename( pathiwad, ipath, s );
         }
         else
         {
-            // Relative path
+            // Simple filename.
             // Find the IWAD in the doomwaddir.
             if( ! Search_doomwaddir( s, IWAD_SEARCH_DEPTH, /*OUT*/ pathiwad ) )
             {
                 // Not found in doomwaddir.
-                strncpy( pathiwad, s, MAX_WADPATH );
-                pathiwad[ MAX_WADPATH-1 ] = 0;
+                cat_filename( pathiwad, "", s );
             }
         }
 

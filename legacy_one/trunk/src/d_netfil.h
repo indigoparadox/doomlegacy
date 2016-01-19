@@ -144,9 +144,15 @@ filestatus_e  checkfile_md5( const char * filename, const byte * wantedmd5sum);
 boolean  Search_doomwaddir( const char * filename, int search_depth,
                  /* OUT */  char * completepath );
 
+// Determine if the filename is simple, or has an inherent file path.
+// Return the correct inherent filepath.
+// Return NULL for a simple filename.
+const char *  file_searchpath( const char * filename );
+
 // Search the doom directories, with md5, restricted privilege.
 //  filename : the filename to be found
 //  wantedmd5sum : NULL for no md5 check
+//  net_secure : true for net downloads, restricted access
 //  completepath : when not NULL, return the full path and name
 //      must be a buffer of MAX_WADPATH
 // return FS_NOTFOUND
@@ -154,11 +160,12 @@ boolean  Search_doomwaddir( const char * filename, int search_depth,
 //        FS_FOUND
 //        FS_SECURITY
 filestatus_e  findfile( const char * filename, const byte * wantedmd5sum,
+			boolean  net_secure,
                         /*OUT*/ char * completepath );
 
 // INTERFACE
 
-//  filename : the filename to be found
+//  filename: simple filename to find in a directory
 //  wantedmd5sum : NULL for no md5 check
 //  completepath : when not NULL, return the full path and name
 //      must be a buffer of MAX_WADPATH
