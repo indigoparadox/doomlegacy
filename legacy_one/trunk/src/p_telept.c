@@ -292,7 +292,7 @@ int EV_SilentTeleport(line_t *line, int side, mobj_t *thing)
               if ( camera.chase == player )
                  P_ResetCamera (player);
 
-	  }
+          }
           return 1;
       }
     }
@@ -428,7 +428,7 @@ int EV_SilentLineTeleport(line_t *line, int side, mobj_t *thing,
             // SoM: 3/15/2000: move chasecam at new player location
             if ( camera.chase == player )
                P_ResetCamera (player);
-	}
+        }
 
         return 1;
     }
