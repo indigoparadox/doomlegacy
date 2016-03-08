@@ -4841,3 +4841,8 @@ Trim: Chains together the segs, and applies those chains that cross the
 NonConvex : Leaves the non-convex polygons.  My nVidia supplied
   OpenGL library seems to tolerate the non-convex polygons.
 
+*** W105_hwpoly
+patchfile = w105_13_hwpoly.patch
+- commit revision 1216
+Expanded use of wpoly to rest of polygon building code.
+Change to drawing poly is now done in finalize_polygons().

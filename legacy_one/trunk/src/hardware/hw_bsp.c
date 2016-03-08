@@ -120,6 +120,14 @@ void  create_poly_vert( void )
     }
 }
 
+// Return true if p1 is a level map polyvertex in the poly_vert structure.
+static inline
+boolean  in_poly_vert( polyvertex_t * p1 )
+{
+    return( (p1 >= poly_vert) && (p1 < &poly_vert[numvertexes]) );
+}
+
+
 
 #define POLYSTORE_NUM_VERT  256
 typedef struct polyvertex_store_s {
@@ -238,6 +246,25 @@ polyvertex_t *  store_polyvertex( polyvertex_t * vert, float ep )
     }
     return vp;
 }
+
+// Create a polyvertex for the vertex.
+//  v1 : fixed point vertex
+//  ep: how close an existing vertex must be to be the same ( 0.001 to 1.5 )
+static
+polyvertex_t *  store_vertex( vertex_t * v1, float ep )
+{
+    float fx = FIXED_TO_FLOAT( v1->x );
+    float fy = FIXED_TO_FLOAT( v1->y );
+    polyvertex_t * vp = find_close_polyvertex( fx, fy, ep );
+    if( ! vp )
+    {
+        vp = new_polyvertex();   // new BSP polyvertex
+        vp->x = fx;
+        vp->y = fy;
+    }
+    return vp;
+}
+
 
 
 // ---- Working polygons
@@ -468,8 +495,41 @@ void  wpoly_insert_cut( polyvertex_t * v1, polyvertex_t * v2,
     tmp_poly = *xpoly;  // save ptrs and sizes
     xpoly->ppts = NULL;  // so does not get freed
     wpoly_split_copy( v1, v2, &tmp_poly, v_from, v_cnt, /*OUT*/ xpoly );
-    wpoly_free( &tmp_poly );  // release saved input
+    wpoly_free( &tmp_poly );  // release saved poly content
 }
+
+
+// Insert a vertex into the destination poly, at a position.
+//  v1 : polyvertex to be inserted
+//  v_at : the index where v1 is inserted
+//  xpoly : the source and destination poly
+static
+void  wpoly_insert_vert( polyvertex_t * v1, int v_at,
+                        /*INOUT*/ wpoly_t * xpoly )
+{
+    wpoly_t  tmp_poly;
+    int numpts = xpoly->numpts;
+
+    if( v_at > numpts )  return;
+
+    tmp_poly = *xpoly;  // save ptrs and sizes
+    // Copy back from tmp_poly to xpoly
+    wpoly_init_alloc( numpts + 1, xpoly );
+    xpoly->numpts = numpts + 1;
+    if( v_at > 0 )
+    {
+        memcpy( &(xpoly->ppts[0]), &(tmp_poly.ppts[0]), sizeof(void*) * v_at );
+    }
+    xpoly->ppts[v_at] = v1;  // insert
+    if( v_at < numpts )
+    {
+        memcpy( &(xpoly->ppts[v_at + 1]), &(tmp_poly.ppts[v_at]),
+                sizeof(void*) * (numpts - v_at) );
+    }
+    wpoly_free( &tmp_poly );  // release saved poly content
+}
+
+
 
 
 // ---- Subsectors
@@ -477,6 +537,7 @@ void  wpoly_insert_cut( polyvertex_t * v1, polyvertex_t * v2,
 // Array of poly_subsector_t,
 // Index by bsp subsector num,  0.. num_poly_subsector-1
 poly_subsector_t*   poly_subsectors = NULL;
+wpoly_t *   wpoly_subsectors = NULL;  // working subsectors
 
 
 // extra subsectors are subsectors without segs, added for the plane polygons
@@ -507,8 +568,6 @@ static int total_subsecpoly_cnt=0;
 #define POLY_VERTINC    256
 static byte*    gr_polypool = NULL;
 static unsigned int  gr_polypool_free = 0;
-static byte*    gr_vertpool = NULL;
-static unsigned int  gr_vertpool_free = 0;
 #endif
 
 // only between levels, clear poly pool
@@ -518,8 +577,6 @@ static void HWR_ClearPolys (void)
 #ifndef ZPLANALLOC
     gr_polypool = NULL;
     gr_polypool_free = 0;
-    gr_vertpool = NULL;
-    gr_vertpool_free = 0;
 #endif
     poly_vert = NULL;
     polyvert_store = NULL;    
@@ -564,30 +621,9 @@ static poly_t* HWR_AllocPoly (int numpts)
     return p;
 }
 
-static polyvertex_t* HWR_AllocVertex (void)
-{
-    polyvertex_t* p;
-    int  size;
 
-    size =  sizeof(polyvertex_t);
-#ifdef ZPLANALLOC
-    p = Z_Malloc(size, PU_HWRPLANE, NULL);
-#else
-    if(gr_vertpool_free < size)
-    {
-        // Allocate another pool.
-        // Z_FreeTags reclaims the leftover memory of previous pool.
-        gr_vertpool_free = sizeof(polyvertex_t) & POLY_VERTINC;
-        gr_vertpool = Z_Malloc(gr_vertpool_free, PU_HWRPLANE, NULL);
-    }
-    p = (polyvertex_t*) gr_vertpool;
-    gr_vertpool += size;
-    gr_vertpool_free -= size;
-#endif
-    return p;
-}
-
-
+#if 0
+// Unused
 // Adding a vertex to a poly requires a new poly allocation with larger size.
 // Free the old poly memory.
 static void HWR_FreePoly (poly_t* poly)
@@ -601,6 +637,7 @@ static void HWR_FreePoly (poly_t* poly)
     memset(poly,0,size);
 #endif
 }
+#endif
 
 #ifdef DEBUG_HWBSP
 // print poly for debugging
@@ -767,8 +804,8 @@ boolean  point_rightside( fdivline_t * dl, polyvertex_t * v4 )
     // If divline is rotated until dy>0 and dx=0, then true when rotated
     // vertex position is to the right of the divline (v4->x > dl->x).
     return
-       ( ((double)(dl->y) - (double)(v4->y)) * (double)(dl->dx)
-       - ((double)(dl->x) - (double)(v4->x)) * (double)(dl->dy)
+       ( (((double)(v4->x) - (double)(dl->x)) * (double)(dl->dy))
+       - (((double)(v4->y) - (double)(dl->y)) * (double)(dl->dx))
        >= 0 );
 }
 
@@ -785,7 +822,20 @@ double  cross_product( polyvertex_t * p1, polyvertex_t * p2, polyvertex_t * v4 )
     );
 }
 
+#if 0
+// Unused
+static
+double  distance( polyvertex_t * p1, polyvertex_t * p2 )
+{
+    double dx = (double)(p2->x) - (double)(p1->x);
+    double dy = (double)(p2->y) - (double)(p1->y);
+    return  sqrt( dx*dx + dy*dy );
+}
+#endif
 
+
+
+  
 // Split a _CONVEX_ polygon in two convex polygons.
 //   poly : polygon to be split by divline
 // outputs:
@@ -1270,7 +1320,7 @@ boolean  apply_seg_chains( wpoly_t * poly )
         free_first_seg_chain();
     }
     return check_convex;
- }
+}
 
 #endif
 
@@ -1462,6 +1512,7 @@ void  CutOutSubsecPoly ( int ssindex, /*INOUT*/ wpoly_t* poly)
 #ifdef CUTOUT_NON_CONVEX
         if( looseA || looseB )
         {
+            // Cutseg does not completely cross the poly.
             // Save the seg
             save_loose_seg( lseg, A.vertex, B.vertex, looseA, looseB,
                             ( B.divfrac < A.divfrac ) );
@@ -1488,6 +1539,7 @@ void  CutOutSubsecPoly ( int ssindex, /*INOUT*/ wpoly_t* poly)
 #endif
         {
             // Cutseg cuts across poly, at two points.
+            // Save poly on rightside of cutting seg.	    
             if( B.divfrac < A.divfrac )
             {
                 // B, A, poly from A to B clockwise
@@ -1552,10 +1604,6 @@ void  CutOutSubsecPoly ( int ssindex, /*INOUT*/ wpoly_t* poly)
 // Called from WalkBSPNode
 static void HWR_SubsecPoly (int ssindex, wpoly_t* poly)
 {
-    poly_t *     dpoly;  // drawing poly
-    polyvertex_t *pv;
-    int  ps;
-
     sscount++;
 
     if (poly->numpts <= 0 )  return;
@@ -1564,16 +1612,6 @@ static void HWR_SubsecPoly (int ssindex, wpoly_t* poly)
     {
         // Trim the subsector with the segs.
         CutOutSubsecPoly( ssindex, /*INOUT*/ poly);
-    }
-
-    // Generate poly in poly_t format.
-    // Vertex in wpoly_t are ptr, but in poly_t they are a copy of the vertex.
-    dpoly = HWR_AllocPoly (poly->numpts);
-    poly_subsectors[ssindex].planepoly = dpoly;
-    pv = dpoly->pts;
-    for( ps = 0; ps<poly->numpts; ps++ )
-    {
-        *pv++ = *(poly->ppts[ps]);  // copy of each vertex
     }
 
 #ifdef DEBUG_HWBSP
@@ -1640,7 +1678,6 @@ void WalkBSPNode (int bspnum, wpoly_t* poly, unsigned short* leafnode, fixed_t *
 
         HWR_SubsecPoly ( subsecnum, poly );
         M_ClearBox(bbox);
-//        poly=poly_subsectors[ subsecnum ].planepoly;
  
         // Add the poly points into the bounding box.
         for (i=0; i<poly->numpts; i++)
@@ -1648,6 +1685,9 @@ void WalkBSPNode (int bspnum, wpoly_t* poly, unsigned short* leafnode, fixed_t *
              pt = poly->ppts[i];
              M_AddToBox (bbox, (fixed_t)(pt->x * FRACUNIT), (fixed_t)(pt->y * FRACUNIT));
         }
+        
+        wpoly_move( poly, /*OUT*/ & wpoly_subsectors[subsecnum] );
+        // poly is empty
 
         //Hurdler: implement a loading status
         if (ls_count-- <= 0)
@@ -1749,13 +1789,13 @@ bad_node:
 }
 
 
-//FIXME: use Z_MAlloc() STATIC ?
 static
 void HWR_Free_poly_subsectors (void)
 {
     if (poly_subsectors)
-        free(poly_subsectors);
+        Z_Free(poly_subsectors);
 }
+
 
 #define MAXDIST   (1.5f)
 // BP: can't move vertex : DON'T change polygon geometry ! (convex)
@@ -1824,6 +1864,7 @@ boolean PointInSeg(polyvertex_t* va, polyvertex_t* v1, polyvertex_t* v2)
     ay/=norm;  // unit vector along seg, v1->v2
     bx= va->x - v1->x;
     by= va->y - v1->y;  // vector v1->va
+
     // d = (a DOT b),  (product of lengths * cosine( angle ))
     d =ax*bx+ay*by;
     // bound of the seg
@@ -1854,67 +1895,91 @@ boolean PointInSeg(polyvertex_t* va, polyvertex_t* v1, polyvertex_t* v2)
 }
 
 
-static int numsplitpoly;
+// [WDJ] The poly forming code has attempted to improve the polygons.
+// Snapping of divide points to existing vertexes is one, and it may
+// contribute to cracks in the floor tiling.  Snapping to an existing
+// vertex may pull the edge of a polygon away from the adjoining polygon.
+// Inaccuracies in the division lines may also contribute to this.
+// This code attempts to find such cracks and fix the polygons to cover them.
+
+static int num_T_vertex_fixed;
+
+// A structure to pass in BSP recursion, reducing it to one parameter.
+typedef struct {
+   fixed_t max_x, min_x, max_y, min_y;
+   wpoly_t * poly;  // our poly
+   polyvertex_t * pt;  // T-split vertex
+   polyvertex_t * before, * after;  // shared vertex before and after it
+   int our_secnum, find_secnum;  // sectors
+   int pt_index;
+} split_T_t;
 
 // Dist 0.4999 cures HOM in Freedoom map09
 #define SEARCHSEG_VERTEX_DIST   0.4999f
 
 // Recursive descent in BSP.
-void SearchSegInBSP(int bspnum, polyvertex_t *p, poly_t *poly)
+void SearchSegInBSP(int bspnum, split_T_t * stp)
 {
-    poly_t  *q;
-    int     j,k;
+    wpoly_t * wq = stp->poly;
+    polyvertex_t * pt = stp->pt;
+    unsigned int  subsecnum;
+    int  numpts, i1, i2;
 
-    if (bspnum & NF_SUBSECTOR)
+    for(;;)
     {
-        if( bspnum!=-1 )
-        {
-            bspnum &= ~NF_SUBSECTOR;
-            q = poly_subsectors[bspnum].planepoly;
-            if( poly==q || !q)
-                return;
+        if (bspnum & NF_SUBSECTOR)  goto got_subsector;
 
-            for(j=0;j<q->numpts;j++)
-            {
-                k=j+1;
-                if( k==q->numpts ) k=0;
-                if( !SameVertex(p, &q->pts[j], SEARCHSEG_VERTEX_DIST)
-                    && !SameVertex(p, &q->pts[k], SEARCHSEG_VERTEX_DIST)
-                    && PointInSeg(p, &q->pts[j], &q->pts[k]) )
-                {
-                    poly_t *newpoly=HWR_AllocPoly(q->numpts+1);
-                    int n;
+        // Not a subsector, visit left and right children.
+        if(    (nodes[bspnum].bbox[0][BOXBOTTOM] <= stp->max_y)
+            && (nodes[bspnum].bbox[0][BOXTOP   ] >= stp->min_y)
+            && (nodes[bspnum].bbox[0][BOXLEFT  ] <= stp->max_x)
+            && (nodes[bspnum].bbox[0][BOXRIGHT ] >= stp->min_y)
+           )
+            SearchSegInBSP(nodes[bspnum].children[0], stp);
 
-                    for(n=0;n<=j;n++)
-                        newpoly->pts[n]=q->pts[n];
-                    newpoly->pts[k]=*p;
-                    for(n=k+1;n<newpoly->numpts;n++)
-                        newpoly->pts[n]=q->pts[n-1];
-                    numsplitpoly++;
-                    poly_subsectors[bspnum].planepoly = newpoly;
-                    HWR_FreePoly(q);
-                    return;
-                }
-            }
-        }
-        return;
+        if(! ( (nodes[bspnum].bbox[1][BOXBOTTOM] <= stp->max_y)
+            && (nodes[bspnum].bbox[1][BOXTOP   ] >= stp->min_y)
+            && (nodes[bspnum].bbox[1][BOXLEFT  ] <= stp->max_x)
+            && (nodes[bspnum].bbox[1][BOXRIGHT ] >= stp->min_y)
+           ) )  break;
+        // Tail recursion within loop.
+        bspnum = nodes[bspnum].children[1];
     }
+    return;
 
-    // Not a subsector, visit left and right children.
-    if(   (FIXED_TO_FLOAT( nodes[bspnum].bbox[0][BOXBOTTOM] )-MAXDIST <= p->y)
-       && (FIXED_TO_FLOAT( nodes[bspnum].bbox[0][BOXTOP   ] )+MAXDIST >= p->y)
-       && (FIXED_TO_FLOAT( nodes[bspnum].bbox[0][BOXLEFT  ] )-MAXDIST <= p->x)
-       && (FIXED_TO_FLOAT( nodes[bspnum].bbox[0][BOXRIGHT ] )+MAXDIST >= p->x)
-       )
-        SearchSegInBSP(nodes[bspnum].children[0],p,poly);
+got_subsector:
+    subsecnum = bspnum & ~NF_SUBSECTOR;
+    if( subsecnum >= numsubsectors )  return;
 
-    if(   (FIXED_TO_FLOAT( nodes[bspnum].bbox[1][BOXBOTTOM] )-MAXDIST <= p->y)
-       && (FIXED_TO_FLOAT( nodes[bspnum].bbox[1][BOXTOP   ] )+MAXDIST >= p->y)
-       && (FIXED_TO_FLOAT( nodes[bspnum].bbox[1][BOXLEFT  ] )-MAXDIST <= p->x)
-       && (FIXED_TO_FLOAT( nodes[bspnum].bbox[1][BOXRIGHT ] )+MAXDIST >= p->x)
-      )
-        SearchSegInBSP(nodes[bspnum].children[1],p,poly);
+    // For every subsector polygon different than poly
+    wq = & wpoly_subsectors[subsecnum];
+    if( wq == stp->poly )  return;
+
+    numpts = wq->numpts;
+    if( numpts == 0 )  return;
+
+    // For all the vertex.
+    for( i1=0; i1<numpts; i1++)
+    {
+        if( wq->ppts[i1] == pt )  continue;
+        i2 = i1+1;
+        if( i2 == numpts )  i2=0;
+        if( wq->ppts[i2] == pt )  continue;
+        if( PointInSeg(pt, wq->ppts[i1], wq->ppts[i2]) )
+        {
+            goto add_pt;
+        }
+    }
+    return;
+
+add_pt:
+    // Insert the vertex pt into the polygon of the bsp subsector.
+    wpoly_insert_vert( pt, i2, /*INOUT*/ wq );
+    num_T_vertex_fixed++;
+//    stp->max_y = - 0x7ffffff0;  // exit all the way
+    return;
 }
+
 
 // search for T-intersection problem
 // BP : It can be much more faster doing this at the same time of the splitpoly
@@ -1925,52 +1990,89 @@ void SearchSegInBSP(int bspnum, polyvertex_t *p, poly_t *poly)
 static
 void SolveTProblem (void)
 {
-    poly_t  *p;
-    int     i,l;
+    split_T_t  splitt;  // parameter to search
+    wpoly_t  *wp;
+    int     ssnum, numpts, i, j;
 
     if (cv_grsolvetjoin.value == 0)
         return;
 
     GenPrintf( EMSG_all | EMSG_now, "Solving T-joins. This may take a while. Please wait...\n");
 
-    numsplitpoly=0;
+    num_T_vertex_fixed=0;
 
-    for(l=0; l<num_poly_subsector; l++ )
+    // For every subsector
+    for(ssnum=0; ssnum<num_poly_subsector; ssnum++ )
     {
-        p = poly_subsectors[l].planepoly;
-        if( p )
+        wp = & wpoly_subsectors[ssnum];
+        if( wp->numpts == 0 )  continue;
+
+        splitt.poly = wp;
+        numpts = wp->numpts;
+        // For all vertex in the subsector
+        for(i=0; i<numpts; i++)
         {
-            for(i=0;i<p->numpts;i++)
-                SearchSegInBSP(numnodes-1,&p->pts[i],p);
+#ifdef DEBUG_HWBSP
+            if( wp->ppts == NULL )
+            {
+                GenPrintf( EMSG_debug, "DEBUG: SolveT: NULL vertex, subsector= %d\n", ssnum );
+            }
+#endif
+            // No need to process polyvertex from the level map.
+            if( in_poly_vert( wp->ppts[i] ) )  continue;
+
+            // This is a vertex added by a split.
+            splitt.pt_index = i;
+            splitt.pt = wp->ppts[i];
+            splitt.max_x = (fixed_t)((wp->ppts[i]->x + MAXDIST) * 0x10000);
+            splitt.min_x = (fixed_t)((wp->ppts[i]->x - MAXDIST) * 0x10000);
+            splitt.max_y = (fixed_t)((wp->ppts[i]->y + MAXDIST) * 0x10000);
+            splitt.min_y = (fixed_t)((wp->ppts[i]->y - MAXDIST) * 0x10000);
+            j = i - 1;
+            if( j < 0 )  j += numpts;
+            splitt.before = wp->ppts[j];
+            j = i + 1;
+            if( j >= numpts )  j -= numpts;
+            splitt.after = wp->ppts[j];
+
+            // Check added polyvertex due to SplitPoly.
+            SearchSegInBSP(numnodes-1, & splitt);
         }
     }
 #ifdef DEBUG_HWBSP
-    GenPrintf( EMSG_debug, "DEBUG: SolveT: div a polygon line= %d\n", numsplitpoly );
+    GenPrintf( EMSG_debug, "DEBUG: SolveT: div polygon line= %d\n", num_T_vertex_fixed );
 #endif
 }
 
+
+
 #define NEARDIST (0.75f) 
-#define MYMAX    (10000000000000.0f)
+// Only needs to be reasonably larger than NEARDIST.
+#define INITIAL_MAX    (10000000000000.0f)
+#define SEG_SAME_VERT   (0.5f)
 
 // Adds polyvertex_t references to the segs.
 // [WDJ] 2013/12 Removed writes of polyvertex_t* to vertex_t*, it now has its
 // own ptrs.  Fewer reverse conversions are needed.
+static
 void AdjustSegs(void)
 {
-    int i,j,segcount;
+    int ssnum, j, segcount;
     seg_t* lseg;
-    poly_t *p;
-    int v1found=0,v2found=0;
-    float nearv1,nearv2;
+    wpoly_t *wp;
+    int v1found=0, v2found=0;
+    float nearv1, nearv2;
 
     // for all segs in all sectors
-    for(i=0;i<numsubsectors;i++)
+    for(ssnum=0; ssnum<numsubsectors; ssnum++)
     {
-        segcount = subsectors[i].numlines;
-        lseg = &segs[subsectors[i].firstline];
-        p = poly_subsectors[i].planepoly;
-        if(!p)
+        wp = & wpoly_subsectors[ssnum];
+        if(wp->numpts == 0)
             continue;
+
+        segcount = subsectors[ssnum].numlines;
+        lseg = &segs[subsectors[ssnum].firstline];
+
         for(;segcount--;lseg++)
         {
             polyvertex_t sv1, sv2;  // seg v1, v2
@@ -1991,33 +2093,35 @@ void AdjustSegs(void)
             sv1.y = FIXED_TO_FLOAT( lseg->v1->y );
             sv2.x = FIXED_TO_FLOAT( lseg->v2->x );
             sv2.y = FIXED_TO_FLOAT( lseg->v2->y );
-            nearv1=nearv2=MYMAX;
+
+            nearv1=nearv2 = INITIAL_MAX;
             // find nearest existing poly pts to seg v1, v2
-            for(j=0;j<p->numpts;j++)
+            for(j=0; j<wp->numpts; j++)
             {
-                distv1 = p->pts[j].x - sv1.x; 
-                tmp    = p->pts[j].y - sv1.y;
-                distv1 = distv1*distv1+tmp*tmp;
+                distv1 = wp->ppts[j]->x - sv1.x; 
+                tmp    = wp->ppts[j]->y - sv1.y;
+                distv1 = distv1*distv1 + tmp*tmp;
                 if( distv1 <= nearv1 )
                 {
                     v1found=j;
                     nearv1 = distv1;
                 }
                 // the same with v2
-                distv2 = p->pts[j].x - sv2.x; 
-                tmp    = p->pts[j].y - sv2.y;
-                distv2 = distv2*distv2+tmp*tmp;
+                distv2 = wp->ppts[j]->x - sv2.x; 
+                tmp    = wp->ppts[j]->y - sv2.y;
+                distv2 = distv2*distv2 + tmp*tmp;
                 if( distv2 <= nearv2 )
                 {
                     v2found=j;
                     nearv2 = distv2;
                 }
             }
+
             // close enough to be considered the same ?
             if( nearv1<=NEARDIST*NEARDIST )
             {
                 // share vertex with segs
-                lseg->pv1 = &(p->pts[v1found]);
+                lseg->pv1 = wp->ppts[v1found];
             }
             else
             {
@@ -2025,21 +2129,15 @@ void AdjustSegs(void)
                 // the right point position also split a polygon side to
                 // solve a T-intersection, but too much work
 
-                polyvertex_t *p1=HWR_AllocVertex();
-                p1->x=sv1.x;
-                p1->y=sv1.y;
-                lseg->pv1 = p1;
+                lseg->pv1 = store_polyvertex( &sv1, SEG_SAME_VERT );
             }
             if( nearv2<=NEARDIST*NEARDIST )
             {
-                lseg->pv2 = &(p->pts[v2found]);
+                lseg->pv2 = wp->ppts[v2found];
             }
             else
             {
-                polyvertex_t *p2=HWR_AllocVertex();
-                p2->x=sv2.x;
-                p2->y=sv2.y;
-                lseg->pv2 = p2;
+                lseg->pv2 = store_polyvertex( &sv2, SEG_SAME_VERT );
             }
 
             // recompute length 
@@ -2054,33 +2152,54 @@ void AdjustSegs(void)
             }
         }
     }
+
     // check for missed segs, not in any polygon
-    for( i=0; i<numsegs; i++ )
+    for( j=0; j<numsegs; j++ )
     {
-        lseg = &segs[i];
+        lseg = &segs[j];
         if( verbose )
         {
             if( ! ( lseg->pv1 && lseg->pv2 ) )
             {
-                GenPrintf( EMSG_ver, "Seg %i, not in any polygon.\n", i );
+                GenPrintf( EMSG_ver, "Seg %i, not in any polygon.\n", j );
             }
         }
         if( ! lseg->pv1 )
         {
-            polyvertex_t *p1=HWR_AllocVertex();
-            p1->x=FIXED_TO_FLOAT( lseg->v1->x );
-            p1->y=FIXED_TO_FLOAT( lseg->v1->y );
-            lseg->pv1 = p1;
+            lseg->pv1 = store_vertex( lseg->v1, SEG_SAME_VERT );
         }
         if( ! lseg->pv2 )
         {
-            polyvertex_t *p2=HWR_AllocVertex();
-            p2->x=FIXED_TO_FLOAT( lseg->v2->x );
-            p2->y=FIXED_TO_FLOAT( lseg->v2->y );
-            lseg->pv2 = p2;
+            lseg->pv2 = store_vertex( lseg->v2, SEG_SAME_VERT );
         }
     }
 }
+
+// Generate drawing polygons from wpoly_t versions.
+static
+void  finalize_polygons( void )
+{
+    wpoly_t *  wpoly;
+    poly_t *   dpoly;  // drawing poly
+    polyvertex_t *pv;
+    int ssnum, ps;
+
+    // For all segs in all sectors.
+    for(ssnum=0; ssnum<numsubsectors; ssnum++)
+    {
+        wpoly = & wpoly_subsectors[ssnum];
+        // Generate poly in poly_t format.
+        // Vertex in wpoly_t are ptr, but in poly_t they are a copy of the vertex.
+        dpoly = HWR_AllocPoly (wpoly->numpts);
+        poly_subsectors[ssnum].planepoly = dpoly;
+        pv = dpoly->pts;
+        for( ps = 0; ps<wpoly->numpts; ps++ )
+        {
+            *pv++ = *(wpoly->ppts[ps]);  // copy of each vertex
+        }
+    }
+}
+
 
 
 // Call this routine after the BSP of a Doom wad file is loaded,
@@ -2112,11 +2231,12 @@ void HWR_CreatePlanePolygons ( void )
     HWR_Free_poly_subsectors ();
     // allocate extra data for each subsector present in map
     num_alloc_poly_subsector = numsubsectors + NUM_EXTRA_SUBSECTORS;
-    poly_subsectors = (poly_subsector_t*)malloc (sizeof(poly_subsector_t) * num_alloc_poly_subsector);
-    if (!poly_subsectors)
-        I_Error ("couldn't malloc poly_subsectors num_alloc_poly_subsector %d\n", num_alloc_poly_subsector);
+    poly_subsectors = Z_Malloc( sizeof(poly_subsector_t) * num_alloc_poly_subsector, PU_STATIC, NULL);
     // set all data in to 0 or NULL !!!
     memset (poly_subsectors, 0, sizeof(poly_subsector_t) * num_alloc_poly_subsector);
+
+    wpoly_subsectors = Z_Malloc( sizeof(wpoly_t) * num_alloc_poly_subsector, PU_HWRPLANE, NULL);
+    memset (wpoly_subsectors, 0, sizeof(wpoly_t) * num_alloc_poly_subsector );
 
     // allocate table for back to front drawing of subsectors
     /*gr_drawsubsectors = (short*)malloc (sizeof(*gr_drawsubsectors) * num_alloc_poly_subsector);
@@ -2150,6 +2270,9 @@ void HWR_CreatePlanePolygons ( void )
     SolveTProblem ();
 
     AdjustSegs();
+
+    finalize_polygons();  // wpoly_t to drawing polygons
+    Z_Free( wpoly_subsectors );
 
 #ifdef DEBUG_HWBSP
     //debug debug..
