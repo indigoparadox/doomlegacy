@@ -39,6 +39,8 @@ void M_ClearBox (fixed_t *box)
     box[BOXBOTTOM] = box[BOXLEFT] = FIXED_MAX;
 }
 
+//  box : bounding box, INOUT
+//  x,y : vertex to add into the box
 void M_AddToBox ( fixed_t*      box,
                   fixed_t       x,
                   fixed_t       y )
@@ -50,6 +52,8 @@ void M_AddToBox ( fixed_t*      box,
     if (y>box[BOXTOP   ])   box[BOXTOP   ] = y;
 }
 
+//  box : bounding box
+//  x,y : return true if this vertex is in the box
 boolean M_PointInBox ( fixed_t*      box,
                        fixed_t       x,
                        fixed_t       y )

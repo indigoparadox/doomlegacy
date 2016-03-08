@@ -64,12 +64,13 @@ extern sector_t*        frontsector;
 extern sector_t*        backsector;
 
 extern boolean          skymap;
+extern byte             doorclosed;
 
 // faB: drawsegs are now allocated on the fly ... see r_segs.c
 // extern drawseg_t*       drawsegs;
 //SoM: 3/26/2000: Use boom code.
 extern drawseg_t*       drawsegs;
-extern unsigned         maxdrawsegs;
+extern uint16_t         maxdrawsegs;
 extern drawseg_t*       ds_p;
 extern drawseg_t*       firstnewseg;
 
@@ -81,9 +82,9 @@ extern lighttable_t**   dscalelight;
 typedef void (*drawfunc_t) (int start, int stop);
 
 
-// BSP?
+// BSP
 void R_ClearClipSegs (void);
-void R_SetupClipSegs();
+void R_SetupClipSegs (void);
 void R_ClearDrawSegs (void);
 
 void R_RenderBSPNode (int bspnum);

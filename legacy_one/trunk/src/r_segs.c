@@ -2110,6 +2110,9 @@ void R_StoreWallRange( int   start, int   stop)
             // ds_p->spr_topclip = screenheightarray;
         }
         
+
+#if 0
+// Duplicated by fix below.
         if (backsector->ceilingheight <= frontsector->floorheight)
         {
 	    // backsector below frontsector
@@ -2125,24 +2128,22 @@ void R_StoreWallRange( int   start, int   stop)
             ds_p->sil_top_height = FIXED_MIN;
             ds_p->silhouette |= SIL_TOP;
         }
+#endif
 
         //SoM: 3/25/2000: This code fixes an automap bug that didn't check
         // frontsector->ceiling and backsector->floor to see if a door was closed.
         // Without the following code, sprites get displayed behind closed doors.
+        if (doorclosed || backsector->ceilingheight<=frontsector->floorheight)
         {
-          extern int doorclosed;    // killough 1/17/98, 2/8/98, 4/7/98
-          if (doorclosed || backsector->ceilingheight<=frontsector->floorheight)
-          {
-              ds_p->spr_bottomclip = negonearray;
-              ds_p->sil_bottom_height = FIXED_MAX;
-              ds_p->silhouette |= SIL_BOTTOM;
-          }
-          if (doorclosed || backsector->floorheight>=frontsector->ceilingheight)
-          {                   // killough 1/17/98, 2/8/98
-              ds_p->spr_topclip = screenheightarray;
-              ds_p->sil_top_height = FIXED_MIN;
-              ds_p->silhouette |= SIL_TOP;
-          }
+            ds_p->spr_bottomclip = negonearray;
+            ds_p->sil_bottom_height = FIXED_MAX;
+            ds_p->silhouette |= SIL_BOTTOM;
+        }
+        if (doorclosed || backsector->floorheight>=frontsector->ceilingheight)
+        {                   // killough 1/17/98, 2/8/98
+            ds_p->spr_topclip = screenheightarray;
+            ds_p->sil_top_height = FIXED_MIN;
+            ds_p->silhouette |= SIL_TOP;
         }
 
         worldbacktop = backsector->ceilingheight - viewz;
