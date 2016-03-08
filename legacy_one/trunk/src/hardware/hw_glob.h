@@ -101,7 +101,6 @@ void HWR_FreePolyPool (void);
 // --------
 void HWR_InitTextureCache (void);
 void HWR_FreeTextureCache (void);
-void HWR_Free_poly_subsectors (void);
 
 void HWR_GetFlat (int flatlumpnum);
 MipTexture_t * HWR_GetTexture (int tex, uint32_t drawflags);

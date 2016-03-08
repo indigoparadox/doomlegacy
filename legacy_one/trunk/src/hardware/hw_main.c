@@ -415,7 +415,17 @@ consvar_t cv_grgammablue = { "gr_gammablue", "127", CV_SAVE | CV_CALL, grgamma_c
 consvar_t cv_grfiltermode = { "gr_filtermode", "Bilinear", CV_SAVE | CV_CALL, grfiltermode_cons_t, CV_filtermode_ONChange };
 consvar_t cv_grzbuffer = { "gr_zbuffer", "On", 0, CV_OnOff };
 consvar_t cv_grcorrecttricks = { "gr_correcttricks", "On", 0, CV_OnOff };
+
 consvar_t cv_grsolvetjoin = { "gr_solvetjoin", "On", 0, CV_OnOff };
+
+CV_PossibleValue_t grpolyshape_cons_t[] = {
+  {0, "Subsector"},
+  {1, "Fat"},
+  {2, "Trim"},
+  {3, "NotConvex"},
+  {0, NULL}
+};
+consvar_t cv_grpolyshape = { "gr_polygon_shape", "Trim", CV_SAVE, grpolyshape_cons_t };
 
 // console variables in development
 consvar_t cv_grpolygonsmooth = { "gr_polygonsmooth", "Off", CV_CALL, CV_OnOff, CV_grPolygonSmooth_OnChange };
@@ -2917,42 +2927,50 @@ int *bbox;
 static void HWR_RenderBSPNode(int bspnum)
 {
     node_t *bsp;
-    int side;
+    unsigned int  side;  // 0, 1
+    unsigned int  subsecnum;  // subsector index
 
-    // Found a subsector?
-    if (bspnum & NF_SUBSECTOR)
+    // [WDJ] From EnternityEngine, killough 5/2/98: remove tail recursion
+    while( ! (bspnum & NF_SUBSECTOR) )
     {
-        if (bspnum == -1)
-        {
-            //*(gr_drawsubsector_p++) = 0;
-            HWR_Subsector(0);
-        }
-        else
-        {
-            //*(gr_drawsubsector_p++) = bspnum&(~NF_SUBSECTOR);
-            HWR_Subsector(bspnum & (~NF_SUBSECTOR));
-        }
-        return;
+        // not a subsector, a nodes
+        bsp = &nodes[bspnum];
+
+        // Decide which side the view point is on.
+        side = R_PointOnSide(viewx, viewy, bsp);
+
+        // BP: big hack for a test in lighning ref:1249753487AB
+        bbox = bsp->bbox[side];
+
+        // Recursively divide front space.
+        HWR_RenderBSPNode(bsp->children[side]);
+
+        // Possibly divide back space.
+        side = side ^ 0x0001; // XOR bit0, other side
+        if (! HWR_CheckBBox(bsp->bbox[side]))
+            return;  // Not in back space
+
+        // BP: big hack for a test in lighning ref:1249753487AB
+        bbox = bsp->bbox[side];
+        // [WDJ] Convert tail recursion to loop.
+        // This does HWR_RenderBSPNode(bsp->children[side]);
+        bspnum = bsp->children[side];
     }
 
-    // not a subsector, a nodes
-    bsp = &nodes[bspnum];
+    // Found a subsector
+    subsecnum = bspnum & (~NF_SUBSECTOR);
+    if( subsecnum >= numsubsectors )  goto bad_subsector;
+    //*(gr_drawsubsector_p++) = subsecnum;
+    HWR_Subsector(subsecnum);
+    return;
 
-    // Decide which side the view point is on.
-    side = R_PointOnSide(viewx, viewy, bsp);
-
-    // BP: big hack for a test in lighning ref:1249753487AB
-    bbox = bsp->bbox[side];
-
-    // Recursively divide front space.
-    HWR_RenderBSPNode(bsp->children[side]);
-
-    // Possibly divide back space.
-    if (HWR_CheckBBox(bsp->bbox[side ^ 1]))
-    {
-        // BP: big hack for a test in lighning ref:1249753487AB
-        bbox = bsp->bbox[side ^ 1];
-        HWR_RenderBSPNode(bsp->children[side ^ 1]);
+bad_subsector:
+    // Error situations, should not get here.
+    if (bspnum == -1)
+    { 
+        // [WDJ] Degenerate map with no nodes.
+        //*(gr_drawsubsector_p++) = 0;
+        HWR_Subsector(0);
     }
 }
 
@@ -3769,10 +3787,12 @@ void HWR_DrawSkyBackground(player_t * player)
     f = 40 + 200 * FIXED_TO_FLOAT(
         finetangent[(FINE_ANG90 - ((int) aimingangle >> (ANGLETOFINESHIFT + 1))) & FINEMASK] );
         // finetangent_ANG( -(aimingangle/2) )
+#if 1
     if (f < 0)
         f = 0;
     if (f > 240 - 127)
         f = 240 - 127;
+#endif   
     v[3].tow = v[2].tow = f / 127.0f;
     v[0].tow = v[1].tow = (f + 127) / 127.0f;   //suppose 256x128 sky...
 
@@ -4185,6 +4205,7 @@ void HWR_AddCommands(void)
     CV_RegisterVar(&cv_grfiltermode);
     CV_RegisterVar(&cv_grcorrecttricks);
     CV_RegisterVar(&cv_grsolvetjoin);
+    CV_RegisterVar(&cv_grpolyshape);
 }
 
 void HWR_AddEngineCommands(void)
@@ -4253,7 +4274,6 @@ void HWR_Startup(void)
 void HWR_Shutdown(void)
 {
     CONS_Printf("HWR_Shutdown()\n");
-    HWR_Free_poly_subsectors();
     HWR_FreePolyPool();
     HWR_FreeTextureCache();
 }
