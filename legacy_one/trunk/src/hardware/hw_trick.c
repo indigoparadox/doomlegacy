@@ -91,13 +91,13 @@ static void addLineToChain(sector_t *sector, line_t *line)
 {
     linechain_t *thisElem, *nextElem;
     
-    if(NULL == sector)
+    if( sector == NULL )
 	return;
     
     thisElem = NULL;
     nextElem = sector->sectorLines;
     
-    while(NULL != nextElem) // walk through chain
+    while( nextElem ) // walk through chain
     {
 	thisElem = nextElem;
 	nextElem = thisElem->next;
@@ -146,7 +146,7 @@ static void releaseLineChains(void)
 	sector = &sectors[i];
 	nextElem = sector->sectorLines;
 	
-	while(NULL != nextElem)
+	while( nextElem )
 	{
 	    thisElem = nextElem;
 	    nextElem = thisElem->next;
@@ -158,13 +158,13 @@ static void releaseLineChains(void)
 }
 
 //
-// check if a pseudo sector is valid by checking all it´s linedefs
+// Check if a pseudo sector is valid by checking all it's linedefs
 //
 static boolean isPSectorValid(sector_t *sector)
 {
     linechain_t *thisElem, *nextElem;
     
-    if(!sector->pseudoSector) // check only pseudosectors, others don´t care
+    if(!sector->pseudoSector) // check only pseudosectors, others don't care
     {	
 #ifdef PARANOIA
 	CONS_Printf("Alert! non-pseudosector fed to isPSectorClosed()\n");
@@ -174,7 +174,7 @@ static boolean isPSectorValid(sector_t *sector)
     
     nextElem = sector->sectorLines;
     
-    while(NULL != nextElem)
+    while( nextElem )
     {
 	thisElem = nextElem;
 	nextElem = thisElem->next;
@@ -384,11 +384,11 @@ static void generateStacklist(sector_t *thisSector)
     {
 	checkSector = &sectors[i];
 	
-	if(checkSector == thisSector) // don´t check self
+	if(checkSector == thisSector) // don't check self
 	    continue;
 	
 	// buggy sector?
-	if(NULL == thisSector->sectorLines)
+	if( thisSector->sectorLines == NULL )
 	    continue;
 	   
 	// check if an arbitrary vertex of thisSector lies inside the checkSector
@@ -404,7 +404,7 @@ static void generateStacklist(sector_t *thisSector)
     }
 
     thisSector->stackList = malloc(sizeof(sector_t*) * (stackCnt+1));
-    if(NULL == thisSector->stackList)
+    if( thisSector->stackList == NULL )
     {
 	I_Error("Out of memory error in generateStacklist()");
     }
@@ -419,7 +419,7 @@ static void generateStacklist(sector_t *thisSector)
 //
 static void sortStacklist(sector_t *sector)
 {
-    sector_t **list;
+    sector_t **list;  // NULL terminated array of ptrs
     sector_t *sec1, *sec2;
     boolean finished;
     int i;
@@ -427,7 +427,7 @@ static void sortStacklist(sector_t *sector)
     list = sector->stackList;
     finished = false;
     
-    if(NULL == *list)
+    if( list[0] == NULL )
 	return; // nothing to sort
     
     while(!finished)
@@ -435,15 +435,15 @@ static void sortStacklist(sector_t *sector)
 	i=0;
 	finished = true;
 	
-	while(NULL != *(list+i+1))
+	while( list[i+1] )
 	{
-	    sec1 = *(list+i);
-	    sec2 = *(list+i+1);
+	    sec1 = list[i];
+	    sec2 = list[i+1];
 	    
 	    if(sec1->lineoutLength > sec2->lineoutLength)
 	    {
-		*(list+i) = sec2;
-		*(list+i+1) = sec1;
+		list[i] = sec2;
+		list[i+1] = sec1;
 		finished = false;
 	    }
 	    i++;
@@ -478,7 +478,7 @@ static double calcLineoutLength(sector_t *sector)
     length = 0.0;
     chain = sector->sectorLines; 
     
-    while(NULL != chain) // sum up lengths of all lines
+    while( chain ) // sum up lengths of all lines
     {
 	length += lineLength(chain->line);
 	chain = chain->next;
@@ -497,7 +497,7 @@ static void calcLineouts(sector_t *sector)
     secCount = 0;
     encSector = *(sector->stackList);
     
-    while(NULL != encSector)
+    while( encSector )
     {
 	if(encSector->lineoutLength < 0.0) // if length has not yet been calculated
 	{	    
@@ -540,7 +540,7 @@ static boolean areToptexturesMissing(sector_t *thisSector)
     nextElem = thisSector->sectorLines;
     nomiss = 0;
     
-    while(NULL != nextElem) // walk through chain
+    while( nextElem ) // walk through chain
     {
 	thisElem = nextElem;
 	nextElem = thisElem->next;
@@ -596,7 +596,7 @@ static boolean areBottomtexturesMissing(sector_t *thisSector)
     nextElem = thisSector->sectorLines;
     nomiss = 0;
     
-    while(NULL != nextElem) // walk through chain
+    while( nextElem ) // walk through chain
     {
 	thisElem = nextElem;
 	nextElem = thisElem->next;
@@ -648,14 +648,14 @@ static boolean isCeilingFloating(sector_t *thisSector)
     boolean floating = true;
     linechain_t *thisElem, *nextElem;
     
-    if(NULL == thisSector)
+    if( thisSector == NULL )
 	return false;
 
     refSector = NULL;
     thisElem  = NULL;
     nextElem  = thisSector->sectorLines;
     
-    while(NULL != nextElem) // walk through chain
+    while( nextElem ) // walk through chain
     {
 	thisElem = nextElem;
 	nextElem = thisElem->next;
@@ -668,13 +668,13 @@ static boolean isCeilingFloating(sector_t *thisSector)
 	else
 	    adjSector = frontSector;
 	
-	if(NULL == adjSector) // assume floating sectors have surrounding sectors
+	if( adjSector == NULL ) // assume floating sectors have surrounding sectors
 	{
 	    floating = false;
 	    break;
 	}
 
-	if(NULL == refSector)
+	if( refSector == NULL )
 	{
 	    refSector = adjSector;
 	    continue;
@@ -710,14 +710,14 @@ static boolean isFloorFloating(sector_t *thisSector)
     boolean floating = true;
     linechain_t *thisElem, *nextElem;
     
-    if(NULL == thisSector)
+    if( thisSector == NULL )
 	return false;
 
     refSector = NULL;
     thisElem  = NULL;
     nextElem  = thisSector->sectorLines;
     
-    while(NULL != nextElem) // walk through chain
+    while( nextElem ) // walk through chain
     {
 	thisElem = nextElem;
 	nextElem = thisElem->next;
@@ -730,13 +730,13 @@ static boolean isFloorFloating(sector_t *thisSector)
 	else
 	    adjSector = frontSector;
 	
-	if(NULL == adjSector) // assume floating sectors have surrounding sectors
+	if( adjSector == NULL ) // assume floating sectors have surrounding sectors
 	{
 	    floating = false;
 	    break;
 	}
 
-	if(NULL == refSector)
+	if( refSector == NULL )
 	{
 	    refSector = adjSector;
 	    continue;
@@ -769,16 +769,16 @@ static fixed_t estimateCeilHeight(sector_t *thisSector)
 {
     sector_t *adjSector;
 
-    if(NULL == thisSector ||
-       NULL == thisSector->sectorLines ||
-       NULL == thisSector->sectorLines->line)
+    if( (thisSector == NULL)
+        || (thisSector->sectorLines == NULL)
+        || (thisSector->sectorLines->line == NULL) )
 	return 0;
     
     adjSector = thisSector->sectorLines->line->frontsector;
     if(adjSector == thisSector)
 	adjSector = thisSector->sectorLines->line->backsector;
     
-    if(NULL == adjSector)
+    if( adjSector == NULL )
 	return 0;
     
     return adjSector->ceilingheight;
@@ -791,16 +791,16 @@ static fixed_t estimateFloorHeight(sector_t *thisSector)
 {
     sector_t *adjSector;
     
-    if(NULL == thisSector ||
-       NULL == thisSector->sectorLines ||
-       NULL == thisSector->sectorLines->line)
+    if( (thisSector == NULL)
+        || (thisSector->sectorLines == NULL)
+        || (thisSector->sectorLines->line == NULL) )
 	return 0;
     
     adjSector = thisSector->sectorLines->line->frontsector;
     if(adjSector == thisSector)
 	adjSector = thisSector->sectorLines->line->backsector;
     
-    if(NULL == adjSector)
+    if( adjSector == NULL )
 	return 0;
     
     return adjSector->floorheight;
@@ -811,7 +811,8 @@ static fixed_t estimateFloorHeight(sector_t *thisSector)
 extern boolean raven;       // true with heretic and hexen
 
 // --------------------------------------------------------------------------
-// Some levels have missing sidedefs, which produces HOM, so let´s try to compensate for that
+// Some levels have missing sidedefs, which produces HOM, so let's try to
+// compensate for that
 // and some levels have deep water trick, invisible staircases etc.
 // --------------------------------------------------------------------------
 // FIXME: put some nice default texture in legacy.dat and use it
@@ -880,9 +881,9 @@ void HWR_CorrectSWTricks(void)
 	{
 	    sectorList = sectors[i].stackList;
 	    k = 0;
-	    while(*(sectorList+k))
+	    while( sectorList[k] )
 	    {
-		outSector = *(sectorList+k);
+		outSector = sectorList[k];
 		if(!outSector->pseudoSector)
 		{
 		    sectors[i].virtualFloorheight = outSector->floorheight;
@@ -891,7 +892,7 @@ void HWR_CorrectSWTricks(void)
 		}
 		k++;
 	    }
-	    if(*(sectorList+k) == NULL) // sorry, did not work :(
+	    if(sectorList[k] == NULL) // sorry, did not work :(
 	    {
 		sectors[i].virtualFloorheight = sectors[i].floorheight;
 		sectors[i].virtualCeilingheight = sectors[i].ceilingheight;
@@ -940,9 +941,9 @@ void HWR_CorrectSWTricks(void)
 	secl = ld->backsector;
 	
 	if(secr == secl) // special renderer trick 
-	    continue; // we can´t correct missing textures here
+	    continue; // we can't correct missing textures here
 
-	if(NULL != secl) // only if there is a backsector 
+	if( secl ) // only if there is a backsector 
 	{
 	    if(secr->pseudoSector || secl->pseudoSector)
 		continue;

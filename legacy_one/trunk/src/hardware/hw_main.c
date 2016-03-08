@@ -332,7 +332,6 @@
 
 #define ZCLIP_PLANE     4.0f
 #define R_FAKEFLOORS
-#define SPRITE_LIGHTLEVEL
 
 // comment to remove the plane rendering
 #define DOPLANES
@@ -361,11 +360,7 @@ struct hwdriver_s hwdriver;
 //                                                                     PROTOS
 // ==========================================================================
 
-#ifdef SPRITE_LIGHTLEVEL
 static void HWR_AddSprites(sector_t* sec, int lightlevel);
-#else  
-static void HWR_AddSprites(sector_t * sec);
-#endif
 static void HWR_ProjectSprite(mobj_t * thing);
 static void HWR_Add3DWater(int lumpnum, poly_subsector_t * xsub, fixed_t fixedheight, int lightlevel, int alpha);
 static void HWR_Render3DWater();
@@ -506,14 +501,11 @@ sector_t *gr_backsector;
 FTransform_t atransform;
 // duplicates of the main code, set after R_SetupFrame() passed them into sharedstruct,
 // copied here for local use
-static fixed_t dup_viewx;
-static fixed_t dup_viewy;
-static fixed_t dup_viewz;
 static angle_t dup_viewangle;
 
 static float gr_viewx;
 static float gr_viewy;
-float gr_viewz;
+static float gr_viewz;
 static float gr_viewsin;
 static float gr_viewcos;
 
@@ -773,7 +765,7 @@ void HWR_RenderPlane(poly_subsector_t * xsub, fixed_t fixedheight,
         float scrollx = 0.0f, scrolly = 0.0f;
         if (gr_frontsector)
         {
-            if (fixedheight < dup_viewz)        // it's a floor
+            if (fixedheight < viewz)        // it's a floor
             {
                 scrollx = gr_frontsector->floor_xoffs * (FIXED_TO_FLOAT_MULT / flatsize);
                 scrolly = gr_frontsector->floor_yoffs * (FIXED_TO_FLOAT_MULT / flatsize);
@@ -2541,16 +2533,16 @@ static boolean HWR_CheckBBox(fixed_t * bspcoord)
 
     // Find the corners of the box
     // that define the edges from current viewpoint.
-    if (dup_viewx <= bspcoord[BOXLEFT])
+    if (viewx <= bspcoord[BOXLEFT])
         boxpos = 0;
-    else if (dup_viewx < bspcoord[BOXRIGHT])
+    else if (viewx < bspcoord[BOXRIGHT])
         boxpos = 1;
     else
         boxpos = 2;
 
-    if (dup_viewy >= bspcoord[BOXTOP])
+    if (viewy >= bspcoord[BOXTOP])
         boxpos |= 0;
-    else if (dup_viewy > bspcoord[BOXBOTTOM])
+    else if (viewy > bspcoord[BOXBOTTOM])
         boxpos |= 1 << 2;
     else
         boxpos |= 2 << 2;
@@ -2615,6 +2607,7 @@ static boolean HWR_CheckBBox(fixed_t * bspcoord)
 static int doomwaterflat;       //set by R_InitFlats hack
 
 // Called from HWR_RenderBSPNode
+//  num : subsector number
 static void HWR_Subsector(int num)
 {
     int segcount;
@@ -2630,8 +2623,8 @@ static void HWR_Subsector(int num)
 
 //no risk while developing, enough debugging nights!
 #ifdef PARANOIA
-    if (num >= addsubsector)
-        I_Error("HWR_Subsector: ss %i with numss = %i, addss = %d", num, numsubsectors, addsubsector);
+    if (num >= num_poly_subsector)
+        I_Error("HWR_Subsector: ss %i with numss = %i, extrass = %d", num, numsubsectors, num_poly_subsector);
 
     /*
        if (num>=numsubsectors)
@@ -2713,7 +2706,6 @@ static void HWR_Subsector(int num)
             sub->sector->moved = gr_frontsector->moved = false;
         }
 
-#if 1
         // [WDJ] from r_bsp.c 4/22/2010
         // adapted to local vars, and may still need a little tuning
 //        light = R_GetPlaneLight(gr_frontsector, gr_frontsector->floorheight);
@@ -2730,10 +2722,6 @@ static void HWR_Subsector(int num)
           ceilinglightlevel = *gr_frontsector->lightlist[light].lightlevel;
           ceilingcolormap = gr_frontsector->lightlist[light].extra_colormap;
         }
-#else
-        floorlightlevel = *gr_frontsector->lightlist[R_GetPlaneLight(gr_frontsector, locFloorHeight)].lightlevel;
-        ceilinglightlevel = *gr_frontsector->lightlist[R_GetPlaneLight(gr_frontsector, locCeilingHeight)].lightlevel;
-#endif
     }
    
     sub->sector->extra_colormap = gr_frontsector->extra_colormap;
@@ -2741,7 +2729,7 @@ static void HWR_Subsector(int num)
     // render floor ?
 #ifdef DOPLANES
     // yeah, easy backface cull! :)
-    if (locFloorHeight < dup_viewz)
+    if (locFloorHeight < viewz)
     {
         if (gr_frontsector->floorpic != skyflatnum)
         {
@@ -2762,7 +2750,7 @@ static void HWR_Subsector(int num)
         }
     }
 
-    if (locCeilingHeight > dup_viewz)
+    if (locCeilingHeight > viewz)
     {
         if (gr_frontsector->ceilingpic != skyflatnum)
         {
@@ -2800,9 +2788,9 @@ static void HWR_Subsector(int num)
 
             if (*fff->bottomheight <= gr_frontsector->ceilingheight
                 && *fff->bottomheight >= gr_frontsector->floorheight
-//                && ((dup_viewz < *fff->bottomheight && (fff->flags & FF_OUTER_PLANES))
-                && ((dup_viewz <= *fff->bottomheight && (fff->flags & FF_OUTER_PLANES))
-                    || (dup_viewz > *fff->bottomheight && (fff->flags & FF_INNER_PLANES))))
+//                && (( viewz < *fff->bottomheight && (fff->flags & FF_OUTER_PLANES))
+                && ((viewz <= *fff->bottomheight && (fff->flags & FF_OUTER_PLANES))
+                    || (viewz > *fff->bottomheight && (fff->flags & FF_INNER_PLANES))))
             {
                 if (fff->flags & (FF_TRANSLUCENT | FF_FOG))   // SoM: Flags are more efficient
                 {
@@ -2823,9 +2811,9 @@ static void HWR_Subsector(int num)
             }
             if (*fff->topheight >= gr_frontsector->floorheight
                 && *fff->topheight <= gr_frontsector->ceilingheight
-//                && ((dup_viewz > *fff->topheight && (fff->flags & FF_OUTER_PLANES))
-                && ((dup_viewz >= *fff->topheight && (fff->flags & FF_OUTER_PLANES))
-                    || (dup_viewz < *fff->topheight && (fff->flags & FF_INNER_PLANES))))
+//                && ((viewz > *fff->topheight && (fff->flags & FF_OUTER_PLANES))
+                && ((viewz >= *fff->topheight && (fff->flags & FF_OUTER_PLANES))
+                    || (viewz < *fff->topheight && (fff->flags & FF_INNER_PLANES))))
             {
                 if (fff->flags & (FF_TRANSLUCENT | FF_FOG))
                 {
@@ -2858,12 +2846,8 @@ static void HWR_Subsector(int num)
     {
         // draw sprites first , coz they are clipped to the solidsegs of
         // subsectors more 'in front'
-#ifdef SPRITE_LIGHTLEVEL
         HWR_AddSprites(gr_frontsector, tempsec.lightlevel);  // ???
 //	HWR_AddSprites(gr_frontsector, gr_frontsector->lightlevel);  // ???
-#else
-        HWR_AddSprites(gr_frontsector);
-#endif
 
         //Hurdler: at this point validcount must be the same, but is not because
         //         gr_frontsector doesn't point anymore to sub->sector due to
@@ -2955,7 +2939,7 @@ static void HWR_RenderBSPNode(int bspnum)
     bsp = &nodes[bspnum];
 
     // Decide which side the view point is on.
-    side = R_PointOnSide(dup_viewx, dup_viewy, bsp);
+    side = R_PointOnSide(viewx, viewy, bsp);
 
     // BP: big hack for a test in lighning ref:1249753487AB
     bbox = bsp->bbox[side];
@@ -3347,11 +3331,7 @@ static void HWR_DrawMD2S(void)
 // --------------------------------------------------------------------------
 static unsigned char sectorlight;
 // Does not need separate lightlevel as long as it is called with frontsector.
-#ifdef SPRITE_LIGHTLEVEL
 static void HWR_AddSprites(sector_t * sec, int sprite_lightlevel)
-#else
-static void HWR_AddSprites(sector_t * sec)
-#endif
 {
     mobj_t *thing;
 
@@ -3365,29 +3345,20 @@ static void HWR_AddSprites(sector_t * sec)
     // Well, now it will be done.
     sec->validcount = validcount;
 
-#if 1
     // sprite lighting
     if(!sec->numlights) // when numlights then light in DrawSprite
     {
-#ifdef SPRITE_LIGHTLEVEL
       int lightlevel = sprite_lightlevel;
       if(sec->model < SM_fluid)   lightlevel = sec->lightlevel;
-#else      
-      // from frontsector is correct for all models
-      int lightlevel = sec->lightlevel;
-#endif       
       sectorlight = LightLevelToLum(lightlevel); // add extra light
     }
-#else
-    // old sprite lighting
-    // [WDJ] The "& 0xff" ought to cause lighting errors
-    sectorlight = LightLevelToLum(sec->lightlevel & 0xff);
-#endif
 
     // Handle all things in sector.
     for (thing = sec->thinglist; thing; thing = thing->snext)
+    {
         if ((thing->flags2 & MF2_DONTDRAW) == 0)
             HWR_ProjectSprite(thing);
+    }
 }
 
 // --------------------------------------------------------------------------
@@ -3496,7 +3467,6 @@ static void HWR_ProjectSprite(mobj_t * thing)
 #endif
         return;
 
-#if 1
    {
    // [WDJ] from r_things.c
    // This fixes the thing lighting in special sectors
@@ -3543,7 +3513,6 @@ static void HWR_ProjectSprite(mobj_t * thing)
     // gr vis does not have a heightsec (yet ??)
     // [WDJ] Only pass water models, not colormap model sectors
     vis->heightsec = thing_has_model ? thingmodelsec : -1 ; //SoM: 3/17/2000
-#endif
 #endif
    
     //
@@ -3717,7 +3686,7 @@ void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
             {
                 ffloor_t *caster;
 
-                caster = sector->lightlist[R_GetPlaneLight(sector, dup_viewz)].caster;
+                caster = sector->lightlist[R_GetPlaneLight(sector, viewz)].caster;
                 sector = caster ? &sectors[caster->model_secnum] : sector;
             }
             if (sector->extra_colormap || view_extracolormap)
@@ -3907,9 +3876,6 @@ void HWR_RenderPlayerView(int viewnumber, player_t * player)
     R_SetupFrame(player);
 
     // copy view cam position for local use
-    dup_viewx = viewx;
-    dup_viewy = viewy;
-    dup_viewz = viewz;
     dup_viewangle = viewangle;
 
     // set window position
@@ -3932,9 +3898,9 @@ void HWR_RenderPlayerView(int viewnumber, player_t * player)
     // check for new console commands.
     NetUpdate();
 
-    gr_viewx = FIXED_TO_FLOAT( dup_viewx );
-    gr_viewy = FIXED_TO_FLOAT( dup_viewy );
-    gr_viewz = FIXED_TO_FLOAT( dup_viewz );
+    gr_viewx = FIXED_TO_FLOAT( viewx );
+    gr_viewy = FIXED_TO_FLOAT( viewy );
+    gr_viewz = FIXED_TO_FLOAT( viewz );
     gr_viewsin = FIXED_TO_FLOAT( viewsin );
     gr_viewcos = FIXED_TO_FLOAT( viewcos );
 
@@ -4344,7 +4310,6 @@ void transform_world_to_gr(float *cx, float *cy, float *cz)
 static planeinfo_t *planeinfo = NULL;
 static int planeinfo_len = 0;  // num allocated
 
-#define PLANE_MERGE_SORT
 
 // Add translucent plane, called for each plane visible
 void HWR_Add3DWater(int lumpnum, poly_subsector_t * xsub, fixed_t fixedheight, int lightlevel, int alpha)
@@ -4357,17 +4322,16 @@ void HWR_Add3DWater(int lumpnum, poly_subsector_t * xsub, fixed_t fixedheight, i
         if( planeinfo == NULL )
             I_Error( "Planeinfo: cannot alloc\n" );
     }
-#ifdef PLANE_MERGE_SORT
-    {
+
     // [WDJ] Merge sort is faster than bubble-sort or quicksort, because
     // the tests can be made simpler, takes advantage of already sorted list,
     // and it moves all closer entries at once, and only once.
     planeinfo_t * plnew = & planeinfo[numplanes];
     planeinfo_t * pl;
     // merge sort farthest to closest
-    fixed_t dist_abs = ABS(dup_viewz - fixedheight);
-    fixed_t dist_min = dup_viewz - dist_abs;  // test
-    fixed_t dist_max = dup_viewz + dist_abs;  // test
+    fixed_t dist_abs = ABS(viewz - fixedheight);
+    fixed_t dist_min = viewz - dist_abs;  // test
+    fixed_t dist_max = viewz + dist_abs;  // test
     for( pl = & planeinfo[0]; pl < plnew; pl++ )
     {
         // test for plane closer
@@ -4385,87 +4349,17 @@ void HWR_Add3DWater(int lumpnum, poly_subsector_t * xsub, fixed_t fixedheight, i
     plnew->lumpnum = lumpnum;
     plnew->xsub = xsub;
     plnew->alpha = alpha;
-    }
-#else
-    planeinfo[numplanes].fixedheight = fixedheight;
-    planeinfo[numplanes].lightlevel = lightlevel;
-    planeinfo[numplanes].lumpnum = lumpnum;
-    planeinfo[numplanes].xsub = xsub;
-    planeinfo[numplanes].alpha = alpha;
-#endif
+
     numplanes++;
 }
 
-#if 0
-// [WDJ] UNUSED
-#define DIST_PLANE(i) ABS(planeinfo[(i)].fixedheight-dup_viewz)
-
-//FIXME: this doesn't work yet
-void HWR_QuickSortPlane(int low, int high)
-{
-    if (low < high)
-    {
-        int lo = low;
-        int hi = high + 1;
-        int pivot = DIST_PLANE(low);
-
-        for (;;)
-        {
-            while (DIST_PLANE(++lo) < pivot);
-            while (DIST_PLANE(--hi) > pivot);
-            if (lo < hi)
-            {   //swap (ia, low, hi);
-                planeinfo_t temp;
-                memcpy(&temp, &planeinfo[low], sizeof(planeinfo_t));
-                memcpy(&planeinfo[low], &planeinfo[hi], sizeof(planeinfo_t));
-                memcpy(&planeinfo[hi], &temp, sizeof(planeinfo_t));
-            }
-            else
-                break;
-        }
-        {       //swap (ia, low, hi);
-            planeinfo_t temp;
-            memcpy(&temp, &planeinfo[low], sizeof(planeinfo_t));
-            memcpy(&planeinfo[low], &planeinfo[hi], sizeof(planeinfo_t));
-            memcpy(&planeinfo[hi], &temp, sizeof(planeinfo_t));
-        }
-        HWR_QuickSortPlane(low, hi - 1);
-        HWR_QuickSortPlane(hi + 1, high);
-    }
-}
-#endif
 
 void HWR_Render3DWater()
 {
     int i;
 
-#ifdef PLANE_MERGE_SORT
     //[WDJ] Do merge sort during insert of plane, then fewest operations,
     // one calc of dist, and one memcpy
-#else
-    //bubble sort 3D Water for correct alpha blending
-    //FIXME: do a quick sort since there can be lots of plane to sort
-    {
-        int permut = 1;
-        while (permut)
-        {
-            int j;
-            permut = 0;
-            for (j = 0; j < numplanes - 1; j++)
-            {
-                if (ABS(planeinfo[j].fixedheight - dup_viewz) < ABS(planeinfo[j + 1].fixedheight - dup_viewz))
-                {
-                    planeinfo_t temp;
-                    memcpy(&temp, &planeinfo[j + 1], sizeof(planeinfo_t));
-                    memcpy(&planeinfo[j + 1], &planeinfo[j], sizeof(planeinfo_t));
-                    memcpy(&planeinfo[j], &temp, sizeof(planeinfo_t));
-                    permut = 1;
-                }
-            }
-        }
-    }
-    //HWR_QuickSortPlane(0, numplanes-1);
-#endif
 
     gr_frontsector = NULL;      //Hurdler: gr_frontsector is no longer valid
     for (i = 0; i < numplanes; i++)
@@ -4549,6 +4443,7 @@ void HWR_AddTransparentWall(vxtx3d_t * vxtx, FSurfaceInfo_t * pSurf, int texnum,
         new_lwi = expand_late_wallinfo();  // may have to reuse farthest
     }
 
+    // New late wall record.
     lw_p = & late_wallinfo[new_lwi];
     memcpy( lw_p->vxtx, vxtx, sizeof(lw_p->vxtx));
     memcpy( & lw_p->Surf, pSurf, sizeof(FSurfaceInfo_t));

@@ -79,19 +79,28 @@
 #include "../v_video.h"
 #include "../m_menu.h"
 #include "../i_system.h"
+#include "../i_video.h"
 
-void I_FinishUpdate (void);
+
+
+//#define DEBUG_HWBSP
+
+// Allocate poly from ZAlloc.
+#define ZPLANALLOC
+
 
 // --------------------------------------------------------------------------
 // This is global data for planes rendering
 // --------------------------------------------------------------------------
 
+// Array of poly_subsector_t,
+// Index by bsp subsector num,  0.. num_poly_subsector-1
 poly_subsector_t*   poly_subsectors = NULL;
 
-// newsubsectors are subsectors without segs, added for the plane polygons
-#define NEWSUBSECTORS       50
-int  totsubsectors;
-int  addsubsector;
+// extra subsectors are subsectors without segs, added for the plane polygons
+#define NUM_EXTRA_SUBSECTORS       50
+unsigned int  num_poly_subsector;
+unsigned int  num_alloc_poly_subsector;
 
 typedef struct { 
     float x;
@@ -106,34 +115,35 @@ typedef struct {
 //                                    FLOOR & CEILING CONVEX POLYS GENERATION
 // ==========================================================================
 
+#ifdef DEBUG_HWBSP
 //debug counters
-static int nobackpoly=0;
-static int skipcut=0;
-static int totalsubsecpolys=0;
+static int nobackpoly_cnt=0;
+static int skipcut_cnt=0;
+static int total_subsecpoly_cnt=0;
+#endif
 
 // --------------------------------------------------------------------------
 // Polygon fast alloc / free
 // --------------------------------------------------------------------------
-//hurdler: quick fix for those who wants to play with larger wad
-#include "../m_argv.h"
 
-#define ZPLANALLOC
 #ifndef ZPLANALLOC
-//#define POLYPOOLSIZE   1024000    // may be much over what is needed
-//                                  //TODO: check out how much is used
-static int POLYPOOLSIZE=1024000;
-
-static byte*    gr_polypool=NULL;
-static byte*    gr_ppcurrent;
-static int      gr_ppfree;
+#define POLY_ALLOCINC  4096
+#define POLY_VERTINC    256
+static byte*    gr_polypool = NULL;
+static unsigned int  gr_polypool_free = 0;
+static byte*    gr_vertpool = NULL;
+static unsigned int  gr_vertpool_free = 0;
 #endif
 
 // only between levels, clear poly pool
 static void HWR_ClearPolys (void)
 {
 #ifndef ZPLANALLOC
-    gr_ppcurrent = gr_polypool;
-    gr_ppfree = POLYPOOLSIZE;
+    Z_FreeTags( PU_HWRPLANE, PU_HWRPLANE );
+    gr_polypool = NULL;
+    gr_polypool_free = 0;
+    gr_vertpool = NULL;
+    gr_vertpool_free = 0;
 #endif
 }
 
@@ -142,16 +152,6 @@ static void HWR_ClearPolys (void)
 void HWR_InitPolyPool (void)
 {
 #ifndef ZPLANALLOC
-    int pnum;
-
-    //hurdler: quick fix for those who wants to play with larger wad
-    if ( (pnum=M_CheckParm("-polypoolsize")) )
-        POLYPOOLSIZE = atoi(myargv[pnum+1])*1024; // (in kb)
-
-    GenPrintf( EMSG_info, "HWR_InitPolyPool() : allocating %d bytes\n", POLYPOOLSIZE);
-    gr_polypool = (byte*) malloc (POLYPOOLSIZE);
-    if (!gr_polypool)
-        I_Error ("HWR_InitPolyPool() : couldn't malloc polypool\n");
     HWR_ClearPolys ();
 #endif
 }
@@ -159,9 +159,7 @@ void HWR_InitPolyPool (void)
 void HWR_FreePolyPool (void)
 {
 #ifndef ZPLANALLOC
-    if (gr_polypool)
-        free (gr_polypool);
-    gr_polypool = NULL;
+    HWR_ClearPolys();
 #endif
 }
 
@@ -174,22 +172,17 @@ static poly_t* HWR_AllocPoly (int numpts)
 #ifdef ZPLANALLOC
     p = Z_Malloc(size, PU_HWRPLANE, NULL);
 #else
-#ifdef PARANOIA
-    if(!gr_polypool)
-        I_Error("Used gr_polypool without init !\n");
-    if(!gr_ppcurrent)
-        I_Error("gr_ppcurrent == NULL !!!\n");
-#endif
-
-    if (gr_ppfree < size)
+    if(gr_polypool_free < size)
     {
-        I_Error ("allocpoly() : no more memory %d bytes left, %d bytes needed\n\n%s\n", 
-                  gr_ppfree, size, "You can try the param -polypoolsize 2048 (or higher if needed)");
+        // Allocate another pool.
+        // Z_FreeTags reclaims the leftover memory of previous pool.
+        gr_polypool_free = POLY_ALLOCINC;
+        gr_polypool = Z_Malloc(gr_polypool_free, PU_HWRPLANE, NULL);
     }
 
-    p = (poly_t*)gr_ppcurrent;
-    gr_ppcurrent += size;
-    gr_ppfree -= size;
+    p = (poly_t*) gr_polypool;
+    gr_polypool += size;
+    gr_polypool_free -= size;
 #endif
     p->numpts = numpts;    
     return p;
@@ -204,30 +197,32 @@ static polyvertex_t* HWR_AllocVertex (void)
 #ifdef ZPLANALLOC
     p = Z_Malloc(size, PU_HWRPLANE, NULL);
 #else
-    if (gr_ppfree < size)
-        I_Error ("allocvertex() : no more memory %d bytes left, %d bytes needed\n\n%s\n", 
-                  gr_ppfree, size, "You can try the param -polypoolsize 2048 (or higher if needed)");
-
-    p = (polyvertex_t*)gr_ppcurrent;
-    gr_ppcurrent += size;
-    gr_ppfree -= size;
+    if(gr_vertpool_free < size)
+    {
+        // Allocate another pool.
+        // Z_FreeTags reclaims the leftover memory of previous pool.
+        gr_vertpool_free = sizeof(polyvertex_t) & POLY_VERTINC;
+        gr_vertpool = Z_Malloc(gr_vertpool_free, PU_HWRPLANE, NULL);
+    }
+    p = (polyvertex_t*) gr_vertpool;
+    gr_vertpool += size;
+    gr_vertpool_free -= size;
 #endif
     return p;
 }
 
 
-//TODO: polygons should be freed in reverse order for efficiency,
-// for now don't free because it doenst' free in reverse order
+// Adding a vertex to a poly requires a new poly allocation with larger size.
+// Free the old poly memory.
 static void HWR_FreePoly (poly_t* poly)
 {
 #ifdef ZPLANALLOC
     Z_Free(poly);
 #else
-    int  size;
-    
-    size = sizeof(poly_t) + sizeof(polyvertex_t) * poly->numpts;
+    // No free list, cannot reclaim memory.
+    // Each poly is a different size.
+    unsigned int  size = sizeof(poly_t) + sizeof(polyvertex_t) * poly->numpts;
     memset(poly,0,size);
-    //mempoly -= polysize;
 #endif
 }
 
@@ -237,7 +232,8 @@ static void HWR_FreePoly (poly_t* poly)
 
 // Return the division in partline div fields.
 // divfrac = how far along partline vector is crossing pt
-static boolean fracdivline (fdivline_t* partline, polyvertex_t* v1, polyvertex_t* v2)
+static
+boolean fracdivline (fdivline_t* partline, polyvertex_t* v1, polyvertex_t* v2)
 {
     double      frac;
     double      num; // numerator
@@ -344,7 +340,7 @@ static boolean SameVertice (polyvertex_t* p1, polyvertex_t* p2)
 // Called from: WalkBSPNode
 static void SplitPoly (fdivline_t* dlnp,        //splitting parametric line
                 poly_t* poly,                   //the convex poly we split
-                poly_t** frontpoly,             //return one poly here
+       /*OUT*/  poly_t** frontpoly,             //return one poly here
                 poly_t** backpoly)              //return the other here
 {
     polyvertex_t *pv;
@@ -424,9 +420,9 @@ static void SplitPoly (fdivline_t* dlnp,        //splitting parametric line
     // the right sectors)
     if (ps<0)
     {
-#if 0       
+#ifdef DEBUG_HWBSP
         GenPrintf( EMSG_debug,
-                   "SplitPoly: did not split polygon (%d %d)\n" ,ps,pe);
+                   "DEBUG: SplitPoly: did not split polygon (%d %d)\n" ,ps,pe);
 #endif
 
         // this eventually happens with 'broken' BSP's that accept
@@ -442,9 +438,9 @@ static void SplitPoly (fdivline_t* dlnp,        //splitting parametric line
 
     if (ps>=0 && pe<0)
     {
-#if 0       
+#ifdef DEBUG_HWBSP
         GenPrintf( EMSG_debug,
-                   "SplitPoly: only one point for split line (%d %d)",ps,pe);
+                   "DEBUG: SplitPoly: only one point for split line (%d %d)\n",ps,pe);
 #endif
         *frontpoly = poly;
         *backpoly  = NULL;
@@ -452,8 +448,9 @@ static void SplitPoly (fdivline_t* dlnp,        //splitting parametric line
     }
     if (pe<=ps)
     {
-#if 0       
-        GenPrintf( EMSG_debug, "SplitPoly: invalid splitting line (%d %d)",ps,pe);
+#ifdef DEBUG_HWBSP
+        GenPrintf( EMSG_debug,
+                   "DEBUG: SplitPoly: invalid splitting line (%d %d)\n",ps,pe);
 #endif
         *frontpoly = poly;
         *backpoly  = NULL;
@@ -522,10 +519,14 @@ static void SplitPoly (fdivline_t* dlnp,        //splitting parametric line
 // the part inside the sector). The part behind the seg, is
 // the void space and is cut out.
 //
+//  poly : surrounding convex polygon, non-destructive
+//  lseg : array of seg
+//  segcount : number of seg in the array
+// Return frontpoly, which may be new or ptr to poly.
 // Called from: HWR_SubsecPoly
 static poly_t* CutOutSubsecPoly (seg_t* lseg, int segcount, poly_t* poly)
 {
-    poly_t* temppoly;
+    poly_t* frontpoly = poly;  // default, return same poly
     polyvertex_t *pv;
     vertex_t *v1, *v2;
     
@@ -615,8 +616,8 @@ static poly_t* CutOutSubsecPoly (seg_t* lseg, int segcount, poly_t* poly)
             if (pe>=0)
             {
                 // generate FRONT poly
-                temppoly = HWR_AllocPoly (poly_num_pts);
-                pv = temppoly->pts;
+                frontpoly = HWR_AllocPoly (poly_num_pts);
+                pv = frontpoly->pts;
                 *pv++ = vs;
                 *pv++ = ve;
                 do {
@@ -625,7 +626,7 @@ static poly_t* CutOutSubsecPoly (seg_t* lseg, int segcount, poly_t* poly)
                     *pv++ = poly->pts[ps];
                 } while (ps!=pe);
                 HWR_FreePoly(poly);
-                poly = temppoly;
+                poly = frontpoly;
             }
             else
             {
@@ -633,15 +634,16 @@ static poly_t* CutOutSubsecPoly (seg_t* lseg, int segcount, poly_t* poly)
                 // only when the cut is not needed it seems (when the cut
                 // line is aligned to one of the borders of the poly, and
                 // only some times..)
-                skipcut++;
-#if 0	   
-                GenPrintf( EMSG_error,
-                      "CutOutPoly: only one point for split line (%d %d)",ps,pe);
+                // [WDJ] This happens often (27 times in Doom2 map01).
+#ifdef DEBUG_HWBSP
+                skipcut_cnt++;
+//	        GenPrintf( EMSG_error,
+//		      "DEBUG: CutOutPoly: only one point for split line (%d %d)\n",ps,pe);
 #endif
             }
         }
     }
-    return poly;
+    return frontpoly;
 }
 
 
@@ -650,6 +652,9 @@ static poly_t* CutOutSubsecPoly (seg_t* lseg, int segcount, poly_t* poly)
 // so continue to cut off the poly into smaller parts with
 // each seg of the subsector.
 //
+//  ssindex : subsec index, 0..(numsubsectors-1)
+//  poly : surrounding convex polygon, non-destructive
+// Called from WalkBSPNode
 static void HWR_SubsecPoly (int ssindex, poly_t* poly)
 {
     int          segcount;
@@ -664,20 +669,21 @@ static void HWR_SubsecPoly (int ssindex, poly_t* poly)
 
     if (poly) {
         poly = CutOutSubsecPoly (lseg,segcount,poly);
-        totalsubsecpolys++;
         //extra data for this subsector
         poly_subsectors[ssindex].planepoly = poly;
+#ifdef DEBUG_HWBSP
+        total_subsecpoly_cnt++;
+#endif
     }
 }
 
 // The bsp divline does not have enough precision.
 // Search for the segs source of this divline.
-void SearchDivline(node_t* bsp, fdivline_t *divline)
+static
+void set_divline(node_t* bsp, fdivline_t *divline)
 {
-#if 0
     // MAR - If you don't use the same partition line that the BSP uses,
     // the front/back polys won't match the subsectors in the BSP!
-#endif
     divline->x=FIXED_TO_FLOAT( bsp->x );
     divline->y=FIXED_TO_FLOAT( bsp->y );
     divline->dx=FIXED_TO_FLOAT( bsp->dx );
@@ -688,10 +694,31 @@ void SearchDivline(node_t* bsp, fdivline_t *divline)
 static int ls_count = 0;
 static int ls_percent = 0;
 
+static
+void loading_status( void )
+{
+    char s[16];
+    int x, y;
+
+    I_OsPolling();
+    CON_Drawer();
+    sprintf(s, "%d%%", (++ls_percent)<<1);
+    x = BASEVIDWIDTH/2;
+    y = BASEVIDHEIGHT/2;
+    V_SetupDraw( 0 | V_SCALESTART | V_SCALEPATCH | V_CENTERHORZ );
+    M_DrawTextBox(x-58, y-8, 13, 1);
+    V_DrawString(x-50, y, V_WHITEMAP, "Loading...");
+    V_DrawString(x+50-V_StringWidth(s), y, V_WHITEMAP, s);
+
+    I_FinishUpdate ();
+}
+
+
 // poly : the convex polygon that encloses all child subsectors
 // Recursive
 // Called from HWR_CreatePlanePolygons at load time.
-static void WalkBSPNode (int bspnum, poly_t* poly, unsigned short* leafnode, fixed_t *bbox)
+static
+void WalkBSPNode (int bspnum, poly_t* poly, unsigned short* leafnode, fixed_t *bbox)
 {
     node_t*     bsp;
 
@@ -699,14 +726,77 @@ static void WalkBSPNode (int bspnum, poly_t* poly, unsigned short* leafnode, fix
     poly_t*     frontpoly;
     fdivline_t  fdivline;   
     polyvertex_t*   pt;
+    unsigned int  subsecnum;  // subsector index
     int     i;
 
 
     // Found a subsector?
     if (bspnum & NF_SUBSECTOR)
     {
-        if (bspnum == -1)
+        // Subsector leaf: bspnum is a subsector number.
+        subsecnum = bspnum & ~NF_SUBSECTOR;
+        if( subsecnum > numsubsectors )  goto bad_sector;
+
+        HWR_SubsecPoly ( subsecnum, poly );
+        M_ClearBox(bbox);
+        poly=poly_subsectors[ subsecnum ].planepoly;
+ 
+        // Add the poly points into the bounding box.
+        for (i=0, pt=poly->pts; i<poly->numpts; i++,pt++)
+             M_AddToBox (bbox, (fixed_t)(pt->x * FRACUNIT), (fixed_t)(pt->y * FRACUNIT));
+
+        //Hurdler: implement a loading status
+        if (ls_count-- <= 0)
         {
+           ls_count = numsubsectors/50;
+           loading_status();
+        }
+        return;
+    }
+
+    // Node reference: bspnum is another node of the tree.
+    if( bspnum > numnodes )  goto bad_node;
+    bsp = &nodes[bspnum];
+    set_divline(bsp, /*OUT*/ &fdivline);
+    SplitPoly (&fdivline, poly, &frontpoly, &backpoly);
+    poly = NULL;
+
+#ifdef DEBUG_HWBSP
+    //debug
+    if (!backpoly)
+        nobackpoly_cnt++;
+#endif
+
+    // Recursively divide front space.
+    if (frontpoly)
+    {
+        WalkBSPNode (bsp->children[0], frontpoly, &bsp->children[0], bsp->bbox[0]);
+
+        // copy child bbox
+        memcpy(bbox, bsp->bbox[0], 4*sizeof(fixed_t));
+    }
+    else
+        I_SoftError ("WalkBSPNode: no front poly ?");
+
+    // Recursively divide back space.
+    if (backpoly)
+    {
+        // Correct back bbox to include floor/ceiling convex polygon
+        WalkBSPNode (bsp->children[1], backpoly, &bsp->children[1], bsp->bbox[1]);
+
+        // enlarge bbox with second child
+        M_AddToBox (bbox, bsp->bbox[1][BOXLEFT  ],
+                          bsp->bbox[1][BOXTOP   ]);
+        M_AddToBox (bbox, bsp->bbox[1][BOXRIGHT ],
+                          bsp->bbox[1][BOXBOTTOM]);
+    }
+    return;
+
+
+bad_sector:
+    if (bspnum == -1)
+    {
+#if 0	   
             // BP: i think this code is useless and wrong because
             // - bspnum==-1 happens only when numsubsectors == 0
             // - it can't happens in bsp recursive call since bspnum is a int and children is unsigned short
@@ -717,82 +807,26 @@ static void WalkBSPNode (int bspnum, poly_t* poly, unsigned short* leafnode, fix
             {
                 if( verbose )
                     GenPrintf( EMSG_ver, "Poly: Adding a new subsector !!!\n");
-                if (addsubsector == numsubsectors + NEWSUBSECTORS)
-                    I_Error ("WalkBSPNode : not enough addsubsectors\n");
-                else if (addsubsector > 0x7fff)
-                    I_Error ("WalkBSPNode : addsubsector > 0x7fff\n");
-                *leafnode = (unsigned short)addsubsector | NF_SUBSECTOR;
-                poly_subsectors[addsubsector].planepoly = poly;
-                addsubsector++;
+                if (num_poly_subsector >= num_alloc_poly_subsector)
+                    I_Error ("WalkBSPNode : not enough poly_subsectors\n");
+                else if (num_poly_subsector > 0x7fff)
+                    I_Error ("WalkBSPNode : num_poly_subsector > 0x7fff\n");
+                *leafnode = (unsigned short)num_poly_subsector | NF_SUBSECTOR;
+                poly_subsectors[num_poly_subsector].planepoly = poly;
+                num_poly_subsector++;
             }
+#endif
             
             //add subsectors without segs here?
             //HWR_SubsecPoly (0, NULL);
-        }
-        else
-        {
-            HWR_SubsecPoly (bspnum&(~NF_SUBSECTOR), poly);
-            //Hurdler: implement a loading status
-            if (ls_count-- <= 0)
-            {
-                char s[16];
-                int x, y;
-
-                I_OsPolling();
-                ls_count = numsubsectors/50;
-                CON_Drawer();
-                sprintf(s, "%d%%", (++ls_percent)<<1);
-                x = BASEVIDWIDTH/2;
-                y = BASEVIDHEIGHT/2;
-                V_SetupDraw( 0 | V_SCALESTART | V_SCALEPATCH | V_CENTERHORZ );
-                M_DrawTextBox(x-58, y-8, 13, 1);
-                V_DrawString(x-50, y, V_WHITEMAP, "Loading...");
-                V_DrawString(x+50-V_StringWidth(s), y, V_WHITEMAP, s);
-
-                I_FinishUpdate ();
-            }
-        }
-        M_ClearBox(bbox);
-        poly=poly_subsectors[bspnum&~NF_SUBSECTOR].planepoly;
- 
-        for (i=0, pt=poly->pts; i<poly->numpts; i++,pt++)
-             M_AddToBox (bbox, (fixed_t)(pt->x * FRACUNIT), (fixed_t)(pt->y * FRACUNIT));
-
-        return;
+            I_Error ("WalkBSPNode : bspnum -1\n");
     }
-
-    bsp = &nodes[bspnum];
-    SearchDivline(bsp,&fdivline);
-    SplitPoly (&fdivline, poly, &frontpoly, &backpoly);
-    poly = NULL;
-
-    //debug
-    if (!backpoly)
-        nobackpoly++;
-
-    // Recursively divide front space.
-    if (frontpoly)
-    {
-        WalkBSPNode (bsp->children[0], frontpoly, &bsp->children[0],bsp->bbox[0]);
-
-        // copy child bbox
-        memcpy(bbox, bsp->bbox[0], 4*sizeof(fixed_t));
-    }
-    else
-        I_Error ("WalkBSPNode: no front poly ?");
-
-    // Recursively divide back space.
-    if (backpoly)
-    {
-        // Correct back bbox to include floor/ceiling convex polygon
-        WalkBSPNode (bsp->children[1], backpoly, &bsp->children[1],bsp->bbox[1]);
-
-        // enlarge bbox with seconde child
-        M_AddToBox (bbox, bsp->bbox[1][BOXLEFT  ],
-                          bsp->bbox[1][BOXTOP   ]);
-        M_AddToBox (bbox, bsp->bbox[1][BOXRIGHT ],
-                          bsp->bbox[1][BOXBOTTOM]);
-    }
+    I_Error ("WalkBSPNode : bad secnum %i, numsectors=%i -1\n",
+              subsecnum, numsubsectors );
+            
+bad_node:
+    I_Error ("WalkBSPNode : bad node num %i, numnodes=%i -1\n",
+              bspnum, numnodes );
 }
 
 
@@ -810,6 +844,34 @@ void HWR_Free_poly_subsectors (void)
 boolean PointInSeg(polyvertex_t* va, polyvertex_t* v1, polyvertex_t* v2)
 {
     register float ax,ay,bx,by,cx,cy,d,norm;
+
+#if 1
+    // check bbox of the seg first (without altering v1, v2)
+    if( v2->x > v1->x )
+    {
+        // check if x within seg box  v1..v2
+        if( (va->x + MAXDIST) < v1->x )  goto not_in;
+        if( (va->x - MAXDIST) > v2->x )  goto not_in;
+    }
+    else
+    {
+        // check if x within seg box  v2..v1
+        if( (va->x + MAXDIST) < v2->x )  goto not_in;
+        if( (va->x - MAXDIST) > v1->x )  goto not_in;
+    }
+    if( v2->y > v1->y )
+    {
+        // check if x within seg box  v1..v2
+        if( (va->y + MAXDIST) < v1->y )  goto not_in;
+        if( (va->y - MAXDIST) > v2->y )  goto not_in;
+    }
+    else
+    {
+        // check if x within seg box  v2..v1
+        if( (va->y + MAXDIST) < v2->y )  goto not_in;
+        if( (va->y - MAXDIST) > v1->y )  goto not_in;
+    }
+#else   
     register polyvertex_t* p;
     
     // check bbox of the seg first
@@ -833,6 +895,7 @@ boolean PointInSeg(polyvertex_t* va, polyvertex_t* v1, polyvertex_t* v2)
     if((va->y < v1->y-MAXDIST) || (va->y > v2->y+MAXDIST))
         goto not_in;  // y not within seg box
 
+#endif
     // v1 = origin
     ax= v2->x - v1->x;
     ay= v2->y - v1->y;
@@ -870,9 +933,10 @@ boolean PointInSeg(polyvertex_t* va, polyvertex_t* v1, polyvertex_t* v2)
     return false;
 }
 
-int numsplitpoly;
+static int numsplitpoly;
 
-void SearchSegInBSP(int bspnum,polyvertex_t *p,poly_t *poly)
+// Recursive descent in BSP.
+void SearchSegInBSP(int bspnum, polyvertex_t *p, poly_t *poly)
 {
     poly_t  *q;
     int     j,k;
@@ -881,10 +945,11 @@ void SearchSegInBSP(int bspnum,polyvertex_t *p,poly_t *poly)
     {
         if( bspnum!=-1 )
         {
-            bspnum&=~NF_SUBSECTOR;
+            bspnum &= ~NF_SUBSECTOR;
             q = poly_subsectors[bspnum].planepoly;
             if( poly==q || !q)
                 return;
+
             for(j=0;j<q->numpts;j++)
             {
                 k=j+1;
@@ -911,6 +976,7 @@ void SearchSegInBSP(int bspnum,polyvertex_t *p,poly_t *poly)
         return;
     }
 
+    // Not a subsector, visit left and right children.
     if(   (FIXED_TO_FLOAT( nodes[bspnum].bbox[0][BOXBOTTOM] )-MAXDIST <= p->y)
        && (FIXED_TO_FLOAT( nodes[bspnum].bbox[0][BOXTOP   ] )+MAXDIST >= p->y)
        && (FIXED_TO_FLOAT( nodes[bspnum].bbox[0][BOXLEFT  ] )-MAXDIST <= p->x)
@@ -933,27 +999,31 @@ void SearchSegInBSP(int bspnum,polyvertex_t *p,poly_t *poly)
 // really but I am soo lazy), the method described is also better for segs precision
 extern consvar_t cv_grsolvetjoin;
 
-int SolveTProblem (void)
+static
+void SolveTProblem (void)
 {
     poly_t  *p;
     int     i,l;
 
     if (cv_grsolvetjoin.value == 0)
-        return 0;
+        return;
 
     GenPrintf( EMSG_all | EMSG_now, "Solving T-joins. This may take a while. Please wait...\n");
 
     numsplitpoly=0;
 
-    for(l=0;l<addsubsector;l++ )
+    for(l=0; l<num_poly_subsector; l++ )
     {
         p = poly_subsectors[l].planepoly;
         if( p )
-        for(i=0;i<p->numpts;i++)
-            SearchSegInBSP(numnodes-1,&p->pts[i],p);
+        {
+            for(i=0;i<p->numpts;i++)
+                SearchSegInBSP(numnodes-1,&p->pts[i],p);
+        }
     }
-    //CONS_Printf("numsplitpoly %d\n", numsplitpoly);
-    return numsplitpoly;
+#ifdef DEBUG_HWBSP
+    GenPrintf( EMSG_debug, "DEBUG: SolveT: div a polygon line= %d\n", numsplitpoly );
+#endif
 }
 
 #define NEARDIST (0.75f) 
@@ -1082,7 +1152,7 @@ void AdjustSegs(void)
 // Call this routine after the BSP of a Doom wad file is loaded,
 // and it will generate all the convex polys for the hardware renderer.
 // Called from P_SetupLevel
-void HWR_CreatePlanePolygons (int bspnum)
+void HWR_CreatePlanePolygons ( void )
 {
     poly_t*       rootp;
     polyvertex_t* rootpv;
@@ -1096,30 +1166,31 @@ void HWR_CreatePlanePolygons (int bspnum)
 
     HWR_ClearPolys ();
     
+    // Enter all vertexes into the root bounding box.
     // find min/max boundaries of map
     //CONS_Printf ("Looking for boundaries of map...\n");
     M_ClearBox(rootbbox);
     for (i=0;i<numvertexes;i++)
-        M_AddToBox(rootbbox,vertexes[i].x,vertexes[i].y);
+        M_AddToBox( rootbbox, vertexes[i].x, vertexes[i].y );
 
     //CONS_Printf ("Generating subsector polygons... %d subsectors\n", numsubsectors);
 
     HWR_Free_poly_subsectors ();
     // allocate extra data for each subsector present in map
-    totsubsectors = numsubsectors + NEWSUBSECTORS;
-    poly_subsectors = (poly_subsector_t*)malloc (sizeof(poly_subsector_t) * totsubsectors);
+    num_alloc_poly_subsector = numsubsectors + NUM_EXTRA_SUBSECTORS;
+    poly_subsectors = (poly_subsector_t*)malloc (sizeof(poly_subsector_t) * num_alloc_poly_subsector);
     if (!poly_subsectors)
-        I_Error ("couldn't malloc poly_subsectors totsubsectors %d\n", totsubsectors);
+        I_Error ("couldn't malloc poly_subsectors num_alloc_poly_subsector %d\n", num_alloc_poly_subsector);
     // set all data in to 0 or NULL !!!
-    memset (poly_subsectors, 0, sizeof(poly_subsector_t) * totsubsectors);
+    memset (poly_subsectors, 0, sizeof(poly_subsector_t) * num_alloc_poly_subsector);
 
     // allocate table for back to front drawing of subsectors
-    /*gr_drawsubsectors = (short*)malloc (sizeof(*gr_drawsubsectors) * totsubsectors);
+    /*gr_drawsubsectors = (short*)malloc (sizeof(*gr_drawsubsectors) * num_alloc_poly_subsector);
     if (!gr_drawsubsectors)
         I_Error ("couldn't malloc gr_drawsubsectors\n");*/
 
     // number of the first new subsector that might be added
-    addsubsector = numsubsectors;
+    num_poly_subsector = numsubsectors;
 
     // construct the initial convex poly that encloses the full map
     rootp  = HWR_AllocPoly (4);
@@ -1137,20 +1208,24 @@ void HWR_CreatePlanePolygons (int bspnum)
     rootpv->x = FIXED_TO_FLOAT( rootbbox[BOXRIGHT ] );
     rootpv->y = FIXED_TO_FLOAT( rootbbox[BOXBOTTOM] );  //ll
 
-    WalkBSPNode (bspnum, rootp, NULL, rootbbox);
+    // start at head node of bsp tree
+    WalkBSPNode ( numnodes-1, rootp, NULL, rootbbox);
 
-    i=SolveTProblem ();
-    //CONS_Printf("%d point div a polygon line\n",i);
+    SolveTProblem ();
     AdjustSegs();
 
+#ifdef DEBUG_HWBSP
     //debug debug..
-    //if (nobackpoly)
-    //    CONS_Printf ("no back polygon %d times\n",nobackpoly);
-                             //"(should happen only with the deep water trick)"
+    if (nobackpoly_cnt)
+    {
+        // should happen only with the deep water trick
+        GenPrintf( EMSG_debug, "DEBUG: no back polygon cnt= %d\n", nobackpoly_cnt);
+    }
 
-    //if (skipcut)
-    //    CONS_Printf ("%d cuts were skipped because of only one point\n",skipcut);
+    if (skipcut_cnt)
+        GenPrintf( EMSG_debug, "DEBUG: cuts skipped because of only one point= %d\n", skipcut_cnt);
 
 
-    //CONS_Printf ("done : %d total subsector convex polygons\n", totalsubsecpolys);
+    GenPrintf( EMSG_debug, "DEBUG: total subsector convex polygons= %d\n", total_subsecpoly_cnt);
+#endif
 }

@@ -103,8 +103,8 @@ void HWR_DrawPatch (MipPatch_t* gpatch, int x, int y, int option);
 void HWR_DrawMappedPatch (MipPatch_t* gpatch, int x, int y, int option, byte *colormap);
 void HWR_MakePatch (patch_t* patch, MipPatch_t* grPatch, Mipmap_t *grMipmap,
                     uint32_t drawflags);
-void HWR_CreatePlanePolygons (int bspnum);
-void HWR_CreateStaticLightmaps (int bspnum);
+void HWR_CreatePlanePolygons (void);
+void HWR_CreateStaticLightmaps (void);
 void HWR_PrepLevelCache (int numtextures);
 void HWR_DrawFill(int x, int y, int w, int h, int color);
 void HWR_DrawPic(int x,int y,int lumpnum);

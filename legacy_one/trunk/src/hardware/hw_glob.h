@@ -87,8 +87,10 @@ typedef struct gr_vissprite_s
 // --------
 // hw_bsp.c
 // --------
+// Array of poly_subsector_t,
+// Index by bsp subsector num,  0.. num_poly_subsector-1
 extern  poly_subsector_t*   poly_subsectors;
-extern  int                 addsubsector;
+extern  unsigned int        num_poly_subsector;
 
 void HWR_InitPolyPool (void);
 void HWR_FreePolyPool (void);
@@ -122,11 +124,6 @@ extern  consvar_t cv_grrounddown;   //on/off
 
 extern int patchformat;
 extern int textureformat;
-#if 0
-// [WDJ] Unused
-extern byte *gr_colormap; 
-#endif
-extern float gr_viewz;
 
 // ------------
 // misc externs

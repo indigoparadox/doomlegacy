@@ -1717,7 +1717,7 @@ boolean P_SetupLevel (int      to_episode,
         HWR_ResetLights();
         // Correct missing sidedefs & deep water trick
         HWR_CorrectSWTricks();
-        HWR_CreatePlanePolygons (numnodes-1);
+        HWR_CreatePlanePolygons();
     }
 #endif
 
@@ -1776,7 +1776,7 @@ boolean P_SetupLevel (int      to_episode,
     if (rendermode != render_soft)
     {
         HWR_PrepLevelCache (numtextures);
-        HWR_CreateStaticLightmaps (numnodes-1);
+        HWR_CreateStaticLightmaps();
     }
 #endif
 

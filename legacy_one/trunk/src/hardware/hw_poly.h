@@ -63,8 +63,7 @@
 
 // a vertex of a Doom 'plane' polygon
 typedef struct polyvertex_s {
-    float   x;
-    float   y;
+    float   x, y;
 } polyvertex_t;
 
 // a convex 'plane' polygon, clockwise order

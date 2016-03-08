@@ -1126,6 +1126,7 @@ void HWR_DynamicShadowing(vxtx3d_t *clVerts, int nrClipVerts, player_t *p)
 }
 
 
+#ifdef STATICLIGHTMAPS
 //**********************************************************
 // Hurdler: new code for faster static lighting and and T&L
 //**********************************************************
@@ -1304,14 +1305,16 @@ static void HWR_SearchLightsInMobjs(void)
             HWR_AddMobjLights((mobj_t *)th);
     }
 }
+#endif
 
 //
 // HWR_CreateStaticLightmaps()
 //
 // Called from P_SetupLevel
-void HWR_CreateStaticLightmaps(int bspnum)
+void HWR_CreateStaticLightmaps( void )
 {
-    return; //Hurdler: TODO!
+#ifdef STATICLIGHTMAPS
+    //Hurdler: TODO!
     CONS_Printf("HWR_CreateStaticLightmaps\n");
 
     dynlights->nb = 0;
@@ -1324,9 +1327,11 @@ void HWR_CreateStaticLightmaps(int bspnum)
 
     // Second: Build all lightmap for walls covered by lights
     validcount++; // to be sure
-    HWR_ComputeLightMapsInBSPNode(bspnum, NULL);
+    HWR_ComputeLightMapsInBSPNode( numnodes-1, NULL);
 
     dynlights->nb = 0;
+#endif
+    return;
 }
 
 /*
