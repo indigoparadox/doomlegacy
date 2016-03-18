@@ -4875,4 +4875,18 @@ which blocks the view of any taller sectors behind the wall.
 Draw these sky walls invisible to set the z-buffer to block draws behind
 the wall.  The sky is already drawn as a background, and will show through.
 
+*** W105_crack2
+patchfile = w105_17_crack2.patch
+- commit revision 1220
+The polytile remedy.
+It enters the same vertex in adjacent poly when splitting a poly at an angle
+that may cause crack errors.  This should prevent cracks before they start.
+In the existing routines, it is hard to find these poly points after other
+poly splitting has taken place.  It was going to get very complex to fix it.
+This can eventually replace that search.
+There is some conflict with some existing crack repair routines,
+so it is made optional.  It does not seem to do harm, but its effect is
+not yet obvious.
+A control,  gr_polytile, can turn it off and on.
+
 

@@ -416,6 +416,7 @@ consvar_t cv_grzbuffer = { "gr_zbuffer", "On", 0, CV_OnOff };
 consvar_t cv_grcorrecttricks = { "gr_correcttricks", "On", 0, CV_OnOff };
 
 consvar_t cv_grsolvetjoin = { "gr_solvetjoin", "On", 0, CV_OnOff };
+consvar_t cv_grpolytile = { "gr_polytile", "On", 0, CV_OnOff };
 
 CV_PossibleValue_t grpolyshape_cons_t[] = {
   {0, "Subsector"},
@@ -4232,6 +4233,7 @@ void HWR_AddCommands(void)
     CV_RegisterVar(&cv_grfiltermode);
     CV_RegisterVar(&cv_grcorrecttricks);
     CV_RegisterVar(&cv_grsolvetjoin);
+    CV_RegisterVar(&cv_grpolytile);
     CV_RegisterVar(&cv_grpolyshape);
 }
 

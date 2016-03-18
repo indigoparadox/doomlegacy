@@ -88,6 +88,8 @@
 // Allocate poly from ZAlloc.
 #define ZPLANALLOC
 
+#define POLYTILE   
+
 
 // --------------------------------------------------------------------------
 // This is global data for planes rendering
@@ -835,8 +837,164 @@ double  distance( polyvertex_t * p1, polyvertex_t * p2 )
 #endif
 
 
-
   
+#ifdef POLYTILE   
+// Polytile list
+// SplitPoly searches for the other poly with the same vertexes when it
+// splits a poly segment, and adds the same vertex there too.
+// This prevents any cracks from forming.
+
+// Hold all polygons that tile the level map.
+#define  POLYTILE_NUM_POLY  256
+typedef struct polytile_store_s {
+    struct polytile_store_s *  next;  // link for search
+    int num_tile_used;
+    wpoly_t *  tile[ POLYTILE_NUM_POLY ];
+} polytile_store_t;
+
+// These are freed by Z_Free( PU_HWRPLANE ).
+polytile_store_t * polytile_store = NULL;
+polytile_store_t * polytile_free = NULL;
+
+// Cleanup after usage.
+static
+void polytile_clean( void )
+{
+    polytile_store_t * ptp;
+    while( polytile_store )
+    {
+        ptp = polytile_store;
+        polytile_store = ptp->next;
+        Z_Free( ptp );
+    }
+}
+
+// Save the poly ptr within the polytile lists.
+static
+void polytile_enter( wpoly_t * poly )
+{
+    polytile_store_t * ptp = polytile_store;
+
+    if( cv_grpolytile.value == 0 )  return;
+    if( poly->numpts == 0 ) return;  // do not enter NULL poly
+
+    if( ! polytile_store
+        || ( polytile_store->num_tile_used >= POLYTILE_NUM_POLY ) )
+    {
+        // Need another storage unit.
+	if( polytile_free )
+        {
+	    polytile_store = polytile_free;
+	    polytile_free = polytile_free->next;
+	}
+        else
+        {
+            polytile_store = Z_Malloc(sizeof(polytile_store_t), PU_HWRPLANE, NULL);
+	}
+        polytile_store->next = ptp;  // link for search
+        polytile_store->num_tile_used = 0;
+    }
+    polytile_store->tile[ polytile_store->num_tile_used++ ] = poly;
+}
+
+static
+void polytile_remove( wpoly_t * poly )
+{
+    polytile_store_t *   ptp;
+    wpoly_t * * wpp;
+    wpoly_t * lp;
+    int i;
+
+    // Search poly tiling.
+    ptp = polytile_store;
+    while( ptp )
+    {
+        // Search for poly in all polytile_store_t
+        wpp = & ptp->tile[0];
+        for( i=ptp->num_tile_used-1; i>=0; i--)
+        {
+	    if( *wpp == poly )  goto found; 
+            wpp++;
+        }
+        ptp = ptp->next;
+    }
+    return;  // not found
+
+found:
+    // Removing it gets complicated due to need to condense the list for searching.
+    // Move the last poly to the empty spot. There must be a last poly entered.
+    lp = polytile_store->tile[ polytile_store->num_tile_used - 1 ];
+    *wpp = lp;  // keep store compacted (ok if *wpp == lp already)
+    // Remove last poly spot.
+    polytile_store->num_tile_used --;
+    if( polytile_store->num_tile_used == 0 )
+    {
+        // Went empty, put on free list.
+        ptp = polytile_store;
+        polytile_store = ptp->next;
+        ptp->next = polytile_free;
+        polytile_free = ptp;
+    }
+}
+
+// Seach polytile and add the new vertex between the vertex of the poly side.
+//  newvert : add this vertex
+//  poly : the poly being split
+//  i1, i2 : indexes of the split side
+static
+void add_vertex_between( polyvertex_t * newvert, wpoly_t * poly,
+			 int i1, int i2 )
+{
+    polytile_store_t *   ptp;
+    wpoly_t * wp;
+    int t, j2;
+    polyvertex_t *s1, *s2;
+    polyvertex_t * v1 = poly->ppts[ i1 ];
+    polyvertex_t * v2 = poly->ppts[ i2 ];
+    
+    if( cv_grpolytile.value == 0 )  return;
+
+    // Do not need to enter a vertex in vert or horz segments.
+    // Those do not cause problems with cracks.
+    if( (newvert->x == v1->x) && (newvert->x == v2->x) )  return;
+    if( (newvert->y == v1->y) && (newvert->y == v2->y) )  return;
+
+    // Search poly tiling.
+    ptp = polytile_store;
+    while( ptp )
+    {
+        // Search for poly in all polytile_store_t
+        for( t=ptp->num_tile_used-1; t>=0; t--)
+        {
+	    wp = ptp->tile[ t ];
+	    if( wp == poly )  continue;
+	    // Search this poly for v1,v2 vertex in opposite order.
+	    s1 = wp->ppts[ wp->numpts - 1 ];  // last vertex
+	    for( j2=0; j2 < wp->numpts; j2++ )
+	    {
+	        s2 = wp->ppts[j2];
+	        if( s2 == v1 )
+	        {
+		    if( s1 == v2 )  goto found;
+		    break;  // cannot find v1 a second time in same poly
+	        }
+		s1 = s2;
+	    }
+	    
+        }
+        ptp = ptp->next;
+    }
+    return;  // not found
+
+found:
+    // Insert newvert between s1 and s2 (opposite order or v1 v2).
+    // (j2-1) is vertex index of s1, j2 is vertex index of s2.
+    wpoly_insert_vert( newvert, j2, /*INOUT*/ wp );
+    // Result is in the same wp.
+}
+#endif
+
+
 // Split a _CONVEX_ polygon in two convex polygons.
 //   poly : polygon to be split by divline
 // outputs:
@@ -852,6 +1010,9 @@ void SplitPoly (fdivline_t* dlnp, wpoly_t* poly,
     wpoly_t * polyA;  // the poly from A to B, clockwise
     wpoly_t * polyB;  // the poly from B to A, clockwise
     int  n,i,j;
+#ifdef POLYTILE   
+    int  A_before_wrap, B_after_wrap;
+#endif
     divline_e     dle;
     div_result_t  A, B;  // dividing points
     div_result_t  * result;
@@ -897,14 +1058,25 @@ void SplitPoly (fdivline_t* dlnp, wpoly_t* poly,
     goto no_split;
 
 split_poly:
+#ifdef POLYTILE
+    A_before_wrap = (A.before < 0)? (A.before + poly->numpts) : A.before;
+    B_after_wrap = (B.after >= poly->numpts)? (B.after - poly->numpts) : B.after;
+#endif
+    
     // Less aggressive same vertex, to avoid kinking line.
     if( A.vertex == NULL )
     {
         A.vertex = store_polyvertex( & A.divpt, 0.01 );
+#ifdef POLYTILE
+        add_vertex_between( A.vertex, poly, A_before_wrap, A.after );
+#endif
     }
     if( B.vertex == NULL )
     {
         B.vertex = store_polyvertex( & B.divpt, 0.01 );
+#ifdef POLYTILE
+        add_vertex_between( B.vertex, poly, B.before, B_after_wrap );
+#endif
     }
 
     // The frontpoly is the one on the 'right' side
@@ -1720,9 +1892,15 @@ void WalkBSPNode (int bspnum, wpoly_t* poly, unsigned short* leafnode, fixed_t *
              pt = poly->ppts[i];
              M_AddToBox (bbox, (fixed_t)(pt->x * FRACUNIT), (fixed_t)(pt->y * FRACUNIT));
         }
-        
+
+#ifdef POLYTILE
+        polytile_remove( poly );
+#endif
         wpoly_move( poly, /*OUT*/ & wpoly_subsectors[subsecnum] );
         // poly is empty
+#ifdef POLYTILE
+        polytile_enter( & wpoly_subsectors[subsecnum] );
+#endif
 
         //Hurdler: implement a loading status
         if (ls_count-- <= 0)
@@ -1739,7 +1917,14 @@ void WalkBSPNode (int bspnum, wpoly_t* poly, unsigned short* leafnode, fixed_t *
     set_divline(bsp, /*OUT*/ &fdivline);
     wpoly_init_0( &frontpoly );
     wpoly_init_0( &backpoly );
+#ifdef POLYTILE
+    polytile_remove( poly );
+#endif
     SplitPoly (&fdivline, poly, &frontpoly, &backpoly);
+#ifdef POLYTILE
+    polytile_enter( &frontpoly );
+    polytile_enter( &backpoly );
+#endif
 
 #ifdef DEBUG_HWBSP
     //debug
@@ -2432,6 +2617,9 @@ void HWR_CreatePlanePolygons ( void )
     SolveTProblem ();
 
     AdjustSegs();
+#ifdef POLYTILE
+    polytile_clean();
+#endif
 
     finalize_polygons();  // wpoly_t to drawing polygons
     Z_Free( wpoly_subsectors );

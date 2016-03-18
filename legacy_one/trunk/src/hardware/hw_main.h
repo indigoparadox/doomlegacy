@@ -134,6 +134,7 @@ extern consvar_t cv_grgammablue;
 extern consvar_t cv_grfiltermode;
 extern consvar_t cv_grcorrecttricks;
 extern consvar_t cv_grsolvetjoin;
+extern consvar_t cv_grpolytile;
 extern consvar_t cv_grpolyshape;
 
 #endif
