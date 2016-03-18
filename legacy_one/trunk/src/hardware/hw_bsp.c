@@ -809,6 +809,7 @@ boolean  point_rightside( fdivline_t * dl, polyvertex_t * v4 )
        >= 0 );
 }
 
+
 // Return the cross product of the vector p1->p2, and p1->v4.
 // The cross product is > 0 when v4 is to the right side of the vector.
 // If the coordinates are rotated until the vector dy>0 and dx=0, then the
@@ -843,7 +844,8 @@ double  distance( polyvertex_t * p1, polyvertex_t * p2 )
 //   backpoly  : polygon on left side
 //
 // Called from: WalkBSPNode
-static void SplitPoly (fdivline_t* dlnp, wpoly_t* poly,
+static
+void SplitPoly (fdivline_t* dlnp, wpoly_t* poly,
        /*OUT*/  wpoly_t* frontpoly, wpoly_t* backpoly)
 {
     // Split poly at A and B.
@@ -1242,6 +1244,8 @@ void save_loose_seg( seg_t * loose_seg,
 }
 
 
+//#define SEG_CHAIN_2
+
 // Apply the list of loose end seg chains.
 // Return true if a possible non-convex cut is made.
 static
@@ -1267,12 +1271,17 @@ boolean  apply_seg_chains( wpoly_t * poly )
         rv2 = sctp->p2;
         i1 = i2 = numpts + 20;  // invalid
        
+#ifndef SEG_CHAIN_2
         if( sctp->loose1 || sctp->loose2 )
         {
             // FIXME: This needs to be handled.
             goto reject;
         }
+#endif
 
+#ifdef SEG_CHAIN_2
+        if( ! sctp->loose1 )
+#endif
         {
             // Find original crossing point.
             for( i1 = 0; i1 < numpts; i1++ )
@@ -1281,6 +1290,9 @@ boolean  apply_seg_chains( wpoly_t * poly )
             }
         }
 
+#ifdef SEG_CHAIN_2
+        if( ! sctp->loose2 )
+#endif
         {
             // Find original crossing point.
             for( i2 = 0; i2 < numpts; i2++ )
@@ -1289,6 +1301,20 @@ boolean  apply_seg_chains( wpoly_t * poly )
             }
         }
 
+#ifdef SEG_CHAIN_2
+        if( sctp->loose1 && ! sctp->loose2 )
+        {
+        }
+
+        if( sctp->loose2 && ! sctp->loose1 )
+        {
+        }
+
+        if( sctp->loose1 && sctp->loose2 )
+        {
+        }
+#endif
+       
         if((i1 < numpts) && (i2 < numpts))
         {
             // Insert points are still there.
@@ -1310,8 +1336,13 @@ boolean  apply_seg_chains( wpoly_t * poly )
             *ppv = rv2;
             comb_poly.numpts = sctp->num_seg + 1;
 
-            // Save i2 to i1, which starts after rv2, to the comb_poly.
-            wpoly_append( poly, i2, n, /*OUT*/ & comb_poly );
+            // It is valid for n == 0, with num_seg > 1,
+            // and both end points on the same poly side.
+            if( n > 0 )
+            {
+                // Save i2 to i1, which starts after rv2, to the comb_poly.
+                wpoly_append( poly, i2, n, /*OUT*/ & comb_poly );
+            }
             wpoly_move( & comb_poly, poly );  // empty comb_poly
             numpts = poly->numpts;
             check_convex = true;
@@ -1372,6 +1403,7 @@ void  CutOutSubsecPoly ( int ssindex, /*INOUT*/ wpoly_t* poly)
         {
             if( sides[line->sidenum[0]].sector == sides[line->sidenum[1]].sector )
             {
+                // Segs that are self-ref linedef do not cutout the subsector.
 #ifdef DEBUG_HWBSP
                 GenPrintf( EMSG_debug, "CutOutSubsecPoly: self ref line %i\n",
                            line - lines );
@@ -1458,6 +1490,8 @@ void  CutOutSubsecPoly ( int ssindex, /*INOUT*/ wpoly_t* poly)
         if( (A.divfrac < 0.0) && (B.divfrac < 0.0) )  continue;
         if( (A.divfrac > 1.0) && (B.divfrac > 1.0) )  continue;
 
+        // Skip cuts that duplicate an existing side.
+        // Does not matter if goes across poly or not.
         cut_at_vert = A.at_vert && B.at_vert;  // cuts are at existing vertexes
         if( cut_at_vert )
         {
@@ -1468,8 +1502,9 @@ void  CutOutSubsecPoly ( int ssindex, /*INOUT*/ wpoly_t* poly)
 
 
 #ifdef CUTOUT_NON_CONVEX
+#define FRAC_EP   0.01       
         // Cuts that may make the polygon non-convex.
-        looseA = (A.divfrac < 0.0) || (A.divfrac > 1.0);
+        looseA = (A.divfrac < (0.0 - FRAC_EP)) || (A.divfrac > (1.0 + FRAC_EP));
         if( looseA )
         {
             // Cannot make normal cut, A end is loose.
@@ -1477,7 +1512,7 @@ void  CutOutSubsecPoly ( int ssindex, /*INOUT*/ wpoly_t* poly)
             // Get vertex at A end of seg, v1 or v2
             A.vertex = store_polyvertex( (( A.divfrac < 0.0 )? &p1 : &p2), 0.25 );
         }
-        looseB = (B.divfrac < 0.0) || (B.divfrac > 1.0);
+        looseB = (B.divfrac < (0.0 - FRAC_EP)) || (B.divfrac > (1.0 + FRAC_EP));
         if( looseB )
         {
             // Cannot make normal cut, B end is loose.
@@ -1873,6 +1908,15 @@ boolean PointInSeg(polyvertex_t* va, polyvertex_t* v1, polyvertex_t* v2)
         // Also excludes some va within MAXDIST of v1 or v2
         goto not_in;
     }
+   
+    // Cross product.
+    if( ( (by * ax) - (bx * ay) ) <= 0 )
+    {
+        // The vertex is to the rightside of the seg, so adding
+        // it to the polygon would worsen the crack.
+        return false;
+    }
+
     // measure the error in vector bx,by as difference squared sum
     //c= (d * unit_vector_seg) - b
     cx=ax*d-bx;
@@ -1970,6 +2014,7 @@ got_subsector:
             goto add_pt;
         }
     }
+    // May have to search more than one polygon to find correct neighbor polygon.
     return;
 
 add_pt:
