@@ -371,7 +371,6 @@ static void HWR_RenderSorted( void );
 static void HWR_RenderTransparentWalls( void );
 #endif
 
-static unsigned int atohex(char *s);
 
 // ==========================================================================
 //                                          3D ENGINE COMMANDS & CONSOLE VARS
@@ -685,8 +684,9 @@ void Extracolormap_to_Surf( /*IN*/ extracolormap_t * extracmap, int light,
 
 #ifdef  DOPLANES
 
-//what is the maximum number of verts around a convex floor/ceiling polygon? FIXME: gothic2 map02 has a 304 vertex poly!!!!
-#define MAXPLANEVERTICES 256
+//what is the maximum number of verts around a convex floor/ceiling polygon?
+// Note: gothic2 map02 has a 304 vertex poly!!!!
+#define MAXPLANEVERTICES   512
 static vxtx3d_t planeVerts[MAXPLANEVERTICES];
 
 // -----------------+
@@ -853,10 +853,13 @@ void HWR_RenderPlane(poly_subsector_t * xsub, fixed_t fixedheight,
 }
 
 #ifdef POLYSKY
+// [WDJ] When I got this working, the low sky plane cut off the tops of trees.
+
 // this don't draw anything it only update the z-buffer so there isn't problem with
 // wall/things upper that sky (map12)
 // Called from HWR_Subsector
-static void HWR_RenderSkyPlane(poly_subsector_t * xsub, fixed_t fixedheight)
+static
+void HWR_RenderSkyPlane(poly_subsector_t * xsub, fixed_t fixedheight)
 //                              FBITFIELD         PolyFlags )
 {
     polyvertex_t *pv;
@@ -888,8 +891,8 @@ static void HWR_RenderSkyPlane(poly_subsector_t * xsub, fixed_t fixedheight)
     v3d = planeVerts;
     for (i = 0; i < nrPlaneVerts; i++, v3d++, pv++)
     {
-        v3d->sow = must be transformed and projected !;
-        v3d->tow = must be transformed and projected !;
+        v3d->sow = (pv->x / flatsize) - flatxref;
+        v3d->tow = flatyref - (pv->y / flatsize);
         v3d->x = pv->x;
         v3d->y = height;
         v3d->z = pv->y;
@@ -1426,6 +1429,13 @@ void HWR_SplitWall(sector_t * sector, vxtx3d_t * vxtx, int texnum,
 // Anything between means the wall segment has been clipped with solidsegs,
 //  reducing wall overdraw to a minimum
 //
+// GLOBAL IN:
+//   gr_curline
+//   gr_frontsector
+//   gr_backsector
+// GLOBAL OUT:
+//   gr_linedef
+//   gr_sidedef
 // Called from HWR_ClipSolidWallSegment, HWR_ClipPassWallSegment
 static void HWR_StoreWallRange(float startfrac, float endfrac)
 {
@@ -1436,6 +1446,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
     fixed_t worldbottom;
     fixed_t worldbacktop = 0;	// back sector, only used on two sided lines
     fixed_t worldbackbottom = 0;
+    float   skybottom = 2E10;
 
     MipTexture_t * miptex = NULL;
     float cliplow, cliphigh;
@@ -1615,7 +1626,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
             }
 
             // set top/bottom coords
-            vxtx[2].y = vxtx[3].y = FIXED_TO_FLOAT( worldtop );
+            vxtx[2].y = vxtx[3].y = skybottom = FIXED_TO_FLOAT( worldtop );
             vxtx[0].y = vxtx[1].y = FIXED_TO_FLOAT( worldbacktop );
 
             Surf.polyflags = PF_Environment;
@@ -1793,6 +1804,11 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
             // set top/bottom coords
             vxtx[2].y = vxtx[3].y = FIXED_TO_FLOAT( h );
             vxtx[0].y = vxtx[1].y = FIXED_TO_FLOAT( l );
+#if 0
+            // [WDJ] Causes transparent signs to block wall behind.	   
+            if( skybottom > 1E10)
+                skybottom = vxtx[2].y;
+#endif
 
             if (blendmode != PF_Masked)
                 HWR_AddTransparentWall(vxtx, &Surf, midtexnum, blendmode);
@@ -1824,7 +1840,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                 vxtx[2].sow = vxtx[1].sow = cliphigh * miptex->scaleX;
             }
             // set top/bottom coords
-            vxtx[2].y = vxtx[3].y = FIXED_TO_FLOAT( worldtop );
+            vxtx[2].y = vxtx[3].y = skybottom = FIXED_TO_FLOAT( worldtop );
             vxtx[0].y = vxtx[1].y = FIXED_TO_FLOAT( worldbottom );
 
             // I don't think that solid walls can use translucent linedef types...
@@ -1840,6 +1856,23 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                     HWR_ProjectWall(vxtx, &Surf, PF_Masked);
             }
         }
+        else
+        {
+            skybottom = FIXED_TO_FLOAT( worldbottom );
+        }
+    }
+
+    if( (gr_frontsector->ceilingpic == skyflatnum)
+        && (skybottom < 1E10) )
+    {
+        // [WDJ] Above upper texture is sky
+        vxtx[2].y = vxtx[3].y = skybottom;
+        vxtx[0].y = vxtx[1].y = 2E10;
+
+        // Transparent, to set z buffer to block more distant draws.       
+        Surf.polyflags = PF_Environment;
+        HWD.pfnDrawPolygon(&Surf, vxtx, 4,
+                           PF_Invisible | PF_Occlude | PF_Masked | PF_Clip );
     }
 
     //Hurdler: 3d-floors test
@@ -4104,41 +4137,35 @@ void HWR_RenderPlayerView(int viewnumber, player_t * player)
 //                                                                        FOG
 // ==========================================================================
 
-//FIXTHIS faB
-
-static unsigned int atohex(char *s)
+static
+unsigned int hex_val(char *str)
 {
-    int iCol;
-    char *sCol;
-    char cCol;
-    int i;
+    unsigned int val = 0;
+    int i, d;
+    char *sc;
+    char c;
 
-    if (strlen(s) < 6)
-        return 0;
-
-    iCol = 0;
-    sCol = s;
-    for (i = 0; i < 6; i++, sCol++)
+    sc = str;
+    for(i = 0; i < 6; i++)
     {
-        iCol <<= 4;
-        cCol = *sCol;
-        if (cCol >= '0' && cCol <= '9')
-            iCol |= cCol - '0';
+        c = *(sc++);
+        if (c >= '0' && c <= '9')
+            d = c - '0';
+        else if (c >= 'a' && c <= 'f')
+            d = c - 'a' + 10;
+        else if (c >= 'A' && c <= 'F')
+            d = c - 'A' + 10;
         else
-        {
-            if (cCol >= 'F')
-                cCol -= ('a' - 'A');
-            if (cCol >= 'A' && cCol <= 'F')
-                iCol = iCol | (cCol - 'A' + 10);
-        }
+            break;
+        val = (val << 4) | d;
     }
-    //CONS_Printf ("col %x\n", iCol);
-    return iCol;
+    //CONS_Printf ("col %x\n", val);
+    return val;
 }
 
 void HWR_FoggingOn(void)
 {
-    HWD.pfnSetSpecialState(HWD_SET_FOG_COLOR, atohex(cv_grfogcolor.string));
+    HWD.pfnSetSpecialState(HWD_SET_FOG_COLOR, hex_val(cv_grfogcolor.string));
     HWD.pfnSetSpecialState(HWD_SET_FOG_DENSITY, cv_grfogdensity.value);
     HWD.pfnSetSpecialState(HWD_SET_FOG_MODE, 1);
 }
@@ -4162,7 +4189,7 @@ static void CV_grPolygonSmooth_OnChange(void)
 /*
 static void CV_grFogColor_OnChange (void)
 {
-    //HWD.pfnSetSpecialState (HWD_SET_FOG_COLOR, atohex(cv_grfogcolor.string));
+    //HWD.pfnSetSpecialState (HWD_SET_FOG_COLOR, hex_val(cv_grfogcolor.string));
 }
 */
 static void Command_GrStats_f(void)

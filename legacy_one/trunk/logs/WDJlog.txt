@@ -4866,5 +4866,13 @@ Created a routine to find the correct sector by finding the closest
 facing linedef to a point within the subsector.
 This fixes one of the missing sector draws for a sign in BOOMEDIT.WAD.
 
+*** W105_hwsky
+patchfile = w105_16_hwsky.patch
+- commit revision 1219
+Fix the hardware render sky drawing to block walls and flats drawn
+inside buildings.  Sky sectors are supposed draw sky over the walls,
+which blocks the view of any taller sectors behind the wall.
+Draw these sky walls invisible to set the z-buffer to block draws behind
+the wall.  The sky is already drawn as a background, and will show through.
 
 
