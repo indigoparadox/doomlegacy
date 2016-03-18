@@ -2091,6 +2091,73 @@ void SolveTProblem (void)
 
 
 
+// [WDJ] Have a subsector poly with a suspect sector.
+// Return the correct sector for the subsector poly.
+static
+sector_t *  find_poly_sector( wpoly_t * ssp )
+{
+    // Examine linedefs for the best that defines the subsector sector.
+    // There should be no two-sided linedefs actually within the subsector.
+    // If there were any one-sided linedefs within the subsector, they would
+    // have been segs, and would have decided the issue already.
+    polyvertex_t  ap;  // avg of subsector points
+    line_t * best_lp = NULL;
+    fixed_t best_dd = 0x7fffffff;
+    fixed_t px, py, dd;
+    int j,k;
+
+    // Find an average point, not on a line, within the sector.
+    // If it is on the poly boundary, it can confuse the linedef exclusion tests.
+    ap.x = ap.y = 0.0;
+    for( j=0; j<ssp->numpts; j++ )
+    {
+        ap.x += ssp->ppts[j]->x;
+        ap.y += ssp->ppts[j]->y;
+    }
+    // Average of poly points.
+    ap.x /= ssp->numpts;
+    ap.y /= ssp->numpts;
+    px = (int)(ap.x * 0x10000);
+    py = (int)(ap.y * 0x10000);
+
+    // Find closest linedef that faces the point, along x and y axis.
+    for( k=0; k < numlines; k++ )
+    {
+        line_t * lp = & lines[k];
+        if( lp->frontsector == lp->backsector ) continue;  // self-ref lines lie.
+        if( abs( lp->dx ) > abs( lp->dy ) )
+        {
+            // Closest linedef in x axis.
+            if( lp->v1->x < px && lp->v2->x < px )  continue;
+            if( lp->v1->x > px && lp->v2->x > px )  continue;
+            dd = abs( py - lp->v1->y + ((px - lp->v1->x) * lp->dy / lp->dx) );
+        }
+        else
+        {
+            // Closest linedef in y axis.
+            if( lp->v1->y < py && lp->v2->y < py )  continue;
+            if( lp->v1->y > py && lp->v2->y > py )  continue;
+            dd = abs( px - lp->v1->x + ((py - lp->v1->y) * lp->dx / lp->dy) );
+        }
+        if( dd < best_dd )
+        {
+            best_dd = dd;
+            best_lp = lp;
+        }
+    }
+
+    if( best_lp == NULL )   return  NULL;
+
+    // cross product with best_lp, to detect ap on rightside
+    double crpd =
+       ( (((double)(ap.x)) - FIXED_TO_FLOAT(best_lp->v1->x)) * FIXED_TO_FLOAT(best_lp->dy) )
+     - ( (((double)(ap.y)) - FIXED_TO_FLOAT(best_lp->v1->y)) * FIXED_TO_FLOAT(best_lp->dx) );
+    return ( crpd >= 0 )?
+         best_lp->frontsector  // rightside of linedef
+       : best_lp->backsector;
+}
+
+
 #define NEARDIST (0.75f) 
 // Only needs to be reasonably larger than NEARDIST.
 #define INITIAL_MAX    (10000000000000.0f)
@@ -2102,7 +2169,13 @@ void SolveTProblem (void)
 static
 void AdjustSegs(void)
 {
-    int ssnum, j, segcount;
+#ifdef DEBUG_HWBSP
+    int missed_seg_cnt = 0;
+    int fixed_segsec_cnt = 0;
+    int lost_segsec_cnt = 0;
+#endif
+    int ssnum, segcount, j;
+    sector_t * ss_sector, * poly_sector, * lseg_sector;
     seg_t* lseg;
     wpoly_t *wp;
     int v1found=0, v2found=0;
@@ -2116,24 +2189,43 @@ void AdjustSegs(void)
             continue;
 
         segcount = subsectors[ssnum].numlines;
+        ss_sector = subsectors[ssnum].sector;
         lseg = &segs[subsectors[ssnum].firstline];
 
+        poly_sector = NULL;
         for(;segcount--;lseg++)
         {
             polyvertex_t sv1, sv2;  // seg v1, v2
             float distv1,distv2,tmp;
 
-#ifdef DEBUG_HWBSP
             if( lseg->linedef->sidenum[1] != NULL_INDEX )
             {
                 if( sides[lseg->linedef->sidenum[0]].sector == sides[lseg->linedef->sidenum[1]].sector )
                 {
+#ifdef DEBUG_HWBSP
                     GenPrintf( EMSG_debug, "AdjustSegs: self ref line %i\n",
                            lseg->linedef - lines );
+#endif
                     continue;
                 }
             }
+
+            if( lseg->linedef->sidenum[ lseg->side ] != NULL_INDEX )
+            {
+                // Get the sector from the seg.
+                lseg_sector = sides[ lseg->linedef->sidenum[ lseg->side ]].sector;
+#ifdef DEBUG_HWBSP
+                int secnum = lseg_sector - sectors;
+                if( lseg_sector != ss_sector )
+                    GenPrintf( EMSG_debug, "AdjustSegs: seg line sector = %i, subsector sector = %i\n",
+                               secnum, ss_sector - sectors );
+                if( poly_sector && (lseg_sector != poly_sector) )
+                    GenPrintf( EMSG_debug, "AdjustSegs: seg line sector = %i, and %i\n",
+                               secnum, poly_sector - sectors );
 #endif
+                poly_sector = lseg_sector;
+            }
+
             sv1.x = FIXED_TO_FLOAT( lseg->v1->x );
             sv1.y = FIXED_TO_FLOAT( lseg->v1->y );
             sv2.x = FIXED_TO_FLOAT( lseg->v2->x );
@@ -2196,6 +2288,22 @@ void AdjustSegs(void)
                 //    lseg->length=1;
             }
         }
+
+        // Fix bad subsector sector references.
+        if( poly_sector == NULL )
+        { 
+            poly_sector = find_poly_sector( wp );
+#ifdef DEBUG_HWBSP
+            lost_segsec_cnt++;
+#endif
+        }
+        if( poly_sector && (poly_sector != ss_sector) )
+        {
+            subsectors[ssnum].sector = poly_sector;
+#ifdef DEBUG_HWBSP
+            fixed_segsec_cnt++;
+#endif
+        }
     }
 
     // check for missed segs, not in any polygon
@@ -2209,6 +2317,10 @@ void AdjustSegs(void)
                 GenPrintf( EMSG_ver, "Seg %i, not in any polygon.\n", j );
             }
         }
+#ifdef DEBUG_HWBSP
+        if( (! lseg->pv1) || (! lseg->pv2) )
+            missed_seg_cnt++;
+#endif
         if( ! lseg->pv1 )
         {
             lseg->pv1 = store_vertex( lseg->v1, SEG_SAME_VERT );
@@ -2218,6 +2330,11 @@ void AdjustSegs(void)
             lseg->pv2 = store_vertex( lseg->v2, SEG_SAME_VERT );
         }
     }
+#ifdef DEBUG_HWBSP
+    GenPrintf( EMSG_debug, "DEBUG: Lost seg sector cnt = %i\n", lost_segsec_cnt );
+    GenPrintf( EMSG_debug, "DEBUG: Fixed seg sector cnt = %i\n", fixed_segsec_cnt );
+    GenPrintf( EMSG_debug, "DEBUG: Missed seg vertex cnt = %i\n", missed_seg_cnt );
+#endif
 }
 
 // Generate drawing polygons from wpoly_t versions.

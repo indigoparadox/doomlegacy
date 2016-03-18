@@ -4846,3 +4846,25 @@ patchfile = w105_13_hwpoly.patch
 - commit revision 1216
 Expanded use of wpoly to rest of polygon building code.
 Change to drawing poly is now done in finalize_polygons().
+
+*** W105_crack1
+patchfile = w105_14_crack1.patch
+- commit revision 1217
+Apply some hw draw crack remedies.
+Check the cross product, so an added vertex does not make the crack worse.
+Fix a bug when a seg-chain cut only cuts one side of the polygon.
+Add some comments.
+
+*** W105_bsp_sector
+patchfile = w105_15_bsp_sector.patch
+- commit revision 1218
+The bsp in the wad file has errors.  One error is that sometimes it has
+the wrong sector number for a subsector.  This results in drawing the
+wrong sector.
+Try to dectect some of these.
+Created a routine to find the correct sector by finding the closest
+facing linedef to a point within the subsector.
+This fixes one of the missing sector draws for a sign in BOOMEDIT.WAD.
+
+
+
