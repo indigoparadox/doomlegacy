@@ -4889,4 +4889,21 @@ so it is made optional.  It does not seem to do harm, but its effect is
 not yet obvious.
 A control,  gr_polytile, can turn it off and on.
 
+*** W105_bsp_clean
+patchfile = w105_18_bsp_clean.patch
+- commit revision 1221
+Cleanup some bsp and segs drawn code.
+Indent fixes, line rearrangement.
+Add comments.
+Make some I_Error into I_SoftError, so user can save the game at least.
+Rearrange logic of doorclosed.
+Comment out some unused struct fields (waterclip, scaleseg).
+Rename some vars to avoid C++ keywords.
+
+*** W105_crack3
+patchfile = w105_19_crack3.patch
+- commit revision 1222
+Fix the indenting in the polytile code.
+Add handling of a seg cutting that hits only one vertex.
+Remove some older unused box code.
 

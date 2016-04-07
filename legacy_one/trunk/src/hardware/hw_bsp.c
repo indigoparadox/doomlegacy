@@ -882,15 +882,15 @@ void polytile_enter( wpoly_t * poly )
         || ( polytile_store->num_tile_used >= POLYTILE_NUM_POLY ) )
     {
         // Need another storage unit.
-	if( polytile_free )
+        if( polytile_free )
         {
-	    polytile_store = polytile_free;
-	    polytile_free = polytile_free->next;
-	}
+            polytile_store = polytile_free;
+            polytile_free = polytile_free->next;
+        }
         else
         {
             polytile_store = Z_Malloc(sizeof(polytile_store_t), PU_HWRPLANE, NULL);
-	}
+        }
         polytile_store->next = ptp;  // link for search
         polytile_store->num_tile_used = 0;
     }
@@ -913,7 +913,7 @@ void polytile_remove( wpoly_t * poly )
         wpp = & ptp->tile[0];
         for( i=ptp->num_tile_used-1; i>=0; i--)
         {
-	    if( *wpp == poly )  goto found; 
+            if( *wpp == poly )  goto found;
             wpp++;
         }
         ptp = ptp->next;
@@ -943,7 +943,7 @@ found:
 //  i1, i2 : indexes of the split side
 static
 void add_vertex_between( polyvertex_t * newvert, wpoly_t * poly,
-			 int i1, int i2 )
+                         int i1, int i2 )
 {
     polytile_store_t *   ptp;
     wpoly_t * wp;
@@ -966,21 +966,21 @@ void add_vertex_between( polyvertex_t * newvert, wpoly_t * poly,
         // Search for poly in all polytile_store_t
         for( t=ptp->num_tile_used-1; t>=0; t--)
         {
-	    wp = ptp->tile[ t ];
-	    if( wp == poly )  continue;
-	    // Search this poly for v1,v2 vertex in opposite order.
-	    s1 = wp->ppts[ wp->numpts - 1 ];  // last vertex
-	    for( j2=0; j2 < wp->numpts; j2++ )
-	    {
-	        s2 = wp->ppts[j2];
-	        if( s2 == v1 )
-	        {
-		    if( s1 == v2 )  goto found;
-		    break;  // cannot find v1 a second time in same poly
-	        }
-		s1 = s2;
-	    }
-	    
+            wp = ptp->tile[ t ];
+            if( wp == poly )  continue;
+            // Search this poly for v1,v2 vertex in opposite order.
+            s1 = wp->ppts[ wp->numpts - 1 ];  // last vertex
+            for( j2=0; j2 < wp->numpts; j2++ )
+            {
+                s2 = wp->ppts[j2];
+                if( s2 == v1 )
+                {
+                    if( s1 == v2 )  goto found;
+                    break;  // cannot find v1 a second time in same poly
+                }
+                s1 = s2;
+            }
+
         }
         ptp = ptp->next;
     }
@@ -993,6 +993,7 @@ found:
     // Result is in the same wp.
 }
 #endif
+
 
 
 // Split a _CONVEX_ polygon in two convex polygons.
@@ -1653,6 +1654,24 @@ void  CutOutSubsecPoly ( int ssindex, /*INOUT*/ wpoly_t* poly)
 //	      GenPrintf( EMSG_error,
 //		      "DEBUG: CutOutPoly: only one point for split line (%d %d)\n",ps,pe);
 #endif
+            // It must have crossed at one polygon vertex.
+            // That is the only way to touch at only one point.
+            // The seg is usually slightly misaligned with the polygon side,
+            // leaving a crack in front of a wall.
+            // Let the seg-chains take care of it.  It is important to
+            // extend the poly to all seg walls to eliminate cracks.
+            if( A.vertex == NULL )
+            {
+                A.vertex = store_polyvertex( & A.divpt, 0.25 );
+            }
+            // Store the other vertex
+            B.vertex = store_polyvertex( (( A.divfrac > 0.5 )? &p1 : &p2), 0.25 );
+            // Get another point in the poly to rv1
+            i2 = A.after;
+            if( i2 >= poly_num_pts )   i2 = 0;
+            rv1 = poly->ppts[i2];
+            save_loose_seg( lseg, A.vertex, B.vertex, false, true,
+                            cross_product( A.vertex, B.vertex, rv1 ) < 0 );
             continue;
         }
         continue;  // no split by this segment
@@ -2025,7 +2044,6 @@ boolean PointInSeg(polyvertex_t* va, polyvertex_t* v1, polyvertex_t* v2)
 {
     register float ax,ay,bx,by,cx,cy,d,norm;
 
-#if 1
     // check bbox of the seg first (without altering v1, v2)
     if( v2->x > v1->x )
     {
@@ -2051,30 +2069,6 @@ boolean PointInSeg(polyvertex_t* va, polyvertex_t* v1, polyvertex_t* v2)
         if( (va->y + MAXDIST) < v2->y )  goto not_in;
         if( (va->y - MAXDIST) > v1->y )  goto not_in;
     }
-#else   
-    // check bbox of the seg first
-    register polyvertex_t* p;
-
-    if( v1->x > v2->x )
-    {
-        // swap v1, v2, so v2 > v1
-        p=v1;
-        v1=v2;
-        v2=p;
-    }
-    if((va->x < v1->x-MAXDIST) || (va->x > v2->x+MAXDIST))
-        goto not_in;  // x not within seg box
-
-    if( v1->y > v2->y )
-    {
-        // swap v1, v2, so v2 > v1
-        p=v1;
-        v1=v2;
-        v2=p;
-    }
-    if((va->y < v1->y-MAXDIST) || (va->y > v2->y+MAXDIST))
-        goto not_in;  // y not within seg box
-#endif
 
     // v1 = origin
     ax= v2->x - v1->x;
