@@ -1554,7 +1554,7 @@ char*  level_mapname = NULL;  // to savegame and info
 //  map_wadname : map command, load wad file
 boolean P_SetupLevel (int      to_episode,
                       int      to_map,
-                      skill_t  to_skill,
+                      skill_e  to_skill,
                       char*    map_wadname)      // for wad files
 {
     char  *sl_mapname = NULL;

@@ -143,6 +143,7 @@
 // Older DoomLegacy demos are demo versions 111..143.
 
 #include "doomincl.h"
+#include "doomstat.h"
 #include "command.h"
 #include "console.h"
 #include "dstrings.h"
@@ -171,7 +172,6 @@
 #include "s_sound.h"
 
 #include "g_game.h"
-#include "g_state.h"
 #include "g_input.h"
 
 //added:16-01-98:quick hack test of rocket trails
@@ -200,13 +200,11 @@
 
 
 
-extern boolean gamekeytapped[NUMINPUTS];
-
 
 boolean G_CheckDemoStatus (void);
 void    G_ReadDemoTiccmd (ticcmd_t* cmd,int playernum);
 void    G_WriteDemoTiccmd (ticcmd_t* cmd,int playernum);
-void    G_InitNew (skill_t skill, char* mapname, boolean resetplayer);
+void    G_InitNew (skill_e skill, char* mapname, boolean resetplayer);
 
 void    G_DoCompleted (void);
 void    G_DoVictory (void);
@@ -221,6 +219,7 @@ void    G_DoWorldDone (void);
 //
 byte            demoversion;
 
+skill_e         gameskill;
 byte            gameepisode;  // current game episode number  1..4
 byte            gamemap;      // current game map number 1..31
 char            game_map_filename[MAX_WADPATH];      // an external wad filename
@@ -233,6 +232,8 @@ language_t      language = english;          // Language.
 boolean         modifiedgame;                  // Set if homebrew PWAD stuff has been added.
 
 
+gamestate_e     gamestate = GS_NULL;
+gameaction_e    gameaction;
 boolean         paused;
 
 boolean         timingdemo;             // if true, exit with report on completion
@@ -957,7 +958,7 @@ void G_DoLoadLevel (boolean resetplayer)
     consoleplayer_ptr->locked = false;
 
     if (wipegamestate == GS_LEVEL)
-        wipegamestate = -1;             // force a wipe
+        wipegamestate = GS_FORCEWIPE;  // force a wipe
 
     gamestate = GS_LEVEL;
     for (i=0 ; i<MAXPLAYERS ; i++)
@@ -1236,7 +1237,8 @@ void G_Ticker (void)
       case GS_WAITINGPLAYERS:
       case GS_DEDICATEDSERVER:
       case GS_NULL:
-      // do nothing
+      default:
+        // do nothing
         break;
     }
 }
@@ -2143,7 +2145,7 @@ void G_DoSaveGame (int   savegameslot, char* savedescription)
 // Boris comment : single player start game
 // Called by SF_StartSkill, M_ChooseSkill, M_VerifyNightmare
 // Called by cht_Responder on clev, CheatWarpFunc
-void G_DeferedInitNew (skill_t skill, char* mapname, boolean StartSplitScreenGame)
+void G_DeferedInitNew (skill_e skill, char* mapname, boolean StartSplitScreenGame)
 {
     paused = false;
     
@@ -2167,7 +2169,7 @@ void G_DeferedInitNew (skill_t skill, char* mapname, boolean StartSplitScreenGam
 // This is the map command interpretation something like Command_Map_f
 //
 // called at : map cmd execution, doloadgame, doplaydemo
-void G_InitNew (skill_t skill, char* mapname, boolean resetplayer)
+void G_InitNew (skill_e skill, char* mapname, boolean resetplayer)
 {
     //added:27-02-98: disable selected features for compatibility with
     //                older demos, plus reset new features as default
@@ -2668,7 +2670,7 @@ void G_DeferedPlayDemo (char* name)
 // Called from Command_Playdemo_f, command play demo file or lump
 void G_DoPlayDemo (char *defdemoname)
 {
-    skill_t skill;
+    skill_e skill;
     int     i, episode, map;
     boolean boomdemo = 0;
     byte  demo144_format = 0;

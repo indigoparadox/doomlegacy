@@ -338,7 +338,7 @@ void F_Ticker (void)
                 {
                     finalecount = 0;
                     finalestage = 1;
-                    wipegamestate = -1;             // force a wipe
+                    wipegamestate = GS_FORCEWIPE;             // force a wipe
                     if (!raven && gameepisode == 3)
                         S_StartMusic (mus_bunny);
                 }

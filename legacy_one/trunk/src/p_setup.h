@@ -45,8 +45,8 @@
 #include "doomtype.h"
 #include "doomdata.h"
   // mapthing_t
-#include "g_state.h"
-  // skill_t
+#include "doomstat.h"
+  // skill_e
 #include "r_defs.h"
   // m_fixed.h, subsector_t
 
@@ -91,7 +91,7 @@ extern char*  level_mapname;  // to savegame and info
 //  map_wadname : map command, load wad file
 boolean P_SetupLevel (int      to_episode,
                       int      to_map,
-                      skill_t  to_skill,
+                      skill_e  to_skill,
                       char*    map_wadname);
 
 

@@ -146,6 +146,7 @@ extern consvar_t       cv_allowrocketjump;
 extern consvar_t       cv_allowautoaim;
 
 extern boolean gamekeydown[NUMINPUTS];
+extern boolean gamekeytapped[NUMINPUTS];
 
 // two key codes (or virtual key) per game control
 extern  int     gamecontrol[num_gamecontrols][2];

@@ -988,7 +988,7 @@ st_lib.o st_stuff.o \
 t_array.o t_func.o t_oper.o t_parse.o t_prepro.o t_script.o t_spec.o t_vari.o \
 sounds.o qmus2mid.o s_sound.o s_amb.o mserv.o \
 b_game.o b_look.o b_node.o b_search.o \
-g_state.o g_input.o g_game.o \
+g_input.o g_game.o \
 f_finale.o f_wipe.o \
 wi_stuff.o \
 am_map.o \

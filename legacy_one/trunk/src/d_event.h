@@ -33,7 +33,6 @@
 #define D_EVENT_H
 
 #include "doomtype.h"
-#include "g_state.h"
 
 // Input event types.
 typedef enum
@@ -62,8 +61,6 @@ typedef struct
 extern  event_t         events[MAXEVENTS];
 extern  int             eventhead;
 extern  int             eventtail;
-
-extern  gameaction_t    gameaction;
 
 // current modifier key status
 extern boolean shiftdown;

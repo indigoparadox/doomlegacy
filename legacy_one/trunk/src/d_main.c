@@ -514,9 +514,10 @@ void D_ProcessEvents(void)
 //
 
 
-// wipegamestate can be set to -1 to force a wipe on the next draw
-// added comment : there is a wipe each change of the gamestate
-gamestate_t wipegamestate = GS_DEMOSCREEN;
+// There is a wipe each change of the gamestate.
+// wipegamestate can be set to GS_FORCEWIPE to force a wipe on the next draw.
+gamestate_e wipegamestate = GS_DEMOSCREEN;
+
 CV_PossibleValue_t screenslink_cons_t[] = { {0, "None"}, {wipe_ColorXForm + 1, "Crossfade"}, {wipe_Melt + 1, "Melt"}, {0, NULL} };
 consvar_t cv_screenslink = { "screenlink", "2", CV_SAVE, screenslink_cons_t };
 
@@ -525,8 +526,9 @@ void D_Display(void)
 {
     // vid : from video setup
     static boolean menuactivestate = false;
-    static gamestate_t oldgamestate = -1;
+    static gamestate_e oldgamestate = GS_FORCEWIPE; // invalid state
     static int borderdrawcount;
+
     tic_t nowtime;
     tic_t tics;
     tic_t wipestart;
@@ -558,7 +560,7 @@ void D_Display(void)
     if (setsizeneeded)
     {
         R_ExecuteSetViewSize();  // set rdraw, view scale, limits, projection
-        oldgamestate = -1;      // force background redraw
+        oldgamestate = GS_FORCEWIPE;  // force background redraw
         borderdrawcount = 3;
         redrawsbar = true;
     }
@@ -611,6 +613,7 @@ void D_Display(void)
             break;
 
         case GS_NULL:
+        default:
             break;
     }
 
@@ -2797,6 +2800,7 @@ restart_command:
         }
         else
             G_TimeDemo(demo_name);
+
         gamestate = wipegamestate = GS_NULL;
 
         return;
