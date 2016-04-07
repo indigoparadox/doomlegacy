@@ -194,7 +194,7 @@ typedef struct
   uint16_t      angle;          
   uint16_t      linedef;
   int16_t       side;
-  int16_t      offset;
+  int16_t       offset;
 } mapseg_t;
 
 
@@ -228,15 +228,15 @@ typedef struct
 
 // Thing definition, position, orientation and type,
 // plus skill/visibility flags and attributes.
-// WAD lump structure
+// WAD lump structure, almost.  P_LoadThings has actual WAD struct.
 typedef struct
 {
     int16_t             x;
     int16_t             y;
     int16_t             z; // Z support for objects SSNTails 07-24-2002
     int16_t             angle;  // normally (0,90,180,270), reported neg sometimes
-    int16_t             type;
-    int16_t             options;
+    int16_t             type;  // DoomEd id number
+    int16_t             options;  // flags
     struct mobj_s*      mobj;  // Extra MapThing, voodoo, and FS tests
 } mapthing_t;
 

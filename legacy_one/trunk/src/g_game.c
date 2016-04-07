@@ -1153,15 +1153,24 @@ void G_Ticker (void)
         }
     }
 
-    // do things to change the game state
+    // Do things to change the game state.
     while (gameaction != ga_nothing)
     {
         switch (gameaction)
         {
-            case ga_completed :  G_DoCompleted (); break;
-            case ga_worlddone :  G_DoWorldDone (); break;
-            case ga_nothing   :  break;
-            default : I_Error("gameaction = %d\n", gameaction);
+            case ga_completed:
+                G_DoCompleted ();
+                break;
+            case ga_worlddone:
+                G_DoWorldDone ();
+                break;
+            case ga_nothing:
+                break;
+            default:
+                // [WDJ] Softer recovery.
+                I_SoftError("GAME: gameaction = %d\n", gameaction);
+                gameaction = ga_nothing;
+                break;
         }
     }
 

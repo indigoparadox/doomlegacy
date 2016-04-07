@@ -58,7 +58,7 @@ struct runningscript_s
 
   // saved variables
   fs_variable_t *variables[VARIABLESLOTS];
-  
+
   runningscript_t *prev, *next;  // for chain
   mobj_t *trigger;
 };
