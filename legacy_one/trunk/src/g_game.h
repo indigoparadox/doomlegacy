@@ -92,6 +92,8 @@ extern char       player_names[MAXPLAYERS][MAXPLAYERNAME];
 extern  char      game_map_filename[MAX_WADPATH];
 extern  boolean   nomonsters;   // checkparm of -nomonsters
 
+extern  boolean   gameplay_msg;  // True during gameplay
+
 // --- Event actions
 
 typedef enum

@@ -82,4 +82,16 @@ void P_LinkFloorThing(mobj_t* mobj);
 void P_UnlinkFloorThing(mobj_t* mobj);
 */
 
+// Player Message for cheats and object interations.
+// Subject to message level control.
+// msglevel:
+//   0..9    debug
+//   10..19  verbose
+//   20..29  normal play
+//   30..39  minimal msg play
+//   40..49  major
+//   50..59  god mode messages
+//   60..64  mandatory (even when messages are off)
+void  P_SetMessage(player_t *player, char *message, byte msglevel);
+
 #endif

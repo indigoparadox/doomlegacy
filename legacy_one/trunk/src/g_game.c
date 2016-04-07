@@ -235,6 +235,7 @@ boolean         modifiedgame;                  // Set if homebrew PWAD stuff has
 gamestate_e     gamestate = GS_NULL;
 gameaction_e    gameaction;
 boolean         paused;
+boolean         gameplay_msg = false;   // enable game play message control
 
 boolean         timingdemo;             // if true, exit with report on completion
 boolean         nodrawers;              // for comparative timing purposes
@@ -280,7 +281,7 @@ wbstartstruct_t wminfo;                 // parms for world map / intermission
 void ShowMessage_OnChange(void);
 void AllowTurbo_OnChange(void);
 
-CV_PossibleValue_t showmessages_cons_t[]={{0,"Off"},{1,"On"},{2,"Not All"},{0,NULL}};
+CV_PossibleValue_t showmessages_cons_t[]={{0,"Off"},{1,"Minimal"},{2,"Play"},{3,"Verbose"},{4,"Diag"},{0,NULL}};
 CV_PossibleValue_t crosshair_cons_t[]   ={{0,"Off"},{1,"Cross"},{2,"Angle"},{3,"Point"},{0,NULL}};
 
 consvar_t cv_crosshair        = {"crosshair"   ,"0",CV_SAVE,crosshair_cons_t};
@@ -294,7 +295,7 @@ consvar_t cv_mouse2_invert    = {"invertmouse2","0",CV_SAVE,CV_OnOff};
 consvar_t cv_mouse2_move      = {"mousemove2"  ,"1",CV_SAVE,CV_OnOff};
 consvar_t cv_alwaysfreelook2  = {"alwaysmlook2","0",CV_SAVE,CV_OnOff};
 
-consvar_t cv_showmessages     = {"showmessages","1",CV_SAVE | CV_CALL | CV_NOINIT,showmessages_cons_t,ShowMessage_OnChange};
+consvar_t cv_showmessages     = {"showmessages","2",CV_SAVE | CV_CALL | CV_NOINIT,showmessages_cons_t,ShowMessage_OnChange};
 consvar_t cv_allowturbo       = {"allowturbo"  ,"0",CV_NETVAR | CV_CALL, CV_YesNo, AllowTurbo_OnChange};
 
 #if MAXPLAYERS>32
@@ -406,7 +407,7 @@ void ShowMessage_OnChange(void)
     if (!cv_showmessages.value)
         CONS_Printf("%s\n",MSGOFF);
     else
-        CONS_Printf("%s\n",MSGON);
+        CONS_Printf("%s: %s\n",MSGON, cv_showmessages.string );
 }
 
 
@@ -949,6 +950,7 @@ void G_DoLoadLevel (boolean resetplayer)
     int             i;
 
     levelstarttic = gametic;        // for time calculation
+    gameplay_msg = false;
 
     // Reset certain attributes
     // (should be in resetplayer 'if'?)
@@ -1020,6 +1022,8 @@ void G_DoLoadLevel (boolean resetplayer)
     // clear hud messages remains (usually from game startup)
     HU_ClearFSPics();
     CON_ClearHUD ();
+
+    gameplay_msg = true;
 }
 
 //
@@ -1239,6 +1243,7 @@ void G_Ticker (void)
       case GS_NULL:
       default:
         // do nothing
+        gameplay_msg = false;
         break;
     }
 }

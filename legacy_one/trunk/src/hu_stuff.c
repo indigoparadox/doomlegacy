@@ -85,6 +85,8 @@
 #include "r_local.h"
 #include "wi_stuff.h"  // for drawrankings
 #include "p_info.h"
+#include "p_inter.h"
+  // P_SetMessage
 
 #include "keys.h"
 #include "v_video.h"
@@ -401,21 +403,24 @@ void HU_Ticker(void)
     // display message if necessary
     // (display the viewplayer's messages)
     pl = displayplayer_ptr;
-
-    if (cv_showmessages.value && pl->message)
+    if ( pl->message )
     {
-        CONS_Printf ("%s\n",pl->message);
-        pl->message = 0;
+        // Player message blocking is handled by P_SetMessage.
+        GenPrintf(EMSG_CONS|EMSG_playmsg_cat, "%s\n", pl->message);
+        pl->message = NULL;
+        pl->msglevel = 0;
     }
 
     // In splitscreen, display second player's messages
     if (cv_splitscreen.value && displayplayer2_ptr )
     {
         pl = displayplayer2_ptr;
-        if (cv_showmessages.value && pl->message)
+        if ( pl->message )
         {
-            CONS_Printf ("\4%s\n",pl->message);
-            pl->message = 0;
+            // Player message blocking is handled by P_SetMessage.
+            GenPrintf(EMSG_CONS|EMSG_playmsg_cat, "\4%s\n", pl->message);
+            pl->message = NULL;
+            pl->msglevel = 0;
         }
     }
     
@@ -544,7 +549,7 @@ boolean HU_Responder (event_t *ev)
           {
               // add a char
               if (!HU_Chat_push_back(c))
-                plr->message = HUSTR_MSGU;  // out of space
+                P_SetMessage( plr, HUSTR_MSGU, 63);  // out of space
           }
           else
             return false; // let the event go
