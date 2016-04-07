@@ -4949,3 +4949,10 @@ message level.
 The memory expansion message can now be blocked.  The EMSG categories
 are now explicit in the enum code, so that GenPrintf info, warnings, debug,
 and other print categories are properly tested during playing.
+
+*** W105_sorted_sprite
+patchfile = w105_23_sortedsprite.patch
+- commit revision 1226
+Remove old code (DRAW_UNSORTED) and choice code (DRAW_CHOICE) in
+hardware renderer.  The new code (DRAW_SORTED) of w89_draw_sorted
+is used, which sorts transparent walls and sprites.
