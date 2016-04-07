@@ -1573,7 +1573,7 @@ boolean P_SetupLevel (int      to_episode,
     {
         players[i].killcount = players[i].secretcount
             = players[i].itemcount = 0;
-        players[i].mo = NULL;
+        players[i].mo = NULL;  // will be freed with PU_LEVEL
 #ifdef CLIENTPREDICTION2
         players[i].spirit = NULL;
 #endif
@@ -1739,20 +1739,18 @@ boolean P_SetupLevel (int      to_episode,
     P_SpawnSpecials ();
     P_InitBrainTarget();
 
-    //BP: spawnplayers now (before all structure are not inititialized)
+    //BP: spawnplayers after all structures are inititialized
     for (i=0 ; i<MAXPLAYERS ; i++)
     {
         if (playeringame[i])
         {
             if (cv_deathmatch.value)
             {
-                players[i].mo = NULL;
                 G_DoReborn(i);
             }
             else if( demoversion>=128 )
             {
-                players[i].mo = NULL;
-                G_CoopSpawnPlayer (i);
+                G_CoopSpawnPlayer(i);
             }
         }
     }

@@ -4907,3 +4907,20 @@ Fix the indenting in the polytile code.
 Add handling of a seg cutting that hits only one vertex.
 Remove some older unused box code.
 
+*** W105_spawn
+patchfile = w105_20_spawn.patch
+- commit revision 1223
+Rewrite of spawning code.  It could not handle more multiple players
+than spawning spots, and network join spawning was suspect.
+
+Converted G_CheckSpot, to G_Player_SpawnSpot, which now
+does the collision check, the spawn fog, and the player spawn.
+Added check of objects and players using a static mobj, so as to not
+depend upon any player mobj.  This eliminates the need for the
+spawn without a check from the original Doom code.
+
+The Coop spawning now tries to spawn at 255 locations around the spawn
+spot, to handle collisions, and to allow more players than spawn spots.
+Deathmatch spawn will also try Coop spawning if it needs to.
+Coop spawn will try Deathmatch spawn locations (last) if it needs to.
+
