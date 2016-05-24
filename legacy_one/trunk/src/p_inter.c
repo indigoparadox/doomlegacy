@@ -290,7 +290,7 @@ boolean P_GiveAmmo ( player_t*     player,
         else
         {
             player->ammo_pickup += PICKUP_FLASH_TICS/2;  // some other ammo
-	    if( player->ammo_pickup > 35 )
+            if( player->ammo_pickup > 35 )
                 player->ammo_pickup = 35;
         }
     }

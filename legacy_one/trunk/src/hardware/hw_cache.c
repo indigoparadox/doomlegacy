@@ -159,10 +159,10 @@ typedef union {
 // Called from HWR_MakePatch
 static
 void HWR_DrawPatchInCache (Mipmap_t* mipmap,
-			   int blockwidth, int blockheight, int blocklinebyte,
-			   int texturewidth, int textureheight,
-			   int originx, int originy, //where to draw the patch in the surface block
-			   patch_t* realpatch, int bytepp )
+                           int blockwidth, int blockheight, int blocklinebyte,
+                           int texturewidth, int textureheight,
+                           int originx, int originy, //where to draw the patch in the surface block
+                           patch_t* realpatch, int bytepp )
 {
     int          x,x1,x2;
     int          col,ncols;
@@ -202,8 +202,8 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
 
 #if 0
     CONS_Printf("patch %dx%d texture %dx%d block %dx%d\n",
-	 realpatch->width, realpatch->height,
-	 texturewidth, textureheight, blockwidth, blockheight);
+         realpatch->width, realpatch->height,
+         texturewidth, textureheight, blockwidth, blockheight);
     CONS_Printf("      col %d ncols %d x %d\n", col, ncols, x);
 #endif
 
@@ -233,9 +233,9 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
             yfrac = 0;
             //yfracstep = (patchcol->length << 16) / count;
             if (ypos < 0)
-	    {
-	        // [WDJ] Original doom had a bug in clipping.
-		// To reproduce that bug, comment out the next line.
+            {
+                // [WDJ] Original doom had a bug in clipping.
+                // To reproduce that bug, comment out the next line.
                 yfrac = -ypos<<16;  // skip pixels in patch (not in original doom)
 
                 count += (((ypos * scale_y) + (FRACUNIT/2)) >> 16);
@@ -252,15 +252,15 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
                 byte texel = source[yfrac>>16];
                 count--;
 
-		// [WDJ] Fixed, this is fx1 not fire
-		// Verified that 0x40000 is the fx1 translucent table.
+                // [WDJ] Fixed, this is fx1 not fire
+                // Verified that 0x40000 is the fx1 translucent table.
                 if( fx1trans && (fx1trans[(texel<<8)] != texel) )
                     alpha = 0x80;
                 else
                     alpha = 0xff;
 
                 //Hurdler: not perfect, but better than holes
-	        // Move pixels conflicting with chromakey to a similar color
+                // Move pixels conflicting with chromakey to a similar color
                 if( chromakey_mapped && texel == HWR_PATCHES_CHROMAKEY_COLORINDEX )
                     texel = HWR_CHROMAKEY_EQUIVALENTCOLORINDEX;
                 //Hurdler: 25/04/2000: now support colormap in hardware mode
@@ -271,21 +271,21 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
                 // gcc do it ! but vcc not ! (why don't use cygnus gcc for win32 ?)
                 switch (bytepp) {
                     case 2 :
-		       ((pixelalpha_t*)dest)->pixel = texel;
-		       ((pixelalpha_t*)dest)->alpha = alpha;
-		       break;
+                       ((pixelalpha_t*)dest)->pixel = texel;
+                       ((pixelalpha_t*)dest)->alpha = alpha;
+                       break;
                     case 3 :
                        ((RGBA_t*)dest)->s.red   = V_GetColor(texel).s.red;
                        ((RGBA_t*)dest)->s.green = V_GetColor(texel).s.green;
                        ((RGBA_t*)dest)->s.blue  = V_GetColor(texel).s.blue;
                        break;
                     case 4 :
-		       *((RGBA_t*)dest) = V_GetColor(texel);
+                       *((RGBA_t*)dest) = V_GetColor(texel);
                        ((RGBA_t*)dest)->s.alpha = alpha;
                        break;
                     default:  // default is 1
-		       *dest = texel;
-		       break;
+                       *dest = texel;
+                       break;
                 }
 
                 dest += blocklinebyte;
@@ -357,40 +357,40 @@ static void HWR_ResizeBlock ( int originalwidth,
     }
 /*    else if (cv_voodoocompatibility.value)
     {
-		if(originalwidth > 256 || originalheight > 256)
-		{
-			blockwidth = 256;
-			while (originalwidth < blockwidth)
-				blockwidth >>= 1;
-			if (blockwidth<1)
-				I_Error ("3D GenerateTexture : too small");
+                if(originalwidth > 256 || originalheight > 256)
+                {
+                        blockwidth = 256;
+                        while (originalwidth < blockwidth)
+                                blockwidth >>= 1;
+                        if (blockwidth<1)
+                                I_Error ("3D GenerateTexture : too small");
 
-			blockheight = 256;
-			while (originalheight < blockheight)
-				blockheight >>= 1;
-			if (blockheight<1)
-				I_Error ("3D GenerateTexture : too small");
-		}
-		else
-		{
-			//size up to nearest power of 2
-			blockwidth = 1;
-			while (blockwidth < originalwidth)
-				blockwidth <<= 1;
-			// scale down the original graphics to fit in 256
-			if (blockwidth>256)
-				blockwidth = 256;
-				//I_Error ("3D GenerateTexture : too big");
+                        blockheight = 256;
+                        while (originalheight < blockheight)
+                                blockheight >>= 1;
+                        if (blockheight<1)
+                                I_Error ("3D GenerateTexture : too small");
+                }
+                else
+                {
+                        //size up to nearest power of 2
+                        blockwidth = 1;
+                        while (blockwidth < originalwidth)
+                                blockwidth <<= 1;
+                        // scale down the original graphics to fit in 256
+                        if (blockwidth>256)
+                                blockwidth = 256;
+                                //I_Error ("3D GenerateTexture : too big");
 
-			//size up to nearest power of 2
-			blockheight = 1;
-			while (blockheight < originalheight)
-				blockheight <<= 1;
-			// scale down the original graphics to fit in 256
-			if (blockheight>256)
-				blockheight = 255;
-				//I_Error ("3D GenerateTexture : too big");
-		}
+                        //size up to nearest power of 2
+                        blockheight = 1;
+                        while (blockheight < originalheight)
+                                blockheight <<= 1;
+                        // scale down the original graphics to fit in 256
+                        if (blockheight>256)
+                                blockheight = 255;
+                                //I_Error ("3D GenerateTexture : too big");
+                }
     }*/
     else
     {
@@ -486,12 +486,12 @@ static byte * MakeBlock( Mipmap_t *mipmap )
         case 2:
            {
                 // fill background with chromakey, alpha=0
-		pixelalpha_t alphachr = {HWR_PATCHES_CHROMAKEY_COLORINDEX, 0};
-	        pixelalpha_t * blka = (pixelalpha_t*) block;
-	        int i;
+                pixelalpha_t alphachr = {HWR_PATCHES_CHROMAKEY_COLORINDEX, 0};
+                pixelalpha_t * blka = (pixelalpha_t*) block;
+                int i;
                 for( i=0; i<blocksize; i++ )
                    blka[i] = alphachr;
-	   }
+           }
            break;
         case 4:
            memset(block,0,blocksize*4);
@@ -511,7 +511,7 @@ static byte * MakeBlock( Mipmap_t *mipmap )
 // drawflags: TF_Opaquetrans
 // Called from HWR_GetTexture
 static void HWR_GenerateTexture (int texnum, MipTexture_t* grtex,
-				 Mipmap_t * mipmap, uint32_t drawflags)
+                                 Mipmap_t * mipmap, uint32_t drawflags)
 {
     byte*               block;
     texture_t*          texture;
@@ -556,7 +556,7 @@ static void HWR_GenerateTexture (int texnum, MipTexture_t* grtex,
 #if 1	       
             for (i=0; i<blockwidth; i++)
             {
-	        ((RGBA_t*)block)[(j*blockwidth)+i] = col;   // endian tolerant
+                ((RGBA_t*)block)[(j*blockwidth)+i] = col;   // endian tolerant
             }
 #else
             for (i=0; i<blockwidth; i++)
@@ -616,7 +616,7 @@ static void HWR_GenerateTexture (int texnum, MipTexture_t* grtex,
 
 // [WDJ] Generate a foggy texture from base texture as an alternate
 static void HWR_GenerateFogTexture (int texnum, Mipmap_t * mipmap,
-				    uint32_t drawflags)
+                                    uint32_t drawflags)
 {
     RGBA_t* rgbablock;
     RGBA_t* fb;
@@ -656,12 +656,12 @@ static void HWR_GenerateFogTexture (int texnum, Mipmap_t * mipmap,
         // find non-transparent pixel
         for( zc = srcsize; zc > 0; zc-- )
         {
-	    si += si_line3 + 17;  // 3 lines + 17 pixels
-	    if( si >= srcsize )  si -= srcsize;
-	    fc.rgba = src[si].rgba;
-	    if( fc.s.alpha > 0x20 )  break;
-	    // if all transparent, will avg random pixel noise
-	}
+            si += si_line3 + 17;  // 3 lines + 17 pixels
+            if( si >= srcsize )  si -= srcsize;
+            fc.rgba = src[si].rgba;
+            if( fc.s.alpha > 0x20 )  break;
+            // if all transparent, will avg random pixel noise
+        }
         fc_r += fc.s.red;
         fc_g += fc.s.green;
         fc_b += fc.s.blue;
@@ -677,39 +677,39 @@ static void HWR_GenerateFogTexture (int texnum, Mipmap_t * mipmap,
     {
         if( x > blockwidth )
         {
-	    // reduce visible artifact by smoothing over x wrap edge
-	    fb = & rgbablock[ x - blockwidth ];
-	    fc_r = fb->s.red * 3;
-	    fc_g = fb->s.green * 3;
-	    fc_b = fb->s.blue * 3;
-	}
+            // reduce visible artifact by smoothing over x wrap edge
+            fb = & rgbablock[ x - blockwidth ];
+            fc_r = fb->s.red * 3;
+            fc_g = fb->s.green * 3;
+            fc_b = fb->s.blue * 3;
+        }
         else
         {
-	    si = x % base->mipmap.width;  // top of column
-	    // always average three pixels of source texture
-	    fc_r = fc_g = fc_b = 0;
-	    for( i=0; i<3; i++ )
-	    {
-	        for( zc = 32; ; )
-	        {
-		    fc.rgba = src[si].rgba;
-		    if( fc.s.alpha > 0x20 )  break;
-		    // skip transparent pixels
-		    si += base->mipmap.width;  // down column
-		    if( si >= srcsize )  si -= srcsize;  // wrap source
-		    if( --zc < 0 )  // too many transparent pixel
-		    {
-		        fc.rgba = fc_avg.rgba;
-		        break;
-		    }
-		}
-	        fc_r += fc.s.red;
-	        fc_g += fc.s.green;
-	        fc_b += fc.s.blue;
-	        si += si_line3;
-	        if( si > srcsize )  si -= srcsize;  // wrap source
-	    }
-	}
+            si = x % base->mipmap.width;  // top of column
+            // always average three pixels of source texture
+            fc_r = fc_g = fc_b = 0;
+            for( i=0; i<3; i++ )
+            {
+                for( zc = 32; ; )
+                {
+                    fc.rgba = src[si].rgba;
+                    if( fc.s.alpha > 0x20 )  break;
+                    // skip transparent pixels
+                    si += base->mipmap.width;  // down column
+                    if( si >= srcsize )  si -= srcsize;  // wrap source
+                    if( --zc < 0 )  // too many transparent pixel
+                    {
+                        fc.rgba = fc_avg.rgba;
+                        break;
+                    }
+                }
+                fc_r += fc.s.red;
+                fc_g += fc.s.green;
+                fc_b += fc.s.blue;
+                si += si_line3;
+                if( si > srcsize )  si -= srcsize;  // wrap source
+            }
+        }
         // blend 61 and 3 = 4.6875%
         fogcolor.s.red = ((((uint16_t)fogcolor.s.red)*61) + fc_r) >> 6;
         fogcolor.s.green = ((((uint16_t)fogcolor.s.green)*61) + fc_g) >> 6;
@@ -718,8 +718,8 @@ static void HWR_GenerateFogTexture (int texnum, Mipmap_t * mipmap,
         // place fog down entire column
         for( cp=fb; cp<=endpixel; cp+=blockwidth )
         {
-	    cp->rgba = fogcolor.rgba;
-	}
+            cp->rgba = fogcolor.rgba;
+        }
         fb++;
     }
     // copy any masked outline into fog
@@ -730,12 +730,12 @@ static void HWR_GenerateFogTexture (int texnum, Mipmap_t * mipmap,
        fb= & rgbablock[y * blockwidth];
        for( x=0; x<blockwidth; x++ )
        {
-	   // Draw masked only recognizes alpha != 0
-	   fb->s.alpha = src[si].s.alpha;
-	   fb++;
-	   si++;
-	   if( si >= si_endx )  // wrap source, larger than fog
-	     si = si_endx - base->mipmap.width;
+           // Draw masked only recognizes alpha != 0
+           fb->s.alpha = src[si].s.alpha;
+           fb++;
+           si++;
+           if( si >= si_endx )  // wrap source, larger than fog
+             si = si_endx - base->mipmap.width;
        }
     }
 
@@ -753,7 +753,7 @@ static void HWR_GenerateFogTexture (int texnum, Mipmap_t * mipmap,
 // Called from HWR_GetPatch
 // Called from W_CachePatchNum
 void HWR_MakePatch (patch_t* patch, MipPatch_t* grPatch, Mipmap_t *grMipmap,
-		    uint32_t drawflags)
+                    uint32_t drawflags)
 {
     byte*   block;
     int     newwidth, newheight;
@@ -796,17 +796,17 @@ void HWR_MakePatch (patch_t* patch, MipPatch_t* grPatch, Mipmap_t *grMipmap,
         newheight = blockheight;
     }
 /*	else if(cv_voodoocompatibility.value) // Only scales down textures that exceed 256x256.
-	{
-		// no rounddown, do not size up patches, so they don't look 'scaled'
+        {
+                // no rounddown, do not size up patches, so they don't look 'scaled'
         newwidth  = min( patch->width , blockwidth );
         newheight = min( patch->height, blockheight);
 
-		if(newwidth > 256 || newheight > 256)
-		{
-			newwidth = blockwidth;
-			newheight = blockheight;
-		}
-	}*/
+                if(newwidth > 256 || newheight > 256)
+                {
+                        newwidth = blockwidth;
+                        newheight = blockheight;
+                }
+        }*/
     else
     {
         // no rounddown, do not size up patches, so they don't look 'scaled'
@@ -878,15 +878,15 @@ void HWR_FreeTextureCache (void)
         // destroy all of gr_textures
         for( i=0; i<gr_numtextures; i++ )
         {
-	    // free alternate texture mipmap used for TF_Opaquetrans
-	    Mipmap_t * altmip = gr_textures[i].mipmap.nextcolormap;
-	    while( altmip )
-	    {
-	        register Mipmap_t * nxt = altmip->nextcolormap;
-	        free(altmip);
-	        altmip = nxt;
-	    }
-	}
+            // free alternate texture mipmap used for TF_Opaquetrans
+            Mipmap_t * altmip = gr_textures[i].mipmap.nextcolormap;
+            while( altmip )
+            {
+                register Mipmap_t * nxt = altmip->nextcolormap;
+                free(altmip);
+                altmip = nxt;
+            }
+        }
         free (gr_textures);
     }
 }
@@ -952,20 +952,20 @@ MipTexture_t* HWR_GetTexture (int tex, uint32_t drawflags)
         // mipmap already in use, find matching flags
         for(; ; mipmap = mipmap->nextcolormap)
         {
-	    if ((mipmap->tfflags & (TF_Opaquetrans|TF_Fogsheet)) == tstflags)
-	        goto found_mipmap;
-	    if( ! mipmap->nextcolormap )  break;
-	}
-	{
-	    // no matching mipmap found, make new one as alternate
-	    Mipmap_t * newmip = malloc(sizeof(Mipmap_t));
-	    if( newmip == NULL )
-	       I_Error(" HWR_GetTexture : mipmap alloc failed\n");
-	    mipmap->nextcolormap = newmip;  // link
-	    memset(newmip, 0, sizeof(Mipmap_t));
+            if ((mipmap->tfflags & (TF_Opaquetrans|TF_Fogsheet)) == tstflags)
+                goto found_mipmap;
+            if( ! mipmap->nextcolormap )  break;
+        }
+        {
+            // no matching mipmap found, make new one as alternate
+            Mipmap_t * newmip = malloc(sizeof(Mipmap_t));
+            if( newmip == NULL )
+               I_Error(" HWR_GetTexture : mipmap alloc failed\n");
+            mipmap->nextcolormap = newmip;  // link
+            memset(newmip, 0, sizeof(Mipmap_t));
 
-	    mipmap = newmip;
-	}
+            mipmap = newmip;
+        }
     }
     else if (drawflags & TF_Fogsheet)
     {
@@ -1008,27 +1008,27 @@ static void HWR_CacheFlat (Mipmap_t* grMipmap, int flatlumpnum)
 
     switch(size)
     {
-		case 4194304: // 2048x2048 lump
-			flatsize = 2048;
-			break;
-		case 1048576: // 1024x1024 lump
-			flatsize = 1024;
-			break;
-		case 262144:// 512x512 lump
-			flatsize = 512;
-			break;
-		case 65536: // 256x256 lump
-			flatsize = 256;
-			break;
-		case 16384: // 128x128 lump
-			flatsize = 128;
-			break;
-		case 1024: // 32x32 lump
-			flatsize = 32;
-			break;
-		default: // 64x64 lump
-			flatsize = 64;
-			break;
+                case 4194304: // 2048x2048 lump
+                        flatsize = 2048;
+                        break;
+                case 1048576: // 1024x1024 lump
+                        flatsize = 1024;
+                        break;
+                case 262144:// 512x512 lump
+                        flatsize = 512;
+                        break;
+                case 65536: // 256x256 lump
+                        flatsize = 256;
+                        break;
+                case 16384: // 128x128 lump
+                        flatsize = 128;
+                        break;
+                case 1024: // 32x32 lump
+                        flatsize = 32;
+                        break;
+                default: // 64x64 lump
+                        flatsize = 64;
+                        break;
     }
     grMipmap->width  = flatsize;
     grMipmap->height = flatsize;
@@ -1163,7 +1163,7 @@ void HWR_GetMappedPatch(MipPatch_t* gpatch, byte *colormap, uint32_t drawflags)
     {
         grmip = grmip->nextcolormap;
         if (grmip->colormap==colormap
-	    && ((grmip->tfflags & TF_Opaquetrans)==drawflags)  )
+            && ((grmip->tfflags & TF_Opaquetrans)==drawflags)  )
         {
             HWR_LoadMappedPatch( grmip, gpatch );
             return;
@@ -1196,8 +1196,8 @@ static const int picmode2GR[] = {
 // Called from HWR_GetPic
 static
 void HWR_DrawPicInCache (byte* block,
-			 int blockwidth, int blockheight, int blocklinebyte,
-			 pic_t* pic, int dest_bytepp)
+                         int blockwidth, int blockheight, int blocklinebyte,
+                         pic_t* pic, int dest_bytepp)
 {
     int     i,j;
     int     picbytepp;
@@ -1216,17 +1216,17 @@ void HWR_DrawPicInCache (byte* block,
         src = &pic->data[(posy>>16)*pic->width*picbytepp];
         for( i=0 ;i<blockwidth;i++)
         {
-	    srcindex = (posx+FRACUNIT/2)>>16; // rounded to int
+            srcindex = (posx+FRACUNIT/2)>>16; // rounded to int
             switch (pic->mode) { // source bpp
                 case PALETTE :
                     texel = src[srcindex];
                     switch( dest_bytepp ) { // destination bpp
                         case 1 :
                             *dest++ = texel;
-		            break;
+                            break;
                         case 2 :
-		            ((pixelalpha_t*)dest)->pixel = texel;
-		            ((pixelalpha_t*)dest)->alpha = 0xff;
+                            ((pixelalpha_t*)dest)->pixel = texel;
+                            ((pixelalpha_t*)dest)->alpha = 0xff;
                             dest +=2;
                             break;
                         case 3 : 
@@ -1251,7 +1251,7 @@ void HWR_DrawPicInCache (byte* block,
                 case RGB24 :
                     break;  // not supported yet
                 case RGBA32 : // assume dest bpp = 4
-	        // [WDJ] without some note, must assume the inc should be after, not before
+                // [WDJ] without some note, must assume the inc should be after, not before
 //                    dest += 4;
                     *(uint32_t*)dest = ((uint32_t*)src)[ srcindex ]; 
                     dest += 4;
@@ -1284,14 +1284,14 @@ MipPatch_t *HWR_GetPic( int lumpnum )
         if( grpatch->mipmap.tfflags & TF_Her_Raw_Pic )
         {
             // raw pic : so get size from grpatch since it is save in v_drawrawscreen
-	    // [WDJ] CacheRawAsPic is correct endian
-	    // Will change to PU_CACHE before end of function
+            // [WDJ] CacheRawAsPic is correct endian
+            // Will change to PU_CACHE before end of function
             pic = W_CacheRawAsPic( lumpnum, grpatch->width, grpatch->height, PU_IN_USE );
             len = W_LumpLength(lumpnum);
         }
         else
         {
-	    // Will change to PU_CACHE before end of function
+            // Will change to PU_CACHE before end of function
             pic = W_CachePicNum( lumpnum, PU_IN_USE ); // endian fixed
             grpatch->width = pic->width;
             grpatch->height = pic->height;
@@ -1321,17 +1321,17 @@ MipPatch_t *HWR_GetPic( int lumpnum )
             newheight = blockheight;
         }
 /*		else if(cv_voodoocompatibility.value) // Only scales down textures that exceed 256x256.
-		{
-			// no rounddown, do not size up patches, so they don't look 'scaled'
+                {
+                        // no rounddown, do not size up patches, so they don't look 'scaled'
             newwidth  = min(pic->width,blockwidth);
             newheight = min(pic->height,blockheight);
 
-			if(newwidth > 256 || newheight > 256)
-			{
-				newwidth = blockwidth;
-				newheight = blockheight;
-			}
-		}*/
+                        if(newwidth > 256 || newheight > 256)
+                        {
+                                newwidth = blockwidth;
+                                newheight = blockheight;
+                        }
+                }*/
         else
         {
             // no rounddown, do not size up patches, so they don't look 'scaled'
@@ -1353,7 +1353,7 @@ MipPatch_t *HWR_GetPic( int lumpnum )
                                blockwidth*format2bpp[grpatch->mipmap.grInfo.format],
                                pic,
                                format2bpp[grpatch->mipmap.grInfo.format]);
-	}
+        }
 
         // Release PU_IN_USE
         Z_ChangeTag(pic, PU_CACHE);

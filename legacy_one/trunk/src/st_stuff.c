@@ -756,7 +756,7 @@ static void ST_updateWidgets(void)
                 // Enable display of both skulls and keycards.
                 st_num_keyboxes = 6;
                 // Shift keybox[ 0..6 ] positions, into two vertical columns
-		// Skulls will now be in [3..6]
+                // Skulls will now be in [3..6]
                 for( i=0; i<6; i++ )
                 {
                     keyboxes[i] = -1;  // clear previous recorded skulls

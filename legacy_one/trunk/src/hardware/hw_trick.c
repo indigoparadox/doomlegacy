@@ -92,43 +92,43 @@ static void addLineToChain(sector_t *sector, line_t *line)
     linechain_t *thisElem, *nextElem;
     
     if( sector == NULL )
-	return;
+        return;
     
     thisElem = NULL;
     nextElem = sector->sectorLines;
     
     while( nextElem ) // walk through chain
     {
-	thisElem = nextElem;
-	nextElem = thisElem->next;
+        thisElem = nextElem;
+        nextElem = thisElem->next;
     }
     
     // add a new element into the chain
     if(thisElem)
     {
-	thisElem->next = malloc(sizeof(linechain_t));
-	if(thisElem->next)
-	{
-	    thisElem->next->line = line;
-	    thisElem->next->next = NULL;
-	}
-	else
-	{
-	    I_Error("Out of memory in addLineToChain(.)\n");
-	}
+        thisElem->next = malloc(sizeof(linechain_t));
+        if(thisElem->next)
+        {
+            thisElem->next->line = line;
+            thisElem->next->next = NULL;
+        }
+        else
+        {
+            I_Error("Out of memory in addLineToChain(.)\n");
+        }
     }
     else // first element in chain
     {
-	sector->sectorLines =  malloc(sizeof(linechain_t));
-	if(sector->sectorLines)
-	{
-	    sector->sectorLines->line = line;
-	    sector->sectorLines->next = NULL;
-	}
-	else
-	{
-	    I_Error("Out of memory in addLineToChain(.)\n");
-	}
+        sector->sectorLines =  malloc(sizeof(linechain_t));
+        if(sector->sectorLines)
+        {
+            sector->sectorLines->line = line;
+            sector->sectorLines->next = NULL;
+        }
+        else
+        {
+            I_Error("Out of memory in addLineToChain(.)\n");
+        }
     }
 }
 
@@ -143,17 +143,17 @@ static void releaseLineChains(void)
     
     for(i=0; i<numsectors; i++) 
     {
-	sector = &sectors[i];
-	nextElem = sector->sectorLines;
-	
-	while( nextElem )
-	{
-	    thisElem = nextElem;
-	    nextElem = thisElem->next;
-	    free(thisElem);
-	}
-	
-	sector->sectorLines = NULL;
+        sector = &sectors[i];
+        nextElem = sector->sectorLines;
+
+        while( nextElem )
+        {
+            thisElem = nextElem;
+            nextElem = thisElem->next;
+            free(thisElem);
+        }
+
+        sector->sectorLines = NULL;
     }
 }
 
@@ -167,19 +167,19 @@ static boolean isPSectorValid(sector_t *sector)
     if(!sector->pseudoSector) // check only pseudosectors, others don't care
     {	
 #ifdef PARANOIA
-	CONS_Printf("Alert! non-pseudosector fed to isPSectorClosed()\n");
+        CONS_Printf("Alert! non-pseudosector fed to isPSectorClosed()\n");
 #endif
-	return false;
+        return false;
     }
     
     nextElem = sector->sectorLines;
     
     while( nextElem )
     {
-	thisElem = nextElem;
-	nextElem = thisElem->next;
-	if(thisElem->line->frontsector != thisElem->line->backsector)
-	    return false;
+        thisElem = nextElem;
+        nextElem = thisElem->next;
+        if(thisElem->line->frontsector != thisElem->line->backsector)
+            return false;
     }
     return true;
 }
@@ -194,7 +194,7 @@ static double phiDiff(double phiMin, double phiMax)
   result = phiMax-phiMin;
 
   if(result < 0.0)
-	result += 2.0*PI;
+        result += 2.0*PI;
 
   return result;
 }
@@ -206,13 +206,13 @@ static void sortPhi(double phi1, double phi2, double *phiMin, double *phiMax)
 {
     if(phiDiff(phi1, phi2) < PI)
     {
-	*phiMin = phi1;
-	*phiMax = phi2;
+        *phiMin = phi1;
+        *phiMax = phi2;
     }
     else
     {
-	*phiMin = phi2;
-	*phiMax = phi1;
+        *phiMin = phi2;
+        *phiMax = phi1;
     }
 }
 
@@ -223,7 +223,7 @@ static void sortPhi(double phi1, double phi2, double *phiMin, double *phiMax)
 static boolean biggerThanPi(double phi1, double phi2)
 {
     if(phiDiff(phi1, phi2) > PI)
-	return true;
+        return true;
     
     return false;
 }
@@ -245,9 +245,9 @@ void phiBounds(double phi1, double phi2, double *phiMin, double *phiMax)
     // check start condition
     if(*phiMin > PI || *phiMax > PI)
     {
-	*phiMin = phi1;
-	*phiMax = phi2;
-	return;
+        *phiMin = phi1;
+        *phiMax = phi2;
+        return;
     }
     
     // 6 cases:
@@ -269,32 +269,32 @@ void phiBounds(double phi1, double phi2, double *phiMin, double *phiMax)
     // case 1 & 5!
     if((psi1 <= psi5) && (psi2 <= psi5))
     {
-	if(psi1 <= psi2) // case 1
-	{
-	    return;
-	}
-	else // case 5
-	{
-	    // create some artificial interval here not to get into numerical trouble
-	    // in fact we know now the sector is completely enclosed -> base for computational optimization
-	    *phiMax = 0.0;
-	    *phiMin = DELTAPHI;
-	    return;
-	}
+        if(psi1 <= psi2) // case 1
+        {
+            return;
+        }
+        else // case 5
+        {
+            // create some artificial interval here not to get into numerical trouble
+            // in fact we know now the sector is completely enclosed -> base for computational optimization
+            *phiMax = 0.0;
+            *phiMin = DELTAPHI;
+            return;
+        }
     }
     
     // case 2
     if((psi1 >= psi5) && (psi2 <= psi5))
     {
-	*phiMin = phi1;
-	return;
+        *phiMin = phi1;
+        return;
     }
     
     // case 3
     if((psi3 >= psi6) && (psi4 <= psi6))
     {
-	*phiMax = phi2;
-	return;
+        *phiMax = phi2;
+        return;
     }
     
     // case 4 & 6
@@ -302,25 +302,25 @@ void phiBounds(double phi1, double phi2, double *phiMin, double *phiMax)
     if((psi3 <= psi6) && (psi4 <= psi6)) // FIXME: isn't this case implicitly true anyway??
 #endif
     {
-	if(psi3 <= psi4) //case 4
-	{
-	    if(psi3 >= psi7)
-	    {
-		*phiMin = phi1;
-		return;
-	    }
-	    else
-	    {
-		*phiMax = phi2;
-		return;
-	    }	  
-	}
-	else // case 6
-	{
-	    *phiMin = phi1;
-	    *phiMax = phi2;
-	    return;
-	}
+        if(psi3 <= psi4) //case 4
+        {
+            if(psi3 >= psi7)
+            {
+                *phiMin = phi1;
+                return;
+            }
+            else
+            {
+                *phiMax = phi2;
+                return;
+            }
+        }
+        else // case 6
+        {
+            *phiMin = phi1;
+            *phiMax = phi2;
+            return;
+        }
     }
 
     I_OutputMsg("phiMin = %f, phiMax = %f, phi1 = %f, phi2 = %f\n", *phiMin, *phiMax, phi1, phi2);
@@ -346,20 +346,20 @@ boolean isVertexInside(vertex_t *vertex, sector_t *sector)
     
     while(chain)
     {
-	// start and end vertex
-	xa = (double)chain->line->v1->x - (double)vertex->x;
-	ya = (double)chain->line->v1->y - (double)vertex->y;
-	xe = (double)chain->line->v2->x - (double)vertex->x;
-	ye = (double)chain->line->v2->y - (double)vertex->y;
-	
-	// angle phi of connection between the vertices and the x-axis
-	phi1 = atan2(ya, xa);
-	phi2 = atan2(ye, xe);
-	
-	// if we have just started, we can have to create start bounds for phi
+        // start and end vertex
+        xa = (double)chain->line->v1->x - (double)vertex->x;
+        ya = (double)chain->line->v1->y - (double)vertex->y;
+        xe = (double)chain->line->v2->x - (double)vertex->x;
+        ye = (double)chain->line->v2->y - (double)vertex->y;
 
-	phiBounds(phi1, phi2, &phiMin, &phiMax);
-	chain = chain->next;
+        // angle phi of connection between the vertices and the x-axis
+        phi1 = atan2(ya, xa);
+        phi2 = atan2(ye, xe);
+
+        // if we have just started, we can have to create start bounds for phi
+
+        phiBounds(phi1, phi2, &phiMin, &phiMax);
+        chain = chain->next;
     }
     
     return biggerThanPi(phiMin, phiMax);
@@ -382,31 +382,31 @@ static void generateStacklist(sector_t *thisSector)
     
     for(i=0; i<numsectors; i++)
     {
-	checkSector = &sectors[i];
-	
-	if(checkSector == thisSector) // don't check self
-	    continue;
-	
-	// buggy sector?
-	if( thisSector->sectorLines == NULL )
-	    continue;
-	   
-	// check if an arbitrary vertex of thisSector lies inside the checkSector
-	if(isVertexInside(thisSector->sectorLines->line->v1, checkSector))
-	{
-	    // if so, the thisSector lies inside the checkSector
-	    locStacklist[stackCnt] = checkSector;
-	    stackCnt++;
-	    
-	    if(MAXSTACK-1 == stackCnt) // beware of the SIGSEGV! and consider terminating NULL!
-		break;
-	}
+        checkSector = &sectors[i];
+
+        if(checkSector == thisSector) // don't check self
+            continue;
+
+        // buggy sector?
+        if( thisSector->sectorLines == NULL )
+            continue;
+
+        // check if an arbitrary vertex of thisSector lies inside the checkSector
+        if(isVertexInside(thisSector->sectorLines->line->v1, checkSector))
+        {
+            // if so, the thisSector lies inside the checkSector
+            locStacklist[stackCnt] = checkSector;
+            stackCnt++;
+
+            if(MAXSTACK-1 == stackCnt) // beware of the SIGSEGV! and consider terminating NULL!
+                break;
+        }
     }
 
     thisSector->stackList = malloc(sizeof(sector_t*) * (stackCnt+1));
     if( thisSector->stackList == NULL )
     {
-	I_Error("Out of memory error in generateStacklist()");
+        I_Error("Out of memory error in generateStacklist()");
     }
     
     locStacklist[stackCnt] = NULL; // terminating NULL
@@ -428,26 +428,26 @@ static void sortStacklist(sector_t *sector)
     finished = false;
     
     if( list[0] == NULL )
-	return; // nothing to sort
+        return; // nothing to sort
     
     while(!finished)
     {
-	i=0;
-	finished = true;
-	
-	while( list[i+1] )
-	{
-	    sec1 = list[i];
-	    sec2 = list[i+1];
-	    
-	    if(sec1->lineoutLength > sec2->lineoutLength)
-	    {
-		list[i] = sec2;
-		list[i+1] = sec1;
-		finished = false;
-	    }
-	    i++;
-	}
+        i=0;
+        finished = true;
+
+        while( list[i+1] )
+        {
+            sec1 = list[i];
+            sec2 = list[i+1];
+
+            if(sec1->lineoutLength > sec2->lineoutLength)
+            {
+                list[i] = sec2;
+                list[i+1] = sec1;
+                finished = false;
+            }
+            i++;
+        }
     }
 }
 
@@ -480,8 +480,8 @@ static double calcLineoutLength(sector_t *sector)
     
     while( chain ) // sum up lengths of all lines
     {
-	length += lineLength(chain->line);
-	chain = chain->next;
+        length += lineLength(chain->line);
+        chain = chain->next;
     }
     return length;
 }
@@ -499,13 +499,13 @@ static void calcLineouts(sector_t *sector)
     
     while( encSector )
     {
-	if(encSector->lineoutLength < 0.0) // if length has not yet been calculated
-	{	    
-	    encSector->lineoutLength = calcLineoutLength(encSector);
-	}
-	
-	secCount++;
-	encSector = *((sector->stackList) + secCount);
+        if(encSector->lineoutLength < 0.0) // if length has not yet been calculated
+        {
+            encSector->lineoutLength = calcLineoutLength(encSector);
+        }
+
+        secCount++;
+        encSector = *((sector->stackList) + secCount);
     }
 }
 
@@ -518,11 +518,11 @@ static void freeStacklists(void)
     
     for(i=0; i<numsectors; i++)
     {
-	if(sectors[i].stackList)
-	{
-	    free(sectors[i].stackList);
-	    sectors[i].stackList = NULL;
-	}
+        if(sectors[i].stackList)
+        {
+            free(sectors[i].stackList);
+            sectors[i].stackList = NULL;
+        }
     }
 }
 
@@ -542,41 +542,41 @@ static boolean areToptexturesMissing(sector_t *thisSector)
     
     while( nextElem ) // walk through chain
     {
-	thisElem = nextElem;
-	nextElem = thisElem->next;
+        thisElem = nextElem;
+        nextElem = thisElem->next;
 
-	frontSector = thisElem->line->frontsector;
-	backSector  = thisElem->line->backsector;
+        frontSector = thisElem->line->frontsector;
+        backSector  = thisElem->line->backsector;
         if( ! backSector || ! frontSector )
-	   continue;
+           continue;
 
-	if(frontSector == backSector) // skip damn renderer tricks here
-	{
-	    continue;
-	}
+        if(frontSector == backSector) // skip damn renderer tricks here
+        {
+            continue;
+        }
 
-	sdr = &sides[thisElem->line->sidenum[0]];
-	sdl = &sides[thisElem->line->sidenum[1]];
+        sdr = &sides[thisElem->line->sidenum[0]];
+        sdl = &sides[thisElem->line->sidenum[1]];
 
-	if(backSector->ceilingheight < frontSector->ceilingheight)
-	{
-	    // texture num are either 0=no-texture, or valid
-	    if(sdr->toptexture != 0)
-	    {
-		nomiss++;
-		break; // we can stop here if decision criterium is ==0
-	    }
-	}
-	
-	else if(backSector->ceilingheight > frontSector->ceilingheight)
-	{
-	    // texture num are either 0=no-texture, or valid
-	    if(sdl->toptexture != 0)
-	    {
-		nomiss++;
-		break; // we can stop here if decision criterium is ==0
-	    }
-	}
+        if(backSector->ceilingheight < frontSector->ceilingheight)
+        {
+            // texture num are either 0=no-texture, or valid
+            if(sdr->toptexture != 0)
+            {
+                nomiss++;
+                break; // we can stop here if decision criterium is ==0
+            }
+        }
+
+        else if(backSector->ceilingheight > frontSector->ceilingheight)
+        {
+            // texture num are either 0=no-texture, or valid
+            if(sdl->toptexture != 0)
+            {
+                nomiss++;
+                break; // we can stop here if decision criterium is ==0
+            }
+        }
     }
     
     return nomiss == 0;
@@ -598,41 +598,41 @@ static boolean areBottomtexturesMissing(sector_t *thisSector)
     
     while( nextElem ) // walk through chain
     {
-	thisElem = nextElem;
-	nextElem = thisElem->next;
+        thisElem = nextElem;
+        nextElem = thisElem->next;
 
-	frontSector = thisElem->line->frontsector;
-	backSector  = thisElem->line->backsector;
+        frontSector = thisElem->line->frontsector;
+        backSector  = thisElem->line->backsector;
         if( ! backSector || ! frontSector )
-	   continue;
-	
-	if(frontSector == backSector) // skip damn renderer tricks here
-	{
-	   continue;
-	}
+           continue;
 
-	sdr = &sides[thisElem->line->sidenum[0]];
-	sdl = &sides[thisElem->line->sidenum[1]];
-	
-	if(backSector->floorheight > frontSector->floorheight)
-	{
-	    // texture num are either 0=no-texture, or valid
-	    if(sdr->bottomtexture != 0)
-	    {
-		nomiss++;
-		break; // we can stop here if decision criterium is ==0
-	    }
-	}
-	
-	else if(backSector->floorheight < frontSector->floorheight)
-	{
-	    // texture num are either 0=no-texture, or valid
-	    if(sdl->bottomtexture != 0)
-	    {
-		nomiss++;
-		break; // we can stop here if decision criterium is ==0
-	    }
-	}
+        if(frontSector == backSector) // skip damn renderer tricks here
+        {
+           continue;
+        }
+
+        sdr = &sides[thisElem->line->sidenum[0]];
+        sdl = &sides[thisElem->line->sidenum[1]];
+
+        if(backSector->floorheight > frontSector->floorheight)
+        {
+            // texture num are either 0=no-texture, or valid
+            if(sdr->bottomtexture != 0)
+            {
+                nomiss++;
+                break; // we can stop here if decision criterium is ==0
+            }
+        }
+
+        else if(backSector->floorheight < frontSector->floorheight)
+        {
+            // texture num are either 0=no-texture, or valid
+            if(sdl->bottomtexture != 0)
+            {
+                nomiss++;
+                break; // we can stop here if decision criterium is ==0
+            }
+        }
     }
     
     //    return missing >= nomiss;
@@ -649,7 +649,7 @@ static boolean isCeilingFloating(sector_t *thisSector)
     linechain_t *thisElem, *nextElem;
     
     if( thisSector == NULL )
-	return false;
+        return false;
 
     refSector = NULL;
     thisElem  = NULL;
@@ -657,45 +657,45 @@ static boolean isCeilingFloating(sector_t *thisSector)
     
     while( nextElem ) // walk through chain
     {
-	thisElem = nextElem;
-	nextElem = thisElem->next;
+        thisElem = nextElem;
+        nextElem = thisElem->next;
 
-	frontSector = thisElem->line->frontsector;
-	backSector  = thisElem->line->backsector;
+        frontSector = thisElem->line->frontsector;
+        backSector  = thisElem->line->backsector;
 
-	if(frontSector == thisSector)
-	    adjSector = backSector;
-	else
-	    adjSector = frontSector;
-	
-	if( adjSector == NULL ) // assume floating sectors have surrounding sectors
-	{
-	    floating = false;
-	    break;
-	}
+        if(frontSector == thisSector)
+            adjSector = backSector;
+        else
+            adjSector = frontSector;
 
-	if( refSector == NULL )
-	{
-	    refSector = adjSector;
-	    continue;
-	}
-	
-	// if adjacent sector has same height or more than one adjacent sector exists -> stop
-	if(thisSector->ceilingheight == adjSector->ceilingheight ||
-	   refSector != adjSector)
-	{
-	    floating = false;
-	    break;
-	}
+        if( adjSector == NULL ) // assume floating sectors have surrounding sectors
+        {
+            floating = false;
+            break;
+        }
+
+        if( refSector == NULL )
+        {
+            refSector = adjSector;
+            continue;
+        }
+
+        // if adjacent sector has same height or more than one adjacent sector exists -> stop
+        if(thisSector->ceilingheight == adjSector->ceilingheight ||
+           refSector != adjSector)
+        {
+            floating = false;
+            break;
+        }
     }
     
     // now check for walltextures
     if(floating)
     {
-	if(!areToptexturesMissing(thisSector))
-	{
-	    floating = false;
-	}
+        if(!areToptexturesMissing(thisSector))
+        {
+            floating = false;
+        }
     }
     return floating;
 }
@@ -711,7 +711,7 @@ static boolean isFloorFloating(sector_t *thisSector)
     linechain_t *thisElem, *nextElem;
     
     if( thisSector == NULL )
-	return false;
+        return false;
 
     refSector = NULL;
     thisElem  = NULL;
@@ -719,45 +719,45 @@ static boolean isFloorFloating(sector_t *thisSector)
     
     while( nextElem ) // walk through chain
     {
-	thisElem = nextElem;
-	nextElem = thisElem->next;
-	
-	frontSector = thisElem->line->frontsector;
-	backSector  = thisElem->line->backsector;
+        thisElem = nextElem;
+        nextElem = thisElem->next;
 
-	if(frontSector == thisSector)
-	    adjSector = backSector;
-	else
-	    adjSector = frontSector;
-	
-	if( adjSector == NULL ) // assume floating sectors have surrounding sectors
-	{
-	    floating = false;
-	    break;
-	}
+        frontSector = thisElem->line->frontsector;
+        backSector  = thisElem->line->backsector;
 
-	if( refSector == NULL )
-	{
-	    refSector = adjSector;
-	    continue;
-	}
-	
-	// if adjacent sector has same height or more than one adjacent sector exists -> stop
-	if(thisSector->floorheight == adjSector->floorheight ||
-	   refSector != adjSector)
-	{
-	    floating = false;
-	    break;
-	}
+        if(frontSector == thisSector)
+            adjSector = backSector;
+        else
+            adjSector = frontSector;
+
+        if( adjSector == NULL ) // assume floating sectors have surrounding sectors
+        {
+            floating = false;
+            break;
+        }
+
+        if( refSector == NULL )
+        {
+            refSector = adjSector;
+            continue;
+        }
+
+        // if adjacent sector has same height or more than one adjacent sector exists -> stop
+        if(thisSector->floorheight == adjSector->floorheight ||
+           refSector != adjSector)
+        {
+            floating = false;
+            break;
+        }
     }
 
     // now check for walltextures
     if(floating)
     {
-	if(!areBottomtexturesMissing(thisSector))
-	{
-	    floating = false;
-	}
+        if(!areBottomtexturesMissing(thisSector))
+        {
+            floating = false;
+        }
     }
     return floating;
 }
@@ -772,14 +772,14 @@ static fixed_t estimateCeilHeight(sector_t *thisSector)
     if( (thisSector == NULL)
         || (thisSector->sectorLines == NULL)
         || (thisSector->sectorLines->line == NULL) )
-	return 0;
+        return 0;
     
     adjSector = thisSector->sectorLines->line->frontsector;
     if(adjSector == thisSector)
-	adjSector = thisSector->sectorLines->line->backsector;
+        adjSector = thisSector->sectorLines->line->backsector;
     
     if( adjSector == NULL )
-	return 0;
+        return 0;
     
     return adjSector->ceilingheight;
 }
@@ -794,14 +794,14 @@ static fixed_t estimateFloorHeight(sector_t *thisSector)
     if( (thisSector == NULL)
         || (thisSector->sectorLines == NULL)
         || (thisSector->sectorLines->line == NULL) )
-	return 0;
+        return 0;
     
     adjSector = thisSector->sectorLines->line->frontsector;
     if(adjSector == thisSector)
-	adjSector = thisSector->sectorLines->line->backsector;
+        adjSector = thisSector->sectorLines->line->backsector;
     
     if( adjSector == NULL )
-	return 0;
+        return 0;
     
     return adjSector->floorheight;
 }
@@ -827,182 +827,182 @@ void HWR_CorrectSWTricks(void)
     sector_t *outSector;
     
     if ( (0 == cv_grcorrecttricks.value) || raven )
-	return;
+        return;
     
     // determine lines for sectors
     for(i=0; i<numlines; i++)
     {
-	ld = &lines[i];
-	secr = ld->frontsector;
-	secl = ld->backsector;
-	
-	if(secr == secl)
-	{
-	    secr->pseudoSector = true; // special renderer trick?
-	    addLineToChain(secr, ld);
-	}
-	else
-	{
-	    addLineToChain(secr, ld);
-	    addLineToChain(secl, ld);
-	}
+        ld = &lines[i];
+        secr = ld->frontsector;
+        secl = ld->backsector;
+
+        if(secr == secl)
+        {
+            secr->pseudoSector = true; // special renderer trick?
+            addLineToChain(secr, ld);
+        }
+        else
+        {
+            addLineToChain(secr, ld);
+            addLineToChain(secl, ld);
+        }
     }
     
     // preprocessing
     for(i=0; i<numsectors; i++)
     {
-	sector_t *checkSector;
-	
-	checkSector = &sectors[i];
-	
-	// identify real pseudosectors first
-	if(checkSector->pseudoSector)
-	{
-	    if(!isPSectorValid(checkSector)) // drop invalid pseudo sectors
-	    {
-		checkSector->pseudoSector = false;
-	    }
-	}
-	
-	// determine enclosing sectors for pseudosectors ... used later
-	if(checkSector->pseudoSector)
-	{
-	    generateStacklist(checkSector);
-	    calcLineouts(checkSector);
-	    sortStacklist(checkSector);
-	}
+        sector_t *checkSector;
+
+        checkSector = &sectors[i];
+
+        // identify real pseudosectors first
+        if(checkSector->pseudoSector)
+        {
+            if(!isPSectorValid(checkSector)) // drop invalid pseudo sectors
+            {
+                checkSector->pseudoSector = false;
+            }
+        }
+
+        // determine enclosing sectors for pseudosectors ... used later
+        if(checkSector->pseudoSector)
+        {
+            generateStacklist(checkSector);
+            calcLineouts(checkSector);
+            sortStacklist(checkSector);
+        }
     }
     
     // set virtual floor heights for pseudo sectors
     // required for deep water effect e.g.
     for(i=0; i<numsectors; i++)
     {
-	if(sectors[i].pseudoSector)
-	{
-	    sectorList = sectors[i].stackList;
-	    k = 0;
-	    while( sectorList[k] )
-	    {
-		outSector = sectorList[k];
-		if(!outSector->pseudoSector)
-		{
-		    sectors[i].virtualFloorheight = outSector->floorheight;
-		    sectors[i].virtualCeilingheight = outSector->ceilingheight;
-		    break;
-		}
-		k++;
-	    }
-	    if(sectorList[k] == NULL) // sorry, did not work :(
-	    {
-		sectors[i].virtualFloorheight = sectors[i].floorheight;
-		sectors[i].virtualCeilingheight = sectors[i].ceilingheight;
-	    } 
-	}
+        if(sectors[i].pseudoSector)
+        {
+            sectorList = sectors[i].stackList;
+            k = 0;
+            while( sectorList[k] )
+            {
+                outSector = sectorList[k];
+                if(!outSector->pseudoSector)
+                {
+                    sectors[i].virtualFloorheight = outSector->floorheight;
+                    sectors[i].virtualCeilingheight = outSector->ceilingheight;
+                    break;
+                }
+                k++;
+            }
+            if(sectorList[k] == NULL) // sorry, did not work :(
+            {
+                sectors[i].virtualFloorheight = sectors[i].floorheight;
+                sectors[i].virtualCeilingheight = sectors[i].ceilingheight;
+            }
+        }
     }
 #ifdef CORRECT_FLOAT_EXPERIMENTAL
     // correct ceiling/floor heights of totally floating sectors
     for(i=0; i<numsectors; i++)
     {
-	sector_t *floatSector;
+        sector_t *floatSector;
 
-	floatSector = &sectors[i];
-	
-	// correct height of floating sectors
-	if(isCeilingFloating(floatSector))
-	{
-	    fixed_t corrheight;
-	    
-	    corrheight = estimateCeilHeight(floatSector);
-	    floatSector->virtualCeilingheight = corrheight;
-	    floatSector->virtualCeiling = true;
-	}
-	if(isFloorFloating(floatSector))
-	{
-	    fixed_t corrheight;
-	    
-	    corrheight = estimateFloorHeight(floatSector);
-	    floatSector->virtualFloorheight = corrheight;
-	    floatSector->virtualFloor = true;
-	}
+        floatSector = &sectors[i];
+
+        // correct height of floating sectors
+        if(isCeilingFloating(floatSector))
+        {
+            fixed_t corrheight;
+
+            corrheight = estimateCeilHeight(floatSector);
+            floatSector->virtualCeilingheight = corrheight;
+            floatSector->virtualCeiling = true;
+        }
+        if(isFloorFloating(floatSector))
+        {
+            fixed_t corrheight;
+
+            corrheight = estimateFloorHeight(floatSector);
+            floatSector->virtualFloorheight = corrheight;
+            floatSector->virtualFloor = true;
+        }
     }
 #endif
 
     // now for the missing textures
     for(i=0; i<numlines; i++)
     {
-	ld = &lines[i];
-	sdr = &sides[ld->sidenum[0]];
-	if (ld->sidenum[1] != NULL_INDEX)
-	{
-	    sdl = &sides[ld->sidenum[1]];
-	}
-	
-	secr = ld->frontsector;
-	secl = ld->backsector;
-	
-	if(secr == secl) // special renderer trick 
-	    continue; // we can't correct missing textures here
+        ld = &lines[i];
+        sdr = &sides[ld->sidenum[0]];
+        if (ld->sidenum[1] != NULL_INDEX)
+        {
+            sdl = &sides[ld->sidenum[1]];
+        }
 
-	if( secl ) // only if there is a backsector 
-	{
-	    if(secr->pseudoSector || secl->pseudoSector)
-		continue;
-	    if(!secr->virtualFloor && !secl->virtualFloor)
-	    {
-		if(secl->floorheight > secr->floorheight)
-		{
-		    // now check if r-sidedef is correct
-		    // texture num are either 0=no-texture, or valid
-		    if(sdr->bottomtexture == 0)
-		    {
-			if(sdr->midtexture == 0)
-			    sdr->bottomtexture = R_TextureNumForName("STONE2");
-			else
-			    sdr->bottomtexture = sdr->midtexture;
-		    }
-		}
-		else if(secl->floorheight < secr->floorheight)
-		{
-		    // now check if l-sidedef is correct
-		    // texture num are either 0=no-texture, or valid
-		    if(sdl->bottomtexture == 0)
-		    {
-			if(sdl->midtexture == 0)
-			    sdl->bottomtexture = R_TextureNumForName("STONE2");
-			else
-			    sdl->bottomtexture = sdl->midtexture;
-		    }
-		}
-	    }
-	    
-	    if(!secr->virtualCeiling && !secl->virtualCeiling)
-	    {
-		if(secl->ceilingheight < secr->ceilingheight)
-		{
-		    // now check if r-sidedef is correct
-		    // texture num are either 0=no-texture, or valid
-		    if(sdr->toptexture == 0)
-		    {
-			if(sdr->midtexture == 0)
-			    sdr->toptexture = R_TextureNumForName("STONE2");
-			else
-			    sdr->toptexture = sdr->midtexture;
-		    }
-		}
-		else if(secl->ceilingheight > secr->ceilingheight)
-		{
-		    // now check if l-sidedef is correct
-		    if(sdl->toptexture == 0)
-		    {
-		        if(sdl->midtexture == 0)
-			    sdl->toptexture = R_TextureNumForName("STONE2");
-		        else
-			    sdl->toptexture = sdl->midtexture;
-		    
-		    }
-		}
-	    }
- 	} // if(NULL != secl)
+        secr = ld->frontsector;
+        secl = ld->backsector;
+
+        if(secr == secl) // special renderer trick
+            continue; // we can't correct missing textures here
+
+        if( secl ) // only if there is a backsector
+        {
+            if(secr->pseudoSector || secl->pseudoSector)
+                continue;
+            if(!secr->virtualFloor && !secl->virtualFloor)
+            {
+                if(secl->floorheight > secr->floorheight)
+                {
+                    // now check if r-sidedef is correct
+                    // texture num are either 0=no-texture, or valid
+                    if(sdr->bottomtexture == 0)
+                    {
+                        if(sdr->midtexture == 0)
+                            sdr->bottomtexture = R_TextureNumForName("STONE2");
+                        else
+                            sdr->bottomtexture = sdr->midtexture;
+                    }
+                }
+                else if(secl->floorheight < secr->floorheight)
+                {
+                    // now check if l-sidedef is correct
+                    // texture num are either 0=no-texture, or valid
+                    if(sdl->bottomtexture == 0)
+                    {
+                        if(sdl->midtexture == 0)
+                            sdl->bottomtexture = R_TextureNumForName("STONE2");
+                        else
+                            sdl->bottomtexture = sdl->midtexture;
+                    }
+                }
+            }
+
+            if(!secr->virtualCeiling && !secl->virtualCeiling)
+            {
+                if(secl->ceilingheight < secr->ceilingheight)
+                {
+                    // now check if r-sidedef is correct
+                    // texture num are either 0=no-texture, or valid
+                    if(sdr->toptexture == 0)
+                    {
+                        if(sdr->midtexture == 0)
+                            sdr->toptexture = R_TextureNumForName("STONE2");
+                        else
+                            sdr->toptexture = sdr->midtexture;
+                    }
+                }
+                else if(secl->ceilingheight > secr->ceilingheight)
+                {
+                    // now check if l-sidedef is correct
+                    if(sdl->toptexture == 0)
+                    {
+                        if(sdl->midtexture == 0)
+                            sdl->toptexture = R_TextureNumForName("STONE2");
+                        else
+                            sdl->toptexture = sdl->midtexture;
+
+                    }
+                }
+            }
+        } // if(NULL != secl)
     } // for(i=0; i<numlines; i++)
 
     // release all linechains

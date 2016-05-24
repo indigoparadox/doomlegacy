@@ -154,7 +154,7 @@ typedef struct
     char *	startup_title; // startup page
     char *	idstr;	       // used for directory and command line
     char * 	iwad_filename[3]; // possible filenames
-   			       // doom, doom2, heretic, heretic1, hexen, etc.
+                               // doom, doom2, heretic, heretic1, hexen, etc.
     char *	support_wad;   // another wad to support the game
     const char * keylump[2];   // required lump names
     byte	require_lump;  // lumps that must appear (bit set)

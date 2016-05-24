@@ -1466,7 +1466,7 @@ boolean  G_Player_SpawnSpot( int playernum, mapthing_t* spot )
         // Not all player[i].mo are init yet, see P_SetupLevel().
         for (i=0 ; i<playernum ; i++)
         {
-	    // Check if another player is on this spot.
+            // Check if another player is on this spot.
             // added 15-1-98 check if player is in game (mistake from id)
             if (playeringame[i]
                 && players[i].mo->x == x
@@ -1661,7 +1661,7 @@ void G_CoopSpawnPlayer (int playernum)
     {
         // May be second attempt at deathmatch spots.
         if( G_DeathMatchSpawnPlayer( playernum )  )
-	    return;
+            return;
     }
 
     // Probably will spawn within someone.
