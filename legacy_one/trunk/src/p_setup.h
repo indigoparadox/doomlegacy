@@ -61,13 +61,15 @@ extern  int             numdmstarts;
 typedef struct
 {
     char        name[8];        // resource name from wad
-    int         lumpnum;        // lump number of the flat
+    uint32_t    lumpnum;        // lump number of the flat (mod by animation)
+
+    uint16_t    size_index;     // flat size index
 
     // for flat animation
-    int         baselumpnum;
-    int         animseq;        // start pos. in the anim sequence
-    int         numpics;
-    int         speed;
+    uint16_t    baselumpnum;    // first flat in animation
+    int16_t     animseq;        // start pos. in the anim sequence
+    uint16_t    numpics;
+    int16_t     speed;
 } levelflat_t;
 
 extern unsigned int    numlevelflats;

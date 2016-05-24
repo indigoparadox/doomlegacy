@@ -461,6 +461,31 @@ void P_LoadSubsectors (int lump)
 // P_LoadSectors
 //
 
+// Return the flat size_index.
+//   flatsize : the flat lump size
+// Called by P_PrecacheLevelFlats at level load time.
+uint16_t P_flatsize_to_index( int flatsize )
+{
+  switch(flatsize)
+  {
+    case 2048*2048: // 2048x2048 lump
+      return 7;
+    case 1024*1024: // 1024x1024 lump
+      return 6;
+    case 512*512: // 512x512 lump
+      return 5;
+    case 256*256: // 256x256 lump
+      return 4;
+    case 128*128: // 128x128 lump
+      return 3;
+    case 64*64: // 64x64 lump
+      return 2;
+    case 32*32: // 32x32 lump
+      return 1;
+  }
+  return 0;
+}
+
 //
 // levelflats
 //
@@ -482,6 +507,7 @@ int P_PrecacheLevelFlats( void )
   for(i = 0; i < numlevelflats; i++)
   {
     lump = levelflats[i].lumpnum;
+    levelflats[i].size_index = P_flatsize_to_index( W_LumpLength(lump) );
     if(devparm)
       flatmemory += W_LumpLength(lump);
     R_GetFlat (lump);
@@ -557,6 +583,7 @@ int P_AddLevelFlat ( char* flatname )
 
     // store the flat lump number
     lfp->lumpnum = R_FlatNumForName (flatname);
+    lfp->size_index = P_flatsize_to_index( W_LumpLength(lfp->lumpnum) );
 
  found_level_flat:
     return i;    // level flat id

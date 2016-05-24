@@ -83,7 +83,8 @@ typedef struct
     poly_subsector_t    *xsub;
     fixed_t             fixedheight;
     int                 lightlevel;
-    int                 lumpnum;
+//    int                 lumpnum;
+    uint16_t            picnum;  // index to levelflats
     int                 alpha;
 } planeinfo_t;
 

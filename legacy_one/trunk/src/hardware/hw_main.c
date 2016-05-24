@@ -326,8 +326,6 @@
 #define SPRITE_NEAR_CLIP_DIST     1.01f
 #define R_FAKEFLOORS
 
-// comment to remove the plane rendering
-#define DOPLANES
 
 // BP: test of draw sky by polygon like in software with visplane, unfortunately
 // this don't work since we must have z for pixel and z for texture (not like now with z=oow)
@@ -355,7 +353,7 @@ struct hwdriver_s hwdriver;
 
 static void HWR_AddSprites(sector_t* sec, int lightlevel);
 static void HWR_ProjectSprite(mobj_t * thing);
-static void HWR_Add3DWater(int lumpnum, poly_subsector_t * xsub, fixed_t fixedheight, int lightlevel, int alpha);
+static void HWR_Add3DWater(int picnum, poly_subsector_t * xsub, fixed_t fixedheight, int lightlevel, int alpha);
 static void HWR_Render3DWater();
 static void HWR_RenderSorted( void );
 
@@ -669,33 +667,64 @@ void Extracolormap_to_Surf( /*IN*/ extracolormap_t * extracmap, int light,
 //                                   FLOOR/CEILING GENERATION FROM SUBSECTORS
 // ==========================================================================
 
-#ifdef  DOPLANES
 
 //what is the maximum number of verts around a convex floor/ceiling polygon?
 // Note: gothic2 map02 has a 304 vertex poly!!!!
 #define MAXPLANEVERTICES   512
 static vxtx3d_t planeVerts[MAXPLANEVERTICES];
 
+// Indexed by flat size_index.
+static float  flat_flatsize_tab[ 8 ] =
+{
+    0, // 0
+    32.0f, // 32x32 flat
+    64.0f, // 64x64 flat
+    128.0f, // 128x128 flat
+    256.0f, // 256x256 flat
+    512.0f, // 512x512 flat
+    1024.0f, // 1024x1024 flat
+    2048.0f, // 2048x2048 flat
+};
+
+
+// Indexed by flat size_index.
+static uint32_t  flat_flatmask_tab[ 8 ] =
+{
+   ~ 0, // 0
+   ~( 32 - 1 ), // 32x32 flat
+   ~( 64 - 1 ), // 64x64 flat
+   ~( 128 - 1 ), // 128x128 flat
+   ~( 256 - 1 ), // 256x256 flat
+   ~( 512 - 1 ), // 512x512 flat
+   ~( 1024 - 1 ), // 1024x1024 flat
+   ~( 2048 - 1 ), // 2048x2048 flat
+};
+
+
+
 // -----------------+
 // HWR_RenderPlane  : Render a floor or ceiling convex polygon
 // -----------------+
+// Preceded by HWR_GetFlat( levelflats[picnum].lumpnum );
 // Parameter static global
 //   planeVerts : polygon verts
+// Parameters:
+//   lightlevel : SoM: 3D floors light level
+//   picnum : index to levelflats
 // Called from HWR_Subsector, HWR_Render3DWater
 static
 void HWR_RenderPlane(poly_subsector_t * xsub, fixed_t fixedheight,
                      FBITFIELD PolyFlags, extracolormap_t* planecolormap,
-                     int lightlevel, int lumpnum)    // SoM: 3D floors ect.
+                     int lightlevel, int picnum) 
 {
     polyvertex_t *pv;
-    float height;               //constant y for all points on the convex flat polygon
     vxtx3d_t * v3d;
     int nrPlaneVerts;           //verts original define of convex flat polygon
-    int i;
+    float height;               //constant y for all points on the convex flat polygon
     float flatxref, flatyref;
-    double flatsize;
-    int flatmask;
-    int size;
+    double flatsize, flatscrollinc;
+    int32_t flatmask;  // cannot be uint as the result will be unsigned
+    int i;
     int lightnum;  // 0..255
 
     FSurfaceInfo_t Surf;
@@ -719,68 +748,38 @@ void HWR_RenderPlane(poly_subsector_t * xsub, fixed_t fixedheight,
         nrPlaneVerts = MAXPLANEVERTICES;  // cut off polygon side
     }
 
-    size = W_LumpLength(lumpnum);
-
-    switch (size)
-    {
-        case 4194304:  // 2048x2048 lump
-            flatsize = 2048.0f;
-            flatmask = 2047;
-            break;
-        case 1048576:  // 1024x1024 lump
-            flatsize = 1024.0f;
-            flatmask = 1023;
-            break;
-        case 262144:   // 512x512 lump
-            flatsize = 512.0f;
-            flatmask = 511;
-            break;
-        case 65536:    // 256x256 lump
-            flatsize = 256.0f;
-            flatmask = 255;
-            break;
-        case 16384:    // 128x128 lump
-            flatsize = 128.0f;
-            flatmask = 127;
-            break;
-        case 1024:     // 32x32 lump
-            flatsize = 32.0f;
-            flatmask = 31;
-            break;
-        default:       // 64x64 lump
-            flatsize = 64.0f;
-            flatmask = 63;
-            break;
-    }
+    int sizeindex = levelflats[picnum].size_index;
+    flatsize = flat_flatsize_tab[sizeindex];
+    flatmask = flat_flatmask_tab[sizeindex];
 
     //reference point for flat texture coord for each vertex around the polygon
-    flatxref = ((fixed_t) pv->x & (~flatmask)) / flatsize;
-    flatyref = ((fixed_t) pv->y & (~flatmask)) / flatsize;
+    flatxref = (((int32_t) pv->x) & flatmask) / flatsize;
+    flatyref = (((int32_t) pv->y) & flatmask) / flatsize;
 
     // transform
+    flatscrollinc = (FIXED_TO_FLOAT_MULT / flatsize);
     v3d = planeVerts;  // static global
     for (i = 0; i < nrPlaneVerts; i++, v3d++, pv++)
     {
+        v3d->y = height;
+        v3d->x = pv->x;
+        v3d->z = pv->y;
+        v3d->sow = (pv->x / flatsize) - flatxref;
+        v3d->tow = flatyref - (pv->y / flatsize);
         // Hurdler: add scrolling texture on floor/ceiling
-        float scrollx = 0.0f, scrolly = 0.0f;
         if (gr_frontsector)
         {
-            if (fixedheight < viewz)        // it's a floor
-            {
-                scrollx = gr_frontsector->floor_xoffs * (FIXED_TO_FLOAT_MULT / flatsize);
-                scrolly = gr_frontsector->floor_yoffs * (FIXED_TO_FLOAT_MULT / flatsize);
+            if (fixedheight < viewz)
+            {  // it's a floor
+                v3d->sow += gr_frontsector->floor_xoffs * flatscrollinc;
+                v3d->tow += gr_frontsector->floor_yoffs * flatscrollinc;
             }
             else
             {
-                scrollx = gr_frontsector->ceiling_xoffs * (FIXED_TO_FLOAT_MULT / flatsize);
-                scrolly = gr_frontsector->ceiling_yoffs * (FIXED_TO_FLOAT_MULT / flatsize);
+                v3d->sow += gr_frontsector->ceiling_xoffs * flatscrollinc;
+                v3d->tow += gr_frontsector->ceiling_yoffs * flatscrollinc;
             }
         }
-        v3d->sow = (pv->x / flatsize) - flatxref + scrollx;
-        v3d->tow = flatyref - (pv->y / flatsize) + scrolly;
-        v3d->x = pv->x;
-        v3d->y = height;
-        v3d->z = pv->y;
     }
 
     // only useful for flat coloured triangles
@@ -895,7 +894,6 @@ void HWR_RenderSkyPlane(poly_subsector_t * xsub, fixed_t fixedheight)
 }
 #endif //polysky
 
-#endif //doplanes
 
 /*
    vxtx order is :
@@ -2761,8 +2759,7 @@ static void HWR_Subsector(int num)
    
     sub->sector->extra_colormap = gr_frontsector->extra_colormap;
 
-    // render floor ?
-#ifdef DOPLANES
+    // Render floor.
     // yeah, easy backface cull! :)
     if (locFloorHeight < viewz)
     {
@@ -2773,7 +2770,7 @@ static void HWR_Subsector(int num)
                 HWR_GetFlat(levelflats[gr_frontsector->floorpic].lumpnum);
                 HWR_RenderPlane(&poly_subsectors[num], locFloorHeight, PF_Occlude,
                                 floorcolormap, floorlightlevel,
-                                levelflats[gr_frontsector->floorpic].lumpnum);
+                                gr_frontsector->floorpic);
             }
         }
         else
@@ -2794,7 +2791,7 @@ static void HWR_Subsector(int num)
                 HWR_GetFlat(levelflats[gr_frontsector->ceilingpic].lumpnum);
                 HWR_RenderPlane(&poly_subsectors[num], locCeilingHeight, PF_Occlude,
                                 ceilingcolormap, ceilinglightlevel,
-                                levelflats[gr_frontsector->ceilingpic].lumpnum);
+                                gr_frontsector->ceilingpic);
             }
         }
         else
@@ -2831,7 +2828,7 @@ static void HWR_Subsector(int num)
                 if (fff->flags & (FF_TRANSLUCENT | FF_FOG))   // SoM: Flags are more efficient
                 {
                     light = R_GetPlaneLight_viewz(gr_frontsector, *fff->bottomheight);
-                    HWR_Add3DWater(levelflats[*fff->bottompic].lumpnum, &poly_subsectors[num],
+                    HWR_Add3DWater(*fff->bottompic, &poly_subsectors[num],
                                    *fff->bottomheight, *gr_frontsector->lightlist[light].lightlevel,
                                    fff->alpha);
                 }
@@ -2842,7 +2839,7 @@ static void HWR_Subsector(int num)
                     HWR_RenderPlane(&poly_subsectors[num], *fff->bottomheight,
                                     PF_Occlude, NULL,
                                     *gr_frontsector->lightlist[light].lightlevel,
-                                    levelflats[*fff->bottompic].lumpnum);
+                                    *fff->bottompic);
                 }
             }
             if (*fff->topheight >= gr_frontsector->floorheight
@@ -2854,7 +2851,7 @@ static void HWR_Subsector(int num)
                 if (fff->flags & (FF_TRANSLUCENT | FF_FOG))
                 {
                     light = R_GetPlaneLight_viewz(gr_frontsector, *fff->topheight);
-                    HWR_Add3DWater(levelflats[*fff->toppic].lumpnum, &poly_subsectors[num],
+                    HWR_Add3DWater(*fff->toppic, &poly_subsectors[num],
                                    *fff->topheight, *gr_frontsector->lightlist[light].lightlevel,
                                    fff->alpha);
                 }
@@ -2865,14 +2862,13 @@ static void HWR_Subsector(int num)
                     HWR_RenderPlane(&poly_subsectors[num], *fff->topheight,
                                     PF_Occlude, NULL,
                                     *gr_frontsector->lightlist[light].lightlevel,
-                                    levelflats[*fff->toppic].lumpnum);
+                                    *fff->toppic);
                 }
             }
 
         }
     }
 #endif
-#endif //doplanes
 
 // Hurder ici se passe les choses intéressantes!
 // on vient de tracer le sol et le plafond
@@ -2904,7 +2900,6 @@ static void HWR_Subsector(int num)
 // DCK: an obsolete editor for DOS and Win95.
 // It only allowed linedefs 0..255, which prevented creating water sectors.
 //20/08/99: Changed by Hurdler (taken from faB's code)
-#ifdef DOPLANES
     // -------------------- WATER IN DEV. TEST ------------------------
     //dck hack : use abs(tag) for waterheight
     if (gr_frontsector->tag < 0)
@@ -2913,13 +2908,12 @@ static void HWR_Subsector(int num)
         wh = ((-gr_frontsector->tag) << 16) + (FRACUNIT / 2);
         if (wh > gr_frontsector->floorheight && wh < gr_frontsector->ceilingheight)
         {
-            HWR_GetFlat(doomwaterflat);
+            HWR_GetFlat(doomwaterflat_pic.lumpnum);
             HWR_RenderPlane(&poly_subsectors[num], wh, PF_Translucent,
-                            NULL, gr_frontsector->lightlevel, doomwaterflat);
+                            NULL, gr_frontsector->lightlevel, doomwaterflat_pic);
         }
     }
     // -------------------- WATER IN DEV. TEST ------------------------
-#endif
 #endif
     sub->validcount = validcount;
 }
@@ -3928,14 +3922,14 @@ void HWR_RenderPlayerView(int viewnumber, player_t * player)
             // swap split window settings
             viewsv_need_sky[viewsv_viewnumber] = need_sky_background;
             need_sky_background = viewsv_need_sky[viewnumber];
-	}
+        }
         else
         {
-	    // Initial values.
-	    need_sky_background = true;
-	    viewsv_need_sky[0] = true;
-	    viewsv_need_sky[1] = true;
-	}
+            // Initial values.
+            need_sky_background = true;
+            viewsv_need_sky[0] = true;
+            viewsv_need_sky[1] = true;
+        }
         viewsv_viewnumber = viewnumber;
         HWR_SetLights(viewnumber);
     }
@@ -4331,7 +4325,8 @@ static int planeinfo_len = 0;  // num allocated
 
 
 // Add translucent plane, called for each plane visible
-void HWR_Add3DWater(int lumpnum, poly_subsector_t * xsub, fixed_t fixedheight, int lightlevel, int alpha)
+//  picnum : index to levelflats
+void HWR_Add3DWater(int picnum, poly_subsector_t * xsub, fixed_t fixedheight, int lightlevel, int alpha)
 {
     planeinfo_t * pl;
 
@@ -4374,7 +4369,7 @@ void HWR_Add3DWater(int lumpnum, poly_subsector_t * xsub, fixed_t fixedheight, i
     // The new water plane
     plnew->fixedheight = fixedheight;
     plnew->lightlevel = lightlevel;
-    plnew->lumpnum = lumpnum;
+    plnew->picnum = picnum;
     plnew->xsub = xsub;
     plnew->alpha = alpha;
 
@@ -4395,9 +4390,9 @@ void HWR_Render3DWater()
         // pass alpha to HWR_RenderPlane
         FBITFIELD PolyFlags = PF_Translucent | (planeinfo[i].alpha << 24);
 
-        HWR_GetFlat(planeinfo[i].lumpnum);
+        HWR_GetFlat(levelflats[planeinfo[i].picnum].lumpnum);
         HWR_RenderPlane(planeinfo[i].xsub, planeinfo[i].fixedheight, PolyFlags,
-                        NULL, planeinfo[i].lightlevel, planeinfo[i].lumpnum);
+                        NULL, planeinfo[i].lightlevel, planeinfo[i].picnum);
     }
     numplanes = 0;
 }
