@@ -185,8 +185,8 @@ typedef struct {
 } filetx_pak;
 
 typedef struct {
-    byte       num_netnodes;
-    byte       wait_nodes;  // if non-zero, wait for player net nodes
+    byte       num_netplayer;  // count players due to 2 player nodes
+    byte       wait_netplayer;  // if non-zero, wait for player net nodes
     uint16_t   wait_tics;  // if non-zero, the timeout tics
     byte       p_rand_index; // to sync P_Random
 } netwait_pak;
