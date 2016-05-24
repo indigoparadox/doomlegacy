@@ -2630,7 +2630,9 @@ static boolean HWR_CheckBBox(fixed_t * bspcoord)
 //                  : Draw one or more line segments.
 // Notes            : Sets gr_cursectorlight to the light of the parent sector, to modulate wall textures
 // -----------------+
+#ifdef DCK_WATER_TEST
 static int doomwaterflat;       //set by R_InitFlats hack
+#endif
 
 // Called from HWR_RenderBSPNode
 //  num : subsector number
@@ -2645,7 +2647,6 @@ static void HWR_Subsector(int num)
     int locFloorHeight, locCeilingHeight;
     int light;
     extracolormap_t * floorcolormap = NULL, * ceilingcolormap = NULL;
-    fixed_t wh;
 
 //no risk while developing, enough debugging nights!
 #ifdef PARANOIA
@@ -2890,12 +2891,16 @@ static void HWR_Subsector(int num)
         }
     }
 
+#ifdef DCK_WATER_TEST
+// DCK: an obsolete editor for DOS and Win95.
+// It only allowed linedefs 0..255, which prevented creating water sectors.
 //20/08/99: Changed by Hurdler (taken from faB's code)
 #ifdef DOPLANES
     // -------------------- WATER IN DEV. TEST ------------------------
     //dck hack : use abs(tag) for waterheight
     if (gr_frontsector->tag < 0)
     {
+        fixed_t wh;
         wh = ((-gr_frontsector->tag) << 16) + (FRACUNIT / 2);
         if (wh > gr_frontsector->floorheight && wh < gr_frontsector->ceilingheight)
         {
@@ -2905,6 +2910,7 @@ static void HWR_Subsector(int num)
         }
     }
     // -------------------- WATER IN DEV. TEST ------------------------
+#endif
 #endif
     sub->validcount = validcount;
 }
@@ -4196,10 +4202,12 @@ void HWR_Startup(void)
         HWR_AddEngineCommands();
         HWR_InitTextureCache();
 
+#ifdef DCK_WATER_TEST
         // for test water translucent surface
         doomwaterflat = W_CheckNumForName("FWATER1");
         if (doomwaterflat == -1)        // if FWATER1 not found (in doom shareware)
             doomwaterflat = W_GetNumForName("WATER0");
+#endif
 
         HWR_InitMD2();
     }

@@ -622,9 +622,11 @@ void P_LoadSectors (int lump)
         ss->special = LE_SWAP16(ms->special);
         ss->tag = LE_SWAP16(ms->tag);
 
+#ifdef DCK_WATER_TEST
         //added:31-03-98: quick hack to test water with DCK
 /*        if (ss->tag < 0)
             CONS_Printf("Level uses dck-water-hack\n");*/
+#endif
 
         ss->thinglist = NULL;
         ss->touching_thinglist = NULL; //SoM: 4/7/2000
