@@ -130,9 +130,9 @@ EXPORT void HWRAPI( Draw2DLine ) ( v2d_t * v1, v2d_t * v2, RGBA_t Color );
 EXPORT void HWRAPI( DrawPolygon ) ( FSurfaceInfo_t  *pSurf,
                                     //FTextureInfo  *pTexInfo,
                                     vxtx3d_t * pOutVerts, FUINT iNumPts,
-                                    FBITFIELD     PolyFlags );
+                                    FBITFIELD polyflags );
 
-EXPORT void HWRAPI( SetBlend ) ( FBITFIELD PolyFlags );
+EXPORT void HWRAPI( SetBlend ) ( FBITFIELD polyflags );
 
 EXPORT void HWRAPI( ClearBuffer ) ( boolean ColorMask,
                                     boolean DepthMask,

@@ -180,16 +180,19 @@
 
 #include "doomincl.h"
 #include "r_opengl.h"
+#include "../hw_glob.h"
 
 // ==========================================================================
 //                                                                  CONSTANTS
 // ==========================================================================
 
-#define N_PI_DEMI  (1.5707963268f)                  // PI/2
+// PI/2
+#define N_PI_DEMI  (1.5707963268f)
 
-#define ASPECT_RATIO            (1.0f)  //(320.0f/200.0f)
+// (320.0f/200.0f)
+#define ASPECT_RATIO            (1.0f)
 #define FAR_CLIPPING_PLANE      9000.0f
-float   NEAR_CLIPPING_PLANE =   0.9f;
+float   near_clipping_plane =   NEAR_CLIP_DIST;
 
 #define MIPMAP_MASK     0x0100
 
@@ -208,7 +211,7 @@ static  GLuint      tex_downloaded  = 0;
 static  GLfloat     fov             = 90.0;
 static  GLuint      tint_color_id   = 0;  // Imitate the special object palette tints
 static  RGBA_float_t  tint_rgb;
-static  FBITFIELD   CurrentPolyFlags;
+static  FBITFIELD   cur_polyflags;
 
 static  FTextureInfo_t*  gr_cachetail = NULL;
 static  FTextureInfo_t*  gr_cachehead = NULL;
@@ -454,7 +457,7 @@ void VIDGL_Set_GL_Model_View( GLint w, GLint h )
 
     glMatrixMode( GL_PROJECTION );
     glLoadIdentity();
-    gluPerspective( fov, ASPECT_RATIO, NEAR_CLIPPING_PLANE, FAR_CLIPPING_PLANE);
+    gluPerspective( fov, ASPECT_RATIO, near_clipping_plane, FAR_CLIPPING_PLANE);
 
     glMatrixMode( GL_MODELVIEW );
     glLoadIdentity();
@@ -499,8 +502,8 @@ void VIDGL_Set_GL_States( void )
     glDepthRange( 0.0, 1.0 );
     glDepthFunc(GL_LEQUAL);
 
-    // this set CurrentPolyFlags to the actual configuration
-    CurrentPolyFlags = 0xffffffff;
+    // this set cur_polyflags to the actual configuration
+    cur_polyflags = 0xffffffff;
     SetBlend(0);
 
 #ifdef LITTLE_WHITE_TEXTURE
@@ -610,10 +613,13 @@ int VIDGL_isExtAvailable(char *extension)
         where = (GLubyte *) strstr((const char *) start, extension);
         if (!where)
             break;
+
         terminator = where + strlen(extension);
         if (where == start || *(where - 1) == ' ')
+        {
             if (*terminator == ' ' || *terminator == '\0')
                 return 1;
+        }
         start = terminator;
     }
     return 0;
@@ -664,10 +670,12 @@ EXPORT void HWRAPI( ReadRect ) (int x, int y, int width, int height,
     for (i=height-1; i>=0; i--)
     {
         for (j=0; j<width; j++)
+        {
             dst_data[(height-1-i)*width+j] =
                                   ((image[(i*width+j)*3]>>3)<<11) |
                                   ((image[(i*width+j)*3+1]>>2)<<5) |
                                   ((image[(i*width+j)*3+2]>>3));
+        }
     }
     free(image);
 }
@@ -681,12 +689,12 @@ EXPORT void HWRAPI( GClipRect ) (int minx, int miny, int maxx, int maxy, float n
     // DBG_Printf ("GClipRect(%d, %d, %d, %d)\n", minx, miny, maxx, maxy);
 
     glViewport( minx, screen_height-maxy, maxx-minx, maxy-miny );
-    NEAR_CLIPPING_PLANE = nearclip;
+    near_clipping_plane = nearclip;
 
     //glScissor(minx, screen_height-maxy, maxx-minx, maxy-miny);
     glMatrixMode( GL_PROJECTION );
     glLoadIdentity();
-    gluPerspective( fov, ASPECT_RATIO, NEAR_CLIPPING_PLANE, FAR_CLIPPING_PLANE);
+    gluPerspective( fov, ASPECT_RATIO, near_clipping_plane, FAR_CLIPPING_PLANE);
     glMatrixMode(GL_MODELVIEW);
 
     // added for new coronas' code (without depth buffer)
@@ -723,7 +731,9 @@ EXPORT void HWRAPI( ClearBuffer ) ( boolean ColorMask, boolean DepthMask,
         ClearMask |= GL_DEPTH_BUFFER_BIT;
     }
 
-    SetBlend( DepthMask ? PF_Occlude | CurrentPolyFlags : CurrentPolyFlags&~PF_Occlude );
+    SetBlend( (DepthMask ?
+	         (cur_polyflags | PF_Occlude)
+	       : (cur_polyflags & ~PF_Occlude) )  );
 
     glClear( ClearMask );
 }
@@ -761,10 +771,9 @@ EXPORT void HWRAPI( Draw2DLine ) ( v2d_t * v1, v2d_t * v2, RGBA_t Color )
         glVertex3f(v2->x, -v2->y, 1);
     glEnd();
 #else
-    if( v2->x != v1->x )
-        angle = (float)atan((v2->y - v1->y)/(v2->x - v1->x));
-    else
-        angle = N_PI_DEMI;
+    angle = ( v2->x != v1->x )?
+          (float)atan((v2->y - v1->y)/(v2->x - v1->x))
+        : N_PI_DEMI;
     dx = (float)sin(angle) / (float)screen_width;
     dy = (float)cos(angle) / (float)screen_height;
 
@@ -791,15 +800,20 @@ EXPORT void HWRAPI( Draw2DLine ) ( v2d_t * v1, v2d_t * v2, RGBA_t Color )
 // -----------------+
 // PF_Masked - we could use an ALPHA_TEST of GL_EQUAL, and alpha ref of 0,
 //             is it faster when pixels are discarded ?
-EXPORT void HWRAPI( SetBlend ) ( FBITFIELD PolyFlags )
+EXPORT void HWRAPI( SetBlend ) ( FBITFIELD polyflags )
 {
     // SetBlend is invoked by GenPrint, so cannot use GenPrint here.
-    FBITFIELD   Xor = CurrentPolyFlags^PolyFlags;
-    if( Xor & ( PF_Blending|PF_Occlude|PF_NoTexture|PF_Modulated|PF_NoDepthTest|PF_Decal|PF_Invisible|PF_NoAlphaTest ) )
+    // xf are the polyflags that changed.
+    FBITFIELD  xf = cur_polyflags ^ polyflags;
+
+    if( xf & ( PF_Blending|PF_Occlude|PF_NoTexture|PF_Modulated|PF_NoDepthTest|PF_Decal|PF_Invisible|PF_NoAlphaTest ) )
     {
-        if( Xor&(PF_Blending) ) // if blending mode must be changed
+        // One of these flags has changed
+	// PF_Blending = (PF_Environment|PF_Additive|PF_Translucent|PF_Masked|PF_Substractive)
+        if( xf & PF_Blending ) // if blending mode must be changed
         {
-            switch(PolyFlags & PF_Blending) {
+	    // PF_Blending flags are mutually exclusive
+            switch(polyflags & PF_Blending) {
                 case PF_Translucent & PF_Blending:
                      glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA ); // alpha = level of transparency
                      break;
@@ -829,40 +843,40 @@ EXPORT void HWRAPI( SetBlend ) ( FBITFIELD PolyFlags )
                      break;
             }
         }
-        if( Xor & PF_NoAlphaTest)
+        if( xf & PF_NoAlphaTest)
         {
-            if( PolyFlags & PF_NoAlphaTest)
+            if( polyflags & PF_NoAlphaTest)
                 glDisable( GL_ALPHA_TEST );
             else
                 glEnable( GL_ALPHA_TEST );      // discard 0 alpha pixels (holes in texture)
         }
 
-        if( Xor & PF_Decal )
+        if( xf & PF_Decal )
         {
-            if( PolyFlags & PF_Decal )
+            if( polyflags & PF_Decal )
                 glEnable(GL_POLYGON_OFFSET_FILL);
             else
                 glDisable(GL_POLYGON_OFFSET_FILL);
         }
-        if( Xor&PF_NoDepthTest )
+        if( xf & PF_NoDepthTest )
         {
-            if( PolyFlags & PF_NoDepthTest )
+            if( polyflags & PF_NoDepthTest )
             {
                 glDepthFunc(GL_ALWAYS); //glDisable( GL_DEPTH_TEST );
             }
             else
                 glDepthFunc(GL_LEQUAL); //glEnable( GL_DEPTH_TEST );
         }
-        if( Xor&PF_Modulated )
+        if( xf & PF_Modulated )
         {
             if (oglflags & GLF_NOTEXENV)
             { // [smite] FIXME this was only for LINUX but why?
 	      // WIN32: if not present, menu shading draws only the corner (rest is black), and menu is grayed
-                if ( !(PolyFlags & PF_Modulated) )
+                if ( !(polyflags & PF_Modulated) )
                     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
             }
             else
-            if( PolyFlags & PF_Modulated )
+            if( polyflags & PF_Modulated )
             {   // mix texture colour with Surface->FlatColor
                 glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
             }
@@ -871,39 +885,36 @@ EXPORT void HWRAPI( SetBlend ) ( FBITFIELD PolyFlags )
                 glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );
             }
         }
-        if( Xor & PF_Occlude ) // depth test but (no) depth write
+        if( xf & PF_Occlude ) // depth test but (no) depth write
         {
-            if (PolyFlags&PF_Occlude)
+            if (polyflags&PF_Occlude)
             {
                 glDepthMask( 1 );
             }
             else
                 glDepthMask( 0 );
         }
-//#ifdef POLYSKY       
-        ////Hurdler: not used if we don't define POLYSKY
-        if( Xor & PF_Invisible )
+        if( xf & PF_Invisible )
         {                     
-//            glColorMask( (PolyFlags&PF_Invisible)==0, (PolyFlags&PF_Invisible)==0,
-//                         (PolyFlags&PF_Invisible)==0, (PolyFlags&PF_Invisible)==0 );
+//            glColorMask( (polyflags&PF_Invisible)==0, (polyflags&PF_Invisible)==0,
+//                         (polyflags&PF_Invisible)==0, (polyflags&PF_Invisible)==0 );
             
-            if (PolyFlags&PF_Invisible)
+            if (polyflags & PF_Invisible)
                 glBlendFunc( GL_ZERO, GL_ONE );         // transparent blending
             else
             {   // big hack: (TODO: manage that better)
                 // we test only for PF_Masked because PF_Invisible is only used 
                 // (for now) with it (yeah, that's crappy, sorry)
-                if ((PolyFlags&PF_Blending)==PF_Masked)
+                if ((polyflags & PF_Blending) == PF_Masked)
                     glBlendFunc( GL_SRC_ALPHA, GL_ZERO );  
             }
         }
-//#endif       
-        if( PolyFlags & PF_NoTexture )
+        if( polyflags & PF_NoTexture )
         {
             SetNoTexture();
         }
     }
-    CurrentPolyFlags = PolyFlags;
+    cur_polyflags = polyflags;
 }
 
 
@@ -1098,7 +1109,7 @@ EXPORT void HWRAPI( DrawPolygon ) ( FSurfaceInfo_t  *pSurf,
                                     //FTextureInfo_t  *pTexInfo,
                                     vxtx3d_t      *pOutVerts,
                                     FUINT         iNumPts,
-                                    FBITFIELD     PolyFlags )
+                                    FBITFIELD     polyflags )
 {
     FUINT i, j;
     RGBA_float_t c;
@@ -1107,17 +1118,17 @@ EXPORT void HWRAPI( DrawPolygon ) ( FSurfaceInfo_t  *pSurf,
 
     // DrawPolygon is invoked by GenPrint, so cannot use GenPrint here.
 #ifdef MINI_GL_COMPATIBILITY
-    if (PolyFlags & PF_Corona) 
-        PolyFlags &= ~PF_NoDepthTest;
+    if (polyflags & PF_Corona) 
+        polyflags &= ~PF_NoDepthTest;
 #else
-    if( (PolyFlags & PF_Corona) && (oglflags & GLF_NOZBUFREAD) )
-        PolyFlags &= ~(PF_NoDepthTest|PF_Corona);
+    if( (polyflags & PF_Corona) && (oglflags & GLF_NOZBUFREAD) )
+        polyflags &= ~(PF_NoDepthTest|PF_Corona);
 #endif
 
-    SetBlend( PolyFlags );    //TODO: inline (#pragma..)
+    SetBlend( polyflags );    //TODO: inline (#pragma..)
 
     // If Modulated, mix the surface colour to the texture
-    if( (CurrentPolyFlags & PF_Modulated) && pSurf)
+    if( (cur_polyflags & PF_Modulated) && pSurf)
     {
         if (tint_color_id)
         {
@@ -1144,7 +1155,7 @@ EXPORT void HWRAPI( DrawPolygon ) ( FSurfaceInfo_t  *pSurf,
     // this test is added for new coronas' code (without depth buffer)
     // I think I should do a separate function for drawing coronas, so it will be a little faster
 #ifndef MINI_GL_COMPATIBILITY
-    if (PolyFlags & PF_Corona) // check to see if we need to draw the corona
+    if (polyflags & PF_Corona) // check to see if we need to draw the corona
     {
         //rem: all 8 (or 8.0f) values are hard coded: it can be changed to a higher value
         GLfloat     buf[8][8];
@@ -1194,8 +1205,9 @@ EXPORT void HWRAPI( DrawPolygon ) ( FSurfaceInfo_t  *pSurf,
         glColor4fv( (float *)&c );
     }
 #endif
-    if (PolyFlags & PF_MD2) 
+    if (polyflags & PF_MD2) 
         return;
+
     glBegin( GL_TRIANGLE_FAN );
     for( i=0; i<iNumPts; i++ )
     {
@@ -1370,6 +1382,7 @@ EXPORT void HWRAPI( DrawMD2 ) (int *gl_cmd_buffer, md2_frame_t *frame,
 EXPORT void HWRAPI( SetTransform ) (FTransform_t *transform)
 {
     static int special_splitscreen;
+
     glLoadIdentity();
     if (transform)
     {
@@ -1386,11 +1399,11 @@ EXPORT void HWRAPI( SetTransform ) (FTransform_t *transform)
         if (special_splitscreen)
         {
 	    gluPerspective( 53.13, 2*ASPECT_RATIO,  // 53.13 = 2*atan(0.5)
-			    NEAR_CLIPPING_PLANE, FAR_CLIPPING_PLANE);
+			    near_clipping_plane, FAR_CLIPPING_PLANE);
 	}
         else
         {
-	    gluPerspective( transform->fovxangle, ASPECT_RATIO, NEAR_CLIPPING_PLANE, FAR_CLIPPING_PLANE);
+	    gluPerspective( transform->fovxangle, ASPECT_RATIO, near_clipping_plane, FAR_CLIPPING_PLANE);
 	}
 #ifndef MINI_GL_COMPATIBILITY
         glGetDoublev(GL_PROJECTION_MATRIX, projMatrix); // added for new coronas' code (without depth buffer)
@@ -1406,12 +1419,12 @@ EXPORT void HWRAPI( SetTransform ) (FTransform_t *transform)
         if (special_splitscreen)
         {
 	    gluPerspective( 53.13, 2*ASPECT_RATIO,  // 53.13 = 2*atan(0.5)
-			    NEAR_CLIPPING_PLANE, FAR_CLIPPING_PLANE);
+			    near_clipping_plane, FAR_CLIPPING_PLANE);
 	}
         else
         {
 	    //Hurdler: is "fov" correct?
-	    gluPerspective( fov, ASPECT_RATIO, NEAR_CLIPPING_PLANE, FAR_CLIPPING_PLANE);
+	    gluPerspective( fov, ASPECT_RATIO, near_clipping_plane, FAR_CLIPPING_PLANE);
 	}
 #ifndef MINI_GL_COMPATIBILITY
         glGetDoublev(GL_PROJECTION_MATRIX, projMatrix); // added for new coronas' code (without depth buffer)

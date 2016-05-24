@@ -132,7 +132,9 @@ extern sector_t * viewer_sector;
 extern int      viewer_modelsec;
 extern boolean  viewer_has_model;
 extern boolean  viewer_underwater;  // only set when viewer_has_model
+extern boolean  viewer_at_water;    // viewer straddles the water plane
 extern boolean  viewer_overceiling; // only set when viewer_has_model
+extern boolean  viewer_at_ceiling;  // viewer straddles the ceiling plane
 
 extern ffloor_t *  view_fogfloor;  // viewer is in a FF_FOG floor
 extern sector_t *  view_fogmodel;  // viewer is in a FF_FOG floor

@@ -321,13 +321,14 @@
 
 
 
-#define ZCLIP_PLANE     4.0f
+//#define SPRITE_NEAR_CLIP_DIST     4.0f
+#define SPRITE_NEAR_CLIP_DIST     1.01f
 #define R_FAKEFLOORS
 
 // comment to remove the plane rendering
 #define DOPLANES
 
-// BP: test of draw sky by polygon like in sofware with visplane, unfortunately
+// BP: test of draw sky by polygon like in software with visplane, unfortunately
 // this don't work since we must have z for pixel and z for texture (not like now with z=oow)
 //#define POLYSKY
 
@@ -677,6 +678,8 @@ static vxtx3d_t planeVerts[MAXPLANEVERTICES];
 // -----------------+
 // HWR_RenderPlane  : Render a floor or ceiling convex polygon
 // -----------------+
+// Parameter static global
+//   planeVerts : polygon verts
 // Called from HWR_Subsector, HWR_Render3DWater
 static
 void HWR_RenderPlane(poly_subsector_t * xsub, fixed_t fixedheight,
@@ -690,7 +693,7 @@ void HWR_RenderPlane(poly_subsector_t * xsub, fixed_t fixedheight,
     int i;
     float flatxref, flatyref;
     double flatsize;
-    int flatflag;
+    int flatmask;
     int size;
     int lightnum;  // 0..255
 
@@ -708,10 +711,11 @@ void HWR_RenderPlane(poly_subsector_t * xsub, fixed_t fixedheight,
     if (nrPlaneVerts < 3)       //not even a triangle ?
         return;
 
-    if (nrPlaneVerts > MAXPLANEVERTICES)        // FIXME: exceeds plVerts size
+    if (nrPlaneVerts > MAXPLANEVERTICES)
     {
-        CONS_Printf("polygon size of %d exceeds max value of %d vertices\n", nrPlaneVerts, MAXPLANEVERTICES);
-        return;
+        // Too many verts for planeVerts
+        I_SoftError("HWR_RenderPlane: polygon size %d exceeds max value of %d vertices\n", nrPlaneVerts, MAXPLANEVERTICES);
+        nrPlaneVerts = MAXPLANEVERTICES;  // cut off polygon side
     }
 
     size = W_LumpLength(lumpnum);
@@ -720,40 +724,40 @@ void HWR_RenderPlane(poly_subsector_t * xsub, fixed_t fixedheight,
     {
         case 4194304:  // 2048x2048 lump
             flatsize = 2048.0f;
-            flatflag = 2047;
+            flatmask = 2047;
             break;
         case 1048576:  // 1024x1024 lump
             flatsize = 1024.0f;
-            flatflag = 1023;
+            flatmask = 1023;
             break;
         case 262144:   // 512x512 lump
             flatsize = 512.0f;
-            flatflag = 511;
+            flatmask = 511;
             break;
         case 65536:    // 256x256 lump
             flatsize = 256.0f;
-            flatflag = 255;
+            flatmask = 255;
             break;
         case 16384:    // 128x128 lump
             flatsize = 128.0f;
-            flatflag = 127;
+            flatmask = 127;
             break;
         case 1024:     // 32x32 lump
             flatsize = 32.0f;
-            flatflag = 31;
+            flatmask = 31;
             break;
         default:       // 64x64 lump
             flatsize = 64.0f;
-            flatflag = 63;
+            flatmask = 63;
             break;
     }
 
     //reference point for flat texture coord for each vertex around the polygon
-    flatxref = ((fixed_t) pv->x & (~flatflag)) / flatsize;
-    flatyref = ((fixed_t) pv->y & (~flatflag)) / flatsize;
+    flatxref = ((fixed_t) pv->x & (~flatmask)) / flatsize;
+    flatyref = ((fixed_t) pv->y & (~flatmask)) / flatsize;
 
     // transform
-    v3d = planeVerts;
+    v3d = planeVerts;  // static global
     for (i = 0; i < nrPlaneVerts; i++, v3d++, pv++)
     {
         // Hurdler: add scrolling texture on floor/ceiling
@@ -842,6 +846,8 @@ void HWR_RenderPlane(poly_subsector_t * xsub, fixed_t fixedheight,
 
 // this don't draw anything it only update the z-buffer so there isn't problem with
 // wall/things upper that sky (map12)
+// Parameter static global
+//   planeVerts : polygon verts
 // Called from HWR_Subsector
 static
 void HWR_RenderSkyPlane(poly_subsector_t * xsub, fixed_t fixedheight)
@@ -873,7 +879,7 @@ void HWR_RenderSkyPlane(poly_subsector_t * xsub, fixed_t fixedheight)
     flatyref = ((fixed_t) pv->y & (~63)) / 64.0f;
 
     // transform
-    v3d = planeVerts;
+    v3d = planeVerts;  // static global
     for (i = 0; i < nrPlaneVerts; i++, v3d++, pv++)
     {
         v3d->sow = (pv->x / flatsize) - flatxref;
@@ -2791,6 +2797,7 @@ static void HWR_Subsector(int num)
         }
         else
         {
+            // Sky as floor.
 #ifdef POLYSKY
             HWR_RenderSkyPlane(&poly_subsectors[num], locCeilingHeight);
 #endif
@@ -2815,7 +2822,7 @@ static void HWR_Subsector(int num)
 
             if (*fff->bottomheight <= gr_frontsector->ceilingheight
                 && *fff->bottomheight >= gr_frontsector->floorheight
-//                && (( viewz < *fff->bottomheight && (fff->flags & FF_OUTER_PLANES))
+//                && ((viewz < *fff->bottomheight && (fff->flags & FF_OUTER_PLANES))
                 && ((viewz <= *fff->bottomheight && (fff->flags & FF_OUTER_PLANES))
                     || (viewz > *fff->bottomheight && (fff->flags & FF_INNER_PLANES))))
             {
@@ -2952,7 +2959,7 @@ static void HWR_RenderBSPNode(int bspnum)
     unsigned int  side;  // 0, 1
     unsigned int  subsecnum;  // subsector index
 
-    // [WDJ] From EnternityEngine, killough 5/2/98: remove tail recursion
+    // [WDJ] From EternityEngine, killough 5/2/98: remove tail recursion
     while( ! (bspnum & NF_SUBSECTOR) )
     {
         // not a subsector, a nodes
@@ -3311,7 +3318,7 @@ static void HWR_SortVisSprites(void)
     gr_vsprsortedhead.next = gr_vsprsortedhead.prev = &gr_vsprsortedhead;
     for (i = 0; i < count; i++)
     {
-        bestdist = ZCLIP_PLANE - 1;
+        bestdist = SPRITE_NEAR_CLIP_DIST - 1;
         for (ds = unsorted.next; ds != &unsorted; ds = ds->next)
         {
             if (ds->tz > bestdist)
@@ -3412,7 +3419,7 @@ static void HWR_ProjectSprite(mobj_t * thing)
     tz = (tr_x * gr_viewcos) + (tr_y * gr_viewsin);  // view depth
 
     // thing is behind view plane?
-    if (tz < ZCLIP_PLANE)
+    if (tz < SPRITE_NEAR_CLIP_DIST)
         return;
 
     tx = (tr_x * gr_viewsin) - (tr_y * gr_viewcos);  // view x
@@ -3516,6 +3523,13 @@ static void HWR_ProjectSprite(mobj_t * thing)
     {
       sector_t * thingmodsecp = & sectors[thingmodelsec];
 
+      // [WDJ] Could use viewer_at_water to force view of objects above and
+      // below to be seen simultaneously.
+      // Instead have choosen to have objects underwater not be seen until
+      // viewer_underwater.
+      // When at viewer_at_water, will not see objects above nor below the water.
+      // As this has some validity in reality, and does not generate HOM,
+      // will live with it.  It is transient, and most players will not notice.
       if (viewer_has_model)
       {
           if( viewer_underwater ?
@@ -3524,7 +3538,7 @@ static void HWR_ProjectSprite(mobj_t * thing)
               )
               return;
           if( viewer_overceiling ?
-              ((gz_top < thingmodsecp->ceilingheight) && (viewz >= thingmodsecp->ceilingheight))
+              ((gz_top < thingmodsecp->ceilingheight) && (viewz > thingmodsecp->ceilingheight))
               : (thing->z >= thingmodsecp->ceilingheight)
               )
               return;
@@ -3596,19 +3610,28 @@ void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
     // decide which patch to use
 #ifdef RANGECHECK
     if ((unsigned) psp->state->sprite >= numsprites)
-        I_Error("HWR_ProjectSprite: invalid sprite number %i ", psp->state->sprite);
+    {
+        I_SoftError("HWR_ProjectSprite: invalid sprite number %i ", psp->state->sprite);
+        return;       
+    }
 #endif
+
     sprdef = &sprites[psp->state->sprite];
 #ifdef RANGECHECK
     if ((psp->state->frame & FF_FRAMEMASK) >= sprdef->numframes)
-        I_Error("HWR_ProjectSprite: invalid sprite frame %i : %i ", psp->state->sprite, psp->state->frame);
+    {
+        I_SoftError("HWR_ProjectSprite: invalid sprite frame %i : %i ", psp->state->sprite, psp->state->frame);
+        return;
+    }
 #endif
-    sprframe = &sprdef->spriteframes[psp->state->frame & FF_FRAMEMASK];
 
-    //Fab:debug
+    sprframe = &sprdef->spriteframes[psp->state->frame & FF_FRAMEMASK];
 #ifdef PARANOIA
     if (sprframe == NULL)
-        I_Error("sprframes NULL for state %d\n", psp->state - states);
+    {
+        I_SoftError("HWR_ProjectSprite: sprframes NULL for state %d\n", psp->state - states);
+        return;
+    }
 #endif
 
     sprlump = &spritelumps[sprframe->spritelump_id[0]];
@@ -4051,7 +4074,7 @@ void HWR_RenderPlayerView(int viewnumber, player_t * player)
 
     // added by Hurdler for correct splitscreen
     // moved here by hurdler so it works with the new near clipping plane
-    HWD.pfnGClipRect(0, 0, vid.width, vid.height, 0.9f);
+    HWD.pfnGClipRect(0, 0, vid.width, vid.height, NEAR_CLIP_DIST);
 }
 
 // ==========================================================================
@@ -4286,20 +4309,27 @@ static int planeinfo_len = 0;  // num allocated
 // Add translucent plane, called for each plane visible
 void HWR_Add3DWater(int lumpnum, poly_subsector_t * xsub, fixed_t fixedheight, int lightlevel, int alpha)
 {
+    planeinfo_t * pl;
+
     if (numplanes >= planeinfo_len)
     {
         // expand number of planeinfo
-        planeinfo_len += PLANEINFO_INC;
-        planeinfo = (planeinfo_t *) realloc(planeinfo, planeinfo_len * sizeof(planeinfo_t));
-        if( planeinfo == NULL )
-            I_Error( "Planeinfo: cannot alloc\n" );
+        size_t planeinfo_req = planeinfo_len + PLANEINFO_INC;
+        pl = (planeinfo_t *) realloc(planeinfo, planeinfo_req * sizeof(planeinfo_t));
+        if( pl == NULL )
+        {
+            // Missing some planes for a while, but player can finish level.
+            I_SoftError( "Planeinfo: cannot alloc %i\n", planeinfo_req );
+            return;
+        }
+        planeinfo = pl;
+        planeinfo_len = planeinfo_req;
     }
 
     // [WDJ] Merge sort is faster than bubble-sort or quicksort, because
     // the tests can be made simpler, takes advantage of already sorted list,
     // and it moves all closer entries at once, and only once.
     planeinfo_t * plnew = & planeinfo[numplanes];
-    planeinfo_t * pl;
     // merge sort farthest to closest
     fixed_t dist_abs = ABS(viewz - fixedheight);
     fixed_t dist_min = viewz - dist_abs;  // test
@@ -4316,6 +4346,8 @@ void HWR_Add3DWater(int lumpnum, poly_subsector_t * xsub, fixed_t fixedheight, i
         memmove( pl+1, pl, (byte*)plnew-(byte*)pl );
         plnew = pl;
     }
+
+    // The new water plane
     plnew->fixedheight = fixedheight;
     plnew->lightlevel = lightlevel;
     plnew->lumpnum = lumpnum;

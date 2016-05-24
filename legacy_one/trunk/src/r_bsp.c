@@ -356,14 +356,19 @@ int R_DoorClosed(void)
 // Similar for ceiling, only reflected.
 //
 //
+// Called by software and hardware draw.
 
-// When using for backsector, back=true.
-sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
+//  sec : the original sector
+//  tempsec : OUT modified copy of original sector
+//  back : When used for backsector
+// Called by R_Subsector, R_AddLine, R_RenderThickSideRange.
+// Called by HWR_Subsector, HWR_AddLine.
+sector_t* R_FakeFlat(sector_t *sec, sector_t *tempsec,
                      int *floorlightlevel, int *ceilinglightlevel,
                      boolean back)
 {
-  int        colormapnum = -1; //SoM: 4/4/2000
-  int	     floorlightsubst, ceilinglightsubst; // light from another sector
+  int  colormapnum = -1; //SoM: 4/4/2000
+  int  floorlightsubst, ceilinglightsubst; // light from another sector
 
   // first light substitution, may be -1 which defaults to sec->lightlevel
   floorlightsubst = sec->floorlightsec;
@@ -387,7 +392,9 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
       {
           // under the model sector floor
           tempsec->floorheight = sec->floorheight;
-          tempsec->ceilingheight = modsecp->floorheight-1;
+          // at the model sector floor, can still see above it
+          if( ! viewer_at_water )
+              tempsec->ceilingheight = modsecp->floorheight-1;
       }
       else
       {
@@ -411,11 +418,14 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
                 // Underwater, only the control sector floor appears
                 // and it "envelops" the player.
                 tempsec->floorheight   = tempsec->ceilingheight+1;
-                tempsec->ceilingpic    = tempsec->floorpic;
-                tempsec->ceiling_xoffs = tempsec->floor_xoffs;
-                tempsec->ceiling_yoffs = tempsec->floor_yoffs;
+                if( ! viewer_at_water )
+                {
+                    tempsec->ceilingpic    = tempsec->floorpic;
+                    tempsec->ceiling_xoffs = tempsec->floor_xoffs;
+                    tempsec->ceiling_yoffs = tempsec->floor_yoffs;
+                }
             }
-            else
+            else if( ! viewer_at_water )
             {
                 tempsec->ceilingpic    = modsecp->ceilingpic;
                 tempsec->ceiling_xoffs = modsecp->ceiling_xoffs;
@@ -573,10 +583,11 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 // Called by R_Subsector
 void R_AddLine (seg_t*  lineseg)
 {
+    static sector_t     tempsec; //SoM: FakeFlat ceiling/water
+
     int                 x1, x2;
     angle_t             angle1, angle2;
     angle_t             span;
-    static sector_t     tempsec; //SoM: FakeFlat ceiling/water
 
     curline = lineseg;
 

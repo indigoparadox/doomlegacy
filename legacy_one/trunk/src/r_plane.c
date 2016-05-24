@@ -720,7 +720,7 @@ void R_DrawPlanes (void)
 
                 if (dc_yl <= dc_yh && dc_yh >= 0 && dc_yl < rdraw_viewheight )
                 {
-		   //[WDJ] phobiata.wad has many views that need clipping
+                    //[WDJ] phobiata.wad has many views that need clipping
                     if ( dc_yl < 0 )   dc_yl = 0;
                     if ( dc_yh >= rdraw_viewheight )   dc_yh = rdraw_viewheight - 1;
                     angle = (viewangle + x_to_viewangle[x])>>ANGLETOSKYSHIFT;

@@ -62,6 +62,10 @@
 // the original aspect ratio of Doom graphics isn't square
 #define ORIGINAL_ASPECT     (320.0f/200.0f)
 
+// Too far and it leaves gaps which show sky.
+//#define NEAR_PLANE_DIST     (0.9f)
+#define NEAR_CLIP_DIST     (0.05f)
+
 
 // needed for sprite rendering
 // equivalent of the software renderer's vissprites

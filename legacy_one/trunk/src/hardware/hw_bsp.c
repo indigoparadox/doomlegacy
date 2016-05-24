@@ -2337,8 +2337,8 @@ sector_t *  find_poly_sector( wpoly_t * ssp )
 }
 
 
-#define NEARDIST (0.75f) 
-// Only needs to be reasonably larger than NEARDIST.
+#define VERTEX_NEAR_DIST (0.75f) 
+// Only needs to be reasonably larger than VERTEX_NEAR_DIST.
 #define INITIAL_MAX    (10000000000000.0f)
 #define SEG_SAME_VERT   (0.5f)
 
@@ -2434,7 +2434,7 @@ void AdjustSegs(void)
             }
 
             // close enough to be considered the same ?
-            if( nearv1<=NEARDIST*NEARDIST )
+            if( nearv1<=VERTEX_NEAR_DIST*VERTEX_NEAR_DIST )
             {
                 // share vertex with segs
                 lseg->pv1 = wp->ppts[v1found];
@@ -2447,7 +2447,7 @@ void AdjustSegs(void)
 
                 lseg->pv1 = store_polyvertex( &sv1, SEG_SAME_VERT );
             }
-            if( nearv2<=NEARDIST*NEARDIST )
+            if( nearv2<=VERTEX_NEAR_DIST*VERTEX_NEAR_DIST )
             {
                 lseg->pv2 = wp->ppts[v2found];
             }
@@ -2463,7 +2463,7 @@ void AdjustSegs(void)
                 float y=lseg->pv2->y - lseg->pv1->y + (0.5*FIXED_TO_FLOAT_MULT);
                 lseg->length = sqrt(x*x+y*y)*FRACUNIT;
                 // BP: debug see this kind of segs
-                //if (nearv2>NEARDIST*NEARDIST || nearv1>NEARDIST*NEARDIST)
+                //if (nearv2>VERTEX_NEAR_DIST*VERTEX_NEAR_DIST || nearv1>VERTEX_NEAR_DIST*VERTEX_NEAR_DIST)
                 //    lseg->length=1;
             }
         }
