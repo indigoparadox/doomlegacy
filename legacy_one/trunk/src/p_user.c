@@ -1336,6 +1336,17 @@ void P_PlayerThink (player_t* player)
     if (player->bonuscount)
         player->bonuscount--;
 
+    if (player->key_pickup)
+        player->key_pickup--;
+    if (player->health_pickup)
+        player->health_pickup--;
+    if (player->armor_pickup)
+        player->armor_pickup--;
+    if (player->ammo_pickup)
+        player->ammo_pickup--;
+    if (player->weapon_pickup)
+        player->weapon_pickup--;
+
     // Handling colormaps.
     if (player->powers[pw_invulnerability])
     {

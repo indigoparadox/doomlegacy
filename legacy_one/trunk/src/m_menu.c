@@ -1755,6 +1755,7 @@ menuitem_t EffectsOptionsMenu[]=
     {IT_STRING | IT_CVAR,0,    "Max splats"       , &cv_maxsplats     , 0},
     {IT_STRING | IT_CVAR,0,    "Sprites limit"    , &cv_spritelim     , 0},
     {IT_STRING | IT_CVAR,0,    "Screens Link"     , &cv_screenslink   , 0},
+    {IT_STRING | IT_CVAR,0,    "Pickup Flash"     , &cv_pickupflash   , 0},
     {IT_STRING | IT_CVAR,0,    "Random sound pitch",&cv_rndsoundpitch , 0},
     {IT_STRING | IT_CVAR,0,    "Menu Sounds",       &cv_menusound     , 0},
     {IT_STRING | IT_CVAR,0,    "Boom Colormap"    , &cv_boom_colormap , 0},
@@ -3812,6 +3813,7 @@ void M_DrawSelCell ( menu_t*       menu,
 //  to read the text with all the stuff in the background...
 //
 //added:06-02-98:
+//  x, y : position (320,200)
 void M_DrawTextBox (int x, int y, int width, int lines)
 {
     fontinfo_t * fip = V_FontInfo();

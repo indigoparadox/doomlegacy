@@ -82,21 +82,21 @@ typedef enum
 typedef enum
 {
     // No clipping, walk through barriers.
-    CF_NOCLIP           = 1,
+    CF_NOCLIP           = 0x01,
     // No damage, no health loss.
-    CF_GODMODE          = 2,
+    CF_GODMODE          = 0x02,
     // Not really a cheat, just a debug aid.
-    CF_NOMOMENTUM       = 4,
+    CF_NOMOMENTUM       = 0x04,
 
     //added:28-02-98: new cheats
-    CF_FLYAROUND        = 8,
+    CF_FLYAROUND        = 0x08,
 
     //added:28-02-98: NOT REALLY A CHEAT
     // Allow player avatar to walk in-air
     //  if trying to get over a small wall (hack for playability)
-    CF_JUMPOVER         = 16
+    CF_JUMPOVER         = 0x10
 
-} cheat_t;
+} cheat_e;
 
 
 // ========================================================================
@@ -163,10 +163,6 @@ typedef struct player_s
     boolean             usedown;
     boolean             jumpdown;   //added:19-03-98:dont jump like a monkey!
 
-    // Bit flags, for cheats and debug.
-    // See cheat_t, above.
-    int                 cheats;
-
     // Refired shots are less accurate.
     int                 refire;
 
@@ -179,9 +175,15 @@ typedef struct player_s
     char*               message;
     byte                msglevel;  // priority of the message
 
+    // Bit flags, for cheats and debug.
+    // See cheat_e, above.
+    uint16_t            cheats;  // cheat_e
+
     // For screen flashing (red or bright).
-    int                 damagecount;
-    int                 bonuscount;
+    uint16_t            damagecount;
+    uint16_t            bonuscount;
+    byte                key_pickup, health_pickup, armor_pickup,
+                        ammo_pickup, weapon_pickup;
 
     // Who did damage (NULL for floors/ceilings).
     mobj_t*             attacker;

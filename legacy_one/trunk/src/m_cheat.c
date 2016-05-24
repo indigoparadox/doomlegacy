@@ -1043,10 +1043,7 @@ static void CheatHealthFunc(player_t * player, Cheat_t * cheat)
 
 static void CheatKeysFunc(player_t * player, Cheat_t * cheat)
 {
-    extern int playerkeys;
-
     player->cards |= it_allkeys;
-    playerkeys = 7;     // Key refresh flags
     P_SetMessage(player, TXT_CHEATKEYS, 51);
 }
 

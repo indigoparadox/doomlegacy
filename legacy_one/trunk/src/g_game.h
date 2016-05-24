@@ -133,6 +133,7 @@ extern  tic_t     levelstarttic;
 extern consvar_t  cv_crosshair;
 //extern consvar_t  cv_crosshairscale;
 extern consvar_t  cv_showmessages;
+extern consvar_t  cv_pickupflash;
 extern consvar_t  cv_fastmonsters;
 extern consvar_t  cv_predictingmonsters;  //added by AC for predmonsters
 

@@ -288,10 +288,10 @@ void HWR_DrawPic(int x, int y, int lumpnum)
 //  |/ |
 //  0--1
 
-    v[0].x = v[3].x = 2.0*(float)x/vid.width - 1;
-    v[2].x = v[1].x = 2.0*(float)(x + mpatch->width*vid.fdupx)/vid.width - 1;
-    v[0].y = v[1].y =1-2.0*(float)y/vid.height;
-    v[2].y = v[3].y =1-2.0*(float)(y + mpatch->height*vid.fdupy)/vid.height;
+    v[0].x = v[3].x = (float)x * vid.fx_scale2 - 1;
+    v[2].x = v[1].x = (float)(x + mpatch->width*vid.fdupx) * vid.fx_scale2 - 1;
+    v[0].y = v[1].y = 1 - (float)y * vid.fy_scale2;
+    v[2].y = v[3].y = 1 - (float)(y + mpatch->height*vid.fdupy) * vid.fy_scale2;
 
     v[0].z = v[1].z = v[2].z = v[3].z = 1.0f;
 
@@ -445,8 +445,8 @@ void HWR_FadeScreenMenuBack( uint32_t color_rgba, int alpha, int height )
     if( height < vid.height )
     {
         // [WDJ] bugginess of this calc when height==vid.height plagued win32.
-        float hf = ((float)height)/(float)vid.height;
-        v[0].y = v[1].y = 1.0f - ( 2.0 * hf );  // -1.0 .. 1.0
+        float hf2 = ((float)height) * vid.fy_scale2;
+        v[0].y = v[1].y = 1.0f - hf2;  // -1.0 .. 1.0
         // [WDJ] This would only give partial alpha, or overflow alpha.
         // Too hard to fix right for such a small visual impact.
 //        Surf.FlatColor.s.alpha = alpha * hf;    //calum: varies console alpha
@@ -602,22 +602,23 @@ void HWR_drawAMline( fline_t* fl, int color )
 
     color_rgba = V_GetColor( color );
 
-    v1.x = ((float)fl->a.x-(vid.width/2.0f))*(2.0f/vid.width);
-    v1.y = ((float)fl->a.y-(vid.height/2.0f))*(2.0f/vid.height);
+    v1.x = ((float)fl->a.x - vid.fx_center) * vid.fx_scale2;
+    v1.y = ((float)fl->a.y - vid.fy_center) * vid.fy_scale2;
 
-    v2.x = ((float)fl->b.x-(vid.width/2.0f))*(2.0f/vid.width);
-    v2.y = ((float)fl->b.y-(vid.height/2.0f))*(2.0f/vid.height);
+    v2.x = ((float)fl->b.x - vid.fx_center) * vid.fx_scale2;
+    v2.y = ((float)fl->b.y - vid.fy_center) * vid.fy_scale2;
 
     HWD.pfnDraw2DLine( &v1, &v2, color_rgba );
 }
 
 
 // -----------------+
-// HWR_DrawFill     : draw flat coloured rectangle, with no texture
+// HWR_DrawVidFill     : draw flat coloured rectangle, with no texture
 // -----------------+
-// Scaled to (320,200), (0,0) at upper left
+// Scaled to vid, (0,0) at upper left
+//  x, y : scaled screen coord.
 //  color : palette index
-void HWR_DrawFill( int x, int y, int w, int h, int color )
+void HWR_DrawVidFill( int x, int y, int w, int h, int color )
 {
     vxtx3d_t  v[4];
     FSurfaceInfo_t Surf;
@@ -626,10 +627,10 @@ void HWR_DrawFill( int x, int y, int w, int h, int color )
 //  | /|
 //  |/ |
 //  0--1
-    v[0].x = v[3].x = (x - 160.0f)/160.0f;
-    v[2].x = v[1].x = ((x+w) - 160.0f)/160.0f;
-    v[0].y = v[1].y = -(y - 100.0f)/100.0f;
-    v[2].y = v[3].y = -((y+h) - 100.0f)/100.0f;
+    v[0].x = v[3].x = (x - vid.fx_center) * vid.fx_scale2;
+    v[2].x = v[1].x = ((x+w) - vid.fx_center) * vid.fx_scale2;
+    v[0].y = v[1].y = (vid.fy_center - y) * vid.fy_scale2;
+    v[2].y = v[3].y = (vid.fy_center - (y+h)) * vid.fy_scale2;
 
 #ifdef _GLIDE_ARGB_
     //Hurdler: do we still use this argb color? if not, we should remove it

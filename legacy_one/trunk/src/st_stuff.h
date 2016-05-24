@@ -52,6 +52,8 @@ extern boolean  stbar_on;  // status bar active
 // Need this for SCR_Recalc() coz widgets coords change with resolutions.
 extern boolean  stbar_recalc;
 
+// pickupflash shifts
+extern byte pickupflash_table[ 4 ];
 
 // update all global position variables (just above)
 void ST_CalcPos(void);
@@ -59,6 +61,9 @@ void ST_CalcPos(void);
 //
 // STATUS BAR
 //
+
+// non-number out-of-band signal for int.  (Doom used 1994)
+#define  NON_NUMBER   0x7FFF
 
 // Called by main loop.
 boolean ST_Responder (event_t* ev);

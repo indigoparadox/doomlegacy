@@ -132,6 +132,8 @@ typedef struct viddef_s
  // special uses
     int         dupx,dupy;       // scale 1,2,3 value for menus & overlays
     float       fdupx,fdupy;     // same as dupx,dupy but exact value when aspect ratio isn't 320/200
+    float       fx_center,fy_center; // half width height
+    float       fx_scale2,fy_scale2; // 2.0 / width, 2.0 / height
     int         centerofs;       // centering for the scaled menu gfx
 
     //int         baseratio;       // SoM: Used to get the correct value for lighting walls //Hurdler: not used anymore

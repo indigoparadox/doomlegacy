@@ -283,6 +283,7 @@ void AllowTurbo_OnChange(void);
 
 CV_PossibleValue_t showmessages_cons_t[]={{0,"Off"},{1,"Minimal"},{2,"Play"},{3,"Verbose"},{4,"Diag"},{0,NULL}};
 CV_PossibleValue_t crosshair_cons_t[]   ={{0,"Off"},{1,"Cross"},{2,"Angle"},{3,"Point"},{0,NULL}};
+CV_PossibleValue_t pickupflash_cons_t[]   ={{0,"Off"},{1,"Status"},{2,"Half"},{3,"Vanilla"},{0,NULL}};
 
 consvar_t cv_crosshair        = {"crosshair"   ,"0",CV_SAVE,crosshair_cons_t};
 //consvar_t cv_crosshairscale   = {"crosshairscale","0",CV_SAVE,CV_YesNo};
@@ -296,6 +297,7 @@ consvar_t cv_mouse2_move      = {"mousemove2"  ,"1",CV_SAVE,CV_OnOff};
 consvar_t cv_alwaysfreelook2  = {"alwaysmlook2","0",CV_SAVE,CV_OnOff};
 
 consvar_t cv_showmessages     = {"showmessages","2",CV_SAVE | CV_CALL | CV_NOINIT,showmessages_cons_t,ShowMessage_OnChange};
+consvar_t cv_pickupflash      = {"pickupflash" ,"1",CV_SAVE, pickupflash_cons_t};
 consvar_t cv_allowturbo       = {"allowturbo"  ,"0",CV_NETVAR | CV_CALL, CV_YesNo, AllowTurbo_OnChange};
 
 #if MAXPLAYERS>32
@@ -1304,6 +1306,11 @@ void G_PlayerFinishLevel (int player)
     p->fixedcolormap = 0;               // cancel ir gogles
     p->damagecount = 0;                 // no palette changes
     p->bonuscount = 0;
+    p->health_pickup = 0;
+    p->armor_pickup = 0;
+    p->weapon_pickup = 0;
+    p->ammo_pickup = 0;
+    p->key_pickup = 0;
 
     if(p->chickenTics)
     {

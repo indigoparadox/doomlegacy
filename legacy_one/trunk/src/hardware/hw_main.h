@@ -106,7 +106,10 @@ void HWR_MakePatch (patch_t* patch, MipPatch_t* grPatch, Mipmap_t *grMipmap,
 void HWR_CreatePlanePolygons (void);
 void HWR_CreateStaticLightmaps (void);
 void HWR_PrepLevelCache (int numtextures);
-void HWR_DrawFill(int x, int y, int w, int h, int color);
+// Scaled to vid, (0,0) at upper left
+//  x, y : scaled screen coord.
+//  color : palette index
+void HWR_DrawVidFill( int x, int y, int w, int h, int color );
 void HWR_DrawPic(int x,int y,int lumpnum);
 
 void HWR_AddCommands (void);

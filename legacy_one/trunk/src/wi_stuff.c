@@ -739,16 +739,17 @@ static void WI_drawAnimatedBack(void)
 //  otherwise only use as many as necessary.
 // Returns new x position.
 //
+//  n : number to be drawn.  NON_NUMBER is not drawn
+//  digits : number of digits,  -1 is variable length
 
-static int WI_drawNum ( int           x,
-                        int           y,
-                        int           n,
-                        int           digits )
+static int WI_drawNum ( int  x, int  y,
+                        int  n,
+                        int  digits )
 {
 
-    int         fontwidth = num[0]->width;
-    int         neg;
-    int         temp;
+    int  fontwidth = num[0]->width;
+    int  neg;
+    int  temp;
 
     if (digits < 0)
     {
@@ -776,7 +777,7 @@ static int WI_drawNum ( int           x,
         n = -n;
 
     // if non-number, do not draw it
-    if (n == 1994)
+    if (n == NON_NUMBER)
         return 0;
 
     // draw the new number
