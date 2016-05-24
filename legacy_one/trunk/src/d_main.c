@@ -2549,6 +2549,7 @@ restart_command:
         V_ClearDisplay();
 
 #ifdef HWRENDER
+        EN_HWR_flashpalette = 0;  // software and default
         if( rendermode != render_soft )
             HWR_Startup();  // hardware render init
 #endif

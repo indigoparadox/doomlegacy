@@ -140,4 +140,6 @@ extern consvar_t cv_grsolvetjoin;
 extern consvar_t cv_grpolytile;
 extern consvar_t cv_grpolyshape;
 
+extern byte  EN_HWR_flashpalette;  // Enable flash palette call.
+
 #endif

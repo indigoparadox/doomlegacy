@@ -441,6 +441,8 @@ extern mobjtype_t      PuffType;
 
 #define MAXCHICKENHEALTH 30
 
+// Now used by Heretic and Doom powers (ironfeet).
+// A power counts down to 0. Below BLINKTHRESHOLD, there is a warning blink.
 #define BLINKTHRESHOLD  (4*32)
 #define WPNLEV2TICS     (40*TICRATE)
 #define FLIGHTTICS      (60*TICRATE)

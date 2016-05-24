@@ -93,7 +93,7 @@ typedef struct
     // pointer to current value
     int32_t *  num;
 
-    // list of patches for 0-9
+    // list of patches for 0-9, minus at [10], percent at [11]
     patch_t**  patches;
 
     // unused
@@ -101,20 +101,6 @@ typedef struct
 //    int data;
 
 } st_number_t;
-
-
-
-// Percent widget ("child" of number widget,
-//  or, more precisely, contains a number widget.)
-typedef struct
-{
-    // number information
-    st_number_t    ni;
-
-    // percent sign graphic
-    patch_t*       patch;
-
-} st_percent_t;
 
 
 
@@ -168,18 +154,9 @@ typedef struct
 } st_binicon_t;
 
 
-extern patch_t*         sttminus;       // from ST_lib
-
 //
 // Widget creation, access, and update routines
 //
-
-// Initializes widget library.
-// More precisely, initialize STMINUS,
-//  everything else is done somewhere else.
-//
-void STlib_init(void);
-
 
 
 // Number widget routines
@@ -188,13 +165,9 @@ void STlib_initNum ( st_number_t* ni, int x, int y,
 
 void STlib_updateNum ( st_number_t* ni );
 
-
-// Percent widget routines
-void STlib_initPercent ( st_percent_t* per, int x, int y,
-  patch_t** patch_list, int* num, patch_t* percent );
-
-
-void STlib_updatePercent ( st_percent_t* per );
+// Draw a number as a percentage.
+// Percent needs to be in the number font at [11].
+void STlib_updatePercent ( st_number_t*  per );
 
 
 // Multiple Icson widget routines

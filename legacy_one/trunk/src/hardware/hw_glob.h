@@ -113,6 +113,11 @@ void HWR_GetMappedPatch(MipPatch_t* gpatch, byte *colormap);
 MipPatch_t * HWR_GetPic (int lumpnum);
 void HWR_SetPalette( RGBA_t *palette );
 
+extern byte  EN_HWR_flashpalette;
+// Faster palette flashes using tints.
+//  palette_num : 0..15
+void HWR_SetFlashPalette( byte palette_num );
+
 // --------
 // hw_draw.c
 // --------

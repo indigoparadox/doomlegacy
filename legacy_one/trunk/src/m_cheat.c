@@ -227,23 +227,24 @@ int idkfa_armor = 200;
 int idkfa_armor_class = 2;
 int god_health = 100;
 
-static player_t *plyr;
+static player_t *cht_plyr;
 
 boolean cht_Responder(event_t * ev)
 {
     int i;
     char *msg;
     char ch = ev->data2; // ASCII character
+    player_t *plyr;
 
     if (ev->type == ev_keydown)
     {
         if (gamemode == heretic)
-            return HandleCheats(ch);
+            return HandleCheats(ch);  // consoleplayer
 
         msg = NULL;
 
         // added 17-5-98
-        plyr = consoleplayer_ptr;
+        plyr = cht_plyr = consoleplayer_ptr;
         // b. - enabled for more debug fun.
         // if (gameskill != sk_nightmare) {
 
@@ -385,7 +386,7 @@ boolean cht_Responder(event_t * ev)
         else if (cht_CheckCheat(&cheat_choppers, ch))
         {
             plyr->weaponowned[wp_chainsaw] = true;
-            plyr->powers[pw_invulnerability] = true;
+            plyr->powers[pw_invulnerability] = 1;
 
             //plyr->message = STSTR_CHOPPERS;
             msg = STSTR_CHOPPERS;
@@ -469,6 +470,7 @@ boolean cht_Responder(event_t * ev)
 void Command_CheatNoClip_f(void)
 {
     player_t *plyr;
+
     if (multiplayer)
         return;
 
@@ -896,6 +898,7 @@ static boolean HandleCheats(byte key)
     {   // Dead players can't cheat
         return false;
     }
+
     eat = false;
     for (i = 0; Cheats[i].func != NULL; i++)
     {

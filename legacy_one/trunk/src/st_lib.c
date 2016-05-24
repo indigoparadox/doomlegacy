@@ -63,19 +63,10 @@ boolean  stlib_enable_erase = false;
 // Set when redrawing from some unknown state, clear when additive update.
 boolean  stlib_force_refresh = true;
 
-//
-// Hack display negative frags.
-//  Loads and store the stminus lump.
-//
-patch_t *  sttminus;
-
-void STlib_init(void)
-{
-    sttminus = (patch_t *) W_CachePatchName("STTMINUS", PU_STATIC);
-}
 
 
-// Initialize number widget
+// Initialize number widget.
+// If font contains percent at [11] then also can draw percent number.
 //  patch_list : font
 void STlib_initNum ( st_number_t * ni,
                      int  x, int  y,
@@ -165,33 +156,23 @@ void STlib_updateNum ( st_number_t*  ni )
     }
 
     // draw a minus sign if necessary
-    if (neg)
-        V_DrawScaledPatch(x - 8, ni->y, sttminus);
-}
-
-
-//
-//  patch_list : font
-void STlib_initPercent ( st_percent_t*         per,
-                         int                   x,
-                         int                   y,
-                         patch_t**             patch_list,
-                         int*                  num,
-                         patch_t*              percent )
-{
-    STlib_initNum(&per->ni, x, y, patch_list, num, 3);
-    per->patch = percent;
+    if (neg && ni->patches[10])
+        V_DrawScaledPatch(x - 8, ni->y, ni->patches[10]);
 }
 
 
 
-
-void STlib_updatePercent ( st_percent_t*  per )
+// Draw a number as a percentage.
+void STlib_updatePercent ( st_number_t*  per )
 {
-    if (per->ni.command == STLIB_REFRESH || stlib_force_refresh )
-        V_DrawScaledPatch(per->ni.x, per->ni.y, per->patch);
+    // Percent is in the number font at [11]
+    if (per->command == STLIB_REFRESH || stlib_force_refresh )
+    {
+      if( per->patches[11] )
+        V_DrawScaledPatch(per->x, per->y, per->patches[11]);
+    }
 
-    STlib_updateNum(&per->ni);
+    STlib_updateNum(per);
 }
 
 

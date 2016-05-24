@@ -318,6 +318,7 @@
 #include "../z_zone.h"
 #include "../r_splats.h"
 #include "../t_func.h"
+#include "../st_stuff.h"
 
 
 
@@ -391,7 +392,7 @@ static void CV_grPolygonSmooth_OnChange(void);
 consvar_t cv_grrounddown = { "gr_rounddown", "Off", 0, CV_OnOff };
 consvar_t cv_grmlook_extends_fov = { "gr_mlook", "Full", CV_SAVE, grmlook_extends_fov_cons_t };
 consvar_t cv_grfov = { "gr_fov", "90", CV_SAVE | CV_CALL, grfov_cons_t, CV_grFov_OnChange };
-consvar_t cv_grsky = { "gr_sky", "On", 0, CV_OnOff };
+//consvar_t cv_grsky = { "gr_sky", "On", 0, CV_OnOff };
 consvar_t cv_grfog = { "gr_fog", "On", CV_SAVE, CV_OnOff };
 consvar_t cv_grfogcolor = { "gr_fogcolor", "000000", CV_SAVE, NULL };
 consvar_t cv_grfogdensity = { "gr_fogdensity", "100", CV_SAVE | CV_CALL | CV_NOINIT, CV_Unsigned, CV_FogDensity_ONChange };
@@ -2639,6 +2640,7 @@ static boolean HWR_CheckBBox(fixed_t * bspcoord)
 #ifdef DCK_WATER_TEST
 static int doomwaterflat;       //set by R_InitFlats hack
 #endif
+static byte  need_sky_background;
 
 // Called from HWR_RenderBSPNode
 //  num : subsector number
@@ -2779,7 +2781,7 @@ static void HWR_Subsector(int num)
 #ifdef POLYSKY
             HWR_RenderSkyPlane(&poly_subsectors[num], locFloorHeight);
 #endif
-            cv_grsky.value = true;
+            need_sky_background = true;
         }
     }
 
@@ -2801,7 +2803,7 @@ static void HWR_Subsector(int num)
 #ifdef POLYSKY
             HWR_RenderSkyPlane(&poly_subsectors[num], locCeilingHeight);
 #endif
-            cv_grsky.value = true;
+            need_sky_background = true;
         }
     }
 
@@ -3847,6 +3849,8 @@ void HWR_ClearView(void)
     // HWD.pfnGClipRect (0,0,vid.width,vid.height );
 }
 
+static int  viewsv_viewnumber;
+
 // -----------------+
 // HWR_SetViewSize  : set projection and scaling values depending on the
 //                  : view window size
@@ -3891,35 +3895,51 @@ void HWR_SetViewSize(int blocks)
 
     gr_pspritexscale = gr_viewwidth / BASEVIDWIDTH;
     gr_pspriteyscale = ((vid.height * gr_pspritexscale * BASEVIDWIDTH) / BASEVIDHEIGHT) / vid.width;
+
+    viewsv_viewnumber = 255;  // force init of render
 }
 
-//25/08/99: added by Hurdler for splitscreen correct palette changes and overlay
-extern player_t *plyr;
-void ST_doPaletteStuff(void);
-void ST_overlayDrawer(int playernum);
 
 //Hurdler: 3D water stuffs
 static int numplanes = 0;
 static int num_late_walls = 0;  // drawn late, transparent walls
 
+
 // ==========================================================================
 //
 // ==========================================================================
+// Split player saved settings.
+// indexed from viewnumber, when 0,1.
+static byte viewsv_need_sky[2];
+
+
+//  viewnumber : 0,1 Splitplayer window. Single player is always 0.
 void HWR_RenderPlayerView(int viewnumber, player_t * player)
 {
     //static float    distance = BASEVIDWIDTH;
 
-    //31/08/99: added by Hurdler for splitscreen correct palette changes
-    //                             & splitscreen dynamic lighting
+    // Palette moved to R_SetupFrame.
+
+    // Is also forced upon first Render, by init of viewsv_viewnumber.
+    if(viewsv_viewnumber != viewnumber)
     {
-        // do we really need to save player (is it not the same)?
-        player_t *saved_player = plyr;
-        plyr = player;
-        ST_doPaletteStuff();
-        plyr = saved_player;
+        if( viewsv_viewnumber < 2 )
+        {
+            // swap split window settings
+            viewsv_need_sky[viewsv_viewnumber] = need_sky_background;
+            need_sky_background = viewsv_need_sky[viewnumber];
+	}
+        else
+        {
+	    // Initial values.
+	    need_sky_background = true;
+	    viewsv_need_sky[0] = true;
+	    viewsv_need_sky[1] = true;
+	}
+        viewsv_viewnumber = viewnumber;
         HWR_SetLights(viewnumber);
     }
-
+     
     // note: sets viewangle, viewx, viewy, viewz
     R_SetupFrame(player);
 
@@ -3982,12 +4002,13 @@ void HWR_RenderPlayerView(int viewnumber, player_t * player)
     if (cv_grfog.value)
         HWR_FoggingOn();
 
-    if (cv_grsky.value)
+    // Needs to be drawn early.  Is drawn with different transform.
+    // Translucents are drawn over it.
+    // Enable when detected sky sectors in previous frame draw.
+    if (need_sky_background)
         HWR_DrawSkyBackground(player);
 
-    //Hurdler: it doesn't work in splitscreen mode
-    //cv_grsky.value = false;
-    cv_grsky.value = cv_splitscreen.value;
+    need_sky_background = false;
 
     // added by Hurdler for FOV 120
 //    if (cv_grfov.value != 90)
@@ -4196,7 +4217,6 @@ void HWR_AddEngineCommands(void)
     CV_RegisterVar(&cv_grbeta);
     CV_RegisterVar(&cv_grgamma);
     CV_RegisterVar(&cv_grzbuffer);
-    CV_RegisterVar(&cv_grsky);
 #ifdef TRANSWALL_CHOICE
     CV_RegisterVar(&cv_grtranswall);
 #endif
@@ -4215,7 +4235,7 @@ void HWR_Startup(void)
 
     CONS_Printf("HWR_Startup()\n");
 
-    // initalize light lut translation
+    // initialize light lut translation
     InitLumLut();
 
     // do this once
@@ -4240,6 +4260,9 @@ void HWR_Startup(void)
 
     if (rendermode == render_opengl)
         textureformat = patchformat = GR_RGBA;
+
+    // The hardware draw modes that can use the flash palette call.
+    EN_HWR_flashpalette = (rendermode == render_opengl) || (rendermode == render_d3d);
 
     startupdone = 1;
 }
