@@ -877,9 +877,11 @@ typedef struct vissprite_s
 
     //Fab:29-04-98: for MF_SHADOW sprites, which translucency table to use
     byte*               translucentmap;
-    byte		translucent_index;
+    byte                translucent_index;
+   
+    byte                dist_priority;  // 0..255, when too many sprites   
 
-    int                 mobjflags;
+    uint32_t            mobjflags;  // mobjflag_e, MF_
 
     // SoM: 3/6/2000: height sector for underwater/fake ceiling support
     int                 heightsec;
@@ -896,7 +898,7 @@ typedef struct vissprite_s
     int                 sz_bot;
     int                 sz_top;
 
-    int                 cut;  //0 for none, bit 1 for top, bit 2 for bottom
+    uint8_t             cut;  //0 for none, bit 1 for top, bit 2 for bottom
                                 // OR of spritecut_e
 } vissprite_t;
 

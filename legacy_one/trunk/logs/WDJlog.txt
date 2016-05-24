@@ -4956,3 +4956,12 @@ patchfile = w105_23_sortedsprite.patch
 Remove old code (DRAW_UNSORTED) and choice code (DRAW_CHOICE) in
 hardware renderer.  The new code (DRAW_SORTED) of w89_draw_sorted
 is used, which sorts transparent walls and sprites.
+
+*** W105_spritedist
+patchfile = w105_24_spritedist.patch
+- commit revision 1227
+Improve the handling of drawing an excessive numbers of sprites.
+The closest sprites are always drawn.
+The farther sprites depend upon the distance from the viewer and priority.
+The priority takes into consideration the object height, and if it is a
+corpse, missile, or monster.
