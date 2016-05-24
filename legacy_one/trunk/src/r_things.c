@@ -1582,7 +1582,8 @@ void R_DrawPSprite (pspdef_t* psp)
         (120<<(FRACBITS)) + FRACUNIT/2 - (psp->sy - sprlump->topoffset)
         : (BASEYCENTER<<FRACBITS) + FRACUNIT/2 - (psp->sy - sprlump->topoffset);
 
-    if( raven ) {
+    if( raven_heretic_hexen )
+    {
         if( rdraw_viewheight == vid.height || (!cv_scalestatusbar.value && vid.dupy>1))
             vis->texturemid -= PSpriteSY[viewplayer->readyweapon];
     }
@@ -2288,10 +2289,12 @@ void Sk_SetDefaultValue(skin_t *skin)
     strcpy (skin->name, DEFAULTSKIN);
     strcpy (skin->faceprefix, "STF");
     for (i=0;i<sfx_freeslot0;i++)
+    {
         if (S_sfx[i].skinsound!=-1)
         {
             skin->soundsid[S_sfx[i].skinsound] = i;
         }
+    }
     memcpy(&skins[0].spritedef, &sprites[SPR_PLAY], sizeof(spritedef_t));
 }
 

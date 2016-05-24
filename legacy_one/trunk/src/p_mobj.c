@@ -2169,7 +2169,7 @@ void P_SpawnMapthing (mapthing_t* mthing)
     }
 
     // Check for boss spots
-    if (raven && mthing->type == 56)    // Monster_BossSpot
+    if (raven_heretic_hexen && mthing->type == 56)    // Monster_BossSpot
     {
         P_AddBossSpot(mthing->x << FRACBITS, mthing->y << FRACBITS, mthing->angle * ANGLE_1);   // SSNTails 06-10-2003
         return;

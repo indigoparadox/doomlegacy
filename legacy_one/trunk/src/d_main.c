@@ -259,12 +259,14 @@
 #include "p_chex.h"
 
 #ifdef HWRENDER
-#include "hardware/hw_main.h"   // 3D View Rendering
+#include "hardware/hw_main.h"
+  // 3D View Rendering
 #endif
 
 #include "hardware/hw3sound.h"
 
-#include "b_game.h"     //added by AC for acbot
+#include "b_game.h"
+  //added by AC for acbot
 
 #ifdef FRENCH_INLINE
 #include "d_french.h"
@@ -972,7 +974,7 @@ void D_PageDrawer(char *lumpname)
             }
         }
     }
-    if (raven && demosequence != 2)     // big hack for legacy's credits
+    if (raven_heretic_hexen && demosequence != 2)     // big hack for legacy's credits
     {
         V_DrawRawScreen_Num(0, 0, W_GetNumForName(lumpname), 320, 200);
         if (demosequence == 0 && pagetic <= 140)
@@ -1758,7 +1760,7 @@ void IdentifyVersion()
     }
     gamedesc_id = gamedesc.gamedesc_id;
     gamemode = gamedesc.gamemode;
-    raven = (gamemode == heretic) || (gamemode == hexen);
+    raven_heretic_hexen = (gamemode == heretic) || (gamemode == hexen);
     CONS_Printf("IWAD recognized: %s\n", gamedesc.gname);
 
     if (gamedesc.gameflags & GD_unsupported)  goto unsupported_wad;

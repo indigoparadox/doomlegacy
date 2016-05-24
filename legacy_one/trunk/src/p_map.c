@@ -2544,8 +2544,9 @@ boolean PIT_ChangeSector (mobj_t*  thing)
     // crunch bodies to giblets
     if (thing->flags & MF_CORPSE)
     {
-        if( !raven )
+        if( !raven_heretic_hexen )
         {
+            // Doom crush
             P_SetMobjState (thing, S_GIBS);
             thing->flags &= ~MF_SOLID;
             //added:22-02-98: lets have a neat 'crunch' sound!

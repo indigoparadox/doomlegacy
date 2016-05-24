@@ -177,8 +177,8 @@ game_desc_t *  D_GameDesc( int i );
 extern game_desc_e     gamedesc_id; // unique game id
 extern game_desc_t     gamedesc;    // active desc used by most of legacy
 extern gamemode_e      gamemode;
-extern boolean         inventory;   // true with heretic and hexen
-extern boolean         raven;       // true with heretic and hexen
+extern boolean         have_inventory;   // true with heretic and hexen
+extern boolean         raven_heretic_hexen;  // true with heretic and hexen
 
 // Set if homebrew PWAD stuff has been added.
 extern  boolean	       modifiedgame;

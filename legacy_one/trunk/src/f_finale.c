@@ -339,7 +339,7 @@ void F_Ticker (void)
                     finalecount = 0;
                     finalestage = 1;
                     wipegamestate = GS_FORCEWIPE;             // force a wipe
-                    if (!raven && gameepisode == 3)
+                    if (!raven_heretic_hexen && gameepisode == 3)
                         S_StartMusic (mus_bunny);
                 }
             }
@@ -376,7 +376,7 @@ void F_TextWrite (void)
 #endif
 
     // draw some of the text onto the screen
-    if( raven )
+    if( raven_heretic_hexen )
     {
         cx = 20;
         cy = 5;
@@ -398,8 +398,8 @@ void F_TextWrite (void)
             break;
         if (c == '\n')
         {
-            cx = raven ? 20 : 10;
-            cy += raven ? 9 : 11;
+            cx = raven_heretic_hexen ? 20 : 10;
+            cy += raven_heretic_hexen ? 9 : 11;
             continue;
         }
 

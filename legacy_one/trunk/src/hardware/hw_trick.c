@@ -79,6 +79,7 @@
 #include <math.h>
 
 #include "../doomincl.h"
+#include "../doomstat.h"
 
 #include "hw_glob.h"
 #include "../r_local.h"
@@ -133,7 +134,7 @@ static void addLineToChain(sector_t *sector, line_t *line)
 }
 
 //
-// We don´t want a memory hole, do we? ;-)
+// We dont want a memory hole, do we? ;-)
 //
 static void releaseLineChains(void)
 {
@@ -808,7 +809,6 @@ static fixed_t estimateFloorHeight(sector_t *thisSector)
 
 #define CORRECT_FLOAT_EXPERIMENTAL
 
-extern boolean raven;       // true with heretic and hexen
 
 // --------------------------------------------------------------------------
 // Some levels have missing sidedefs, which produces HOM, so let's try to
@@ -826,7 +826,7 @@ void HWR_CorrectSWTricks(void)
     sector_t **sectorList;
     sector_t *outSector;
     
-    if ( (0 == cv_grcorrecttricks.value) || raven )
+    if ( raven_heretic_hexen || (cv_grcorrecttricks.value == 0) )
         return;
     
     // determine lines for sectors

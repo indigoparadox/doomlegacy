@@ -648,7 +648,7 @@ void P_ArchivePlayers(void)
         }
         WRITEU16(save_p, flags);
 
-        if (inventory)
+        if (have_inventory)
         {
             WRITEBYTE(save_p, ply->inventorySlotNum);
             for (j = 0; j < ply->inventorySlotNum; j++)
@@ -749,7 +749,7 @@ void P_UnArchivePlayers(void)
 
         flags = READU16(save_p);
 
-        if (inventory)
+        if (have_inventory)
         {
             ply->inventorySlotNum = READBYTE(save_p);
             for (j = 0; j < ply->inventorySlotNum; j++)

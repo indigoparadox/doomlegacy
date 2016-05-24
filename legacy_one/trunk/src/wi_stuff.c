@@ -862,7 +862,7 @@ void WI_draw_wait( int net_nodes, int net_players, int wait_players, int wait_ti
     {
         waitmsg = va("WAIT PLAYERS %2d/%2d : NODES %2d : TIMEOUT %4d",
                     net_players, wait_players, net_nodes, wait_tics/TICRATE);
-        length = 28;
+        length = 38;  // Doom 28, but Heretic text uses more
         if( server )
         {
             lines = 2;
@@ -872,13 +872,14 @@ void WI_draw_wait( int net_nodes, int net_players, int wait_players, int wait_ti
     else
     {
         waitmsg = va("START IN %4d", wait_tics/TICRATE);
-        length = 10;
+        length = 18;  // Doom 10
     }
+    // Heretic: The wait message barely fits within the screen width.
     //i=V_StringWidth(num);
-    M_DrawTextBox( 106, 20, length, lines );
-    V_DrawString( 116, 28, V_WHITEMAP, waitmsg );
+    M_DrawTextBox( 2, 20, length, lines );
+    V_DrawString( 12, 28, V_WHITEMAP, waitmsg );
     if( msg2 )
-        V_DrawString( 116, 36, V_WHITEMAP, msg2 );
+        V_DrawString( 12, 36, V_WHITEMAP, msg2 );
 }
 
 

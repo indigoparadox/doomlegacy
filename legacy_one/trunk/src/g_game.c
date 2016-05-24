@@ -227,7 +227,8 @@ char            game_map_filename[MAX_WADPATH];      // an external wad filename
 
 gamemode_e      gamemode = indetermined;       // Game Mode - identify IWAD as shareware, retail etc.
 
-boolean         raven = false;
+boolean         raven_heretic_hexen = false;
+boolean         have_inventory = false;      // Heretic, Hexen
 language_t      language = english;          // Language.
 boolean         modifiedgame;                  // Set if homebrew PWAD stuff has been added.
 
@@ -550,7 +551,7 @@ boolean G_InventoryResponder(player_t *ply, int gc[num_gamecontrols][2], event_t
   // use up an inventory item when game saving.
   static boolean keyup_armed = false;
    
-  if (!inventory)
+  if (! have_inventory)
     return false;
 
   switch (ev->type)
@@ -2309,7 +2310,7 @@ boolean G_Downgrade(int version)
         // disable rocket trails
         states[S_ROCKET].action.acv = NULL; //NULL like in Doom2 v1.9
 
-        // Boris : for older demos, initalise the new skincolor value
+        // Boris : for older demos, initialize the new skincolor value
         //         also disable the new preferred weapons order.
         for(i=0;i<4;i++)
         {

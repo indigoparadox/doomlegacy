@@ -220,8 +220,6 @@ mobj_t *P_SpawnMissileAngle(mobj_t *source, mobjtype_t type,
 }
 
 
-boolean inventory = false;
-
 extern int GetWeaponAmmo[];
 extern byte cheat_mus_seq[];
 extern byte cheat_choppers_seq[];
@@ -239,7 +237,7 @@ void HereticPatchEngine(void)
 {
     ceilmovesound = sfx_dormov;
     doorclosesound = sfx_doropn;
-    inventory = true;
+    have_inventory = true;
 
     // we can put such thinks in a dehacked lump, maybe for later
     S_sfx[sfx_oof].name        = "plroof";
