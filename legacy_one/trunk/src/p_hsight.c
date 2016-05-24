@@ -43,7 +43,7 @@
 /*
 ==============================================================================
 
-							P_CheckSight
+                                                        P_CheckSight
 
 This uses specialized forms of the maputils routines for optimized performance
 

@@ -467,7 +467,7 @@ void  EV_OpenDoor(int sectag, int speed, int wait_time);
 void  EV_CloseDoor(int sectag, int speed);
 
 int   EV_DoLockedDoor ( line_t* line, vldoor_e type, mobj_t* thing,
-			fixed_t speed );
+                        fixed_t speed );
 
 void  T_VerticalDoor (vldoor_t* door);
 void  P_SpawnDoorCloseIn30 (sector_t* sec);
@@ -766,11 +766,11 @@ typedef enum
 } result_e;
 
 result_e  T_MovePlane ( sector_t*     sector,
-			fixed_t       speed,
-			fixed_t       dest,
-			boolean       crush,
-			int           floorOrCeiling,
-			int           direction );
+                        fixed_t       speed,
+                        fixed_t       dest,
+                        boolean       crush,
+                        int           floorOrCeiling,
+                        int           direction );
 
 int   EV_BuildStairs ( line_t* line, stair_e type );
 
@@ -1121,7 +1121,7 @@ typedef struct {
   // Thinker structure for Pusher
   thinker_t thinker;  // must be first for ptr conversion
   mobj_t* source;      // Point source if point pusher
-   			// not saved, derived from affectee
+                        // not saved, derived from affectee
  // State to be saved in save game (p_saveg.c)
  // Savegame saves fields (type ... )
   pushpull_type_e  type;

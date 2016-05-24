@@ -120,7 +120,7 @@ void P_RunThinkers (void)
     {
         next_thinker = currentthinker->next;  // because of T_RemoveThinker
         if (currentthinker->function.acp1)
-	    currentthinker->function.acp1 (currentthinker);
+            currentthinker->function.acp1 (currentthinker);
         currentthinker = next_thinker;
     }
 }
