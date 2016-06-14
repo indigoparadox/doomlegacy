@@ -5162,3 +5162,9 @@ patchfile = w105_37_spawn_fog.patch
 - commit revision 1241
 Move the spawn fog over the spawned monster and spawned object.
 
+*** W105_fixdep
+patchfile = w105_38_fixdep.patch
+- commit revision 1242
+Fix a sizeof() compile issue in fixdep.
+
+
