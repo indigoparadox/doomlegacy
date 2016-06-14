@@ -33,6 +33,7 @@
 #ifndef HW_3DS_DRV_H
 #define HW_3DS_DRV_H
 
+#include "doomtype.h"
 // Use standard hardware API
 #include "hw_drv.h"
 
@@ -95,8 +96,8 @@ typedef struct sfx_data_s
 {
     int     length;
     void    *data;
-    int     priority;
-    int     id;                     // Doom sfx id
+    int16_t priority;   // Heretic style, signed priority, neg is lowest.
+    sfxid_t id;                     // Doom sfx id
     int     pitch;
     int     volume;
     int     sep;                    // Only when source is 2D sound

@@ -155,7 +155,9 @@ void I_SetSfxVolume(int volume)
     if(nosoundfx)
         return;
 
-    set_volume (cv_soundvolume.value*255/31,-1);
+    // Can use mix_sfxvolume (0..31), or set local volume vars.
+    // mix_sfxvolume = volume;
+    set_volume (volume*255/31,-1);
 }
 
 // MUSIC API - dummy. Some code from DOS version.

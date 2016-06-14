@@ -62,6 +62,10 @@
 void  I_GetSfx (sfxinfo_t*  sfx);  // read lump to sfx data, length
 void  I_FreeSfx (sfxinfo_t* sfx);
 
+// The volumes for the hardware and software mixers.
+extern int mix_sfxvolume;
+extern int mix_musicvolume;
+
 
 // Init at program start...
 void I_StartupSound();
@@ -79,7 +83,8 @@ void I_ShutdownSound(void);
 //
 
 // Starts a sound in a particular sound channel.
-int I_StartSound ( int id, int vol, int sep, int pitch, int priority );
+//  vol : 0..255
+int I_StartSound ( sfxid_t sfxid, int vol, int sep, int pitch, int priority );
 
 
 // Stops a sound channel.

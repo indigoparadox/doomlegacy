@@ -229,17 +229,18 @@ int  addsfx( int sfxid, int volume, int step, int seperation )
     //  range is: 1 - 256
     seperation += 1;
 
-    // Volume arrives in range 0..255 and it must be in 0..cv_soundvolume...
-    volume = (volume * cv_soundvolume.value) >> 6;
+    // vol : range 0..255
+    // mix_sfxvolume : range 0..31
+    volume = (volume * mix_sfxvolume) >> 6;
 
     // Per left/right channel.
     //  x^2 seperation,
     //  adjust volume properly.
     leftvol =
-    volume - ((volume*seperation*seperation) >> 16); ///(256*256);
+      volume - ((volume*seperation*seperation) >> 16); ///(256*256);
     seperation = seperation - 257;
     rightvol =
-    volume - ((volume*seperation*seperation) >> 16);
+      volume - ((volume*seperation*seperation) >> 16);
 
     // Sanity check, clamp volume.
     if (rightvol < 0 || rightvol > 127)
@@ -321,7 +322,9 @@ void I_SetSfxVolume(int volume)
   //  the menu/config file setting
   //  to the state variable used in
   //  the mixing.
-  //snd_SfxVolume = volume;
+
+  // Can use mix_sfxvolume (0..31), or set local volume vars.
+  // mix_sfxvolume = volume;
   printf( "I_SetSfxVolume %d\n", volume);
 }
 
@@ -406,13 +409,9 @@ void I_FreeSfx (sfxinfo_t* sfx)
 // Pitching (that is, increased speed of playback)
 //  is set, but currently not used by mixing.
 //
-int
-I_StartSound
-( int        id,
-  int        vol,
-  int        sep,
-  int        pitch,
-  int        priority )
+//  vol : volume, 0..255
+// Return a channel handle.
+int I_StartSound(sfxid_t sfxid, int vol, int sep, int pitch, int priority)
 {
 
     if (nosoundfx)
@@ -431,7 +430,7 @@ I_StartSound
 
 
 
-// You need the handle returned by StartSound.
+//   handle : the handle returned by StartSound.
 void I_StopSound (int handle)
 {
     int slot = handle & CHANNEL_NUM_MASK;
@@ -442,7 +441,7 @@ void I_StopSound (int handle)
 }
 
 
-// You need the handle returned by StartSound.
+//   handle : the handle returned by StartSound.
 int I_SoundIsPlaying(int handle)
 {
     int slot = handle & CHANNEL_NUM_MASK;

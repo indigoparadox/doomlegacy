@@ -156,8 +156,9 @@ static int addsfx ( int		sfxid,
     //  range is: 1 - 256
     seperation += 1;
    
-    // Volume arrives in range 0..255 and it must be in 0..cv_soundvolume...
-    volume = (volume * cv_soundvolume.value) >> 6;
+    // volume : range 0..255
+    // mix_sfxvolume : range 0..31
+    volume = (volume * mix_sfxvolume) >> 6;
     // Notice : sdldoom replaced all the calls to avoid this conversion
     
     leftvol = volume - ((volume*seperation*seperation) >> 16);
@@ -220,7 +221,8 @@ void I_SetChannels(void)
 
 void I_SetSfxVolume(int volume)
 {
-    CV_SetValue(&cv_soundvolume, volume);
+    // Can use mix_sfxvolume (0..31), or set local volume vars.
+    // mix_sfxvolume = volume;
 }
 
 
@@ -268,7 +270,9 @@ void I_FreeSfx (sfxinfo_t* sfx)
         sfx->data -= 8;   // undo skip header, for Z_Free
 }
 
-int I_StartSound(int id,int vol,int sep,int pitch,int priority)
+//  vol : volume, 0..255
+// Return a channel handle.
+int I_StartSound(sfxid_t sfxid, int vol, int sep, int pitch, int priority)
 {
     // UNUSED
     priority = 0;
@@ -281,7 +285,7 @@ int I_StartSound(int id,int vol,int sep,int pitch,int priority)
     return id;
 }
 
-// You need the handle returned by StartSound.
+//   handle : the handle returned by StartSound.
 void I_StopSound (int handle)
 {
     SndCommand theCmd;
@@ -299,7 +303,7 @@ void I_StopSound (int handle)
     channelbusy[handle] = 0;
 }
 
-// You need the handle returned by StartSound.
+//   handle : the handle returned by StartSound.
 int I_SoundIsPlaying(int handle)
 {
     return channelbusy[handle];
@@ -321,6 +325,10 @@ void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
 	
     if(nosoundfx)
         return;
+
+    // vol : range 0..255
+    // mix_sfxvolume : range 0..31
+    vol = (vol * mix_sfxvolume) >> 6;
 
     lvol = vol - ((vol*sep*sep) >> 16);
     sep = sep - 257;

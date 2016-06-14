@@ -214,6 +214,9 @@ int strlwr(char *n);
 #define MININT    ((int)0x80000000)
 #endif
 
+// Sound effect id type.
+typedef  uint16_t  sfxid_t;
+
 // This is compatible with SDL_color (R,G,B,-).
 typedef union {
     uint32_t  rgba;

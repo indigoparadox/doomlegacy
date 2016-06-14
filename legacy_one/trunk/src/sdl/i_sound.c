@@ -215,14 +215,8 @@ static void I_SetChannels(void)
 
 void I_SetSfxVolume(int volume)
 {
-    // Identical to DOS.
-    // Basically, this should propagate
-    //  the menu/config file setting
-    //  to the state variable used in
-    //  the mixing.
-
-    CV_SetValue(&cv_soundvolume, volume);
-
+    // Can use mix_sfxvolume (0..31), or set local volume vars.
+    // mix_sfxvolume = volume;
 }
 
 
@@ -259,7 +253,9 @@ static void stop_channel( mix_channel_t * chanp )
 // Pitching (that is, increased speed of playback)
 //  is set, but currently not used by mixing.
 //
-int I_StartSound(int sfxid, int vol, int sep, int pitch, int priority)
+//  vol : volume, 0..255
+// Return a channel handle.
+int I_StartSound(sfxid_t sfxid, int vol, int sep, int pitch, int priority)
 {
     int handle;
     mix_channel_t  *  chanp;
@@ -343,8 +339,9 @@ int I_StartSound(int sfxid, int vol, int sep, int pitch, int priority)
     //  adjust volume properly.
     //    vol *= 8;
 
-    // Volume arrives in range 0..255 and it must be in 0..cv_soundvolume...
-    vol = (vol * cv_soundvolume.value) >> 7;
+    // vol : range 0..255
+    // mix_sfxvolume : range 0..31
+    vol = (vol * mix_sfxvolume) >> 7;
     // Notice : sdldoom replaced all the calls to avoid this conversion
 
     int leftvol = vol - ((vol * sep * sep) >> 16);      // (256*256);
@@ -383,7 +380,7 @@ int I_StartSound(int sfxid, int vol, int sep, int pitch, int priority)
 }
 
 
-// You need the handle returned by StartSound.
+//   handle : the handle returned by StartSound.
 void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
 {
     int slot = handle & CHANNEL_NUM_MASK;
@@ -399,8 +396,9 @@ void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
         //  x^2 seperation,
         //  adjust volume properly.
         //    vol *= 8;
-        // Volume arrives in range 0..255 and it must be in 0..cv_soundvolume...
-        vol = (vol * cv_soundvolume.value) >> 7;
+        // vol : range 0..255
+        // mix_sfxvolume : range 0..31
+        vol = (vol * mix_sfxvolume) >> 7;
 
         int leftvol = vol - ((vol * sep * sep) >> 16);      // (256*256);
         sep = sep - 257;
@@ -430,7 +428,7 @@ void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
 }
 
 
-// You need the handle returned by StartSound.
+//   handle : the handle returned by StartSound.
 void I_StopSound(int handle)
 {
     int slot = handle & CHANNEL_NUM_MASK;
@@ -450,7 +448,7 @@ void I_StopSound(int handle)
     }
 }
 
-// You need the handle returned by StartSound.
+//   handle : the handle returned by StartSound.
 int I_SoundIsPlaying(int handle)
 {
     int slot = handle & CHANNEL_NUM_MASK;

@@ -181,7 +181,7 @@ typedef struct {
         // Need for produce surround sound
     LPDIRECTSOUNDBUFFER lpSurround;
 #endif
-    int                 priority;
+    int16_t             priority;
     boolean             duplicate;
 } StackSound_t;
 
@@ -562,13 +562,15 @@ void I_SetSfxVolume(int volume)
 {
     int     vol;
     HRESULT hr;
+    // Can set local var to volume, or use the global mix_sfxvolume.   
 
     if (nosoundfx || !sound_started)
         return;
         
     // use the last quarter of volume range
-    if (cv_soundvolume.value)
-        vol = (cv_soundvolume.value * ((DSBVOLUME_MAX-DSBVOLUME_MIN)/4)) / 31 +
+    // mix_sfxvolume or volume : range 0..31
+    if (volume)
+        vol = (volume * ((DSBVOLUME_MAX-DSBVOLUME_MIN)/4)) / 31 +
               (DSBVOLUME_MAX - ((DSBVOLUME_MAX-DSBVOLUME_MIN)/4));
     else
         vol = DSBVOLUME_MIN;    // make sure 0 is silence
@@ -609,13 +611,14 @@ static void I_UpdateSoundPanning (LPDIRECTSOUNDBUFFER lpSnd, int sep)
 }
 
 // search a free slot in the stack, free it if needed
-static int GetFreeStackNum(int  newpriority)
+static int GetFreeStackNum(int16_t  newpriority)
 {
-    int  lowestpri,lowestprihandle;
+    int16_t  lowestpri;
+    int  lowestprihandle;
     int  i;
     // DirectSound can't play multiple instances of the same sound buffer
     // unless they are duplicated, so if the sound buffer is in use, make a duplicate
-    lowestpri = 256;
+    lowestpri = 0x3FFF;
     lowestprihandle = 0;
     for (i=0; i<MAXSTACKSOUNDS; i++)
     {
@@ -707,6 +710,7 @@ int I_StartSound (int id, int vol, int sep, int pitch, int priority )
         goto ret_nothing;
 
     //CONS_Printf ("I_StartSound:\n\t\tS_sfx[%d]\n", id);
+    // Heretic style signed priority, -10..2560, neg is lowest.
     handle = GetFreeStackNum(priority);
     if( handle<0 )  
         goto ret_nothing;

@@ -2722,7 +2722,8 @@ restart_command:
     //
     CONS_Printf(text[S_SETSOUND_NUM]);
     nosoundfx = M_CheckParm("-nosound");
-    nomusic = M_CheckParm("-nomusic");  // WARNING: DOS version initmusic in I_StartupSound
+    nomusic = M_CheckParm("-nomusic");
+    // WARNING: DOS version initmusic in I_StartupSound
     I_StartupSound();
     S_Init(cv_soundvolume.value, cv_musicvolume.value);
 
