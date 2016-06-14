@@ -88,7 +88,7 @@ void T_Init_FSArrayList(void)
    {
        fs_array_t * sfap, * sfap_nxt;
        // enable to test if this is happening
-//       GenPrintf(EMSG_debug, "T_Init_FSArrayList: clearing array list\n" );
+//       debug_Printf( "T_Init_FSArrayList: clearing array list\n" );
 #ifdef FS_ARRAYLIST_STRUCTHEAD
        sfap = fs_arraylist.next;
 #else      

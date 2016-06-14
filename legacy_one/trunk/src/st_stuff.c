@@ -908,7 +908,7 @@ void ST_doPaletteStuff( player_t * plyr )
         if( EN_HWR_flashpalette )  // some hardware draw can flash palette
         {
             // Imitate the palette flash
-            //CONS_Printf("palette: %d\n", palette);
+            //debug_Printf("palette: %d\n", palette);
             HWR_SetFlashPalette( palette );
         }
         else

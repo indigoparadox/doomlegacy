@@ -220,7 +220,7 @@ void* Chex_safe_pictures( char* name, void* lumpptr )
            // found a matching entry name
            uint64_t c_checksum = W_lump_checksum( lumpptr );
            // [WDJ] Uncomment the next line to get the checksums of pictures.
-//	   GenPrintf(EMSG_debug, "Chex_safe_pictures: %8.8s  checksum=%16lX\n", name, (long)c_checksum);
+//	   debug_Printf( "Chex_safe_pictures: %8.8s  checksum=%16lX\n", name, (long)c_checksum);
            if( chex_repl[i].checksum == c_checksum )
            {
                // it is the original, replace it

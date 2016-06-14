@@ -421,7 +421,7 @@ boolean R_AddSingleSpriteDef (char* sprname, spritedef_t* spritedef, int wadnum,
 #ifdef DEBUG_CHEXQUEST
             // [WDJ] 4/28/2009 Chexquest
             // [WDJ] not fatal, some wads have broken sprite but still play
-            GenPrintf(EMSG_debug, "R_InitSprites: No patches found "
+            debug_Printf( "R_InitSprites: No patches found "
                      "for %s frame %c \n", sprname, frame+'A');
 #else
             I_Error ("R_InitSprites: No patches found "
@@ -1551,7 +1551,7 @@ void R_DrawPSprite (pspdef_t* psp)
     // There being one viewpoint per offset, probably do not need this.
     if( flip )
     {
-        // GenPrintf(EMSG_debug,"Player weapon flip detected!\n" );
+        // debug_Printf("Player weapon flip detected!\n" );
         tx -= sprlump->width - sprlump->offset;  // Fraggle's flip offset
     }
     else

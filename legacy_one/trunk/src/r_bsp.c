@@ -1281,7 +1281,7 @@ void R_RenderBSPNode (int bspnum)
         if ((bsp = *--bspnum_p) == NULL )
         {
             // we're done
-            //CONS_Printf ("Subsectors visited: %d\n", visited);
+            //debug_Printf("Subsectors visited: %d\n", visited);
             return;
         }
 

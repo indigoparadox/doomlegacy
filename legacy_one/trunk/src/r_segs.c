@@ -237,7 +237,7 @@ static void R_DrawSplatColumn (column_t* column)
             dc_source = (byte *)column + 3;
             dc_texturemid = basetexturemid - (column->topdelta<<FRACBITS);
             
-            //CONS_Printf("l %d h %d %d\n",dc_yl,dc_yh, column->length);
+            //debug_Printf("l %d h %d %d\n",dc_yl,dc_yh, column->length);
             // Drawn by either R_DrawColumn
             //  or (SHADOW) R_DrawFuzzColumn.
             colfunc ();
@@ -1922,7 +1922,7 @@ void R_RenderSegLoop (void)
 	// The cause of the overflow many times seems to be the step value.
         if( bottomfrac < topfrac ) {
 	   // Uncomment to see which map areas cause this overflow.
-//	   GenPrintf(EMSG_debug,"Overflow break: bottomfrac(%i) < topfrac(%i)\n", bottomfrac, topfrac );
+//	   debug_Printf("Overflow break: bottomfrac(%i) < topfrac(%i)\n", bottomfrac, topfrac );
 	   break;
 	}
     }
@@ -2518,7 +2518,7 @@ void R_StoreWallRange( int   start, int   stop)
     if( bottomfrac < topfrac )
     {
        // enable print to see where this happens
-//     GenPrintf(EMSG_debug,"Overflow mult: bottomfrac(%i) < topfrac(%i)\n", bottomfrac, topfrac );
+//     debug_Printf("Overflow mult: bottomfrac(%i) < topfrac(%i)\n", bottomfrac, topfrac );
        return;
     }
 
@@ -2711,7 +2711,7 @@ void R_StoreWallRange( int   start, int   stop)
     if( bottomfrac < topfrac )
     {
        // Enable to see where this happens.
-//       GenPrintf(EMSG_debug,"Overflow in call: bottomfrac(%i) < topfrac(%i)\n", bottomfrac, topfrac );
+//       debug_Printf("Overflow in call: bottomfrac(%i) < topfrac(%i)\n", bottomfrac, topfrac );
        return;
     }
 

@@ -598,7 +598,7 @@ void R_DrawViewBorder (void)
 
 
 #ifdef DEBUG
-    GenPrintf(EMSG_debug,"RDVB: vidwidth %d vidheight %d rdraw_scaledviewwidth %d rdraw_viewheight %d\n",
+    debug_Printf("RDVB: vidwidth %d vidheight %d rdraw_scaledviewwidth %d rdraw_viewheight %d\n",
              vid.width,vid.height,rdraw_scaledviewwidth,rdraw_viewheight);
 #endif
 

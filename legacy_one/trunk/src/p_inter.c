@@ -146,6 +146,7 @@ void P_SetMessage(player_t *player, char *message, byte msglevel)
     // This actually optimizes cheaper than a table.
     switch( cv_showmessages.value )
     {
+     case 5: // dev level
      case 4: // debug level
         break;
      case 3: // verbose level
@@ -1353,7 +1354,7 @@ void P_TouchSpecialThing ( mobj_t*       special,
 
       default:
         // SoM: New gettable things with FraggleScript!
-        //CONS_Printf ("\2P_TouchSpecialThing: Unknown gettable thing\n");
+        //debug_Printf ("\2P_TouchSpecialThing: Unknown gettable thing\n");
         return;
     }
 
@@ -1886,7 +1887,7 @@ void P_KillMobj ( mobj_t*  target,
                     break;
 
                 default:
-                    //CONS_Printf("Unknown weapon %d\n", target->player->readyweapon);
+                    //debug_Printf("Unknown weapon %d\n", target->player->readyweapon);
                     return;
             }
         }
@@ -1919,7 +1920,7 @@ void P_KillMobj ( mobj_t*  target,
                     break;
 
                 default:
-                    //CONS_Printf("Unknown weapon %d\n", target->player->readyweapon);
+                    //debug_Printf("Unknown weapon %d\n", target->player->readyweapon);
                     return;
             }
         }

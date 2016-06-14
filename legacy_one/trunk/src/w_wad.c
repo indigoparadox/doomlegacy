@@ -792,7 +792,7 @@ void* W_CacheLumpNum ( int lump, int ztag )
     {
         // read the lump in
 
-        //CONS_Printf ("cache miss on lump %i\n",lump);
+        //debug_Printf ("cache miss on lump %i\n",lump);
         byte* ptr = Z_Malloc (W_LumpLength (lump), ztag, &lumpcache[llump]);
         W_ReadLumpHeader (lump, ptr, 0);   // read whole lump
 //        W_ReadLumpHeader (lump, lumpcache[llump], 0);   // read whole lump
@@ -800,7 +800,7 @@ void* W_CacheLumpNum ( int lump, int ztag )
     }
     else
     {
-        //CONS_Printf ("cache hit on lump %i\n",lump);
+        //debug_Printf ("cache hit on lump %i\n",lump);
         // [WDJ] Do not degrade lump to PU_CACHE while it is in use.
         if( ztag == PU_CACHE )   ztag = PU_CACHE_DEFAULT;
         Z_ChangeTag (lumpcache[llump], ztag);

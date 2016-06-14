@@ -409,7 +409,7 @@ void HU_Ticker(void)
     if ( pl->message )
     {
         // Player message blocking is handled by P_SetMessage.
-        GenPrintf(EMSG_CONS|EMSG_playmsg_cat, "%s\n", pl->message);
+        GenPrintf(EMSG_playmsg, "%s\n", pl->message);
         pl->message = NULL;
         pl->msglevel = 0;
     }
@@ -421,7 +421,7 @@ void HU_Ticker(void)
         if ( pl->message )
         {
             // Player message blocking is handled by P_SetMessage.
-            GenPrintf(EMSG_CONS|EMSG_playmsg_cat, "\4%s\n", pl->message);
+            GenPrintf(EMSG_playmsg2, "%s\n", pl->message);
             pl->message = NULL;
             pl->msglevel = 0;
         }

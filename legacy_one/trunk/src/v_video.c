@@ -2157,11 +2157,12 @@ int  V_Drawfont1_char(int x, int y, byte c)
     byte * lbp;
     byte lb[FONT1_WIDTH*8];
 
+    chwidth = FONT1_WIDTH * drawinfo.dupx;
     c &= 0x7f;
-    if( c < 33 )  return 0;
+    if( c < 33 )  return chwidth;  // space and non-printing
+
     fb = (c - FONT1_START) * FONT1_HEIGHT;  // in font addressing
 
-    chwidth = FONT1_WIDTH * drawinfo.dupx;
     dp = drawinfo.drawp + (y * drawinfo.y0bytes) + (x * drawinfo.x0bytes);
 
     if(((x * drawinfo.dupx0) + chwidth) > vid.width)

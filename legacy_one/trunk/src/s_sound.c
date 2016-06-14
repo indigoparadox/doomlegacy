@@ -446,7 +446,7 @@ void S_Init(int sfxVolume, int musicVolume)
     if (dedicated)
         return;
 
-    //CONS_Printf( "S_Init: default sfx volume %d\n", sfxVolume);
+    //debug_Printf( "S_Init: default sfx volume %d\n", sfxVolume);
 
     S_SetSfxVolume(sfxVolume);
     S_SetMusicVolume(musicVolume);
@@ -660,7 +660,7 @@ void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume)
 
 #if 0
     // Debug.
-    GenPrintf(EMSG_debug, "S_StartSoundAtVolume: playing sound %d (%s)\n",
+    debug_Printf( "S_StartSoundAtVolume: playing sound %d (%s)\n",
 		sfx_id, S_sfx[sfx_id].name );
 #endif
 
@@ -815,7 +815,7 @@ void S_StartSoundAtVolume(void *origin_p, int sfx_id, int volume)
         sep = (~sep) & 255;
 #endif
 
-    //CONS_Printf("stereo %d reverse %d\n", sep, stereoreverse.value);
+    //debug_Printf("stereo %d reverse %d\n", sep, stereoreverse.value);
 
     // Returns a handle to a mixer/output channel.
     channels[cnum].handle =

@@ -786,7 +786,7 @@ void D_Display(void)
             if (cv_ticrate.value )
                 V_Draw_ticrate_graph();
             I_FinishUpdate();   // page flip or blit buffer
-            //CONS_Printf ("last frame update took %d\n", I_EndProfile());
+            //debug_Printf("last frame update took %d\n", I_EndProfile());
         }
         return;
     }
@@ -1438,7 +1438,7 @@ open_err:
     reason = "Wad file open err";
 
 err_ret0:
-    CONS_Printf( "%s: %s\n", reason, wadname );
+    GenPrintf( EMSG_error, "%s: %s\n", reason, wadname );
     if( wadfile )  fclose( wadfile );
     return 0;
 }
@@ -1494,7 +1494,7 @@ static
 void IdentifyVersion()
 {
     char pathiwad[_MAX_PATH + 16];
-    // GenPrintf(EMSG_debug, "MAX_PATH: %i\n", _MAX_PATH);
+    // debug_Printf("MAX_PATH: %i\n", _MAX_PATH);
 
     boolean  other_names = 0;	// indicates -iwad other names
     boolean  devgame = false;   // indicates -devgame <game>    
@@ -1761,7 +1761,7 @@ void IdentifyVersion()
     gamedesc_id = gamedesc.gamedesc_id;
     gamemode = gamedesc.gamemode;
     raven_heretic_hexen = (gamemode == heretic) || (gamemode == hexen);
-    CONS_Printf("IWAD recognized: %s\n", gamedesc.gname);
+    GenPrintf( EMSG_info, "IWAD recognized: %s\n", gamedesc.gname);
 
     if (gamedesc.gameflags & GD_unsupported)  goto unsupported_wad;
 
@@ -1927,7 +1927,7 @@ void D_DoomMain()
     D_Make_legacytitle();
 
     CON_Init();  // vid, zone independent
-    EMSG_flags |= EMSG_CONS;  // all msgs to CON buffer
+    EOUT_flags |= EOUT_con;  // all msgs to CON buffer
     use_font1 = 1;  // until PLAYPAL and fonts loaded
 
     //added:18-02-98:keep error messages until the final flush(stderr)
@@ -1961,7 +1961,7 @@ void D_DoomMain()
       exit(0);
     }
 
-    CONS_Printf("%s\n", legacytitle);
+    GenPrintf( EMSG_info|EMSG_all, "%s\n", legacytitle);
 
     // Find or make a default dir that is not root dir
     // get the current directory (possible problem on NT with "." as current dir)
@@ -2026,7 +2026,7 @@ void D_DoomMain()
 #endif
 #endif
 
-    EMSG_flags = EMSG_text | EMSG_log;
+    EOUT_flags = EOUT_text | EOUT_log;
 
     CONS_Printf(text[Z_INIT_NUM]);
     // Cannot Init nor register cv_ vars until after Z_Init and some
@@ -2090,7 +2090,7 @@ restart_command:
 #endif
 
     V_SetupFont( 1, NULL, 0 );  // Startup font size
-    EMSG_flags = EMSG_text | EMSG_log | EMSG_CONS;
+    EOUT_flags = EOUT_text | EOUT_log | EOUT_con;
 
     devparm |= M_CheckParm("-devparm");  // -devparm or -devgame
     if (devparm)
@@ -2446,7 +2446,7 @@ restart_command:
       }
     }
    
-    EMSG_flags = EMSG_text | EMSG_log | EMSG_CONS;
+    EOUT_flags = EOUT_text | EOUT_log | EOUT_con;
 
 
 #ifdef LAUNCHER   
@@ -2481,7 +2481,7 @@ restart_command:
         // restart
         Clear_SoftError();
         D_ClearFiles();
-        GenPrintf( EMSG_info|EMSG_CONS, "Launcher restart:\n");
+        con_Printf( "Launcher restart:\n" );
         goto restart_command;
     }
 #endif
@@ -2513,7 +2513,7 @@ restart_command:
     {
         nodrawers = true;
         I_ShutdownGraphics();
-        EMSG_flags = EMSG_log;
+        EOUT_flags = EOUT_log;
     }
     else
     {
@@ -2558,7 +2558,7 @@ restart_command:
         // switch off use_font1 when hu_font is loaded
         HU_Init();  // dependent upon dedicated and raven
         CON_VideoInit();  // dependent upon vid, hu_font
-        EMSG_flags = EMSG_log | EMSG_CONS;
+        EOUT_flags = EOUT_log | EOUT_con;
     }
 
     // get skill / episode / map from parms
@@ -2846,7 +2846,8 @@ static uint32_t      SE_val[SoftError_listsize]; // we only want to compare
 static int  SE_msgcnt = 0;
 static int  SE_next_msg_slot = 0;
 
-byte  EMSG_flags = EMSG_text | EMSG_log;  // EMSG_e
+byte  EMSG_flags = EMSG_CONS;  // EMSG_e default
+byte  EOUT_flags = EOUT_text | EOUT_log;  // EOUT_e
 
 static void Clear_SoftError(void)
 {
@@ -2860,13 +2861,12 @@ void I_SoftError (const char *errmsg, ...)
 {
     va_list     argptr;
     int		index, errval;
-    byte        save_emsg_flags = EMSG_flags;
 
     // Message first.
     va_start (argptr,errmsg);
     errval = va_arg( argptr, uint32_t ) ; // sample it as an int, no matter what
     va_end (argptr);
-//  GenPrintf(EMSG_debug,"errval=%d\n", errval );   // debug
+//  debug_Printf("errval=%d\n", errval );   // debug
     for( index = 0; index < SE_msgcnt; index ++ ){
        if( errmsg == SE_msg[index] ){
           if( errval == SE_val[index] ) goto done;	// it is a repeat msg
@@ -2879,27 +2879,13 @@ void I_SoftError (const char *errmsg, ...)
     if( SE_next_msg_slot >= SoftError_listsize )  SE_next_msg_slot = 0;  // wrap
     if( SE_msgcnt < SoftError_listsize ) SE_msgcnt++;  // limit
     // Error, always prints EMSG_text
-#if 1
-    EMSG_flags = EMSG_flags | EMSG_error;  // ensure print to error
     fprintf (stderr, "Warn: ");
     va_start (argptr,errmsg);
-    CONS_Printf_va( errmsg, argptr );  // handles EMSG_CONS
+    CONS_Printf_va( EMSG_error, errmsg, argptr );  // handles EOUT_con
     va_end (argptr);
-#else
-    // [WDJ] Keep getting msg printed twice to stderr
-    // print msg to stderr (text)
-    va_start (argptr,errmsg);
-    fprintf (stderr, "Warn: ");
-    vfprintf (stderr,errmsg,argptr);
-    // fprintf (stderr, "\n");
-    EMSG_flags = (EMSG_flags & ~EMSG_text) | EMSG_error;  // dont print text twice
-    CONS_Printf_va( errmsg, argptr );  // handles EMSG_CONS
-    va_end (argptr);
-#endif
 
 done:   
     fflush( stderr );
-    EMSG_flags = save_emsg_flags;
 }
 
 
