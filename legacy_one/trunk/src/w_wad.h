@@ -128,6 +128,8 @@ typedef struct
 //                         DYNAMIC WAD LOADING
 // =========================================================================
 
+typedef uint32_t   lumpnum_t;
+
 #define WADFILENUM(lump)       ((lump)>>16)   // wad file number in upper word
 #define LUMPNUM(lump)          ((lump)&0xffff)    // lump number for this pwad
 

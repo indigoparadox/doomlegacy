@@ -66,7 +66,7 @@ typedef struct
     uint16_t    size_index;     // flat size index
 
     // for flat animation
-    uint16_t    baselumpnum;    // first flat in animation
+    uint32_t    baselumpnum;    // first flat in animation
     int16_t     animseq;        // start pos. in the anim sequence
     uint16_t    numpics;
     int16_t     speed;
