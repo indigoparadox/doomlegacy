@@ -974,53 +974,6 @@ void HWR_SetFlashPalette( byte palette_num )
 }
 
 
-// Imitate the special object screen tints for each special palette.
-// Corresponding to Doom special effect palettes.
-// These seem to be the same for Doom and Heretic.
-static uint32_t  palette_to_tint[16] =
-{
-   0x0,  // 00 normal
-   0xff373797, // 01 red
-   0xff373797, // 02 red
-   0xff3030a7, // 03 red
-   0xff2727b7, // 04 red
-   0xff2020c7, // 05 red
-   0xff1717d7, // 06 red
-   0xff1010e7, // 07 red
-   0xff0707f7, // 08 red
-   0xffff6060, // 09 blue
-   0xff70a090, // 0A light green
-   0xff67b097, // 0B light green
-   0xff60c0a0, // 0C light green
-   0xff60ff60, // 0D green
-   0xffff6060, // 0E blue
-   0xffff6060  // 0F blue
-};
-
-
-// Enables flash palette.
-byte  EN_HWR_flashpalette = 0;
-
-// Faster palette flashes using tints.
-//  palette_num : 0..15
-void HWR_SetFlashPalette( byte palette_num )
-{
-        
-    //faB - NOW DO ONLY IN SOFTWARE MODE, LETS FIX THIS FOR GOOD OR NEVER
-    //      idea : use a true color gradient from frame to frame, because we
-    //             are in true color in HW3D, we can have smoother palette change
-    //             than the palettes defined in the wad
-
-    //Hurdler: TODO: see if all heretic palettes are properly managed
-
-    // Could change the HW palette used for paletted textures, but
-    // that would require conversion of textures to RGB again.
-    // This sets a tint that is averaged with the surface color
-    // by the drawing engine.
-    HWD.pfnSetSpecialState(HWD_SET_TINT_COLOR, palette_to_tint[palette_num] );
-}
-
-
 // --------------------------------------------------------------------------
 // Make sure texture is downloaded and set it as the source
 // --------------------------------------------------------------------------

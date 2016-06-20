@@ -5210,3 +5210,8 @@ Added a field to the sound info tables for the Heretic limit channels.
 This limits how many channels can have the same sfx.
 Checks this limit when trying to get a channel.
 
+*** W105_fix_svn
+patchfile = w105_40_fix_svn.patch
+- commit revision 1244
+Somehow got two copies of a palette patch in the hardware/hw_cache.c file.
+
