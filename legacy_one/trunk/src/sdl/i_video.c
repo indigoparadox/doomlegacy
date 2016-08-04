@@ -363,13 +363,6 @@ void I_SetPalette(RGBA_t* palette)
         localPalette[i].g = palette[i].s.green;
         localPalette[i].b = palette[i].s.blue;
     }
-#if ( defined(DEBUG_WINDOWED) && defined(WIN32) )
-    // Palette fix during debug, otherwise black text on black background
-    if( palette[6].s.red < 96 )
-	    localPalette[6].r = 96;  // at least get red text on black
-    if( palette[7].s.green < 96 )
-	    localPalette[7].g = 96;  // at least get green text on black
-#endif
 
 #if defined(MAC_SDL) && defined( DEBUG_MAC )
     if( ! SDL_SetColors(vidSurface, localPalette, 0, 256) )

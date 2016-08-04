@@ -688,7 +688,7 @@ void R_DrawColumnShadowed(void)
     for (i = 0; i < dc_numlights; i++)
     {
         // If the height of the light is above the column, get the colormap
-        // anyway because the lighting of the top should be effected.
+        // anyway because the lighting of the top should be affected.
         solid = dc_lightlist[i].flags & FF_CUTSOLIDS;
 
         height = dc_lightlist[i].height >> 12;
