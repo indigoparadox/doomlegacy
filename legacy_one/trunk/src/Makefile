@@ -906,15 +906,36 @@ endif
 endif
 #=================================
 
+#  $(info $(PATH) )
 # DOS/OS2/WIN32 file differences
 ifdef DOSFILE
-  RM:=del
+  ifndef HAVE_DOSCOMMAND
+    ifneq ("$(findstring "MSYS", "$(SHELL)"),"")
+      $(info HAVE MSYS )
+      # When SHELL = command.com, it chokes on @echo and - $(RM)
+      # When SHELL = cmd.exe, it works for mingw32-make, but MSYS make
+      # does not execute the DOS commands
+#     SHELL:=cmd.exe
+#     .SHELLFLAGS="/C /Q"
+      HAVE_MSYS=1
+    endif
+  endif
+  ifdef HAVE_MSYS
+    # MSYS has its own idea of the root directory.
+    LIBS:=$(subst -L/,-LC:/,$(LIBS))
+    $(info LIBS=$(LIBS) )
+  else
+    $(info HAVE DOSCOMMAND )
+    HAVE_DOSCOMMAND=1
+    RM:=del
+  endif
   BIN_WIN:=$(subst /,\,$(BIN))
   O_WIN:=$(subst /,\,$(O))
   DD_WIN:=$(subst /,\,$(DD))
 else
   SHELL:=/bin/sh
 endif
+#  $(info HAVE SHELL=$(SHELL) )
 
 OPTOBJS:=
 
@@ -1038,13 +1059,13 @@ endif
 
 # Win32/OS2/DOS sees "/" as a switch, "\" is an escape to make
 clean:
-ifdef DOSFILE
-	@echo "Removing dependencies"
+ifdef HAVE_DOSCOMMAND
+	@echo "Removing dependencies $(DD_WIN)"
 	- $(RM) $(DD_WIN)\*.dep
 	@echo "Removing obj  $(O_WIN)"
 	- $(RM) $(O_WIN)\*.o
 else
-	@echo "Removing dependencies"
+	@echo "Removing dependencies $(DD)"
 	- $(RM) $(DD)/*
 	@echo "Removing obj  $(O)"
 	- $(RM) $(O)/*.o
@@ -1299,18 +1320,25 @@ ifdef DOSFILE
 # Fixdep adds the obj directory to the dep entries.
 # The dep entries use / in MinGW.
 
-$(BIN_WIN)\fixdep.exe:
+ifdef HAVE_MSYS
+  # MSYS make cannot handle DOS directories either.
+  FIXDEP:=$(BIN)/fixdep.exe
+else
+  FIXDEP:=$(BIN_WIN)\fixdep.exe
+endif
+
+$(FIXDEP):
 	$(MAKE) -C ..  fixdep
 
-%.dep : | $(BIN_WIN)\fixdep.exe
+%.dep : | $(FIXDEP)
   ifeq ($(CC_SELECT), MINGW)
 	@echo "Making MINGW dependencies $(@F)"
 	$(CC) $(CFLAGS) -MM $^ > $(DD)/$(@F)
-	$(BIN_WIN)\fixdep  $(O)/  $(DD_WIN)\$(@F)
+	$(FIXDEP)  $(O)/  $(DD_WIN)\$(@F)
   else
 	@echo "Making WIN dependencies $(@F)"
 	$(CC) $(CFLAGS) -MM $^ > $(DD_WIN)\$(@F)
-	$(BIN_WIN)\fixdep  $(O_WIN)\  $(DD_WIN)\$(@F)
+	$(FIXDEP)  $(O_WIN)\  $(DD_WIN)\$(@F)
   endif
 
 else
@@ -1364,7 +1392,11 @@ endif
 
 INSTALL_FILES:=$(addprefix $(BIN)/, $(EXENAME) $(INSTALL_SUPPL))
 ifdef DOSFILE
-  RMFILE ?= del
+  ifdef HAVE_DOSCOMMAND
+    RMFILE ?= del
+  else
+    RMFILE ?= rm -v
+  endif
   INSTALL_FILES_WIN:=$(subst /,\,$(INSTALL_FILES))
 else
   RMFILE ?= rm -I -v
@@ -1374,7 +1406,7 @@ INSTALL ?= install
 export INSTALL
 
 install:
-ifdef DOSFILE
+ifdef HAVE_DOSCOMMAND
 	xcopy $(INSTALL_FILES_WIN) $(INSTALL_DIR) /S /E
 else
 	$(INSTALL) $(INSTALL_OPTS) -t $(INSTALL_DIR)  $(INSTALL_FILES)
@@ -1387,7 +1419,7 @@ ifdef SNDSERV
 endif
 
 uninstall:
-ifdef DOSFILE
+ifdef HAVE_DOSCOMMAND
 	- $(RMFILE) $(subst /,\,$(INSTALL_DIR)/$(EXENAME))
   ifdef INSTALL_SUPPL
 	- $(RMFILE) $(subst /,\,$(INSTALL_DIR)/$(INSTALL_SUPPL))

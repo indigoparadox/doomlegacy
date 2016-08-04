@@ -216,6 +216,10 @@ MUS_OS_LIST= EMPTY SCOOS5 SCOUW2 SCOUW7
 # Reported that SDLMain is no longer required for Mac using SDL 1.3.
 # SDL_1_3=1
 
+# The MSYS make does not understand undefine,
+# Using undefine makes it fail with message "*** Missing Separator".
+# Recommend use mingw32-make.
+
 # Warning flags
 # WFLAGS=-Wall -Wwrite-strings
 
@@ -485,7 +489,18 @@ export OS
 export DOSFILE
 ifdef DOSFILE
   # DOS, OS2, Win32
-  RM:=del
+  # MSYS shell interferes with DOS commands.
+  # Setting SHELL = command.com DOES NOT WORK.
+  ifndef HAVE_DOSCOMMAND
+    ifneq ("$(findstring "MSYS", "$(SHELL)"),"")
+      HAVE_MSYS=1
+      export HAVE_MSYS
+    endif
+  endif
+  ifndef HAVE_MSYS
+    HAVE_DOSCOMMAND=1
+    DEL:=del
+  endif
   BIN_WIN:=$(subst /,\,$(BIN))
   O_WIN:=$(subst /,\,$(O))
   DD_WIN:=$(subst /,\,$(DD))
@@ -524,18 +539,25 @@ init: $(MAKE_OPTIONS)
 dirs: $(O)
 $(O):
 ifdef OS
-ifdef DOSFILE
+ifdef HAVE_DOSCOMMAND
 	@echo "Making dirs (WIN32/OS2/DOS)"
 	mkdir "$(BIN_WIN)"
 	mkdir "$(O_WIN)"
 	mkdir "$(DD_WIN)"
+else
+ifdef HAVE_MSYS
+	@echo "Making dirs (MSYS)"
+	- mkdir  $(BIN)
+	- mkdir  $(O)
+	- mkdir  $(DD)
 else
 	@echo "Making dirs (Linux/BSD)"
 	mkdir -p $(BIN)
 	mkdir -p $(O)
 	mkdir -p $(DD)
 endif
-else	
+endif
+else
 	@echo Could not make dirs, do not know OS.
 	@echo If do not have dep, bin, and objs dirs, then make dirs.
 endif
@@ -549,8 +571,8 @@ clean:
 # As all intermediates are kept outside of dist, there is nothing extra to do
 # except to remove make_options
 distclean: clean
-ifdef DOSFILE
-	- $(RM) $(MAKE_OPTIONS)
+ifdef HAVE_DOSCOMMAND
+	- $(DEL) $(MAKE_OPTIONS)
 else
 	- $(RM) $(MAKE_OPTIONS)
 endif
@@ -665,6 +687,23 @@ depend:
 #=======================================================
 .PHONY : install install_sys install_games install_user
 
+
+ifdef DOSFILE
+  ifdef HAVE_DOSCOMMAND
+    RMFILE:= del
+  else
+    RMFILE:= rm -v
+  endif
+
+  ifdef HAVE_MSYS
+    # MSYS defines HOME for itself.
+    USERHOME:=$(USERPROFILE)
+  else
+    USERHOME:=$(HOME)
+  endif
+endif
+
+
 # Specify INSTALL_DIR= to override.
 ifdef INSTALL_DIR
   INSTALL_SYS_DIR:=$(INSTALL_DIR)
@@ -677,8 +716,7 @@ ifdef DOS
   INSTALL_SYS_DIR ?= $(PREFIX)\legacy
   INSTALL_SHARE_DIR ?= $(PREFIX)\legacy
   INSTALL_GAMES_DIR ?= \games\legacy
-  INSTALL_USER_DIR ?= $(HOME)\games\legacy
-  RMFILE:= del
+  INSTALL_USER_DIR ?= $(USERHOME)\games\legacy
 else
 ifdef DOSFILE
   # WIN32, OS2
@@ -687,8 +725,7 @@ ifdef DOSFILE
   INSTALL_SYS_DIR ?= $(PREFIX)\doomlegacy
   INSTALL_SHARE_DIR ?= $(PREFIX)\doomlegacy
   INSTALL_GAMES_DIR ?= \games\doomlegacy
-  INSTALL_USER_DIR ?= $(HOME)\games\doomlegacy
-  RMFILE:= del
+  INSTALL_USER_DIR ?= $(USERHOME)\games\doomlegacy
 else
   # Linux, FreeBSD, Mac
   # DO NOT use tilde, use $(HOME).
@@ -731,7 +768,9 @@ else
   ifeq ("$(LEGACY_WAD)","")
     LEGACY_WAD:=$(wildcard $(LEGACYWAD_INSDIR)legacy.wad)
     ifeq ("$(LEGACY_WAD)","")
-      undefine LEGACY_WAD
+#     MSYS make does not understand undefine, but assign empty does the same.
+       LEGACY_WAD=
+#      undefine LEGACY_WAD
 #      ifeq ("$(wildcard $(INSTALL_LEGACYWAD_DIR)/legacy.wad)","")
 #        $(info "No legacy.wad: not found in bin/, nor in $(LEGACYWAD_INSDIR) .")
 #      endif
@@ -786,10 +825,18 @@ install_sys:
 	@echo Installing docs to $(INSTALL_SHARE_DIR)
 ifdef DOSFILE
 	@- mkdir $(INSTALL_SHARE_DIR)
+  ifdef HAVE_DOSCOMMAND
 	xcopy $(subst /,\,docs $(INSTALL_SHARE_DIR)/docs) /S /E /I
+  else
+	- cp -a -u docs $(INSTALL_SHARE_DIR)/docs
+  endif
   ifdef LEGACY_WAD
 	@- mkdir $(INSTALL_LEGACYWAD_DIR)
+    ifdef HAVE_DOSCOMMAND
 	- xcopy $(LEGACY_WAD) $(INSTALL_LEGACYWAD_DIR)
+    else
+	- cp -a -u $(LEGACY_WAD) $(INSTALL_LEGACYWAD_DIR)
+    endif
   endif
 	@echo Installing to $(INSTALL_SYS_DIR).
 	$(MAKE) -C $(SRC) install INSTALL_DIR=$(INSTALL_SYS_DIR)
@@ -854,9 +901,17 @@ install_games:
 ifdef DOSFILE
 	@echo Installing to $(INSTALL_GAMES_DIR).
 	@- mkdir $(INSTALL_GAMES_DIR)
+  ifdef HAVE_DOSCOMMAND
 	- xcopy $(subst /,\,docs $(INSTALL_GAMES_DIR)/docs) /S /E /I
+  else
+	- cp -a -u docs $(INSTALL_GAMES_DIR)/docs
+  endif
   ifdef LEGACY_WAD
+    ifdef HAVE_DOSCOMMAND
 	- xcopy $(LEGACY_WAD) $(INSTALL_GAMES_DIR)
+    else
+	- cp -u $(LEGACY_WAD) $(INSTALL_GAMES_DIR)
+    endif
   endif
 	$(MAKE) -C $(SRC) install INSTALL_DIR=$(INSTALL_GAMES_DIR)
 else
@@ -888,9 +943,17 @@ install_user:
 	@echo Installing DoomLegacy to $(INSTALL_USER_DIR)
 ifdef DOSFILE
 	@- mkdir $(INSTALL_USER_DIR)
+  ifdef HAVE_DOSCOMMAND
 	xcopy $(subst /,\,docs $(INSTALL_USER_DIR)/docs) /S /E /I
+  else
+	cp -a -u docs $(INSTALL_USER_DIR)/docs
+  endif
   ifdef LEGACY_WAD
+    ifdef HAVE_DOSCOMMAND
 	xcopy $(LEGACY_WAD) $(INSTALL_USER_DIR)
+    else
+	cp -u $(LEGACY_WAD) $(INSTALL_USER_DIR)
+    endif
   endif
 else
 	mkdir -p $(INSTALL_USER_DIR)
@@ -941,7 +1004,7 @@ uninstall_sys:
 	@echo Uninstalling DoomLegacy from $(INSTALL_SYS_DIR)
 	$(MAKE) -C $(SRC) uninstall INSTALL_DIR=$(INSTALL_SYS_DIR)
 	@echo Uninstalling DoomLegacy from $(INSTALL_SHARE_DIR).
-ifdef DOSFILE
+ifdef HAVE_DOSCOMMAND
 	- $(RMFILE) $(subst /,\,$(INSTALL_SHARE_DIR)/legacy.wad )
 	$(MAKE) del_docs_dir INSTALL_DIR=$(INSTALL_SHARE_DIR)
 else
@@ -957,7 +1020,7 @@ else
 uninstall_sharegames:
 	@echo Uninstalling DoomLegacy from $(INSTALL_GAMES_DIR)
 	$(MAKE) -C $(SRC) uninstall INSTALL_DIR=$(INSTALL_GAMES_DIR)
-ifdef DOSFILE
+ifdef HAVE_DOSCOMMAND
 	- $(RMFILE) $(subst /,\,$(INSTALL_GAMES_DIR)/legacy.wad )
 	$(MAKE) delete_docs_dir INSTALL_DIR=$(INSTALL_GAMES_DIR)
 	- rmdir $(INSTALL_GAMES_DIR)
@@ -976,7 +1039,7 @@ endif
 uninstall_games:
 	@echo Uninstalling DoomLegacy from $(INSTALL_GAMES_DIR)
 	$(MAKE) -C $(SRC) uninstall INSTALL_DIR=$(INSTALL_GAMES_DIR)
-ifdef DOSFILE
+ifdef HAVE_DOSCOMMAND
 	- $(RMFILE) $(subst /,\,$(INSTALL_GAMES_DIR)/legacy.wad )
 	$(MAKE) delete_docs_dir INSTALL_DIR=$(INSTALL_GAMES_DIR)
 	- rmdir $(INSTALL_GAMES_DIR)
@@ -993,7 +1056,7 @@ endif
 uninstall_user:
 	@echo Uninstalling DoomLegacy from $(INSTALL_USER_DIR)
 	$(MAKE) -C $(SRC) uninstall INSTALL_DIR=$(abspath $(INSTALL_USER_DIR))
-ifdef DOSFILE
+ifdef HAVE_DOSCOMMAND
 	- $(RMFILE) $(subst /,\, $(INSTALL_USER_DIR)/legacy.wad )
 	$(MAKE) del_docs_dir INSTALL_DIR=$(INSTALL_USER_DIR)
 	- rmdir $(INSTALL_USER_DIR)/wads
@@ -1013,7 +1076,7 @@ ifeq ("$(INSTALL_DIR)","")
 endif
 
 delete_docs_dir:
-ifdef DOSFILE
+ifdef HAVE_DOSCOMMAND
   ifdef DOS
 	- $(RMFILE) $(subst /,\,$(INSTALL_DIR)/docs/images/demo/*.* )
 	- $(RMFILE) $(subst /,\,$(INSTALL_DIR)/docs/images/*.* )

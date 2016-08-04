@@ -2119,7 +2119,12 @@ restart_command:
         {
             userhome = getenv("HOME");
 #ifdef WIN32
-            // Windows XP, 
+            if( strstr( userhome, "MSYS" ) )
+            {
+                // Ignore MSYS HOME, it is not the one wanted.
+                userhome = NULL;
+            }
+            // Windows XP,
             if( !userhome )
                  userhome = getenv("UserProfile");
 #endif
