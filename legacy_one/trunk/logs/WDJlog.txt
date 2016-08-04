@@ -5248,3 +5248,9 @@ which is causing problems with Makefile cleanup.
 MSYS shell will not execute DOS commands, so MSYS commands and MSYS
 legal directory specifications have to be substituted everywhere.
 
+*** W105_flash_opengl
+patchfile = w105_43_flash_opengl.patch
+- commit revision 1247
+Fix the pickup flash for OpenGL, and for small status bar.
+Make a V_DrawScaledFill that matches the other scaled draws.
+
