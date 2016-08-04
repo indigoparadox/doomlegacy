@@ -78,9 +78,11 @@
 
 #include <stdio.h>
 #include <fcntl.h>
+
 #ifdef __OS2__
 #include <sys/types.h>
 #endif // __OS2__
+
 #include <sys/stat.h>
 
 #include <time.h>
@@ -90,15 +92,16 @@
 #include <direct.h>
 #else
 #include <sys/types.h>
-#include <dirent.h>
+//#include <dirent.h>
 #include <utime.h>
 #endif
 
-#ifndef __WIN32__
-#include <unistd.h>
-#else
+#ifdef __WIN32__
 #include <sys/utime.h>
+#else
+#include <unistd.h>
 #endif
+
 #ifdef __DJGPP__
 #include <dir.h>
 #include <utime.h>
