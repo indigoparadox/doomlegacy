@@ -5276,3 +5276,11 @@ but I could not find the fault using Linux.
 It had to wait until extensive testing on a Windows system.
 
 Fixed some other suspect code in the palette and colormaps.
+
+*** W105_cv_string
+patchfile = w105_46_cvstring.patch
+- commit revision 1250
+When a cv var set value exceeds the bounds, the code attempts to rewrite
+the value string.  The string could be a const string such as during init,
+which segfaults on modern systems like Linux.
+Fix the code to write a buffer instead.

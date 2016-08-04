@@ -1034,6 +1034,8 @@ char *CV_CompleteVar (char *partial, int skips)
 //
 static void Setvalue (consvar_t *var, char *valstr)
 {
+    char  value_str[64];  // print %d cannot exceed 64
+
     if(var->PossibleValue)
     {
         int v=atoi(valstr);
@@ -1052,15 +1054,18 @@ static void Setvalue (consvar_t *var, char *valstr)
             if(var->PossibleValue[i].strvalue==NULL)
                 I_Error("Bounded cvar \"%s\" without Maximum !",var->name);
 #endif
-            if(v<var->PossibleValue[0].value)
+            // [WDJ] Cannot print into const string.
+            if(v < var->PossibleValue[0].value)
             {
-               v=var->PossibleValue[0].value;
-               sprintf(valstr,"%d",v);
+                v = var->PossibleValue[0].value;
+                sprintf(value_str,"%d", v);
+                valstr = value_str;
             }
-            if(v>var->PossibleValue[i].value)
+            if(v > var->PossibleValue[i].value)
             {
-               v=var->PossibleValue[i].value;
-               sprintf(valstr,"%d",v);
+                v = var->PossibleValue[i].value;
+                sprintf(value_str,"%d", v);
+                valstr = value_str;
 	    }
         }
         else
