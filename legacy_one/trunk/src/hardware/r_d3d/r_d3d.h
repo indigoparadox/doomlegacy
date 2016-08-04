@@ -32,7 +32,7 @@
 #ifndef R_D3D_H
 #define R_D3D_H
 
-#ifndef WIN_NATIVE
+#ifndef SMIF_WIN_NATIVE
 # error r_d3d is WIN_NATIVE only
 #endif
 
@@ -42,7 +42,7 @@
 
 // necessary for Unix AND Windows
 #define  HWRAPI_CREATE_DLL
-#include "../hw_drv.h"
+#include "hardware/hw_drv.h"
 
 // ==========================================================================
 //                                                                DEFINITIONS

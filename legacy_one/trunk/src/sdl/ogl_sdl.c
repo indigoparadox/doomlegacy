@@ -43,10 +43,10 @@
 // Because of WINVER redefine, before any include that could define WINVER
 #include "doomincl.h"
 
-#include "SDL.h"
-#include "SDL_opengl.h"
+#include <SDL.h>
+#include <SDL_opengl.h>
 
-#include "../hardware/r_opengl/r_opengl.h"
+#include "hardware/r_opengl/r_opengl.h"
   // OpenGL, gl.h, glu.h
 #include "v_video.h"
 

@@ -80,7 +80,7 @@ consvar_t  cv_controlperkey = {"controlperkey","1",CV_SAVE,onecontrolperkey_cons
 //SoM: 3/28/2000: Working rocket jumping.
 consvar_t  cv_allowrocketjump = {"allowrocketjump","0",CV_NETVAR,CV_YesNo};
 
-#ifdef SDL
+#ifdef SMIF_SDL
 CV_PossibleValue_t mouse_motion_cons_t[]={{0,"Absolute"},{1,"Relative"},{0,NULL}};
 consvar_t  cv_mouse_motion = {"mousemotion","0", CV_SAVE|CV_CALL, mouse_motion_cons_t, CV_mouse_OnChange };
 #endif

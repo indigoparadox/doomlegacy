@@ -64,7 +64,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "SDL.h"
+#include <SDL.h>
 
 
 #ifdef LINUX

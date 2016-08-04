@@ -129,7 +129,7 @@ void I_Tactile (int on, int off, int total);
 //                the return code 0 of I_Quit();
 void I_OutputMsg (char *error, ...);
 
-#ifdef WIN_NATIVE
+#ifdef SMIF_WIN_NATIVE
 void I_MsgBox (char * msg );
 #endif
 

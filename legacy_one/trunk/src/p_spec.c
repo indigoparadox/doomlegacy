@@ -2974,7 +2974,6 @@ void P_SpawnSpecials (void)
     sector_t*   sector;
     uint32_t    flags;
     int         i;
-    int         episode;
     // update all special sectors
     fixed_t  water_friction = FRICTION_NORM;
     int  water_movefactor = ORIG_FRICTION_FACTOR;
@@ -2988,9 +2987,12 @@ void P_SpawnSpecials (void)
         water_movefactor = 8*((FRICTION_NORM-48 - 0xDB34)*(0xA))/0x80; // non stick
     }
 
-    episode = 1;
+#if 0
+    // [WDJ] At one time this may have been important, but is not used now.
+    int episode = 1;
     if (W_CheckNumForName("texture2") >= 0)
         episode = 2;
+#endif
 
     //  Init special SECTORs.
     sector = sectors;

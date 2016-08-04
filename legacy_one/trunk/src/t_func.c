@@ -3601,7 +3601,7 @@ void SF_SetLineTexture(void)
     int tagnum, linenum;
     unsigned int side;
     int sectionflags;
-    line_t *line;
+//    line_t *line;
 
     if(t_argc != 4)  goto err_numarg;
 
@@ -3610,7 +3610,7 @@ void SF_SetLineTexture(void)
     // check on existing line
     linenum = P_FindLineFromTag(tagnum, -1);
     if(linenum < 0)  goto err_noline;
-    line = &lines[linenum];  // for return value
+//    line = &lines[linenum];  // for return value
 
     side = (unsigned) intvalue(t_argv[2]);
     if( side > 1 )  side = 1;  // easier than an error

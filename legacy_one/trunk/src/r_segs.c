@@ -252,7 +252,7 @@ static void R_DrawSplatColumn (column_t* column)
 static void R_DrawWallSplats (void)
 {
     wallsplat_t*    splat;
-    seg_t*      seg;
+//    seg_t*      seg;
     angle_t     angle1, angle2;
     int         angf;
     int         x1, x2;
@@ -267,7 +267,7 @@ static void R_DrawWallSplats (void)
         I_Error ("R_DrawWallSplats: splat is NULL");
 #endif
 
-    seg = ds_p->curline;
+//    seg = ds_p->curline;
 
     // draw all splats from the line that touches the range of the seg
     for ( ; splat ; splat=splat->next)
@@ -1947,7 +1947,7 @@ void R_StoreWallRange( int   start, int   stop)
     ff_lightlist_t      *ff_light;
     r_lightlist_t       *rlight;
     ffloor_t 		* bff, * fff;  // backsector fake floor, frontsector fake floor
-    fixed_t             lheight;
+//    fixed_t             lheight;  // unused
 
     if (ds_p == &drawsegs[maxdrawsegs])   expand_drawsegs();
     
@@ -2549,9 +2549,12 @@ void R_StoreWallRange( int   start, int   stop)
         rlight->flags = ff_light->flags;
         if(ff_light->caster && ff_light->caster->flags & FF_SOLID)
         {
+#if 0
+          // [WDJ] At some time this became unused.
           lheight = (*ff_light->caster->bottomheight > frontsector->ceilingheight) ?
 	      frontsector->ceilingheight + FRACUNIT
 	     : *ff_light->caster->bottomheight;
+#endif
 	  // in screen coord.
           rlight->botheight = (centeryfrac >> 4) - FixedMul((*ff_light->caster->bottomheight - viewz) >> 4, rw_scale);
           rlight->botheightstep = -FixedMul (rw_scalestep, (*ff_light->caster->bottomheight - viewz) >> 4);

@@ -78,10 +78,10 @@
 #include "hw_defs.h"
 #include "hw_data.h"
 
-#include "../am_map.h"
-#include "../d_player.h"
-#include "../r_defs.h"
-#include "../command.h"
+#include "am_map.h"
+#include "d_player.h"
+#include "r_defs.h"
+#include "command.h"
   // consvar_t
 
 extern float gr_baseviewwindowy, gr_viewwindowx, gr_viewheight, gr_viewwidth;

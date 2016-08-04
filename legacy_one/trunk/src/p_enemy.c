@@ -943,7 +943,7 @@ static boolean P_LookForPlayers ( mobj_t*       actor,
     int         c;
     int         stop;
     player_t*   player;
-    sector_t*   sector;
+//    sector_t*   sector;
     angle_t     an;
     fixed_t     dist;
 
@@ -956,7 +956,7 @@ static boolean P_LookForPlayers ( mobj_t*       actor,
         if (actor->eflags & MF_IGNOREPLAYER)
                 return false;
 
-        sector = actor->subsector->sector;
+//        sector = actor->subsector->sector;
 
     // BP: first time init, this allow minimum lastlook changes
     if( actor->lastlook<0 && demoversion>=129 )

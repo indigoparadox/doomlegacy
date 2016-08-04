@@ -31,7 +31,7 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "../doomincl.h"
+#include "doomincl.h"
   // stdio, stdlib, strings, defines
 
 #include <stdio.h>
@@ -40,15 +40,15 @@
 
 #include <math.h>
 
-#include "../doomstat.h"
-#include "../i_system.h"
-#include "../i_sound.h"
-#include "../z_zone.h"
-#include "../m_argv.h"
-#include "../m_misc.h"
-#include "../w_wad.h"
-#include "../s_sound.h"
-#include "../console.h"
+#include "doomstat.h"
+#include "i_system.h"
+#include "i_sound.h"
+#include "z_zone.h"
+#include "m_argv.h"
+#include "m_misc.h"
+#include "w_wad.h"
+#include "s_sound.h"
+#include "console.h"
 
 //### let's try with Allegro ###
 #define  alleg_mouse_unused
@@ -68,7 +68,7 @@
 #include <allegro.h>
 //### end of Allegro include ###
 
-#include "../qmus2mid.h"
+#include "qmus2mid.h"
 //#include "loadmus.h"
 
 //allegro has 256 virtual voices

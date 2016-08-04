@@ -70,7 +70,7 @@
 //output debugging msgs to r_glide.log
 //#define DEBUG_GLIDE_TO_FILE
 
-#ifndef WIN_NATIVE
+#ifndef SMIF_WIN_NATIVE
 # error r_glide is WIN_NATIVE only
 #endif
 
@@ -79,9 +79,9 @@
 #include <math.h>
 
 #define  HWRAPI_CREATE_DLL
-#include "../hw_drv.h"
+#include "hardware/hw_drv.h"
 
-#include "../../screen.h"
+#include "screen.h"
 #include "3dmath.h"
 
 

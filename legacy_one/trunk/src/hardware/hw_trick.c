@@ -78,12 +78,12 @@
 
 #include <math.h>
 
-#include "../doomincl.h"
-#include "../doomstat.h"
+#include "doomincl.h"
+#include "doomstat.h"
 
 #include "hw_glob.h"
-#include "../r_local.h"
-#include "../i_system.h"
+#include "r_local.h"
+#include "i_system.h"
 
 //
 // add a line to a sectors list of lines

@@ -109,7 +109,7 @@
 // To save code size, can turn off some drawing bpp that you cannot use.
 #define ENABLE_DRAW15
 #define ENABLE_DRAW16
-#ifndef PC_DOS
+#ifndef SMIF_PC_DOS
 # define ENABLE_DRAW24
 # define ENABLE_DRAW32
 #endif
@@ -149,7 +149,7 @@
 #define DEFAULTDIR1 ".doomlegacy"
 #define DEFAULTDIR2 ".legacy"
 #endif
-#ifdef PC_DOS
+#ifdef SMIF_PC_DOS
 #define DEFAULTDIR1 "dmlegacy"
 #define DEFAULTDIR2 "legacy"
 #endif
@@ -160,7 +160,7 @@
 #define DEFAULTDIR2 "legacy"
 #endif
 
-#if defined PC_DOS || defined WIN32 || defined OS2
+#if defined SMIF_PC_DOS || defined WIN32 || defined OS2
 // HOME is ~
 // Allowed DEFWADS01..DEFWADS21
 #if 1
@@ -182,7 +182,7 @@
 #endif
 
 // When cannot find user $(HOME), make a home in the executable dir.
-#ifdef PC_DOS
+#ifdef SMIF_PC_DOS
 #define DEFHOME    "DL_HOME"
 #else
 #define DEFHOME    "legacyhome"
@@ -256,7 +256,7 @@
 #define SAVESTRINGSIZE          24
 
 // Used for many file path buffer sizes
-#ifdef PC_DOS
+#ifdef SMIF_PC_DOS
 #define MAX_WADPATH   128
 #else
 // was too short for network systems

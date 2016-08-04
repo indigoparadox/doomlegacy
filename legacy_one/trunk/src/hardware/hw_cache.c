@@ -104,20 +104,20 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "../doomincl.h"
+#include "doomincl.h"
 
 #include "hw_glob.h"
 #include "hw_drv.h"
 
-#include "../doomstat.h"
+#include "doomstat.h"
   //gamemode
-#include "../i_video.h"
+#include "i_video.h"
   //rendermode
-#include "../m_swap.h"
-#include "../r_data.h"
-#include "../w_wad.h"
-#include "../z_zone.h"
-#include "../v_video.h"
+#include "m_swap.h"
+#include "r_data.h"
+#include "w_wad.h"
+#include "z_zone.h"
+#include "v_video.h"
 
 #if 0
 // [WDJ] Replaced global cache draw flags with drawflags parameter and TF_ flags
@@ -624,7 +624,7 @@ static void HWR_GenerateFogTexture (int texnum, Mipmap_t * mipmap,
     RGBA_t* cp;
 
     int  srcsize, si_line3, si, si_endx;
-    int  i, x, y, fogb1, zc;
+    int  i, x, y, zc;
     unsigned int  fc_g, fc_r, fc_b;
     RGBA_t fc, fc_avg;
     RGBA_t fogcolor = {.rgba=0x10101010};  // any endian
@@ -671,7 +671,6 @@ static void HWR_GenerateFogTexture (int texnum, Mipmap_t * mipmap,
     fc_avg.s.blue = fc_b >> 4;
     fc_avg.s.alpha = 0xff;
     fogcolor.rgba = fc_avg.rgba;  // init
-    fogb1 = 0;
     // make a fog texture from averaged colors of linedef texture
     for( x=0; x<blockwidth+32; x++ )  // wrap around width to smooth
     {
@@ -1085,7 +1084,7 @@ static void HWR_CacheFlat (Mipmap_t* grMipmap, int flatlumpnum)
                       PU_HWRCACHE,
                       &grMipmap->grInfo.data);
 
-    W_ReadLump (flatlumpnum,grMipmap->grInfo.data);
+    W_ReadLump (flatlumpnum, block);
 }
 
 

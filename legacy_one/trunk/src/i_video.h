@@ -140,7 +140,7 @@ void I_FinishUpdate (void);
 
 void I_ReadScreen (byte* scr);
 
-#if defined(WIN_NATIVE) || defined(OS2_NATIVE) 
+#if defined(SMIF_WIN_NATIVE) || defined(SMIF_OS2_NATIVE) 
 // printf to loading screen
 void I_LoadingScreen ( const char * msg );
 #endif

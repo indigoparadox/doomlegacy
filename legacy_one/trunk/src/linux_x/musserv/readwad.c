@@ -25,7 +25,7 @@
 #include <sys/soundcard.h>
 #include <stdint.h>
 #include "musserver.h"
-#include "../../m_swap.h"
+#include "m_swap.h"
 
 static unsigned long lumpsize[35] = {	/* size in bytes of data lumps */
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,

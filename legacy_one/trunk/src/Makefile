@@ -619,7 +619,7 @@ ifeq ($(SMIF), SDL)
     endif
   endif
 
-  OPTS+=-DHWRENDER -DSDL
+  OPTS+=-DHWRENDER -DSMIF_SDL
   OPTINC+=$(SRCINC)
 
   ifdef HAVE_MIXER
@@ -668,7 +668,7 @@ ifeq ($(SMIF), LINUX_X11)
   # Uncomment if you want to use the POLL_POINTER hack
   #POLL_POINTER:=-DPOLL_POINTER
 
-  OPTS+=-DVID_X11 -DOLD_SOUND_DRIVER -DSNDSERV -DHWRENDER
+  OPTS+=-DSMIF_X11 -DOLD_SOUND_DRIVER -DSNDSERV -DHWRENDER
   ifdef CDMUS
     OPTS+=-DMUSSERV
   endif
@@ -685,7 +685,7 @@ ifeq ($(SMIF), LINUX_X11)
 
   ifdef X11_GGI
     # GGI
-    OPTS+=-DVID_GGI
+    OPTS+=-DSMIF_X11_GGI
     OPTINC:=$(SRCINC)
     LDFLAGS:=
     LIBS:=-lggi -lm
@@ -734,7 +734,7 @@ ifeq ($(SMIF), FREEBSD_X11)
   # Uncomment if you want to use the POLL_POINTER hack
   #POLL_POINTER:=-DPOLL_POINTER
 
-  OPTS+=-DVID_X11 -DOLD_SOUND_DRIVER -DSNDSERV -DHWRENDER
+  OPTS+=-DSMIF_X11 -DOLD_SOUND_DRIVER -DSNDSERV -DHWRENDER
   # objs common to xshm and ggi, video is added later
   # Note: free-bsd version of cdmus
   MAINOBJ:=i_main.o
@@ -747,7 +747,7 @@ ifeq ($(SMIF), FREEBSD_X11)
  
   ifdef X11_GGI
     # GGI
-    OPTS+=-DVID_GGI
+    OPTS+=-DSMIF_X11_GGI
     OPTINC+=$(SRCINC) -I/usr/local/include
     LDFLAGS:=
     LIBS:=-lggi -lm -lipx
@@ -781,7 +781,7 @@ ifeq ($(SMIF), OS2_NATIVE)
 #USEASM=1
   PROFILEMODE=1
 # options (separate OS2 library and OS2_NATIVE video)
-  OPTS+= -DOS2_NATIVE
+  OPTS+= -DSMIF_OS2_NATIVE
   OPTINC+=-Zmt $(SRCINC) -I$(SD)os2
 
 #  DEBUGLIBS:=
@@ -833,7 +833,7 @@ ifeq ($(SMIF), WIN32_NATIVE)
   #USEASM=1
 
 # options (separate WIN32 library, and WIN_NATIVE video)
-  OPTS+=-DWIN_NATIVE
+  OPTS+=-DSMIF_WIN_NATIVE
   OPTINC+=-g $(SRCINC)
   ifdef DDINC
     OPTINC+=$(DDINC)
@@ -881,7 +881,7 @@ ifeq ($(SMIF), DJGPPDOS_NATIVE)
   #USEASM=1
 
 # options
-  OPTS:=-DPC_DOS
+  OPTS:=-DSMIF_PC_DOS
   OPTINC+=-g $(SRCINC)
 
 #  DEBUGLIBS:=
@@ -1303,11 +1303,13 @@ $(BIN_WIN)\fixdep.exe:
 	$(MAKE) -C ..  fixdep
 
 %.dep : | $(BIN_WIN)\fixdep.exe
-	@echo "Making dependencies $(@F)"
-	$(CC) $(CFLAGS) -MM $^ > $(DD_WIN)\$(@F)
   ifeq ($(CC_SELECT), MINGW)
+	@echo "Making MINGW dependencies $(@F)"
+	$(CC) $(CFLAGS) -MM $^ > $(DD)/$(@F)
 	$(BIN_WIN)\fixdep  $(O)/  $(DD_WIN)\$(@F)
   else
+	@echo "Making WIN dependencies $(@F)"
+	$(CC) $(CFLAGS) -MM $^ > $(DD_WIN)\$(@F)
 	$(BIN_WIN)\fixdep  $(O_WIN)\  $(DD_WIN)\$(@F)
   endif
 

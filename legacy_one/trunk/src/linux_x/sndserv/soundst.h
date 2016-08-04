@@ -31,8 +31,8 @@
 //
 //-----------------------------------------------------------------------------
 
-#ifndef __SOUNDSTH__
-#define __SOUNDSTH__
+#ifndef SNDSRV_SOUNDST_H
+#define SNDSRV_SOUNDST_H
 
 #define S_MAX_VOLUME            127
 

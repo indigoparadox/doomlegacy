@@ -43,7 +43,7 @@
 
 //#define DEBUG_SDS3D_TO_FILE
 
-#ifndef WIN_NATIVE
+#ifndef SMIF_WIN_NATIVE
 # error s_ds3d is WIN_NATIVE only
 #endif
 
@@ -54,11 +54,11 @@
 
 
 #define  HWRAPI_CREATE_DLL
-#include "../hw3dsdrv.h"
+#include "hardware/hw3dsdrv.h"
 
-#include "../../m_fixed.h"
+#include "m_fixed.h"
 
-#include "../../win32/win_main.h"
+#include "win32/win_main.h"
   // hWndMain
 
 // Internal sound stack
@@ -494,7 +494,7 @@ EXPORT BOOL HWRAPI( Startup ) (I_Error_t FatalErrorFunction, snddev_t *snd_dev)
         return FALSE;
     }
 
-#ifdef WIN_NATIVE
+#ifdef SMIF_WIN_NATIVE
     // these paramters are only defined for WIN_NATIVE
     hr = IDirectSound_SetCooperativeLevel(DSnd, hWndMain, snd_dev->cooplevel);
     if (FAILED (hr))

@@ -115,18 +115,18 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "../doomincl.h"
+#include "doomincl.h"
 #include "hw_light.h"
 #include "hw_main.h"
-#include "../i_video.h"
-#include "../z_zone.h"
-#include "../m_random.h"
-#include "../m_bbox.h"
-#include "../m_swap.h"
-#include "../w_wad.h"
-#include "../r_state.h"
-#include "../r_main.h"
-#include "../p_local.h"
+#include "i_video.h"
+#include "z_zone.h"
+#include "m_random.h"
+#include "m_bbox.h"
+#include "m_swap.h"
+#include "w_wad.h"
+#include "r_state.h"
+#include "r_main.h"
+#include "p_local.h"
 
 //=============================================================================
 //                                                                      DEFINES

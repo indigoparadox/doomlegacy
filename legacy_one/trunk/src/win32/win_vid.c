@@ -71,17 +71,17 @@
 
 // Because of WINVER redefine, doomtype.h (via doomincl.h) is before any
 // other include that might define WINVER
-#include "../doomincl.h"
+#include "doomincl.h"
 
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "../i_system.h"
-#include "../m_argv.h"
-#include "../v_video.h"
-#include "../st_stuff.h"
-#include "../i_video.h"
-#include "../z_zone.h"
+#include "i_system.h"
+#include "m_argv.h"
+#include "v_video.h"
+#include "st_stuff.h"
+#include "i_video.h"
+#include "z_zone.h"
 #include "fabdxlib.h"       //wow! I can make use of my win32 test stuff!!
 
 #include "win_main.h"
@@ -89,8 +89,8 @@
 
 #ifdef HWRENDER
 #include "win_dll.h"                //loading the Glide Render DLL
-#include "../hardware/hw_drv.h"     //calling Driver Init & Shutdown
-#include "../hardware/hw_main.h"    //calling HWR module Init & Shutdown
+#include "hardware/hw_drv.h"     //calling Driver Init & Shutdown
+#include "hardware/hw_main.h"    //calling HWR module Init & Shutdown
 #endif
 
 // -------

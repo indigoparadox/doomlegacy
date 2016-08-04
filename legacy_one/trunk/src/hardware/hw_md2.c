@@ -48,7 +48,7 @@
 //-----------------------------------------------------------------------------
 
 
-#include "../doomincl.h"
+#include "doomincl.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,9 +57,9 @@
 
 #include "hw_drv.h"
 #include "hw_light.h"
-#include "../r_main.h"
-#include "../w_wad.h"
-#include "../z_zone.h"
+#include "r_main.h"
+#include "w_wad.h"
+#include "z_zone.h"
 
 
 md2_t md2_models[NUMSPRITES];
@@ -280,7 +280,6 @@ int md2_getAnimationCount (md2_model_t *model)
 {
     int i, j, pos;
     int count;
-    int lastId;
     char name[16], last[16];
 
     strcpy (last, model->frames[0].name);
@@ -293,7 +292,6 @@ int md2_getAnimationCount (md2_model_t *model)
     }
     last[pos + 1] = '\0';
 
-    lastId = 0;
     count = 0;
 
     for (i = 0; i <= model->header.numFrames; i++)
@@ -325,10 +323,10 @@ int md2_getAnimationCount (md2_model_t *model)
 
 const char * md2_getAnimationName (md2_model_t *model, int animation)
 {
+    static char last[32];
+
     int i, j, pos;
     int count;
-    int lastId;
-    static char last[32];
     char name[32];
 
     strcpy (last, model->frames[0].name);
@@ -341,7 +339,6 @@ const char * md2_getAnimationName (md2_model_t *model, int animation)
     }
     last[pos + 1] = '\0';
 
-    lastId = 0;
     count = 0;
 
     for (i = 0; i <= model->header.numFrames; i++)
@@ -377,7 +374,6 @@ void md2_getAnimationFrames (md2_model_t *model, int animation, int *startFrame,
 {
     int i, j, pos;
     int count, numFrames, frameCount;
-    int lastId;
     char name[16], last[16];
 
     strcpy (last, model->frames[0].name);
@@ -390,7 +386,6 @@ void md2_getAnimationFrames (md2_model_t *model, int animation, int *startFrame,
     }
     last[pos + 1] = '\0';
 
-    lastId = 0;
     count = 0;
     numFrames = 0;
     frameCount = 0;

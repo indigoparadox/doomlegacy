@@ -108,7 +108,7 @@ typedef enum {
   // Apple C 4.2, __APPLE_CC__ == 5666
   //   They define __MACH__, __GNUC__, and conditionally __BIG_ENDIAN__
   //   Do not use __LITTLE_ENDIAN__, it is not defined on WIN, LINUX
-# ifdef SDL
+# ifdef SMIF_SDL
    // Mac on SDL, is like Linux
    // Can also test for __APPLE_CC__ or __MACH__
 #  define MAC_SDL

@@ -50,7 +50,7 @@
 //
 //-----------------------------------------------------------------------------
 
-#ifndef VID_X11
+#ifndef SMIF_X11
 // Linux X11 or BSD X11 only.
 # error ogl_x11 is X11 only
 #endif

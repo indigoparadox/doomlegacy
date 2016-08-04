@@ -38,7 +38,7 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "../doomincl.h"
+#include "doomincl.h"
   // stdio, stdlib, strings, defines
 
 #include <netinet/in.h>
@@ -51,16 +51,16 @@
 #include <dos.h>
 #include <sys/nearptr.h>
 
-#include "../doomstat.h"
+#include "doomstat.h"
 
-#include "../i_system.h"
-#include "../d_event.h"
-#include "../d_net.h"
-#include "../m_argv.h"
+#include "i_system.h"
+#include "d_event.h"
+#include "d_net.h"
+#include "m_argv.h"
 
-#include "../z_zone.h"
-#include "../i_net.h"
-#include "../i_tcp.h"
+#include "z_zone.h"
+#include "i_net.h"
+#include "i_tcp.h"
 
 //
 // NETWORKING

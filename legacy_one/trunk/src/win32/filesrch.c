@@ -19,7 +19,7 @@
 
 // Because of WINVER redefine, doomtype.h (via doomincl.h) is before any
 // other include that might define WINVER
-#include "../doomincl.h"
+#include "doomincl.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -36,8 +36,8 @@
 #endif
 #endif
 
-#include "../d_netfil.h"
-#include "../m_misc.h"
+#include "d_netfil.h"
+#include "m_misc.h"
 
 //
 // sys_filesearch:

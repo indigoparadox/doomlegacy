@@ -71,15 +71,15 @@
 
 #include <math.h>
 
-#include "../doomincl.h"
+#include "doomincl.h"
 #include "hw_glob.h"
-#include "../r_local.h"
-#include "../z_zone.h"
-#include "../console.h"
-#include "../v_video.h"
-#include "../m_menu.h"
-#include "../i_system.h"
-#include "../i_video.h"
+#include "r_local.h"
+#include "z_zone.h"
+#include "console.h"
+#include "v_video.h"
+#include "m_menu.h"
+#include "i_system.h"
+#include "i_video.h"
 
 
 

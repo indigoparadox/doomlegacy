@@ -146,6 +146,8 @@ boolean B_ReachablePoint (player_t *p, sector_t* destSector, fixed_t x, fixed_t 
 
 	return P_PathTraverse (p->mo->x, p->mo->y, x, y, PT_ADDLINES|PT_ADDTHINGS, PTR_QuickReachable);
 }
+
+
 //
 // B_LookForSpecialLine
 //
@@ -160,7 +162,7 @@ boolean B_ReachablePoint (player_t *p, sector_t* destSector, fixed_t x, fixed_t 
 boolean B_LookForSpecialLine(player_t* p, fixed_t* x, fixed_t* y)
 {
     int  i, j;
-    sector_t  *specialsector, *insector, *sector;
+    sector_t  *insector, *sector;
     line_t  *edge;
     msecnode_t  *insectornode;
 
@@ -172,7 +174,7 @@ boolean B_LookForSpecialLine(player_t* p, fixed_t* x, fixed_t* y)
         {
 	    // for all lines in sector linelist
 	    edge = insector->linelist[i];
-	    specialsector = (insector == edge->frontsector) ? edge->backsector : edge->frontsector;
+            // sector_t * specialsector = (insector == edge->frontsector) ? edge->backsector : edge->frontsector;
 	    if (
 		//edge->special && !(edge->special & ML_REPEAT_SPECIAL)
 		//P_CheckTag(edge) && (!specialsector || !specialsector->ceilingdata))
@@ -194,13 +196,13 @@ boolean B_LookForSpecialLine(player_t* p, fixed_t* x, fixed_t* y)
 	    {
 	        // its a double sided linedef
 	        sector = (edge->frontsector == insector) ?
-		 edge->backsector : edge->frontsector;
+                edge->backsector : edge->frontsector;
 
 	        for (j = 0; j < sector->linecount; j++)
 	        {
 		    // for all lines in sector linelist
 		    edge = sector->linelist[j];
-		    specialsector = (sector == edge->frontsector) ? edge->backsector : edge->frontsector;
+                    // sector_t * specialsector = (sector == edge->frontsector) ? edge->backsector : edge->frontsector;
 		    if (
 			//edge->special && !(edge->special & ML_REPEAT_SPECIAL))//P_CheckTag(edge) && (!specialsector || !specialsector->ceilingdata))//line!(line->flags & ML_TWOSIDED) || (line->flags & ML_BLOCKING))
 			//(((edge->special & TriggerType) >> TriggerTypeShift) == SwitchOnce) || (((edge->special & TriggerType) >> TriggerTypeShift) == PushOnce))

@@ -1,8 +1,8 @@
 //      Created by the sound utility written by Dave Taylor.
 //      Kept as a sample, DOOM2  sounds. Frozen.
 
-#ifndef __SOUNDS__
-#define __SOUNDS__
+#ifndef SNDSRV_SOUNDS_H
+#define SNDSRV_SOUNDS_H
 
 #include <stdio.h> // Needed for NULL
 

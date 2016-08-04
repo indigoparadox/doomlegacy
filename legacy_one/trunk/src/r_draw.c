@@ -659,13 +659,14 @@ void R_DrawViewBorder (void)
 void R_DrawColumnShadowed(void)
 {
     int count;
-    int realyh, realyl;
+//    int realyh, realyl;
+    int realyh;
     int i;
     int height, bheight = 0;
     int solid = 0;
 
     realyh = dc_yh;
-    realyl = dc_yl;
+//    realyl = dc_yl;
 
     count = dc_yh - dc_yl;
 

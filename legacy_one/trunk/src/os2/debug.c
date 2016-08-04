@@ -12,7 +12,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "Debug.h"
+#include "debug.h"
 
 #define PIPEME
 #undef fprintf

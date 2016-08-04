@@ -62,8 +62,8 @@
 #ifndef HW_DEFS_H
 #define HW_DEFS_H
 
-#include "../doomdef.h"
-#include "../doomtype.h"
+#include "doomdef.h"
+#include "doomtype.h"
 
 // ==========================================================================
 //                                                               SIMPLE TYPES

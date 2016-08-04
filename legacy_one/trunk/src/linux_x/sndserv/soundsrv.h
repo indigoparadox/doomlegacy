@@ -30,8 +30,8 @@
 //
 //-----------------------------------------------------------------------------
 
-#ifndef __SNDSERVER_H__
-#define __SNDSERVER_H__
+#ifndef SNDSERVER_H
+#define SNDSERVER_H
 
 #define SAMPLECOUNT             512
 #define MIXBUFFERSIZE   (SAMPLECOUNT*2*2)

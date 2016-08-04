@@ -33,7 +33,7 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "../doomincl.h"
+#include "doomincl.h"
   // stdlib, stdio, strings, defines
 
 #include <stdlib.h>
@@ -57,28 +57,28 @@
  #include <keys.h>
 #endif
 
-#include "../m_misc.h"
-#include "../i_video.h"
-#include "../i_sound.h"
-#include "../i_system.h"
-#include "../d_net.h"
-#include "../g_game.h"
+#include "m_misc.h"
+#include "i_video.h"
+#include "i_sound.h"
+#include "i_system.h"
+#include "d_net.h"
+#include "g_game.h"
 
-#include "../d_main.h"
+#include "d_main.h"
 
-#include "../m_argv.h"
+#include "m_argv.h"
 
-#include "../w_wad.h"
-#include "../z_zone.h"
-#include "../g_input.h"
+#include "w_wad.h"
+#include "z_zone.h"
+#include "g_input.h"
 
-#include "../console.h"
+#include "console.h"
 
 #ifdef __GNUG__
- #pragma implementation "../i_system.h"
+ #pragma implementation "i_system.h"
 #endif
 
-#include "../i_joy.h"
+#include "i_joy.h"
 
 
 //### let's try with Allegro ###

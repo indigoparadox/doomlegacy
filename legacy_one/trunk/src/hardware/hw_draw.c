@@ -84,24 +84,24 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "../doomincl.h"
+#include "doomincl.h"
 
 #include "hw_glob.h"
 #include "hw_drv.h"
 
-#include "../m_misc.h"
+#include "m_misc.h"
   //FIL_WriteFile()
-#include "../m_swap.h"
-#include "../r_draw.h"
+#include "m_swap.h"
+#include "r_draw.h"
   //viewborderlump
-#include "../r_main.h"
-#include "../w_wad.h"
-#include "../z_zone.h"
-#include "../v_video.h"
+#include "r_main.h"
+#include "w_wad.h"
+#include "z_zone.h"
+#include "v_video.h"
 
 #include <unistd.h>
 #include <fcntl.h>
-#include "../i_video.h"
+#include "i_video.h"
   // for rendermode != render_glide
 
 

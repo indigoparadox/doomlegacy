@@ -32,7 +32,7 @@
 // Because of WINVER redefine, put before any include that might define WINVER
 #include "doomincl.h"
 
-#include "SDL.h"
+#include <SDL.h>
 
 #include "i_sound.h"
 #include "command.h"

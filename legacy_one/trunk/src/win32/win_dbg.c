@@ -39,13 +39,13 @@
 
 // Because of WINVER redefine, doomtype.h (via doomincl.h) is before any
 // other include that might define WINVER
-#include "../doomincl.h"
+#include "doomincl.h"
   // VERSION
 
 #include "win_dbg.h"
 #include "win_main.h"
 
-#include "../m_argv.h" //print the parameter in the log
+#include "m_argv.h" //print the parameter in the log
 
 #define NumCodeBytes    16          // Number of code bytes to record.
 #define MaxStackDump    2048    // Maximum number of DWORDS in stack dumps.

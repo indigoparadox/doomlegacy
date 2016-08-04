@@ -63,7 +63,7 @@
 
 // Because of redefine WINVER, doomtype.h (via doomdef.h) needs to be before
 // any other possible WINVER users, like gl and glu
-#include "../../doomdef.h"
+#include "doomdef.h"
 
 //[segabor]
 #ifdef __MACH__
@@ -76,7 +76,7 @@
 
 // necessary for Unix AND Windows (param to hw_drv)
 #define  HWRAPI_CREATE_DLL
-#include "../hw_drv.h"
+#include "hardware/hw_drv.h"
 
 // ==========================================================================
 //                                                                DEFINITIONS

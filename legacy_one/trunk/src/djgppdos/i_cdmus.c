@@ -29,15 +29,15 @@
 //      
 //-----------------------------------------------------------------------------
 
-#include "../doomincl.h"
+#include "doomincl.h"
 
 // CD-Audio library by Brennan Underwood
 #include "bcd.h"
 
-#include "../i_sound.h"
-#include "../command.h"
-#include "../i_system.h"
-#include "../s_sound.h"
+#include "i_sound.h"
+#include "command.h"
+#include "i_system.h"
+#include "s_sound.h"
 
 // ------
 // protos

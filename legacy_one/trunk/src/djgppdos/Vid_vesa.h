@@ -30,8 +30,8 @@
 #ifndef VID_VESA_H
 #define VID_VESA_H
 
-#include "../doomtype.h"
-#include "../screen.h"
+#include "doomtype.h"
+#include "screen.h"
 
 
 #define MODE_SUPPORTED_IN_HW    0x0001

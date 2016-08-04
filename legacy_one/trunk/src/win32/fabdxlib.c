@@ -33,7 +33,7 @@
 
 // Because of WINVER redefine, doomtype.h (via doomincl.h) is before any
 // other include that might define WINVER
-#include "../doomincl.h"
+#include "doomincl.h"
 
 #include "win_main.h"
 #include "fabdxlib.h"
@@ -41,7 +41,7 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <ddraw.h>
-#include "../i_system.h"
+#include "i_system.h"
 
 #define NT4COMPAT   //always defined, always compatible
 

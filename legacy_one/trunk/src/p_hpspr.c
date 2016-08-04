@@ -689,16 +689,16 @@ void A_FireGoldWandPL2(player_t *player, pspdef_t *psp)
     int i;
     angle_t angle;
     int damage;
-    fixed_t momz;
 
     player->ammo[am_goldwand] -=
                 cv_deathmatch.value ? USE_GWND_AMMO_1 : USE_GWND_AMMO_2;
     PuffType = MT_GOLDWANDPUFF2;
     P_BulletSlope(pmo);
-    momz = FixedMul(mobjinfo[MT_GOLDWANDFX2].speed, bulletslope);
+// [WDJ] Disabled since 1.42 and I do not know why.
+//      fixed_t momz = FixedMul(mobjinfo[MT_GOLDWANDFX2].speed, bulletslope);
 //      P_SpawnMissileAngle(pmo, MT_GOLDWANDFX2, mo->angle-(ANG45/8), momz);
 //      P_SpawnMissileAngle(pmo, MT_GOLDWANDFX2, mo->angle+(ANG45/8), momz);
-    angle = pmo->angle-(ANG45/8);
+    angle = pmo->angle - (ANG45/8);
     for(i = 0; i < 5; i++)
     {
         damage = 1+(P_Random()&7);

@@ -31,7 +31,7 @@
 //-----------------------------------------------------------------------------
 
 
-#include<stdlib.h>
+#include <stdlib.h>
 
 int   VID_NumModes(void) {
   return 1;

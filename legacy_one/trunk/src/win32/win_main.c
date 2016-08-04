@@ -58,31 +58,31 @@
 
 // Because of WINVER redefine, doomtype.h (via doomincl.h) is before any
 // other include that might define WINVER
-#include "../doomincl.h"
+#include "doomincl.h"
 
 #include <stdio.h>
 #include <windef.h>
 
-#include "../doomstat.h"
+#include "doomstat.h"
   // netgame
 #include "resource.h"
 
-#include "../m_argv.h"
-#include "../d_main.h"
-#include "../i_system.h"
+#include "m_argv.h"
+#include "d_main.h"
+#include "i_system.h"
 
-#include "../screen.h"
-#include "../keys.h"
+#include "screen.h"
+#include "keys.h"
   //hack quick test
 
-#include "../console.h"
+#include "console.h"
 
 #include "fabdxlib.h"
 #include "win_main.h"
 #include "win_dbg.h"
-#include "../I_sound.h"
+#include "I_sound.h"
   // midi pause/unpause
-#include "../g_input.h"
+#include "g_input.h"
   // KEY_MOUSEWHEELxxx
 
 // judgecutor: MSWheel support for Win95/NT3.51

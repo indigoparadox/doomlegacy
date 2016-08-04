@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "i_os2.h"
+#include "I_os2.h"
 #include "i_sound.h"
 #include "qmus2mid2.h"
 #include "debug.h"

@@ -31,15 +31,15 @@
 
 #include <errno.h>
 
-#include "../doomincl.h"
-#include "../doomstat.h"
+#include "doomincl.h"
+#include "doomstat.h"
 
-#include "../i_system.h"
-#include "../i_net.h"
-#include "../d_event.h"
-#include "../d_net.h"
-#include "../m_argv.h"
-#include "../z_zone.h"
+#include "i_system.h"
+#include "i_net.h"
+#include "d_event.h"
+#include "d_net.h"
+#include "m_argv.h"
+#include "z_zone.h"
 
 //
 // NETWORKING

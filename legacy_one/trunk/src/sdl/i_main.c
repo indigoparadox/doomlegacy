@@ -50,7 +50,7 @@
 // probably around 2015.
 // This include will rename main as SDL_main, and use a main from SDL.
 // Must also compile and link SDLmain.m, which is objective-C program.
-# include "SDL.h"
+# include <SDL.h>
   // This will also get SDL_main.h, SDL_config.h, SDL_platform.h
 #endif
 

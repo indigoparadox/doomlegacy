@@ -50,7 +50,7 @@ typedef struct snddev_s
     int     sample_rate;
     int     bps;
     
-#ifdef WIN_NATIVE
+#ifdef SMIF_WIN_NATIVE
     // Windows specific data, but no windows types allowed
     int     cooplevel;
 #endif

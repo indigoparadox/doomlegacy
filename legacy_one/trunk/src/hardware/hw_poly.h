@@ -55,7 +55,7 @@
 #ifndef HW_POLY_H
 #define HW_POLY_H
 
-#include "../m_fixed.h"
+#include "m_fixed.h"
 
 // -----------
 // structures

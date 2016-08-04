@@ -28,17 +28,17 @@
 //      
 //-----------------------------------------------------------------------------
 
-#include "../doomincl.h"
-#include "../m_argv.h"
+#include "doomincl.h"
+#include "m_argv.h"
 
 #if 0
 #include <errno.h>
-#include "../doomstat.h"
-#include "../i_system.h"
-#include "../d_event.h"
-#include "../d_net.h"
-#include "../i_net.h"
-#include "../z_zone.h"
+#include "doomstat.h"
+#include "i_system.h"
+#include "d_event.h"
+#include "d_net.h"
+#include "i_net.h"
+#include "z_zone.h"
 
 int I_InitTcpNetwork(void);
 //

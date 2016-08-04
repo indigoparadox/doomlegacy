@@ -534,7 +534,7 @@ EV_VerticalDoor ( line_t* line, mobj_t* thing )
 {
     player_t * player = thing->player;
     char * msg = NULL;
-    int secnum;
+//    int secnum;
     sector_t *sec;
     vldoor_t *door;
 //    int         side; //SoM: 3/6/2000
@@ -581,7 +581,7 @@ EV_VerticalDoor ( line_t* line, mobj_t* thing )
 
     // if the sector has an active thinker, use it
     sec = sides[line->sidenum[1]].sector;
-    secnum = sec - sectors; // sector number
+//    secnum = sec - sectors; // sector number
 
     if (sec->ceilingdata)       //SoM: 3/6/2000
     {

@@ -2141,26 +2141,24 @@ boolean P_AutoUseChaosDevice(player_t *player)
 //
 //---------------------------------------------------------------------------
 
+// From Heretic
 void P_AutoUseHealth(player_t *player, int saveHealth)
 {
     int i;
     int count;
     int normalCount;
-    int normalSlot;
     int superCount;
-    int superSlot;
-    
+
+    // Uses P_PlayerUseArtifact, so do not need to know inventory slot.
     normalCount = superCount = 0;
     for(i = 0; i < player->inventorySlotNum; i++)
     {
         if(player->inventory[i].type == arti_health)
         {
-            normalSlot = i;
             normalCount = player->inventory[i].count;
         }
         else if(player->inventory[i].type == arti_superhealth)
         {
-            superSlot = i;
             superCount = player->inventory[i].count;
         }
     }

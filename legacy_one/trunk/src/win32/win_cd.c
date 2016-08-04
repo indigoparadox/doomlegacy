@@ -34,17 +34,17 @@
 
 // Because of WINVER redefine, doomtype.h (via doomincl.h) is before any
 // other include that might define WINVER
-#include "../doomincl.h"
+#include "doomincl.h"
 
 #include "win_main.h"
 #include <mmsystem.h>
 
-#include "../command.h"
-#include "../doomtype.h"
-#include "../i_sound.h"
-#include "../i_system.h"
+#include "command.h"
+#include "doomtype.h"
+#include "i_sound.h"
+#include "i_system.h"
 
-#include "../s_sound.h"
+#include "s_sound.h"
 
 #define MAX_CD_TRACKS       100
 

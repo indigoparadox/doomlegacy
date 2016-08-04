@@ -329,7 +329,7 @@ byte    fatal_error = 0;
 // name buffer sizes including directory and everything
 #define FILENAME_SIZE  256
 
-#if defined PC_DOS || defined __WIN32__ || defined __OS2__
+#if defined SMIF_PC_DOS || defined __WIN32__ || defined __OS2__
 # define  SLASH  "\\"
 #else
 # define  SLASH  "/"
@@ -473,7 +473,7 @@ void D_PostEvent(const event_t * ev)
 }
 
 // just for lock this function
-#ifdef PC_DOS
+#ifdef SMIF_PC_DOS
 void D_PostEvent_end(void)
 {
 };
@@ -1799,7 +1799,7 @@ fatal_err:
 /* ======================================================================== */
 // Just print the nice red titlebar like the original DOOM2 for DOS.
 /* ======================================================================== */
-#ifdef PC_DOS
+#ifdef SMIF_PC_DOS
 void D_Titlebar(const char *title1, const char *title2)
 {
     // DOOM LEGACY banner

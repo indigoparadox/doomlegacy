@@ -38,8 +38,8 @@
 
 #ifdef HW3SOUND
 #include "hw3dsdrv.h"
-//#include "../s_sound.h"
-//#include "../p_mobj.h"
+//#include "s_sound.h"
+//#include "p_mobj.h"
 
 // Default sound mode (original stereo mode)
 enum { HWS_DEFAULT_MODE = 0 };

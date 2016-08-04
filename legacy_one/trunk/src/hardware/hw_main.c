@@ -301,24 +301,24 @@
 
 #include <math.h>
 
-#include "../doomincl.h"
+#include "doomincl.h"
 
 #include "hw_glob.h"
 #include "hw_light.h"
 
-#include "../doomstat.h"
-#include "../i_video.h"
+#include "doomstat.h"
+#include "i_video.h"
   // added by Hurdler for rendermode == render_glide
-#include "../v_video.h"
-#include "../p_local.h"
-#include "../p_setup.h"
-#include "../r_local.h"
-#include "../d_clisrv.h"
-#include "../w_wad.h"
-#include "../z_zone.h"
-#include "../r_splats.h"
-#include "../t_func.h"
-#include "../st_stuff.h"
+#include "v_video.h"
+#include "p_local.h"
+#include "p_setup.h"
+#include "r_local.h"
+#include "d_clisrv.h"
+#include "w_wad.h"
+#include "z_zone.h"
+#include "r_splats.h"
+#include "t_func.h"
+#include "st_stuff.h"
 
 
 
@@ -997,7 +997,6 @@ void HWR_RenderFog( ffloor_t* fff, sector_t * intosec, int foglight,
     line_t * fogline = fff->master;
     side_t * fogside = & sides[ fogline->sidenum[0] ];
     sector_t * modelsec = fogside->sector;
-    MipTexture_t * miptex = NULL;
 
     FSurfaceInfo_t Surf;
     vxtx3d_t fVert[4];
@@ -1096,7 +1095,8 @@ void HWR_RenderFog( ffloor_t* fff, sector_t * intosec, int foglight,
         goto nofog;
 
     // miptex is for the base texture, fog texture has fixed size
-    miptex = HWR_GetTexture(texnum, Surf.texflags);
+    // MipTexture_t * miptex = HWR_GetTexture(texnum, Surf.texflags);
+    HWR_GetTexture(texnum, Surf.texflags);
 
     fVert[3].tow = fVert[2].tow = fog_bltic * (1.0 / (FOG_HEIGHT * 128.0 * 4.0));
     fVert[0].tow = fVert[1].tow = fVert[3].tow + (1.0 / (FOG_HEIGHT * 128.0 * 4.0));
@@ -3595,7 +3595,7 @@ void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
     vxtx3d_t vxtx[4];
     int i;
     float tx, ty;
-    float x1, x2;
+//    float x1, x2;
 
     MipPatch_t *gpatch;       //sprite patch converted to hardware
 
@@ -3637,12 +3637,12 @@ void HWR_DrawPSprite(pspdef_t * psp, int lightlevel)
 
     tx = FIXED_TO_FLOAT( (psp->sx - ((BASEVIDWIDTH / 2) << FRACBITS)) );
     tx -= FIXED_TO_FLOAT( sprlump->offset );
-    x1 = gr_windowcenterx + (tx * gr_pspritexscale);
+//    x1 = gr_windowcenterx + (tx * gr_pspritexscale);
 
     vxtx[3].x = vxtx[0].x = tx;
 
     tx += FIXED_TO_FLOAT( sprlump->width );
-    x2 = gr_windowcenterx + (tx * gr_pspritexscale) - 1;
+//    x2 = gr_windowcenterx + (tx * gr_pspritexscale) - 1;
 
     vxtx[2].x = vxtx[1].x = tx;
 

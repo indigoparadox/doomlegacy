@@ -64,7 +64,7 @@
 
 // Because of WINVER redefine, doomtype.h (via doomincl.h) is before any
 // other include that might define WINVER
-#include "../doomincl.h"
+#include "doomincl.h"
 
 #include <stdlib.h>
 #include <signal.h>
@@ -80,26 +80,26 @@
 #include <winuser.h>
 #endif
 
-#include "../i_video.h"
-#include "../i_sound.h"
-#include "../i_system.h"
+#include "i_video.h"
+#include "i_sound.h"
+#include "i_system.h"
   // graphics_state
-#include "../i_joy.h"
+#include "i_joy.h"
 
-#include "../m_misc.h"
-#include "../d_net.h"
-#include "../g_game.h"
+#include "m_misc.h"
+#include "d_net.h"
+#include "g_game.h"
 
-#include "../d_main.h"
+#include "d_main.h"
 
-#include "../m_argv.h"
+#include "m_argv.h"
 
-#include "../w_wad.h"
-#include "../z_zone.h"
-#include "../g_input.h"
+#include "w_wad.h"
+#include "z_zone.h"
+#include "g_input.h"
 
-#include "../keys.h"
-#include "../screen.h"
+#include "keys.h"
+#include "screen.h"
   // vid
 
 #include "fabdxlib.h"

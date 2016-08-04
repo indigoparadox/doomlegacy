@@ -80,7 +80,7 @@
 
 #ifdef __WIN32__
 
-#ifndef WIN_NATIVE
+#ifndef SMIF_WIN_NATIVE
 # error ogl_win is WIN_NATIVE only
 #endif
 

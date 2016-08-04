@@ -60,7 +60,8 @@
 
 #ifdef USEASM
 // added 19990125 by Kin
-#include "../vid_copy.h"
+// [WDJ] vid_copy.s exists, but do not have vid_copy.h
+// #include "vid_copy.h"
 #endif
 
 #include "doomstat.h"

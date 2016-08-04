@@ -75,19 +75,19 @@
 #include <math.h>
 #include <unistd.h>
 
-#include "SDL.h"
-#include "SDL_audio.h"
-#include "SDL_mutex.h"
-#include "SDL_version.h"
+#include <SDL.h>
+#include <SDL_audio.h>
+#include <SDL_mutex.h>
+#include <SDL_version.h>
 #if ((SDL_MAJOR_VERSION*100)+(SDL_MINOR_VERSION*10)) < 120
-# include "SDL_byteorder.h"
+# include <SDL_byteorder.h>
 #else
-# include "SDL_endian.h"
+# include <SDL_endian.h>
 #endif
 
 #ifdef HAVE_MIXER
 # define  USE_RWOPS
-# include "SDL_mixer.h"
+# include <SDL_mixer.h>
 #endif
 
 #include "doomincl.h"
@@ -592,7 +592,7 @@ static struct music_channel_t
   // Older SDL without RWOPS
 #define OLD_SDL_MIXER
 
-#ifdef PC_DOS
+#ifdef SMIF_PC_DOS
 static char * midiname = "DoomMUS.mid";
 #else
 static char midiname[24] = "/tmp/DoomMUSXXXXXX";
@@ -601,7 +601,7 @@ FILE * midifile;
 
 void Init_OLD_SDL_MIXER( void )
 {
-#ifndef PC_DOS
+#ifndef SMIF_PC_DOS
     // Make temp file name
     mkstemp( midiname );
 //    strcat( midiname, ".mid" );

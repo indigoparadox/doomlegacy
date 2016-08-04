@@ -74,7 +74,7 @@
 
 // Because of WINVER redefine, doomtype.h (via doomincl.h) is before any
 // other include that might define WINVER
-#include "../doomincl.h"
+#include "doomincl.h"
 
 #include "win_main.h"
 #include <mmsystem.h>
@@ -87,21 +87,21 @@
 #endif
 #include <dsound.h>
 
-#include "../command.h"
-#include "../i_sound.h"
-#include "../s_sound.h"
-#include "../i_system.h"
-#include "../m_argv.h"
-#include "../w_wad.h"
-#include "../z_zone.h"
-#include "../doomstat.h"
+#include "command.h"
+#include "i_sound.h"
+#include "s_sound.h"
+#include "i_system.h"
+#include "m_argv.h"
+#include "w_wad.h"
+#include "z_zone.h"
+#include "doomstat.h"
 
 #include "dx_error.h"
 
-#include "../qmus2mid.h"
+#include "qmus2mid.h"
 #include "mid2strm.h"
 
-#include "../hardware/hw3sound.h"
+#include "hardware/hw3sound.h"
 
 #include "win_dll.h"
 

@@ -366,7 +366,7 @@ void D_Register_ClientCommands(void)
 
     //g_input.c
     CV_RegisterVar(&cv_grabinput);
-#ifdef SDL
+#ifdef SMIF_SDL
     CV_RegisterVar(&cv_mouse_motion);
 #endif
     CV_RegisterVar(&cv_usemouse);

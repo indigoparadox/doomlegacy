@@ -32,8 +32,8 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "../doomincl.h"
-#include "../m_argv.h"
+#include "doomincl.h"
+#include "m_argv.h"
 
 //
 // NETWORKING

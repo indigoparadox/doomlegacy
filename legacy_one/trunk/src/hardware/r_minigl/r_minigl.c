@@ -42,7 +42,7 @@
 //
 //-----------------------------------------------------------------------------
 
-#ifndef WIN_NATIVE
+#ifndef SMIF_WIN_NATIVE
 # error r_minigl is WIN_NATIVE only
 #endif
 
@@ -55,8 +55,8 @@
 #define DRIVER_STRING "HWRAPI Init(): DooM Legacy MiniGL renderer"
 
 // Include this at end
-#include "../r_opengl/r_opengl.c"
-#include "../r_opengl/ogl_win.c"
+#include "hardware/r_opengl/r_opengl.c"
+#include "hardware/r_opengl/ogl_win.c"
 
 // That's all ;-) 
 // Just, be sure to do the right changes in r_opengl.cpp

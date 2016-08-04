@@ -36,9 +36,9 @@
 //      
 //-----------------------------------------------------------------------------
 
-#include "../doomincl.h"
+#include "doomincl.h"
   // I_Error
-#include "../m_argv.h"
+#include "m_argv.h"
 
 //
 // I_InitNetwork

@@ -30,8 +30,8 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __STRCMP__
-#define __STRCMP__
+#ifndef SNDSRV_STRCMP_H
+#define SNDSRV_STRCMP_H
 
 int strcasecmp (const char *, const char *);
 int strncasecmp (const char *, const char *, int);

@@ -6,7 +6,7 @@
 #define INCL_WIN
 #define INCL_GPI
 
-#include "i_os2.h"
+#include "I_os2.h"
 #include "screen.h"
 
 #include <fourcc.h>

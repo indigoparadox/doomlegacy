@@ -37,7 +37,7 @@
 
 // Because of WINVER redefine, doomtype.h (via doomincl.h) is before any
 // other include that might define WINVER
-#include "../doomincl.h"
+#include "doomincl.h"
   // warnings
   // I_Error, CONS_Printf
 

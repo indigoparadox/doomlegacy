@@ -60,7 +60,7 @@
 #define HW_DRV_H
 
 // this must be here 19991024 by Kin  (?? why)
-#include "../screen.h"
+#include "screen.h"
 #include "hw_defs.h"
 #include "hw_data.h"
 #include "hw_md2.h"
@@ -77,7 +77,7 @@
 
 // Windows SDL version does not require any of these.
 #ifdef HWRAPI_CREATE_DLL
-  #ifdef WIN_NATIVE
+  #ifdef SMIF_WIN_NATIVE
     #ifdef __cplusplus
       #define EXPORT  extern "C" __declspec( dllexport )
     #else
@@ -94,7 +94,7 @@
   #endif   
 #else // HWRAPI_CREATE_DLL
   #define EXPORT      typedef
-  #ifdef WIN_NATIVE
+  #ifdef SMIF_WIN_NATIVE
     #define HWRAPI(fn)  (WINAPI *fn)
   #else
     #define HWRAPI(fn)  (*fn)
@@ -111,11 +111,11 @@ typedef void (*I_Error_t) (char *error, ...);
 EXPORT boolean HWRAPI( Init ) (I_Error_t ErrorFunction) ;
 EXPORT void HWRAPI( Shutdown ) (void) ;
 
-#ifdef WIN_NATIVE
+#ifdef SMIF_WIN_NATIVE
 EXPORT void    HWRAPI( GetModeList ) (vmode_t** pvidmodes, int* numvidmodes) ;
 #endif
 
-#ifdef VID_X11
+#ifdef SMIF_X11
 // [WDJ] Must use same dll HWRAPI interface.
 #include <X11/Xlib.h>
   // just to get Window and Display typedef
@@ -164,10 +164,10 @@ EXPORT char *HWRAPI( GetRenderer ) (void);
 struct hwdriver_s {
     Init                pfnInit;
     Shutdown            pfnShutdown;
-#ifdef WIN_NATIVE
+#ifdef SMIF_WIN_NATIVE
     GetModeList         pfnGetModeList;
 #endif
-#ifdef VID_X11
+#ifdef SMIF_X11
     HookXwin            pfnHookXwin;
 #endif
     SetPalette          pfnSetPalette;

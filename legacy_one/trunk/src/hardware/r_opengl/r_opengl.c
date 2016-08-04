@@ -180,7 +180,7 @@
 
 #include "doomincl.h"
 #include "r_opengl.h"
-#include "../hw_glob.h"
+#include "hardware/hw_glob.h"
 
 // ==========================================================================
 //                                                                  CONSTANTS

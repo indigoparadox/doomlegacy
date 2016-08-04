@@ -686,7 +686,6 @@ void AM_Start (void)
 //
 boolean AM_Responder ( event_t *  ev )
 {
-    static int cheatstate=0;
     static char buffer[20];
 
     char * msg = NULL;
@@ -768,8 +767,8 @@ boolean AM_Responder ( event_t *  ev )
             msg = AMSTR_MARKSCLEARED;
             break;
           default:
-            cheatstate=0;
             rc = false;
+            break;
         }
     }
 

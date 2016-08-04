@@ -34,7 +34,7 @@
 //      
 //-----------------------------------------------------------------------------
 
-#include "r_opengl.h"
+#include "hardware/r_opengl/r_opengl.h"
 #include "hwsym_mac.h"
 
 //

@@ -48,7 +48,7 @@ rcsid[] = "$Id$";
 #include <netinet/in.h>
 #include <signal.h>
 
-#include "i_os2.h"
+#include "I_os2.h"
 
 //#include "mgraph.h"
 

@@ -2003,7 +2003,7 @@ void G_Savegame_Name( /*OUT*/ char * namebuf, /*IN*/ int slot )
 #else
     sprintf(namebuf, savegamename, slot);
 #endif
-#ifdef PC_DOS
+#ifdef SMIF_PC_DOS
     if( slot > 9 )
     {
         // shorten name to 8 char

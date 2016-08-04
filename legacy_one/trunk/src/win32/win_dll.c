@@ -49,11 +49,11 @@
 
 // Because of WINVER redefine, doomtype.h (via doomincl.h) is before any
 // other include that might define WINVER
-#include "../doomincl.h"
+#include "doomincl.h"
 
-#include "../hardware/hw_drv.h"        // get the standard 3D Driver DLL exports prototypes
+#include "hardware/hw_drv.h"        // get the standard 3D Driver DLL exports prototypes
 
-#include "../hardware/hw3dsdrv.h"      // get the 3D sound driver DLL export prototypes
+#include "hardware/hw3dsdrv.h"      // get the 3D sound driver DLL export prototypes
 
 #include "win_dll.h"
 #include "win_main.h"       // I_GetLastErrorMsgBox()

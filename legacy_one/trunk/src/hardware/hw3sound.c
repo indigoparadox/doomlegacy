@@ -43,19 +43,19 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "../doomincl.h"
+#include "doomincl.h"
 #include "hw3sound.h"
-#include "../i_sound.h"
-#include "../s_sound.h"
-#include "../w_wad.h"
+#include "i_sound.h"
+#include "s_sound.h"
+#include "w_wad.h"
 
-#include "../g_game.h"
-#include "../tables.h"
-#include "../sounds.h"
-#include "../r_main.h" 
-#include "../r_things.h"
-#include "../m_random.h"
-#include "../z_zone.h"
+#include "g_game.h"
+#include "tables.h"
+#include "sounds.h"
+#include "r_main.h" 
+#include "r_things.h"
+#include "m_random.h"
+#include "z_zone.h"
 
 #define ANGLE2DEG(x) (((double)(x)) / ((double)ANG45/45))
 

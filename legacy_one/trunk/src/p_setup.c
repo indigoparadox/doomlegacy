@@ -759,7 +759,7 @@ void P_LoadThings (int lump)
 
     int                 i;
     mapthing_t*         mt;
-    boolean             spawn;
+//    boolean             spawn;
     byte               *data;
 
     data = W_CacheLumpNum (lump,PU_LEVEL);  // temp things lump
@@ -775,7 +775,7 @@ void P_LoadThings (int lump)
     mt = mapthings;
     for (i=0 ; i<nummapthings ; i++, mt++, dmt++)
     {
-        spawn = true;
+//        spawn = true;
 
         // Do spawn all other stuff.
         // SoM: Do this first so all the mapthing slots are filled!

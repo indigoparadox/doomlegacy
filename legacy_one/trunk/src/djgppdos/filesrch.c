@@ -5,8 +5,8 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "..\d_netfil.h"
-#include "../m_misc.h"
+#include "d_netfil.h"
+#include "m_misc.h"
 
 #define MAX_SRCHPATH (MAX_WADPATH * 2)
 

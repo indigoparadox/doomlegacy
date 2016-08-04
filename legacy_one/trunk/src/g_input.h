@@ -113,7 +113,7 @@ extern consvar_t   cv_mouse_move;
 extern consvar_t   cv_mouse_invert;
 extern consvar_t   cv_mouse_sens_x;
 extern consvar_t   cv_mouse_sens_y;
-#ifdef SDL
+#ifdef SMIF_SDL
 extern consvar_t   cv_mouse_motion;
 #endif
 

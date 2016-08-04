@@ -70,12 +70,13 @@ static int testbpp = 0;
 
 #include <stdlib.h>
 
-#include "SDL.h"
+#include <SDL.h>
 
 #include "doomincl.h"
 #include "doomstat.h"
 
 #include "i_system.h"
+#include "i_video.h"
 #include "v_video.h"
   // mode_fullscreen, etc
 #include "m_argv.h"
@@ -85,7 +86,6 @@ static int testbpp = 0;
 #include "g_input.h"
 #include "st_stuff.h"
 #include "g_game.h"
-#include "i_video.h"
 #include "hardware/hw_main.h"
 #include "hardware/hw_drv.h"
 #include "console.h"
