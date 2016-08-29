@@ -647,7 +647,7 @@ void M_DrawGenericMenu(void)
                                    sp++;
                                }
                                V_DrawString (x+8,y+12,0, sp);
-//			       if( skullAnimCounter<4 && i==itemOn )
+//                             if( skullAnimCounter<4 && i==itemOn )
                                if( i==itemOn )
                                   V_DrawCharacter( x+8+w, y+12,  '_' | 0x80);  // white
                            }
@@ -3900,8 +3900,11 @@ void M_DrawTextBox (int x, int y, int width, int lines)
    
     V_DrawScaledPatch_Num (cx, cy, viewborderlump[BRDR_BL] );
 
-    // draw middle
-    V_DrawFlatFill (x+boff, y+boff, width*step, lines*step, st_borderflat_num);
+    // draw background
+    // Flat fill per drawinfo, centering.
+    // Reduce scale of Doom background to (0..2) so text is easier to read.
+    V_DrawFlatFill (x+boff, y+boff, width*step, lines*step,
+                   (raven_heretic_hexen ? 15:0), st_borderflat_num);
 
     // draw top and bottom
     cx += boff;
@@ -5013,7 +5016,7 @@ void M_Configure (void)
               EpisodeMenu[4].status = IT_CALL | IT_STRING2;
 #else
               NewDef.prevMenu = &MainDef;  // disable access to episodes menu
-#endif	     
+#endif
           }
           break;
 

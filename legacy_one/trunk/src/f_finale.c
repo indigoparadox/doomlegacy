@@ -357,6 +357,7 @@ void F_Ticker (void)
 //
 // F_TextWrite
 //
+// Called by F_Drawer
 void F_TextWrite (void)
 {
     // vid : from video setup
@@ -368,8 +369,8 @@ void F_TextWrite (void)
 
     // Draw to screen0, scaled
 
-    // erase the entire screen to a tiled background
-    V_DrawFlatFill(0, 0, vid.width, vid.height, W_GetNumForName(finaleflat));
+    // erase the entire screen0 to a tiled background
+    V_ScreenFlatFill( W_GetNumForName(finaleflat) );
 
 #ifdef DIRTY_RECT
     V_MarkRect (0, 0, vid.width, vid.height);

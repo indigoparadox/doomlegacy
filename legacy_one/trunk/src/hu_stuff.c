@@ -906,6 +906,8 @@ static int     oldclearlines;
 
 void HU_Erase (void)
 {
+    static  int     secondframelines;
+
     // vid : from video setup
     int topline;
     int bottomline;
@@ -913,7 +915,6 @@ void HU_Erase (void)
 
     //faB: clear hud msgs on double buffer (Glide mode)
     boolean secondframe;
-    static  int     secondframelines;
 
     if (con_clearlines==oldclearlines && !con_hudupdate && !chat_on)
         return;

@@ -98,6 +98,9 @@
 #include "w_wad.h"
 #include "z_zone.h"
 #include "v_video.h"
+#include "p_setup.h"
+  // P_flatsize_to_index
+  
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -135,30 +138,47 @@ void saveTGA(char *file_name, int width, int height, GLRGB *buffer);
 //
 // -----------------+
 // HWR_DrawPatch    : Draw a 'tile' graphic
-// Notes            : x,y : positions relative to the original Doom resolution
-//                  : textes(console+score) + menus + status bar
+// Notes            :
+//                  : text(console+score) + menus + status bar
 // -----------------+
-void HWR_DrawPatch (MipPatch_t* gpatch, int x, int y, int option)
+// Does not obey V_CENTERSCREEN, it is stretched to fill screen instead.
+//  x, y : vid coordinates, or drawinfo coordinates (see option)
+//  option: OR of flags
+//          V_TRANSLUCENTPATCH
+//          V_DRAWINFO = use drawinfo
+//          V_NOSCALE = vid coordinates
+void HWR_DrawPatch (MipPatch_t* gpatch, int x, int y, uint32_t option)
 {
     vxtx3d_t      v[4];
+    float stx, sty, pdupx, pdupy;
+
+    if( option & V_DRAWINFO )
+    {
+      // V_SetupDraw now has fdupx, fdupy derived from V_SCALEPATCH.
+      pdupx = drawinfo.fdupx * 2.0;
+      pdupy = drawinfo.fdupy * 2.0;
+
+      // V_SetupDraw now has fdupx0, fdupy0 derived from V_SCALESTART.
+      stx = x * drawinfo.fdupx0 * 2.0;
+      sty = y * drawinfo.fdupy0 * 2.0;
+    }
+    else
+    {
+      // V_NOSCALE, vid coordinates
+      pdupx = 2.0;
+      pdupy = 2.0;
+
+      stx = x * 2.0;
+      sty = y * 2.0;
+    }
+
+    // make patch ready in hardware cache
+    HWR_GetPatch (gpatch);
 
 //  3--2
 //  | /|
 //  |/ |
 //  0--1
-    float stx, sty, pdupx, pdupy;
-
-    // make patch ready in hardware cache
-    HWR_GetPatch (gpatch);
-
-    // V_SetupDraw now has fdupx, fdupy derived from V_SCALEPATCH.
-    pdupx = drawinfo.fdupx * 2.0;
-    pdupy = drawinfo.fdupy * 2.0;
-
-    // V_SetupDraw now has fdupx0, fdupy0 derived from V_SCALESTART.
-    stx = x * drawinfo.fdupx0 * 2.0;
-    sty = y * drawinfo.fdupy0 * 2.0;
-
     v[0].x = v[3].x = (stx - (gpatch->leftoffset*pdupx))/vid.width - 1;
     v[2].x = v[1].x = (stx + ((gpatch->width - gpatch->leftoffset)*pdupx))/vid.width - 1;
     v[0].y = v[1].y = 1-(sty - (gpatch->topoffset*pdupy))/vid.height;
@@ -192,7 +212,7 @@ void HWR_DrawPatch (MipPatch_t* gpatch, int x, int y, int option)
 //[WDJ] 2012-02-06 DrawSmallPatch found to be unused
 
 // Draws a patch 2x as small SSNTails 06-10-2003
-void HWR_DrawSmallPatch (MipPatch_t* gpatch, int x, int y, int option, byte *colormap)
+void HWR_DrawSmallPatch (MipPatch_t* gpatch, int x, int y, uint32_t option, byte *colormap)
 {
     vxtx3d_t      v[4];
 
@@ -230,10 +250,13 @@ void HWR_DrawSmallPatch (MipPatch_t* gpatch, int x, int y, int option, byte *col
 //
 // HWR_DrawMappedPatch(): Like HWR_DrawPatch but with translated color
 //
-void HWR_DrawMappedPatch (MipPatch_t* gpatch, int x, int y, int option, byte *colormap)
+// Does not obey V_CENTERSCREEN, it is stretched to fill screen instead.
+//  x, y : drawinfo coordinates only
+//  option: OR of flags
+//          V_TRANSLUCENTPATCH
+void HWR_DrawMappedPatch (MipPatch_t* gpatch, int x, int y, uint32_t option, byte *colormap)
 {
     vxtx3d_t      v[4];
-
     float stx, sty, pdupx, pdupy;
 
     // make patch ready in hardware cache
@@ -327,70 +350,76 @@ void HWR_DrawPic(int x, int y, int lumpnum)
 // ==========================================================================
 
 
+// Fill Flat size and mask.
+// Indexed by flat size_index.
+static uint16_t  fill_size_tab[ 8 ] =
+{
+    0, // 0
+    32, // 32x32 flat
+    64, // 64x64 flat
+    128, // 128x128 flat
+    256, // 256x256 flat
+    512, // 512x512 flat
+    1024, // 1024x1024 flat
+    2048, // 2048x2048 flat
+};
+
 // --------------------------------------------------------------------------
 // Fills a box of pixels using a flat texture as a pattern
 // --------------------------------------------------------------------------
-// Scaled to (320,200), (0,0) at upper left
-void HWR_DrawFlatFill (int x, int y, int w, int h, int flatlumpnum)
+// Does not obey V_CENTERSCREEN, it is stretched to fill screen instead.
+//   x, y, w, h : vid coordinates, (0,0) at upper left
+//   scale : 1 .. 4
+void HWR_DrawVidFlatFill (int x, int y, int w, int h, int scale, int flatlumpnum)
 {
     vxtx3d_t  v[4];
-    double flatsize;
-    int flatflag;
-    int size;
-
-    size = W_LumpLength(flatlumpnum);
-
-    switch(size)
-    {
-        case 4194304: // 2048x2048 lump
-            flatsize = 2048.0f;
-            flatflag = 2047;
-            break;
-        case 1048576: // 1024x1024 lump
-            flatsize = 1024.0f;
-            flatflag = 1023;
-            break;
-        case 262144:// 512x512 lump
-            flatsize = 512.0f;
-            flatflag = 511;
-            break;
-        case 65536: // 256x256 lump
-            flatsize = 256.0f;
-            flatflag = 255;
-            break;
-        case 16384: // 128x128 lump
-            flatsize = 128.0f;
-            flatflag = 127;
-            break;
-        case 1024: // 32x32 lump
-            flatsize = 32.0f;
-            flatflag = 31;
-            break;
-        default: // 64x64 lump
-            flatsize = 64.0f;
-            flatflag = 63;
-            break;
-    }
 
 //  3--2
 //  | /|
 //  |/ |
 //  0--1
 
+    // Vid Coordinates to -1..+1.
+    v[0].x = v[3].x = (x - vid.fx_center) * vid.fx_scale2;
+    v[2].x = v[1].x = ((x+w) - vid.fx_center) * vid.fx_scale2;
+    v[0].y = v[1].y = (vid.fy_center - y) * vid.fy_scale2;
+    v[2].y = v[3].y = (vid.fy_center - (y+h)) * vid.fy_scale2;
+#if 0
+    // From when this was scaled(320,200)
     v[0].x = v[3].x = (x - 160.0f)/160.0f;
     v[2].x = v[1].x = ((x+w) - 160.0f)/160.0f;
     v[0].y = v[1].y = -(y - 100.0f)/100.0f;
     v[2].y = v[3].y = -((y+h) - 100.0f)/100.0f;
+#endif
 
     v[0].z = v[1].z = v[2].z = v[3].z = 1.0f;
 
-    // flat is 64x64 lod and texture offsets are [0.0, 1.0]
-    v[0].sow = v[3].sow = (x & flatflag)/flatsize;
-    v[2].sow = v[1].sow = v[0].sow + w/flatsize;
-    v[0].tow = v[1].tow = (y & flatflag)/flatsize;
-    v[2].tow = v[3].tow = v[0].tow + h/flatsize;
-
     HWR_GetFlat (flatlumpnum);
+   
+    // The index may someday be supplied from the flat structure.
+    int sizeindex = P_flatsize_to_index( W_LumpLength(flatlumpnum), NULL );
+    int size = fill_size_tab[ sizeindex ];
+    // Scale 0..15 ==> (size/2) .. (size/2 * vid.fdupy)
+    double sc = ((double)(scale) * vid.fdupy + (15 - scale))/15 * size / 2;
+    // sow = horz, fractional position within flat, or repeat
+    // tow = vert
+    // To match edges of tiles, which is needed for HWR_DrawViewBorder,
+    // need to account for (x,y) position.
+    // But, Menu appearance matches with software flat fill better when (x,y)=0.
+#if 0
+    // From previous code...
+    // This does not work, edges and tiles swim with size change.
+    int imask = (scale < 6)? 0: size - 1;  // test scale to detect tiling
+    v[0].sow = v[3].sow = (x & imask)/sc;
+    v[0].tow = v[1].tow = (y & imask)/sc;
+#else
+    // This has stable tiles.
+    // Test scale to detect tiling.
+    v[0].sow = v[3].sow = (scale < 6)? 0 : x/sc;
+    v[0].tow = v[1].tow = (scale < 6)? 0 : y/sc;
+#endif
+    v[2].sow = v[1].sow = v[0].sow + w/sc;
+    v[2].tow = v[3].tow = v[0].tow + h/sc;
 
     //Hurdler: Boris, the same comment as above... but maybe for pics
     // it not a problem since they don't have any transparent pixel
@@ -401,6 +430,7 @@ void HWR_DrawFlatFill (int x, int y, int w, int h, int flatlumpnum)
       // maybe PF_Translucent ??
     HWD.pfnDrawPolygon( NULL, v, 4, PF_NoDepthTest);
 }
+
 
 
 // --------------------------------------------------------------------------
@@ -460,115 +490,150 @@ void HWR_FadeScreenMenuBack( uint32_t color_rgba, int alpha, int height )
 //                                                             R_DRAW.C STUFF
 // ==========================================================================
 
+// BORDER FILL SCALE, 0..15
+#define BF_DOOM_SCALE 10
+#define BF_RAVEN_SCALE 14
+
 // ------------------
 // HWR_DrawViewBorder
-// Fill the space around the view window with a Doom flat texture, draw the
-// beveled edges.
-// 'clearlines' is useful to clear the heads up messages, when the view
-// window is reduced, it doesn't refresh all the view borders.
+// Fill the space around the view window with a Doom flat texture,
+// draw the beveled edges.
+//   clearlines : how many lines to refresh.  (0=refresh all)
+//     Is used to clear the heads up messages, when the view
+//     window is reduced, so it doesn't refresh all the view borders.
 // ------------------
 void HWR_DrawViewBorder (int clearlines)
 {
-    int         x,y;
-    int         top,side;
-    int         baseviewwidth,baseviewheight;
-    int         basewindowx,basewindowy;
     MipPatch_t * mpatch;
+    int  bf_scale = (raven_heretic_hexen)? BF_RAVEN_SCALE : BF_DOOM_SCALE;
+    int  vw_x, vw_y;  // view window x, y for border
+    int  refresh_y;
+    int  v_top, v_side, v_width, v_height;  // vid coord.
+    int  step_x, step_y, off_x, off_y;
+    int  x, y;
 
-//    if (gr_viewwidth == vid.width)
-//        return;
+    if (gr_viewwidth == vid.width)
+        return;
 
-    if (!clearlines)
-        clearlines = BASEVIDHEIGHT; //refresh all
+    // refresh all when 0
+    refresh_y = (clearlines == 0)? vid.height : (clearlines * vid.fdupy);
 
-    // calc view size based on original game resolution
-    baseviewwidth  = gr_viewwidth/vid.fdupx; //(cv_viewsize.value * BASEVIDWIDTH/10)&~7;
+    // calc view window size and position using vid coordinates
+    v_width = gr_viewwidth;
+    v_height = gr_viewheight;
+    v_top = gr_baseviewwindowy;
+    v_side = gr_viewwindowx;
 
-    baseviewheight = gr_viewheight/vid.fdupy;
-    top  = gr_baseviewwindowy/vid.fdupy;
-    side = gr_viewwindowx/vid.fdupx;
-
+    // Flat fill uses vid coordinates to fill to screen edges.
     // top
-    HWR_DrawFlatFill (0, 0,
-                     BASEVIDWIDTH, (top<clearlines ? top : clearlines),
-                     st_borderflat_num);
+    HWR_DrawVidFlatFill (0, 0,
+                     vid.width, ((v_top<refresh_y) ? v_top : refresh_y),
+                     bf_scale, st_borderflat_num);
 
-    // left
-    if (top<clearlines)
-        HWR_DrawFlatFill (0, top,
-                         side, (clearlines-top < baseviewheight ? clearlines-top : baseviewheight),
-                         st_borderflat_num);
-
-    // right
-    if (top<clearlines)
-        HWR_DrawFlatFill (side + baseviewwidth, top,
-                         side, (clearlines-top < baseviewheight ? clearlines-top : baseviewheight),
-                         st_borderflat_num);
+    if (v_top < refresh_y)
+    {
+        y = ((refresh_y-v_top < v_height) ? refresh_y-v_top : v_height);
+        // left
+        HWR_DrawVidFlatFill (0, v_top, v_side, y, bf_scale, st_borderflat_num);
+        // right
+        HWR_DrawVidFlatFill (v_side + v_width, v_top, v_side, y, bf_scale, st_borderflat_num);
+    }
 
     // bottom
-    if (top+baseviewheight<clearlines)
-        HWR_DrawFlatFill (0, top+baseviewheight,
-                         BASEVIDWIDTH, BASEVIDHEIGHT,
-                         st_borderflat_num);
+    if (v_top+v_height < refresh_y)
+        HWR_DrawVidFlatFill (0, v_top+v_height, vid.width, vid.height,
+                         bf_scale, st_borderflat_num);
 
     //
-    // draw the view borders
+    // draw the view border edging
     //
 
-    basewindowx = (BASEVIDWIDTH - baseviewwidth)>>1;
-    if (baseviewwidth==BASEVIDWIDTH)
-        basewindowy = 0;
+    // view window position for border edge
+    vw_x = (vid.width - v_width)>>1;
+    if (v_width >= vid.width)
+        vw_y = 0;
     else
-        basewindowy = top;
+        vw_y = v_top;
+
+    // Edge patch size
+    if( gamemode == heretic )
+    {
+        step_x = step_y = 16;
+        off_x = off_y = 4; // borderoffset
+    }
+    else
+    {
+        step_x = step_y = 8;
+        off_x = off_y = 8;
+    }
+
+#if 1
+   
+#define EDGE_OPT   V_NOSCALE
+    V_SetupDraw( V_NOSCALE ); // the edge patch not scaled, like native draw.
+
+#else
+
+#define EDGE_OPT   V_DRAWINFO
+    V_SetupDraw( V_SCALEPATCH ); // the edge patch scaled.
+    // Patch size
+    step_x *= vid.fdupx;
+    step_y *= vid.fdupy;
+    off_x *= vid.fdupx;
+    off_y *= vid.fdupy;
+
+#endif
 
     // top edge
-    if (clearlines > basewindowy-8) {
+    if (vw_y-off_y < refresh_y) {
         mpatch = W_CachePatchNum (viewborderlump[BRDR_T],PU_CACHE);
-        for (x=0 ; x<baseviewwidth; x+=8)
-            HWR_DrawPatch (mpatch, basewindowx+x, basewindowy-8, 0);
+        for (x=vw_x ; x<(vw_x+v_width); x+=step_x)
+            HWR_DrawPatch (mpatch, x, vw_y-off_y, EDGE_OPT);
     }
 
     // bottom edge
-    if (clearlines > basewindowy+baseviewheight) {
+    if (vw_y+v_height < refresh_y) {
         mpatch = W_CachePatchNum (viewborderlump[BRDR_B],PU_CACHE);
-        for (x=0 ; x<baseviewwidth ; x+=8)
-            HWR_DrawPatch (mpatch, basewindowx+x, basewindowy+baseviewheight, 0);
+        for (x=vw_x ; x<vw_x+v_width; x+=step_x)
+            HWR_DrawPatch (mpatch, x, vw_y+v_height, EDGE_OPT);
     }
 
-    // left edge
-    if (clearlines > basewindowy) {
+    if (vw_y < refresh_y)
+    {
+        int v_bot = (vw_y+v_height < refresh_y)? vw_y+v_height : refresh_y;
+        // Does not divide evenly, so the last is drawn aligned.
+        // left edge
         mpatch = W_CachePatchNum (viewborderlump[BRDR_L],PU_CACHE);
-        for (y=0 ; y<baseviewheight && (basewindowy+y < clearlines); y+=8)
-            HWR_DrawPatch (mpatch, basewindowx-8, basewindowy+y, 0);
-    }
+        for (y=vw_y ; y<(v_bot-step_y); y+=step_y)
+            HWR_DrawPatch (mpatch, vw_x-off_x, y, EDGE_OPT);
+        HWR_DrawPatch (mpatch, vw_x-off_x, v_bot-step_y, EDGE_OPT);
 
-    // right edge
-    if (clearlines > basewindowy) {
+        // right edge
         mpatch = W_CachePatchNum (viewborderlump[BRDR_R],PU_CACHE);
-        for (y=0 ; y<baseviewheight && (basewindowy+y < clearlines); y+=8)
-            HWR_DrawPatch (mpatch, basewindowx+baseviewwidth, basewindowy+y, 0);
+        for (y=vw_y ; y<(v_bot-step_y); y+=step_y)
+            HWR_DrawPatch (mpatch, vw_x+v_width, y, EDGE_OPT);
+        HWR_DrawPatch (mpatch, vw_x+v_width, v_bot-step_y, EDGE_OPT);
     }
 
-    // Draw beveled corners.
-    if (clearlines > basewindowy-8)
+    // top corners
+    if (vw_y-off_y < refresh_y)
+    {
         HWR_DrawPatch (W_CachePatchNum (viewborderlump[BRDR_TL],PU_CACHE),
-                       basewindowx-8,
-                       basewindowy-8,0);
+                       vw_x-off_x, vw_y-off_y, EDGE_OPT);
 
-    if (clearlines > basewindowy-8)
         HWR_DrawPatch (W_CachePatchNum (viewborderlump[BRDR_TR],PU_CACHE),
-                       basewindowx+baseviewwidth,
-                       basewindowy-8,0);
+                       vw_x+v_width, vw_y-off_y, EDGE_OPT);
+    }
 
-    if (clearlines > basewindowy+baseviewheight)
+    // bottom corners
+    if (vw_y+v_height < refresh_y)
+    {
         HWR_DrawPatch (W_CachePatchNum (viewborderlump[BRDR_BL],PU_CACHE),
-                       basewindowx-8,
-                       basewindowy+baseviewheight,0);
+                       vw_x-off_x, vw_y+v_height, EDGE_OPT);
 
-    if (clearlines > basewindowy+baseviewheight)
         HWR_DrawPatch (W_CachePatchNum (viewborderlump[BRDR_BR],PU_CACHE),
-                       basewindowx+baseviewwidth,
-                       basewindowy+baseviewheight,0);
+                       vw_x+v_width, vw_y+v_height, EDGE_OPT);
+    }
 }
 
 
@@ -615,8 +680,8 @@ void HWR_drawAMline( fline_t* fl, int color )
 // -----------------+
 // HWR_DrawVidFill     : draw flat coloured rectangle, with no texture
 // -----------------+
-// Scaled to vid, (0,0) at upper left
-//  x, y : scaled screen coord.
+// Vid range coordinates, (0,0) at upper left
+//  x, y : screen coord. vid range.
 //  color : palette index
 void HWR_DrawVidFill( int x, int y, int w, int h, int color )
 {

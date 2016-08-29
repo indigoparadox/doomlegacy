@@ -464,6 +464,7 @@ void P_LoadSubsectors (int lump)
 // Return the flat size_index.
 //   flatsize : the flat lump size
 // Called by P_PrecacheLevelFlats at level load time.
+// Called by V_DrawVidFlatFill, HWR_DrawFlatFill.
 uint16_t P_flatsize_to_index( int flatsize, char * name )
 {
   switch(flatsize)

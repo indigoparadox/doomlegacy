@@ -95,12 +95,14 @@ void HWR_drawAMline (fline_t* fl, int color);
 void HWR_FadeScreenMenuBack( uint32_t color_rgba, int alpha, int height );
 void HWR_RenderPlayerView (int viewnumber, player_t* player);
 void HWR_DrawViewBorder (int clearlines);
-void HWR_DrawFlatFill (int x, int y, int w, int h, int flatlumpnum);
+//   x, y, w, h : vid coordinates, relative to center.
+//   scale : 0 .. 15
+void HWR_DrawVidFlatFill (int x, int y, int w, int h, int scale, int flatlumpnum);
 boolean HWR_Screenshot (char *lbmname);
 void HWR_InitTextureMapping (void);
 void HWR_SetViewSize (int blocks);
-void HWR_DrawPatch (MipPatch_t* gpatch, int x, int y, int option);
-void HWR_DrawMappedPatch (MipPatch_t* gpatch, int x, int y, int option, byte *colormap);
+void HWR_DrawPatch (MipPatch_t* gpatch, int x, int y, uint32_t option);
+void HWR_DrawMappedPatch (MipPatch_t* gpatch, int x, int y, uint32_t option, byte *colormap);
 void HWR_MakePatch (patch_t* patch, MipPatch_t* grPatch, Mipmap_t *grMipmap,
                     uint32_t drawflags);
 void HWR_CreatePlanePolygons (void);
