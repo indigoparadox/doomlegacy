@@ -36,17 +36,23 @@ endif
 #unixware7
 # MUS_OS=SCOUW7
 
-
+ifdef DEBUG
+DEBUGFLG= -g3
+else
+DEBUGFLG=
+endif
 #CC	= gcc
-CFLAGS	= -I. -Wall -O2 -march=pentium
+CFLAGS	= -Wall -O2 -march=pentium
 LDFLAGS	=
 #LDFLAGS	= -static
 OPTOBJ=
 
+INCOPT = -I. -I../../
+
 # Differences from Linux
 
 ifeq ($(SMIF), FREEBSD_X11)
- CFLAGS	= -I. -Wall -O2 -m486 -I/usr/src/sys/i386/isa/sound -DFREEBSD
+ CFLAGS	= -Wall -O2 -m486 -I/usr/src/sys/i386/isa/sound -DFREEBSD
  SUBDIR=freebsd
 else
  SUBDIR=linux
@@ -55,16 +61,16 @@ endif
 ifeq ($(MUS_OS), SCOOS5)
 # The differences from Linux
 # use this for an older GNU C 2.7.2
-#CFLAGS	= -I. -Wall -O2 -m486 -b elf -DSCOOS5
+#CFLAGS	= -Wall -O2 -m486 -b elf -DSCOOS5
 # use this for EGCS 1.0.1
-CFLAGS	= -I. -Wall -O2 -mpentium -DSCOOS5
+CFLAGS	= -Wall -O2 -mpentium -DSCOOS5
 LDFLAGS	=
 OPTOBJ=usleep.o
 SUBDIR=openserver5
 endif
 
 ifeq ($(MUS_OS), SCOUW2)
-CFLAGS	= -I. -Wall -O2 -m486 -DSCOUW2
+CFLAGS	= -Wall -O2 -m486 -DSCOUW2
 LDFLAGS	=
 OPTOBJ=usleep.o
 SUBDIR=unixware2
@@ -72,7 +78,7 @@ endif
 
 ifeq ($(MUS_OS), SCOUW7)
 CC=cc
-CFLAGS	= -I. -O2 -K pentium -DSCOUW7
+CFLAGS	= -O2 -K pentium -DSCOUW7
 LDFLAGS	=
 OPTOBJ=usleep.o
 SUBDIR=unixware7
@@ -85,7 +91,7 @@ endif
 
 # Export SERV_BUILD_DIR from parent Make.
 BIN:=$(SERV_BUILD_DIR)bin
-O:=$(SERV_BUILD_DIR)objs/$(SUBDIR)
+O:=$(SERV_BUILD_DIR)objs/mus_$(SUBDIR)
 
 MUSOBJLIST:=musserver.o readwad.o playmus.o sequencer.o $(OPTOBJ)
 MUSOBJ:=$(addprefix $(O)/, $(MUSOBJLIST))
@@ -93,7 +99,7 @@ MUSOBJ:=$(addprefix $(O)/, $(MUSOBJLIST))
 all: $(BIN)/musserver
 
 $(BIN)/musserver: $(MUSOBJ)
-	${CC} ${CFLAGS} ${LDFLAGS} $(MUSOBJ) -o $(BIN)/musserver
+	${CC} ${DEBUGFLG} ${CFLAGS} ${LDFLAGS} $(MUSOBJ) -o $(BIN)/musserver
 
 clean:
 	rm -f $(O)/*
@@ -107,7 +113,7 @@ dirs:
 	mkdir -p $(O)
 
 $(O)/%.o: %.c
-	${CC} ${CFLAGS} -c $< -o $@
+	${CC} ${DEBUGFLG} ${CFLAGS} ${INCOPT} -c $< -o $@
 
 #=======================================================
 # Install binaries

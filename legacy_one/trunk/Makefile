@@ -491,10 +491,12 @@ ifdef DOSFILE
   # DOS, OS2, Win32
   # MSYS shell interferes with DOS commands.
   # Setting SHELL = command.com DOES NOT WORK.
+  # Set SHELL = cmd.exe appears to work for some systems.
   ifndef HAVE_DOSCOMMAND
     ifneq ("$(findstring "MSYS", "$(SHELL)"),"")
       HAVE_MSYS=1
       export HAVE_MSYS
+      RM:=rm
     endif
   endif
   ifndef HAVE_MSYS
@@ -576,6 +578,7 @@ ifdef HAVE_DOSCOMMAND
 else
 	- $(RM) $(MAKE_OPTIONS)
 endif
+	$(MAKE) -C $(SRC)  distclean
 
 
 .PHONY : versionstring

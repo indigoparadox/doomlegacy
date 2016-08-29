@@ -62,6 +62,7 @@ endif
 # HAVE_ESD=1
 
 #CC=gcc
+IFLAGS=-I. -I../../
 CFLAGS=-O2 -march=pentium -Wall -DNORMALUNIX -DLINUX
 LDFLAGS=
 LIBS=-lm
@@ -114,7 +115,7 @@ endif
 
 # Subdirectories for binaries and build intermediates
 BIN:= $(SERV_BUILD_DIR)bin
-O:= $(SERV_BUILD_DIR)objs/$(SUBDIR)
+O:= $(SERV_BUILD_DIR)objs/snd_$(SUBDIR)
 
 
 HWOUTOBJ	:=	linux.o
@@ -151,7 +152,7 @@ $(BIN)/$(SNDEXE): $(SNDOBJ)
 
 # Rule
 $(O)/%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(IFLAGS) -c $< -o $@
 
 #=======================================================
 # Install binaries

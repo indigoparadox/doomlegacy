@@ -1071,15 +1071,29 @@ else
 	- $(RM) $(O)/*.o
 endif
 ifeq ($(SMIF), LINUX_X11)
-	- $(RM) $(O)/$(MUSSERV)/*/*.o
-	- $(RM) $(O)/$(SNDSERV)/*/*.o
+	cd $(SD)$(MUSSERV) && $(MAKE) clean
+	cd $(SD)$(SNDSERV) && $(MAKE) clean
+#	- $(RM) $(O)/$(MUSSERV)/*.o
+#	- $(RM) $(O)/$(SNDSERV)/*.o
 else
 ifeq ($(SMIF), FREEBSD_X11)
-#	- $(RM) $(O)/$(MUSSERV)/*/*.o
-	- $(RM) $(O)/$(SNDSERV)/*/*.o
+	cd $(SD)$(MUSSERV) && $(MAKE) clean
+	cd $(SD)$(SNDSERV) && $(MAKE) clean
+#	- $(RM) $(O)/$(MUSSERV)/*.o
+#	- $(RM) $(O)/$(SNDSERV)/*.o
 endif
 endif
 
+distclean:
+ifdef HAVE_DOSCOMMAND
+	- $(RM) $(DD_WIN)\*.dep
+	- $(RM) $(O_WIN)\*.o
+	- $(RM) $(O_WIN)\*\*.o
+else
+	- $(RM) $(DD)/*
+	- $(RM) $(O)/*.o
+	- $(RM) $(O)/*/*.o
+endif
 
 
 .PHONY : versionstring

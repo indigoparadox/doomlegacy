@@ -5327,3 +5327,8 @@ patchfile = w105_49_bug0626.patch
 Fix bug 0626, submitted by Ryan.
 Change memcpy to memmove in command.c because it overlaps dest.
 Reported that it was causing segfaults.
+
+*** W105_linux_make
+patchfile = w105_50_linux_make.patch
+- commit revision 1254
+Fixes some problems with clean and distclean in the linux port Makefiles.
