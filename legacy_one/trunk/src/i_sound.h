@@ -105,17 +105,28 @@ void I_UpdateSoundParams ( int handle, int vol, int sep, int pitch );
 //
 // Volume.
 void I_SetMusicVolume(int volume);
+void I_SetMusicOption(void);
 void I_SetSfxVolume(int volume);
 // PAUSE game handling.
 void I_PauseSong(int handle);
 void I_ResumeSong(int handle);
+
+#ifdef MUSSERV
+// Information for ports with music servers.
+//  name : name of song
+//  lumpnum : lumpnum of the song data
+int I_PlayServerSong( char * name, int lumpnum, byte looping );
+#else
 // Registers a song handle to song data.
-int I_RegisterSong(void* data,int len);
+//  data : ptr to lump data
+//  len : length of data
+int I_RegisterSong( void* data, int len );
+#endif
 // Called by anything that wishes to start music.
 //  plays a song, and when the song is done,
 //  starts playing it again in an endless loop.
 // Horrible thing to do, considering.
-void I_PlaySong ( int handle, int looping );
+void I_PlaySong ( int handle, byte looping );
 // Stops a song over 3 seconds.
 void I_StopSong(int handle);
 // See above (register), then think backwards

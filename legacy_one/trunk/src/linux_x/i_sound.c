@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
+// Portions Copyright (C) 1998-2016 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -131,6 +131,9 @@
 #include <errno.h>
 
 #include "doomstat.h"
+  // nomusic
+  // nosoundfx
+  // Flags for the -nosound and -nomusic options
 
 #include "i_system.h"
 #include "i_sound.h"
@@ -143,20 +146,8 @@
 #include "d_main.h"
 #include "z_zone.h"
 
+#include "musserv/musserver.h"
 
-//#include "cd_audio.h"
-
-// Number of sound channels used as set in the config file
-extern consvar_t cv_numChannels;
-
-#ifdef SNDSERV
-extern consvar_t sndserver_cmd;
-extern consvar_t sndserver_arg;
-#endif
-#ifdef MUSSERV
-extern consvar_t musserver_cmd;
-extern consvar_t musserver_arg;
-#endif
 
 // UNIX hack, to be removed.
 #ifdef SNDSERV
@@ -182,9 +173,6 @@ int musserver = -1;
 int msg_id = -1;
 #endif
 
-// Flags for the -nosound and -nomusic options
-extern boolean nosoundfx;
-extern boolean nomusic;
 
 // Flag to signal CD audio support to not play a title
 //int playing_title;
@@ -219,7 +207,7 @@ int audio_8bit_flag;
 // Basically, samples from all active internal channels
 //  are modifed and added, and stored in the buffer
 //  that is submitted to the audio device.
-signed short mixbuffer[MIXBUFFERSIZE];
+int16_t  mixbuffer[MIXBUFFERSIZE];
 
 // The channel step amount...
 unsigned int channelstep[NUM_CHANNELS];
@@ -270,8 +258,8 @@ void myioctl(int fd, int command, int *arg)
     rc = ioctl(fd, command, arg);
     if (rc < 0)
     {
-        fprintf(stderr, "ioctl(dsp,%d,arg) failed\n", command);
-        fprintf(stderr, "errno=%d\n", errno);
+        GenPrintf(EMSG_error, "ioctl(dsp,%d,arg) failed\n", command);
+        GenPrintf(EMSG_error, "errno=%d\n", errno);
         exit(-1);
     }
 }
@@ -354,8 +342,8 @@ int addsfx(int sfxid, int volume, int step, int seperation)
             // Active, and using the same SFX?
             if ((channels[i]) && (channelids[i] == sfxid))
             {
-	        if( S_sfx[sfxid].flags & SFX_id_fin )
-		    return channelhandles[i];  // already have one
+                if( S_sfx[sfxid].flags & SFX_id_fin )
+                    return channelhandles[i];  // already have one
                 // Kill, Reset.
                 channels[i] = 0;
                 break;
@@ -370,9 +358,9 @@ int addsfx(int sfxid, int volume, int step, int seperation)
     {
         if (channels[i] == 0)  // unused
         {
-	    slot = i;
-	    break;
-	}
+            slot = i;
+            break;
+        }
         if (channelstart[i] < oldest)
         {
             slot = i;
@@ -501,35 +489,6 @@ void I_SetSfxVolume(int volume)
 #endif
 }
 
-// MUSIC API
-void I_SetMusicVolume(int volume)
-{
-    // Internal state variable.
-//  snd_MusicVolume = volume;
-    // Now set volume on output device.
-    // Whatever( snd_MusciVolume );
-
-    if (nomusic)
-        return;
-
-#ifdef MUSSERV
-
-    if (msg_id != -1)
-    {
-        struct
-        {
-            long msg_type;
-            char msg_text[12];
-        } msg_buffer;
-
-        msg_buffer.msg_type = 6;
-        memset(msg_buffer.msg_text, 0, 12);
-        msg_buffer.msg_text[0] = 'v';
-        msg_buffer.msg_text[1] = volume;
-        msgsnd(msg_id, (struct msgbuf *) &msg_buffer, 12, IPC_NOWAIT);
-    }
-#endif
-}
 
 //
 // Starting a sound means adding it
@@ -543,7 +502,9 @@ void I_SetMusicVolume(int volume)
 // Pitching (that is, increased speed of playback)
 //  is set, but currently not used by mixing.
 //
-int I_StartSound(int id, int vol, int sep, int pitch, int priority)
+// Starts a sound in a particular sound channel.
+//  vol : 0..255
+int I_StartSound ( sfxid_t sfxid, int vol, int sep, int pitch, int priority )
 {
 
     // UNUSED
@@ -557,7 +518,7 @@ int I_StartSound(int id, int vol, int sep, int pitch, int priority)
     if (sndserver)
     {
         unsigned char scmd[4];
-        scmd[0] = (unsigned char) *((int *) S_sfx[id].data);
+        scmd[0] = (unsigned char) *((int *) S_sfx[sfxid].data);
         scmd[1] = (unsigned char) pitch;
         scmd[2] = (unsigned char) vol;
         scmd[3] = (unsigned char) sep;
@@ -566,15 +527,15 @@ int I_StartSound(int id, int vol, int sep, int pitch, int priority)
         fflush(sndserver);
     }
     // warning: control reaches end of non-void function.
-    return id;
+    return sfxid;
 #else
     // Debug.
-    //fprintf( stderr, "starting sound %d", id );
+    //GenPrintf(EMSG_debug, "starting sound %d", id );
 
     // Returns a handle.
     int handle = addsfx(id, vol, steptable[pitch], sep);
 
-    // fprintf( stderr, "/handle is %d\n", id );
+    //GenPrintf(EMSG_debug, "/handle is %d\n", id );
 
     return handle;
 #endif
@@ -634,13 +595,13 @@ void I_UpdateSound(void)
     register unsigned int sample;
     register int dl;
     register int dr;
-    unsigned short sdl;
-    unsigned short sdr;
+    uint16_t  sdl;
+    uint16_t  sdr;
 
     // Pointers in global mixbuffer, left, right, end.
-    signed short *leftout;
-    signed short *rightout;
-    signed short *leftend;
+    int16_t * leftout;
+    int16_t * rightout;
+    int16_t * leftend;
     unsigned char *bothout;
 
     // Step in mixbuffer, left and right, thus two.
@@ -703,7 +664,7 @@ void I_UpdateSound(void)
         }
 
         // Clamp to range. Left hardware channel.
-        // Has been char instead of short.
+        // Has been char instead of int16.
         // if (dl > 127) *leftout = 127;
         // else if (dl < -128) *leftout = -128;
         // else *leftout = dl;
@@ -758,7 +719,7 @@ void I_UpdateSound(void)
 
         if (misses > 10)
         {
-            fprintf(stderr, "I_SoundUpdate: missed 10 buffer writes\n");
+            GenPrintf(EMSG_warn, "I_SoundUpdate: missed 10 buffer writes\n");
             misses = 0;
         }
 
@@ -798,7 +759,8 @@ void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
     handle = vol = sep = pitch = 0;
 }
 
-void I_ShutdownSound(void)
+static
+void LX_ShutdownSound(void)
 {
 #ifdef SNDSERV
     if (sndserver)
@@ -842,28 +804,24 @@ void I_ShutdownSound(void)
     return;
 }
 
-void I_StartupSound()
+
+static
+void LX_InitSound()
 {
 #ifdef SNDSERV
     char buffer[2048];
     char *fn_snd;
 
-    if (dedicated)
-        return;
-
-    if (nosoundfx)
-        return;
-
-    fn_snd = searchpath(sndserver_cmd.string);
+    fn_snd = searchpath(cv_sndserver_cmd.string);
 
     // start sound process
     if (!access(fn_snd, X_OK))
     {
-        sprintf(buffer, "%s %s", fn_snd, sndserver_arg.string);
+        sprintf(buffer, "%s %s", fn_snd, cv_sndserver_arg.string);
         sndserver = popen(buffer, "w");
     }
     else
-        fprintf(stderr, "Could not start sound server [%s]\n", fn_snd);
+        GenPrintf(EMSG_error, "Could not start sound server [%s]\n", fn_snd);
 #else
 
     int i, j;
@@ -872,12 +830,12 @@ void I_StartupSound()
         return;
 
     // Secure and configure sound device first.
-    fprintf(stderr, "I_InitSound: ");
+    GenPrintf(EMSG_info, "LX_InitSound: ");
 
     audio_fd = open("/dev/dsp", O_WRONLY);
     if (audio_fd < 0)
     {
-        fprintf(stderr, "Could not open /dev/dsp\n");
+        GenPrintf(EMSG_error, "Could not open /dev/dsp\n");
         nosoundfx++;
         return;
     }
@@ -918,15 +876,15 @@ void I_StartupSound()
     i = SAMPLERATE;
     myioctl(audio_fd, SNDCTL_DSP_SPEED, &i);
 
-    fprintf(stderr, " configured %dbit audio device\n", (audio_8bit_flag) ? 8 : 16);
+    GenPrintf(EMSG_info, " configured %dbit audio device\n", (audio_8bit_flag) ? 8 : 16);
 
 #ifdef SNDINTR
-    fprintf(stderr, "I_SoundSetTimer: %d microsecs\n", SOUND_INTERVAL);
+    GenPrintf(EMSG_info, "I_SoundSetTimer: %d microsecs\n", SOUND_INTERVAL);
     I_SoundSetTimer(SOUND_INTERVAL);
 #endif
 
     // Initialize external data (all sounds) at start, keep static.
-    fprintf(stderr, "I_InitSound: ");
+    GenPrintf(EMSG_info, "LX_InitSound: ");
 
     // Do we have a sound lump for the chaingun?
     if (W_CheckNumForName("dschgun") == -1)
@@ -936,174 +894,333 @@ void I_StartupSound()
         //S_sfx[sfx_chgun].pitch = 150;
         //S_sfx[sfx_chgun].volume = 0;
         //S_sfx[sfx_chgun].data = 0;
-        fprintf(stderr, "linking chaingun sound to pistol sound,");
+        GenPrintf(EMSG_info, "linking chaingun sound to pistol sound,");
     }
     else
     {
-        fprintf(stderr, "found chaingun sound,");
+        GenPrintf(EMSG_info, "found chaingun sound,");
     }
 
-    fprintf(stderr, " pre-cached all sound data\n");
+    GenPrintf(EMSG_info, " pre-cached all sound data\n");
 
     // Now initialize mixbuffer with zero.
     for (i = 0; i < MIXBUFFERSIZE; i++)
         mixbuffer[i] = 0;
 
     // Finished initialization.
-    fprintf(stderr, "I_InitSound: sound module ready\n");
+    GenPrintf(EMSG_info, "LX_InitSound: sound module ready\n");
 
 #endif
 }
+
+
+// --- Music
+//#define DEBUG_MUSSERV
+
+#ifdef MUSSERV
+mus_msg_t  msg_buffer;
+
+void send_val_musserver( char command, char sub_command, int val )
+{
+    if( msg_id < 0 )  return;
+
+    msg_buffer.mtype = 5;
+    memset(msg_buffer.mtext, 0, MUS_MSG_MTEXT_LENGTH);
+    snprintf(msg_buffer.mtext, MUS_MSG_MTEXT_LENGTH-1, "%c%c%i",
+             command, sub_command, val);
+    msg_buffer.mtext[MUS_MSG_MTEXT_LENGTH-1] = 0;
+#ifdef  DEBUG_MUSSERV
+    GenPrintf( EMSG_debug, "Send musserver: %s\n", msg_buffer.mtext );
+#endif
+    msgsnd(msg_id, MSGBUF(msg_buffer), 12, IPC_NOWAIT);
+    usleep(2);  // just enough for musserver to respond promptly.
+}
+#endif
+
+// Music volume may be set before calling LX_InitMusic.
+static int music_volume = 0;
 
 //
 // MUSIC API.
 // Music done now, we'll use Michael Heasley's musserver.
 //
-void I_InitMusic(void)
+static
+void LX_InitMusic(void)
 {
 #ifdef MUSSERV
-    char buffer[2048];
+    char buffer[MAX_WADPATH];
     char *fn_mus;
-#endif
 
-    if (dedicated)
-        return;
+    fn_mus = searchpath(cv_musserver_cmd.string);
 
-    if (nomusic)
-        return;
-
-#ifdef MUSSERV
-    fn_mus = searchpath(musserver_cmd.string);
-
-    // now try to start the music server process
-    if (!access(fn_mus, X_OK))
+    // Try to start the music server process.
+    if ( access(fn_mus, X_OK) < 0)
     {
-        int p;
-
-        sprintf(buffer, "%s %s", fn_mus, musserver_arg.string);
-        // check for a specific iwad file
-        if ((p = M_CheckParm("-iwad")) && p < myargc - 1)
-        {
-            sprintf(buffer, "%s -i %s", buffer, myargv[p + 1]);
-        }
-
-        sprintf(buffer, "%s &", buffer);
-
-        fprintf(stderr, "Starting music server [%s]\n", buffer);
-        musserver = system(buffer);
-        msg_id = msgget(53075, IPC_CREAT | 0777);
+        GenPrintf(EMSG_error, "Could not find music server [%s]\n", fn_mus);
+        return;
     }
-    else
-        fprintf(stderr, "Could not start music server [%s]\n", fn_mus);
+
+    // [WDJ] Use IPC for settings, not command line.
+    snprintf(buffer, MAX_WADPATH-1, "%s %s &", fn_mus, cv_musserver_arg.string);
+    buffer[MAX_WADPATH-1] = 0;
+
+    GenPrintf( EMSG_info, "Starting music server [%s]\n", buffer);
+    // Sys call "system()"  seems to work, and does not need \n.
+    // It returns 0 on success.
+    musserver = system(buffer);
+    if( musserver < 0 )
+    {
+        GenPrintf( EMSG_error, "Could not start music server [%s]\n", fn_mus);
+        return;
+    }
+
+    msg_id = msgget(MUSSERVER_MSG_KEY, IPC_CREAT | 0777);
+    if( verbose > 1 )
+        GenPrintf( EMSG_info, "Started Musicserver = %i, IPC = %i\n", musserver, msg_id );
+    send_val_musserver( 'v', ' ', music_volume );
+    // [WDJ] Starting with system() gives the process a PPID of 1, which is Init.
+    // When DoomLegacy is killed, it is not detected by musserver.
+    send_val_musserver( 'I', ' ', getpid() ); // our pid
+    // Send this again because it was too early at configure time.
+    I_SetMusicOption();
 #endif
 }
 
-void I_ShutdownMusic(void)
+void LX_ShutdownMusic(void)
 {
     if (nomusic)
         return;
 
 #ifdef MUSSERV
+    // [WDJ] It is a race between the quit command and the queue destruction.
+    // Rely upon one or the other.
+#if 1
+    // send a "quit" command.
+    send_val_musserver( 'Q', 'Q', 0 );
+#else
     if (musserver > -1)
     {
-        // send a "quit" command.
+        // Close the queue.
         if (msg_id != -1)
             msgctl(msg_id, IPC_RMID, (struct msqid_ds *) NULL);
     }
 #endif
+#endif
 }
 
-static int looping = 0;
-static int musicdies = -1;
 
-void I_PlaySong(int handle, int looping)
+// MUSIC API
+void I_SetMusicVolume(int volume)
 {
-    // UNUSED.
-    handle = looping = 0;
-    musicdies = gametic + TICRATE * 30;
+    // Internal state variable.
+    music_volume = volume;
+    // Now set volume on output device.
+    // Whatever( snd_MusciVolume );
 
     if (nomusic)
         return;
 
+#ifdef MUSSERV
+    send_val_musserver( 'v', ' ', volume );
+#endif
 }
+
+// MUSIC API
+
+char * mus_ipc_opt_tab[] = {
+  "-dd", // Default
+  "-dM", // Midi
+  "-dT", // TiMidity
+  "-dL", // FluidSynth
+  "-dS", // Synth
+  "-dF", // FM Synth
+  "-dA"  // Awe32 Synth
+};
+
+void I_SetMusicOption(void)
+{
+    byte bi = cv_musserver_opt.value;
+
+    if( msg_id < 0 )  return;
+    if( bi > 6 )  return;
+
+    msg_buffer.mtype = 6;
+    memset(msg_buffer.mtext, 0, MUS_MSG_MTEXT_LENGTH);
+    snprintf(msg_buffer.mtext, MUS_MSG_MTEXT_LENGTH-1, "O%s", mus_ipc_opt_tab[bi] );
+    msg_buffer.mtext[MUS_MSG_MTEXT_LENGTH-1] = 0;
+#ifdef  DEBUG_MUSSERV
+    GenPrintf( EMSG_debug, "Send musserver option: %s\n", msg_buffer.mtext );
+#endif
+    msg_buffer.mtext[MUS_MSG_MTEXT_LENGTH-1] = 0;
+    msgsnd(msg_id, MSGBUF(msg_buffer), MUS_MSG_MTEXT_LENGTH, IPC_NOWAIT);
+}
+
+
+
+static byte music_looping = 0;
+static int music_dies = -1;
+
+
 
 void I_PauseSong(int handle)
 {
-    // UNUSED.
-    handle = 0;
-
     if (nomusic)
         return;
 
+#ifdef MUSSERV
+    send_val_musserver( 'P', 'P', 1 );
+#endif
+    handle = 0;  // UNUSED
 }
 
 void I_ResumeSong(int handle)
 {
-    // UNUSED.
-    handle = 0;
-
     if (nomusic)
         return;
 
+#ifdef MUSSERV
+    send_val_musserver( 'P', 'R', 0 );
+#endif
+    handle = 0;  // UNUSED
 }
 
 void I_StopSong(int handle)
 {
-    // UNUSED.
-    handle = 0;
-    looping = 0;
-    musicdies = 0;
-
     if (nomusic)
         return;
 
+#ifdef MUSSERV
+    send_val_musserver( 'X', 'X', 0 );
+#endif
+    handle = 0; // UNUSED.
+    music_looping = 0;
+    music_dies = 0;
 }
 
 void I_UnRegisterSong(int handle)
 {
-    // UNUSED.
-    handle = 0;
+    handle = 0; // UNUSED.
 }
 
-// BP: len is unused but is just to have compatible api
-int I_RegisterSong(void *data, int len)
-{
-#ifdef MUSSERV
-    struct
-    {
-        long msg_type;
-        char msg_text[12];
-    } msg_buffer;
-#endif
 
+#ifdef MUSSERV
+// Information for ports with music servers.
+//  name : name of song
+// Return handle
+int I_PlayServerSong( char * name, int lumpnum, byte looping )
+{
     if (nomusic)
     {
-        data = NULL;
         return 1;
     }
 
-#ifdef MUSSERV
+    music_dies = gametic + (TICRATE * 30);
+
+    music_looping = looping;
+
     if (msg_id != -1)
     {
-        msg_buffer.msg_type = 6;
-        memset(msg_buffer.msg_text, 0, 12);
-        sprintf(msg_buffer.msg_text, "d_%s", (char *) data);
-        msgsnd(msg_id, (struct msgbuf *) &msg_buffer, 12, IPC_NOWAIT);
-    }
-#else
-    data = NULL;
+        static  byte sent_genmidi = 0;
+        wadfile_t * wadp;
+       
+        msg_buffer.mtype = 6;
+        if( sent_genmidi == 0 )
+        {
+            sent_genmidi = 1;
+            // Music server needs the GENMIDI lump, which may depend
+            // upon the IWAD and PWAD order.
+            int genmidi_lumpnum = W_GetNumForName( "GENMIDI" );
+            wadp = lumpnum_to_wad( genmidi_lumpnum );
+            if( wadp )
+            {
+                memset(msg_buffer.mtext, 0, MUS_MSG_MTEXT_LENGTH);
+                snprintf(msg_buffer.mtext, MUS_MSG_MTEXT_LENGTH-1, "W%s", wadp->filename);
+                msg_buffer.mtext[MUS_MSG_MTEXT_LENGTH-1] = 0;
+#ifdef  DEBUG_MUSSERV
+                GenPrintf( EMSG_debug, "Send musserver wad: %s\n", msg_buffer.mtext );
 #endif
-
+                msgsnd(msg_id, MSGBUF(msg_buffer), MUS_MSG_MTEXT_LENGTH, IPC_NOWAIT);
+            }
+            // Sending genmidi lumpnum to musserver.
+            send_val_musserver( 'G', ' ', LUMPNUM(genmidi_lumpnum) );
+        }
+        // Send song name to musserver
+        memset(msg_buffer.mtext, 0, MUS_MSG_MTEXT_LENGTH);
+        sprintf(msg_buffer.mtext, "D %s", name);
+#ifdef  DEBUG_MUSSERV
+        GenPrintf( EMSG_debug, "Send musserver song: %s\n", msg_buffer.mtext );
+#endif
+        msgsnd(msg_id, MSGBUF(msg_buffer), 12, IPC_NOWAIT);
+        // Song info
+        wadp = lumpnum_to_wad( lumpnum );
+        if( wadp )
+        {
+            // Send song wad information to server
+            memset(msg_buffer.mtext, 0, MUS_MSG_MTEXT_LENGTH);
+            snprintf(msg_buffer.mtext, MUS_MSG_MTEXT_LENGTH-1, "W%s", wadp->filename);
+            msg_buffer.mtext[MUS_MSG_MTEXT_LENGTH-1] = 0;
+#ifdef  DEBUG_MUSSERV
+            GenPrintf( EMSG_debug, "Send musserver wad: %s\n", msg_buffer.mtext );
+#endif
+            msgsnd(msg_id, MSGBUF(msg_buffer), MUS_MSG_MTEXT_LENGTH, IPC_NOWAIT);
+        }
+        // Sending song lumpnum to musserver.
+        send_val_musserver( 'S', (looping?'C':' '), LUMPNUM(lumpnum) );
+    }
     return 1;
 }
+
+
+#else
+int I_RegisterSong( void* data, int len )
+{
+    if (nomusic)
+    {
+        return 1;
+    }
+
+    data = NULL;
+    return 1;
+}
+
+void I_PlaySong(int handle, int looping)
+{
+    music_dies = gametic + (TICRATE * 30);
+
+    if (nomusic)
+        return;
+
+    music_looping = looping;
+    handle = 0;
+}
+#endif
+
 
 // Is the song playing?
 int I_QrySongPlaying(int handle)
 {
-    // UNUSED.
-    handle = 0;
-    return looping || musicdies > gametic;
+    handle = 0;  // UNUSED
+    return music_looping || (music_dies > gametic);
 }
+
+
+void I_StartupSound()
+{
+   if( dedicated )
+       return;
+
+   if(! nosoundfx)
+       LX_InitSound();
+   if(! nomusic )
+       LX_InitMusic();
+}
+
+void I_ShutdownSound(void)
+{
+   LX_ShutdownSound();
+   LX_ShutdownMusic();
+}
+
 
 //
 // Experimental stuff.
@@ -1134,7 +1251,7 @@ static int sig = SIGVTALRM;
 void I_HandleSoundTimer(int ignore)
 {
     // Debug.
-    //fprintf( stderr, "%c", '+' ); fflush( stderr );
+    //GenPrintf(EMSG_debug, "%c", '+' ); fflush( stderr );
 
     // Feed sound device if necesary.
     if (flag)
@@ -1190,7 +1307,7 @@ int I_SoundSetTimer(int duration_of_tick)
 
     // Debug.
     if (res == -1)
-        fprintf(stderr, "I_SoundSetTimer: interrupt n.a.\n");
+        GenPrintf(EMSG_debug, "I_SoundSetTimer: interrupt n.a.\n");
 
     return res;
 }
@@ -1200,7 +1317,7 @@ void I_SoundDelTimer()
 {
     // Debug.
     if (I_SoundSetTimer(0) == -1)
-        fprintf(stderr, "I_SoundDelTimer: failed to remove interrupt. Doh!\n");
+        GenPrintf(EMSG_debug, "I_SoundDelTimer: failed to remove interrupt. Doh!\n");
 }
 
 //Hurdler: TODO

@@ -289,14 +289,14 @@ static void vidmodes_to_vidmap( void )
     for(i=0; i<num_fullvidmodes; i++)
     {
         if(vidmodes[i]->hdisplay <= MAXVIDWIDTH
-	   && vidmodes[i]->vdisplay <= MAXVIDHEIGHT)
+           && vidmodes[i]->vdisplay <= MAXVIDHEIGHT)
         {
-	    // only init vidmap when mode sizes are within our limits
-	    vidmap[num_vidmodes++] = i;
-	    // limit num of modes at usage of index
-	    if( num_vidmodes >= MAX_NUM_VIDMODES )
-	        break;
-	}
+            // only init vidmap when mode sizes are within our limits
+            vidmap[num_vidmodes++] = i;
+            // limit num of modes at usage of index
+            if( num_vidmodes >= MAX_NUM_VIDMODES )
+                break;
+        }
     }
    
     // bubble sort modes, largest first
@@ -306,18 +306,18 @@ static void vidmodes_to_vidmap( void )
 
         for(i=0; i<num_vidmodes-1; i++)
         {
-	    int e1 = vidmap[i];
-	    int e2 = vidmap[i+1];
-	    // compare h*w of [i] with [i+1]
-	    if(vidmodes[e1]->hdisplay * vidmodes[e1]->vdisplay <
-	       vidmodes[e2]->hdisplay * vidmodes[e2]->vdisplay)
-	    {
-	        // swap entries
-	        vidmap[i] = e2;
-	        vidmap[i+1] = e1;
-	        finished = false;
-	    }
-	}
+            int e1 = vidmap[i];
+            int e2 = vidmap[i+1];
+            // compare h*w of [i] with [i+1]
+            if(vidmodes[e1]->hdisplay * vidmodes[e1]->vdisplay <
+               vidmodes[e2]->hdisplay * vidmodes[e2]->vdisplay)
+            {
+                // swap entries
+                vidmap[i] = e2;
+                vidmap[i+1] = e1;
+                finished = false;
+            }
+        }
     } while(!finished);
 }
 
@@ -498,7 +498,7 @@ static void determineBPP(void)
       for (i=0; i<count; i++) {
          if (X_pixmapformats[i].depth == X_visualinfo.depth) {
             x_bitpp = X_pixmapformats[i].bits_per_pixel;
-	    break;
+            break;
          }
       }
       if (x_bitpp==0)
@@ -760,13 +760,23 @@ static int xlatekey( KeyCode keycode, boolean keydown )
     return rc;
 }
 
+static char shift27[] =
+{ 0x22, // QUOTE
+  0,0,0,
+  '+', '<', '_', '>', '?',  // '=', comma, '-', '.', '/'
+  ')', '!', '@', '#', '$', '%', '^', '&', '*', '(',  // '0' .. '9'
+  0, ':',  // ':', ';'
+};
+
 int to_ASCII( int kcch, boolean shiftdown )
 {
     // SDL does this by  -> Unicode -> ASCII
     if( shiftdown )
     {
         if( kcch >= 'a' && kcch <= 'z' )
-	   kcch = kcch - 'a' + 'A';   // to uppercase
+           kcch = kcch - 'a' + 'A';   // to uppercase
+        else if( kcch >= 0x27 && kcch <= 0x3F )
+           kcch = shift27[ kcch - 0x27 ];
     }
     return  (kcch <= 0x7F) ? kcch : 0; // ASCII key
 }
@@ -1208,14 +1218,14 @@ void I_FinishUpdate(void)
         // bpp = 8, bytepp = 1, multiply = 1 19990125 by Kin
         if( vid.direct_rowbytes == vid.widthbytes )
         {
-	    // if direct draw, then no copy needed
-	    if( vid.display != (byte*)image->data ) {
-	        memcpy(image->data, vid.display, vid.direct_size);
-	    }
-	}
+            // if direct draw, then no copy needed
+            if( vid.display != (byte*)image->data ) {
+                memcpy(image->data, vid.display, vid.direct_size);
+            }
+        }
         else
-	    VID_BlitLinearScreen ( vid.display, (byte*)image->data, vid.widthbytes,
-				   vid.height, vid.ybytes, vid.direct_rowbytes );
+            VID_BlitLinearScreen ( vid.display, (byte*)image->data, vid.widthbytes,
+                                   vid.height, vid.ybytes, vid.direct_rowbytes );
     }
     // colormap transformation dependent upon X server color depth
     else if (x_bytepp == 2) { // 15 bpp, 16 bpp
@@ -1292,7 +1302,7 @@ void I_FinishUpdate(void)
             if (XPending(X_display))
                 I_GetEvent();
             else
-	        usleep( 20 );
+                usleep( 20 );
         } while (!shmFinished);
 
     }
@@ -1561,7 +1571,7 @@ char * VID_GetModeName( modenum_t modenum )
     }
     // form the string
     snprintf( &vidModeName[modenum.index][0], MAX_LEN_VIDMODENAME, "%s %dx%d",
-	      mark_str, mode_x, mode_y );
+              mark_str, mode_x, mode_y );
     vidModeName[modenum.index][MAX_LEN_VIDMODENAME] = 0;
     return &vidModeName[modenum.index][0];
 
@@ -1583,14 +1593,14 @@ modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
         best = 1; // standard mode if no other found
         for (i = 0; i < NUM_VOODOOMODES; i++)
         {
-	    tdist = abs(voodooModes[i][0] - rw) + abs(voodooModes[i][1] - rh);
-	    // find closest dist
-	    if( bestdist > tdist )
-	    {
-	        bestdist = tdist;
-	        best = i;
-	        if( tdist == 0 )  break;   // found exact match
-	    }
+            tdist = abs(voodooModes[i][0] - rw) + abs(voodooModes[i][1] - rh);
+            // find closest dist
+            if( bestdist > tdist )
+            {
+                bestdist = tdist;
+                best = i;
+                if( tdist == 0 )  break;   // found exact match
+            }
         }
         modenum.index = best + 1;  // 1..
         modenum.modetype = MODE_voodoo;
@@ -1605,15 +1615,15 @@ modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
 
         for (i = 0; i < num_vidmodes; i++)
         {
-	    XF86VidModeModeInfo * vmm = vidmodes[vidmap[i]];
-	    tdist = abs(vmm->hdisplay - rw) + abs(vmm->vdisplay - rh);
-	    // find closest dist
-	    if( bestdist > tdist )
-	    {
-	        bestdist = tdist;
-	        best = i;
-	        if( tdist == 0 )  break;   // found exact match
-	    }
+            XF86VidModeModeInfo * vmm = vidmodes[vidmap[i]];
+            tdist = abs(vmm->hdisplay - rw) + abs(vmm->vdisplay - rh);
+            // find closest dist
+            if( bestdist > tdist )
+            {
+                bestdist = tdist;
+                best = i;
+                if( tdist == 0 )  break;   // found exact match
+            }
         }
         modenum.index = best + 1;  // 1..
         modenum.modetype = rmodetype;
@@ -1623,14 +1633,14 @@ modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
         best = MAXWINMODES;  // default
         for (i = 1; i <= MAXWINMODES; i++)
         {
-	    tdist = abs(windowedModes[i][0] - rw) + abs(windowedModes[i][1] - rh);
-	    // find closest dist
-	    if( bestdist > tdist )
-	    {
-	        bestdist = tdist;
-	        best = i;
-	        if( tdist == 0 )  break;   // found exact match
-	    }
+            tdist = abs(windowedModes[i][0] - rw) + abs(windowedModes[i][1] - rh);
+            // find closest dist
+            if( bestdist > tdist )
+            {
+                bestdist = tdist;
+                best = i;
+                if( tdist == 0 )  break;   // found exact match
+            }
         }
         modenum.index = best;  // 1..
         modenum.modetype = rmodetype;
@@ -1650,8 +1660,8 @@ static void destroyWindow(void)
        {
            free(vid.buffer);
            vid.buffer = vid.direct = NULL; // I want to have an access violation if something goes wrong
-	   vid.display = NULL;
-	   vid.screen1 = NULL;
+           vid.display = NULL;
+           vid.screen1 = NULL;
        }
 
        if(doShm) {
@@ -1719,29 +1729,29 @@ static int createWindow(boolean set_fullscreen, modenum_t modenum)
         // setup attributes for main window
         if (vidmode_active) {
             // [WDJ] Submitted by pld-linux: Do not force CWColormap, it may be a truecolor mode.
-	    attribmask = CWSaveUnder | CWBackingStore |
-	         CWEventMask | CWOverrideRedirect;
+            attribmask = CWSaveUnder | CWBackingStore |
+                 CWEventMask | CWOverrideRedirect;
 
-	    attribs.override_redirect = True;
-	    attribs.backing_store = NotUseful;
-	    attribs.save_under = False;
-	} else {
-	    // [WDJ] Submitted by pld-linux: Do not force CWColormap, it may be a truecolor mode.
-	    attribmask = CWBorderPixel | CWEventMask;
-	}
+            attribs.override_redirect = True;
+            attribs.backing_store = NotUseful;
+            attribs.save_under = False;
+        } else {
+            // [WDJ] Submitted by pld-linux: Do not force CWColormap, it may be a truecolor mode.
+            attribmask = CWBorderPixel | CWEventMask;
+        }
 
         attribs.event_mask = KeyPressMask | KeyReleaseMask
 #ifndef POLL_POINTER
-	    | PointerMotionMask | ButtonPressMask | ButtonReleaseMask
+            | PointerMotionMask | ButtonPressMask | ButtonReleaseMask
 #endif
-	    | ExposureMask | StructureNotifyMask;
+            | ExposureMask | StructureNotifyMask;
 
         // [WDJ] Submitted by pld-linux: Do not force CWColormap, it may be a truecolor mode.
         // Only in DRAW8PAL does X handle the colormap, not in TrueColor where we do.
         if (x_drawmode == DRAW8PAL) {
-	    attribmask |= CWColormap;
-	    attribs.colormap = X_cmap;
-	}
+            attribmask |= CWColormap;
+            attribs.colormap = X_cmap;
+        }
         attribs.border_pixel = 0;
 
         // create the main window
@@ -1872,7 +1882,7 @@ static int createWindow(boolean set_fullscreen, modenum_t modenum)
       }
       else
       {
-	image = XCreateImage(X_display,
+        image = XCreateImage(X_display,
                              X_visual,
                              X_visualinfo.depth,
                              ZPixmap,
@@ -1902,14 +1912,14 @@ static int createWindow(boolean set_fullscreen, modenum_t modenum)
       vid.direct_size = vid.direct_rowbytes * vid.height;
       if( x_bytepp == vid.bytepp && vid.direct_rowbytes == vid.widthbytes )
       {
-	  // can draw direct into image
-	  vid.display = vid.direct;
-	  GenPrintf(EMSG_info, "Draw direct\n");
+          // can draw direct into image
+          vid.display = vid.direct;
+          GenPrintf(EMSG_info, "Draw direct\n");
       }
 #endif
       if( verbose )
       {
-	  GenPrintf(EMSG_ver, "Drawing %i bpp,  video at % i bpp\n", vid.bitpp, x_bitpp );
+          GenPrintf(EMSG_ver, "Drawing %i bpp,  video at % i bpp\n", vid.bitpp, x_bitpp );
       }
       vid.fullscreen = set_fullscreen;
 
@@ -1937,13 +1947,13 @@ void VID_PrepareModeList(void)
         if(num_vidmodes > 0)  // do we have any fullscreen modes at all?
         {
             lowest_vidmode = num_vidmodes - 1;
-	}
+        }
         else
         {
-	    // switch to windowed
+            // switch to windowed
             mode_fullscreen = 0;
             GenPrintf(EMSG_info,"No modes below 1600x1200 available\nSwitching to windowed mode ...\n");
-	}
+        }
    }
    else
    {
@@ -1987,7 +1997,7 @@ int VID_SetMode( modenum_t modenum )
 
     vid.recalc = 1;
     GenPrintf( EMSG_info, "VID_SetMode(%s,%i) %dx%d\n",
-	       modetype_string[modenum.modetype], modenum.index, vid.width, vid.height);
+               modetype_string[modenum.modetype], modenum.index, vid.width, vid.height);
 
     if(!createWindow( set_fullscreen, modenum ))
         return FAIL_create;
@@ -2011,21 +2021,21 @@ void detect_Voodoo( void )
     if(!isVoodooChecked) {
         if(rendermode == render_opengl) {
             renderer_str = HWD.pfnGetRenderer();
-	    if( verbose )
-	    {
-	       GenPrintf(EMSG_ver, "%s\n", renderer_str );
-	    }
-	    // FIXME: if Mesa ever decides to change the this spotword, we're deep in the shit
-	    voodoo_detect = strstr(renderer_str, "Voodoo_Graphics");
-	    if( ! voodoo_detect )
-	        voodoo_detect = strstr(renderer_str, "Voodoo");
+            if( verbose )
+            {
+               GenPrintf(EMSG_ver, "%s\n", renderer_str );
+            }
+            // FIXME: if Mesa ever decides to change the this spotword, we're deep in the shit
+            voodoo_detect = strstr(renderer_str, "Voodoo_Graphics");
+            if( ! voodoo_detect )
+                voodoo_detect = strstr(renderer_str, "Voodoo");
             if(voodoo_detect != NULL)
-	    {
+            {
                 haveVoodoo = true;
-	        if( verbose )
-	        {
-		    GenPrintf(EMSG_ver, "Voodoo card detected\n" );
-		}
+                if( verbose )
+                {
+                    GenPrintf(EMSG_ver, "Voodoo card detected\n" );
+                }
             }
         }
         isVoodooChecked = true;
@@ -2138,24 +2148,24 @@ void I_RequestFullGraphics( byte select_fullscreen )
 
        if(!dlptr)
        {
-	   // to get first error messages
+           // to get first error messages
            dlopen("./r_opengl.so",RTLD_NOW | RTLD_GLOBAL);
            GenPrintf(EMSG_error, "Error opening r_opengl.so\n%s\n", dlerror());
 #if 0	  
-	   {
-	       // [WDJ] Troubleshoot why cannot open it
-	       char * cwd2 = getcwd( NULL, 0 );  // malloc
-	       GenPrintf(EMSG_error, "CWD: %s \n", cwd2 );
-	       free( cwd2 );
-	       char * readperm = (access( "r_opengl.so", R_OK ) == 0 )? "OK": "NOT PERMITTED";
-	       char * execperm = (access( "r_opengl.so", X_OK ) == 0 )? "OK": "NOT PERMITTED";
-	       GenPrintf(EMSG_error, "Access r_opengl.so: READ %s, EXECUTE %s\n", readperm, execperm );
-	   }
+           {
+               // [WDJ] Troubleshoot why cannot open it
+               char * cwd2 = getcwd( NULL, 0 );  // malloc
+               GenPrintf(EMSG_error, "CWD: %s \n", cwd2 );
+               free( cwd2 );
+               char * readperm = (access( "r_opengl.so", R_OK ) == 0 )? "OK": "NOT PERMITTED";
+               char * execperm = (access( "r_opengl.so", X_OK ) == 0 )? "OK": "NOT PERMITTED";
+               GenPrintf(EMSG_error, "Access r_opengl.so: READ %s, EXECUTE %s\n", readperm, execperm );
+           }
 #endif	  
-	   // Fail to software rendering
+           // Fail to software rendering
            rendermode = render_soft;
        } else {
-	   // linkage to dll r_opengl.so
+           // linkage to dll r_opengl.so
            HWD.pfnInit = dlsym(dlptr,"Init");
            HWD.pfnShutdown = dlsym(dlptr,"Shutdown");
            HWD.pfnHookXwin = dlsym(dlptr,"HookXwin");
@@ -2204,8 +2214,8 @@ void I_RequestFullGraphics( byte select_fullscreen )
      case REQ_specific:
        if( x_bitpp != req_bitpp )
        {
-	   GenPrintf(EMSG_error, "Not in %i bpp mode\n", req_bitpp );
-	   goto abort_error;
+           GenPrintf(EMSG_error, "Not in %i bpp mode\n", req_bitpp );
+           goto abort_error;
        }
        break;
      case REQ_highcolor:
@@ -2221,16 +2231,16 @@ void I_RequestFullGraphics( byte select_fullscreen )
      accept_bitpp: 
        if( V_CanDraw( x_bitpp ))
        {
-	   vid.bitpp = x_bitpp;
-	   vid.bytepp = x_bytepp;
-	   GenPrintf(EMSG_info, "Video %i bpp (%i bytes)\n", vid.bitpp, vid.bytepp);
+           vid.bitpp = x_bitpp;
+           vid.bytepp = x_bytepp;
+           GenPrintf(EMSG_info, "Video %i bpp (%i bytes)\n", vid.bitpp, vid.bytepp);
        }
        else if( verbose )
        {
-	   // Use 8 bit and do the palette translation.
-	   vid.bitpp = 8;
-	   vid.bytepp = 1;
-	   GenPrintf(EMSG_ver, "%i bpp rejected\n", x_bitpp );
+           // Use 8 bit and do the palette translation.
+           vid.bitpp = 8;
+           vid.bytepp = 1;
+           GenPrintf(EMSG_ver, "%i bpp rejected\n", x_bitpp );
        }
      default:
        break;
@@ -2240,8 +2250,8 @@ void I_RequestFullGraphics( byte select_fullscreen )
     createColorMap();  // Create X_cmap and x_colormap2/3/4
 
     if( select_fullscreen
-	&& ! haveVoodoo
-	&& num_vidmodes == 0)  // do we have any fullscreen modes at all?
+        && ! haveVoodoo
+        && num_vidmodes == 0)  // do we have any fullscreen modes at all?
     {
         // switch to windowed
         select_fullscreen = 0;
@@ -2250,7 +2260,7 @@ void I_RequestFullGraphics( byte select_fullscreen )
 
     mode_fullscreen = select_fullscreen;
     initialmode = VID_GetModeForSize( vid.width, vid.height,
-		   (select_fullscreen ? MODE_fullscreen: MODE_window));
+                   (select_fullscreen ? MODE_fullscreen: MODE_window));
     createWindow( select_fullscreen, initialmode );
 
     // startupscreen does not need a grabbed mouse

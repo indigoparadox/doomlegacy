@@ -91,6 +91,8 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <string.h>
+#include <libgen.h>
+  // dirname
 
 #include <stdarg.h>
 #include <sys/time.h>
@@ -132,11 +134,6 @@
 #include "m_argv.h"
 
 extern void D_PostEvent(event_t*);
-
-// Common func defs that are disappearing from the include files.
-// From i_sound.c
-void I_InitMusic(void);
-void I_ShutdownMusic(void);
 
 extern event_t         events[MAXEVENTS];
 extern int             eventhead;
@@ -218,8 +215,8 @@ int I_GetKey (void)
             rc = ev->data1;
         }
 
-	eventtail++;
-	eventtail = eventtail & (MAXEVENTS-1);
+        eventtail++;
+        eventtail = eventtail & (MAXEVENTS-1);
     }
     
     return rc; 
@@ -301,7 +298,7 @@ static void I_ShutdownJoystick(void)
   for( i=0; i<num_joysticks; i++ )
   {
       if(joystk[i].fd != -1)
-	 close(joystk[i].fd);
+         close(joystk[i].fd);
       joystk[i].fd = -1;
   }
   num_joysticks = 0;
@@ -408,7 +405,7 @@ int I_JoystickGetAxis (int joynum, int axisnum )
 #ifdef LJOYSTICK
     if(joynum < num_joysticks ) {
        if( axisnum < joystk[joynum].numaxes ) {
-	  return joystk[joynum].axis[axisnum];
+          return joystk[joynum].axis[axisnum];
        }
     }
 #endif
@@ -636,51 +633,6 @@ again:
 }
 
 
-#if 0
-//[WDJ] Apparently abandoned
-//
-// I_Init
-//
-void I_Init (void)
-{
-    I_StartupSound();
-    I_InitMusic();
-    quiting = 0;
-    //  I_InitGraphics();
-}
-#endif
-
-#if 0
-// Replaced by D_Quit_Save, I_Quit_System
-//
-// I_Quit
-//
-void I_Quit (void)
-{
-    static int quitting=0; /* prevent recursive I_Quit() */
-    /* prevent recursive I_Quit() */
-    if(quitting) return;
-    quitting = 1;
-  //added:16-02-98: when recording a demo, should exit using 'q' key,
-  //        but sometimes we forget and use 'F10'.. so save here too.
-    if (demorecording)
-        G_CheckDemoStatus();
-    D_Quit_NetGame();
-    I_ShutdownMusic();
-    I_ShutdownSound();
-#ifdef CDMUS
-    I_ShutdownCD();
-#endif
-   // use this for 1.28 19990220 by Kin
-    M_SaveConfig (NULL);
-    I_ShutdownGraphics();
-    I_ShutdownSystem();
-    printf("\r");
-    ShowEndTxt();
-    exit(0);
-}
-#endif
-
 // sleeps for the given amount of milliseconds
 void I_Sleep(unsigned int ms)
 {
@@ -706,6 +658,8 @@ void I_EndRead(void)
 {
 }
 
+#if 0
+// Unused
 byte*   I_AllocLow(int length)
 {
     byte*       mem;
@@ -714,15 +668,11 @@ byte*   I_AllocLow(int length)
     memset (mem,0,length);
     return mem;
 }
-
+#endif
 
 //
 // I_Error
 //
-#if 0
-extern boolean demorecording;
-#endif
-
 void I_Error (const char *error, ...)
 {
     va_list     argptr;
@@ -736,21 +686,7 @@ void I_Error (const char *error, ...)
 
     fflush( stderr );
 
-#if 1
     D_Quit_Save( QUIT_panic );  // No save, safe shutdown
-#else
-    // Shutdown. Here might be other errors.
-    if (demorecording)
-        G_CheckDemoStatus();
-
-    D_Quit_NetGame();
-    I_ShutdownMusic();
-    I_ShutdownSound();
-    I_Sleep( 3000 );  // to see some messages
-    I_ShutdownGraphics();
-    // shutdown everything else which was registered
-    I_ShutdownSystem();
-#endif
     
     exit(-1);
 }
@@ -828,9 +764,10 @@ void I_ShutdownSystem(void)
    int c;
 
    for (c=MAX_QUIT_FUNCS-1; c>=0; c--)
+   {
       if (quit_funcs[c])
          (*quit_funcs[c])();
-
+   }
 }
 
 uint64_t I_GetDiskFreeSpace(void)
@@ -923,9 +860,9 @@ boolean I_Get_Prog_Dir( char * defdir, /*OUT*/ char * dirbuf )
         // argv[0] is relative to current dir
         if( defdir )
         {
-	    cat_filename( dirbuf, defdir, arg0p );
-	    goto got_path;
-	}
+            cat_filename( dirbuf, defdir, arg0p );
+            goto got_path;
+        }
     }
     goto failed;
    
@@ -950,6 +887,7 @@ int  I_mkdir(const char *dirname, int unixright)
     return mkdir(dirname, unixright);
 }
 
+#if 0
 // check if legacy.dat exists in the given path
 static boolean isWadPathOk(char *path)
 {
@@ -1097,6 +1035,7 @@ void I_LocateWad(void)
 
     return;
 }
+#endif
 
 
 

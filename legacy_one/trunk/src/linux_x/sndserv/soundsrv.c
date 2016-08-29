@@ -62,6 +62,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 
+#include "doomtype.h"
 #include "sounds.h"
 #include "soundsrv.h"
 
@@ -77,16 +78,16 @@ typedef struct wadinfo_struct
 {
     // should be IWAD
     char        identification[4];      
-    int         numlumps;
-    int         infotableofs;
+    uint32_t    numlumps;
+    uint32_t    infotableofs;
     
 } wadinfo_t;
 
 
 typedef struct filelump_struct
 {
-    int         filepos;
-    int         size;
+    uint32_t    filepos;
+    uint32_t    size;
     char        name[8];
     
 } filelump_t;
@@ -105,7 +106,7 @@ int             longsound;
 int             lengths[NUMSFX];
 
 // mixing buffer
-signed short    mixbuffer[MIXBUFFERSIZE];
+int16_t         mixbuffer[MIXBUFFERSIZE];
 
 // file descriptor of sfx device
 int             sfxdevice;                      
@@ -114,7 +115,7 @@ int             sfxdevice;
 int             musdevice;                      
 
 // the channel data pointers
-unsigned char*  channels[8];
+byte *          channels[8];
 
 // the channel step amount
 unsigned int    channelstep[8];
@@ -123,7 +124,7 @@ unsigned int    channelstep[8];
 unsigned int    channelstepremainder[8];
 
 // the channel data end pointers
-unsigned char*  channelsend[8];
+byte *          channelsend[8];
 
 // time that the channel started playing
 int             channelstart[8];
@@ -161,15 +162,11 @@ int mix(void)
 {
 
     register unsigned int       sample;
-    register int                dl;
-    register int                dr;
-    unsigned short              sdl;
-    unsigned short              sdr;
+    register int            dl, dr;
+    uint16_t                sdl, sdr;
     
-    signed short*               leftout;
-    signed short*               rightout;
-    signed short*               leftend;
-    unsigned char*              bothout;
+    int16_t               * leftout, * rightout,  * leftend;
+    byte  *                 bothout;
     
     int                         step;
     int                         i;
@@ -203,7 +200,7 @@ int mix(void)
             dr += volume_lookup[rightv[0]][sample];
             channelstepremainder[0] += channelstep[0];
             channels[0] += channelstepremainder[0] >> 16;
-            channelstepremainder[0] &= 65536-1;
+            channelstepremainder[0] &= 0xFFFF;
 
             if (channels[0] >= channelsend[0])
                 channels[0] = 0;
@@ -218,7 +215,7 @@ int mix(void)
             dr += volume_lookup[rightv[1]][sample];
             channelstepremainder[1] += channelstep[1];
             channels[1] += channelstepremainder[1] >> 16;
-            channelstepremainder[1] &= 65536-1;
+            channelstepremainder[1] &= 0xFFFF;
 
             if (channels[1] >= channelsend[1])
                 channels[1] = 0;
@@ -233,7 +230,7 @@ int mix(void)
             dr += volume_lookup[rightv[2]][sample];
             channelstepremainder[2] += channelstep[2];
             channels[2] += channelstepremainder[2] >> 16;
-            channelstepremainder[2] &= 65536-1;
+            channelstepremainder[2] &= 0xFFFF;
 
             if (channels[2] >= channelsend[2])
                 channels[2] = 0;
@@ -248,7 +245,7 @@ int mix(void)
             dr += volume_lookup[rightv[3]][sample];
             channelstepremainder[3] += channelstep[3];
             channels[3] += channelstepremainder[3] >> 16;
-            channelstepremainder[3] &= 65536-1;
+            channelstepremainder[3] &= 0xFFFF;
 
             if (channels[3] >= channelsend[3])
                 channels[3] = 0;
@@ -263,7 +260,7 @@ int mix(void)
             dr += volume_lookup[rightv[4]][sample];
             channelstepremainder[4] += channelstep[4];
             channels[4] += channelstepremainder[4] >> 16;
-            channelstepremainder[4] &= 65536-1;
+            channelstepremainder[4] &= 0xFFFF;
 
             if (channels[4] >= channelsend[4])
                 channels[4] = 0;
@@ -278,7 +275,7 @@ int mix(void)
             dr += volume_lookup[rightv[5]][sample];
             channelstepremainder[5] += channelstep[5];
             channels[5] += channelstepremainder[5] >> 16;
-            channelstepremainder[5] &= 65536-1;
+            channelstepremainder[5] &= 0xFFFF;
 
             if (channels[5] >= channelsend[5])
                 channels[5] = 0;
@@ -293,7 +290,7 @@ int mix(void)
             dr += volume_lookup[rightv[6]][sample];
             channelstepremainder[6] += channelstep[6];
             channels[6] += channelstepremainder[6] >> 16;
-            channelstepremainder[6] &= 65536-1;
+            channelstepremainder[6] &= 0xFFFF;
 
             if (channels[6] >= channelsend[6])
                 channels[6] = 0;
@@ -307,7 +304,7 @@ int mix(void)
             dr += volume_lookup[rightv[7]][sample];
             channelstepremainder[7] += channelstep[7];
             channels[7] += channelstepremainder[7] >> 16;
-            channelstepremainder[7] &= 65536-1;
+            channelstepremainder[7] &= 0xFFFF;
 
             if (channels[7] >= channelsend[7])
                 channels[7] = 0;
@@ -378,14 +375,9 @@ void updatesounds(void)
 
 }
 
-int
-addsfx
-( int           sfxid,
-  int           volume,
-  int           step,
-  int           seperation )
+int  addsfx( int sfxid, int volume, int step, int seperation )
 {
-    static unsigned short       handlenums = 0;
+    static uint16_t   handlenums = 0;
  
     int         i;
     int         rc = -1;
@@ -474,6 +466,8 @@ addsfx
 }
 
 
+#if 0
+// [WDJ] Unused
 void outputushort(int num)
 {
 
@@ -498,6 +492,7 @@ void outputushort(int num)
         write(1, buff, 5);
     }
 }
+#endif
 
 void initdata(void)
 {
@@ -527,10 +522,11 @@ void initdata(void)
     // vol_lookup[i*256+j] = (i*(j-128))/127;
     
     for (i=0 ; i<128 ; i++)
+    {
         for (j=0 ; j<256 ; j++)
             // vol_lookup[i*256+j] = (i*(j-128)*256)/127;
             volume_lookup[i][j] = (i*(j-128)*256)/127;
-
+    }
 }
 
 
@@ -550,10 +546,7 @@ fd_set          scratchset;
 
 
 
-int
-main
-( int           c,
-  char**        v )
+int main ( int c, char** v )
 {
 
     int         done = 0;
@@ -649,7 +642,7 @@ main
                             read(0, &bln, sizeof(int));
                             //fprintf(stderr,"%d in...\n",bln);
                             S_sfx[sndcnt].data = malloc(bln);
-                            // hey, read on a pipewill not always
+                            // hey, read on a pipe will not always
                             // fill the whole buffer 19990203 by Kin
                             for(tlen = 0; tlen < bln;) {
                                 tlen+=read(0, S_sfx[sndcnt].data+tlen, bln-tlen);

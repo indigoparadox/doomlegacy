@@ -642,7 +642,7 @@ void Midifile_OLD_SDL_MIXER( byte* midibuf, unsigned long midilength )
 #endif
 
 
-void I_PlaySong(int handle, int looping)
+void I_PlaySong(int handle, byte looping)
 {
 #ifdef HAVE_MIXER
   if (nomusic)
@@ -703,7 +703,9 @@ void I_UnRegisterSong(int handle)
 
 
 // return handle (always 0)
-int I_RegisterSong(void* data, int len)
+//  data : ptr to lump data
+//  len : length of data
+int I_RegisterSong( void* data, int len )
 {
 #ifdef HAVE_MIXER
   if (nomusic)

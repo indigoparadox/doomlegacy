@@ -74,12 +74,13 @@ extern consvar_t cv_numChannels;
 extern consvar_t cv_rndsoundpitch;
 
 #ifdef SNDSERV
-extern consvar_t sndserver_cmd;
-extern consvar_t sndserver_arg;
+extern consvar_t cv_sndserver_cmd;
+extern consvar_t cv_sndserver_arg;
 #endif
 #ifdef MUSSERV
-extern consvar_t musserver_cmd;
-extern consvar_t musserver_arg;
+extern consvar_t cv_musserver_cmd;
+extern consvar_t cv_musserver_arg;
+extern consvar_t cv_musserver_opt;
 #endif
 
 extern CV_PossibleValue_t soundvolume_cons_t[];
@@ -158,10 +159,10 @@ void S_StopSound(void* origin);
 // Start music using <music_id> from sounds.h
 void S_StartMusic(int music_id);
 
-// Start music using <music_id> from sounds.h,
-//  and set whether looping
-void S_ChangeMusic (int music_num, int looping);
-void S_ChangeMusicName(char *name, int looping);
+// Start music using <music_id> from sounds.h.
+//   looping : non-zero if continuous looping of music
+void S_ChangeMusic (int music_num, byte looping);
+void S_ChangeMusicName(char *name, byte looping);
 
 // Stops the music fer sure.
 void S_StopMusic(void);

@@ -48,14 +48,12 @@ extern pid_t getpid (void);
 
 volatile static int waiting;
 
-static void getalrm(i)
-  int i;
+static void getalrm( int i )
 {
     waiting = 0;
 }
 
-void usleep(t)
-  unsigned t;
+void usleep( unsigned int t )
 {
     static struct itimerval it, ot;
     void (*oldsig)();

@@ -155,6 +155,9 @@ typedef struct wadfile_s
 extern  int          numwadfiles;
 extern  wadfile_t*   wadfiles[MAX_WADFILES];
 
+// Return the wadfile info for the lumpnum
+wadfile_t * lumpnum_to_wad( int lumpnum );
+
 // [WDJ] Indicates cache miss, new lump read requires endian fixing.
 extern boolean lump_read;
 

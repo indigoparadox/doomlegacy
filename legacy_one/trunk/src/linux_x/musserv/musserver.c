@@ -27,67 +27,271 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <string.h>
-//#if defined(__FreeBSD__) || defined(SCOOS5) || defined(SCOUW2) || defined(SCOUW7)
-#  include <errno.h>
-//#endif
+#include <errno.h>
+#include <ctype.h>
+  // isdigit
 #include "musserver.h"
 
 #if defined(SCOUW2)
 #include "usleep.h"
 #endif
 
-typedef unsigned char  byte;
 
-extern int use_dev;
-extern int seqfd;
-extern int mixfd;
-byte *musicdata;
-int doomver;
-int verbose = 0;
-int qid;
-int changevol = 1;
-FILE *infile;
-char pproc[20];
-#if !defined(SCOOS5)
-int pcheck = 1;
-#else
-int pcheck = 0;
-#endif
+// Globals
+byte verbose = 0;
+byte changevol_allowed = 1;
+byte parent_check = 1;  // check parent process
+char parent_proc[32];  // parent process /proc/num
 
-// readwad.c
-extern int read_wad_dir_music(FILE *wadfile, int version);
-extern int readmus(int lumpnum);
-extern int playmus(byte *musdata, unsigned int mussize, int play_once);
-extern void seq_setup(int pref_dev, int dev_num);
-extern void read_genmidi(FILE *wadfile);
-extern void list_devs(void);
-extern void cleanup_midi(void);
-extern void read_extra_wads(int doomver);
-extern void readwad(char *s, int doomver);
-extern void fmload(void);
+int qid;  // IPC message queue id
+
+music_data_t  music_data;
+
+// Locals
+static FILE *infile;
+
+static byte sel_dvt = DVT_DEFAULT;  // dev_e
+static int dev_port_num = -1;
+static int dev_type = -1;  // as per the ioctl listing
+
+#define  TIMEOUT_UNIT_MS  200
+#define  DEFAULT_TIMEOUT_SEC  300
+// Timeout in seconds.
+static unsigned int timeout = DEFAULT_TIMEOUT_SEC;
 
 
 void show_help(void)
 {
+    printf("musserver version %s\n", MUS_VERSION);
     printf("Usage: musserver [options]\n\n");
-#ifdef AWE32_SYNTH_SUPPORT
-    printf("  -a               Use AWE32 synth device for music playback\n");
-#endif
-    printf("  -c               Do not check whether the parent process is alive\n");
-    printf("  -d directory     Look in 'directory' for DOOM wad file\n");
-    printf("  -f               Use FM synth device for music playback\n");
-    printf("  -h               Print this message and exit\n");
     printf("  -l               List detected music devices and exit\n");
-    printf("  -m               Use general midi device for music playback\n");
-    printf("  -t number        Timeout after 'number' seconds when getting IPC message\n");
-    printf("                   queue id\n");
-    printf("  -u number        Use device of type 'number' where 'number' is the type\n");
-    printf("                   reported by 'musserver -l'.  Requires -f or -m option.\n");
-    printf("  -V               Ignore volume change messages from Doom\n");
-    printf("  -v               Verbose\n\n");
+    printf("  -d <dev> <port>  Device preference.\n" );
+    printf("    <dev>: M = Any Midi      E = Ext Midi\n" );
+    printf("           L = FluidSynth    T = TiMidity\n" );
+    printf("           S = Any Synth     F = FM Synth\n" );
+#ifdef AWE32_SYNTH_SUPPORT
+    printf("           A = Awe32 Synth\n" );
+#endif
+    printf("    <port>         Optional, defaults to first found. \n");
+    printf("  -u <number>      Use device of type <number> where <number> is the type\n");
+    printf("                   reported by 'musserver -l'.\n");
+    printf("  -V <vol>         Ignore volume change messages from Doom\n");
+    printf("  -c               Do not check whether the parent process is alive\n");
+    printf("  -t <number>      Timeout for getting IPC message queue (sec).\n");
+    printf("  -v -v2 -v3       Verbose. Default level 1.\n");
+    printf("  -h               Help: print this message and exit\n");
 }
 
-void cleanup(int status)
+// Index with dev_e.
+const char * dev_txt[] = {
+   "DEFAULT",
+   "NO_SYNTH",
+   "MIDI",
+   "TIMIDITY",
+   "FLUIDSYNTH",
+   "EXT_MIDI",
+   "SYNTH"
+   "FM_SYNTH",
+   "AWE32_SYNTH",
+   "LIST"
+};
+
+
+// Select preference device.
+static
+byte  select_device( char ch )
+{
+    byte sd;
+    switch( ch )
+    {
+     case 'M':
+        sd = DVT_MIDI;
+        break;
+     case 'E':
+        sd = DVT_EXT_MIDI;
+        break;
+     case 'T':
+        sd = DVT_TIMIDITY;
+        break;
+     case 'L':
+        sd = DVT_FLUIDSYNTH;
+        break;
+     case 'S':
+        sd = DVT_SYNTH;
+        break;
+     case 'F':
+        sd = DVT_FM_SYNTH;
+        break;
+     case 'A':
+        sd = DVT_AWE32_SYNTH;
+        break;
+     default:
+        sd = DVT_DEFAULT;
+        break;
+    }
+    return sd;
+}
+
+static
+void  parse_option_string( const char * optstr )
+{
+    const char * p = optstr;
+
+    if( option_string == NULL )  return;
+    while( *p != 0 )
+    {
+        while(*p == ' ') p++;
+        if( *(p++) != '-' )  continue;
+       
+        switch( *(p++) )
+        {
+         case 'v':
+            verbose=1;
+            if( *p )
+              verbose= *p - '0';
+            break;
+         case 'V':
+            // fixed volume
+            while(*p == ' ') p++;
+            vol_change(atoi(p));
+            while( isdigit(*p) ) p++;
+            changevol_allowed = 0;  // fixed volume
+            break;
+         case 'd':
+            while(*p == ' ') p++;
+            if( isalpha( *p ) )
+            {
+                sel_dvt = select_device( *(p++) );
+                while(*p == ' ') p++;
+            }
+            if( isdigit( *p ) )
+            {
+                dev_port_num = atoi(p);
+                while( isdigit(*p) ) p++;
+            }
+            break;
+         default:
+            break;
+        }
+    }
+}
+
+// Return optional parameter value on the command line switch.
+// Return -1 when none.
+//  avstr : string after the switch
+//  avp :  & *argv[]  /*INOUT*/
+int  command_value( char * const avstr, /*INOUT*/ char ** avp[] )
+{
+    if( avstr && *avstr )
+    {
+      // Check for number at next char of switch.
+      if( isdigit( *avstr ) )
+         return  atoi( avstr );
+    }
+   
+    if( avp && *avp )
+    {
+      // Check for number in token following the switch.
+      char * next_arg = (*avp)[1];
+      if( next_arg )
+      {
+        if( isdigit( *next_arg ) )
+        {
+          (*avp)++;  // argument used up
+          return  atoi( next_arg );
+        }
+      }
+    }
+    return -1;  // invalid
+}
+
+
+// Parse the command line.
+void  command_line( int ac, char * av[] )
+{
+    char * avstr;
+    int val;
+
+    if( ac < 1 )  return;
+
+    // Gave up on getopt, as it could not handle our optional arguments.
+    av++; // skip program name
+    for( ; *av ; av++ )
+    {
+      avstr = *av;
+      if( *avstr == '-' )
+      {
+        char swch = avstr[1];
+        avstr+=2;  // skip - and char
+        switch ( swch )
+        {
+         case 'd':
+            if( *avstr == 0 )
+            {
+                if( *av[1] == '-' )  continue;
+                // Select letter must be in next token.
+                av++;
+                avstr = *av;
+            }
+            if( isalpha( *avstr ) )
+                sel_dvt = select_device( *(avstr++) );
+            dev_port_num = command_value( avstr, &av );  // optional port num
+            break;
+         case 'u':
+            dev_type = command_value( avstr, &av );
+            break;
+         case 'l':
+            list_devs();
+            break;
+         case 't':
+            val = command_value( avstr, &av ); // optional time
+            if( val >= 0 )
+              timeout = val;  // seconds
+            break;
+         case 'V':
+            changevol_allowed = 0;  // fixed volume
+            val = command_value( avstr, &av );  // optional volume
+            if( val >= 0 )
+            {
+              vol_change(val);
+            }
+            break;
+         case 'c':
+            parent_check = 0;
+            break;
+         case 'v':
+            verbose = 1;
+            val = command_value( avstr, &av );  // optional verbose level
+            if( val > 0 )
+              verbose = val;
+            break;
+         case 'h':
+            show_help();
+            exit(0);
+            break;
+         case '?': case ':':
+            show_help();
+            exit(1);
+            break;
+        }
+      }
+    }
+   
+//    printf( "dev_sel= %s  dev_port= %i  dev_type= %i\n", dev_txt[sel_dvt], dev_port_num, dev_type );
+
+#ifndef AWE32_SYNTH_SUPPORT
+    if( sel_dvt == DVT_AWE32_SYNTH )
+    {
+        printf("musserver: No AWE32 support\n");
+        sel_dvt = DVT_DEFAULT;
+    }
+#endif
+}
+
+
+
+// Cleanup and Exit
+void cleanup_exit(int status, char * exit_msg)
 {
     struct msqid_ds *dummy;
     
@@ -95,299 +299,181 @@ void cleanup(int status)
     dummy = malloc(sizeof(struct msqid_ds));
     msgctl(qid, IPC_RMID, dummy);
     free(dummy);
-    fclose(infile);
+    if( infile )
+      fclose(infile);
+
+    if( (status > 1) || (status < -1) || verbose )
+    {
+      if( exit_msg )
+      {
+        if( strlen(exit_msg) > 0 )
+          printf( "musserver: %s.\n", exit_msg );
+        printf( "musserver: exiting.\n" );
+      }
+    }
     exit(status);
 }
 
+
 int main(int argc, char **argv)
 {
-    int done = 0;
-    int lump = -1;
-    int intro = 0;
-    int introa = 0;
-    int result;
-    char *wadfilename;
-    char *waddir;
-    char *iwadname=NULL;
+    int result = 0;
+    char * fail_msg = "";
     unsigned int musicsize;
-    int x;
-    int outtro = 31;
-    int opt_dev = 0;
-    int num_dev = -1;
-    int playarg;
-    unsigned int timeout = 1500;
     pid_t ppid;
+    int timeout_cnt;
 
+    music_data.data = NULL;
+    music_data.size = 0;
 
-    ppid = getppid();
-    sprintf(pproc, "/proc/%d", (int)ppid);
-    if (verbose > 1)
-	printf("ppid %d %s\n", ppid, pproc);
-    ppid = getpid();
-    if (verbose > 1) 
-	printf("pid %d %s\n", ppid, pproc);
-    waddir = getenv("DOOMWADDIR");
-    if (waddir == NULL)
-	waddir = ".";
-
-    while ((x = getopt(argc, argv, "acd:fhi:lmt:u:Vv")) != -1)
-	switch (x)
-	{
-#ifdef AWE32_SYNTH_SUPPORT
-	case 'a':
-	    opt_dev = AWE32_SYNTH;
-	    break;
+#if defined(SCOOS5)
+    parent_check = 0;
 #endif
-	case 'c':
-	    pcheck = 0;
-	    break;
-	case 'd':
-	    waddir = optarg;
-	    break;
-	case 'f':
-	    opt_dev = FM_SYNTH;
-	    break;
-	case 'h':
-	    show_help();
-	    exit(0);
-	    break;
-	case 'i':
-	    iwadname = optarg;
-	    break;
-	case 'l':
-	    list_devs();
-	    break;
-	case 'm':
-	    opt_dev = EXT_MIDI;
-	    break;
-	case 't':
-	    timeout = 5 * atoi(optarg);
-	    break;
-	case 'u':
-	    num_dev = atoi(optarg);
-	    break;
-	case 'V':
-	    changevol = 0;
-	    break;
-	case 'v':
-	    verbose++;
-	    break;
-	case '?': case ':':
-	    show_help();
-	    exit(1);
-	    break;
-	}
-
-
-    if (!opt_dev)
-	opt_dev = DEFAULT_DEV;
-
-#ifdef DEFAULT_TYPE
-    if (num_dev == -1)
-	num_dev = DEFAULT_TYPE;
-#endif
-    
-    if (verbose > 1)
-	printf("musserver version %s\n", MUS_VERSION);
-
-    wadfilename = malloc(strlen(waddir) + strlen("/plutonia.wad") + 1);
-
-    // if an iwad name has been supplied, try it!
-    if(iwadname) {
-	sprintf(wadfilename, "%s/%s", waddir, iwadname);
-	infile = fopen(wadfilename, "r");
-	if (infile != NULL) {
-	    if(!strcmp(iwadname, "doomu.wad") || 
-	       !strcmp(iwadname, "doom.wad")) {
-		doomver = 1;
-	    }
-	    else if(!strcmp(iwadname, "doom1.wad")) {
-		doomver = 0;
-	    }
-	    else {
-		doomver = 2;
-	    }
-	    goto found;
-	}
-    }
-    /*
-     * carefull here, the order for looking at the wad files must be the
-     * same as in xdoom and sndserver, else it might play the wrong tunes
-     */
-    sprintf(wadfilename, "%s/doom2.wad", waddir);
-    infile = fopen(wadfilename, "r");
-    if (infile != NULL) {
-	doomver = 2;
-	goto found;
-    }
-
-    sprintf(wadfilename, "%s/doomu.wad", waddir);
-    infile = fopen(wadfilename, "r");
-    if (infile != NULL) {
-	doomver = 1;
-	goto found;
-    }
-
-    sprintf(wadfilename, "%s/doom.wad", waddir);
-    infile = fopen(wadfilename, "r");
-    if (infile != NULL) {
-	doomver = 1;
-	goto found;
-    }
-
-    sprintf(wadfilename, "%s/doom1.wad", waddir);
-    infile = fopen(wadfilename, "r");
-    if (infile != NULL) {
-	doomver = 0;
-	goto found;
-    }
-
-    sprintf(wadfilename, "%s/plutonia.wad", waddir);
-    infile = fopen(wadfilename, "r");
-    if (infile != NULL) {
-	doomver = 2;
-	goto found;
-    }
-
-    sprintf(wadfilename, "%s/tnt.wad", waddir);
-    infile = fopen(wadfilename, "r");
-    if (infile != NULL) {
-	doomver = 2;
-	goto found;
-    }
-
-    sprintf(wadfilename, "%s/doom2f.wad", waddir);
-    infile = fopen(wadfilename, "r");
-    if (infile != NULL) {
-	doomver = 2;
-	goto found;
-    }
-
-    printf("musserver: game mode indeterminate.\n");
-    exit(1);
-
- found:
-    if (verbose)
-	switch (doomver)
-	{
-	case 0:
-	    printf("Playing music for shareware DOOM\n");
-	    break;
-	case 1:
-	    printf("Playing music for registered DOOM\n");
-	    break;
-	case 2:
-	    printf("Playing music for DOOM II\n");
-	    break;
-	}
-
-    switch(doomver)
-    {
-    case 0: case 1:
-	intro = 28;
-	introa = 27;
-	break;
-    case 2:
-	intro = 33;
-	introa = 100;
-	outtro = 100;
-	break;
-    }
-
-    /* read the wadfile, get music data */
-    read_wad_dir_music(infile, doomver);
-    if (doomver)	/*  if not shareware doom, scan for external PWADs */
-	read_extra_wads(doomver);
-
-    seq_setup(opt_dev, num_dev);
-
-    if (use_dev == FM_SYNTH)
-    {
-	read_genmidi(infile);
-	fmload();
-    }
-
-    // According to cph, this makes the device really load the instruments
-    // Thanks, Colin!!
-    cleanup_midi();
+    command_line( argc, argv );
   
-    seq_setup(opt_dev, num_dev);
+    if( verbose )
+        printf("musserver version %s\n", MUS_VERSION);
 
-    if (use_dev == FM_SYNTH)
+    ppid = getpid();  // our pid
+    if(verbose >= 2) 
+        printf("musserver pid %d\n", ppid);
+
+    if( parent_check )
     {
-	read_genmidi(infile);
-	fmload();
+        ppid = getppid();  // parent pid
+        sprintf(parent_proc, "/proc/%d", (int)ppid);  // length 17
+        if (verbose >= 2)
+            printf("parent pid %d %s\n", ppid, parent_proc);
+        if( ppid < 2 )
+            parent_check = 0;  // started by init, such as from system() call.
+        // Will get correct PPID sent by IPC.
     }
 
-    qid = -1;
-    x = 0;
-    if (verbose > 1)
-	printf("getting message queue id...\n");
-    while (qid == -1)
+    // The message queue is created after the musserver is started.
+    qid = -9;
+    for( timeout_cnt = timeout * 1000 / TIMEOUT_UNIT_MS; ; timeout_cnt-- )
     {
-	x++;
-	qid = msgget((key_t)53075, 0);
-	if (verbose > 1)
-	    printf("qid: %d\n",qid);
-	if (x > timeout)
-	    qid = -2;
-	if (qid == -1)
-	{
-	    if (errno == ENOENT)
-		usleep(200000);
-	    else
-		qid = -2;
-	}	
+        // Even if timeout is 0, test for IPC queue at least once.
+        qid = msgget( MUSSERVER_MSG_KEY, 0);
+        // Cannot have a printf before checking errno !
+        if (qid >= 0 )  break;
+
+        switch(errno)
+        {
+          case ENOENT:  // does not exist yet
+            if ((verbose >= 2) && ((timeout_cnt & 0x0F) == 4))
+            {
+               printf("Waiting for message queue id...\n");
+            }
+            break;
+          case EACCES:  // do not have access permission
+            fail_msg="IPC message queue, permission failure";
+            goto  fail_exit;
+          case ENOMEM:  // do not enough memory
+            fail_msg="IPC message queue, not enough memory";
+            goto  fail_exit;
+          case ENOSPC:  // system limit
+            fail_msg="IPC message queue, system limit";
+            goto  fail_exit;
+          default:
+            fail_msg="IPC message queue, general failure";
+            goto  fail_exit;
+        }
+        if( timeout_cnt < 1 )
+        {
+            fail_msg="Could not connect to IPC";
+            goto  fail_exit;
+        }
+        usleep(TIMEOUT_UNIT_MS * 1000);  // 0.2 sec
     }
-    if (qid == -2)
+    if (verbose >= 2)
+        printf("qid: %d\n", qid);
+
+    if (verbose >= 2)
+        printf("Waiting for first message from Doom...\n");
+
+    // The DoomLegacy wad search is very complicated, and game dependent.
+    // PWAD may also be involved.
+    // Get the wad file name from IPC.
+
+    while(genmidi_lump.state == PLAY_OFF)
+       get_mesg(MSG_WAIT);
+
+    if( genmidi_lump.wad_name == NULL )
+      goto normal_exit_terminate;
+   
+    if( option_pending )
     {
-	if(verbose > 1)
-	    printf("musserver: could not get IPC message queue id, exiting.\n");
-	cleanup(1);
+        // Parse the option string from doom
+        parse_option_string( option_string );
     }
+   
+    if( verbose >= 2 )
+       printf( " select sel_dvt=%s, dev_type=%i, port=%i\n", dev_txt[sel_dvt], dev_type, dev_port_num );
+    // init, load, setup the selected device
+    seq_midi_init_setup(sel_dvt, dev_type, dev_port_num);
+   
+    // Instrument setup is done.
+    
+    // Wait for first music
+    while(music_lump.state == PLAY_OFF)
+       get_mesg(MSG_WAIT);
+   
+    if( music_lump.wad_name == NULL )
+      goto normal_exit_terminate;
 
-    printf("musserver: using %s\nmusserver: ready\n", wadfilename);
-    free(wadfilename);
-
-    playarg = 2;
-    if (verbose > 1)
-	printf("Waiting for first message from Doom...\n");
-    while (!done)
+    for(;;)
     {
-	qid = msgget((key_t)53075, 0);
-	if ((lump == outtro) || (lump == intro) || (lump == introa))
-	    playarg = 1;
-	else if (lump >= 0)
-	    playarg = 0;
-	else
-	    lump = intro;
-	if ((verbose > 1) && (playarg != 2))
-	    printf("Playing music resource number %d\n", lump + 1);
-	musicsize = readmus(lump);
-	result = playmus(musicdata, musicsize, playarg);
-	free(musicdata);
-	switch (result)
-	{
-	case TERMINATED:
-	    done = 1;
-	    if (verbose)
-		printf("Terminated\n");
-	    break;
-	default:
-	    if (result >= 500)
-		lump = result - 500;
-	    else
-	    {
-		done = 1;
-		printf("musserver: unknown error in music playing, exiting\n");
-	    }
-	    break;
-	}
-	if (playarg == 2)
-	    playarg = 1;
+//	qid = msgget( MUSSERVER_MSG_KEY, 0);
+        while( music_lump.state != PLAY_START )
+            get_mesg(MSG_WAIT);
+
+        if (verbose >= 2)
+            printf("Playing music resource number %d\n", music_lump.lumpnum + 1);
+        musicsize = read_wad_music( & music_lump,
+             /* OUT */  & music_data );
+        if( musicsize )
+        {
+          // Looping is now set by IPC message.
+          result = playmus( & music_data, 1 );
+          free(music_data.data);
+          music_data.data = NULL;
+        }
+        else
+        {
+          result = music_lump.state;
+        }
+        switch (result)
+        {
+          case PLAY_START:
+            break;
+          case PLAY_STOP:
+            break;
+          case PLAY_RESTART:
+            if( option_pending )
+            {
+               parse_option_string( option_string );
+               cleanup_midi();
+               // load, setup the selected device
+               seq_midi_init_setup(sel_dvt, dev_type, dev_port_num);
+            }
+            music_lump.state = PLAY_START;
+            break;
+          case PLAY_QUITMUS:
+            if (verbose)
+                printf("Terminated\n");
+            goto normal_exit_terminate;
+          default:
+            fail_msg = "unknown error in music playing";
+            goto fail_exit;
+        }
     }
 
-    cleanup(0);
-
+normal_exit_terminate:
+    cleanup_exit(0, NULL);
     return 0;
+
+fail_exit:
+    cleanup_exit(2, fail_msg);
+    return 1;
 }

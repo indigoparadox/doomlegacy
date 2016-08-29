@@ -2220,6 +2220,7 @@ enum
     SVM_sfx_empty2,
     SVM_cdaudio_vol,
     SVM_sfx_empty3,
+    SVM_sfx_mus_pref,
     SVM_sound_end
 } SVM_sound_e;
 
@@ -2233,6 +2234,9 @@ menuitem_t SoundMenu[]=
 #ifdef CDMUS
     {IT_CVARMAX   | IT_PATCH ,"M_CDVOL" ,"CD Volume"   ,&cd_volume       ,'c'}, // in legacy.wad
     {IT_BIGSLIDER | IT_SPACE ,NULL      ,NULL          ,&cd_volume           },
+#endif
+#ifdef MUSSERV
+    {IT_STRING | IT_CVAR | IT_YOFFSET, 0, "Music Pref",  &cv_musserver_opt , 110},
 #endif
 };
 

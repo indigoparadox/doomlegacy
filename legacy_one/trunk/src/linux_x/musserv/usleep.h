@@ -30,9 +30,9 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __USLEEP__
-#define __USLEEP__
+#ifndef USLEEP_H
+#define USLEEP_H
 
-void usleep (unsigned);
+void usleep (unsigned int);
 
 #endif

@@ -136,6 +136,18 @@
 int          numwadfiles;             // number of active wadfiles
 wadfile_t*   wadfiles[MAX_WADFILES];  // 0 to numwadfiles-1 are valid
 
+
+// Return the wadfile info for the lumpnum
+wadfile_t * lumpnum_to_wad( int lumpnum )
+{
+    // level_lumpnum contains index to the wad
+    int wadnum = WADFILENUM( lumpnum );
+    if( wadnum < numwadfiles )
+      return  wadfiles[ wadnum ];
+    return NULL;
+}
+
+
 // W_Shutdown
 // Closes all of the WAD files before quitting
 // If not done on a Mac then open wad files
