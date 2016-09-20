@@ -2557,14 +2557,8 @@ void P_ProcessSpecialSector(player_t* player, sector_t* sector, boolean instantd
 
         case 9:
           // SECRET SECTOR
-          player->secretcount++;
           sector->special = 0;
-
-          //faB: useful only in single & coop.
-          if (!cv_deathmatch.value && player == displayplayer_ptr)
-              CONS_Printf ("\2You found a secret area!\n");
-
-          break;
+          goto found_secret_area;
 
         case 11:
           // EXIT SUPER DAMAGE! (for E1M8 finale)
@@ -2607,18 +2601,28 @@ void P_ProcessSpecialSector(player_t* player, sector_t* sector, boolean instantd
          }
          break;
      }
+
      if (sector->special&SECRET_MASK)
      {
-       player->secretcount++;
        sector->special &= ~SECRET_MASK;
-
-       if (!cv_deathmatch.value && player == displayplayer_ptr)
-          CONS_Printf ("\2You found a secret area!\n");
-
        if (sector->special<32)
          sector->special=0;
+       goto found_secret_area;
      }
    }
+   return;
+
+found_secret_area:
+   player->secretcount++;
+   //faB: useful only in single & coop.
+   if (!cv_deathmatch.value)
+   {
+       if( player == displayplayer_ptr )
+           GenPrintf(EMSG_playmsg, "\2You found a secret area!\n");
+       else if( player == displayplayer2_ptr )
+           GenPrintf(EMSG_playmsg2, "\2You found a secret area!\n");
+   }
+   return;
 }
 
 

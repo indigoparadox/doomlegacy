@@ -626,10 +626,11 @@ void SF_PlayerMsg(void)
     if (t_argc < 2)  goto err_numarg;
 
     plnum = intvalue(t_argv[0]);
-    if ( plnum == displayplayer )
+    if( (plnum == displayplayer) || (plnum == displayplayer2) )
     {
         char * tempstr = Z_cat_args(1);  // concat arg1, arg2, ...
-        CONS_Printf("%s\n", tempstr);
+        GenPrintf( (plnum == displayplayer)? EMSG_playmsg: EMSG_playmsg2,
+                   "%s\n", tempstr);
         Z_Free(tempstr);
     }
 done:

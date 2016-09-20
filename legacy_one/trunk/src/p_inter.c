@@ -1493,6 +1493,7 @@ void P_UnlinkFloorThing(mobj_t*   mobj)
 #endif
 
 
+#define BUFFSIZE  512
 // Death messages relating to the target (dying) player
 //
 static
@@ -1500,6 +1501,7 @@ void P_DeathMessages ( mobj_t*       target,
                        mobj_t*       inflictor,
                        mobj_t*       source )
 {
+    char txt[BUFFSIZE+1];
     int     w;
     char    *str;
 
@@ -1513,15 +1515,12 @@ void P_DeathMessages ( mobj_t*       target,
     {
         if (source->player==target->player)
         {
+            str = text[DEATHMSG_SUICIDE];
+            snprintf(txt, BUFFSIZE, str, player_names[target->player - players]);
+	    txt[BUFFSIZE-1] = 0;
+            GenPrintf(EMSG_playmsg, txt);
             if (cv_splitscreen.value)
-            {
-                char txt[512];
-                sprintf(txt, text[DEATHMSG_SUICIDE], player_names[target->player-players]);
-                CONS_Printf(txt);
-                CONS_Printf("\4%s", txt);
-            }
-            else
-                CONS_Printf(text[DEATHMSG_SUICIDE], player_names[target->player-players]);
+                GenPrintf(EMSG_playmsg2, txt);
         }
         else
         {
@@ -1578,17 +1577,14 @@ void P_DeathMessages ( mobj_t*       target,
                     break;
                 }
             }
+
+            snprintf(txt, BUFFSIZE, str,
+                     player_names[target->player - players],
+                     player_names[source->player - players]);
+	    txt[BUFFSIZE-1] = 0;
+            GenPrintf(EMSG_playmsg, txt);
             if (cv_splitscreen.value)
-            {
-                char txt[512];
-                sprintf(txt, str, player_names[target->player-players], 
-                                  player_names[source->player-players]);
-                CONS_Printf(txt);
-                CONS_Printf("\4%s", txt);
-            }
-            else
-                CONS_Printf(str,player_names[target->player-players],
-                                player_names[source->player-players]);
+                GenPrintf(EMSG_playmsg2, txt);
         }
     }
     else
@@ -1614,9 +1610,9 @@ void P_DeathMessages ( mobj_t*       target,
             {
                 if (source->target->player)
                 {
-                    CONS_Printf(text[DEATHMSG_BARRELFRAG],
-                                player_names[target->player-players],
-                                player_names[source->target->player-players]);
+                    GenPrintf(EMSG_playmsg, text[DEATHMSG_BARRELFRAG],
+                                player_names[target->player - players],
+                                player_names[source->target->player - players]);
                     return;
                 }
                 else
@@ -1646,7 +1642,7 @@ void P_DeathMessages ( mobj_t*       target,
               default:           str = text[DEATHMSG_DEAD];      break;
             }
         }
-        CONS_Printf(str, player_names[target->player-players]);
+        GenPrintf(EMSG_playmsg, str, player_names[target->player - players]);
     }
 }
 
