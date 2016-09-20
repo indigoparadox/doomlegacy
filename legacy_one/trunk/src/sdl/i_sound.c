@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Copyright (C) 2000-2013 by Doom Legacy team
+// Copyright (C) 2000-2016 by Doom Legacy team
 //
 // This source is available for distribution and/or modification
 // only under the terms of the DOOM Source Code License as

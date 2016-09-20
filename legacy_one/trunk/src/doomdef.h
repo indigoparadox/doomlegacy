@@ -30,8 +30,10 @@
 
 // Uncheck this to compile debugging code
 //#define RANGECHECK
-#define PARANOIA                // do some test that never happens but maybe
-#define LOGMESSAGES             // write message in log.txt (win32 and Linux only for the moment)
+// Do some extra tests, that never happens but maybe.
+#define PARANOIA
+// write message in log.txt (win32 and Linux only for the moment)
+#define LOGMESSAGES
 #define LOGLINELEN  80
 #define SHOW_DEBUG_MESSAGES
 

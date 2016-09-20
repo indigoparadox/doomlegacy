@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1995 by Sebastien Bacquet.
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
+// Portions Copyright (C) 1998-2016 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License

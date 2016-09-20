@@ -161,6 +161,7 @@ consvar_t cv_grcoronasize      = {"gr_coronasize",        "1", CV_SAVE| CV_FLOAT
 consvar_t cv_grmblighting      = {"gr_mblighting",       "On", CV_SAVE|CV_CALL
                                   , CV_OnOff, CV_grMonsterDL_OnChange };
 
+// Select by view, using indirection into view_dynlights.
 static dynlights_t view_dynlights[2]; // 2 players in splitscreen mode
 static dynlights_t *dynlights = &view_dynlights[0];
 
@@ -1137,6 +1138,7 @@ static sector_t *gr_backsector ;
 static seg_t    *gr_curline;
 
 
+
 /*
 static void HWR_StoreWallRange (int startfrac, int endfrac)
 {
@@ -1209,7 +1211,6 @@ static void HWR_AddLightMapForLine( int lightnum, seg_t *line)
 
     HWR_BuildWallLightmaps(&p1, &p2, lightnum, line);
 }
-
 
 
 //TODO: see what HWR_AddLine does

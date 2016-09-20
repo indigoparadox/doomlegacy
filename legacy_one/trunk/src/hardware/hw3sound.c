@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 2001 by DooM Legacy Team.
+// Copyright (C) 2001-2016 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License

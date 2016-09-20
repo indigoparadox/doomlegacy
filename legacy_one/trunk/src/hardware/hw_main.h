@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-// Copyright (C) 1998-2012 by DooM Legacy Team.
+// Copyright (C) 1998-2016 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -93,7 +93,7 @@ void HWR_Shutdown (void);
 void HWR_clearAutomap (void);
 void HWR_drawAMline (fline_t* fl, int color);
 void HWR_FadeScreenMenuBack( uint32_t color_rgba, int alpha, int height );
-void HWR_RenderPlayerView (int viewnumber, player_t* player);
+void HWR_RenderPlayerView (byte viewnumber, player_t* player);
 void HWR_DrawViewBorder (int clearlines);
 //   x, y, w, h : vid coordinates, relative to center.
 //   scale : 0 .. 15

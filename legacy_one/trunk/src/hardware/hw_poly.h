@@ -3,7 +3,7 @@
 //
 // $Id: hw_glob.h 1035 2013-08-14 00:38:40Z wesleyjohnson $
 //
-// Copyright (C) 1998-2012 by DooM Legacy Team.
+// Copyright (C) 1998-2016 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
