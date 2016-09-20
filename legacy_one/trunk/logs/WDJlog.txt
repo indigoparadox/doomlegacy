@@ -5417,3 +5417,10 @@ Make conditional one of the Makefile changes for WinXP.
 On Win98 using DOS commands, the output redirection of the dep output must
 use DOS file name conventions.
 On WinXP which has MSYS 1.0.17, they must be unix file name conventions.
+
+*** W105_tcp_err
+patchfile = w105_59_tcp_err.patch
+- commit revision 1263
+Reorganize network error codes.
+Add handling of TCP connection reset and connection aborted errors
+that were transient errors with WinXP.
