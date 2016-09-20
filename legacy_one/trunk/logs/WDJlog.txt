@@ -5496,3 +5496,7 @@ patchfile = w105_66_version1461.patch
 Update version numbers for 1.46.1.
 Still uses legacy.wad 145, no need to change that.
 
+*** W105_docs
+patchfile = w105_67_docs.patch
+- commit revision 1271
+Update the docs for Release Version 1.46.

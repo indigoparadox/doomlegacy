@@ -9,6 +9,38 @@
 
 <h1 id="intro">INSTALL</h1>
 
+<h2>Environment variables</h2>
+<p>
+  You can set the following environment variables to
+  have additional control over Legacy behavior. None of them are
+  required.
+</p>
+<ul>
+  <li>
+    <b>DOOMWADDIR</b>: This environment variable defines a path where
+    wad files are located. This way you can easily share your wad
+    files between different programs.  It is searched before the
+    current directory, and the wad directory list are searched.
+  </li>
+  <li>
+    <b>USER</b>: This variable contains your username, is used as the
+    default value for your player name in multiplayer games.
+  </li>
+  <li>
+    <b>HOME</b>: This variable indicates your home directory.
+    In the home directory Doom Legacy will create a legacy directory to store
+    your config and savegame files.
+    If this variable is not defined, a default legacy home directory will be
+    checked for existing, or one created in the program directory.
+    Failure to have a consistent HOME will lead to losing your config,
+    and savegames will not be saved.
+  </li>
+  <li>
+    <b>UserProfile</b>: This variable is checked on Windows systems as
+    a substitute for HOME, if HOME is not defined.
+  </li>
+</ul>
+
 <h2>Install General Instructions</h2>
 
 <h3>Install Requires:</h3>
@@ -39,8 +71,8 @@ Subdirectories will NOT be searched.
 </p>
 
 <li>SDL library.
-<p>The SDL library is required for the SDL build of Doom Legacy.  The
-user is expected to install the SDL library as a system resource.
+<p>The SDL library is required for the SDL build of Doom Legacy.  Linux
+users are expected to install the SDL library as a system resource.
 <p>Doom Legacy uses SDL 1.2.
 <p>The SDL binaries have an SDL library included, for those users who
 do not have SDL already installed.  If your system does not already
@@ -432,17 +464,17 @@ INSTALL_BIN_DIR="$HOME/games/doomlegacy"
 <p>
   Put your wad files in directory <b>"\doomwads"</b>, or <b>"\games\doomwads"</b>,
   or in the current directory.  Doom Legacy will search all doomwaddir 
-  for the use the wad file.
-  The environment variable <b>DOOMWADDIR</b> can be set a batch file to specify a
-  different wad directory.  Other doom ports commonly used that
+  for the wad file.
+  The environment variable <b>DOOMWADDIR</b> can be set in a batch file to
+  specify a different wad directory.  Other doom ports commonly used that
   environment variable to point to the doom wad directory.
 </p>
 <p>
   A <b>"legacy"</b> or <b>"doomlegacy"</b> directory will be created in your
   home directory for savegames and saved config files.
   This depends upon determining the HOME directory at run-time.
-  This is commonly done with a HOME environment variable set at user login
-  to the operating system.
+  This is commonly done with a UserProfile or HOME environment variable set
+  at user login to the operating system.
 </p>
 <p>
   For Windows, Doom Legacy first looks for the HOME directory in the
@@ -622,36 +654,4 @@ INSTALL_WADS = %INSTALL_DIR%\wads
   This behavior can be overridden by using the -home and -config switches.
 </p>
 
-
-<h2>Environment variables</h2>
-<p>
-  You can set the following environment variables to
-  have additional control over Legacy behavior. None of them are
-  required.
-</p>
-<ul>
-  <li>
-    <b>DOOMWADDIR</b>: This environment variable defines a path where
-    wad files are located. This way you can easily share your wad
-    files between different programs.  It is searched before the
-    current directory, and the wad directory list are searched.
-  </li>
-  <li>
-    <b>USER</b>: This variable contains your username, is used as the
-    default value for your player name in multiplayer games.
-  </li>
-  <li>
-    <b>HOME</b>: This variable indicates your home directory.
-    In the home directory Doom Legacy will create a legacy directory to store
-    your config and savegame files.
-    If this variable is not defined, a default legacy home directory will be
-    checked for existing, or one created in the program directory.
-    Failure to have a consistent HOME will lead to losing your config,
-    and savegames will not be saved.
-  </li>
-  <li>
-    <b>UserProfile</b>: This variable is checked on Windows systems as
-    a substitute for HOME, if HOME is not defined.
-  </li>
-</ul>
 
