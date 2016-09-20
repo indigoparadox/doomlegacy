@@ -810,7 +810,7 @@ void script_error(const char *fmt, ...)
     CONS_Printf(": ");
 
     va_start(ap, fmt);
-    CONS_Printf_va(EMSG_error, fmt, ap);
+    GenPrintf_va(EMSG_error, fmt, ap);
     va_end(ap);
 
     // make a noise

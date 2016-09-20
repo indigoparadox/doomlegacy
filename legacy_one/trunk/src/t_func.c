@@ -305,7 +305,7 @@ void SF_Print(void)
 
     for (i = 0; i < t_argc; i++)
     {
-        CONS_Printf("%s", stringvalue(t_argv[i]));
+        GenPrintf(EMSG_playmsg, "%s", stringvalue(t_argv[i]));
     }
 }
 
@@ -584,7 +584,7 @@ void SF_Message(void)
     if (fs_current_script->trigger->player == displayplayer_ptr)
     {
         char * tempstr = Z_cat_args(0);  // concat arg0, arg1, ...
-        CONS_Printf("%s\n", tempstr);
+        GenPrintf(EMSG_playmsg, "%s\n", tempstr);
         Z_Free(tempstr);
     }
 }
@@ -4352,7 +4352,7 @@ void SF_SetCorona(void)
                 lspr[num].dynamic_sqrradius = sqrt(lspr[num].dynamic_radius);
                 break;
             default:
-                CONS_Printf("SetCorona: what %i\n", what);
+                I_SoftError("SetCorona: what %i\n", what);
                 break;
         }
     }

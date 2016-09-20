@@ -99,7 +99,8 @@ static boolean CDAudio_GetAudioDiskInfo(void)
 
   if (!CD_INDRIVE(cdStatus))
   {
-      CONS_Printf("No CD in drive\n");
+      if( verbose )
+          CONS_Printf("No CD in drive\n");
       return false;
   }
     
@@ -120,9 +121,9 @@ void I_StopCD(void)
     return;
     
   if (SDL_CDStop(cdrom))
-    {
+  {
       CONS_Printf("CD stop failed\n");
-    }
+  }
 }
 
 /**************************************************************************
@@ -142,7 +143,7 @@ static void I_EjectCD(void)
     
   if (SDL_CDEject(cdrom))
   {
-      CONS_Printf("CD eject failed\n");
+      GenPrintf(EMSG_warn, "CD eject failed\n");
   }
 }
 
@@ -212,10 +213,10 @@ static void Command_Cd_f (void)
     // from this point on, make sure the cd is ok        
     if (!CD_OK(cdrom)) {
       if (!CDAudio_GetAudioDiskInfo()) // check if situation has changed
-	{
-	    CONS_Printf("No CD in player.\n");
+      {
+//	    CONS_Printf("No CD in player.\n");
 	    return;
-	}
+      }
     }
 
     if (!strncmp(command, "open", 4)) {
@@ -339,34 +340,34 @@ void I_InitCD (void)
 
   // Initialize SDL cdrom subsystem
   if (SDL_InitSubSystem(SDL_INIT_CDROM) < 0)
-    {
+  {
       CONS_Printf(" Couldn't initialize SDL CD-ROM subsystem: %s\n", SDL_GetError());
       return;
-    }
+  }
 
   if (SDL_CDNumDrives() < 1)
-    {
+  {
       CONS_Printf(" No CD-ROM drives found.\n");
       return;
-    }
+  }
 
   // Open a drive
   const char *cdName = SDL_CDName(0);
   cdrom = SDL_CDOpen(0);
     
   if (!cdrom)
-    {
+  {
       if (!cdName)
 	CONS_Printf("Couldn't open default CD-ROM drive: %s\n", SDL_GetError());
       else
 	CONS_Printf("Couldn't open default CD-ROM drive %s: %s\n", cdName, SDL_GetError());
 	
       return;
-    }
+  }
   else
-    {
+  {
       CONS_Printf("Default CD-ROM drive %s initialized.\n", cdName);
-    }
+  }
 
   // init track mapping
   for (i = 0; i < MAX_CD_TRACKS; i++)
@@ -429,42 +430,42 @@ void I_PlayCD (unsigned int track, boolean looping)
     return;
     
   if (!CD_OK(cdrom))
-    {
+  {
       if (!CDAudio_GetAudioDiskInfo()) // check if situation has changed
-	{
+      {
 	    CONS_Printf("No CD in drive.\n");
 	    return;
-	}
-    }
+      }
+  }
 
   track = cdRemap[track];
     
   if (track >= cdrom->numtracks)
-    {
+  {
       CONS_Printf("I_PlayCD: Bad track number %d.\n", track);
       return;
-    }
+  }
     
   // don't try to play a non-audio track
   if (cdrom->track[track].type == SDL_DATA_TRACK)
-    {
+  {
       CONS_Printf("I_PlayCD: track %d is not audio.\n", track);
       return;
-    }
+  }
 	
   if (cdrom->status == CD_PLAYING)
-    {
+  {
       if (playTrack == track)
 	return; // already playing it
 
       I_StopCD();
-    }
+  }
     
   if (SDL_CDPlayTracks(cdrom, track, 0, 1, 0))
-    {
+  {
       CONS_Printf("Error playing track %d: %s\n", track, SDL_GetError());
       return;
-    }
+  }
     
   playLooping = looping;
   playTrack = track;

@@ -725,7 +725,7 @@ int I_RegisterSong( void* data, int len )
       int err = qmus2mid(data, mus2mid_buffer, 89, 64, 0, len, MIDBUFFERSIZE, &midilength);
       if ( err != 0 )
       {
-	  CONS_Printf("Cannot convert MUS to MIDI: error %d.\n", err);
+	  I_SoftError("Cannot convert MUS to MIDI: error %d.\n", err);
 	  return 0;
       }
 #ifdef OLD_SDL_MIXER
@@ -752,11 +752,11 @@ int I_RegisterSong( void* data, int len )
 #endif   
   if (!music.mus)
   {
-      CONS_Printf("Couldn't load music lump: %s\n", Mix_GetError());
+      I_SoftError("Couldn't load music lump: %s\n", Mix_GetError());
       music.rwop = NULL;
   }
 
-//  CONS_Printf("register song\n"); 	// [WDJ] debug
+//  debug_Printf("register song\n"); 	// [WDJ] debug
 #endif
 
   return 0;

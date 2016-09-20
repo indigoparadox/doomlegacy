@@ -249,7 +249,7 @@ boolean P_GiveAmmo ( player_t*     player,
 
     if (ammo < 0 || ammo > NUMAMMO)
     {
-        CONS_Printf ("\2P_GiveAmmo: bad type %i", ammo);
+        GenPrintf(EMSG_warn, "\2P_GiveAmmo: bad type %i", ammo);
         return false;
     }
 

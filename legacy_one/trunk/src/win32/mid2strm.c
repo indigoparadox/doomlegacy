@@ -881,7 +881,7 @@ static BOOL GetTrackEvent(INTRACKSTATE* pInTrack, TEMPEVENT *pMe)
         // authoring software is stpuid.
         //
 #ifdef DEBUGMIDISTREAM
-        CONS_Printf ("System message not supposed to be in MIDI file..\n");
+        debug_Printf ("System message not supposed to be in MIDI file..\n");
 #endif
         return FALSE;
     }
@@ -1186,7 +1186,7 @@ BOOL Mid2StreamConverterInit( UBYTE* pMidiData, ULONG iMidiSize )
     ifs.pFilePointer = ifs.pFile;
 
 #ifdef DEBUGMIDISTREAM
-    CONS_Printf ("Midi file size: %d\n", iMidiSize);
+    debug_Printf ("Midi file size: %d\n", iMidiSize);
 #endif
 
     // note: midi header size should always be 6
@@ -1205,7 +1205,7 @@ BOOL Mid2StreamConverterInit( UBYTE* pMidiData, ULONG iMidiSize )
     ifs.dwTimeDivision = (LONG)WORDSWAP(pHeader->wTimeDivision);
 
 #ifdef DEBUGMIDISTREAM
-    CONS_Printf ("MIDI Header:\n"
+    debug_Printf ("MIDI Header:\n"
                    "------------\n"
                    "format: %d\n"
                    "number of tracks: %d\n"
@@ -1246,7 +1246,7 @@ BOOL Mid2StreamConverterInit( UBYTE* pMidiData, ULONG iMidiSize )
         }
 
 #ifdef DEBUGMIDISTREAM
-        CONS_Printf ("Track %d : length %d bytes\n", iTrack, iChunkSize);
+        debug_Printf ("Track %d : length %d bytes\n", iTrack, iChunkSize);
         pInTrack->nTrack = iTrack;
 #endif
         // Setup pointer to the current position in the track
@@ -1407,7 +1407,7 @@ static int AddEventToStreamBuffer( PTEMPEVENT pMe, CONVERTINFO *lpciInfo )
         
         dwBufferTickLength = ( ifs.dwTimeDivision * 1000 * BUFFER_TIME_LENGTH ) / dwCurrentTempo;
 #ifdef DEBUGMIDISTREAM
-        CONS_Printf("dwBufferTickLength = %lu", dwBufferTickLength );
+        debug_Printf("dwBufferTickLength = %lu", dwBufferTickLength );
 #endif
         lpciInfo->dwBytesRecorded += 3 *sizeof(DWORD);
     }

@@ -173,7 +173,7 @@ byte *  P_Alloc_savebuffer( boolean large_size )
     save_p = savebuffer = (byte *)malloc(savebuffer_size);
     if( ! savebuffer)
     {
-        CONS_Printf (" Cannot allocate memory for savegame\n");
+        I_SoftError(" Cannot allocate memory for savegame\n");
         return NULL;
     }
     extfile.buffer = savebuffer;

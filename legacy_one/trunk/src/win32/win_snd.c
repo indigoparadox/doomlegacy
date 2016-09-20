@@ -543,7 +543,7 @@ void I_FreeSfx (sfxinfo_t* sfx)
     else
 #endif
     {
-        //CONS_Printf ("I_FreeSfx(%d)\n", sfx->lumpnum);
+        //debug_Printf ("I_FreeSfx(%d)\n", sfx->lumpnum);
 
         // free DIRECTSOUNDBUFFER
         dsbuffer = (LPDIRECTSOUNDBUFFER) sfx->data;
@@ -574,7 +574,7 @@ void I_SetSfxVolume(int volume)
               (DSBVOLUME_MAX - ((DSBVOLUME_MAX-DSBVOLUME_MIN)/4));
     else
         vol = DSBVOLUME_MIN;    // make sure 0 is silence
-    //CONS_Printf ("setvolume to %d\n", vol);
+    //debug_Printf ("setvolume to %d\n", vol);
     hr = DSndPrimary->lpVtbl->SetVolume (DSndPrimary, vol);
     //if (FAILED(hr))
     //    CONS_Printf ("setvolumne failed\n");
@@ -624,7 +624,7 @@ static int GetFreeStackNum(int16_t  newpriority)
     {
         // find a free 'playing sound slot' to use
         if (StackSounds[i].lpSndBuf==NULL) {
-            //CONS_Printf ("\t\tfound free slot %d\n", i);
+            //debug_Printf ("\t\tfound free slot %d\n", i);
             return i;
         }
         else
@@ -632,7 +632,7 @@ static int GetFreeStackNum(int16_t  newpriority)
             // check for sounds that finished playing, and can be freed
             if( !I_SoundIsPlaying(i) )
             {
-                //CONS_Printf ("\t\tfinished sound in slot %d\n", i);
+                //debug_Printf ("\t\tfinished sound in slot %d\n", i);
                 //stop sound and free the 'slot'
                 I_StopSound (i);
                 // we can use this one since it's now freed
@@ -650,12 +650,12 @@ static int GetFreeStackNum(int16_t  newpriority)
     // the maximum of sounds playing at the same time is reached, if we have at least
     // one sound playing with a lower priority, stop it and replace it with the new one
 
-    //CONS_Printf ("\t\tall slots occupied..");
+    //debug_Printf ("\t\tall slots occupied..");
     if (newpriority >= lowestpri)
     {
         I_StopSound (lowestprihandle);
         return lowestprihandle;
-            //CONS_Printf (" kicking out lowest priority slot: %d pri: %d, my priority: %d\n",
+            //debug_Printf (" kicking out lowest priority slot: %d pri: %d, my priority: %d\n",
             //             handle, lowestpri, priority);
     }
 
@@ -709,13 +709,13 @@ int I_StartSound (int id, int vol, int sep, int pitch, int priority )
     if (nosoundfx)
         goto ret_nothing;
 
-    //CONS_Printf ("I_StartSound:\n\t\tS_sfx[%d]\n", id);
+    //debug_Printf ("I_StartSound:\n\t\tS_sfx[%d]\n", id);
     // Heretic style signed priority, -10..2560, neg is lowest.
     handle = GetFreeStackNum(priority);
     if( handle<0 )  
         goto ret_nothing;
 
-    //CONS_Printf ("\t\tusing handle %d\n", handle);
+    //debug_Printf ("\t\tusing handle %d\n", handle);
 
     // if the original buffer is playing, duplicate it (DirectSound specific)
     // else, use the original buffer
@@ -723,11 +723,11 @@ int I_StartSound (int id, int vol, int sep, int pitch, int priority )
     dsbuffer->lpVtbl->GetStatus (dsbuffer, &dwStatus);
     if (dwStatus & (DSBSTATUS_PLAYING | DSBSTATUS_LOOPING))
     {
-        //CONS_Printf ("\t\toriginal sound S_sfx[%d] is playing, duplicating.. ", id);
+        //debug_Printf ("\t\toriginal sound S_sfx[%d] is playing, duplicating.. ", id);
         hr = DSnd->lpVtbl->DuplicateSoundBuffer(DSnd,  (LPDIRECTSOUNDBUFFER) S_sfx[id].data, &dsbuffer);
         if (FAILED(hr))
         {
-            //CONS_Printf ("Cound't duplicate sound buffer\n");
+            //debug_Printf ("Cound't duplicate sound buffer\n");
             // re-use the original then..
             dsbuffer = (LPDIRECTSOUNDBUFFER) sfx->data;
             // clean up stacksounds info
@@ -766,9 +766,9 @@ int I_StartSound (int id, int vol, int sep, int pitch, int priority )
     StackSounds[handle].priority = priority;
     StackSounds[handle].duplicate = (dsbuffer != (LPDIRECTSOUNDBUFFER)S_sfx[id].data);
 
-    //CONS_Printf ("StackSounds[%d].lpSndBuf is %s\n", handle, StackSounds[handle].lpSndBuf==NULL ? "Null":"valid");
-    //CONS_Printf ("StackSounds[%d].priority is %d\n", handle, StackSounds[handle].priority);
-    //CONS_Printf ("StackSounds[%d].duplicate is %s\n", handle, StackSounds[handle].duplicate ? "TRUE":"FALSE");
+    //debug_Printf ("StackSounds[%d].lpSndBuf is %s\n", handle, StackSounds[handle].lpSndBuf==NULL ? "Null":"valid");
+    //debug_Printf ("StackSounds[%d].priority is %d\n", handle, StackSounds[handle].priority);
+    //debug_Printf ("StackSounds[%d].duplicate is %s\n", handle, StackSounds[handle].duplicate ? "TRUE":"FALSE");
 
     I_UpdateSoundVolume (dsbuffer, vol);
 
@@ -803,7 +803,7 @@ int I_StartSound (int id, int vol, int sep, int pitch, int priority )
     hr = dsbuffer->lpVtbl->Play (dsbuffer, 0, 0, 0);
     if (hr == DSERR_BUFFERLOST)
     {
-        //CONS_Printf("buffer lost\n");
+        //debug_Printf("buffer lost\n");
         // restores the buffer memory and all other settings for the buffer
         hr = dsbuffer->lpVtbl->Restore (dsbuffer);
         if ( SUCCEEDED ( hr ) )
@@ -831,7 +831,7 @@ int I_StartSound (int id, int vol, int sep, int pitch, int priority )
     if (sep == -128)
     {
         hr = dssurround->lpVtbl->Play (dssurround, 0, 0, 0);
-        //CONS_Printf("Surround playback\n");
+        //debug_Printf("Surround playback\n");
         if (hr == DSERR_BUFFERLOST)
         {
             // restores the buffer memory and all other settings for the surround buffer
@@ -878,14 +878,14 @@ void I_StopSound (int handle)
     if (nosoundfx || handle<0)
         return;
 
-    //CONS_Printf ("I_StopSound (%d)\n", handle);
+    //debug_Printf ("I_StopSound (%d)\n", handle);
     
     dsbuffer = StackSounds[handle].lpSndBuf;
     hr = dsbuffer->lpVtbl->Stop (dsbuffer);
 
     // free duplicates of original sound buffer (DirectSound hassles)
     if (StackSounds[handle].duplicate) {
-        //CONS_Printf ("\t\trelease a duplicate..\n");
+        //debug_Printf ("\t\trelease a duplicate..\n");
         dsbuffer->lpVtbl->Release (dsbuffer);
     }
 
@@ -1587,7 +1587,7 @@ void I_PlaySong(int handle, int looping)
 #endif
 
 #ifdef DEBUGMIDISTREAM
-    CONS_Printf("I_PlaySong: looping %d\n", looping);
+    debug_Printf("I_PlaySong: looping %d\n", looping);
 #endif
 
     // unpause the song first if it was paused
@@ -1630,7 +1630,7 @@ void I_PauseSong (int handle)
         return;
 
 #ifdef DEBUGMIDISTREAM
-    CONS_Printf("I_PauseSong: \n");
+    debug_Printf("I_PauseSong: \n");
 #endif
 
     if (!midi_paused) {
@@ -1659,7 +1659,7 @@ void I_ResumeSong (int handle)
         return;
 
 #ifdef DEBUGMIDISTREAM
-    CONS_Printf("I_ResumeSong: \n");
+    debug_Printf("I_ResumeSong: \n");
 #endif
 
     if( midi_paused )
@@ -1691,7 +1691,7 @@ void I_StopSong(int handle)
 #endif
 
 #ifdef DEBUGMIDISTREAM
-    CONS_Printf("I_StopSong: \n");
+    debug_Printf("I_StopSong: \n");
 #endif
 
     if (midi_playing || (uCallbackStatus != STATUS_CALLBACKDEAD) )
@@ -1701,7 +1701,7 @@ void I_StopSong(int handle)
             uCallbackStatus != STATUS_WAITINGFOREND )
                     uCallbackStatus = STATUS_KILLCALLBACK;
 
-        //CONS_Printf ("a: %d\n",I_GetTime());
+        //debug_Printf ("a: %d\n",I_GetTime());
         if(( mmrRetVal = midiStreamStop( hStream )) != MMSYSERR_NOERROR )
         {
             MidiErrorMessageBox( mmrRetVal );
@@ -1714,7 +1714,7 @@ void I_StopSong(int handle)
         {
             midiStreamPause( hStream );
         }
-        //CONS_Printf ("b: %d\n",I_GetTime());
+        //debug_Printf ("b: %d\n",I_GetTime());
         else
         //faB: this damn call takes 1 second and a half !!! still do it on exit
         //     to be sure everything midi is cleaned as much as possible
@@ -1726,7 +1726,7 @@ void I_StopSong(int handle)
                 return;
             }
         }
-        //CONS_Printf ("c: %d\n",I_GetTime());
+        //debug_Printf ("c: %d\n",I_GetTime());
 
         // Wait for the callback thread to release this thread, which it will do by
         // calling SetEvent() once all buffers are returned to it
@@ -1739,7 +1739,7 @@ void I_StopSong(int handle)
             CONS_Printf( "Timed out waiting for MIDI callback\n" );
             uCallbackStatus = STATUS_CALLBACKDEAD;
         }
-        //CONS_Printf ("d: %d\n",I_GetTime());
+        //debug_Printf ("d: %d\n",I_GetTime());
     }
 
     if( uCallbackStatus == STATUS_CALLBACKDEAD )
@@ -1764,7 +1764,7 @@ int I_QrySongPlaying (int handle)
         return 0;
 
 #ifdef DEBUGMIDISTREAM
-    CONS_Printf("I_QrySongPlaying: \n");
+    debug_Printf("I_QrySongPlaying: \n");
 #endif
 #ifdef FMOD_SOUND
     if (fmod_music)
@@ -1786,7 +1786,7 @@ void I_UnRegisterSong(int handle)
     Mid2StreamConverterCleanup();
 
 #ifdef DEBUGMIDISTREAM
-    CONS_Printf("I_UnregisterSong: \n");
+    debug_Printf("I_UnregisterSong: \n");
 #endif
 }
 
@@ -1861,7 +1861,7 @@ int I_RegisterSong(void* data, int len)
         return 1;
 
 #ifdef DEBUGMIDISTREAM
-    CONS_Printf("I_RegisterSong: \n");
+    debug_Printf("I_RegisterSong: \n");
 #endif
     if (!memcmp(data,"MUS",3))
     {
@@ -2197,7 +2197,7 @@ static void CALLBACK MidiStreamCallback (HMIDIIN hMidi, UINT uMsg, DWORD dwInsta
 #ifdef DEBUGMIDISTREAM
                 if( MIDIEVENT_DATA1( pme->dwEvent ) == MIDICTRL_VOLUME_LSB )
                 {
-                    CONS_Printf ( "Got an LSB volume event" );
+                    debug_Printf ( "Got an LSB volume event" );
                     PostMessage (hWnd_main, WM_CLOSE, 0, 0); //faB: can't I_Error() here
                     break;
                 }
@@ -2207,7 +2207,7 @@ static void CALLBACK MidiStreamCallback (HMIDIIN hMidi, UINT uMsg, DWORD dwInsta
                     break;
                 
                 // Mask off the channel number and cache the volume data byte
-                //CONS_Printf ( "dwvolcache %d = %d\n", MIDIEVENT_CHANNEL( pme->dwEvent ),  MIDIEVENT_VOLUME( pme->dwEvent ));
+                //debug_Printf ( "dwvolcache %d = %d\n", MIDIEVENT_CHANNEL( pme->dwEvent ),  MIDIEVENT_VOLUME( pme->dwEvent ));
                 dwVolCache[ MIDIEVENT_CHANNEL( pme->dwEvent )] = MIDIEVENT_VOLUME( pme->dwEvent );
                 // call SetChannelVolume() later to adjust MIDI volume control message to our
                 // own current volume level.

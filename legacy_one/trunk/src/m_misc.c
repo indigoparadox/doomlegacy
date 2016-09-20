@@ -404,7 +404,7 @@ void M_SaveConfig (char *filename)
             strcpy(configfile,filename);  // filename is already MAX_WADPATH
         else
         {
-            CONS_Printf ("Couldn't save game config file %s\n",filename);
+            I_SoftError("Could not save game config file %s\n",filename);
             return;
         }
     }
@@ -413,7 +413,7 @@ void M_SaveConfig (char *filename)
         f = fopen (configfile, "w");
         if (!f)
         {
-            CONS_Printf ("Couldn't save game config file %s\n",configfile);
+            I_SoftError("Could not save game config file %s\n",configfile);
             return;
         }
     }

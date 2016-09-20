@@ -298,7 +298,7 @@ void R_AddFloorSplat (subsector_t* subsec, char* picname, fixed_t x, fixed_t y, 
     if (!splat)
         return;
 
-    CONS_Printf ("added a floor splat\n");
+//    debug_Printf("added a floor splat\n");
 
     // set the splat
     splat->pic = W_GetNumForName (picname);
@@ -410,7 +410,7 @@ static void R_RenderFloorSplat (floorsplat_t* pSplat, vertex_t* verts, byte* pTe
     offsety = pSplat->verts[0].y & 0x3fffff;
 
         // do for each segment, starting with the first one
-    /*CONS_Printf ("floor splat (%d,%d) (%d,%d) (%d,%d) (%d,%d)\n",
+    /*debug_Printf("floor splat (%d,%d) (%d,%d) (%d,%d) (%d,%d)\n",
                   verts[3].x,verts[3].y,verts[2].x,verts[2].y,
                   verts[1].x,verts[1].y,verts[0].x,verts[0].y);*/
 
@@ -648,7 +648,7 @@ skipit:
         pSplat = pSplat->nextvis;
     }
     
-    CONS_Printf ("%d floor splats in view\n", iCount);
+//    debug_Printf("%d floor splats in view\n", iCount);
 }
 
 

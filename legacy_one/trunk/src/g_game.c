@@ -1055,7 +1055,7 @@ boolean G_Responder (event_t* ev)
             ST_changeDemoView ();
 
         //added:11-04-98: tell who's the view
-        CONS_Printf("Viewpoint : %s\n", player_names[displayplayer]);
+        GenPrintf(EMSG_hud, "Viewpoint : %s\n", player_names[displayplayer]);
         goto handled;
     }
 
@@ -2700,7 +2700,7 @@ void G_DoPlayDemo (char *defdemoname)
         FIL_DefaultExtension(defdemoname,".lmp");
         if (!FIL_ReadFile (defdemoname, &demobuffer) )
         {
-            CONS_Printf ("\2ERROR: couldn't open file '%s'.\n", defdemoname);
+            GenPrintf(EMSG_warn, "\2ERROR: couldn't open file '%s'.\n", defdemoname);
             goto no_demo;
         }
         demo_p = demobuffer;
@@ -2752,7 +2752,7 @@ void G_DoPlayDemo (char *defdemoname)
 
     if (demoversion < 109 || demoversion >= 215)
     {
-        CONS_Printf("\2ERROR: Incompatible demo (version %d). Legacy supports demo versions 109-%d.\n", demoversion, VERSION);
+        GenPrintf(EMSG_warn, "\2ERROR: Incompatible demo (version %d). Legacy supports demo versions 109-%d.\n", demoversion, VERSION);
         goto kill_demo;
     }
    
@@ -3151,7 +3151,7 @@ boolean G_CheckDemoStatus (void)
         Z_Free (demobuffer);
         demorecording = false;
 
-        CONS_Printf("\2Demo %s recorded\n",demoname);
+        GenPrintf(EMSG_hud, "\2Demo %s recorded\n", demoname);
         return true;
     }
 

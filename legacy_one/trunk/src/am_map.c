@@ -1130,7 +1130,7 @@ void AM_drawFline_soft ( fline_t*       fl,
            || fl->b.x < 0 || fl->b.x >= f_w
            || fl->b.y < 0 || fl->b.y >= f_h)
     {
-        CONS_Printf("line clipping problem %d \r", lc_prob_count++);
+        debug_Printf("line clipping problem %d \r", lc_prob_count++);
         return;
     }
 #endif

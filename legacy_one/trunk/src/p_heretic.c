@@ -631,7 +631,7 @@ void P_HerePlayerInSpecialSector(player_t *player)
         break;
         
     default:
-        CONS_Printf("P_PlayerInSpecialSector: "
+        I_SoftError( "P_PlayerInSpecialSector: "
                     "unknown special %i\n", sector->special);
     }
 }

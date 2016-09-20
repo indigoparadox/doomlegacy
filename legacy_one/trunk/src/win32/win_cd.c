@@ -80,7 +80,7 @@ static void CD_MCI_ErrorMessageBox (MCIERROR error_code)
     char errtext[128];
     if (!mciGetErrorString (error_code, errtext, sizeof(errtext)))
         wsprintf(errtext,"MCI CD Audio Unknown Error #%d\n", error_code);
-    CONS_Printf (errtext);
+    GenPrintf(EMSG_error, errtext);
     /*MessageBox (GetActiveWindow(), szTemp+1, "LEGACY",
                 MB_OK | MB_ICONSTOP );*/
 }

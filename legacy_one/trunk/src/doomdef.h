@@ -35,7 +35,8 @@
 // write message in log.txt (win32 and Linux only for the moment)
 #define LOGMESSAGES
 #define LOGLINELEN  80
-#define SHOW_DEBUG_MESSAGES
+// Default to show debug messages.
+//#define DEBUG_MESSAGES_ON
 
 // [WDJ] Machine speed limitations.
 // Leave undefined for netplay, or make sure all machines have same setting.

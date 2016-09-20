@@ -247,7 +247,7 @@ handleKeyDoom:
 
 
     case WM_MOUSEWHEEL:
-        //CONS_Printf("MW_WHEEL dispatched.\n");
+        //debug_Printf("MW_WHEEL dispatched.\n");
         ev.type = ev_keydown;
         if ((short)HIWORD(wParam) > 0)
             ev.data1 = KEY_MOUSEWHEELUP;
@@ -443,14 +443,14 @@ int WINAPI HandledWinMain(HINSTANCE hInstance,
 #endif
 
     // fill myargc,myargv for m_argv.c retrieval of cmdline arguments
-//    CONS_Printf ("GetArgcArgv() ...\n");
+//    debug_Printf ("GetArgcArgv() ...\n");
     args = GetCommandLine();
-//    CONS_Printf ("Command line is '%s'\n", args);
+//    debug_Printf ("Command line is '%s'\n", args);
     GetArgcArgv(args);
 
-//    CONS_Printf ("Myargc: %d\n", myargc);
+//    debug_Printf ("Myargc: %d\n", myargc);
 //    for (i=0;i<myargc;i++)
-//        CONS_Printf("myargv[%d] : '%s'\n", i, myargv[i]);
+//        debug_Printf("myargv[%d] : '%s'\n", i, myargv[i]);
 
 
     // store for later use, will we need it ?

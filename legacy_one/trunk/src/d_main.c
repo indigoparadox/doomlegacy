@@ -2001,7 +2001,7 @@ void D_DoomMain()
     // CDROM overrides doomwaddir (when valid)
     if (M_CheckParm("-cdrom"))
     {
-        CONS_Printf(D_CDROM);
+        GenPrintf(EMSG_hud, D_CDROM);
         // [WDJ] Execute DoomLegacy off CDROM ??
         // DoomLegacy already has separate doomwaddir and legacyhome.
         // Legacy is not compatible with other port config and savegames,
@@ -2026,7 +2026,7 @@ void D_DoomMain()
 #endif
 #endif
 
-    EOUT_flags = EOUT_text | EOUT_log;
+    EOUT_flags = EOUT_text | EOUT_log | EOUT_con;
 
     CONS_Printf(text[Z_INIT_NUM]);
     // Cannot Init nor register cv_ vars until after Z_Init and some
@@ -2308,7 +2308,7 @@ restart_command:
     const char *gametitle = gamedesc.startup_title;  // set by IdentifyVersion
     if( gametitle == NULL )   gametitle = gamedesc.gname;
     if( gametitle )
-      CONS_Printf("%s\n", gametitle);
+      GenPrintf(EMSG_info, "%s\n", gametitle);
 
     // add any files specified on the command line with -file wadfile
     // to the wad list
@@ -2328,7 +2328,7 @@ restart_command:
             case ultdoom_retail:
             case doom_registered:
                 sprintf(fbuf, "~" DEVMAPS "E%cM%c.wad", myargv[p + 1][0], myargv[p + 2][0]);
-                CONS_Printf("Warping to Episode %s, Map %s.\n", myargv[p + 1], myargv[p + 2]);
+                GenPrintf(EMSG_info, "Warping to Episode %s, Map %s.\n", myargv[p + 1], myargv[p + 2]);
                 break;
 
             case doom2_commercial:
@@ -2846,13 +2846,12 @@ restart_command:
 
 
 // Print error and continue game [WDJ] 1/19/2009
-#define SoftError_listsize   8
-static const char *  SE_msg[SoftError_listsize];
-static uint32_t      SE_val[SoftError_listsize]; // we only want to compare
+#define SOFTERROR_LISTSIZE   8
+static const char *  SE_msg[SOFTERROR_LISTSIZE];
+static uint32_t      SE_val[SOFTERROR_LISTSIZE]; // we only want to compare
 static int  SE_msgcnt = 0;
 static int  SE_next_msg_slot = 0;
 
-byte  EMSG_flags = EMSG_CONS;  // EMSG_e default
 byte  EOUT_flags = EOUT_text | EOUT_log;  // EOUT_e
 
 static void Clear_SoftError(void)
@@ -2866,7 +2865,8 @@ static void Clear_SoftError(void)
 void I_SoftError (const char *errmsg, ...)
 {
     va_list     argptr;
-    int		index, errval;
+    int         index;
+    uint32_t    errval;
 
     // Message first.
     va_start (argptr,errmsg);
@@ -2882,12 +2882,14 @@ void I_SoftError (const char *errmsg, ...)
     SE_msg[SE_next_msg_slot] = errmsg;
     SE_val[SE_next_msg_slot] = errval;
     SE_next_msg_slot++;
-    if( SE_next_msg_slot >= SoftError_listsize )  SE_next_msg_slot = 0;  // wrap
-    if( SE_msgcnt < SoftError_listsize ) SE_msgcnt++;  // limit
+    if( SE_next_msg_slot > SE_msgcnt )
+       SE_msgcnt = SE_next_msg_slot;  // max
+    if( SE_next_msg_slot >= SOFTERROR_LISTSIZE )
+       SE_next_msg_slot = 0;  // wrap
     // Error, always prints EMSG_text
     fprintf (stderr, "Warn: ");
     va_start (argptr,errmsg);
-    CONS_Printf_va( EMSG_error, errmsg, argptr );  // handles EOUT_con
+    GenPrintf_va( EMSG_error, errmsg, argptr );  // handles EOUT_con
     va_end (argptr);
 
 done:   

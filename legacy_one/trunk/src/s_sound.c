@@ -424,7 +424,7 @@ static void S_GetSfx( sfxinfo_t * sfx )
 {
     if ( sfx->name )
     {
-//        CONS_Printf ("cached sound %s\n", sfx->name);
+//        debug_Printf("cached sound %s\n", sfx->name);
         if (sfx->link)
         {
             // NOTE: linked sounds use the link data at StartSound time
@@ -508,8 +508,8 @@ void S_Init(int sfxVolume, int musicVolume)
     if (!nosoundfx && (M_CheckParm("-precachesound") || precachesound.value))
     {
         // Initialize external data (all sounds) at start, keep static.
-//        CONS_Printf("Loading sounds... ");
-        CONS_Printf("Caching sound data (%d sfx)... ", NUMSFX);
+//        GenPrintf(EMSG_info, "Loading sounds... ");
+        GenPrintf(EMSG_info, "Caching sound data (%d sfx)... ", NUMSFX);
 
         for (i = 1; i < NUMSFX; i++)
         {
@@ -518,7 +518,7 @@ void S_Init(int sfxVolume, int musicVolume)
                 S_GetSfx( & S_sfx[i] );
         }
 
-        CONS_Printf(" pre-cached all sound data\n");
+        GenPrintf(EMSG_info, " pre-cached all sound data\n");
     }
 
     S_InitRuntimeMusic();
@@ -1228,7 +1228,7 @@ void S_ChangeMusicName(char *name, byte looping)
         S_ChangeMusic(music, looping);
     else
     {
-        CONS_Printf("music not found: %s\n", name);
+        GenPrintf(EMSG_warn, "Music not found: %s\n", name);
         S_StopMusic();  // stop music anyway
     }
 }
@@ -1245,7 +1245,7 @@ void S_ChangeMusic(int music_num, byte looping)
 
     if ((music_num <= mus_None) || (music_num >= NUMMUSIC))
     {
-        CONS_Printf("ERROR: Bad music number %d\n", music_num);
+        GenPrintf(EMSG_error, "Bad music number %d\n", music_num);
         return;
     }
     else

@@ -1053,7 +1053,7 @@ static byte gameplay_hud_message_table[ 16 ] =
  0, // unk3
  0, // unk4
  250, // EMSG_console
- 0, // unk6
+ 1, // EMSG_hud
  0, // unk7
  2, // EMSG_info
  3, // EMSG_ver
@@ -1069,13 +1069,13 @@ static byte gameplay_hud_message_table[ 16 ] =
 // indexed by EMSG_cat
 static byte gameplay_con_message_table[ 16 ] =
 {
- 1, // EMSG_CONS
+ 0, // EMSG_CONS  (cannot be blocking CONS_Printf from the console)
  0, // EMSG_playmsg
  0, // EMSG_playmsg2
  0, // unk3
  0, // unk4
- 1, // EMSG_console
- 0, // unk6
+ 0, // EMSG_console  (interactive console specific)
+ 0, // EMSG_hud
  0, // unk7
  1, // EMSG_info
  2, // EMSG_ver
@@ -1089,9 +1089,9 @@ static byte gameplay_con_message_table[ 16 ] =
 
 // [WDJ] print from va_list
 // Caller must have va_start, va_end, or else run-time segfault will occur.
-void CONS_Printf_va (const byte emsg, const char *fmt, va_list ap)
+void GenPrintf_va (const byte emsg, const char *fmt, va_list ap)
 {
-    byte eout = EOUT_flags;
+    byte eout = EOUT_flags;  // default for CONS_Printf
     byte ecat = emsg & EMSG_cat;
     byte viewnum = 0;
     // vid : from video setup
@@ -1115,6 +1115,9 @@ void CONS_Printf_va (const byte emsg, const char *fmt, va_list ap)
      case EMSG_console:  // console interactive
         eout = EOUT_con;  // console only
         viewnum = 5;       
+        break;
+     case EMSG_hud:
+        eout |= EOUT_hud | EOUT_con;
         break;
      case EMSG_warn:
         eout |= EOUT_all;
@@ -1164,9 +1167,10 @@ void CONS_Printf_va (const byte emsg, const char *fmt, va_list ap)
 #endif
     DEBFILE(txt);
 
-    // Disable debug messages for release version
-#ifndef  SHOW_DEBUG_MESSAGES
-    if( ecat == EMSG_debug )  goto done;  // disable debug messages
+#ifndef  DEBUG_MESSAGES_ON
+    // Hide debug messages for release version
+    if((ecat == EMSG_debug) && (verbose == 0) && (cv_showmessages.value < 4))
+       goto done;  // disable debug messages
 #endif
 
     if( eout & EOUT_text )
@@ -1209,7 +1213,7 @@ void CONS_Printf_va (const byte emsg, const char *fmt, va_list ap)
 #endif
 #endif
 
-    // Situations inherited from EMSG_flags settings.
+    // Situations inherited from EMSG_ settings.
     if( (eout & (EOUT_hud|EOUT_con)) == 0  )  goto done;  // no CONS flag
 
     if( (eout & (EOUT_hud|EOUT_con)) == EOUT_con )
@@ -1254,12 +1258,13 @@ void CONS_Printf_va (const byte emsg, const char *fmt, va_list ap)
 // General printf interface for CONS_Printf
 // Due to script files and indirect commands, many error messages
 // still go through here, so they are seen on stderr.
+// Global param: EOUT_flags
 void CONS_Printf (const char *fmt, ...)
 {
     va_list ap;
 
     va_start(ap, fmt);
-    CONS_Printf_va( EMSG_flags, fmt, ap );
+    GenPrintf_va( EMSG_CONS, fmt, ap );
     va_end(ap);
 }
 
@@ -1294,7 +1299,7 @@ void con_Printf (const char *fmt, ...)
     va_list ap;
 
     va_start(ap, fmt);
-    CONS_Printf_va( EMSG_console, fmt, ap );
+    GenPrintf_va( EMSG_console, fmt, ap );
     va_end(ap);
 }
 
@@ -1307,7 +1312,7 @@ void debug_Printf (const char *fmt, ...)
     // It is still possible to use GenPrintf(EMSG_debug, ) which is
     // why there will be no special tests here.
     va_start(ap, fmt);
-    CONS_Printf_va( EMSG_debug, fmt, ap );
+    GenPrintf_va( EMSG_debug, fmt, ap );
     va_end(ap);
 }
 
@@ -1317,7 +1322,7 @@ void GenPrintf (const byte emsg, const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
-    CONS_Printf_va( emsg, fmt, ap );  // print to text, console, and logs
+    GenPrintf_va( emsg, fmt, ap );  // print to text, console, and logs
     va_end(ap);
 }
 

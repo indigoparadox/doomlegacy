@@ -556,7 +556,7 @@ sfxid_t  S_AddSoundFx (char *name, uint32_t flags)
         sfxid = leastid;
         goto addsfx;
     }
-    CONS_Printf("\2No more free sound slots\n");
+    GenPrintf(EMSG_warn, "\2No more free sound slots\n");
     return 0;
 
  addsfx:
@@ -618,7 +618,7 @@ int S_AddMusic(char *name)
     }
   }
 
-  CONS_Printf("All music slots are full!\n");
+  GenPrintf(EMSG_warn, "All music slots are full!\n");
   return 0;
 }
 

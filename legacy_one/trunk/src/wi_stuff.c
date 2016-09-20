@@ -591,8 +591,10 @@ static void WI_drawOnLnode ( int           n,
     if (fits && i<2)
         V_DrawScaledPatch(lnodes->x, lnodes->y, c[i]);
     else
+    {
         // DEBUG
-        CONS_Printf("Could not place patch on level %d\n", n+1);
+        debug_Printf("Could not place patch on level %d\n", n+1);
+    }
 }
 
 

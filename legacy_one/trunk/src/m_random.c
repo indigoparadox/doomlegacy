@@ -87,14 +87,14 @@ int P_SignedRandom ()
 
 byte P_Random2 (char *a,int b)
 {
-    CONS_Printf("P_Random at : %sp %d\n",a,b);
+    debug_Printf("P_Random at : %sp %d\n",a,b);
     return rndtable[++prndindex];
 }
 
 int P_SignedRandom2 (char *a,int b)
 {
     int r;
-    CONS_Printf("P_SignedRandom at : %sp %d\n",a,b);
+    debug_Printf("P_SignedRandom at : %sp %d\n",a,b);
     r = rndtable[++prndindex];
     return r-rndtable[++prndindex];
 }
