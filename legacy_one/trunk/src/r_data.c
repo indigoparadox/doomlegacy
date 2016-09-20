@@ -1828,7 +1828,10 @@ int R_ColormapNumForName(char *name)
   // Check for existing colormap of same name
   lump = R_CheckNumForNameList(name, colormaplumps, numcolormaplumps);
   if(lump == -1)
-    I_Error("R_ColormapNumForName: Cannot find colormap lump %8s\n", name);
+  {
+    I_SoftError("R_ColormapNumForName: Cannot find colormap lump %8s\n", name);
+    return 0;
+  }
 
   for(i = 0; i < num_extra_colormaps; i++)
     if(lump == fnd_colormap_lump[i])
@@ -1836,7 +1839,10 @@ int R_ColormapNumForName(char *name)
 
   // Add another colormap
   if(num_extra_colormaps == MAXCOLORMAPS)
-    I_Error("R_ColormapNumForName: Too many colormaps!\n");
+  {
+    I_SoftError("R_ColormapNumForName: Too many colormaps!\n");
+    return 0;
+  }
 
   fnd_colormap_lump[num_extra_colormaps] = lump;
 
@@ -1992,7 +1998,10 @@ int R_CreateColormap(char *colorstr, char *ctrlstr, char *fadestr)
 #endif
 
   if(num_extra_colormaps == MAXCOLORMAPS)
-    I_Error("R_CreateColormap: Too many colormaps!\n");
+  {
+    I_SoftError("R_CreateColormap: Too many colormaps!\n");
+    return 0;
+  }
   num_extra_colormaps++;
 
   fnd_colormap_lump[mapnum] = -1;
@@ -2183,7 +2192,10 @@ char *R_ColormapNameForNum(int num)
     return "NONE";
 
   if(num < 0 || num > MAXCOLORMAPS)
-    I_Error("R_ColormapNameForNum: num is invalid!\n");
+  {
+    I_SoftError("R_ColormapNameForNum: num is invalid!\n");
+    return "NONE";
+  }
 
   if(fnd_colormap_lump[num] == -1)
     return "INLEVEL";
@@ -2787,7 +2799,7 @@ int R_TextureNumForName (char* name)
     if (i==-1)
     {
         //I_Error ("R_TextureNumForName: %.8s not found", name);
-        GenPrintf(EMSG_warn,"WARNING: R_TextureNumForName: %.8s not found\n", name);
+        I_SoftError("R_TextureNumForName: %.8s not found\n", name);
         i=1;	// default to texture[1]
     }
     return i;
