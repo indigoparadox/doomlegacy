@@ -5389,3 +5389,10 @@ Commit some parts of the hardware draw sky work.
 patchfile = w105_55_extmidi.patch
 - commit revision 1259
 Include the external midi in the control to select a midi player.
+
+*** W105_hw_ticrate
+patchfile = w105_56_hw_ticrate.patch
+- commit revision 1260
+Fix the draw scaling for the hardware ticrate display.
+It was drawing an unscaled graph on a scaled grid.
+

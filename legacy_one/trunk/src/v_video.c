@@ -2897,9 +2897,9 @@ void V_Draw_ticrate_graph( void )
 
             for (i=1; i<FPS_POINTS; i++)
             {
-                p.a.x = FPS_SCALE * (i-1);
+                p.a.x = FPS_SCALE * vid.dupx * (i-1);
                 p.a.y = vid.height-1-fpsgraph[i-1]*FPS_SCALE*vid.dupy;
-                p.b.x = FPS_SCALE * i;
+                p.b.x = FPS_SCALE * vid.dupx * i;
                 p.b.y = vid.height-1-fpsgraph[i]*FPS_SCALE*vid.dupy;
                 HWR_drawAMline(&p, 0xff);
             }
