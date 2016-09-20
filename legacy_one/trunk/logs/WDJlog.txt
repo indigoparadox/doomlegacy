@@ -5384,3 +5384,8 @@ Update copyright dates and comments.
 patchfile = w105_54_hwsky.patch
 - commit revision 1258
 Commit some parts of the hardware draw sky work.
+
+*** W105_extmidi
+patchfile = w105_55_extmidi.patch
+- commit revision 1259
+Include the external midi in the control to select a midi player.

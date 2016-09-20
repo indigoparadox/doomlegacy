@@ -140,9 +140,10 @@ CV_PossibleValue_t musserv_opt_cons_t[] = {
    {1, "Midi"},
    {2, "TiMidity"},
    {3, "FluidSynth"},
-   {4, "Synth"},
-   {5, "FM Synth"},
-   {6, "Awe32 Synth"},
+   {4, "Ext Midi"},
+   {5, "Synth"},
+   {6, "FM Synth"},
+   {7, "Awe32 Synth"},
    {0, NULL}
 };
 

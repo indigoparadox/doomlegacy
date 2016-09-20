@@ -1032,6 +1032,7 @@ char * mus_ipc_opt_tab[] = {
   "-dM", // Midi
   "-dT", // TiMidity
   "-dL", // FluidSynth
+  "-dE", // Ext Midi
   "-dS", // Synth
   "-dF", // FM Synth
   "-dA"  // Awe32 Synth
