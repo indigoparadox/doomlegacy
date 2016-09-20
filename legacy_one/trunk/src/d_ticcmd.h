@@ -86,11 +86,11 @@ typedef struct
     fixed_t      x;
     fixed_t      y;
 #endif
-    char         forwardmove;    // *2048 for move
-    char         sidemove;       // *2048 for move
-    short        angleturn;      // <<16 for angle delta
+    int8_t       forwardmove;    // *2048 for move
+    int8_t       sidemove;       // *2048 for move
+    int16_t      angleturn;      // <<16 for angle delta
                                  // SAVED AS A BYTE into demos
-    short        aiming;    // pitch angle (up-down)
+    int16_t      aiming;    // pitch angle (up-down)
     byte         buttons;
 } ticcmd_t;
 
