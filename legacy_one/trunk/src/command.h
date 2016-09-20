@@ -180,11 +180,6 @@ void  CV_AddValue (consvar_t *var, int increment);
 // write all CV_SAVE variables to config file
 void  CV_SaveVariables (FILE *f);
 
-// load/save gamesate (load and save option and for network join in game)
-void CV_SaveNetVars( char **p );
-void CV_LoadNetVars( char **p );
-void Got_NetXCmd_NetVar(char **p, int playernum);
-
 consvar_t *CV_FindVar (char *name);
 
 #endif // COMMAND_H
