@@ -5379,3 +5379,8 @@ that was segfaulting, to block the dereference.
 patchfile = w105_53_misc.patch
 - commit revision 1257
 Update copyright dates and comments.
+
+*** W105_hwsky
+patchfile = w105_54_hwsky.patch
+- commit revision 1258
+Commit some parts of the hardware draw sky work.

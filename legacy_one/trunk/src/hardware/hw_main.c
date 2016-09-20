@@ -327,8 +327,8 @@
 #define R_FAKEFLOORS
 
 
-// BP: test of draw sky by polygon like in software with visplane, unfortunately
-// this don't work since we must have z for pixel and z for texture (not like now with z=oow)
+// BP: test of draw sky by polygon like in software with visplane ...
+// [WDJ] Looks bad because R_SKY2 is not a plane, it is distant wall texture.
 //#define POLYSKY
 
 // BP: test change fov when looking up/down but bsp projection messup :(
@@ -341,6 +341,10 @@
 // mirror corona choice, with auto modifications
 byte  corona_draw_choice;
 #endif
+
+// Sky upper and lower halfs.
+typedef enum { DSB_none, DSB_upper, DSB_lower, DSB_all }  DSB_e;
+
 
 // ==========================================================================
 // the hardware driver object
@@ -843,14 +847,19 @@ void HWR_RenderPlane(poly_subsector_t * xsub, fixed_t fixedheight,
 
 #ifdef POLYSKY
 // [WDJ] When I got this working, the low sky plane cut off the tops of trees.
+// It appears:
+// The software render draws sky planes, but without object clipping.
+// In sky sectors it draws upper textures as sky.
 
 // this don't draw anything it only update the z-buffer so there isn't problem with
 // wall/things upper that sky (map12)
 // Parameter static global
+//   skypoly : the polygon that sky is seen through
+//   polyheight : height of polygon
 //   planeVerts : polygon verts
 // Called from HWR_Subsector
 static
-void HWR_RenderSkyPlane(poly_subsector_t * xsub, fixed_t fixedheight)
+void HWR_RenderSkyPlane(poly_subsector_t * skypoly, fixed_t polyheight)
 //                              FBITFIELD         PolyFlags )
 {
     polyvertex_t *pv;
@@ -858,39 +867,73 @@ void HWR_RenderSkyPlane(poly_subsector_t * xsub, fixed_t fixedheight)
     vxtx3d_t *v3d;
     int nrPlaneVerts;           //verts original define of convex flat polygon
     int i;
-    float flatxref, flatyref;
+    angle_t angle;
+    float f, skysow03, skysow12, skytow01, skytow23;
+    float xsize, ysize;
+    float dx, dy, dz;
 
     // no convex poly were generated for this subsector
-    if (!xsub->planepoly)
+    if (!skypoly->planepoly)
         return;
 
-    height = FIXED_TO_FLOAT( fixedheight );
+    height = FIXED_TO_FLOAT( polyheight );
+    dz = fabs( height - gr_viewz );
 
-    pv = xsub->planepoly->pts;
-    nrPlaneVerts = xsub->planepoly->numpts;
+    pv = skypoly->planepoly->pts;
+    nrPlaneVerts = skypoly->planepoly->numpts;
 
     if (nrPlaneVerts < 3)       //not even a triangle ?
         return;
+   
+    HWR_GetTexture (skytexture, 0);
+    xsize = 128;
+    ysize = 256;
 
-    //HWR_GetTexture (skytexture, 0);
+    angle = ((dup_viewangle + gr_x_to_viewangle[0]) % ANG90);
 
-    //reference point for flat texture coord for each vertex around the polygon
-    flatxref = ((fixed_t) pv->x & (~63)) / 64.0f;
-    flatyref = ((fixed_t) pv->y & (~63)) / 64.0f;
+    // left
+    skysow03 = 1.0 + ((float) angle) / (ANG90 - 1);
+    // right
+    skysow12 = ((float) angle) / (ANG90 - 1);
 
+    f = 40 + 200 * FIXED_TO_FLOAT(
+        finetangent[(FINE_ANG90 - ((int) aimingangle >> (ANGLETOFINESHIFT + 1))) & FINEMASK] );
+        // finetangent_ANG( -(aimingangle/2) )
+#if 1
+    if (f < 0)
+        f = 0;
+    if (f > 240 - 127)
+        f = 240 - 127;
+#endif
+    // up
+    skytow23 = f / 127.0f;
+    // down
+    skytow01 = (f + 127) / 127.0f;   //suppose 256x128 sky...
+    
+    // Sky x,y,z are all -4.0 to 4.0, but here scaled much larger.
     // transform
     v3d = planeVerts;  // static global
     for (i = 0; i < nrPlaneVerts; i++, v3d++, pv++)
     {
-        v3d->sow = (pv->x / flatsize) - flatxref;
-        v3d->tow = flatyref - (pv->y / flatsize);
-        v3d->x = pv->x;
         v3d->y = height;
+        v3d->x = pv->x;
         v3d->z = pv->y;
+//        v3d->sow = (pv->x / xsize);
+//        v3d->tow = - (pv->y / xsize);
+     // Still not right.
+     // Sky turns with viewer, so clouds are horizontal from all sides.
+     // This keeps cloud orientation fixed with respect to polygon,
+     // which is more correct for a floor sky hole, but does not match the
+     // vanilla doom.
+        dx = (pv->x - gr_viewx);
+        dy = (pv->y - gr_viewy);
+        v3d->sow = skysow03 + ((skysow12 - skysow03) / 2.0 * (dx/dz + 1.0));
+        v3d->tow = skytow01 + ((skytow23 - skytow01) / 2.0 * (dy/dz + 1.0));
     }
 
-    HWD.pfnDrawPolygon(NULL, planeVerts, nrPlaneVerts,
-                       PF_Invisible | PF_Occlude | PF_Masked | PF_Clip);
+    HWD.pfnDrawPolygon(NULL, planeVerts, nrPlaneVerts, 0);
+//    HWD.pfnDrawPolygon(NULL, planeVerts, nrPlaneVerts,
+//                       PF_Invisible | PF_Occlude | PF_Masked | PF_Clip);
 }
 #endif //polysky
 
@@ -2775,10 +2818,11 @@ static void HWR_Subsector(int num)
         }
         else
         {
+            // Sky as floor.
 #ifdef POLYSKY
             HWR_RenderSkyPlane(&poly_subsectors[num], locFloorHeight);
 #endif
-            need_sky_background = true;
+            need_sky_background |= DSB_lower;
         }
     }
 
@@ -2796,11 +2840,11 @@ static void HWR_Subsector(int num)
         }
         else
         {
-            // Sky as floor.
+            // Sky as ceiling.
 #ifdef POLYSKY
             HWR_RenderSkyPlane(&poly_subsectors[num], locCeilingHeight);
 #endif
-            need_sky_background = true;
+            need_sky_background |= DSB_upper;
         }
     }
 
@@ -2915,6 +2959,7 @@ static void HWR_Subsector(int num)
     }
     // -------------------- WATER IN DEV. TEST ------------------------
 #endif
+
     sub->validcount = validcount;
 }
 
@@ -3780,11 +3825,13 @@ static void HWR_DrawPlayerSprites(void)
 // ==========================================================================
 //
 // ==========================================================================
-void HWR_DrawSkyBackground(player_t * player)
+//  upper_lower : DSB_e
+void HWR_DrawSkyBackground(player_t * player, byte upper_lower)
 {
     vxtx3d_t v[4];
     angle_t angle;
     float f;
+//    float horizon;
 
 //  3--2
 //  | /|
@@ -3803,11 +3850,31 @@ void HWR_DrawSkyBackground(player_t * player)
     v[0].z = v[1].z = v[2].z = v[3].z = 4.0f;
 
 #define WRAPANGLE (ANGLE_MAX/4)
+    // ANGLE_MAX = 0xffffffff
+    // ANGLE_MAX/4 = 0x3fffffff
+    // ANG90 = 0x40000000
     angle = ((dup_viewangle + gr_x_to_viewangle[0]) % WRAPANGLE);
 
     v[0].sow = v[3].sow = 1.0 + ((float) angle) / (WRAPANGLE - 1);
     v[2].sow = v[1].sow = ((float) angle) / (WRAPANGLE - 1);
 
+#if 0
+    // View angle effect on screen.
+    // -1.0 when looking straight up.
+    // 0 when look at horizon.
+    float vpf = FIXED_TO_FLOAT(
+        finetangent[(FINE_ANG90 - ((int) aimingangle >> (ANGLETOFINESHIFT + 1))) & FINEMASK] );
+#endif
+    // Doom2 sky texture is 256w x 128h.
+    // Heretic and Hexen sky texture are 256w x 200h.
+    // Expanded texture for free-look is 256w x 240h.
+    // When view is at horizon, draw sky texture [40] as top.
+    // When aiming angle > 0x10480000, then sky repeats at top.
+    //   horizon = -0.2017
+    //   f = -0.338
+    // When aiming angle > 0x38c00000, then sky repeats at top again.
+    //   horizon = -0.83
+    //   f = -127.0
     f = 40 + 200 * FIXED_TO_FLOAT(
         finetangent[(FINE_ANG90 - ((int) aimingangle >> (ANGLETOFINESHIFT + 1))) & FINEMASK] );
         // finetangent_ANG( -(aimingangle/2) )
@@ -3816,9 +3883,29 @@ void HWR_DrawSkyBackground(player_t * player)
         f = 0;
     if (f > 240 - 127)
         f = 240 - 127;
-#endif   
+#endif
+
+    // The view of the sky texture is 128 pixels high.
     v[3].tow = v[2].tow = f / 127.0f;
     v[0].tow = v[1].tow = (f + 127) / 127.0f;   //suppose 256x128 sky...
+
+#if 0
+    // FIXME: This does not handle free-look.
+    // FIXME: This does not handle f hitting the limits.
+    switch( upper_lower )
+    {
+     case DSB_upper:
+        v[0].y = v[1].y = 8.0 * anglef;
+//        v[0].tow = v[1].tow = (f + 64) / 127.0f;
+        break;
+     case DSB_lower:
+        v[2].y = v[3].y = 0.0f;
+        v[3].tow = v[2].tow = (f - 64) / 127.0f;
+        break;
+     default:
+        break;
+    }
+#endif
 
     HWD.pfnDrawPolygon(NULL, v, 4, 0);
 }
@@ -3843,7 +3930,7 @@ void HWR_ClearView(void)
     // HWD.pfnGClipRect (0,0,vid.width,vid.height );
 }
 
-static int  viewsv_viewnumber;
+static byte  viewsv_viewnumber;
 
 // -----------------+
 // HWR_SetViewSize  : set projection and scaling values depending on the
@@ -3878,8 +3965,9 @@ void HWR_SetViewSize(int blocks)
     gr_windowcenterx = (float) (vid.width / 2);
     if (gr_viewwidth == vid.width)
     {
+        // window top left corner at 0,0
         gr_baseviewwindowy = 0;
-        gr_basewindowcentery = gr_viewheight / 2;       // window top left corner at 0,0
+        gr_basewindowcentery = gr_viewheight / 2;
     }
     else
     {
@@ -3907,8 +3995,9 @@ static int num_late_walls = 0;  // drawn late, transparent walls
 static byte viewsv_need_sky[2];
 
 
-//  viewnumber : 0,1 Splitplayer window. Single player is always 0.
-void HWR_RenderPlayerView(int viewnumber, player_t * player)
+//  viewnumber : splitscreen 0=upper, 1=lower. Single player is always 0.
+//    
+void HWR_RenderPlayerView(byte viewnumber, player_t * player)
 {
     //static float    distance = BASEVIDWIDTH;
 
@@ -3926,9 +4015,8 @@ void HWR_RenderPlayerView(int viewnumber, player_t * player)
         else
         {
             // Initial values.
-            need_sky_background = true;
-            viewsv_need_sky[0] = true;
-            viewsv_need_sky[1] = true;
+            need_sky_background = DSB_all;
+            viewsv_need_sky[0] = viewsv_need_sky[1] = DSB_all;
         }
         viewsv_viewnumber = viewnumber;
         HWR_SetLights(viewnumber);
@@ -3946,6 +4034,7 @@ void HWR_RenderPlayerView(int viewnumber, player_t * player)
     gr_windowcentery = gr_basewindowcentery;
     if (cv_splitscreen.value && viewnumber == 1)
     {
+        // lower screen
         //gr_centery += (vid.height/2 );
         gr_viewwindowy += (vid.height / 2);
         gr_windowcentery += (vid.height / 2);
@@ -4000,9 +4089,9 @@ void HWR_RenderPlayerView(int viewnumber, player_t * player)
     // Translucents are drawn over it.
     // Enable when detected sky sectors in previous frame draw.
     if (need_sky_background)
-        HWR_DrawSkyBackground(player);
+        HWR_DrawSkyBackground(player, need_sky_background);
 
-    need_sky_background = false;
+    need_sky_background = DSB_none;
 
     // added by Hurdler for FOV 120
 //    if (cv_grfov.value != 90)
