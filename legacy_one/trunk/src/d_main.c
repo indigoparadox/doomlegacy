@@ -274,7 +274,7 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1264+"
+#define SVN_REV "1272+"
 #endif
 
 
@@ -2048,11 +2048,15 @@ void D_DoomMain()
     I_StartupGraphics();    // window
     SCR_Startup();
 
+    if( verbose > 1 )
+        CONS_Printf("Init DEH, cht, menu\n");
     // save Doom, Heretic, Chex strings for DEH
     DEH_Init();  // Init DEH before files and lumps loaded
     cht_Init();	 // init iwad independent cheats info, needed by Responder
 
     M_Init();    // init menu
+    if( verbose > 1 )
+        CONS_Printf("Console inits\n");
     CON_Register();
 
 #ifdef LAUNCHER
@@ -2096,6 +2100,8 @@ restart_command:
     if (devparm)
       CONS_Printf(D_DEVSTR);
 
+    if( verbose > 1 )
+        CONS_Printf("Find HOME\n");
     // userhome section
     {
         char * userhome = NULL;
@@ -2118,15 +2124,23 @@ restart_command:
         else
         {
             userhome = getenv("HOME");
+            if( userhome && verbose > 1 )
+                CONS_Printf("HOME = %s\n", userhome);
 #ifdef WIN32
-            if( strstr( userhome, "MSYS" ) )
+            if( userhome && strstr( userhome, "MSYS" ) )
             {
                 // Ignore MSYS HOME, it is not the one wanted.
+                if( verbose > 1 )
+                    CONS_Printf("Ignore MYS HOME = %s\n", userhome);
                 userhome = NULL;
             }
             // Windows XP,
             if( !userhome )
+            {
                  userhome = getenv("UserProfile");
+                 if( userhome && verbose > 1 )
+                     CONS_Printf("UserProfile = %s\n", userhome);
+            }
 #endif
         }
 

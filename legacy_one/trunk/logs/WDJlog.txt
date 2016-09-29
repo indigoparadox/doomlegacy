@@ -5500,3 +5500,13 @@ Still uses legacy.wad 145, no need to change that.
 patchfile = w105_67_docs.patch
 - commit revision 1271
 Update the docs for Release Version 1.46.
+
+*** W105_home
+patchfile = w105_68_home.patch
+- commit revision 1272
+Add some verbose messages to diagnose problems with video startup and
+finding home directory.
+Add tests for HOME environment string NULL before using it.
+This would crash DoomLegacy on Windows, where HOME is not usually set
+(when do not have MSYS).
+Thanks to testing by Eckehardt Luhm.
