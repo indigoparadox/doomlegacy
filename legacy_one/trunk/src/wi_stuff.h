@@ -59,8 +59,9 @@ void WI_Start(wbstartstruct_t*   wbstartstruct);
 boolean teamingame(int teamnum);
 
 // draw rankings
+//  colwidth : column width
 void WI_drawRanking(char *title, int x, int y, fragsort_t *fragtable,
-                    int scorelines, boolean large, int white);
+                    int scorelines, boolean large, int white, int colwidth);
 
 // For startup wait, and deathmatch wait.
 void WI_draw_wait( int net_nodes, int net_players, int wait_players, int wait_tics );
