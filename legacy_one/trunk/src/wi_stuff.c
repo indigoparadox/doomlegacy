@@ -70,6 +70,7 @@
 #include "st_stuff.h"
 #include "i_video.h"
 #include "v_video.h"
+#include "screen.h"
 #include "z_zone.h"
 #include "console.h"
 #include "p_info.h"
