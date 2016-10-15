@@ -364,8 +364,9 @@ boolean R_AddSingleSpriteDef (char* sprname, spritedef_t* spritedef, int wadnum,
             //BP: we cannot use special trick in hardware mode because feet in ground caused by z-buffer
             if( rendermode != render_soft )
             {
-                uint16_t p_topoffset = LE_SWAP16(patch.topoffset);
-                uint16_t p_height = LE_SWAP16(patch.height);
+                // topoffset may be negative, use signed compare
+                int16_t p_topoffset = LE_SWAP16(patch.topoffset);
+                int16_t p_height = LE_SWAP16(patch.height);
                 if( p_topoffset>0 && p_topoffset<p_height) // not for psprite
                 {
                     // perfect is patch.height but sometime it is too high
