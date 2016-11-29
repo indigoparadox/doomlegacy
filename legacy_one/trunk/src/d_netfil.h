@@ -48,6 +48,8 @@
 #include "doomtype.h"
 #include "w_wad.h"
   // MAX_WADFILES
+  
+#define NETFILE_BOX_Y  100
 
 // Type of storage, after transmission handling
 typedef enum {

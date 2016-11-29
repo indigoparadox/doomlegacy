@@ -231,6 +231,7 @@ static char*  reload_filename;
 //  return -1 in case of problem
 //
 // BP: Can now load dehacked files (ext .deh)
+// Called by W_InitMultipleFiles, P_AddWadFile.
 int W_LoadWadFile (const char *filename)
 {
     int              filenum = numwadfiles;  // return value
