@@ -5548,3 +5548,17 @@ Sprite load for hardware render had a patch offset stored in an uint16_t.
 It looks like a negative offset would not work as in the original version
 1.42 code.  It is a temp var introduced as part of the SWAP code update,
 and has no explanation.  Fixed it to be signed.
+
+*** W106_savegame
+patchfile = w106_1_savegame.patch
+- commit revision 1279
+The W105_netstr patch changed some function interfaces, to provide buffer
+limits so as to prevent buffer overrun.  A few calls in the savegame code
+were updated, but one did not update the current savegame ptr.
+As a result the Net variables saved in the savegame got overwritten.
+The savegame read code correctly recognized that the savegame was
+missing too many Net variables, and issued a corrupted savegame message.
+Added the missing line to update the savegame position.
+Testing should have caught this, and it may have been noticed.
+But other bugs being fixed at the same time may have confused things.
+It did not affect reading an old savegame.

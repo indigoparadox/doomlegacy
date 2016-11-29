@@ -3304,6 +3304,7 @@ void P_SaveGame( void )
     xc.curpos = save_p;
     xc.endpos = & savebuffer[savebuffer_size-1];
     CV_SaveNetVars( &xc );
+    save_p = xc.curpos;
     SG_SaveSync( SYNC_misc );
     P_ArchiveMisc();
     SG_SaveSync( SYNC_players );
