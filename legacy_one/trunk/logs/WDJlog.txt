@@ -5608,3 +5608,14 @@ series of actions can be taken.
 player at their current position.
 3. The Kick command will be issued.
 
+*** W106_docs4
+patchfile = w106_4_docs.patch
+- commit revision 1282
+Update the docs for 1.46.2.
+
+*** W106_net
+patchfile = w106_5_version1462.patch
+- commit revision 1283
+Update the version to 1.46.2.
+
+
