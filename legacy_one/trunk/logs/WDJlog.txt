@@ -5646,4 +5646,10 @@ Remove redundant files:
   linux_x/sndserv/sounds.c
   linux_x/sndserv/sounds.h
 
+*** W106_version1462_1287_docs
+patchfile = w106_9_version1462_1287_docs.patch
+- commit revision 1287
+Release 1.46.2 again, due to finding another bug before making the release.
+Update Release docs and VER.
+
 

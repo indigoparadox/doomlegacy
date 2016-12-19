@@ -13,7 +13,7 @@
 
 <div class="column">
 
-<h2>1.46.2 SVN1281 (2016-12-10)</h2>
+<h2>1.46.2 SVN1287 (2016-12-10)</h2>
 
 <h3>FEATURES 1.46.2</h3>
 
@@ -67,6 +67,15 @@ affect textures, so it now clears the cache and rebuilds all textures.
 <li>
 Fixed the download display screen to have a background draw so the background
 does not flicker due to hardware double buffer swaps.
+</li>
+<li>
+Fix a Heretic status bar draw that was drawing outside the screen
+buffer.
+</li>
+<li>
+Rewrite of the X11 version sound server code, and the internal sound
+driver.  Added some functionality and cleaned up the unused code.
+Separated the code for the 3 sound driver alternatives.
 </li>
 </ul>
 
