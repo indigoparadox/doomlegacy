@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by Raven Software, Corp.
-// Portions Copyright (C) 1998-2000 by DooM Legacy Team.
+// Portions Copyright (C) 1998-2016 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -512,8 +512,7 @@ static void ShadeChain(void)
 {
     int chain_x1 = (stbar_x+277) * stbar_scalex;
     int chain_x2 = (stbar_x+19) * stbar_scalex;
-//    int chain_y = (stbar_y+32) * stbar_scaley;
-    int chain_y = (stbar_y+32) * vid.dupy;
+    int chain_y = (stbar_y+32) * stbar_scaley;
     int i1, i2;
 
     if( rendermode != render_soft )
