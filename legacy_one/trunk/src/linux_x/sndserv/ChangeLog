@@ -54,3 +54,18 @@ Wed Dec 31 1997			<udo@umserver.umnet.de>
 	  This should work with all PC UNIX's, but I have tested
 	  it under UW 2.1.2 only, because that is the only system
 	  I have with old 8bit sound hardware.
+
+Dec 17 2016			WDJ
+    Rewrote the sndserver system.
+    The load sound messages now includes the sfxid and flags.
+    The play sound message now include a handle.
+    The main program can use the handle to stop the sound.
+    There is now a stop sound message.
+    Removed the files sounds.c and sounds.h as they were obsolete
+    copies of the main program files, and were not up to date.  The
+    correct information is now passed in the load sound message.
+    Rewrote the channel selection to use the flags to identify sounds
+    that should be unique, such as the chainsaw.
+    Rewrote the channel code to use a channel structure, and use ptrs
+    to step through all the channels.  This removes many array indexing
+    multiplies.

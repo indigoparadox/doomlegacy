@@ -139,6 +139,7 @@ extern event_t         events[MAXEVENTS];
 extern int             eventhead;
 extern int             eventtail;
 
+#if 0
 // Locations for searching the legacy.dat
 #define DEFAULTWADLOCATION1 "/usr/local/games/legacy"
 #define DEFAULTWADLOCATION2 "/usr/games/legacy"
@@ -148,6 +149,7 @@ extern int             eventtail;
 
 // holds wad path
 static char returnWadPath[256];
+#endif
 
 #ifdef LJOYSTICK
 

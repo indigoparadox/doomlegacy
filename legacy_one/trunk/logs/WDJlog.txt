@@ -5635,4 +5635,15 @@ patchfile = w106_7_zzone.patch
 - commit revision 1285
 Some fixes to the alternative zone memory system, used for debugging.
 
+*** W106_x11_sound
+patchfile = w106_8_x11_sound.patch
+- commit revision 1286
+Rewrite of X11 sound server.  Much of the code was not used, being
+blindly copied into the sound server because some other sound system had it.
+Disabled the unused code for several kinds of alternative sound systems that
+were not selected.
+Remove redundant files:
+  linux_x/sndserv/sounds.c
+  linux_x/sndserv/sounds.h
+
 

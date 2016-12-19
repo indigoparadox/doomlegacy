@@ -128,7 +128,7 @@ CFLAGS		+=	$(ESDCFLAGS)
 endif
 
 
-SNDOBJLIST:=soundsrv.o sounds.o $(HWOUTOBJ) $(OPTOBJ)
+SNDOBJLIST:=soundsrv.o $(HWOUTOBJ) $(OPTOBJ)
 SNDOBJ:=$(addprefix $(O)/, $(SNDOBJLIST))
 
 

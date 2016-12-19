@@ -667,8 +667,10 @@ ifeq ($(SMIF), LINUX_X11)
 
   # Uncomment if you want to use the POLL_POINTER hack
   #POLL_POINTER:=-DPOLL_POINTER
+  # Uncomment if you want to use SOUND_RESET, only valid without SNDSERV
+  #OPTS+=-DSOUND_RESET
 
-  OPTS+=-DSMIF_X11 -DOLD_SOUND_DRIVER -DSNDSERV -DHWRENDER
+  OPTS+=-DSMIF_X11 -DSNDSERV -DHWRENDER
   ifdef CDMUS
     OPTS+=-DMUSSERV
   endif
@@ -733,8 +735,10 @@ ifeq ($(SMIF), FREEBSD_X11)
 
   # Uncomment if you want to use the POLL_POINTER hack
   #POLL_POINTER:=-DPOLL_POINTER
+  # Uncomment if you want to use SOUND_RESET, only valid without SNDSERV
+  #OPTS+=-DSOUND_RESET
 
-  OPTS+=-DSMIF_X11 -DOLD_SOUND_DRIVER -DSNDSERV -DHWRENDER
+  OPTS+=-DSMIF_X11 -DSNDSERV -DHWRENDER
   # objs common to xshm and ggi, video is added later
   # Note: free-bsd version of cdmus
   MAINOBJ:=i_main.o

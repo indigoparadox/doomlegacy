@@ -66,25 +66,36 @@
 #include <sys/soundcard.h>
 #endif
 
+#include "doomtype.h"
 #include "soundsrv.h"
 
 int     audio_fd;
-int     audio_8bit_flag;
+byte    audio_8bit_flag;
 
-void
-myioctl
-( int   fd,
-  int   command,
-  int*  arg )
+void myioctl( int fd, int command, int* arg )
 {   
-    int         rc;
-    
-    rc = ioctl(fd, command, arg);  
+    static byte  ioctl_err_count = 0;
+    static byte  ioctl_err_off = 0;
+    int rc;
+
+    if( ioctl_err_off )
+    {
+        ioctl_err_off--;
+        return;
+    }
+
+    rc = ioctl(fd, command, arg);
     if (rc < 0)
     {
         fprintf(stderr, "ioctl(dsp,%d,arg) failed\n", command);
         fprintf(stderr, "errno=%d\n", errno);
-        exit(-1);
+        // [WDJ] No unnecessary fatal exits, let the player recover.
+        if( ioctl_err_count < 254 )
+            ioctl_err_count++;
+        if( ioctl_err_count > 10 )
+            ioctl_err_off = 20;
+       
+//        exit(-1);
     }
 }
 
@@ -92,12 +103,8 @@ void I_InitMusic(void)
 {
 }
 
-void
-I_InitSound
-( int   samplerate,
-  int   samplesize )
+void I_InitSound( int samplerate, int samplesize )
 {
-
     int i;
                 
     audio_fd = open("/dev/dsp", O_WRONLY);
@@ -109,12 +116,16 @@ I_InitSound
    
     // reset is broken in many sound drivers
     //myioctl(audio_fd, SNDCTL_DSP_RESET, 0);
+    ioctl(audio_fd, SNDCTL_DSP_RESET, NULL);  // ignore errors
 
+    
+    audio_8bit_flag = 1;  // default
     if (getenv("DOOM_SOUND_SAMPLEBITS") == NULL)
     {
         myioctl(audio_fd, SNDCTL_DSP_GETFMTS, &i);
         if (i&=AFMT_S16_LE)
         {
+            audio_8bit_flag = 0;
             myioctl(audio_fd, SNDCTL_DSP_SETFMT, &i);
             i = 11 | (2<<16);                                           
             myioctl(audio_fd, SNDCTL_DSP_SETFRAGMENT, &i);
@@ -122,23 +133,14 @@ I_InitSound
             myioctl(audio_fd, SNDCTL_DSP_STEREO, &i);
             fprintf(stderr, "sndserver: Using 16 bit sound card\n");
         }
-        else
-        {
-            i=AFMT_U8;
-            myioctl(audio_fd, SNDCTL_DSP_SETFMT, &i);
-            i = 10 | (2<<16);                                           
-            myioctl(audio_fd, SNDCTL_DSP_SETFRAGMENT, &i);
-            audio_8bit_flag++;
-            fprintf(stderr, "sndserver: Using 8 bit sound card\n");
-        }
     }
-    else
+
+    if( audio_8bit_flag )  // default
     {
         i=AFMT_U8;
         myioctl(audio_fd, SNDCTL_DSP_SETFMT, &i);
         i = 10 | (2<<16);                                           
         myioctl(audio_fd, SNDCTL_DSP_SETFRAGMENT, &i);
-        audio_8bit_flag++;
         fprintf(stderr, "sndserver: Using 8 bit sound card\n");
     }
 
@@ -146,10 +148,7 @@ I_InitSound
     myioctl(audio_fd, SNDCTL_DSP_SPEED, &i);
 }
 
-void
-I_SubmitOutputBuffer
-( void* samples,
-  int   samplecount )
+void I_SubmitOutputBuffer( void* samples, int samplecount )
 {
     if (audio_fd >= 0)
     {
