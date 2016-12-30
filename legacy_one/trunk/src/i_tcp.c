@@ -231,6 +231,13 @@ typedef struct sockaddr_ipx {
   // END of Not Windows
 #endif // win32
 
+#ifdef __APPLE__
+// IPX is not supported on macOS
+# ifdef USE_IPX
+#   undef USE_IPX
+# endif
+#endif
+
 #include "i_system.h"
 #include "i_net.h"
 #include "d_net.h"
