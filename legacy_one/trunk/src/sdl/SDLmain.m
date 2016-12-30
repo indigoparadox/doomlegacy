@@ -1,11 +1,11 @@
 /* 
  Copyright (C) 2011 by DooM Legacy Team.
-
+  
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
  as published by the Free Software Foundation; either version 2
  of the License, or (at your option) any later version.
-
+  
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -23,10 +23,6 @@ No NIB (not frameworks), no CPS (docking).
 Do not change current directory.  DoomLegacy uses current directory when run
 from command line or script, and has its own dir search.
 */
-
-//#define SDL_CHANGE_DIRECTORY  1
-#define PROGRAM_NAME   "DoomLegacy"
-
 /*   SDLMain.m - main entry point for our Cocoa-ized SDL app
        Initial Version: Darrell Walisser <dwaliss1@purdue.edu>
        Non-NIB-Code & other changes: Max Horn <max@quendi.de>
@@ -34,321 +30,343 @@ from command line or script, and has its own dir search.
     Feel free to customize this file to suit your needs
 */
 
-#if 1
-#import <SDL.h>
-#else
-#import <SDL/SDL.h>
-#endif
-#import <sys/param.h> /* for MAXPATHLEN */
-#import <unistd.h>
+#include "SDL.h"
+#include "SDLMain.h"
+#include <sys/param.h> /* for MAXPATHLEN */
+#include <unistd.h>
 
-/* SDLmain header from SDL demos */
-#import <Cocoa/Cocoa.h>
-@interface SDLMain : NSObject
+/* For some reaon, Apple removed setAppleMenu from the headers in 10.4,
+ but the method still is there and works. To avoid warnings, we declare
+ it ourselves here. */
+@interface NSApplication(SDL_Missing_Methods)
+- (void)setAppleMenu:(NSMenu *)menu;
 @end
-/* end header */
 
-/* Testing whether we need to use SDLMain.nib or not */
-#define  SDL_USE_NIB_FILE   0
+/* Use this flag to determine whether we use SDLMain.nib or not */
+#define		SDL_USE_NIB_FILE	0
 
-/* Testing whether we need to need to use CPS (docking) or not */
-#if 1
-/* DEBUG: Test if CPS is needed */
-#define  SDL_USE_CPS   1
-#else
-//#define  SDL_USE_CPS   0
-#endif
-
+/* Use this flag to determine whether we use CPS (docking) or not */
+#define		SDL_USE_CPS		1
 #ifdef SDL_USE_CPS
 /* Portions of CPS.h */
 typedef struct CPSProcessSerNum
 {
-    UInt32  lo;
-    UInt32  hi;
+	UInt32		lo;
+	UInt32		hi;
 } CPSProcessSerNum;
 
-extern OSErr  CPSGetCurrentProcess( CPSProcessSerNum *psn);
-extern OSErr  CPSEnableForegroundOperation( CPSProcessSerNum *psn, UInt32 _arg2, UInt32 _arg3, UInt32 _arg4, UInt32 _arg5);
-extern OSErr  CPSSetFrontProcess( CPSProcessSerNum *psn);
+extern OSErr	CPSGetCurrentProcess( CPSProcessSerNum *psn);
+extern OSErr 	CPSEnableForegroundOperation( CPSProcessSerNum *psn, UInt32 _arg2, UInt32 _arg3, UInt32 _arg4, UInt32 _arg5);
+extern OSErr	CPSSetFrontProcess( CPSProcessSerNum *psn);
 
 #endif /* SDL_USE_CPS */
-#endif
 
-
-// global arguments (do not know if names are important so same as everybody else)
-static int   gArgc;
+static int    gArgc;
 static char  **gArgv;
-static BOOL  gFinderLaunch;
+static BOOL   gFinderLaunch;
+static BOOL   gCalledAppMainline = FALSE;
 
-#ifdef PROGRAM_NAME
-NSString * program_app_name = @ PROGRAM_NAME;
-#else
-static NSString * get_program_name( void )
+static NSString *getApplicationName(void)
 {
-    NSString * progname = 0;  // program name
-    NSDictionary * dict;
+    const NSDictionary *dict;
+    NSString *appName = 0;
 
-    /* get the application name from the process */
-    dict = (NSDictionary *)CFBundleGetInfoDictionary( CFBundleGetMainBundle() );
+    /* Determine the application name */
+    dict = (const NSDictionary *)CFBundleGetInfoDictionary(CFBundleGetMainBundle());
     if (dict)
-       progname = [dict objectForKey: @"CFBundleName"];
+        appName = [dict objectForKey: @"CFBundleName"];
     
-    if (![progname length])
-       progname = [[NSProcessInfo processInfo] processName];
+    if (![appName length])
+        appName = [[NSProcessInfo processInfo] processName];
 
-    return progname;
+    return appName;
 }
 
-
-#ifdef SDL_USE_NIB_FILE
-/* helper category for NSString */
+#if SDL_USE_NIB_FILE
+/* A helper category for NSString */
 @interface NSString (ReplaceSubString)
-- (NSString *) replace_in_string :(NSRange)str_range with:(NSString *)strin;
-@end
-
-  
-@implementation NSString (ReplaceSubString)
-
-- (NSString *) replace_in_string :(NSRange)str_range with:(NSString *)strin
-{
-    NSString * strout;
-    NSRange rep_range;
-    unsigned int self_len = [self length];
-    unsigned int strin_len = [strin length];
-    unsigned int buffer_size;
-    unichar * buffer;
-
-    /* replace the characters in range with strin */
-    buffer_size = self_len + strin_len - str_range.length;
-    buffer = NSAllocateMemoryPages( buffer_size * sizeof(unichar) );
-    
-    /* copy before range into buffer */
-    rep_range.location = 0;
-    rep_range.length = str_range.location;
-    [self getCharacters:buffer range:rep_range];
-    
-    /* copy strin */
-    rep_range.location = 0;
-    rep_range.length = strin_len;
-    [strin getCharacters:(buffer + str_range.location) range:rep_range];
-     
-    /* copy after range into buffer */
-    rep_range.location = str_range.location + str_range.length;
-    rep_range.length = self_len - rep_range.location;
-    [self getCharacters:(buffer+str_range.location+strin_len) range:rep_range];
-    
-    /* make a string from buffer */
-    strout = [NSString stringWithCharacters:buffer length:buffer_size];
-    
-    NSDeallocateMemoryPages(buffer, buffer_size);
-    
-    return strout;
-}
-
-@end
-
-#else
-/* From Edge-1.35: For some reason, Apple removed setAppleMenu from the 
-headers in 10.4, but the method still is there and works. 
-To avoid warnings, declare it here. */
-@interface NSApplication(SDL_Missing_Methods)
-- (void)setAppleMenu:(NSMenu *)menu;
+- (NSString *)stringByReplacingRange:(NSRange)aRange with:(NSString *)aString;
 @end
 #endif
 
-@interface SDLApplication : NSApplication
+@interface NSApplication (SDLApplication)
 @end
 
-@implementation SDLApplication
+@implementation NSApplication (SDLApplication)
 /* Invoked from the Quit menu item */
 - (void)terminate:(id)sender
 {
     /* Post a SDL_QUIT event */
-    SDL_Event  event;
+    SDL_Event event;
     event.type = SDL_QUIT;
-    SDL_PushEvent( &event );
+    SDL_PushEvent(&event);
 }
 @end
 
 /* The main class of the application, the application's delegate */
 @implementation SDLMain
 
-#ifdef SDL_CHANGE_DIRECTORY
-/* Set working directory to the app parent directory */
-- (void) set_work_dir:(BOOL)enable_chdir
+/* Set the working directory to the .app's parent directory */
+- (void) setupWorkingDirectory:(BOOL)shouldChdir
 {
-    if (enable_chdir)
+    if (shouldChdir)
     {
         char parentdir[MAXPATHLEN];
-        CFURLRef url1 = CFBundleCopyBundleURL( CFBundleGetMainBundle() );
-        CFURLRef url2 = CFURLCreateCopyDeletingLastPathComponent(0, url1);
-        if (CFURLGetFileSystemRepresentation(url2, true, parentdir, MAXPATHLEN)) {
-	   assert ( chdir (parentdir) == 0 );   /* chdir to the binary app's parent */
-	}
-        CFRelease( url2 );
-        CFRelease( url1 );
+        CFURLRef url = CFBundleCopyBundleURL(CFBundleGetMainBundle());
+        CFURLRef url2 = CFURLCreateCopyDeletingLastPathComponent(0, url);
+        if (CFURLGetFileSystemRepresentation(url2, 1, (UInt8 *)parentdir, MAXPATHLEN)) {
+            chdir(parentdir);   /* chdir to the binary app's parent */
+        }
+        CFRelease(url);
+        CFRelease(url2);
     }
 }
-#endif
 
-#ifdef SDL_USE_NIB_FILE
+#if SDL_USE_NIB_FILE
 
-/* Change menu to new_name */
-- (void) change_menu_name:(NSMenu *)chmenu to:(NSString *)new_app_name
+/* Fix menu to contain the real app name instead of "SDL App" */
+- (void)fixMenu:(NSMenu *)aMenu withAppName:(NSString *)appName
 {
-    NSRange str_range;
-    NSEnumerator * menu_enumtor;
-    NSMenuItem * menu_item;
+    NSRange aRange;
+    NSEnumerator *enumerator;
+    NSMenuItem *menuItem;
 
-    /* find placeholder name "SDL App" */
-    str_range = [[chmenu title] rangeOfString:@"SDL App"];
-    if (str_range.length != 0)
-        [chmenu setTitle: [[chmenu title] replace_in_string:str_range with:new_app_name]];
+    aRange = [[aMenu title] rangeOfString:@"SDL App"];
+    if (aRange.length != 0)
+        [aMenu setTitle: [[aMenu title] stringByReplacingRange:aRange with:appName]];
 
-    menu_enumtor = [[chmenu itemArray] objectEnumerator];
-    while ((menu_item = [menu_enumtor nextObject]))
+    enumerator = [[aMenu itemArray] objectEnumerator];
+    while ((menuItem = [enumerator nextObject]))
     {
-        str_range = [[menu_item title] rangeOfString:@"SDL App"];
-        if (str_range.length != 0)
-            [menu_item setTitle: [[menu_item title] replace_in_string:str_range with:new_app_name]];
-        if ([menu_item hasSubmenu])
-            [self change_menu_name:[menu_item submenu] to:new_app_name];
+        aRange = [[menuItem title] rangeOfString:@"SDL App"];
+        if (aRange.length != 0)
+            [menuItem setTitle: [[menuItem title] stringByReplacingRange:aRange with:appName]];
+        if ([menuItem hasSubmenu])
+            [self fixMenu:[menuItem submenu] withAppName:appName];
     }
-    [ chmenu sizeToFit ];
 }
 
 #else
 
-static void create_doomlegacy_mac_menus ( void )
+static void setApplicationMenu(void)
 {
     /* warning: this code is very odd */
-    NSMenu * apple_menu;
-    NSMenu * window_menu;
-    NSMenuItem * menu_item;
-    NSString * title;
-    NSString * appname;
-
-#ifdef PROGRAM_NAME    
-    appname = program_app_name;
-#else
-    appname = get_program_name();
-#endif
-
-    /* Program/App menu */
-    apple_menu = [[NSMenu alloc] initWithTitle:@""];
-
-    /* standard menu items */
-//    title = [@"About " stringByAppendingString:appname];
-//    [apple_menu addItemWithTitle:title action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@""];
-
-//    [apple_menu addItem:[NSMenuItem separatorItem]];
-
-    title = [@"Hide " stringByAppendingString:appname];
-    [apple_menu addItemWithTitle:title action:@selector(hide:) keyEquivalent:@"h"];
-
-    menu_item = (NSMenuItem *)[apple_menu addItemWithTitle:@"Hide Others" action:@selector(hideOtherApplications:) keyEquivalent:@"h"];
-    [menu_item setKeyEquivalentModifierMask:(NSAlternateKeyMask | NSCommandKeyMask)];
-
-    [apple_menu addItemWithTitle:@"Show All" action:@selector(unhideAllApplications:) keyEquivalent:@""];
-
-    [apple_menu addItem:[NSMenuItem separatorItem]];
-
-    title = [@"Quit " stringByAppendingString:appname];
-    [apple_menu addItemWithTitle:title action:@selector(terminate:) keyEquivalent:@"q"];
+    NSMenu *appleMenu;
+    NSMenuItem *menuItem;
+    NSString *title;
+    NSString *appName;
     
-    /* Insert this menu into the window menubar */
-    menu_item = [[NSMenuItem alloc] initWithTitle:@"" action:nil keyEquivalent:@""];
-    [menu_item setSubmenu:apple_menu];
-    [[NSApp mainMenu] addItem:menu_item];
-    [menu_item release];
+    appName = getApplicationName();
+    appleMenu = [[NSMenu alloc] initWithTitle:@""];
+    
+    /* Add menu items */
+    title = [@"About " stringByAppendingString:appName];
+    [appleMenu addItemWithTitle:title action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@""];
 
-    /* Set this menu as the application menu */
-    [NSApp setAppleMenu:apple_menu];
-    [apple_menu release];
+    [appleMenu addItem:[NSMenuItem separatorItem]];
 
-    /* Window menu */
-    window_menu = [[NSMenu alloc] initWithTitle:@"Window"];
+    title = [@"Hide " stringByAppendingString:appName];
+    [appleMenu addItemWithTitle:title action:@selector(hide:) keyEquivalent:@"h"];
+
+    menuItem = (NSMenuItem *)[appleMenu addItemWithTitle:@"Hide Others" action:@selector(hideOtherApplications:) keyEquivalent:@"h"];
+    [menuItem setKeyEquivalentModifierMask:(NSAlternateKeyMask|NSCommandKeyMask)];
+
+    [appleMenu addItemWithTitle:@"Show All" action:@selector(unhideAllApplications:) keyEquivalent:@""];
+
+    [appleMenu addItem:[NSMenuItem separatorItem]];
+
+    title = [@"Quit " stringByAppendingString:appName];
+    [appleMenu addItemWithTitle:title action:@selector(terminate:) keyEquivalent:@"q"];
+
     
-    /* Standard menu items */
-    menu_item = [[NSMenuItem alloc] initWithTitle:@"Minimize" action:@selector(performMiniaturize:) keyEquivalent:@"m"];
-    [window_menu addItem:menu_item];
-    [menu_item release];
+    /* Put menu into the menubar */
+    menuItem = [[NSMenuItem alloc] initWithTitle:@"" action:nil keyEquivalent:@""];
+    [menuItem setSubmenu:appleMenu];
+    [[NSApp mainMenu] addItem:menuItem];
+
+    /* Tell the application object that this is now the application menu */
+    [NSApp setAppleMenu:appleMenu];
+
+    /* Finally give up our references to the objects */
+    [appleMenu release];
+    [menuItem release];
+}
+
+/* Create a window menu */
+static void setupWindowMenu(void)
+{
+    NSMenu      *windowMenu;
+    NSMenuItem  *windowMenuItem;
+    NSMenuItem  *menuItem;
+
+    windowMenu = [[NSMenu alloc] initWithTitle:@"Window"];
     
-    /* Insert this menu into the menubar */
-    menu_item = [[NSMenuItem alloc] initWithTitle:@"Window" action:nil keyEquivalent:@""];
-    [menu_item setSubmenu:window_menu];
-    [[NSApp mainMenu] addItem:menu_item];
-    [menu_item release];
+    /* "Minimize" item */
+    menuItem = [[NSMenuItem alloc] initWithTitle:@"Minimize" action:@selector(performMiniaturize:) keyEquivalent:@"m"];
+    [windowMenu addItem:menuItem];
+    [menuItem release];
     
-    /* Set the new menu as the application menu */
-    [NSApp setWindowsMenu:window_menu];
-    [window_menu release];
+    /* Put menu into the menubar */
+    windowMenuItem = [[NSMenuItem alloc] initWithTitle:@"Window" action:nil keyEquivalent:@""];
+    [windowMenuItem setSubmenu:windowMenu];
+    [[NSApp mainMenu] addItem:windowMenuItem];
+    
+    /* Tell the application object that this is now the window menu */
+    [NSApp setWindowsMenu:windowMenu];
+
+    /* Finally give up our references to the objects */
+    [windowMenu release];
+    [windowMenuItem release];
 }
 
 /* Replacement for NSApplicationMain */
-static void DL_app_main (int argc, char ** argv)
+static void CustomApplicationMain (int argc, char **argv)
 {
-    NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
-    SDLMain * sdl_main_prog;
+    NSAutoreleasePool	*pool = [[NSAutoreleasePool alloc] init];
+    SDLMain				*sdlMain;
 
-    /* Initialize (or reinit) the program application */
-    [SDLApplication sharedApplication];
+    /* Ensure the application object is initialised */
+    [NSApplication sharedApplication];
     
 #ifdef SDL_USE_CPS
     {
-        // whatever CPS is, it is optional
         CPSProcessSerNum PSN;
-        /* info on this process is sent to the dock */
+        /* Tell the dock about us */
         if (!CPSGetCurrentProcess(&PSN))
             if (!CPSEnableForegroundOperation(&PSN,0x03,0x3C,0x2C,0x1103))
                 if (!CPSSetFrontProcess(&PSN))
-                    [SDLApplication sharedApplication];
+                    [NSApplication sharedApplication];
     }
 #endif /* SDL_USE_CPS */
 
     /* Set up the menubar */
     [NSApp setMainMenu:[[NSMenu alloc] init]];
-    create_doomlegacy_mac_menus();
+    setApplicationMenu();
+    setupWindowMenu();
 
-    /* Create SDLMain process and set it as the app delegate ?? */
-    sdl_main_prog = [[SDLMain alloc] init];
-    [NSApp setDelegate:sdl_main_prog];
+    /* Create SDLMain and make it the app delegate */
+    sdlMain = [[SDLMain alloc] init];
+    [NSApp setDelegate:sdlMain];
     
-    /* Run it, (Start the main event loop??) */
+    /* Start the main event loop */
     [NSApp run];
     
-    /* Release local obj references */
-    [sdl_main_prog release];
+    [sdlMain release];
     [pool release];
 }
 
 #endif
+
+
+/*
+ * Catch document open requests...this lets us notice files when the app
+ *  was launched by double-clicking a document, or when a document was
+ *  dragged/dropped on the app's icon. You need to have a
+ *  CFBundleDocumentsType section in your Info.plist to get this message,
+ *  apparently.
+ *
+ * Files are added to gArgv, so to the app, they'll look like command line
+ *  arguments. Previously, apps launched from the finder had nothing but
+ *  an argv[0].
+ *
+ * This message may be received multiple times to open several docs on launch.
+ *
+ * This message is ignored once the app's mainline has been called.
+ */
+- (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
+{
+    const char *temparg;
+    size_t arglen;
+    char *arg;
+    char **newargv;
+
+    if (!gFinderLaunch)  /* MacOS is passing command line args. */
+        return FALSE;
+
+    if (gCalledAppMainline)  /* app has started, ignore this document. */
+        return FALSE;
+
+    temparg = [filename UTF8String];
+    arglen = SDL_strlen(temparg) + 1;
+    arg = (char *) SDL_malloc(arglen);
+    if (arg == NULL)
+        return FALSE;
+
+    newargv = (char **) realloc(gArgv, sizeof (char *) * (gArgc + 2));
+    if (newargv == NULL)
+    {
+        SDL_free(arg);
+        return FALSE;
+    }
+    gArgv = newargv;
+
+    SDL_strlcpy(arg, temparg, arglen);
+    gArgv[gArgc++] = arg;
+    gArgv[gArgc] = NULL;
+    return TRUE;
+}
+
 
 /* Called when the internal event loop has just started running */
 - (void) applicationDidFinishLaunching: (NSNotification *) note
 {
     int status;
 
-#ifdef SDL_CHANGE_DIRECTORY
-    /* Set working directory to the app parent directory */
-    [self set_work_dir:gFinderLaunch];
+    /* Set the working directory to the .app's parent directory */
+    [self setupWorkingDirectory:gFinderLaunch];
+
+#if SDL_USE_NIB_FILE
+    /* Set the main menu to contain the real app name instead of "SDL App" */
+    [self fixMenu:[NSApp mainMenu] withAppName:getApplicationName()];
 #endif
 
-#ifdef SDL_USE_NIB_FILE
-    /* Change the main menu to have the program name */
-# ifdef PROGRAM_NAME    
-    [self change_menu_name:[NSApp mainMenu] to:program_app_name];
-# else
-    [self change_menu_name:[NSApp mainMenu] to:get_program_name()];
-# endif
-#endif
-
-    /* Run SDL_main in the DoomLegacy program */
+    /* Hand off to main application code */
+    gCalledAppMainline = TRUE;
     status = SDL_main (gArgc, gArgv);
 
-    /* Exit the program */
+    /* We're done, thank you for playing */
     exit(status);
 }
+@end
+
+
+@implementation NSString (ReplaceSubString)
+
+- (NSString *)stringByReplacingRange:(NSRange)aRange with:(NSString *)aString
+{
+    unsigned int bufferSize;
+    unsigned int selfLen = [self length];
+    unsigned int aStringLen = [aString length];
+    unichar *buffer;
+    NSRange localRange;
+    NSString *result;
+
+    bufferSize = selfLen + aStringLen - aRange.length;
+    buffer = (unichar *)NSAllocateMemoryPages(bufferSize*sizeof(unichar));
+    
+    /* Get first part into buffer */
+    localRange.location = 0;
+    localRange.length = aRange.location;
+    [self getCharacters:buffer range:localRange];
+    
+    /* Get middle part into buffer */
+    localRange.location = 0;
+    localRange.length = aStringLen;
+    [aString getCharacters:(buffer+aRange.location) range:localRange];
+     
+    /* Get last part into buffer */
+    localRange.location = aRange.location + aRange.length;
+    localRange.length = selfLen - localRange.location;
+    [self getCharacters:(buffer+aRange.location+aStringLen) range:localRange];
+    
+    /* Build output string */
+    result = [NSString stringWithCharacters:buffer length:bufferSize];
+    
+    NSDeallocateMemoryPages(buffer, bufferSize);
+    
+    return result;
+}
+
 @end
 
 
@@ -364,19 +382,25 @@ int main (int argc, char **argv)
     /* Copy the arguments into a global variable */
     /* This is passed if we are launched by double-clicking */
     if ( argc >= 2 && strncmp (argv[1], "-psn", 4) == 0 ) {
+        gArgv = (char **) SDL_malloc(sizeof (char *) * 2);
+        gArgv[0] = argv[0];
+        gArgv[1] = NULL;
         gArgc = 1;
         gFinderLaunch = YES;
     } else {
+        int i;
         gArgc = argc;
+        gArgv = (char **) SDL_malloc(sizeof (char *) * (argc+1));
+        for (i = 0; i <= argc; i++)
+            gArgv[i] = argv[i];
         gFinderLaunch = NO;
     }
-    gArgv = argv;
 
-#ifdef SDL_USE_NIB_FILE
-    [SDLApplication poseAsClass:[NSApplication class]];
+#if SDL_USE_NIB_FILE
     NSApplicationMain (argc, argv);
 #else
-    DL_app_main (argc, argv);
+    CustomApplicationMain (argc, argv);
 #endif
     return 0;
 }
+
