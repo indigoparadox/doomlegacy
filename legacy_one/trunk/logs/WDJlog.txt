@@ -5652,4 +5652,19 @@ patchfile = w106_9_version1462_1287_docs.patch
 Release 1.46.2 again, due to finding another bug before making the release.
 Update Release docs and VER.
 
+*** W106_messagebox
+patchfile = w106_10_messagebox.patch
+- commit revision 1288
+The text in the message box is not in the box.
+Setup the message box position for non-menu message boxes.
+
+The Message box is positioned badly for video modes other than 800x600.
+This is due to menu centering Setup that differs from message box setup.
+Make the caller do the Setup to make it consistent for menus.
+
+Adjust connect menu position to give more room to the boxes.
+
+Fix the menu centering for video modes that pad the video lines.
+
+
 

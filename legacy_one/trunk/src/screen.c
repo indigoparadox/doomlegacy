@@ -429,9 +429,10 @@ void SCR_Recalc (void)
 
 
     //added:18-02-98: calculate centering offset for the scaled menu
-    // Adds a left margin for CENTERMENU
-    vid.centerofs = (((vid.height%BASEVIDHEIGHT)/2) * vid.width) +
-                    (vid.width%BASEVIDWIDTH)/2;
+    // Adds a left margin and top margin for CENTERMENU
+    // Fixed to account for video buffer line padding.
+    vid.centerofs = (((vid.height%BASEVIDHEIGHT)/2) * vid.ybytes) +
+                    (((vid.width%BASEVIDWIDTH)/2)  * vid.bytepp) ;
 
     // patch the asm code depending on vid buffer rowbytes
 #ifdef USEASM

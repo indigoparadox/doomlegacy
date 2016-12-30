@@ -972,8 +972,8 @@ void V_SetupDraw( uint32_t screenflags )
     }
     if (screenflags & V_CENTERMENU)
     {
-        // Center the menu by adding a left border.
-        drawinfo.start_offset += ( vid.centerofs * vid.bytepp );
+        // Center the menu by adding a left and top margin.
+        drawinfo.start_offset = vid.centerofs;
         // as previously was performed by scaleofs.
         // Enabled when the menu is displayed, and crosshairs.
         // The menu is scaled, a round multiple of the original pixels to
@@ -1725,8 +1725,12 @@ void V_DrawVidFill(int x, int y, int w, int h, byte color)
     }
 #endif
 
+#if 0
     dest = screens[0] + (y * vid.ybytes) + (x * vid.bytepp);
     dest += drawinfo.start_offset;
+#else
+    dest = drawinfo.drawp + (y * vid.ybytes) + (x * vid.bytepp);
+#endif
 
     for (v = 0; v < h; v++, dest += vid.ybytes)
     {
