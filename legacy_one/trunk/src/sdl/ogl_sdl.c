@@ -85,14 +85,14 @@ void  mac_report_context_var( char * str, GLint varid, int num )
     GLint paar[8];
 
     cglerr = CGLGetParameter ( cglcon, varid, paar );
-    if( clgerr )
+    if( cglerr )
       mac_cgl_error( "GetParameter", cglerr );
     else
     {
       if( num == 1 )
 	 GenPrintf( EMSG_info, "  %s = %i\n", paar[0] );
       else
-	 GenPrintf( EMSG_info, "  %s = %i,%i,%i,%i\n", paar[0], parr[1], parr[2], parr[3] );
+	 GenPrintf( EMSG_info, "  %s = %i,%i,%i,%i\n", paar[0], paar[1], paar[2], paar[3] );
     }
 }
 
