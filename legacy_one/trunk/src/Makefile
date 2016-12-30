@@ -573,13 +573,19 @@ ifeq ($(SMIF), SDL)
     EXENAME:=doomlegacy.exe
     LIBS:=-lopengl32 -lglu32 -lwsock32 -lm
   else
-    # default is Linux, for all unix SDL
-    EXENAME:=doomlegacy
-    LDFLAGS=-L/usr/X11R6/lib
-    LIBS:=-lGL -lGLU -lm
-    # -L/usr/X11R6/lib is needed by Linux 2.4 and others that still have
-    # the GLU libraries in an X11 directory.
-    # -lm is needed for pow, powf, and other MATH1 functions.
+    ifndef MAC
+      # default is Linux, for all unix SDL
+      EXENAME:=doomlegacy
+      LDFLAGS=-L/usr/X11R6/lib
+      LIBS:=-lGL -lGLU -lm
+      # -L/usr/X11R6/lib is needed by Linux 2.4 and others that still have
+      # the GLU libraries in an X11 directory.
+      # -lm is needed for pow, powf, and other MATH1 functions.
+    else
+      EXENAME:=doomlegacy
+      LDFLAGS=-framework OpenGL
+    endif
+
     SDL_CONFIG:=1
   endif
 
