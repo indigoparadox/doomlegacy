@@ -41,6 +41,7 @@
 byte verbose = 0;
 byte changevol_allowed = 1;
 byte parent_check = 1;  // check parent process
+byte no_devices_exit = 0;
 char parent_proc[32];  // parent process /proc/num
 
 int qid;  // IPC message queue id
@@ -79,13 +80,16 @@ void show_help(void)
     printf("  -c               Do not check whether the parent process is alive\n");
     printf("  -t <number>      Timeout for getting IPC message queue (sec).\n");
     printf("  -v -v2 -v3       Verbose. Default level 1.\n");
+    printf("  -x               Exit if no devices found.\n");
     printf("  -h               Help: print this message and exit\n");
 }
 
 // Index with dev_e.
 const char * dev_txt[] = {
-   "DEFAULT",
-   "NO_SYNTH",
+   "DEFAULT",  // preset default device
+   "SEARCH1",
+   "SEARCH2",
+   "SEARCH3",
    "MIDI",
    "TIMIDITY",
    "FLUIDSYNTH",
@@ -93,6 +97,10 @@ const char * dev_txt[] = {
    "SYNTH"
    "FM_SYNTH",
    "AWE32_SYNTH",
+   "DEV6",
+   "DEV7",
+   "DEV8",
+   "DEV9",
    "LIST"
 };
 
@@ -126,7 +134,29 @@ byte  select_device( char ch )
         sd = DVT_AWE32_SYNTH;
         break;
      default:
+     case 'a':
+        sd = DVT_SEARCH1;
+        break;
+     case 'b':
+        sd = DVT_SEARCH2;
+        break;
+     case 'c':
+        sd = DVT_SEARCH3;
+        break;
+     case 'd':
         sd = DVT_DEFAULT;
+        break;
+     case 'g':
+        sd = DVT_DEV6;
+        break;
+     case 'h':
+        sd = DVT_DEV7;
+        break;
+     case 'j':
+        sd = DVT_DEV8;
+        break;
+     case 'k':
+        sd = DVT_DEV9;
         break;
     }
     return sd;
@@ -137,7 +167,9 @@ void  parse_option_string( const char * optstr )
 {
     const char * p = optstr;
 
+    option_pending = 0;
     if( option_string == NULL )  return;
+
     while( *p != 0 )
     {
         while(*p == ' ') p++;
@@ -269,6 +301,9 @@ void  command_line( int ac, char * av[] )
             show_help();
             exit(0);
             break;
+         case 'x':
+            no_devices_exit = 1;
+            break;
          case '?': case ':':
             show_help();
             exit(1);
@@ -317,7 +352,6 @@ void cleanup_exit(int status, char * exit_msg)
 
 int main(int argc, char **argv)
 {
-    int result = 0;
     char * fail_msg = "";
     unsigned int musicsize;
     pid_t ppid;
@@ -424,9 +458,20 @@ int main(int argc, char **argv)
 
     for(;;)
     {
-//	qid = msgget( MUSSERVER_MSG_KEY, 0);
-        while( music_lump.state != PLAY_START )
+        if( option_pending )
+        {
+            parse_option_string( option_string );
+            cleanup_midi();
+            // load, setup the selected device
+            seq_midi_init_setup(sel_dvt, dev_type, dev_port_num);
+        }
+       
+        if( music_lump.state != PLAY_START )
+        {
             get_mesg(MSG_WAIT);
+        }
+
+        if( music_lump.state != PLAY_START )  continue;
 
         if (verbose >= 2)
             printf("Playing music resource number %d\n", music_lump.lumpnum + 1);
@@ -434,29 +479,18 @@ int main(int argc, char **argv)
              /* OUT */  & music_data );
         if( musicsize )
         {
-          // Looping is now set by IPC message.
-          result = playmus( & music_data, 1 );
-          free(music_data.data);
-          music_data.data = NULL;
+            // Looping is now set by IPC message.
+            playmus( & music_data, 1 );
         }
-        else
-        {
-          result = music_lump.state;
-        }
-        switch (result)
+        switch ( music_lump.state )
         {
           case PLAY_START:
             break;
           case PLAY_STOP:
+            free(music_data.data);
+            music_data.data = NULL;
             break;
           case PLAY_RESTART:
-            if( option_pending )
-            {
-               parse_option_string( option_string );
-               cleanup_midi();
-               // load, setup the selected device
-               seq_midi_init_setup(sel_dvt, dev_type, dev_port_num);
-            }
             music_lump.state = PLAY_START;
             break;
           case PLAY_QUITMUS:

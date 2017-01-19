@@ -313,9 +313,9 @@ void I_GetSfx(sfxinfo_t * sfx)
     if (sndserver)
     {
         // Send sound data to server.
-	// The sound server does not need padded sound, and if it did
-	// it could more easily do that itself.
-	uint32_t snd_size = size - 8;
+        // The sound server does not need padded sound, and if it did
+        // it could more easily do that itself.
+        uint32_t snd_size = size - 8;
         // [WDJ] No longer send volume with load, as it interferes with
         // the automated volume update.
         uint16_t id = sfx - S_sfx;
@@ -1123,13 +1123,20 @@ void I_SetMusicVolume(int volume)
 
 char * mus_ipc_opt_tab[] = {
   "-dd", // Default
+  "-da", // Search 1
+  "-db", // Search 2
+  "-dc", // Search 3
   "-dM", // Midi
   "-dT", // TiMidity
   "-dL", // FluidSynth
   "-dE", // Ext Midi
   "-dS", // Synth
   "-dF", // FM Synth
-  "-dA"  // Awe32 Synth
+  "-dA", // Awe32 Synth
+  "-dg", // Dev6
+  "-dh", // Dev7
+  "-dj", // Dev8
+  "-dk"  // Dev9
 };
 
 void I_SetMusicOption(void)
@@ -1137,7 +1144,7 @@ void I_SetMusicOption(void)
     byte bi = cv_musserver_opt.value;
 
     if( msg_id < 0 )  return;
-    if( bi > 6 )  return;
+    if( bi > 16 )  return;
 
     msg_buffer.mtype = 6;
     memset(msg_buffer.mtext, 0, MUS_MSG_MTEXT_LENGTH);

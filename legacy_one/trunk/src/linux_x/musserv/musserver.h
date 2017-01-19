@@ -139,8 +139,10 @@ typedef struct {
 
 // Device types
 typedef enum {
-   DVT_DEFAULT,
-   DVT_NO_SYNTH,
+   DVT_DEFAULT, // preset default device
+   DVT_SEARCH1,
+   DVT_SEARCH2,
+   DVT_SEARCH3,
    DVT_MIDI,  // TIMIDITY, FLUIDSYNTH, then EXT_MIDI
    DVT_TIMIDITY,
    DVT_FLUIDSYNTH,
@@ -148,6 +150,10 @@ typedef enum {
    DVT_SYNTH,  // synth devices
    DVT_FM_SYNTH,
    DVT_AWE32_SYNTH,
+   DVT_DEV6,
+   DVT_DEV7,
+   DVT_DEV8,
+   DVT_DEV9,
    DVT_LIST,
 } dvtype_e;
 
@@ -188,6 +194,7 @@ extern byte music_paused;
 extern byte verbose;
 extern byte changevol_allowed;
 extern byte parent_check;  // check parent process
+extern byte no_devices_exit;
 extern char parent_proc[32];  // parent process /proc/num
 
 extern int queue_size;
@@ -212,7 +219,7 @@ void control_change(int controller, int channel, int value);
 void patch_change(int patch, int channel);
 void vol_change(int volume);
 
-int playmus(music_data_t * music_data, byte check_msg);
+void playmus(music_data_t * music_data, byte check_msg);
 
 extern int qid;  // IPC message queue id
 

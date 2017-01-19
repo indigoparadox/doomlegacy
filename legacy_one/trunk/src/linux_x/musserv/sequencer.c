@@ -42,13 +42,14 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <sys/soundcard.h>
   // synth_info
 #include "musserver.h"
 
 // Some synth, like TiMidity, do not implement all-off effectively.
 // Take drastic measures to kill notes that drone on.
-#define ALL_OFF_FIX 1
+//#define ALL_OFF_FIX 1
 
 
 #ifdef DEFAULT_AWE32_SYNTH
@@ -113,7 +114,7 @@ static int mixfd;
 static int synth_patches[16];
 static int chanvol[16];
 static int volscale = 100;
-static unsigned int voxdate;
+static byte fm_note12 = 0;
 static synth_voice_t *voices;
 static struct sbi_instrument fm_sbi[175];
 opl_instr_t  fm_instruments[175];
@@ -175,6 +176,7 @@ int queue_free( void )
 //   Returns EINTR if fails to empty queue.
 //   This only flushes the music to the device or TiMidity,
 //   which has its own queue.
+//   Often hangs the musserver.
 // SNDCTL_SEQ_GETOUTCOUNT:
 //   Put (MAX_QUEUE - qlen) to value.
 // SNDCTL_SEQ_RESET:  reset the sequencer
@@ -319,45 +321,35 @@ void setup_fm(int fm_dev)
 {
   char * fail_msg = NULL;
   FILE *sndstat;
-  char sndver[100];
-  char snddate[100];
   int num_voices;
-  int x, y;
+  int x;
 
   use_dvt = DVT_FM_SYNTH;
   seq_dev = fm_dev;
   synth_ip = & sinfo[seq_dev];
+  fm_note12 = 0;
 
+  // Linux no longer has /dev/sndstat
   sndstat = fopen("/dev/sndstat", "r");
-  if (sndstat == NULL)
+  if( sndstat )
   {
-    fail_msg = "could not open /dev/sndstat";
-    goto fail_exit;
-  }
-  fgets(sndver, 100, sndstat);
-  if( verbose > 1 )
-    printf( "musserver: sndver=%s\n", sndver );
+      char sndver[100];
+      char * snddate = NULL;
 
-  for (x = 0; x < strlen(sndver); x++)
-  {
-    if (sndver[x] == '-')
-    {
-      x++;
-      for (y = x; y < strlen(sndver); y++)
-      {
-        if (sndver[y] != ' ')
-          snddate[y-x] = sndver[y];
-        else
-        {
-          snddate[y-x] = 0;
-          break;
-        }
-      }
-      break;
-    }
+      fgets(sndver, 100, sndstat);
+      fclose(sndstat);
+
+      if( verbose > 1 )
+          printf( "musserver: sndver=%s\n", sndver );
+
+      // [WDJ] Cannot fix this code properly because do not have the specific
+      // hardware they were detecting, and they did not leave comments.
+      // It does not exist on Linux 2.4 or Linux 2.6.
+      // Previous code was mostly extraneous.
+      snddate = strchr( sndver, '-' );
+      if( snddate && ( strncmp( snddate+1, "950728", 6 ) == 0) )
+         fm_note12 = 1;
   }
-  voxdate = atoi(snddate);
-  fclose(sndstat);
 
   num_voices = synth_ip->nr_voices;
   voices = malloc( num_voices * sizeof(synth_voice_t));
@@ -370,6 +362,12 @@ void setup_fm(int fm_dev)
     synth_patches[x] = -1;
 
   mixfd = open("/dev/mixer", O_WRONLY, 0);
+  if( mixfd < 0 )
+  {
+    printf( "musserver: /dev/mixer: %s\n", strerror(errno) );
+    fail_msg = "Failed to open mixer";
+    goto fail_exit;
+  }
 
   if (verbose)
     printf("Using synth device number %d (%s)\n", seq_dev+1, synth_ip->name);
@@ -406,12 +404,38 @@ void list_devs( void )
   exit(0);
 }
 
+
+// Search orders for pref device option.
+// Now that this is changable from the DoomLegacy menu,
+// no longer do search when an specific device is specified.
+// Ext midi is only a port, even when nothing is there, so put it last.
+static char * search_order[] =
+{
+  "",    // DVT_DEFAULT, never used
+  "ALTFE",      // DVT_SEARCH1
+  "AFLTghjkE",  // DVT_SEARCH2, to be customized
+  "kjhgTLFAE",  // DVT_SEARCH3, to be customized
+  "TLE",  // DVT_MIDI
+  "T",    // DVT_TIMIDITY
+  "L",    // DVT_FLUIDSYNTH
+  "E",    // DVT_EXT_MIDI
+  "AFL",  // DVT_SYNTH
+  "F",    // DVT_FM_SYNTH
+  "A",    // DVT_AWE32_SYNTH
+  "g",    // DVT_DEV6
+  "h",    // DVT_DEV7
+  "j",    // DVT_DEV8
+  "k"     // DVT_DEV9
+};
+
+
 static
 void seq_setup(int pref_dev, int dev_type, int port_num)
 {
   int fnd_dev = -1;
   char * pc;  // pref sequence chars
 
+//  printf( "pref_dev = %i, dev_type = %i, port_num = %i\n", pref_dev, dev_type, port_num );
   if ((seqfd = open("/dev/sequencer", O_WRONLY, 0)) < 0)
   {
     perror("open /dev/sequencer");
@@ -455,44 +479,22 @@ void seq_setup(int pref_dev, int dev_type, int port_num)
     find_synth( DVT_SYNTH, dev_type, -1);
   }
   
-#if 0   
-  printf("Timidity port: %i\n", timidity_dev );
-  printf("Ext midi port: %i\n", ext_midi_dev );
-  printf("FM port: %i\n", fm_dev );
-  printf("AWE32 port: %i\n", awe_dev );
-#endif
+  if( verbose )
+  {
+    printf("Timidity port: %i\n", timidity_dev );
+    printf("Ext midi port: %i\n", ext_midi_dev );
+    printf("FM port: %i\n", fm_dev );
+    printf("AWE32 port: %i\n", awe_dev );
+  }
 
   if ((timidity_dev < 0) && (ext_midi_dev < 0) && (fm_dev < 0) && (awe_dev < 0 ))
     goto no_devices;
 
-  switch(pref_dev)
+  if( pref_dev < DVT_SEARCH1 || pref_dev > DVT_DEV9 )  // table limits
   {
-    default:
-    case DVT_NO_SYNTH:
-      pc = "LETAF";
-      break;
-    case DVT_MIDI:
-      pc = "LETFA";
-      break;
-    case DVT_TIMIDITY:
-      pc = "TLEAF";
-      break;
-    case DVT_FLUIDSYNTH:
-      pc = "LTEAF";
-      break;
-    case DVT_EXT_MIDI:
-      pc = "ELTAF";
-      break;
-    case DVT_SYNTH:
-    case DVT_FM_SYNTH:
-      pc = "FLTEA";
-      break;
-#ifdef AWE32_SYNTH_SUPPORT
-    case DVT_AWE32_SYNTH:
-      pc = "ALTEF";
-      break;
-#endif
+     pref_dev = DVT_SEARCH1;
   }
+  pc = search_order[pref_dev];
   use_dvt = DVT_DEFAULT;
   for( ; ; pc++ )
   {
@@ -520,6 +522,11 @@ void seq_setup(int pref_dev, int dev_type, int port_num)
         setup_awe(awe_dev);
 #endif
       break;
+     case 'g':  // new device
+     case 'h':  // new device
+     case 'j':  // new device
+     case 'k':  // new device
+      break;
      case 0:  // end of list
       goto no_devices;
     }
@@ -530,7 +537,9 @@ void seq_setup(int pref_dev, int dev_type, int port_num)
   return;
 
 no_devices:
-  cleanup_exit(1, "no music devices found" );
+  seq_dev = -1;
+  if( no_devices_exit )
+      cleanup_exit(1, "no music devices found" );
   return;
 }
 
@@ -580,48 +589,42 @@ void clear_used(void)
     memset( channel_used, 0, sizeof(channel_used) );
     memset( note_used, 0, sizeof(note_used) );
 }
+#endif
 
 void all_off_midi(void)
 {
   if (use_dvt == DVT_MIDI)
   {
-    byte note, channel;
+#ifdef ALL_OFF_FIX
+    unsigned int note, channel;
     for (channel = 0; channel < 16; channel++)
     {
       if( ! channel_used[channel] ) continue;
       for( note=0; note <= 0x7F; note++ )
       {
-        SEQ_MIDIOUT(seq_dev, MIDI_NOTEOFF | channel);
-        SEQ_MIDIOUT(seq_dev, note);
-        SEQ_MIDIOUT(seq_dev, 63);
-        SEQ_DUMPBUF();
+        if( note_used[note] )
+        {
+          SEQ_MIDIOUT(seq_dev, MIDI_NOTEOFF | channel);
+          SEQ_MIDIOUT(seq_dev, note);
+          SEQ_MIDIOUT(seq_dev, 8);
+          SEQ_DUMPBUF();
+        }
       }
     }
     clear_used();
-  }
-}
-
 #else
-
-void all_off_midi(void)
-{
-  if (use_dvt == DVT_MIDI)
-  {
+    unsigned int channel;
     for (channel = 0; channel < 16; channel++)
     {
       /* all notes off */
       SEQ_MIDIOUT(seq_dev, MIDI_CTL_CHANGE | channel);
       SEQ_MIDIOUT(seq_dev, CMM_ALL_NOTES_OFF);
       SEQ_MIDIOUT(seq_dev, 0);
-      SEQ_DUMPBUF();
     }
-    ioctl(seqfd, SNDCTL_SEQ_SYNC);
-    SEQ_DELTA_TIME( 1000 );
     SEQ_DUMPBUF();
+#endif
   }
 }
-
-#endif
 
 
 
@@ -680,27 +683,33 @@ void reset_midi(void)
 #endif
   if (use_dvt == DVT_MIDI)
   {
-    // Stop drones first.
-    for (channel = 0; channel < 16; channel++)
-    {
-      /* all notes off */
-      SEQ_MIDIOUT(seq_dev, MIDI_CTL_CHANGE | channel);
-      SEQ_MIDIOUT(seq_dev, CMM_ALL_NOTES_OFF);
-      SEQ_MIDIOUT(seq_dev, 0);
-    }
-    SEQ_DUMPBUF();
-    usleep( 300 );  // long enough for synth to react
+    // SNDCTL_SEQ_SYNC hangs the musserver
+//    ioctl(seqfd, SNDCTL_SEQ_SYNC);
+    // All notes off on used channels.
+    // Being implemented at the driver, it has the most immediate effect.
+    ioctl(seqfd, SNDCTL_SEQ_RESET);
+    usleep( 500 );  // long enough for synth to react
+
+#if 0
+    // Optional additional all notes off.
+    // It does not seem to affect anything much.
+    pause_midi();
+    // It takes a while for buffer to get to all notes off, and then
+    // there is an off decay.
+    // If other commands follow too closely, they retrigger the note.
+    usleep(20000);
+#endif
+
+#ifdef ALL_OFF_FIX
+    all_off_midi();  // for synth that drone on
+    // Touching the controls too soon seems to retrigger drone
+    usleep(20000);
+#endif
 
     for (channel = 0; channel < 16; channel++)
     {
       /* reset pitch bender */
-#if 1
       pitch_bend( channel, 64 );
-#else
-      SEQ_MIDIOUT(seq_dev, MIDI_PITCH_BEND | channel);
-      SEQ_MIDIOUT(seq_dev, 64 >> 7);  // upper 7 bits
-      SEQ_MIDIOUT(seq_dev, 64 & 127); // lower 7 bits
-#endif
       /* reset volume to 100 */
       SEQ_MIDIOUT(seq_dev, MIDI_CTL_CHANGE | channel);
       SEQ_MIDIOUT(seq_dev, CTL_MAIN_VOLUME);
@@ -713,9 +722,6 @@ void reset_midi(void)
 
       SEQ_DUMPBUF();
     }
-#ifdef ALL_OFF_FIX     
-    all_off_midi();  // for synth that drone on
-#endif
   }
   else
   {
@@ -814,7 +820,7 @@ void note_on(int note, int channel, int volume)
       else
       {
         SEQ_SET_PATCH(seq_dev, x, synth_patches[channel]);
-        if ((voxdate != 950728) && (use_dvt == DVT_FM_SYNTH))
+        if ( fm_note12 )  // [WDJ] have no idea what this fixes
           note = note + 12;
       }
       SEQ_START_NOTE(seq_dev, x, note, volume);

@@ -136,18 +136,25 @@ void CV_musserv_opt_OnChange( void )
 }
 
 CV_PossibleValue_t musserv_opt_cons_t[] = {
-   {0, "Default"},
-   {1, "Midi"},
-   {2, "TiMidity"},
-   {3, "FluidSynth"},
-   {4, "Ext Midi"},
-   {5, "Synth"},
-   {6, "FM Synth"},
-   {7, "Awe32 Synth"},
+   {0, "Default dev"},
+   {1, "Search 1"},
+   {2, "Search 2"},
+   {3, "Search 3"},
+   {4, "Midi"},
+   {5, "TiMidity"},
+   {6, "FluidSynth"},
+   {7, "Ext Midi"},
+   {8, "Synth"},
+   {9, "FM Synth"},
+   {10, "Awe32 Synth"},
+   {11, "Dev6"},
+   {12, "Dev7"},
+   {13, "Dev8"},
+   {14, "Dev9"},
    {0, NULL}
 };
 
-consvar_t cv_musserver_opt = { "musserver_opt", "Default", CV_SAVE | CV_CALL,
+consvar_t cv_musserver_opt = { "musserver_opt", "Search 1", CV_SAVE | CV_CALL,
              musserv_opt_cons_t, CV_musserv_opt_OnChange };
 #endif
 

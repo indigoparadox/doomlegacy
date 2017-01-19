@@ -314,8 +314,7 @@ double  get_float_time(void)
 #endif
 
 
-// Return play_e
-int playmus(music_data_t * music_data, byte check_msg)
+void playmus(music_data_t * music_data, byte check_msg)
 {
   byte * musp;
   byte event0, event1, event2;  // bytes of the event
@@ -521,5 +520,5 @@ handle_msg:
   if( verbose >= 2 )
     printf( "Music STOP\n" );
   reset_midi();
-  return music_lump.state;;
+  return;
 }
