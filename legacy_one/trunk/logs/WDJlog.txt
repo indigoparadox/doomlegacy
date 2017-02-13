@@ -5727,3 +5727,13 @@ For Doom (but not Heretic) move the weapon down 1 pixel.
 The position was checked against prboom and looks to be the same now.
 Fixes bug 0455 (from 2004).
 
+*** W106_shadow
+patchfile = w106_15_shadow.patch
+- commit revision 1298
+Control variables for translucency and fuzzy mode were confused together,
+and confused with smoke draw.
+Separated fuzzy shadow draw from translucency.  Put fuzzy shadow draw
+control in effects menu.
+Expanded translucency control in effects menu.
+Fixed Smoke draw function assign.
+Fixes bug 0631.

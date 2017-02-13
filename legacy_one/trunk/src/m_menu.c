@@ -1763,6 +1763,7 @@ void M_DrawSlider (int x, int y, int range)
 menuitem_t EffectsOptionsMenu[]=
 {
     {IT_STRING | IT_CVAR,0,    "Translucency"     , &cv_translucency  , 0},
+    {IT_STRING | IT_CVAR,0,    "Fuzzy Shadow"     , &cv_fuzzymode     , 0},
     {IT_STRING | IT_CVAR,0,    "Splats"           , &cv_splats        , 0},
     {IT_STRING | IT_CVAR,0,    "Max splats"       , &cv_maxsplats     , 0},
     {IT_STRING | IT_CVAR,0,    "Sprites limit"    , &cv_spritelim     , 0},
