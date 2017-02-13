@@ -961,6 +961,9 @@ void R_ExecuteSetViewSize (void)
 
     // psprite scales
     centerypsp = rdraw_viewheight/2;  //added:06-02-98:psprite pos for freelook
+    // Doom weapons are too high for high resolutions.
+    if( ! raven_heretic_hexen )
+       centerypsp += (rdraw_viewheight/400);
 
     pspritescale  = (rdraw_viewwidth<<FRACBITS)/BASEVIDWIDTH;
     pspriteiscale = (BASEVIDWIDTH<<FRACBITS)/rdraw_viewwidth;   // x axis scale
