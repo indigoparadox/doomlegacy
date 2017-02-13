@@ -65,52 +65,73 @@
 #include "m_argv.h"
 #include "d_main.h"
 
+// Remap index is level map 1..34, or (episode-1)*9+map 1..36
+#define MAX_MAPPING   40
 #define MAX_CD_TRACKS 256
 
 static boolean cdValid = false;
 static boolean playing = false;
 static boolean wasPlaying = false;
 static boolean initialized = false;
-static boolean enabled = false;
-static boolean playLooping = false;
-static byte    playTrack;
+static boolean cd_enabled = false;
+static boolean play_looping = false;
+static byte    playTrack; // track being played, 1..n
 static byte    maxTrack;
-static byte    cdRemap[MAX_CD_TRACKS];
+static byte    cdRemap[MAX_MAPPING];
 static int     cdvolume = -1;
+static time_t  lastchk = 0;
+static time_t  play_time = 0;
+
+static int open_cdrom(void);
+static void I_StopCD(void);
+static void I_SetVolumeCD (int volume);
+static void cd_volume_onchange(void);
 
 CV_PossibleValue_t cd_volume_cons_t[]={{0,"MIN"},{31,"MAX"},{0,NULL}};
 
-consvar_t cd_volume = {"cd_volume","31",CV_SAVE, cd_volume_cons_t};
-consvar_t cdUpdate  = {"cd_update","1",CV_SAVE};
+consvar_t cd_volume = {"cd_volume","31", CV_SAVE|CV_CALL, cd_volume_cons_t, cd_volume_onchange};
+//consvar_t cdUpdate  = {"cd_update","1",CV_SAVE};
 consvar_t cv_jigglecdvol = {"jigglecdvolume", "0", CV_SAVE};
 
-static int cdfile = -1;
+static void cd_volume_onchange(void)
+{
+    I_SetVolumeCD( cd_volume.value ); 
+}
+
+static int cd_fd = -1;
 static char cd_dev[64] = "/dev/cdrom";
 
-void I_StopCD(void);
-int I_SetVolumeCD (int volume);
 
-
-static int CDAudio_GetAudioDiskInfo(void)
+// return 0 when CD TOC has been read
+static byte  CDAudio_GetAudioDiskInfo(void)
 {
-	struct cdrom_tochdr tochdr;
+    struct cdrom_tochdr tochdr;
+    int ierr;
+    char * errstr = NULL;
 
-	cdValid = false;
+    cdValid = false;
+    if( cd_fd < 0 )  return 1;
 
-	if ( ioctl(cdfile, CDROMREADTOCHDR, &tochdr) == -1 ) {
-            CONS_Printf("ioctl cdromreadtochdr failed\n");
-            return -1;
-        }
+    // Read TOC header
+    if ( ioctl(cd_fd, CDROMREADTOCHDR, &tochdr) < 0 ) {
+        errstr = "CDROM Read TOC";
+        goto errexit;
+    }
         
-	if (tochdr.cdth_trk0 < 1) {
-            CONS_Printf("CDAudio_GetAudioDiskInfo: no music tracks\n");
-            return -1;
-	}
+    if (tochdr.cdth_trk0 < 1) {
+        CONS_Printf("CDAudio_GetAudioDiskInfo: no music tracks\n");
+        return 2;
+    }
 
-	cdValid = true;
-	maxTrack = tochdr.cdth_trk1;
+    cdValid = true;
+    maxTrack = tochdr.cdth_trk1;
 
-	return 0;
+    return 0;
+
+errexit:
+    ierr = errno;
+    GenPrintf( EMSG_error, "%s: %s\n", errstr, strerror(ierr));
+    return 3;
 }
 
 static boolean CDAudio_GetStartStop(struct cdrom_msf *msf, int track, struct cdrom_tocentry *entry)
@@ -132,7 +153,7 @@ static boolean CDAudio_GetStartStop(struct cdrom_msf *msf, int track, struct cdr
         endentry.cdte_format = CDROM_MSF;
     }
     
-    if(ioctl(cdfile, CDROMREADTOCENTRY, &endentry))
+    if(ioctl(cd_fd, CDROMREADTOCENTRY, &endentry))
         return false;
         
     // end of track
@@ -145,379 +166,445 @@ static boolean CDAudio_GetStartStop(struct cdrom_msf *msf, int track, struct cdr
 
 static void I_EjectCD(void)
 {
-	if (cdfile == -1 || !enabled)
-            return; // no cd init'd
+    cdValid = false;
+    if (cd_fd < 0)
+        return; // no cd init'd
 
-        I_StopCD();
+    I_StopCD();
 
-	if ( ioctl(cdfile, CDROMEJECT) == -1 ) 
-            CONS_Printf("ioctl cdromeject failed\n");
+    if ( ioctl(cd_fd, CDROMEJECT) < 0 ) 
+        CONS_Printf("CD eject: %s\n", strerror(errno));
 }
 
-static void Command_Cd_f (void)
+static void command_CD_f (void)
 {
-	char	*command;
-	int		ret;
-	int		n;
+    char    *command;
+    int     ret;
+    int     n;
 
-	if (!initialized)
-	   return;
+    if (COM_Argc() < 2) {
+        CONS_Printf ("cd [on] [off] [remap] [reset] [open]\n"
+                     "   [info] [play <track>] [resume]\n"
+                     "   [stop] [pause] [loop <track>]\n");
+        return;
+    }
 
-	if (COM_Argc() < 2) {
-            CONS_Printf ("cd [on] [off] [remap] [reset] [open]\n"
-                         "   [info] [play <track>] [resume]\n"
-                         "   [stop] [pause] [loop <track>]\n");
+    command = COM_Argv (1);
+
+    if (!strncmp(command, "on", 2)) {
+            cd_enabled = true;
+            return;
+    }
+
+    if (!strncmp(command, "off", 3)) {
+            I_ShutdownCD();  // so can change CD disc
+            return;
+    }
+    
+    if (!strncmp(command, "remap", 5)) {
+        ret = COM_Argc() - 2;
+        if (ret <= 0) {
+            for (n = 1; n < MAX_MAPPING; n++)
+                if (cdRemap[n] != (n+1))
+                    CONS_Printf("  %u -> %u\n", n, cdRemap[n]);
             return;
         }
-
-	command = COM_Argv (1);
-
-	if (!strncmp(command, "on", 2)) {
-            enabled = true;
-            return;
-	}
-
-	if (!strncmp(command, "off", 3)) {
-            I_StopCD();
-            enabled = false;
-            return;
-	}
-	
-	if (!strncmp(command, "remap", 5)) {
-            ret = COM_Argc() - 2;
-            if (ret <= 0) {
-                for (n = 1; n < MAX_CD_TRACKS; n++)
-                    if (cdRemap[n] != n)
-                        CONS_Printf("  %u -> %u\n", n, cdRemap[n]);
-                return;
-            }
-            for (n = 1; n <= ret; n++)
-                cdRemap[n] = atoi(COM_Argv (n+1));
-            return;
-	}
+        for (n = 1; n <= ret; n++)
+            cdRemap[n] = atoi(COM_Argv (n+1));
+        return;
+    }
         
-	if (!strncmp(command, "reset", 5)) {
-            enabled = true;
-            I_StopCD();
+    if (!strncmp(command, "reset", 5)) {
+        cd_enabled = true;
+        I_StopCD();
             
-            for (n = 0; n < MAX_CD_TRACKS; n++)
-                cdRemap[n] = n;
-            CDAudio_GetAudioDiskInfo();
-            return;
+        for (n = 0; n < MAX_MAPPING; n++)
+            cdRemap[n] = (n+1);
+
+        CDAudio_GetAudioDiskInfo();
+        return;
+    }
+
+    if (cd_fd < 0)
+       open_cdrom();
+   
+    if (!strncmp(command, "info", 4)) {
+        if(cd_fd < 0)
+        {
+	    CONS_Printf("No CDROM");
+	    return;
 	}
+        CDAudio_GetAudioDiskInfo();
+        CONS_Printf("%u tracks\n", maxTrack);
+        if (playing)
+            CONS_Printf("Currently %s track %u\n", play_looping ? "looping" : "playing", playTrack);
+        else if (wasPlaying)
+            CONS_Printf("Paused %s track %u\n", play_looping ? "looping" : "playing", playTrack);
+        CONS_Printf("Volume is %d\n", cdvolume);
+        return;
+    }
+
+    if (!initialized)
+       return;
         
-	if (!cdValid) {
-            CDAudio_GetAudioDiskInfo();
-            if (!cdValid) {
-                CONS_Printf("No CD in player.\n");
-                return;
-            }
-	}
-
-	if (!strncmp(command, "open", 4)) {
-            I_EjectCD();
-            cdValid = false;
+    if (!cdValid) {
+        if( CDAudio_GetAudioDiskInfo() )
             return;
-	}
+    }
 
-	if (!strncmp(command, "info", 4)) {
-            CONS_Printf("%u tracks\n", maxTrack);
-            if (playing)
-                CONS_Printf("Currently %s track %u\n", playLooping ? "looping" : "playing", playTrack);
-            else if (wasPlaying)
-                CONS_Printf("Paused %s track %u\n", playLooping ? "looping" : "playing", playTrack);
-            CONS_Printf("Volume is %d\n", cdvolume);
-            return;
-	}
+   
+    if (!strncmp(command, "open", 4)) {
+        I_EjectCD();
+        return;
+    }
 
-	if (!strncmp(command, "play", 4)) {
+    if (!strncmp(command, "play", 4)) {
             I_PlayCD((byte)atoi(COM_Argv (2)), false);
             return;
-	}
+    }
 
-	if (!strncmp(command, "loop", 4)) {
+    if (!strncmp(command, "loop", 4)) {
             I_PlayCD((byte)atoi(COM_Argv (2)), true);
             return;
-	}
+    }
 
-	if (!strncmp(command, "stop", 4)) {
+    if (!strncmp(command, "stop", 4)) {
             I_StopCD();
             return;
-	}
+    }
         
-	if (!strncmp(command, "pause", 5)) {
+    if (!strncmp(command, "pause", 5)) {
             I_PauseCD();
             return;
-	}
+    }
         
-	if (!strncmp(command, "resume", 6)) {
+    if (!strncmp(command, "resume", 6)) {
             I_ResumeCD();
             return;
-	}
+    }
         
-	CONS_Printf("Invalid command \"cd %s\"\n", COM_Argv (1));
+    CONS_Printf("Invalid command \"cd %s\"\n", COM_Argv (1));
 }
 
+static
 void I_StopCD(void)
 {
-	if (cdfile == -1 || !enabled)
-		return;
-	
-	if (!(playing || wasPlaying))
-		return;
+    if (cd_fd < 0)
+        return;
+    
+    if (!(playing || wasPlaying))
+        return;
 
-	if ( ioctl(cdfile, CDROMSTOP, 0) == -1 )
-		CONS_Printf("ioctl cdromstop failed (%d)\n", errno);
+    if ( ioctl(cd_fd, CDROMSTOP, 0) < 0 )
+        CONS_Printf("CD stop: %s\n", strerror(errno));
 
-	wasPlaying = false;
-	playing = false;
+    wasPlaying = false;
+    playing = false;
+    lastchk = 0;
 }
 
 void I_PauseCD (void)
 {
-	if (cdfile == -1 || !enabled)
-		return;
-	
-	if (!playing)
-		return;
+    if (cd_fd < 0 || !cd_enabled)
+        return;
+    
+    if (!playing)
+        return;
 
-	if ( ioctl(cdfile, CDROMPAUSE) == -1 )
-		CONS_Printf("ioctl cdrompause failed (%d)\n", errno);
+    if ( ioctl(cd_fd, CDROMPAUSE) < 0 )
+        CONS_Printf("CD pause: %s\n", strerror(errno));
 
-	wasPlaying = playing;
-	playing = false;
+    wasPlaying = playing;
+    playing = false;
+    lastchk = 0;
 }
 
 // continue after a pause
 void I_ResumeCD (void)
 {
-	if (cdfile == -1 || !enabled)
-		return;
-	
-	if (!cdValid)
-		return;
+    if (cd_fd < 0 || !cd_enabled)
+        return;
+    
+    if (!cdValid)
+        return;
 
-	if (!wasPlaying)
-		return;
-	
-	if ( ioctl(cdfile, CDROMRESUME) == -1 ) 
-		CONS_Printf("ioctl cdromresume failed\n");
+    if (!wasPlaying)
+        return;
+    
+    if ( ioctl(cd_fd, CDROMRESUME) < 0 ) 
+        CONS_Printf("CD resume: %s\n", strerror(errno));
 
-	playing = true;
-        wasPlaying = false;
+    playing = true;
+    wasPlaying = false;
+    lastchk = ( play_looping )? 2 : 0;
 
-	if(cv_jigglecdvol.value)
-	{
-	    I_SetVolumeCD(31-cd_volume.value);
-	    I_SetVolumeCD(cd_volume.value);
-	}
+    if(cv_jigglecdvol.value)
+    {
+        I_SetVolumeCD(31-cd_volume.value);
+        I_SetVolumeCD(cd_volume.value);
+    }
 
-	return;
+    return;
 }
 
 
 void I_ShutdownCD (void)
 {
-	if (!initialized)
-		return;
-	I_StopCD();
-	close(cdfile);
-	cdfile = -1;
+    if (!initialized)
+        return;
 
-	initialized = false;
-	enabled = false;
+    I_StopCD();
+    close(cd_fd);
+    cd_fd = -1;
+
+    cdValid = false;
+    cd_enabled = false;
 }
 
 void I_InitCD (void)
 {
-	int i;
-
-	// Don't start music on a dedicated server
-	if (M_CheckParm("-dedicated"))
+    // Don't start music on a dedicated server
+    if (M_CheckParm("-dedicated"))
             return ;
-	
-	// Has been checked in d_main.c, but doesn't hurt here
-	if (M_CheckParm ("-nocd"))
+    
+    // Has been checked in d_main.c, but doesn't hurt here
+    if (M_CheckParm ("-nocd"))
             return ;
-	
-	// New commandline switch -cddev 
-	if ((i = M_CheckParm("-cddev")) != 0 && M_IsNextParm()) {
-            strncpy(cd_dev, M_GetNextParm() , sizeof(cd_dev));
-            cd_dev[sizeof(cd_dev) - 1] = 0;
-	}
+    
+    // New commandline switch -cddev 
+    if ( M_CheckParm("-cddev") && M_IsNextParm() ) {
+        strncpy(cd_dev, M_GetNextParm(), sizeof(cd_dev));
+        cd_dev[sizeof(cd_dev) - 1] = 0;
+    }
 
-	if ((cdfile = open(cd_dev, O_RDONLY)) == -1) {
-            int myerrno = errno;
-            CONS_Printf("I_InitCD: open of \"%s\" failed (%i)\n", cd_dev, myerrno);
-            if(EACCES == myerrno) // permission denied -> very common problem with IDE drives
-                CONS_Printf("-------------------------------------\n"
-                            "Permission denied to open device %s\n"
-                            "Set read permission or run as root\n"
-                            "if in doubt *READ THE DOCS*\n"
-                            "-------------------------------------\n", cd_dev); // Shall we add a line about this in the README?
-            cdfile = -1;
-            return ;
-	}
-	for (i = 0; i < MAX_CD_TRACKS; i++)
-            cdRemap[i] = i;
-        
-	initialized = true;
-	enabled = true;
-        
-	if (CDAudio_GetAudioDiskInfo()) {
-            CONS_Printf("I_InitCD: No CD in player.\n");
-            cdValid = false;
-	}
+    COM_AddCommand ("cd", command_CD_f);
 
-	if(cv_jigglecdvol.value)
-	{
-	    I_SetVolumeCD(31-cd_volume.value);
-	    I_SetVolumeCD(cd_volume.value);
-	}
-	
-	COM_AddCommand ("cd", Command_Cd_f);
+    CONS_Printf("CD Audio Initialized\n");
 
-	CONS_Printf("CD Audio Initialized\n");
-
-	return ;
+    initialized = true;
+    return;
 }
 
 
+static
+int  open_cdrom(void)
+{
+    int i;
 
-// loop/go to next track when track is finished (if cd_update var is true)
-// update the volume when it has changed (from console/menu) 
-// FIXME: Why do we have Setvolume then ???
-// TODO: check for cd change and restart music ?
-//
+    if( cd_fd >= 0 )  return 1;   // already open
+
+    // As of Linux 2.1, must use O_NONBLOCK.  See /usr/include/linux/cdrom.h
+    cd_fd = open(cd_dev, O_RDONLY|O_NONBLOCK);
+    if ( cd_fd < 0 )
+    {
+        int myerrno = errno;
+        CONS_Printf("Open \"%s\" failed:\n %s\n",
+		    cd_dev, strerror(myerrno));
+        if(EACCES == myerrno)
+        {
+	    // permission denied -> very common problem with IDE drives
+	    // Shall we add a line about this in the README?
+            CONS_Printf("-------------------------------------\n"
+                        "Permission denied to open device %s\n"
+                        "Set read permission or run as root\n"
+                        "if in doubt *READ THE DOCS*\n"
+                        "-------------------------------------\n", cd_dev);
+	}
+        return -1;
+    }
+    for (i = 0; i < MAX_MAPPING; i++)
+        cdRemap[i] = (i+1);
+        
+    cd_enabled = true;
+    cdValid = false;  // force read of TOC
+
+    if(verbose)
+        CONS_Printf( "CD %s open\n", cd_dev );
+
+    if(cv_jigglecdvol.value)
+    {
+        I_SetVolumeCD(31-cd_volume.value);
+    }
+    I_SetVolumeCD(cd_volume.value);
+
+    return 2;
+}
+
+
+// Check for done and loop track.
 void I_UpdateCD (void)
 {
+    if(dedicated)
+        return;
+    
+    if (!cd_enabled || !play_looping || !playing )
+        return;
+   
+    if( lastchk < 3 )
+    {
+        if( lastchk == 2 )
+        {
+	  // Est. time to play,  + 4 secs.
+          lastchk = time(NULL) + (play_time + 4);
+        }
+        return;
+    }
+
+    // FIXME: Do we have a "hicup" here every 2 secs?
+    if ( playing && (lastchk < time(NULL)) )
+    {
         struct cdrom_subchnl subchnl;
-	static time_t lastchk;
-	
-	if(dedicated)
-	    return;
-	
-	if (!enabled)
-		return;
-
-	I_SetVolumeCD(cd_volume.value);
-
-	// FIXME: Do we have a "hicup" here every 2 secs?
-	if (playing && lastchk < time(NULL)) {
-            lastchk = time(NULL) + 2; //two seconds between chks
+    
+        // [WDJ] Checking the CD status blocks for 1/4 second,
+        // which is very visible during play.
+            lastchk = time(NULL) + 4; // 4 seconds between chks
             subchnl.cdsc_format = CDROM_MSF;
-            if (ioctl(cdfile, CDROMSUBCHNL, &subchnl) == -1 ) {
-                CONS_Printf("ioctl cdromsubchnl failed\n");
+            if (ioctl(cd_fd, CDROMSUBCHNL, &subchnl) < 0 ) {
+                CONS_Printf("CD subchnl: %s\n", strerror(errno));
                 playing = false;
                 return;
             }
             if (subchnl.cdsc_audiostatus != CDROM_AUDIO_PLAY &&
                 subchnl.cdsc_audiostatus != CDROM_AUDIO_PAUSED) {
                 playing = false;
-                if (playLooping)
-                    I_PlayCD(playTrack, true);
+                if (play_looping)
+                    I_PlayCD(playTrack|0x100, true);
             }
-	}
+    }
 }
 
 
 // play the cd
+//  track : 1 .. n
 void I_PlayCD (unsigned int track, boolean looping)
 {
-	struct cdrom_tocentry entry;
-        struct cdrom_msf msf;
+    struct cdrom_tocentry entry;
+    struct cdrom_msf msf;
 
-	if (cdfile == -1 || !enabled)
-		return;
-	
-	if (!cdValid)
-	{
-		CDAudio_GetAudioDiskInfo();
-		if (!cdValid)
-			return;
-	}
+    if ( !cd_enabled )
+        return;
+     
+    if( cd_fd < 0 ) {  // to allow insert of disk after starting DoomLegacy
+        if( open_cdrom() < 0 )   return;
+    }
 
-	track = cdRemap[track];
-
-	if (track < 1 || track > maxTrack)
-	{
-		CONS_Printf("I_PlayCD: Bad track number %u.\n", track);
-		return;
-	}
-
-	// don't try to play a non-audio track
-	entry.cdte_track = track;
-	entry.cdte_format = CDROM_MSF;
-	if ( ioctl(cdfile, CDROMREADTOCENTRY, &entry) == -1 )
-	   {
-	      CONS_Printf("ioctl cdromreadtocentry failed\n");
-	      return;
-	   }
-	if (entry.cdte_ctrl == CDROM_DATA_TRACK)
-	{
-		CONS_Printf("I_PlayCD: track %i is not audio\n", track);
-		return;
-	}
-
-	if(cv_jigglecdvol.value)
-	{
-	    I_SetVolumeCD(31-cd_volume.value);
-	    I_SetVolumeCD(cd_volume.value);
-	}
-	
-	if (playing)
-	{
-		if (playTrack == track)
-			return;
-		I_StopCD();
-	}
-
-        if(!CDAudio_GetStartStop(&msf, track, &entry)) 
+    if (!cdValid)
+    {
+        if( CDAudio_GetAudioDiskInfo() )
             return;
+    }
 
-        if(ioctl(cdfile, CDROMPLAYMSF, &msf) == -1) {
-            CONS_Printf("ioctl cdromplaymsf failed\n");
-            return;
-        }
+    if( track & 0x100 )
+    {
+        // looping bypasses remap
+        track = track & 0x3f;
+    }
+    else
+    {
+        if( track < 1 )   track = 1;
+        if( track > MAX_MAPPING-1 )  track = MAX_MAPPING-1;
+        // cdRemap index is 0 .. n-1
+        track = cdRemap[track-1];
+        if( track == 0 )  return;
+        // Linux CDROM tracks are 1 .. n
+    }
+
 #if 0
-        // FIXME: is this necessary??
-	if ( ioctl(cdfile, CDROMRESUME) == -1 ) 
-		CONS_Printf("ioctl cdromresume failed\n");
+    if( ioctl(cd_fd, CDROMSTART) < 0 )
+    {
+        errstr = "CDROM Start";
+        goto errexit;
+    }
+#endif
+   
+    // don't try to play a non-audio track
+    entry.cdte_track = track;
+    entry.cdte_format = CDROM_MSF;
+    if ( ioctl(cd_fd, CDROMREADTOCENTRY, &entry) < 0 )
+    {
+        CONS_Printf("CD read TOC: %s\n", strerror(errno));
+        return;
+    }
+    if (entry.cdte_ctrl == CDROM_DATA_TRACK)
+    {
+        CONS_Printf("I_PlayCD: track %i is not audio\n", track);
+        return;
+    }
+
+#if 0   
+    if(cv_jigglecdvol.value)
+    {
+        I_SetVolumeCD(31-cd_volume.value);
+        I_SetVolumeCD(cd_volume.value);
+    }
 #endif   
 
-	if(cv_jigglecdvol.value)
-	{
-	    I_SetVolumeCD(31-cd_volume.value);
-	    I_SetVolumeCD(cd_volume.value);
-	}
-	
-	playLooping = looping;
-	playTrack = track;
-	playing = true;
+    if (playing)
+    {
+        if (playTrack == track)
+            return;
+        I_StopCD();
+    }
+
+    if(!CDAudio_GetStartStop(&msf, track, &entry)) 
+        return;
+
+    if( ioctl(cd_fd, CDROMPLAYMSF, &msf) < 0 ) {
+        CONS_Printf("CD play msf: %s\n", strerror(errno));
+        return;
+    }
+#if 0
+        // FIXME: is this necessary??
+    if( ioctl(cd_fd, CDROMRESUME) < 0 ) 
+        CONS_Printf("CD resume: %s\n", strerror(errno));
+#endif   
+
+    if(cv_jigglecdvol.value)
+    {
+        I_SetVolumeCD(31-cd_volume.value);
+    }
+    I_SetVolumeCD(cd_volume.value);
+    
+    play_looping = looping;
+    // only enable play check if play looping
+    lastchk = ( play_looping )? 2 : 0;
+    // play time, secs
+    play_time = ((msf.cdmsf_min1 - msf.cdmsf_min0) * 60)
+	     + (msf.cdmsf_sec1 - msf.cdmsf_sec0);
+    if( verbose )
+        CONS_Printf( "Play time %u secs\n", play_time );
+    playTrack = track;
+    playing = true;
 }
 
 
 // volume : logical cd audio volume 0-31 (hardware is 0-255)
-int I_SetVolumeCD (int volume)
+static
+void I_SetVolumeCD (int volume)
 {
-        struct cdrom_volctrl volctrl;
+    struct cdrom_volctrl volctrl;
+    
+    if( cd_fd < 0 )  return;
 
-	if(volume < 0 || volume > 31)
-	   CONS_Printf("cdvolume should be between 0-31\n");
+    if(volume < 0 || volume > 31)
+    {
+        CONS_Printf("cdvolume should be between 0-31\n");
+        volume = 0;
+    }
 
-	// volume control for CD music
-	if (volume != cdvolume){
-	      volctrl.channel0 = volume/31.0 * 255.0;
-	      volctrl.channel1 = volctrl.channel0;
-	      volctrl.channel2 = 0;
-	      volctrl.channel3 = 0;
-	      
-	      if(ioctl(cdfile, CDROMVOLCTRL, &volctrl) == -1){
-		 CONS_Printf("ioctl cdromvolctrl failed\n");
-	      }
-	      
-	      cdvolume = volume;
-	}
-		    
-    return 0;
+    // volume control for CD music
+    volctrl.channel0 = (volume * 255.0) / 31.0;
+    volctrl.channel1 = volctrl.channel0;
+    volctrl.channel2 = 0;
+    volctrl.channel3 = 0;
+
+    if(ioctl(cd_fd, CDROMVOLCTRL, &volctrl) < 0){
+        CONS_Printf("CD volume: %s\n", strerror(errno));
+    }
+
+    // Read back volume
+    cdvolume = 0;
+    if(ioctl(cd_fd, CDROMVOLREAD, &volctrl) >= 0){
+        cdvolume = (volctrl.channel0 * 31) / 255;
+    }
 }

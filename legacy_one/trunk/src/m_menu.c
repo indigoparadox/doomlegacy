@@ -1041,7 +1041,7 @@ void M_StartServer( int choice )
     {
         dedicated = true;
         nodrawers = true;
-        vid.draw_ready = 0;
+        vid.draw_ready = 0;        
         I_ShutdownGraphics();
     }
     D_WaitPlayer_Setup();
@@ -2233,11 +2233,20 @@ menuitem_t SoundMenu[]=
     {IT_CVARMAX   | IT_PATCH ,"M_MUSVOL","Music Volume",&cv_musicvolume  ,'m'},
     {IT_BIGSLIDER | IT_SPACE ,NULL      ,NULL          ,&cv_musicvolume      },
 #ifdef CDMUS
+#ifdef SMIF_SDL
+    // [WDJ] SDL cannot control CDROM volume.
+    {IT_SPACE, NULL, NULL, NULL },
+    {IT_STRING | IT_CVAR, 0, "CD Volume on", &cd_volume },  // on off
+#else   
     {IT_CVARMAX   | IT_PATCH ,"M_CDVOL" ,"CD Volume"   ,&cd_volume       ,'c'}, // in legacy.wad
     {IT_BIGSLIDER | IT_SPACE ,NULL      ,NULL          ,&cd_volume           },
 #endif
+#endif
 #ifdef MUSSERV
-    {IT_STRING | IT_CVAR | IT_YOFFSET, 0, "Music Pref",  &cv_musserver_opt , 110},
+#if !defined(CDMUS) || !defined(SMIF_SDL)
+    {IT_SPACE, NULL, NULL, NULL },
+#endif
+    {IT_STRING | IT_CVAR | IT_YOFFSET, 0, "Music Pref",  &cv_musserver_opt },
 #endif
 };
 
