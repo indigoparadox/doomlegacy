@@ -243,6 +243,8 @@ int VID_SetMode(modenum_t modenum)
     if (cv_scr_depth.value<16)
         CV_Set(&cv_scr_depth,"16");         // dont want 8-bit (?)
 
+    vid.draw_ready = 0;  // disable print reaching console
+
     vid.bitpp = 32;
     vid.bytepp = 4;
     vid.width = modeList[modenum.index].w;

@@ -1041,6 +1041,7 @@ void M_StartServer( int choice )
     {
         dedicated = true;
         nodrawers = true;
+        vid.draw_ready = 0;
         I_ShutdownGraphics();
     }
     D_WaitPlayer_Setup();

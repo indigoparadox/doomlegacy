@@ -471,6 +471,13 @@ static void  VID_SetMode_vid( int req_width, int req_height, int reqflags )
     if( cbpp == 0 )
         return; // SetMode would have failed, keep current buffers
 
+    if( verbose>1 )
+    {
+        GenPrintf( EMSG_ver,"SDL_SetVideoMode(%i,%i,%i,0x%X)  %s\n",
+		req_width, req_height, request_bitpp, reqflags,
+		(reqflags&SDL_FULLSCREEN)?"Fullscreen":"Window");
+    }
+
     if(vidSurface)
     {
         SDL_FreeSurface(vidSurface);
@@ -483,13 +490,6 @@ static void  VID_SetMode_vid( int req_width, int req_height, int reqflags )
     vid.width = req_width;
     vid.height = req_height;
    
-    if( verbose>1 )
-    {
-        GenPrintf( EMSG_ver,"SDL_SetVideoMode(%i,%i,%i,0x%X)  %s\n",
-		vid.width, vid.height, request_bitpp, reqflags,
-		(reqflags&SDL_FULLSCREEN)?"Fullscreen":"Window");
-    }
-
     vidSurface = SDL_SetVideoMode(vid.width, vid.height, request_bitpp, reqflags);
     if(vidSurface == NULL)
         return;  // Modes were prechecked, SDL should not fail.
@@ -573,12 +573,13 @@ int VID_SetMode(modenum_t modenum)
     int req_width, req_height;
     boolean set_fullscreen = (modenum.modetype == MODE_fullscreen);
 
+    vid.draw_ready = 0;  // disable print reaching console
+    vid.recalc = true;
+
     GenPrintf( EMSG_info, "VID_SetMode(%s,%i)\n",
 	       modetype_string[modenum.modetype], modenum.index);
 
     I_UngrabMouse();
-
-    vid.recalc = true;
 
     if( set_fullscreen )
     {
@@ -620,6 +621,8 @@ int VID_SetMode(modenum_t modenum)
     vid.modenum = modenum;
     vid.fullscreen = set_fullscreen;
     vid.widthbytes = vid.width * vid.bytepp;
+
+    V_Setup_VideoDraw(); // setup screen for print messages, redundant.
 
     I_StartupMouse( false );
 
@@ -682,6 +685,8 @@ void I_RequestFullGraphics( byte select_fullscreen )
     SDL_PixelFormat    req_format;
     char * req_errmsg = NULL;
     byte  alt_request_bitpp = 0;
+
+    vid.draw_ready = 0;  // disable print reaching console
 
     // Get video info for screen resolutions
     // even if I set vid.bytepp and highscreen properly it does seem to

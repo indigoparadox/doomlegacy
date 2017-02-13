@@ -1917,6 +1917,9 @@ static int createWindow(boolean set_fullscreen, modenum_t modenum)
           GenPrintf(EMSG_info, "Draw direct\n");
       }
 #endif
+      // Will segfault on the verbose messages if the screen is not setup.
+      V_Setup_VideoDraw();
+
       if( verbose )
       {
           GenPrintf(EMSG_ver, "Drawing %i bpp,  video at % i bpp\n", vid.bitpp, x_bitpp );
@@ -1968,6 +1971,8 @@ int VID_SetMode( modenum_t modenum )
 {
     boolean set_fullscreen = (modenum.modetype == MODE_fullscreen);
 
+    vid.draw_ready = 0;  // disable print reaching console
+   
     if(haveVoodoo) {
         int mi = modenum.index - 1;
         if(mi >= NUM_VOODOOMODES)   goto fail_end;
@@ -2050,6 +2055,7 @@ void I_StartupGraphics(void)
     // pre-init by V_Init_VideoControl
     char  *displayname;
    
+    vid.draw_ready = 0;  // disable print reaching console
     graphics_state = VGS_startup;
 
     // FIXME: catch other signals as well?
@@ -2090,11 +2096,11 @@ void I_StartupGraphics(void)
     // startupscreen does not need a grabbed mouse
     I_UngrabMouse();
 
-    vid.recalc = true;
-    graphics_state = VGS_active;
-
     if( verbose )
         GenPrintf(EMSG_ver, "StartupGraphics completed\n" );
+
+    vid.recalc = true;
+    graphics_state = VGS_active;
     return;
 
 abort_error:
@@ -2110,8 +2116,9 @@ void I_RequestFullGraphics( byte select_fullscreen )
     modenum_t  initialmode;
     void *dlptr;
 
-    destroyWindow();
+    vid.draw_ready = 0;  // disable print reaching console
     graphics_state = VGS_startup;
+    destroyWindow();
 
     // setup vid 19990110 by Kin
 
@@ -2266,11 +2273,11 @@ void I_RequestFullGraphics( byte select_fullscreen )
     // startupscreen does not need a grabbed mouse
     I_UngrabMouse();
 
-    vid.recalc = true;
-    graphics_state = VGS_fullactive;
-
     if( verbose )
         GenPrintf(EMSG_ver, "RequestFullGraphics completed\n" );
+
+    vid.recalc = true;
+    graphics_state = VGS_fullactive;
     return;
 
 abort_error:

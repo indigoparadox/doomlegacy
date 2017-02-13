@@ -826,6 +826,8 @@ int VID_SetMode (modenum_t modenum)
     boolean  set_fullscreen = (modenum.modetype == MODE_fullscreen);
     range_t  range = VID_ModeRange( modenum.modetype );
 
+    vid.draw_ready = 0;  // disable print reaching console
+
     GenPrintf( EMSG_info, "VID_SetMode(%d,%d)\n", modenum.modetype, modenum.index);
 
     if ((modenum.index > range.last) || (modenum.index < range.first))

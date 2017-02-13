@@ -388,6 +388,8 @@ int VID_SetMode (modenum_t modenum)
     oldmode_p = currentmode_p;
     currentmode_p = newmode_p;
 
+    vid.draw_ready = 0;  // disable print reaching console
+
     // initialize vidbuffer size for setmode_func
     vid.width  = currentmode_p->width;
     vid.height = currentmode_p->height;

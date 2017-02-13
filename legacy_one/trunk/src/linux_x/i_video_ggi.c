@@ -469,6 +469,7 @@ found_i:
 void I_StartupGraphics(void)
 {
     // pre-init by V_Init_VideoControl
+  vid.draw_ready = 0;  // disable print reaching console
   graphics_state = VGS_startup;
 
   if (ggiInit())
@@ -479,10 +480,11 @@ void I_StartupGraphics(void)
 
   // ??? No window mode
   
-  vid.recalc = true;
-  graphics_state = VGS_active;
   if( verbose )
       GenPrintf(EMSG_ver, "StartupGraphics completed\n" );
+
+  vid.recalc = true;
+  graphics_state = VGS_active;
   return;
 }
 
@@ -496,6 +498,7 @@ void I_RequestFullGraphics( byte select_fullscreen )
   byte  alt_request_bitpp = 0;
   int i;
 
+  vid.draw_ready = 0;  // disable print reaching console
   graphics_state = VGS_startup;
 
 #ifdef MULTIPLY_ENABLE
@@ -643,6 +646,8 @@ int VID_SetMode(modenum_t modenum)
   int mi = modenum_index - 1;
   if( mi >= num_vidmodes || mi < 0 )   goto fail_end;
 
+  vid.draw_ready = 0;  // disable print reaching console
+   
   if (ggiSetMode(screen,&vidmodes[mi])) {
     I_SoftError("Failed to set mode");
     return  FAIL_create;

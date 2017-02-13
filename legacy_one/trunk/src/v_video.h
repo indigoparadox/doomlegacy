@@ -92,6 +92,8 @@ void V_Init_VideoControl( void );
 // Allocates buffer screens, call before R_Init.
 // Must be called after every video Init and SetMode
 void V_Setup_VideoDraw (void);
+// Setup wad loadable video resources.
+void V_Setup_Wad_VideoResc(void);
 
 // Set the current RGB palette lookup to use for palettized graphics
 void V_SetPalette( int palettenum );
