@@ -842,8 +842,11 @@ void D_DoomLoop(void)
     if (demorecording)
         G_BeginRecording();
 
-    // user settings
-    COM_BufAddText("exec autoexec.cfg\n");
+    if( access( "autoexec.cfg", R_OK) == 0 )
+    {
+        // user settings
+        COM_BufAddText("exec autoexec.cfg\n");
+    }
 
     // end of loading screen: CONS_Printf() will no more call FinishUpdate()
     con_self_refresh = false;
