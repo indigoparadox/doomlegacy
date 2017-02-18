@@ -1406,7 +1406,9 @@ boolean D_Startup_NetGame(void)
         {
             // Command_connect is invoked by Init_TCP_Network.
             server = false;
-            netgame = true;
+	    // Init_TCP_Network tests -connect, and tests netgame,
+	    // then issues connect command that sets netgame, and multiplayer.
+//            netgame = true;  
         }
     }
 

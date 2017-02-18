@@ -1388,9 +1388,7 @@ void I_Init_TCP_Network( void )
 #endif
            )
         {
-            COM_BufAddText("connect \"");
-            COM_BufAddText(serverhostname);
-            COM_BufAddText("\"\n");
+            COM_BufAddText(va("connect \"%s\"", serverhostname ));
 
             // probably modem
             hardware_MAXPACKETLENGTH = INETPACKETLENGTH;
