@@ -24,6 +24,11 @@ The translucent draw control has been expanded.
 
 <h3>BUG FIXES 1.46.3</h3>
 <ul>
+<li>
+Fix the setup of the message box position for non-menu message boxes.
+Fix message box text positioning so that it is in the message box for
+video modes other than 800x600.
+</li>
 <li>Video modes switches could cause segfault if a video print triggered
 console output.  This was occuring in the linux_x xshm port when
 verbose was enabled.
