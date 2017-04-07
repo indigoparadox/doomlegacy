@@ -1935,6 +1935,7 @@ void M_GameOption(int choice)
 menuitem_t AdvOptionsMenu[]=
 {
     {IT_STRING | IT_CVAR,0,"Gravity"             ,&cv_gravity            ,0},
+    {IT_STRING | IT_CVAR,0,"Monster gravity"     ,&cv_monstergravity     ,0},  // [WDJ]
     {IT_STRING | IT_CVAR,0,"Monster friction"    ,&cv_monsterfriction    ,0},  // [WDJ]
     {IT_STRING | IT_CVAR,0,"Monster door stuck"  ,&cv_doorstuck          ,0},  // [WDJ]
     {IT_STRING | IT_CVAR,0,"Voodoo mode"         ,&cv_voodoo_mode        ,0},  // [WDJ]

@@ -103,6 +103,8 @@ void CV_monster_OnChange(void)
     DemoAdapt_p_enemy();
 }
 
+consvar_t cv_monstergravity = {"monstergravity","1", CV_NETVAR | CV_SAVE | CV_CALL, CV_OnOff, CV_monster_OnChange };
+
 // DarkWolf95: Monster Behavior
 CV_PossibleValue_t monbehavior_cons_t[]={
    {0,"Normal"},
@@ -434,6 +436,7 @@ byte EN_skull_limit = 0;  // turn off pain skull gen limits
 byte EN_old_pain_spawn = 0;
 byte EN_doorstuck = 0;
 byte EN_mbf_doorstuck = 0;
+byte EN_monster_gravity = 0;
 
 
 // local version control
@@ -457,6 +460,8 @@ void DemoAdapt_p_enemy( void )
     }
     EN_skull_limit = ( demoversion <= 132 ) ? 20 : 0;  // doom demos
     EN_old_pain_spawn = ( demoversion < 143 );
+//    EN_monster_gravity = ( demoversion >= 147 ) && (cv_monstergravity.value > 0);
+    EN_monster_gravity = ( demoversion >= 146 ) && (cv_monstergravity.value > 0); // DEBUG
     if( demoplayback && (demoversion < 144 || demoversion >= 200))
     {
         EN_mbf_doorstuck = ( demoversion > 203 );  // mbf demo
@@ -713,9 +718,12 @@ static boolean P_MoveActor (mobj_t* actor)  // formerly P_Move
 
     if (! (actor->flags & MF_FLOAT) )
     {
+      if( ! EN_monster_gravity )
+      {
         if(actor->z > actor->floorz)
            P_HitFloor(actor);
         actor->z = actor->floorz;
+      }
     }
     return true;
 }

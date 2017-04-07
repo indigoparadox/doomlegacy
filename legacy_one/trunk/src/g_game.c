@@ -2581,7 +2581,7 @@ void G_BeginRecording (void)
     *demo_p++ = nomonsters;
     *demo_p++ = consoleplayer;
     *demo_p++ = cv_timelimit.value;      // just to be compatible with old demo (no more used)
-    *demo_p++ = multiplayer;             // 1.31
+    *demo_p++ = multiplayer;             // 1..31
 
     for (i=0 ; i<MAXPLAYERS ; i++)
     {
@@ -2605,9 +2605,10 @@ void G_BeginRecording (void)
     *demo_p++ = cv_rndsoundpitch.value;  // uses M_Random
     *demo_p++ = cv_monbehavior.value;
     *demo_p++ = cv_doorstuck.value;
+    *demo_p++ = cv_monstergravity.value;
     
     // empty space
-    for( i=9; i<32; i++ )  *demo_p++ = 0;
+    for( i=10; i<32; i++ )  *demo_p++ = 0;
 
     *demo_p++ = 0x55;   // Sync mark, start of data
     memset(oldcmd,0,sizeof(oldcmd));
@@ -2618,6 +2619,7 @@ void G_BeginRecording (void)
 byte pdss_settings_valid = 0;  // init not saved
 byte pdss_solidcorpse;
 byte pdss_instadeath;
+byte pdss_monstergravity;
 byte pdss_monsterfriction;
 byte pdss_monbehavior;
 byte pdss_rndsoundpitch;
@@ -2641,6 +2643,7 @@ void playdemo_save_settings( void )
         pdss_settings_valid = 1;
         pdss_solidcorpse = cv_solidcorpse.value;
         pdss_instadeath = cv_instadeath.value;
+        pdss_monstergravity = cv_monstergravity.value;
         pdss_monsterfriction = cv_monsterfriction.value;
         pdss_monbehavior = cv_monbehavior.value;
         pdss_rndsoundpitch = cv_rndsoundpitch.value; // calls M_Random
@@ -2655,6 +2658,7 @@ void playdemo_restore_settings( void )
     {
         cv_solidcorpse.value = pdss_solidcorpse;
         cv_instadeath.value = pdss_instadeath;
+        cv_monstergravity.value = pdss_monstergravity;
         cv_monsterfriction.value = pdss_monsterfriction;
         cv_monbehavior.value = pdss_monbehavior;
         cv_rndsoundpitch.value = pdss_rndsoundpitch; // calls M_Random
@@ -2803,6 +2807,7 @@ void G_DoPlayDemo (char *defdemoname)
         voodoo_mode = 0;  // Vanilla
         cv_instadeath.value = 0;  // Die
         cv_monbehavior.value = 0;  // do not notify NET
+        cv_monstergravity.value = 0;
         monster_infight = INFT_none;
     }
 
@@ -3018,6 +3023,7 @@ void G_DoPlayDemo (char *defdemoname)
         cv_rndsoundpitch.value = *demo_p++;  // uses M_Random
         cv_monbehavior.value = *demo_p++;
         cv_doorstuck.value = *demo_p++;
+        cv_monstergravity.value = *demo_p++;
 
         demo_p = demo_p_next;  // skip rest of settings
         if( *demo_p++ != 0x55 )  goto broken_header;  // Sync mark, start of data

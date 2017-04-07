@@ -343,6 +343,7 @@ void D_Register_MiscCommands (void)
     // for p_enemy
     CV_RegisterVar (&cv_monbehavior);
     CV_RegisterVar (&cv_monsterfriction);
+    CV_RegisterVar (&cv_monstergravity);
     CV_RegisterVar (&cv_doorstuck);
     CV_RegisterVar (&cv_pickupflash);
 }
