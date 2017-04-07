@@ -483,7 +483,7 @@ static void R_RenderFloorSplat (floorsplat_t* pSplat, vertex_t* verts, byte* pTe
     // prepare values for all the splat
     ds_source = (byte *)W_CacheLumpNum(pSplat->pic,PU_CACHE);
     planeheight = abs(pSplat->z - viewz);
-    int vlight = pSplat->subsector->sector->lightlevel + extralight;
+    lightlev_t  vlight = pSplat->subsector->sector->lightlevel + extralight;
     planezlight =
         (vlight < 0) ? zlight[0]
       : (vlight >= 255) ? zlight[LIGHTLEVELS-1]

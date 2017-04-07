@@ -248,4 +248,7 @@ typedef union {
 #define RGBA( r, g, b, a )  ((r)|((g)<<8)|((b)<<16)|((a)<<24))
 #endif
 
+// Lights values 0..255, but signed to detect underflow.
+typedef int16_t   lightlev_t;
+
 #endif  //__DOOMTYPE__

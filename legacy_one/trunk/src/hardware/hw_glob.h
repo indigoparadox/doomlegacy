@@ -80,8 +80,8 @@ typedef struct gr_vissprite_s
     float               ty;
     int                 patchlumpnum;
     boolean             flip;
-    unsigned char       translucency;       //alpha level 0-255
-    unsigned char       sectorlight;        // ...
+    byte                translucency;       //alpha level 0-255
+    byte                sectorlight;        // ...
     mobj_t              *mobj; 
    //Hurdler: 25/04/2000: now support colormap in hardware mode
     byte                *colormap;

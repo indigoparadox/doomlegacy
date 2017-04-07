@@ -5765,3 +5765,10 @@ patchfile = w106_19_whatsnew.patch
 - commit revision 1303
 Update a missing bug fix in the whatsnew docs.
 
+*** W107_lightlev
+patchfile = w107_1_lightlev.patch
+- commit revision 1304
+Create a consistent light level type.
+Use the light level type consistently in all the code.
+Adjust and fix other type problems in the light level code.
+This will help to avoid sign-extension errors.

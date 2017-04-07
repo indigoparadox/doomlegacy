@@ -74,8 +74,8 @@ typedef struct visplane_s
   fixed_t               height;
   fixed_t               viewz;
   angle_t               viewangle;
+  lightlev_t            lightlevel;
   int                   picnum;
-  int                   lightlevel;
   int                   minx, maxx;
 
   //SoM: 4/3/2000: Colormaps per sector!

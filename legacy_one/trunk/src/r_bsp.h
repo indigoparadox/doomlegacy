@@ -89,14 +89,14 @@ void R_ClearDrawSegs (void);
 
 void R_RenderBSPNode (int bspnum);
 
-sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
-                     int *floorlightlevel, int *ceilinglightlevel,
-                     boolean back);
+sector_t* R_FakeFlat(sector_t *sec, sector_t *tempsec, boolean back,
+             /*OUT*/ lightlev_t *floorlightlevel,
+		     lightlev_t *ceilinglightlevel );
 
 // Find light under planeheight, plain version
-int    R_GetPlaneLight(sector_t* sector, fixed_t planeheight);
+ff_light_t *  R_GetPlaneLight(sector_t* sector, fixed_t planeheight);
 // Find light under planeheight, slight difference according to viewz
-int    R_GetPlaneLight_viewz(sector_t* sector, fixed_t planeheight);
+ff_light_t *  R_GetPlaneLight_viewz(sector_t* sector, fixed_t planeheight);
 
 void   R_Prep3DFloors(sector_t* sector);
 #endif

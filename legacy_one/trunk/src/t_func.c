@@ -3227,7 +3227,7 @@ void SF_LightLevel(void)
     if (t_argc > 1)     // > 1: set
     {
         // set all sectors with tag
-        int arg_light = intvalue(t_argv[1]);
+        lightlev_t arg_light = intvalue(t_argv[1]);
         secnum = -1;  // init search
         while ((secnum = P_FindSectorFromTag(tagnum, secnum)) >= 0)
         {

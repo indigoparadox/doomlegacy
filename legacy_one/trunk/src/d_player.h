@@ -43,6 +43,8 @@
 #ifndef D_PLAYER_H
 #define D_PLAYER_H
 
+#include "doomtype.h"
+
 // The player data structure depends on a number
 // of other structs: items (internal inventory),
 // animation states (closely tied to the sprites
@@ -190,7 +192,7 @@ typedef struct player_s
     int                 specialsector;      //lava/slime/water...
 
     // So gun flashes light up areas.
-    int                 extralight;
+    lightlev_t          extralight;
 
     // Normally 0, which allows normal colormap.
     // pain=>REDCOLORMAP, invulnerability=>INVERSECOLORMAP, goggles=>1

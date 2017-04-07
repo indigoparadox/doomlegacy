@@ -789,8 +789,8 @@ void R_DrawSinglePlane(visplane_t* pl)
   int  x;
   int  stop;
   int  angf;
-  int  addlight = (pl->extra_colormap && pl->extra_colormap->fog) ? extralight_cm : extralight;
-  int  vlight = pl->lightlevel;  // visible light 0..255
+  lightlev_t  addlight = (pl->extra_colormap && pl->extra_colormap->fog) ? extralight_cm : extralight;
+  lightlev_t  vlight = pl->lightlevel;  // visible light 0..255
 
   if (pl->minx > pl->maxx)
     return;

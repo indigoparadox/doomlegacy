@@ -1050,10 +1050,10 @@ static void P_InitTagLists(void)
 // Find minimum light from an adjacent sector
 //
 // max is the default value
-int  P_FindMinSurroundingLight ( sector_t*  sector, int max )
+lightlev_t  P_FindMinSurroundingLight ( sector_t*  sector, lightlev_t max )
 {
     int         i;
-    int         min;
+    lightlev_t  min;
     line_t*     line;
     sector_t*   check;
 
