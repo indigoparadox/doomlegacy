@@ -5804,3 +5804,11 @@ being enabled for release code.
 Made DEFINE for controlling the light thinker read and write formats.
 The new lightlev savegame format is disabled, and has not yet been written
 by a release version, so the LIGHT147_VERSION define has a dummy value.
+
+*** W107_FreeBSD_IPX
+patchfile = w107_5_FreeBSD_IPX.patch
+- commit revision 1308
+A few lines of code for returning an IPX address value on FreeBSD.
+Supplied by Alexy Dokuchaev.
+Fixes bug 0639.
+
