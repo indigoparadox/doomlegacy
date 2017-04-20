@@ -5833,3 +5833,10 @@ The ARCH option is added to the make_option files.
 It appears that the default is to compile for  -march=generic32,
 which appears to be close to i486.
 Compiling for i686 can reduce the code size by 30K.
+
+*** W107_byte1
+patchfile = w107_8_byte1.patch
+- commit revision 13xx
+Fix some type conversion problems that affect big-endian machines.
+Mostly byte comparisions to -1, and automatic type conversion
+from unsigned to int.

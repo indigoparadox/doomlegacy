@@ -412,7 +412,7 @@ void Got_RequestFilePak(byte nnode)
 {
     char *p = (char *)netbuffer->u.textcmd;
 
-    while(*p!=-1)
+    while((byte)*p!=0xFF)
     {
         SV_SendFile(nnode, p+1, *p);
         p++; // skip fileid
