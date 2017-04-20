@@ -115,6 +115,7 @@
 
 #include "i_sound.h"
 #include "s_sound.h"
+#include "qmus2mid.h"
 #include "w_wad.h"
 #include "z_zone.h"
 #include "d_main.h"
@@ -1278,7 +1279,7 @@ void S_ChangeMusic(int music_num, byte looping)
     music->handle = I_PlayServerSong( music->name, music->lumpnum, looping );
 #else
     // load & register it
-    music->data = (void *) W_CacheLumpNum(music->lumpnum, PU_MUSIC);
+    music->data = (void *) S_CacheMusicLump(music->lumpnum);
     music->handle = I_RegisterSong(music->data, W_LumpLength(music->lumpnum));
     // play it
     I_PlaySong(music->handle, looping);

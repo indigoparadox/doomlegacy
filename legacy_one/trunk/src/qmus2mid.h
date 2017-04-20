@@ -40,6 +40,10 @@
 
 #include "doomtype.h"
 
+// Call this function to load all music lumps.
+void* S_CacheMusicLump(int lump);
+
+
 typedef enum {
   QM_success,
   QM_NOTMUSFILE,   // Not a MUS file
@@ -58,13 +62,20 @@ typedef enum {
 #define MUSHEADER     "MUS\032"
   // this seems to work
 
-#ifndef __OS2__
+#ifdef __OS2__
+// Does not use qmus2mid
+#else
 // Buffer to Buffer version
 // Return QMUS_error_code_e
-int qmus2mid (byte  *mus, byte *mid,     // buffers in memory
-              uint16_t division, int buffersize, int nocomp,
-              int    length, int midbuffersize,
-              unsigned long* midilength);    //faB: returns midi file length in here
+int qmus2mid (byte  *mus,     // input mus
+              int muslength,  // input mus length
+              uint16_t division, // ticks per quarter note
+              int nocomp,     // no compression, is ignored
+              int midbuffersize, // output buffer length
+    /*INOUT*/
+              byte *mid,  // output buffer in memory
+              unsigned long* midilength //faB: return midi file length
+             );
 #endif
 
 #endif

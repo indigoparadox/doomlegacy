@@ -5843,7 +5843,7 @@ from unsigned to int.
 
 *** W107_midi
 patchfile = w107_9_midi.patch
-- commit revision 1312
+- commit revision 1313
 Rewrote much of the qmus2midi conversion to bring it up to date.
 Changed buffers and variables from char to byte.
 Fixed comparisons that affect compilation on big-endian machines.

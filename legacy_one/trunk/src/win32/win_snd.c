@@ -1232,7 +1232,7 @@ static void I_DS_StartupSound( void )
 #define MIDBUFFERSIZE   128*1024L       // buffer size for Mus2Midi conversion  (ugly code)
 #define SPECIAL_HANDLE_CLEANMIDI  -1999 // tell I_StopSong() to do a full (slow) midiOutReset() on exit
 
-static  byte*       pMus2MidData;       // buffer allocated at program start for Mus2Mid conversion
+static  byte*       MidiData_buf;       // buffer allocated at program start for Mus2Mid conversion
 
 static  UINT        uMIDIDeviceID, uCallbackStatus;
 static  HMIDISTRM   hStream;
@@ -1263,7 +1263,7 @@ static boolean  midi_can_set_volume;          // midi caps
 static void Mid2StreamFreeBuffers( void );
 static void CALLBACK MidiStreamCallback (HMIDIIN hMidi, UINT uMsg, DWORD dwInstance,
                                                  DWORD dwParam1, DWORD dwParam2 );
-static BOOL StreamBufferSetup( byte* pMidiData, int iMidiSize );
+static BOOL StreamBufferSetup( byte* MidiData, int MidiSize );
 
 // -------------------
 // MidiErrorMessageBox
@@ -1388,7 +1388,7 @@ no_fmod:
 #endif
 
     // initialisation of midicard by I_StartupSound
-    pMus2MidData = Z_Malloc (MIDBUFFERSIZE,PU_STATIC,NULL);
+    MidiData_buf = Z_Malloc (MIDBUFFERSIZE,PU_STATIC,NULL);
 
     // ----------------------------------------------------------------------
     // Midi2Stream initialization
@@ -1489,7 +1489,7 @@ static void I_ShutdownMusic(void)
     
     CloseHandle( hBufferReturnEvent );
 
-    //free (pMus2MidData);
+    //free (MidiData_buf);
 
     music_started = false;
 }
@@ -1854,8 +1854,8 @@ void I_StartFMODSong (char* musicname, int looping)
 int I_RegisterSong(void* data, int len)
 {
     int    err_code;
-    byte*  pMidiFileData = NULL;  // MIDI music buffer to be played or NULL
-    unsigned long  iMus2MidSize;  // size of Midi output data
+    byte*  MidiData = NULL;  // MIDI music buffer to be played or NULL
+    unsigned long  MidiSize;  // size of Midi output data
 
     if (nomusic)
         return 1;
@@ -1868,21 +1868,21 @@ int I_RegisterSong(void* data, int len)
         // convert mus to mid with a wonderful function
         // thanks to S.Bacquet for the sources of qmus2mid
         // convert mus to mid and load it in memory
-        err_code = qmus2mid((byte *)data, pMus2MidData, 89,64,0, len,
-				MIDBUFFERSIZE, &iMus2MidSize);
-        if(err_code!=0)
+        err_code = qmus2mid((byte *)data, len, 89, 0,
+				MIDBUFFERSIZE,
+		   /*INOUT*/    MidiData_buf, &MidiSize );
+        if(err_code != QM_success)
         {
-            CONS_Printf("Cannot convert mus to mid, converterror :%d\n",err_code);
+            CONS_Printf("Cannot convert mus to mid, converterror :%d\n", err_code);
             return 0;
         }
-        pMidiFileData = pMus2MidData;
+        MidiData = MidiData_buf;
     }
-    else
-    // support mid file in WAD !!! (no conversion needed)
-    if (!memcmp(data,"MThd",4))
+    else if (!memcmp(data,"MThd",4))
     {
-        pMidiFileData = data;
-	iMus2MidSize = len;
+        // support mid file in WAD !!! (no conversion needed)
+        MidiData = data;
+        MidiSize = len;
     }
     else
     {
@@ -1890,20 +1890,21 @@ int I_RegisterSong(void* data, int len)
         return 0;
     }
 
-    if (pMidiFileData == NULL)
+    if (MidiData == NULL)
     {
-        CONS_Printf ("Not a valid MIDI file : %d\n", err_code);
+        CONS_Printf ("Not a valid MIDI file : %c%c%c%c\n",
+		     (char)data[0], (char)data[1], (char)data[2], (char)data[3]);
         return 0;
     }
-#ifdef DEBUGMIDISTREAM //EVENMORE
+#ifdef DEBUGMIDISTREAM
     else
     {
-        I_SaveMemToFile (pMidiFileData, iMus2MidSize, "c:/temp/debug.mid");
+        I_SaveMemToFile (MidiData, MidiSize, "c:/temp/debug.mid");
     }
 #endif
     
     // setup midi stream buffer
-    if (StreamBufferSetup(pMidiFileData, iMus2MidSize))
+    if (StreamBufferSetup(MidiData, MidiSize))
     {
         Mid2StreamConverterCleanup();
         I_SoftError ("I_RegisterSong: StreamBufferSetup FAILED\n");
@@ -1922,7 +1923,7 @@ int I_RegisterSong(void* data, int len)
 // -----------------
 
 //mid2strm.c - returns TRUE if an error occurs
-BOOL Mid2StreamConverterInit( byte* pMidiData, ULONG iMidiSize );
+BOOL Mid2StreamConverterInit( byte* MidiData, ULONG MidiSize );
 void Mid2StreamConverterCleanup( void );
 
 
@@ -1930,7 +1931,7 @@ void Mid2StreamConverterCleanup( void );
 // StreamBufferSetup
 // - returns TRUE if a problem occurs
 // -----------------
-static BOOL StreamBufferSetup( byte* pMidiData, int iMidiSize )
+static BOOL StreamBufferSetup( byte* MidiData, int MidiSize )
 {
     MMRESULT            mmrRetVal;
     MIDIPROPTIMEDIV     mptd;
@@ -1961,7 +1962,7 @@ static BOOL StreamBufferSetup( byte* pMidiData, int iMidiSize )
     }
 
     // returns TRUE in case of conversion error
-    if (Mid2StreamConverterInit( pMidiData, iMidiSize ))
+    if (Mid2StreamConverterInit( MidiData, MidiSize ))
         return( TRUE );
 
     // Initialize the volume cache array to some pre-defined value

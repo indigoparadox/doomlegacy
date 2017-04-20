@@ -82,7 +82,7 @@
 #else
 #include "qmus2mid.h"
 #define MIDBUFFERSIZE   128*1024L          // buffer size for Mus2Midi conversion  (ugly code)
-static  char*           pMus2MidData;      // buffer allocated at program start for Mus2Mid conversion
+static  char*           MidiData_buf;      // buffer allocated at program start for Mus2Mid conversion
 #endif
 int                     music_started=0;
 
@@ -689,7 +689,7 @@ void I_InitMusic(void)
 #ifdef MIDI_FILE_TO_FILE
 #else
    // initialisation of midicard by I_StartupSound
-   pMus2MidData = (char *)Z_Malloc (MIDBUFFERSIZE,PU_STATIC,NULL);
+   MidiData_buf = (char *)Z_Malloc (MIDBUFFERSIZE,PU_STATIC,NULL);
 #endif
 
    I_AddExitFunc(I_ShutdownMusic);
@@ -781,9 +781,9 @@ void I_SaveMemToFile (unsigned char* pData, unsigned long iLength, char* sFileNa
 
 int I_RegisterSong(void* data, int len)
 {
-    int             iErrorCode;
-    char*           pMidiFileData = NULL;       // MIDI music buffer to be played or NULL
-    unsigned long   iMus2MidSize;               // size of Midi output data
+    int             er;
+    char*           MidiData = NULL;       // MIDI music buffer to be played or NULL
+    unsigned long   MidiSize;               // size of Midi output data
 //   FILE* blah;
 
     if (nomusic)
@@ -802,20 +802,20 @@ int I_RegisterSong(void* data, int len)
         // convert mus to mid with a wonderful function
         // thanks to S.Bacquet for the sources of qmus2mid
         // convert mus to mid and load it in memory
-        if((iErrorCode = qmus2mid((char *)data,pMus2MidData,89,64,0,len,MIDBUFFERSIZE,
-                                   &iMus2MidSize))!=0)
+        er = qmus2mid((char *)data, 89, 0, len, MIDBUFFERSIZE,
+            /*INOUT*/ MidiData_buf, &MidiSize);
+        if( er != QM_success )
         {
-            CONS_Printf("Cannot convert mus to mid, converterror :%d\n",iErrorCode);
+            CONS_Printf("Cannot convert mus to mid, converterror :%d\n", er);
             return 0;
         }
-        pMidiFileData = pMus2MidData;
+        MidiData = MidiData_buf;
     }
-    else
-    // support mid file in WAD !!! (no conversion needed)
-    if (!memcmp(data,"MThd",4))
+    else if (!memcmp(data,"MThd",4))
     {
-        pMidiFileData = data;
-	iMus2MidSize = len;
+        // support mid file in WAD !!! (no conversion needed)
+        MidiData = data;
+	MidiSize = len;
     }
     else
     {
@@ -823,18 +823,19 @@ int I_RegisterSong(void* data, int len)
         return 0;
     }
 
-    if (pMidiFileData == NULL)
+    if (MidiData == NULL)
     {
-        CONS_Printf ("Not a valid MIDI file : %d\n",iErrorCode);
+        CONS_Printf ("Not a valid MIDI file : %c%c%c%c\n",
+		     (char)data[0], (char)data[1], (char)data[2], (char)data[3]);
         return 0;
     }
-#ifdef DEBUGMIDISTREAM //EVENMORE
+#ifdef DEBUGMIDISTREAM
     else
     {
-        I_SaveMemToFile (pMidiFileData, iMus2MidSize, "c:/temp/debug.mid");
+        I_SaveMemToFile (MidiData, MidiSize, "c:/temp/debug.mid");
     }
 #endif
-    I_SaveMemToFile (pMidiFileData, iMus2MidSize, "doom.mid");
+    I_SaveMemToFile (MidiData, MidiSize, "doom.mid");
 #endif
 
     OpenMIDI( pmData);

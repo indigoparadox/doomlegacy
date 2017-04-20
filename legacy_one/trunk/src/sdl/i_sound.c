@@ -163,7 +163,7 @@ static Sint32 steptable[256];
 static int vol_lookup[128 * 256];
 
 // Buffer for MIDI
-static byte *mus2mid_buffer;
+static byte *midi_buffer;
 
 // Flags for the -nosound and -nomusic options
 extern boolean nosoundfx;
@@ -722,16 +722,17 @@ int I_RegisterSong( void* data, int len )
       unsigned long midilength;  // per qmus2mid, SDL_RWFromConstMem wants int
       // convert mus to mid in memory with a wonderful function
       // thanks to S.Bacquet for the source of qmus2mid
-      int err = qmus2mid(data, mus2mid_buffer, 89, 64, 0, len, MIDBUFFERSIZE, &midilength);
-      if ( err != 0 )
+      int err = qmus2mid(data, len, 89, 0, MIDBUFFERSIZE,
+               /*INOUT*/ midi_buffer, &midilength);
+      if ( err != QM_success )
       {
 	  I_SoftError("Cannot convert MUS to MIDI: error %d.\n", err);
 	  return 0;
       }
 #ifdef OLD_SDL_MIXER
-      Midifile_OLD_SDL_MIXER( mus2mid_buffer, midilength );
+      Midifile_OLD_SDL_MIXER( midi_buffer, midilength );
 #else     
-      music.rwop = SDL_RWFromConstMem(mus2mid_buffer, midilength);
+      music.rwop = SDL_RWFromConstMem(midi_buffer, midilength);
 #endif   
   }
   else
@@ -847,7 +848,7 @@ void I_StartupSound(void)
   if (!nomusic)
   {
       Mix_ResumeMusic();  // start music playback
-      mus2mid_buffer = (byte *)Z_Malloc(MIDBUFFERSIZE, PU_STATIC, NULL);
+      midi_buffer = (byte *)Z_Malloc(MIDBUFFERSIZE, PU_STATIC, NULL);
 
 #ifdef OLD_SDL_MIXER
   Init_OLD_SDL_MIXER();
@@ -885,7 +886,7 @@ void I_ShutdownSound(void)
   // music
   if (musicStarted)
   {
-      Z_Free(mus2mid_buffer);
+      Z_Free(midi_buffer);
 
 #ifdef OLD_SDL_MIXER
       Free_OLD_SDL_MIXER();
