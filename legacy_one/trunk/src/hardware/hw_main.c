@@ -683,7 +683,7 @@ static vxtx3d_t planeVerts[MAXPLANEVERTICES];
 // Indexed by flat size_index.
 static float  flat_flatsize_tab[ 8 ] =
 {
-    0, // 0
+    0.0, // 0
     32.0f, // 32x32 flat
     64.0f, // 64x64 flat
     128.0f, // 128x128 flat
@@ -895,7 +895,7 @@ void HWR_RenderSkyPlane(poly_subsector_t * skypoly, fixed_t polyheight)
     angle = ((dup_viewangle + gr_x_to_viewangle[0]) % ANG90);
 
     // left
-    skysow03 = 1.0 + ((float) angle) / (ANG90 - 1);
+    skysow03 = 1.0f + ((float) angle) / (ANG90 - 1);
     // right
     skysow12 = ((float) angle) / (ANG90 - 1);
 
@@ -930,8 +930,8 @@ void HWR_RenderSkyPlane(poly_subsector_t * skypoly, fixed_t polyheight)
      // vanilla doom.
         dx = (pv->x - gr_viewx);
         dy = (pv->y - gr_viewy);
-        v3d->sow = skysow03 + ((skysow12 - skysow03) / 2.0 * (dx/dz + 1.0));
-        v3d->tow = skytow01 + ((skytow23 - skytow01) / 2.0 * (dy/dz + 1.0));
+        v3d->sow = skysow03 + ((skysow12 - skysow03) / 2.0f * (dx/dz + 1.0));
+        v3d->tow = skytow01 + ((skytow23 - skytow01) / 2.0f * (dy/dz + 1.0));
     }
 
     HWD.pfnDrawPolygon(NULL, planeVerts, nrPlaneVerts, 0);
@@ -1130,10 +1130,10 @@ void HWR_RenderFog( ffloor_t* fff, sector_t * intosec, int foglight,
         leftoffset = (fog_tic - playermov) % FOG_WIDTH;
         rightoffset += leftoffset;
         dr_alpha = fweff[fff->fw_effect].fsh_alpha;  // dr_alpha 0..255
-        Surf.FlatColor.s.alpha = (float)dr_alpha * (251.0/256.0) + 5.0;
-//        Surf.FlatColor.s.alpha = (float)dr_alpha * (246.0/256.0) + 10.0;
-//        Surf.FlatColor.s.alpha = (float)dr_alpha * (241.0/256.0) + 15.0;
-//        Surf.FlatColor.s.alpha = (float)dr_alpha * (226.0/256.0) + 20.0;
+        Surf.FlatColor.s.alpha = (float)dr_alpha * (251.0f/256.0f) + 5.0f;
+//        Surf.FlatColor.s.alpha = (float)dr_alpha * (246.0f/256.0f) + 10.0f;
+//        Surf.FlatColor.s.alpha = (float)dr_alpha * (241.0f/256.0f) + 15.0f;
+//        Surf.FlatColor.s.alpha = (float)dr_alpha * (226.0f/256.0f) + 20.0f;
         Surf.texflags = TF_Fogsheet;
         blend = PF_Fog;
     }
@@ -1144,10 +1144,10 @@ void HWR_RenderFog( ffloor_t* fff, sector_t * intosec, int foglight,
     // MipTexture_t * miptex = HWR_GetTexture(texnum, Surf.texflags);
     HWR_GetTexture(texnum, Surf.texflags);
 
-    fVert[3].tow = fVert[2].tow = fog_bltic * (1.0 / (FOG_HEIGHT * 128.0 * 4.0));
-    fVert[0].tow = fVert[1].tow = fVert[3].tow + (1.0 / (FOG_HEIGHT * 128.0 * 4.0));
-    fVert[0].sow = fVert[3].sow = leftoffset * (1.0/FOG_WIDTH);
-    fVert[2].sow = fVert[1].sow = rightoffset * (1.0/FOG_WIDTH);
+    fVert[3].tow = fVert[2].tow = fog_bltic * (1.0f / (FOG_HEIGHT * 128.0f * 4.0f));
+    fVert[0].tow = fVert[1].tow = fVert[3].tow + (1.0f / (FOG_HEIGHT * 128.0f * 4.0f));
+    fVert[0].sow = fVert[3].sow = leftoffset * (1.0f/FOG_WIDTH);
+    fVert[2].sow = fVert[1].sow = rightoffset * (1.0f/FOG_WIDTH);
 
     HWD.pfnDrawPolygon(&Surf, fVert, 4,
                        blend | PF_Modulated | PF_NoDepthTest);
@@ -1364,8 +1364,8 @@ void HWR_SplitWall(sector_t * sector, vxtx3d_t * vxtx, int texnum,
             if( (fflags & FF_JOIN_SIDES)
                 && ( (caster->flags & (FF_TRANSLUCENT|FF_FOG)) == (fflags & (FF_TRANSLUCENT|FF_FOG)) ) )
             {
-//	        Surfp->FlatColor.s.alpha = base_alpha * 0.4;  // JOIN
-                Surfp->FlatColor.s.alpha = base_alpha * 0.45;  // JOIN
+//	        Surfp->FlatColor.s.alpha = base_alpha * 0.4f;  // JOIN
+                Surfp->FlatColor.s.alpha = base_alpha * 0.45f;  // JOIN
                 solid = false;
             }
         }
@@ -1966,8 +1966,8 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                     // Legacy Fog in tagged sector
                     blendmode = PF_Fog;
                     dr_alpha = fweff[bff->fw_effect].fsh_alpha;  // dr_alpha 0..255
-                    Surf.FlatColor.s.alpha = (float)dr_alpha * (251.0/256.0) + 5.0;
-//		    Surf.FlatColor.s.alpha = (float)dr_alpha * (246.0/256.0) + 10.0;
+                    Surf.FlatColor.s.alpha = (float)dr_alpha * (251.0f/256.0f) + 5.0f;
+//		    Surf.FlatColor.s.alpha = (float)dr_alpha * (246.0f/256.0f) + 10.0f;
                     Surf.texflags = TF_Fogsheet;
                 }
                 else
@@ -2050,7 +2050,7 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
                     // Legacy Fog in tagged sector
                     dr_alpha = fweff[fff->fw_effect].fsh_alpha;  // dr_alpha 0..255
                     // fog alpha needs to be biased, otherwise low alpha become invisible
-                    Surf.FlatColor.s.alpha = (float)dr_alpha * (251.0/256.0) + 5.0;
+                    Surf.FlatColor.s.alpha = (float)dr_alpha * (251.0f/256.0f) + 5.0f;
                     Surf.texflags = TF_Fogsheet;
                     blendmode = PF_Fog;
                 }
@@ -2486,8 +2486,8 @@ static void HWR_AddLine(seg_t * lineseg)
         else
             fx2 = gr_windowcenterx + (fx2 * gr_viewsin - fy2 * gr_viewcos) * gr_centerx / fy1;
 
-        x1 = fx1 + 0.5;
-        x2 = fx2 + 0.5;
+        x1 = fx1 + 0.5f;
+        x2 = fx2 + 0.5f;
     }
 #else
     // The seg is in the view range, but not necessarily visible.
@@ -3861,7 +3861,7 @@ void HWR_DrawSkyBackground(player_t * player, byte upper_lower)
     // ANG90 = 0x40000000
     angle = ((dup_viewangle + gr_x_to_viewangle[0]) % WRAPANGLE);
 
-    v[0].sow = v[3].sow = 1.0 + ((float) angle) / (WRAPANGLE - 1);
+    v[0].sow = v[3].sow = 1.0f + ((float) angle) / (WRAPANGLE - 1);
     v[2].sow = v[1].sow = ((float) angle) / (WRAPANGLE - 1);
 
 #if 0
@@ -3901,7 +3901,7 @@ void HWR_DrawSkyBackground(player_t * player, byte upper_lower)
     switch( upper_lower )
     {
      case DSB_upper:
-        v[0].y = v[1].y = 8.0 * anglef;
+        v[0].y = v[1].y = 8.0f * anglef;
 //        v[0].tow = v[1].tow = (f + 64) / 127.0f;
         break;
      case DSB_lower:
@@ -4169,7 +4169,7 @@ void HWR_RenderPlayerView(byte viewnumber, player_t * player)
         int fog_extralight = (player->extralight * view_fogfloor->alpha) >> 7;
         // fog drawn over eyes, using sprite transforms
         if( extralight )
-           HWR_RenderFog( view_fogfloor, viewer_sector, fog_extralight, 4.0 );
+           HWR_RenderFog( view_fogfloor, viewer_sector, fog_extralight, 4.0f );
         HWR_RenderFog( view_fogfloor, viewer_sector, fog_extralight, 0.0 );  // random scale
     }
 
@@ -4617,8 +4617,8 @@ void HWR_RenderSorted( void )
     late_wallinfo_t * lw_p = NULL;
     // sprites
     gr_vissprite_t * spr = NULL;
-    float spr_dist = -1000.0;
-    float tranwall_dist = -1000.0;
+    float spr_dist = -1000.0f;
+    float tranwall_dist = -1000.0f;
 
     // sprites
     if (gr_vissprite_p > gr_vissprites)
@@ -4645,7 +4645,7 @@ void HWR_RenderSorted( void )
 #ifdef DEBUG_DRAWSORTED   
             if( spr_dist < 0 )  neg_dist_cnt++;
 #else
-            if( spr_dist < -200.0 )  break;
+            if( spr_dist < -200.0f )  break;
                // farther back and cannot even contribute light
 #endif
             // sprite
@@ -4664,7 +4664,7 @@ void HWR_RenderSorted( void )
             if(spr == &gr_vsprsortedhead)
             {
                 spr = NULL;   // stop sprites
-                spr_dist = -1000.0;
+                spr_dist = -1000.0f;
             }
         }
         else if( lw_p )
@@ -4673,8 +4673,8 @@ void HWR_RenderSorted( void )
             if( tranwall_dist < 0 )  neg_dist_cnt++;
 #else
             // [WDJ] this test has been culling left side visible walls
-//	    if( tranwall_dist < -200.0 )  break;
-            if( tranwall_dist < -2000.0 )  break;
+//	    if( tranwall_dist < -200.0f )  break;
+            if( tranwall_dist < -2000.0f )  break;
                // farther back and cannot even contribute light
 #endif
             // transparent wall
@@ -4698,7 +4698,7 @@ void HWR_RenderSorted( void )
             else
             {
                 lw_p = NULL;
-                tranwall_dist = -10000.0;
+                tranwall_dist = -10000.0f;
             }
         }
         else

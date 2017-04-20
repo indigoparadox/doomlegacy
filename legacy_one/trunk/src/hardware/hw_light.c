@@ -689,13 +689,13 @@ void HWR_WallLighting(vxtx3d_t *wlVerts)
         }
         d[2] = d[1]; d[3] = d[0];
 #ifdef DL_HIGH_QUALITY
-        s = 0.5 / lsp->dynamic_radius;
+        s = 0.5f / lsp->dynamic_radius;
 #else
-        s = 0.5 / sqrt(lsp->dynamic_sqrradius - dist_p2d);
+        s = 0.5f / sqrt(lsp->dynamic_sqrradius - dist_p2d);
 #endif
         for (i=0; i<4; i++) {
-            wlVerts[i].sow = 0.5 + d[i]*s;
-            wlVerts[i].tow = 0.5 + (wlVerts[i].y - light_pos->y)*s*1.2f;
+            wlVerts[i].sow = 0.5f + d[i]*s;
+            wlVerts[i].tow = 0.5f + (wlVerts[i].y - light_pos->y)*s*1.2f;
         }
 
         HWR_SetLight();
@@ -868,7 +868,7 @@ void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr)
 
         // put light little forward of the sprite so there is no 
         // z-blocking or z-fighting
-        if( cz > 0.5 )  // correction for side drift due to cz change
+        if( cz > 0.5f )  // correction for side drift due to cz change
         {  // -0.75 per unit of cz
            cx += cx * ((-6.0f) / cz);
            cy += cy * ((-6.0f) / cz);
@@ -961,7 +961,7 @@ void HWR_DrawCoronas( void )
         // put light little forward the sprite so there is no 
         // z-buffer problem (coplanaire polygons)
         // BP: use PF_Decal do not help :(
-        if( cz > 0.5 )  // correction for side drift due to cz change
+        if( cz > 0.5f )  // correction for side drift due to cz change
         {
            cx += cx * ((-3.8f) / cz);
            cy += cy * ((-3.8f) / cz);
@@ -1114,8 +1114,8 @@ void HWR_DynamicShadowing(vxtx3d_t *clVerts, int nrClipVerts, player_t *p)
         return;
 
     for (i=0; i<nrClipVerts; i++) {
-        clVerts[i].sow = 0.5f + clVerts[i].x*0.01;
-        clVerts[i].tow = 0.5f + clVerts[i].z*0.01*1.2f;
+        clVerts[i].sow = 0.5f + clVerts[i].x*0.01f;
+        clVerts[i].tow = 0.5f + clVerts[i].z*0.01f*1.2f;
     }
     
     HWR_SetLight();

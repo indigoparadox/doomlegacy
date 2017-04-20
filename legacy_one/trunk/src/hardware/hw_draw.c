@@ -155,21 +155,21 @@ void HWR_DrawPatch (MipPatch_t* gpatch, int x, int y, uint32_t option)
     if( option & V_DRAWINFO )
     {
       // V_SetupDraw now has fdupx, fdupy derived from V_SCALEPATCH.
-      pdupx = drawinfo.fdupx * 2.0;
-      pdupy = drawinfo.fdupy * 2.0;
+      pdupx = drawinfo.fdupx * 2.0f;
+      pdupy = drawinfo.fdupy * 2.0f;
 
       // V_SetupDraw now has fdupx0, fdupy0 derived from V_SCALESTART.
-      stx = x * drawinfo.fdupx0 * 2.0;
-      sty = y * drawinfo.fdupy0 * 2.0;
+      stx = x * drawinfo.fdupx0 * 2.0f;
+      sty = y * drawinfo.fdupy0 * 2.0f;
     }
     else
     {
       // V_NOSCALE, vid coordinates
-      pdupx = 2.0;
-      pdupy = 2.0;
+      pdupx = 2.0f;
+      pdupy = 2.0f;
 
-      stx = x * 2.0;
-      sty = y * 2.0;
+      stx = x * 2.0f;
+      sty = y * 2.0f;
     }
 
     // make patch ready in hardware cache
@@ -222,12 +222,12 @@ void HWR_DrawSmallPatch (MipPatch_t* gpatch, int x, int y, uint32_t option, byte
     HWR_GetMappedPatch (gpatch, colormap);
 
     // V_SetupDraw now has fdupx, fdupy derived from V_SCALEPATCH.
-    pdupx = drawinfo.fdupx * 2.0;
-    pdupy = drawinfo.fdupy * 2.0;
+    pdupx = drawinfo.fdupx * 2.0f;
+    pdupy = drawinfo.fdupy * 2.0f;
 
     // V_SetupDraw now has fdupx0, fdupy0 derived from V_SCALESTART.
-    stx = x * drawinfo.fdupx0 * 2.0;
-    sty = y * drawinfo.fdupy0 * 2.0;
+    stx = x * drawinfo.fdupx0 * 2.0f;
+    sty = y * drawinfo.fdupy0 * 2.0f;
 
     v[0].x = v[3].x = (stx - gpatch->leftoffset*pdupx)/vid.width - 1;
     v[2].x = v[1].x = (stx + (gpatch->width - gpatch->leftoffset)*pdupx)/vid.width - 1;
@@ -263,12 +263,12 @@ void HWR_DrawMappedPatch (MipPatch_t* gpatch, int x, int y, uint32_t option, byt
     HWR_GetMappedPatch (gpatch, colormap);
 
     // V_SetupDraw now has fdupx, fdupy derived from V_SCALEPATCH.
-    pdupx = drawinfo.fdupx * 2.0;
-    pdupy = drawinfo.fdupy * 2.0;
+    pdupx = drawinfo.fdupx * 2.0f;
+    pdupy = drawinfo.fdupy * 2.0f;
 
     // V_SetupDraw now has fdupx0, fdupy0 derived from V_SCALESTART.
-    stx = x * drawinfo.fdupx0 * 2.0;
-    sty = y * drawinfo.fdupy0 * 2.0;
+    stx = x * drawinfo.fdupx0 * 2.0f;
+    sty = y * drawinfo.fdupy0 * 2.0f;
     
     v[0].x = v[3].x = (stx - gpatch->leftoffset*pdupx)/vid.width - 1;
     v[2].x = v[1].x = (stx + (gpatch->width - gpatch->leftoffset)*pdupx)/vid.width - 1;
@@ -318,9 +318,9 @@ void HWR_DrawPic(int x, int y, int lumpnum)
 
     v[0].z = v[1].z = v[2].z = v[3].z = 1.0f;
 
-    v[0].sow = v[3].sow =  0;
+    v[0].sow = v[3].sow =  0.0f;
     v[2].sow = v[1].sow =  mpatch->max_s;
-    v[0].tow = v[1].tow =  0;
+    v[0].tow = v[1].tow =  0.0f;
     v[2].tow = v[3].tow =  mpatch->max_t;
 
 

@@ -733,7 +733,7 @@ divline_e
     v3dy = partline->dy;
 
     den = v3dy*v1dx - v3dx*v1dy;
-    if (fabs(den) < 1.0E-36) // avoid check of float for exact 0
+    if (fabs(den) < 1.0E-36f) // avoid check of float for exact 0
         return DVL_none;  // partline and polygon side are effectively parallel
 
     // first check the frac along the polygon segment,
@@ -741,7 +741,7 @@ divline_e
     num = (v3x - v1x)*v3dy + (v1y - v3y)*v3dx;
     frac = num / den;
     // 0= cross at v1, 1.0= cross at v2
-    if (frac<0.0 || frac>1.0)
+    if (frac<0.0 || frac>1.0)  // double
         return DVL_none;  // not within the polygon side
 
     // now get the frac along the BSP line
@@ -766,7 +766,7 @@ divline_e
 
     // Determine if dividing point is one of the end vertex.
     // Set before and after indexes, relative to v1 index.
-    if( frac < 0.05
+    if( frac < 0.05  // double
         && SameVertex( &result->divpt, v1, DIVLINE_VERTEX_DIFF ) )
     {
         result->vertex = v1;
@@ -775,7 +775,7 @@ divline_e
         result->at_vert = true;
         return DVL_v1;
     }
-    if( frac > 0.95
+    if( frac > 0.95  // double
         && SameVertex( &result->divpt, v2, DIVLINE_VERTEX_DIFF ) )
     {
         result->vertex = v2;
@@ -1067,14 +1067,14 @@ split_poly:
     // Less aggressive same vertex, to avoid kinking line.
     if( A.vertex == NULL )
     {
-        A.vertex = store_polyvertex( & A.divpt, 0.01 );
+        A.vertex = store_polyvertex( & A.divpt, 0.01f );
 #ifdef POLYTILE
         add_vertex_between( A.vertex, poly, A_before_wrap, A.after );
 #endif
     }
     if( B.vertex == NULL )
     {
-        B.vertex = store_polyvertex( & B.divpt, 0.01 );
+        B.vertex = store_polyvertex( & B.divpt, 0.01f );
 #ifdef POLYTILE
         add_vertex_between( B.vertex, poly, B.before, B_after_wrap );
 #endif
@@ -1662,10 +1662,10 @@ void  CutOutSubsecPoly ( int ssindex, /*INOUT*/ wpoly_t* poly)
             // extend the poly to all seg walls to eliminate cracks.
             if( A.vertex == NULL )
             {
-                A.vertex = store_polyvertex( & A.divpt, 0.25 );
+                A.vertex = store_polyvertex( & A.divpt, 0.25f );
             }
             // Store the other vertex
-            B.vertex = store_polyvertex( (( A.divfrac > 0.5 )? &p1 : &p2), 0.25 );
+            B.vertex = store_polyvertex( (( A.divfrac > 0.5 )? &p1 : &p2), 0.25f );
             // Get another point in the poly to rv1
             i2 = A.after;
             if( i2 >= poly_num_pts )   i2 = 0;
@@ -1693,23 +1693,23 @@ void  CutOutSubsecPoly ( int ssindex, /*INOUT*/ wpoly_t* poly)
 
 
 #ifdef CUTOUT_NON_CONVEX
-#define FRAC_EP   0.01       
+#define FRAC_EP   0.01f
         // Cuts that may make the polygon non-convex.
-        looseA = (A.divfrac < (0.0 - FRAC_EP)) || (A.divfrac > (1.0 + FRAC_EP));
+        looseA = (A.divfrac < (0.0 - FRAC_EP)) || (A.divfrac > (1.0f + FRAC_EP));
         if( looseA )
         {
             // Cannot make normal cut, A end is loose.
             if( cv_grpolyshape.value == 1 )  continue;  // fat polygons
             // Get vertex at A end of seg, v1 or v2
-            A.vertex = store_polyvertex( (( A.divfrac < 0.0 )? &p1 : &p2), 0.25 );
+            A.vertex = store_polyvertex( (( A.divfrac < 0.0 )? &p1 : &p2), 0.25f );
         }
-        looseB = (B.divfrac < (0.0 - FRAC_EP)) || (B.divfrac > (1.0 + FRAC_EP));
+        looseB = (B.divfrac < (0.0 - FRAC_EP)) || (B.divfrac > (1.0f + FRAC_EP));
         if( looseB )
         {
             // Cannot make normal cut, B end is loose.
             if( cv_grpolyshape.value == 1 )  continue;  // fat polygons
             // Get vertex at B end of seg, v1 or v2
-            B.vertex = store_polyvertex( (( B.divfrac < 0.0 )? &p1 : &p2), 0.25 );
+            B.vertex = store_polyvertex( (( B.divfrac < 0.0 )? &p1 : &p2), 0.25f );
             if( looseA )  // from A end
             {
                 // Both ends are loose.
@@ -1728,11 +1728,11 @@ void  CutOutSubsecPoly ( int ssindex, /*INOUT*/ wpoly_t* poly)
         // Store new crossing vertex.
         if( A.vertex == NULL )
         {
-            A.vertex = store_polyvertex( & A.divpt, 0.25 );
+            A.vertex = store_polyvertex( & A.divpt, 0.25f );
         }
         if( B.vertex == NULL )
         {
-            B.vertex = store_polyvertex( & B.divpt, 0.25 );
+            B.vertex = store_polyvertex( & B.divpt, 0.25f );
         }
 
 #ifdef CUTOUT_NON_CONVEX
