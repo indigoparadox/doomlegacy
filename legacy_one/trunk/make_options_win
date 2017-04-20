@@ -27,6 +27,24 @@ HAVE_MIXER=1
 # CC_ENVIRONMENT=1
 # CC_EXPLICIT=clang
 
+# Architecture custom compile will result in faster smaller code,
+# but will not execute on incompatible machines.
+# Any valid value for -march= on your compiler may be set here.
+# For more information, ask your compiler.
+# > gcc --target-help
+# The default for GCC may be generic or i386.
+# generic32, generic64, i386, i486, i586, i686
+# pentium4, prescott, core, core2, athlon, k6, k8, amdfam10
+# + mmx, sse, sse2, sse3, sse4, 3dnow
+# Examples:
+# ARCH=-march=i386
+# ARCH=-march=i486+sse2
+# ARCH=-march=athlon
+# Multiple switches
+# ARCH=-march=i686 -mtune=athlon -msse
+# Let the compiler detect your hardware.
+# ARCH=-march=native
+
 # To enable debug code, with no fullscreen.
 # DEBUG=1
 

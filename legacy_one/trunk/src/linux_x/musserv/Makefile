@@ -42,7 +42,24 @@ else
 DEBUGFLG=
 endif
 #CC	= gcc
-CFLAGS	= -Wall -O2 -march=pentium
+
+CFLAGS:=
+# Machine architecture.
+ifdef ARCH
+  # if does not have leading -march, -mcpu, -mtune, or similar.
+  ifeq ($(filter -march% -mcpu% -mtune% -m%, $(strip $(ARCH))),)
+    # Apply to most general architecture compiler flag.
+    CFLAGS:=-march=$(ARCH)
+    $(warning Using ARCH as: $(CFLAGS) )
+  else
+    # Looks like a complete switch, use it as is.
+    CFLAGS:=$(ARCH)
+  endif
+else
+  CFLAGS=-march=i586
+endif
+CFLAGS+= -Wall -O2
+
 LDFLAGS	=
 #LDFLAGS	= -static
 OPTOBJ=
@@ -93,7 +110,7 @@ endif
 BIN:=$(SERV_BUILD_DIR)bin
 O:=$(SERV_BUILD_DIR)objs/mus_$(SUBDIR)
 
-MUSOBJLIST:=musserver.o readwad.o playmus.o sequencer.o $(OPTOBJ)
+MUSOBJLIST:=musserver.o readwad.o playmus.o sequencer.o ../m_swap.o $(OPTOBJ)
 MUSOBJ:=$(addprefix $(O)/, $(MUSOBJLIST))
 
 all: $(BIN)/musserver

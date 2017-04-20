@@ -63,7 +63,24 @@ endif
 
 #CC=gcc
 IFLAGS=-I. -I../../
-CFLAGS=-O2 -march=pentium -Wall -DNORMALUNIX -DLINUX
+
+CFLAGS:=
+# Machine architecture.
+ifdef ARCH
+  # if does not have leading -march, -mcpu, -mtune, or similar.
+  ifeq ($(filter -march% -mcpu% -mtune% -m%, $(strip $(ARCH))),)
+    # Apply to most general architecture compiler flag.
+    CFLAGS:=-march=$(ARCH)
+    $(warning Using ARCH as: $(CFLAGS) )
+  else
+    # Looks like a complete switch, use it as is.
+    CFLAGS:=$(ARCH)
+  endif
+else
+  CFLAGS=-march=i586
+endif
+CFLAGS+=-O2 -Wall -DNORMALUNIX -DLINUX
+
 LDFLAGS=
 LIBS=-lm
 OPTOBJ=

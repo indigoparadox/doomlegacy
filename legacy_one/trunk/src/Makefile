@@ -460,6 +460,10 @@ ifeq ($(OS), LINUX)
   # HPux defines: hpux __hpux __hpux__
   # SGI IRIX defines: sgi  __sgi  __sgi__
   # Solaris defines:  SOLARIS
+  # PPC defines: __PPC__
+  # GCC on PPC defines: _ARCH_PPC  __PPC__
+  # PPC 64 bit defines: __PPC64__
+  # Big Endian machines (PPC) define: __BIG_ENDIAN__
   # SDL_platform.h for Solaris __SVR4 defines:  __SOLARIS__
   # SDL_platform.h for SGI variations defines:  __IRIX__
   # SDL_platform.h for HPux variations defines: __HPUX__
@@ -547,6 +551,21 @@ OPTINC:=
 LIBS:=
 LDFLAGS:=
 INSTALL_SUPPL:=
+
+CFLAGS:=
+# Machine architecture.
+ifdef ARCH
+  # if does not have leading -march, -mcpu, -mtune, or similar.
+  ifeq ($(filter -march% -mcpu% -mtune% -m%, $(strip $(ARCH))),)
+    # Apply to most general architecture compiler flag.
+    CFLAGS:=-march=$(ARCH)
+    $(warning Using ARCH as: $(CFLAGS) )
+  else
+    # Looks like a complete switch, use it as is.
+    CFLAGS:=$(ARCH)
+  endif
+endif
+
 
 #=================================
 ifeq ($(SMIF), SDL)
@@ -963,7 +982,7 @@ ifdef CDMUS
 endif
 
 # compiler and linker flags
-CFLAGS:=$(WFLAGS)
+CFLAGS+=$(WFLAGS)
 
 ifdef PROFILEMODE
 # build with gprof profiling information

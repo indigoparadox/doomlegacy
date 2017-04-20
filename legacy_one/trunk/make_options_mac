@@ -33,6 +33,20 @@ HAVE_MIXER=1
 # To enable debug code, with no fullscreen.
 # DEBUG=1
 
+# Architecture custom compile will result in faster smaller code,
+# but will not execute on incompatible machines.
+# Any valid value for -march= on your compiler may be set here.
+# For more information, ask your compiler.
+# > gcc --target-help
+# The default for GCC may be generic.
+# 68010, 68020, 68030, 68040, 68060, cpu32
+# ARCH=-march=68040
+# For PowerPC: 401, 403, 630, 740, 7400, 7450, 8540, power7, etc.
+# ARCH=-march=630
+# ARCH=-mcpu=630 -m64
+# Let the compiler detect your hardware.
+# ARCH=-march=native
+
 # Might not have the CD music libraries.
 # CD_MUSIC=0
 
