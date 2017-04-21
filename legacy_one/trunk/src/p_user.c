@@ -334,7 +334,7 @@ void P_MovePlayer (player_t* player)
                || (player->cheats & CF_FLYAROUND)   // cheat
                || (pmo->flags2&(MF2_ONMOBJ|MF2_FLY));  // heretic
 
-    if(variable_friction && onground)
+    if(EN_variable_friction && onground)
     {
         movefactor = P_GetMoveFactor(pmo); // gets got_movefactor, got_friction
 //        CONS_Printf("friction: %X, movefactor: %i\n", got_friction, movefactor);

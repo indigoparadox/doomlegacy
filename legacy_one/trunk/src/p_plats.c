@@ -152,7 +152,7 @@ void T_PlatRaise(plat_t* plat)
             //jff 1/26/98 remove the plat if it bounced so it can be tried again
             //only affects plats that raise and bounce
     
-            if (boomsupport)
+            if (EN_boom)
             {
               switch(plat->type)
               {
@@ -165,9 +165,11 @@ void T_PlatRaise(plat_t* plat)
             }
         }
         else
+        {
             if (gamemode == heretic && !(leveltime & 31))
                 S_StartSound ((mobj_t *) & plat->sector->soundorg,
                     sfx_stnmov);
+        }
 
         break;
 

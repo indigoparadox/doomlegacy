@@ -396,12 +396,12 @@ extern fixed_t  see_bottomslope;
 
 
 //SoM: 3/6/2000: Added public "boomsupport variable"
-extern int boomsupport;
-extern int variable_friction;
-extern int allow_pushers;
-extern byte  monster_friction;  // MBF demo flag
-extern byte  mbf_support;  // [WDJ] MBF enable
-                           // similar to prboom mbf_features, but as a flag
+extern byte  EN_boom;
+extern byte  EN_variable_friction;
+extern byte  EN_pushers;
+extern byte  EN_mbf;  // [WDJ] MBF enable
+                   // similar to prboom mbf_features, but as a flag
+extern byte  EN_monster_friction;  // MBF demo flag
 
 typedef enum {
  // Boom values

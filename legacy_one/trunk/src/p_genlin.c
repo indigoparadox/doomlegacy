@@ -715,13 +715,13 @@ manual_stair:
         if (!Igno && tsec->floorpic != texture)
           continue;
 
-        if (!boomsupport)
+        if (!EN_boom)
           height += mfloor->direction * stairsize;
 
         if (P_SectorActive( S_floor_special, tsec) || tsec->stairlock)
           continue;
         
-        if (boomsupport)
+        if (EN_boom)
           height += mfloor->direction * stairsize;
 
         // link the stair chain in both directions

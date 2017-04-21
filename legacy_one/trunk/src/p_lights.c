@@ -318,7 +318,7 @@ int EV_LightTurnOn ( line_t* line, int bright )
                 }
             }
             sector-> lightlevel = tbright;
-            if(!boomsupport)
+            if(!EN_boom)
               bright = tbright;
         }
     }

@@ -818,7 +818,7 @@ missile_impact:
         && tmr_ceilingline->frontsector->ceilingpic == skyflatnum
         && mo->subsector->sector->ceilingheight == mo->ceilingz)
     {
-        if (!boomsupport || mo->z > tmr_ceilingline->backsector->ceilingheight) //SoM: 4/7/2000: DEMO'S
+        if (!EN_boom || mo->z > tmr_ceilingline->backsector->ceilingheight) //SoM: 4/7/2000: DEMO'S
         {
             // Hack to prevent missiles exploding against the sky.
             // Does not handle sky floors.
