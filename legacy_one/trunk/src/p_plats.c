@@ -99,6 +99,23 @@ void T_PlatRaise(plat_t* plat)
                   plat->status = PLATS_in_stasis;  //for reactivation of toggle
                 }
 
+                if( gamemode == heretic )
+                {
+                    // Heretic: Must not remove others, or else can retrigger.
+                    switch(plat->type)
+                    {
+                      case PLATT_downWaitUpStay:
+                      case PLATT_raiseAndChange:
+                        P_RemoveActivePlat(plat);
+                        break;
+                      // case PLATT_raiseToNearestAndChange:
+                      default:
+                        break;
+                    }
+                    return;
+                }
+
+                // Doom and Boom
                 switch(plat->type)
                 {
                   case PLATT_blazeDWUS:
