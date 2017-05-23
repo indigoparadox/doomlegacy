@@ -260,8 +260,23 @@ mobj_t *P_SPMAngle ( mobj_t* source, mobjtype_t type, angle_t angle );
 extern  consvar_t cv_monbehavior;
 extern  consvar_t cv_monsterfriction;
 extern  consvar_t cv_doorstuck;
-extern  consvar_t cv_solidcorpse;        // p_enemy
-extern  consvar_t cv_monstergravity;     // p_enemy
+extern  consvar_t cv_solidcorpse;
+extern  consvar_t cv_monstergravity;
+extern  consvar_t cv_monster_remember;
+
+extern  consvar_t cv_mbf_dropoff;
+extern  consvar_t cv_mbf_falloff;
+extern  consvar_t cv_mbf_pursuit;
+extern  consvar_t cv_mbf_staylift;
+extern  consvar_t cv_mbf_monster_avoid_hazard;
+extern  consvar_t cv_mbf_monster_backing;
+extern  consvar_t cv_mbf_help_friend;
+extern  consvar_t cv_mbf_distfriend;
+extern  consvar_t cv_mbf_monkeys;
+#ifdef DOGS   
+extern  consvar_t cv_mbf_dogs;
+extern  consvar_t cv_mbf_dog_jumping;
+#endif
 
 // when pushing a line 
 //#define MAXSPECIALCROSS 16
@@ -387,8 +402,10 @@ extern byte  EN_skull_bounce_fix;  // PrBoom 2001  !comp[comp_soul]
 extern byte  EN_pushers;
 
 // MBF
+extern fixed_t EV_mbf_distfriend;
 extern byte  EN_mbf_speed;
 extern byte  EN_monster_friction;
+
 // Heretic, Hexen
 extern byte  EN_inventory;   // Heretic, Hexen
 

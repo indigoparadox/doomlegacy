@@ -68,6 +68,10 @@
 #define DOORDELAY_CONTROL
   // See p_fab.c, giving it NETVAR status causes saved games to crash program.
 
+// [WDJ] MBF DOGS
+// There were conditional in MBF, so here too.
+#define DOGS
+
 // [WDJ] 6/22/2009  Generate gamma table using two settings,
 // and a selected function.
 // Gamma funcs are selectable, now a standard feature, 12/15/2015.

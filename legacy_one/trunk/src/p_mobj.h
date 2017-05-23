@@ -261,10 +261,10 @@ typedef enum {
     MF2_TELESTOMP      =     0x00040000,      // mobj can stomp another
     MF2_FLOATBOB       =     0x00080000,      // use float bobbing z movement
     MF2_DONTDRAW       =     0x00100000,      // don't generate a vissprite
-   
+
     // extra
     MF2_FLOORHUGGER    =     0x00200000,      // stays on the floor
-        
+
     // for chase camera, don't be blocked by things (partial clipping)
     MF2_NOCLIPTHING    =     0x00400000,
 } mobjflag2_e;
