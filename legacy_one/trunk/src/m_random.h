@@ -56,6 +56,10 @@ byte P_Random (void);
 int P_SignedRandom ();
 #endif
 
+// MBF, PrBoom
+#define  PP_Random(pr)  P_Random()
+#define  PP_SignedRandom(pr)  P_SignedRandom()
+
 // separate so to not affect demo playback
 byte A_Random (void);  // ambience
 byte B_Random (void);  // bots etc..

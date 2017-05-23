@@ -346,6 +346,7 @@ void D_Register_MiscCommands (void)
     CV_RegisterVar (&cv_monstergravity);
     CV_RegisterVar (&cv_doorstuck);
     CV_RegisterVar (&cv_pickupflash);
+    CV_RegisterVar (&cv_weapon_recoil);
 }
 
 void  DemoAdapt_p_fab(void)  // local enables of p_fab

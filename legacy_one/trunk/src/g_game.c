@@ -334,6 +334,7 @@ consvar_t cv_alwaysfreelook2  = {"alwaysmlook2","0",CV_SAVE,CV_OnOff};
 
 consvar_t cv_showmessages     = {"showmessages","2",CV_SAVE | CV_CALL | CV_NOINIT,showmessages_cons_t,ShowMessage_OnChange};
 consvar_t cv_pickupflash      = {"pickupflash" ,"1",CV_SAVE, pickupflash_cons_t};
+consvar_t cv_weapon_recoil    = {"weaponrecoil","0",CV_SAVE | CV_NETVAR, CV_OnOff};  // Boom weapon recoil
 consvar_t cv_allowturbo       = {"allowturbo"  ,"0",CV_NETVAR | CV_CALL, CV_YesNo, AllowTurbo_OnChange};
 
 #if MAXPLAYERS>32
@@ -3017,6 +3018,7 @@ void G_DoPlayDemo (char *defdemoname)
         // [7] fast monsters
         // [8] no monsters
         EN_variable_friction = demo_p[1];
+        cv_weapon_recoil.EV = demo_p[2];
         EN_pushers = demo_p[3];
 #ifdef DEBUG_DEMO
         debug_Printf( " respawn %i.\n", (int)demo_p[6] );
