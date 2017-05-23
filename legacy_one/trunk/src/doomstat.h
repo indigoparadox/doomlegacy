@@ -75,6 +75,15 @@
 #include "d_player.h"
 #include "d_clisrv.h"
 
+
+#if 1
+// TESTING
+#define  VERSION147  146
+#else
+// RELEASE, replace all VERSION147 with the value 147
+#define  VERSION147  147
+#endif
+
 // Game mode handling - identify IWAD version,
 //  handle IWAD dependend animations etc.
 // [WDJ] modifed names to be self readable

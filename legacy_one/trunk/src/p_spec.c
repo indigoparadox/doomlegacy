@@ -168,12 +168,9 @@
 // Feature enables.
 byte  EN_variable_friction = 1;
 byte  EN_pushers = 1;
-byte  EN_monster_friction = 1;  // MBF demo flag, and legacy.
-byte  monster_infight = 0; //DarkWolf95:November 21, 2003: Monsters Infight!
-byte  monster_infight_deh = 0; // DEH input.
 
 // [WDJ]
-friction_model_e  friction_model = FR_legacy;
+byte  friction_model = FR_legacy;  // friction_model_e
 
 byte  boom_detect = 0;
 byte  legacy_detect = 0;

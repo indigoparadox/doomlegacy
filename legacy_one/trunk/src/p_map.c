@@ -1240,7 +1240,7 @@ boolean P_TryMove ( mobj_t*       thing,
     //added:28-02-98: gameplay hack : walk over a small wall while jumping
     //                stop jumping it succeeded
     // BP: removed in 1.28 because we can move in air now
-    if ( demoplayback<128 && demoplayback>=112
+    if( (demoversion >= 112) && (demoversion < 128)
          && thing->player
          && (thing->player->cheats & CF_JUMPOVER) )
     {
