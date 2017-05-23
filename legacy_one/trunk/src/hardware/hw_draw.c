@@ -505,7 +505,7 @@ void HWR_FadeScreenMenuBack( uint32_t color_rgba, int alpha, int height )
 void HWR_DrawViewBorder (int clearlines)
 {
     MipPatch_t * mpatch;
-    int  bf_scale = (raven_heretic_hexen)? BF_RAVEN_SCALE : BF_DOOM_SCALE;
+    int  bf_scale = (EN_heretic_hexen)? BF_RAVEN_SCALE : BF_DOOM_SCALE;
     int  vw_x, vw_y;  // view window x, y for border
     int  refresh_y;
     int  v_top, v_side, v_width, v_height;  // vid coord.
@@ -556,7 +556,7 @@ void HWR_DrawViewBorder (int clearlines)
         vw_y = v_top;
 
     // Edge patch size
-    if( gamemode == heretic )
+    if( EN_heretic )
     {
         step_x = step_y = 16;
         off_x = off_y = 4; // borderoffset

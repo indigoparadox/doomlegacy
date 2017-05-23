@@ -3812,7 +3812,7 @@ void M_DrawThermo ( int   x,
 
     // Draw to screen0, scaled
     xx = x;
-    if( raven_heretic_hexen )
+    if( EN_heretic_hexen )
     {
         xx -= 32-8;
         leftlump      = W_GetNumForName("M_SLDLT");
@@ -3838,7 +3838,7 @@ void M_DrawThermo ( int   x,
     }
     for (i=0;i<16;i++)
     {
-        // alternate center patches (raven_heretic_hexen)
+        // Has alternate center patches for heretic, hexen.
         V_DrawScaledPatch_Num (xx,y, centerlump[i & 1] );
         xx += 8;
     }
@@ -3923,7 +3923,7 @@ void M_DrawTextBox (int x, int y, int width, int lines)
     // Flat fill per drawinfo, centering.
     // Reduce scale of Doom background to (0..2) so text is easier to read.
     V_DrawFlatFill (x+boff, y+boff, width*step, lines*step,
-                   (raven_heretic_hexen ? 15:0), st_borderflat_num);
+                   (EN_heretic_hexen ? 15:0), st_borderflat_num);
 
     // draw top and bottom
     cx += boff;
@@ -4926,7 +4926,7 @@ void M_Configure (void)
 
     // Reversible
     // remove the inventory key from the menu !
-    cval = ( have_inventory )? (IT_CONTROL) : IT_LITLSPACE;
+    cval = ( EN_inventory )? (IT_CONTROL) : IT_LITLSPACE;
     for( i=0; i<ControlDef2.numitems; i++)
     {
         if( ControlMenu2[i].alphaKey == gc_invprev ||

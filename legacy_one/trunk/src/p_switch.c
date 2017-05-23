@@ -506,7 +506,7 @@ boolean P_UseSpecialLine ( mobj_t*       thing,
     }
     // monsters past this point have been checked OK for using the switch
 
-    if (!P_CheckTag(line) && EN_boom)  //disallow zero tag on some types
+    if (EN_boom && !P_CheckTag(line))  //disallow zero tag on some types
       goto nopass;
 
     // do something
@@ -536,12 +536,12 @@ boolean P_UseSpecialLine ( mobj_t*       thing,
         // SWITCHES
       case 7:
         // Build Stairs
-        if (EV_BuildStairs( line, (gamemode == heretic)? 8*FRACUNIT : ST_build8))
+        if (EV_BuildStairs( line, (EN_heretic)? 8*FRACUNIT : ST_build8))
             P_ChangeSwitchTexture(line,0);
         break;
 
       case 107:
-        if( gamemode == heretic )
+        if( EN_heretic )
         {
             if (EV_BuildStairs (line, 16 * FRACUNIT))
                 P_ChangeSwitchTexture (line, 0);
@@ -619,7 +619,7 @@ boolean P_UseSpecialLine ( mobj_t*       thing,
 
       case 49:
         // Ceiling Crush And Raise
-        if (EV_DoCeiling( line, (gamemode==heretic)? CT_lowerAndCrush : CT_crushAndRaise))
+        if (EV_DoCeiling( line, (EN_heretic)? CT_lowerAndCrush : CT_crushAndRaise))
             P_ChangeSwitchTexture(line,0);
         break;
 
@@ -1211,7 +1211,7 @@ boolean P_UseSpecialLine ( mobj_t*       thing,
         break;
 
       case 99:
-        if( gamemode == heretic ) // used for right scrolling texture
+        if( EN_heretic ) // used for right scrolling texture
             break;
         // BlzOpenDoor BLUE
       case 134:

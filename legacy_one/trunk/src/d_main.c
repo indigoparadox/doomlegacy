@@ -981,7 +981,8 @@ void D_PageDrawer(char *lumpname)
             }
         }
     }
-    if (raven_heretic_hexen && demosequence != 2)     // big hack for legacy's credits
+    // big hack for legacy's credits
+    if (EN_heretic_hexen && (demosequence != 2))
     {
         V_DrawRawScreen_Num(0, 0, W_GetNumForName(lumpname), 320, 200);
         if (demosequence == 0 && pagetic <= 140)
@@ -1768,8 +1769,7 @@ void IdentifyVersion()
         gamedesc.iwad_filename[0] = other_iwad_filename;
     }
     gamedesc_id = gamedesc.gamedesc_id;
-    gamemode = gamedesc.gamemode;
-    raven_heretic_hexen = (gamemode == heretic) || (gamemode == hexen);
+    G_set_gamemode( gamedesc.gamemode );
     GenPrintf( EMSG_info, "IWAD recognized: %s\n", gamedesc.gname);
 
     if (gamedesc.gameflags & GD_unsupported)  goto unsupported_wad;

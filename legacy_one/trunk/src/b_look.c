@@ -344,7 +344,7 @@ void B_LookForThings (player_t* p)
 	    else if (((mo->flags & MF_SPECIAL)
 		      || (mo->flags & MF_DROPPED))) //most likely a pickup
 	    {
-	        if(gamemode == heretic)
+	        if(EN_heretic)
 	        {
 		    switch (mo->type)
 		    {

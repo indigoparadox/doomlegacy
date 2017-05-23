@@ -173,10 +173,10 @@ void HU_Init(void)
 
     // cache the heads-up font for entire game execution
     use_font1 = 0;
-    j = (gamemode == heretic) ? 1 : HU_FONTSTART;
+    j = (EN_heretic)? 1 : HU_FONTSTART;
     for (i=0; i<HU_FONTSIZE; i++)
     {
-        if( raven_heretic_hexen )
+        if( EN_heretic_hexen )
             sprintf(buffer, "FONTA%.2d", ((j>59)? 59 : j));
         else
             sprintf(buffer, "STCFN%.3d", j);

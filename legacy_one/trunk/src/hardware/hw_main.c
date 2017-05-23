@@ -3711,9 +3711,10 @@ void HWR_DrawPSprite(pspdef_t * psp,  byte lightlum)
     ty = FIXED_TO_FLOAT( psp->sy - sprlump->topoffset );
     if (cv_splitscreen.value && (cv_grfov.value == 90))
         ty -= 20;       //Hurdler: so it's a bit higher
-    if (raven_heretic_hexen)
+    if (EN_heretic_hexen)
     {
-        if (rdraw_viewheight == vid.height || (!cv_scalestatusbar.value && vid.dupy > 1))
+        if (rdraw_viewheight == vid.height
+            || (!cv_scalestatusbar.value && vid.dupy > 1) )
             ty += FIXED_TO_FLOAT( PSpriteSY[viewplayer->readyweapon] );
     }
 

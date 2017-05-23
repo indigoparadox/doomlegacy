@@ -177,7 +177,7 @@ void T_VerticalDoor(vldoor_t * door)
                     case VD_genClose:
                         door->sector->ceilingdata = NULL;       //SoM: 3/6/2000
                         P_RemoveThinker(&door->thinker);        // unlink and free
-                        if (gamemode == heretic)
+                        if (EN_heretic)
                             S_StartSound((mobj_t *) & door->sector->soundorg, sfx_dorcls);
 
                         break;
@@ -268,7 +268,7 @@ void T_VerticalDoor(vldoor_t * door)
                     case VD_genBlazeCdO:
                         door->sector->ceilingdata = NULL;
                         P_RemoveThinker(&door->thinker);        // unlink and free
-                        if (gamemode == heretic)
+                        if (EN_heretic)
                             S_StopSound((mobj_t *) & door->sector->soundorg);
 
                         break;

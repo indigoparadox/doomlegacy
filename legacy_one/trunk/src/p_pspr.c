@@ -209,7 +209,8 @@ boolean P_CheckAmmo (player_t* player)
     if(!player->originalweaponswitch)
          VerifFavoritWeapon(player);
     else // eof Boris
-    if( gamemode == heretic )
+    if( EN_heretic )
+    {
         do
         {
             if(player->weaponowned[wp_skullrod]
@@ -250,7 +251,9 @@ boolean P_CheckAmmo (player_t* player)
                 player->pendingweapon = wp_staff;
             }
         } while(player->pendingweapon == wp_nochange);
+    }
     else
+    {
         do
         {
             if (player->weaponowned[wp_plasma]
@@ -301,6 +304,7 @@ boolean P_CheckAmmo (player_t* player)
             }
             
         } while (player->pendingweapon == wp_nochange);
+    }
 
     // Now set appropriate weapon overlay.
     P_SetPsprite (player,
@@ -322,7 +326,7 @@ void P_FireWeapon (player_t* player)
     if (!P_CheckAmmo (player))
         return;
 
-    if( gamemode == heretic )
+    if( EN_heretic )
     {
         P_SetMobjState(pmo, S_PLAY_ATK2);
         newstate = player->refire ? player->weaponinfo[player->readyweapon].holdatkstate
@@ -404,12 +408,13 @@ void A_WeaponReady ( player_t*     player,
     }
 
     // check for fire
-    //  the missile launcher and bfg do not auto fire
     if (player->cmd.buttons & BT_ATTACK)
     {
+        //  the missile launcher and bfg do not auto fire
         if ( !player->attackdown
-             || (player->readyweapon != wp_missile
-                 && (player->readyweapon != wp_bfg || gamemode == heretic)) )
+             || !( (player->readyweapon == wp_missile)  // Heretic: phoenixrod
+                    || (EN_doom_etc && (player->readyweapon == wp_bfg)) )
+           )
         {
             player->attackdown = true;
             P_FireWeapon (player);

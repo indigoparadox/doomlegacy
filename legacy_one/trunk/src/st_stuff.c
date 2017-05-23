@@ -833,7 +833,7 @@ void ST_Ticker (void)
     if( st_stopped )
         return;
 
-    if( gamemode == heretic )
+    if( EN_heretic )
     {
         SB_Heretic_Ticker();
         return;
@@ -1046,7 +1046,7 @@ void ST_Drawer ( boolean refresh )
     // Respond to these changes immediately, so cannot be in any setup.
     stbar_on = (cv_viewsize.value<11) || automapactive;
 
-    if( gamemode == heretic )
+    if( EN_heretic )
     {
         SB_Heretic_Drawer( refresh );
         return;
@@ -1493,7 +1493,7 @@ void ST_Start (void)
     // Doom and Heretic common.
     st_plyr = &players[statusbarplayer];
 
-    if( gamemode == heretic )
+    if( EN_heretic )
     {
         st_stopped = false;
         return;
@@ -1553,7 +1553,7 @@ void ST_Init (void)
     // [WDJ] Lock against other users of same patch releasing it!.
     scr_borderflat = W_CacheLumpNum (st_borderflat_num, PU_LOCK_SB);
 
-    if( gamemode == heretic )
+    if( EN_heretic )
     {
         SB_Heretic_Init();
         return;

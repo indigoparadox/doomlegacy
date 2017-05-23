@@ -826,7 +826,7 @@ void HWR_CorrectSWTricks(void)
     sector_t **sectorList;
     sector_t *outSector;
     
-    if ( raven_heretic_hexen || (cv_grcorrecttricks.value == 0) )
+    if ( EN_heretic_hexen || (cv_grcorrecttricks.value == 0) )
         return;
     
     // determine lines for sectors

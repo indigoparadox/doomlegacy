@@ -451,7 +451,7 @@ boolean P_CheckSight( mobj_t* t1, mobj_t* t2 )
         return false;
     }
 /*  BP: it seam that it don't work :( TODO: fix it
-    if (gamemode == heretic )
+    if (EN_heretic )
     {
         //
         // check precisely
@@ -522,7 +522,7 @@ boolean P_CheckSight2( mobj_t* t1, mobj_t* t2, fixed_t px, fixed_t py, fixed_t p
         return false;
     }
 /*  BP: it seem that it don't work :( TODO: fix it
-    if (gamemode == heretic )
+    if (EN_heretic )
     {
         //
         // check precisely

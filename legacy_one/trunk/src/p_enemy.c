@@ -955,13 +955,14 @@ static boolean P_LookForPlayers ( mobj_t*       actor,
     angle_t     an;
     fixed_t     dist;
 
-    if(!multiplayer && players[0].health <= 0 && gamemode == heretic)
+    if( EN_heretic
+	&& !multiplayer && players[0].health <= 0 )
     { // Single player game and player is dead, look for monsters
         return(P_LookForMonsters(actor));
     }
 
     // Don't look for a player if ignoring
-        if (actor->eflags & MF_IGNOREPLAYER)
+    if (actor->eflags & MF_IGNOREPLAYER)
                 return false;
 
 //        sector = actor->subsector->sector;
@@ -1010,7 +1011,7 @@ static boolean P_LookForPlayers ( mobj_t*       actor,
                     continue;   // behind back
             }
         }
-        if( gamemode == heretic && player->mo->flags&MF_SHADOW)
+        if( EN_heretic && player->mo->flags&MF_SHADOW)
         { // Player is invisible
             if((P_AproxDistance(player->mo->x-actor->x,
                 player->mo->y-actor->y) > 2*MELEERANGE)
@@ -1148,7 +1149,7 @@ void A_Chase (mobj_t*   actor)
     // modify target threshold
     if  (actor->threshold)
     {
-        if (gamemode != heretic 
+        if (EN_doom_etc 
             && (!actor->target
               || actor->target->health <= 0
 //              || (actor->target->flags & MF_CORPSE)  // corpse health < 0
@@ -1160,7 +1161,7 @@ void A_Chase (mobj_t*   actor)
             actor->threshold--;
     }
 
-    if(gamemode == heretic  && cv_fastmonsters.value)
+    if( EN_heretic && cv_fastmonsters.value)
     { // Monsters move faster in nightmare mode
         actor->tics -= actor->tics/2;
         if(actor->tics < 3)
@@ -2069,7 +2070,7 @@ void A_SkullAttack (mobj_t* actor)
                 // fuzzy player
                 if (dest->flags & MF_SHADOW)
                 {
-                        if( gamemode == heretic )
+                        if( EN_heretic )
                             ang += P_SignedRandom()<<21;
                         else
                             ang += P_SignedRandom()<<20;

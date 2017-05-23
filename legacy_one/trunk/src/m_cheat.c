@@ -238,7 +238,7 @@ boolean cht_Responder(event_t * ev)
 
     if (ev->type == ev_keydown)
     {
-        if (gamemode == heretic)
+        if (EN_heretic)
             return HandleCheats(ch);  // consoleplayer
 
         msg = NULL;

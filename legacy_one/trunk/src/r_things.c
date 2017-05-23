@@ -1592,9 +1592,10 @@ void R_DrawPSprite (pspdef_t* psp)
         (120<<(FRACBITS)) + FRACUNIT/2 - (psp->sy - sprlump->topoffset)
         : (BASEYCENTER<<FRACBITS) + FRACUNIT/2 - (psp->sy - sprlump->topoffset);
 
-    if( raven_heretic_hexen )
+    if( EN_heretic_hexen )
     {
-        if( rdraw_viewheight == vid.height || (!cv_scalestatusbar.value && vid.dupy>1))
+        if( rdraw_viewheight == vid.height
+            || (!cv_scalestatusbar.value && vid.dupy>1) )
             vis->texturemid -= PSpriteSY[viewplayer->readyweapon];
     }
 

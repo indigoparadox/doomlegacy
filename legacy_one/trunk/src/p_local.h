@@ -393,14 +393,10 @@ extern fixed_t  see_bottomslope;
 //
 #include "p_spec.h"
 
-
-
-//SoM: 3/6/2000: Added public "boomsupport variable"
-extern byte  EN_boom;
+// Secondary feature sets.
+extern byte  EN_inventory;   // Heretic, Hexen
 extern byte  EN_variable_friction;
 extern byte  EN_pushers;
-extern byte  EN_mbf;  // [WDJ] MBF enable
-                   // similar to prboom mbf_features, but as a flag
 extern byte  EN_monster_friction;  // MBF demo flag
 
 typedef enum {

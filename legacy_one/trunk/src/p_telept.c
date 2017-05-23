@@ -68,7 +68,7 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle)
     player_t * player = (thing->player && thing->player->mo == thing) ?
           thing->player : NULL;
 
-    if( gamemode == heretic && !(thing->flags&MF_MISSILE))
+    if( EN_heretic && !(thing->flags&MF_MISSILE))
         fogDelta = TELEFOGHEIGHT;
     aboveFloor = thing->z - thing->floorz;
     
@@ -133,7 +133,9 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle)
     }
     
     thing->angle = angle;
-    if(thing->flags2&MF2_FOOTCLIP && P_GetThingFloorType(thing) != FLOOR_SOLID && gamemode == heretic )
+    if( EN_heretic
+        && thing->flags2&MF2_FOOTCLIP
+        && P_GetThingFloorType(thing) != FLOOR_SOLID )
     {
         thing->flags2 |= MF2_FEETARECLIPPED;
     }
@@ -167,8 +169,8 @@ int EV_Teleport ( line_t*       line,
     sector_t*   sector;
 
     // don't teleport missiles
-    if (((thing->flags & MF_MISSILE) && gamemode!=heretic) 
-        || (thing->flags2 & MF2_NOTELEPORT))
+    if ( (EN_doom_etc && (thing->flags & MF_MISSILE)) 
+        || (thing->flags2 & MF2_NOTELEPORT) )  // heretic flag
         return 0;
 
     // Don't teleport if hit back of line,

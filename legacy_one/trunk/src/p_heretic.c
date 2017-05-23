@@ -237,7 +237,6 @@ void HereticPatchEngine(void)
 {
     ceilmovesound = sfx_dormov;
     doorclosesound = sfx_doropn;
-    have_inventory = true;
 
     // we can put such thinks in a dehacked lump, maybe for later
     S_sfx[sfx_oof].name        = "plroof";

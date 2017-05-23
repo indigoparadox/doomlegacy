@@ -94,6 +94,16 @@ typedef enum
 
 } gamemode_e;
 
+// Set from gamemode.
+extern byte  EN_heretic_hexen;  // common features
+extern byte  EN_heretic;
+extern byte  EN_hexen;
+extern byte  EN_strife;
+extern byte  EN_doom_etc;  // doom, boom, mbf, common behavior  (not heretic, hexen, strife)
+// Set by gamemode, but may be enabled by demos too.
+extern byte  EN_boom;  // Boom features (boom demo compatibility=0)
+extern byte  EN_mbf;   // MBF (Marines Best Friend) enable (similar prboom mbf_features)
+
 
 #if 0
 // [WDJ] 8/26/2011 Replaced by gamedesc_id, GDESC_

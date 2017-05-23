@@ -530,7 +530,7 @@ static void AM_initVariables(void)
     old_m_w = m_w;
     old_m_h = m_h;
 
-    if( gamemode == heretic )
+    if( EN_heretic )
     {
         REDS       = 12*8;
         REDRANGE   = 1;
@@ -1503,7 +1503,7 @@ void AM_Drawer (void)
                   NULL, V_SCALESTART );
 #endif
 
-    y = BASEVIDHEIGHT - ((gamemode == heretic)? H_STBAR_HEIGHT : ST_HEIGHT)
+    y = BASEVIDHEIGHT - ((EN_heretic)? H_STBAR_HEIGHT : ST_HEIGHT)
         - drawfont.font_height - 1;
     V_DrawString( 20, y, 0, P_LevelName());
     V_SetupDraw( drawinfo.prev_screenflags );

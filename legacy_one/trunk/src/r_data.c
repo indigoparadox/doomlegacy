@@ -1676,7 +1676,7 @@ void  R_Colormap_Analyze( int mapnum )
     RGBA_t work_rgba;
     int i;
 
-    if( gamemode == heretic )
+    if( EN_heretic )
        tstcolor = & heretic_analyze_index[0];  // heretic colors to test
 
     // [WDJ] Analyze the colormap to get some imitative parameters.
@@ -2306,7 +2306,7 @@ void  R_TranslucentMap_Analyze( translucent_map_t * transp, byte * tmap )
     byte * tstcolor = & doom_analyze_index[0];  // colors to test
     int ti;
 
-    if( gamemode == heretic )
+    if( EN_heretic )
        tstcolor = & heretic_analyze_index[0];  // heretic colors to test
 
     float h4 = 0.0; // alpha = 0

@@ -441,7 +441,7 @@ int viewborderlump[8];
 
 void R_InitViewBorder (void)
 {
-    if( raven_heretic_hexen )
+    if( EN_heretic_hexen )
     {   // Heretic, Hexen
         viewborderlump[BRDR_T]  = W_GetNumForName ("bordt");
         viewborderlump[BRDR_B]  = W_GetNumForName ("bordb");
@@ -516,7 +516,7 @@ void R_FillBackScreen (void)
        return;
 
     // viewwindow borders
-    if( gamemode == heretic )
+    if( EN_heretic )
     {
         step = 16;
         boff = 4; // borderoffset
