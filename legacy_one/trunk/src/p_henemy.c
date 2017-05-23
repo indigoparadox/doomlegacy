@@ -100,7 +100,7 @@ void P_AddBossSpot(fixed_t x, fixed_t y, angle_t angle)
 #define MONS_LOOK_RANGE (20*64*FRACUNIT)
 #define MONS_LOOK_LIMIT 64
 
-boolean P_LookForMonsters(mobj_t *actor)
+boolean PH_LookForMonsters(mobj_t *actor)
 {
     int count;
     mobj_t *mo;

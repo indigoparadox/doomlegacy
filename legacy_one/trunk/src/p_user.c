@@ -323,8 +323,9 @@ void P_MovePlayer (player_t* player)
     // Do not let the player control movement
     //  if not onground.
     onground = (pmo->z <= pmo->floorz) 
-               || (player->cheats & CF_FLYAROUND)   // cheat
-               || (pmo->flags2&(MF2_ONMOBJ|MF2_FLY));  // heretic
+               || (pmo->flags & MF_BOUNCES) // MBF
+               || (pmo->flags2&(MF2_ONMOBJ|MF2_FLY))  // heretic
+               || (player->cheats & CF_FLYAROUND);   // cheat
 
     if(EN_variable_friction && onground)
     {

@@ -2037,7 +2037,7 @@ void SF_LineAttack(void)
     }
     else
     {
-        slope = P_AimLineAttack(mo, angle, MISSILERANGE);  // auto aim
+        slope = P_AimLineAttack(mo, angle, MISSILERANGE, 0);  // auto aim
     }
 
     P_LineAttack(mo, angle, MISSILERANGE, slope, damage);

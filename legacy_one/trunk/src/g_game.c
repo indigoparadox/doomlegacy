@@ -2939,6 +2939,7 @@ void G_DoPlayDemo (char *defdemoname)
         EN_boom = (demoversion >= 129);
         EN_mbf = 0; // legacy demos before mbf
     }
+
 #ifdef SHOW_DEMOVERSION
     CONS_Printf( "Demo Version %i.\n", (int)demoversion );
 #endif
@@ -3122,7 +3123,7 @@ void G_DoPlayDemo (char *defdemoname)
             // monster_infight from demo is 0/1
             // Feature enables 1=ON, Do not notify NET
             cv_monbehavior.EV = demo_p[14]? 2:5; // (infight:off)
-#ifdef DOGS	   
+#ifdef DOGS
             cv_mbf_dogs.EV = demo_p[15];
 #endif
             EV_mbf_distfriend = ((demo_p[18]<<8) + demo_p[19]) << FRACBITS;

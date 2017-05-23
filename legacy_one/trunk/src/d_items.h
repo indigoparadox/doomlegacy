@@ -78,6 +78,10 @@ typedef enum
   MTF_NODM        = 0x0020,  // Do not spawn in deathmatch mode
   MTF_NOCOOP      = 0x0040,  // Do not spawn in coop mode
 
+// MBF
+  MTF_FRIEND      = 0x0080,  // Friend to player
+  MTF_RESERVED    = 0x0100,  // Reserved (identify bad editor)
+
 // DoomLegacy additions
 //Hurdler: special option to tell the things has been spawned by an FS
   MTF_FS_SPAWNED  = 0x1000,  // fragglescript spawned
