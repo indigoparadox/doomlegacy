@@ -6170,8 +6170,8 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
         16*FRACUNIT,    // height
         100,            // mass
         0,              // damage
-        MF_NOBLOCKMAP|MF_NOSECTOR|MF_NOGRAVITY|MF_FLOAT|MF_NOCLIPTHING,  // flags
-        MF2_SLIDE
+        MF_NOBLOCKMAP|MF_NOSECTOR|MF_NOGRAVITY|MF_FLOAT,  // flags
+        MF2_SLIDE|MF2_NOCLIPTHING
     },
     //added:9-06-98: spirit for movement prediction
     {           // MT_SPIRIT

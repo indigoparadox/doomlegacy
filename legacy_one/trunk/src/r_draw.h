@@ -109,7 +109,13 @@ extern byte*            dc_skintran;  // ptr to selected skin table
 // for skin = 1..(MAXSKINNUM-1), skin=0 does not use translation
 #define SKIN_TO_SKINMAP( skin )  (&skintranstables[ ((skin)-1)<<8 ])
 // for flags containing MF_TRANSLATION bits, 0=original skin
-#define MF_TO_SKINMAP( flags )  (&skintranstables[ (((flags) & MF_TRANSLATION) >> (MF_TRANSSHIFT-8)) - 256 ])
+#if MFT_TRANSHIFT == 8
+#define MFT_TO_SKINMAP( flags )  (&skintranstables[ ((flags) & MFT_TRANSLATION6) - 256 ])
+#elif MFT_TRANSLATE > 8
+#define MFT_TO_SKINMAP( flags )  (&skintranstables[ (((flags) & MFT_TRANSLATION6) >> (MFT_TRANSSHIFT-8)) - 256 ])
+#else
+#define MFT_TO_SKINMAP( flags )  (&skintranstables[ (((flags) & MFT_TRANSLATION6) << (8-MFT_TRANSSHIFT)) - 256 ])
+#endif
 
 
 extern struct r_lightlist_s*      dc_lightlist;

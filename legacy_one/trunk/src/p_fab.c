@@ -292,7 +292,7 @@ void Translucency_OnChange(void)
     {
         if( flags_valid_deh
            && ((translucent_enable == TE_off) || (translucent_enable == TE_all) ) )
-            GenPrintf( EMSG_hud, "DEH set translucency ignored\n" );
+            GenPrintf( EMSG_hud, "DEH set translucency overridden by controls.\n" );
     }
     P_SetTranslucencies();
 }

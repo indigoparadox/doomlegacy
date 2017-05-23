@@ -809,7 +809,9 @@ void SF_SkinColor(void)
         }
 
         players[playernum].skincolor = colour;
-        players[playernum].mo->flags = (players[playernum].mo->flags & ~MF_TRANSLATION) | ((players[playernum].mo->player->skincolor) << MF_TRANSSHIFT);
+        players[playernum].mo->tflags =
+           (players[playernum].mo->tflags & ~MFT_TRANSLATION6)
+           | (players[playernum].mo->player->skincolor);
 
         CV_SetValue (&cv_playercolor, colour);
     }

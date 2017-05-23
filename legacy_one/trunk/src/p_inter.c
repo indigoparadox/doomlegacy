@@ -2059,7 +2059,7 @@ boolean P_ChickenMorphPlayer(player_t *player)
     pmo->flags2 |= oldflags2&MF2_FLY;  // preserve fly
     // Clear skin so it does not override chicken.
     pmo->skin = NULL;  // Chickens all look alike.
-    pmo->flags &= ~MF_TRANSLATION; // no color translation for chicken
+    pmo->tflags &= ~MFT_TRANSLATION6; // no color translation for chicken
     // spawnhealth for chicken is 100, this is 30
     player->health = pmo->health = MAXCHICKENHEALTH;
     player->armorpoints = player->armortype = 0;

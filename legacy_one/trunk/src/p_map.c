@@ -1086,11 +1086,11 @@ boolean P_CheckPosition ( mobj_t* thing, fixed_t x, fixed_t y )
     // based on their origin point, and can overlap
     // into adjacent blocks by up to MAXRADIUS units.
 
-    // BP: added MF_NOCLIPTHING :used by camera to don't be blocked by things
-    if(!(thing->flags & MF_NOCLIPTHING)
-       && (thing->flags & MF_SOLID || thing->flags & MF_MISSILE))
-                /* DarkWolf95:don't check non-solids against other things,
-                   keep them in the map though, so still check against lines */
+    // DarkWolf95:don't check non-solids against other things,
+    // keep them in the map though, so still check against lines.
+    // BP: added MF2_NOCLIPTHING :used by camera to not be blocked by things
+    if((thing->flags & (MF_SOLID | MF_MISSILE))
+        && !(thing->flags2 & MF2_NOCLIPTHING) )
     {
         xl = (tm_bbox[BOXLEFT] - bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
         xh = (tm_bbox[BOXRIGHT] - bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;

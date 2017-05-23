@@ -670,7 +670,7 @@ boolean P_UndoPlayerChicken(player_t *player)
     }
     // Restore player skin and skincolor.
     pmo->skin = &skins[player->skin];  // restore player skin
-    pmo->flags |= (player->skincolor) << MF_TRANSSHIFT;
+    pmo->tflags |= (player->skincolor) << MFT_TRANSSHIFT;
     pmo->reactiontime = 18;
     player->chickenTics = 0;
 #ifndef PLAYER_CHICKEN_KEEPS_SHADOW

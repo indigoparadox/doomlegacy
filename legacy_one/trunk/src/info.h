@@ -2914,6 +2914,7 @@ typedef struct
     int16_t damage;
     uint32_t flags;   // mobjflag_e
     uint32_t flags2;  // from heretic/hexen  mobjflag2_e
+    uint32_t tflags;  // translation  mobjtflag_e
 } mobjinfo_t;
 
 extern mobjinfo_t mobjinfo[NUMMOBJTYPES];

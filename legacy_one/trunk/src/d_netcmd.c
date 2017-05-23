@@ -534,7 +534,8 @@ void Got_NetXCmd_NameColor(xcmd_t * xc)
 
     // a copy of color
     if (p->mo)
-        p->mo->flags = (p->mo->flags & ~MF_TRANSLATION) | ((p->skincolor) << MF_TRANSSHIFT);
+        p->mo->tflags = (p->mo->tflags & ~MFT_TRANSLATION6)
+                        | ((p->skincolor) << MFT_TRANSSHIFT);
 
     // Players 0..(MAXPLAYERS-1) are init as Player 1 ..
     // name
@@ -736,7 +737,7 @@ void Command_Map_f(void)
     if (FIL_CheckExtension(MAPNAME))
     {
         // here check if file exist !!!
-	// Owner security permissions.
+        // Owner security permissions.
         if (!findfile(MAPNAME, NULL, false, NULL))
         {
             CONS_Printf("\2File %s' not found\n", MAPNAME);

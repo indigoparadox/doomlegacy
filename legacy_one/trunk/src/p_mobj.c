@@ -1552,6 +1552,7 @@ mobj_t * P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
     mobj->height = info->height;
     mobj->flags = info->flags;
     mobj->flags2 = info->flags2;
+    mobj->tflags = info->tflags;
 
     mobj->health = info->spawnhealth;
 
@@ -2069,7 +2070,7 @@ void P_SpawnPlayer(mapthing_t * mthing, int playernum )
 
     // set color translations for player sprites
     // added 6-2-98 : change color : now use skincolor (befor is mthing->type-1
-    mobj->flags |= (p->skincolor) << MF_TRANSSHIFT;
+    mobj->tflags |= (p->skincolor) << MFT_TRANSSHIFT;
 
     //
     // set 'spritedef' override in mobj for player skins.. (see ProjectSprite)
