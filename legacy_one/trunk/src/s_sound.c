@@ -837,7 +837,7 @@ void S_StartSoundAtVolume(const void *origin_p, sfxid_t sfx_id, int volume,
     //                but of course not using M_Random().
     //added 16-08-02: added back by Judgecutor
     //Sound pitching for both Doom and Heretic
-    if (cv_rndsoundpitch.value)
+    if( cv_rndsoundpitch.EV )
     {
         if (EN_heretic)
         {

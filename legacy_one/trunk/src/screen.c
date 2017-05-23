@@ -345,28 +345,28 @@ void SCR_SetMode (void)
 // change drawer function when fuzzymode is changed
 void CV_Fuzzymode_OnChange(void)
 {
-  if( (rendermode != render_soft) && cv_fuzzymode.value )
+  if( (rendermode != render_soft) && cv_fuzzymode.EV )
       GenPrintf(EMSG_hud, "OpenGL has only translucent shadow.\n" );
   switch(vid.drawmode)
   {
    default:
    case DRAW8PAL:
-     fuzzcolfunc = (cv_fuzzymode.value) ? R_DrawFuzzColumn_8 : R_DrawTranslucentColumn_8;
+     fuzzcolfunc = (cv_fuzzymode.EV) ? R_DrawFuzzColumn_8 : R_DrawTranslucentColumn_8;
      break;
 #if defined(ENABLE_DRAW15) || defined(ENABLE_DRAW16)
    case DRAW15:
    case DRAW16:
-     fuzzcolfunc = (cv_fuzzymode.value) ? R_DrawFuzzColumn_16 : R_DrawTranslucentColumn_16;
+     fuzzcolfunc = (cv_fuzzymode.EV) ? R_DrawFuzzColumn_16 : R_DrawTranslucentColumn_16;
      break;
 #endif
 #ifdef ENABLE_DRAW24
    case DRAW24:
-     fuzzcolfunc = (cv_fuzzymode.value) ? R_DrawFuzzColumn_24 : R_DrawTranslucentColumn_24;
+     fuzzcolfunc = (cv_fuzzymode.EV) ? R_DrawFuzzColumn_24 : R_DrawTranslucentColumn_24;
      break;
 #endif
 #ifdef ENABLE_DRAW32
    case DRAW32:
-     fuzzcolfunc = (cv_fuzzymode.value) ? R_DrawFuzzColumn_32 : R_DrawTranslucentColumn_32;
+     fuzzcolfunc = (cv_fuzzymode.EV) ? R_DrawFuzzColumn_32 : R_DrawTranslucentColumn_32;
      break;
 #endif
   }

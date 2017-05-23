@@ -1407,7 +1407,7 @@ void AM_drawPlayers(void)
 
         p = &players[i];
 
-        if ( (cv_deathmatch.value && !singledemo) && p != plr)
+        if( (cv_deathmatch.EV && !singledemo) && p != plr)
             continue;
 
         if (p->powers[pw_invisibility])

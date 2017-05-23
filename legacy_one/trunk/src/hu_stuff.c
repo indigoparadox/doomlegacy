@@ -422,7 +422,7 @@ void HU_Ticker(void)
     }
     
     //deathmatch rankings overlay if press key or while in death view
-    if (cv_deathmatch.value)
+    if( cv_deathmatch.EV )
     {
         if (gamekeydown[gamecontrol[gc_scores][0]] ||
             gamekeydown[gamecontrol[gc_scores][1]] )

@@ -2717,7 +2717,7 @@ void R_StoreWallRange( int   start, int   stop)
     }
 
 #ifdef BORIS_FIX
-    if (linedef->splats && cv_splats.value)
+    if( linedef->splats && cv_splats.EV )
     {
         // SoM: Isn't a bit wasteful to copy the ENTIRE array for every drawseg?
         memcpy(&last_ceilingclip[ds_p->x1], &ceilingclip[ds_p->x1], sizeof(short) * (ds_p->x2 - ds_p->x1 + 1));

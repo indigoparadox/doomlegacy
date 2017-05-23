@@ -1588,14 +1588,14 @@ void R_DrawPSprite (pspdef_t* psp)
     // store information in a vissprite
     vis = &avis;
     vis->mobjflags = 0;
-    vis->texturemid = (cv_splitscreen.value) ?
+    vis->texturemid = (cv_splitscreen.EV) ?
         (120<<(FRACBITS)) + FRACUNIT/2 - (psp->sy - sprlump->topoffset)
         : (BASEYCENTER<<FRACBITS) + FRACUNIT/2 - (psp->sy - sprlump->topoffset);
 
     if( EN_heretic_hexen )
     {
         if( rdraw_viewheight == vid.height
-            || (!cv_scalestatusbar.value && vid.dupy>1) )
+            || (!cv_scalestatusbar.EV && vid.dupy>1) )
             vis->texturemid -= PSpriteSY[viewplayer->readyweapon];
     }
 

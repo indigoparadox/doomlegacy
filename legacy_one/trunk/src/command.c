@@ -979,7 +979,7 @@ void CV_RegisterVar (consvar_t *variable)
     if ((variable->flags & CV_NOINIT) && !(variable->flags & CV_CALL))
         I_Error("variable %s have CV_NOINIT without CV_CALL\n");
     if ((variable->flags & CV_CALL) && !variable->func)
-        I_Error("variable %s have cv_call flags whitout func");
+        I_Error("variable %s have cv_call flags without func");
 #endif
     if (variable->flags & CV_NOINIT)
         variable->flags &=~CV_CALL;
@@ -1135,9 +1135,29 @@ finish:
     }
     DEBFILE(va("%s set to %s\n",var->name,var->string));
     var->flags |= CV_MODIFIED;
+    var->EV = var->value;  // user setting of active value
     // raise 'on change' code
     if (var->flags & CV_CALL)
         var->func ();
+}
+
+// Called after demo to restore the user settings.
+void CV_Restore_User_Settings( void )
+{
+    consvar_t  *cvar;
+
+    // Check for modified cvar
+    for (cvar=consvar_vars; cvar; cvar = cvar->next)
+    {
+        if( cvar->EV != (byte)cvar->value )
+        {
+            cvar->EV = cvar->value;  // user setting of active value
+            // Use func to restore state dependent upon this setting.
+            // raise 'on change' code
+            if( cvar->flags & CV_CALL )
+                cvar->func();
+        }
+    }
 }
 
 

@@ -35,8 +35,6 @@
 #include "command.h"
   // consvar_t
 
-extern consvar_t cv_solidcorpse;        // p_enemy
-extern consvar_t cv_monstergravity;     // p_enemy
 extern consvar_t cv_bloodtime;
 
 void  DemoAdapt_p_fab(void);  // local enables of p_fab

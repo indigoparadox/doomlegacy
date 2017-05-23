@@ -905,7 +905,7 @@ void Command_Frags_f(void)
 {
     int i, j;
 
-    if (!cv_deathmatch.value)
+    if( !cv_deathmatch.EV )
     {
         CONS_Printf("Frags : show the frag table\n");
         CONS_Printf("Only for deathmatch games\n");
@@ -932,7 +932,7 @@ void Command_TeamFrags_f(void)
     int frags[MAXPLAYERS];
     int fragtbl[MAXPLAYERS][MAXPLAYERS];
 
-    if (!cv_deathmatch.value && !cv_teamplay.value)
+    if( !cv_deathmatch.EV && !cv_teamplay.EV )
     {
         CONS_Printf("teamfrags : show the frag table for teams\n");
         CONS_Printf("Only for deathmatch teamplay games\n");
@@ -996,20 +996,21 @@ void TimeLimit_OnChange(void)
 }
 
 void P_RespawnWeapons(void);
+
 void Deathmatch_OnChange(void)
 {
     if (server)
     {
-        if (cv_deathmatch.value >= 2)
+        if( cv_deathmatch.EV >= 2 )
             CV_SetValue(&cv_itemrespawn, 1);
         else
             CV_SetValue(&cv_itemrespawn, 0);
     }
-    if (cv_deathmatch.value == 1 || cv_deathmatch.value == 3)
+    if( cv_deathmatch.EV == 1 || cv_deathmatch.EV == 3 )
         P_RespawnWeapons();
 
     // give all key to the players
-    if (cv_deathmatch.value)
+    if( cv_deathmatch.EV )
     {
         int j;
         for (j = 0; j < MAXPLAYERS; j++)

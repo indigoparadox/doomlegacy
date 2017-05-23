@@ -431,7 +431,7 @@ consvar_t cv_menusound = {"menusound", "1", CV_SAVE | CV_CALL, menusound_cons_t,
 
 void CV_menusound_OnChange(void)
 {
-    int menusound = cv_menusound.value;
+    byte menusound = cv_menusound.EV;
 
     switch ( gamemode )
     {

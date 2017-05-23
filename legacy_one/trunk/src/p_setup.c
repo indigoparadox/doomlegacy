@@ -1782,7 +1782,7 @@ boolean P_SetupLevel (int      to_episode,
     {
         if (playeringame[i])
         {
-            if (cv_deathmatch.value)
+            if( cv_deathmatch.EV )
             {
                 G_DoReborn(i);
             }

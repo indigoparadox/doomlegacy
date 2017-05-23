@@ -1467,7 +1467,7 @@ void P_ArtiTele(player_t *player)
     angle_t destAngle;
     mapthing_t * mtp;
     
-    if(cv_deathmatch.value)
+    if( cv_deathmatch.EV )
     {
         // Heretic use of P_Random
         i = P_Random()%numdmstarts;

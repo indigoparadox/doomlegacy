@@ -1148,7 +1148,7 @@ void GenPrintf_va (const byte emsg, const char *fmt, va_list ap)
         // Linux, Mac
         eout = EOUT_text | EOUT_log;
 #endif
-        if( cv_showmessages.value >= 4 )
+        if( cv_showmessages.EV >= 4 )
             eout |= EOUT_con | EOUT_hud;
         break;
      case EMSG_dev:   // development category
@@ -1179,7 +1179,7 @@ void GenPrintf_va (const byte emsg, const char *fmt, va_list ap)
 
 #ifndef  DEBUG_MESSAGES_ON
     // Hide debug messages for release version
-    if((ecat == EMSG_debug) && (verbose == 0) && (cv_showmessages.value < 4))
+    if((ecat == EMSG_debug) && (verbose == 0) && (cv_showmessages.EV < 4))
        goto done;  // disable debug messages
 #endif
 
@@ -1204,9 +1204,9 @@ void GenPrintf_va (const byte emsg, const char *fmt, va_list ap)
     if( gameplay_msg )
     {
         // During game playing, honor the showmessage option.
-        if( cv_showmessages.value < (int)gameplay_hud_message_table[ ecat ] )
+        if( cv_showmessages.EV < gameplay_hud_message_table[ ecat ] )
             viewnum = 5;  // console only	    
-        if( cv_showmessages.value < (int)gameplay_con_message_table[ ecat ] )
+        if( cv_showmessages.EV < gameplay_con_message_table[ ecat ] )
             return;
     }
 
