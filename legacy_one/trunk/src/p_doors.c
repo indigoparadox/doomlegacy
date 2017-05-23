@@ -59,6 +59,8 @@
 #include "doomincl.h"
 #include "doomstat.h"
 #include "p_local.h"
+#include "p_tick.h"
+  // think
 #include "p_inter.h"
 #include "r_state.h"
 #include "dstrings.h"

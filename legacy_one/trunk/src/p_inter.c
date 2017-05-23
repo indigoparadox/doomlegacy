@@ -83,19 +83,21 @@
 //-----------------------------------------------------------------------------
 
 #include "doomincl.h"
+#include "p_local.h"
+#include "p_tick.h"
+  // class-list
+#include "p_inter.h"
+#include "g_game.h"
+#include "g_input.h"
+  // cv_allowrocketjump
 #include "i_system.h"
   //I_Tactile currently has no effect
 #include "am_map.h"
 #include "dstrings.h"
-#include "g_game.h"
 #include "m_random.h"
-#include "p_local.h"
-#include "p_inter.h"
 #include "s_sound.h"
 #include "r_main.h"
 #include "st_stuff.h"
-#include "g_input.h"
-  // cv_allowrocketjump
 
 #define BONUSADD        6
 #define PICKUP_FLASH_TICS     10

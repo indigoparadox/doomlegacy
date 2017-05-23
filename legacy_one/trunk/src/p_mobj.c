@@ -125,14 +125,18 @@
 //-----------------------------------------------------------------------------
 
 #include "doomincl.h"
+#include "p_local.h"
   // memset
+#include "p_tick.h"
+  // think
+#include "p_inter.h"
+#include "p_fab.h"
+#include "p_setup.h"
+  //levelflats to test if mobj in water sector
 #include "g_game.h"
 #include "g_input.h"
 #include "st_stuff.h"
 #include "hu_stuff.h"
-#include "p_local.h"
-#include "p_inter.h"
-#include "p_setup.h"    //levelflats to test if mobj in water sector
 #include "r_main.h"
 #include "r_things.h"
 #include "r_sky.h"
@@ -143,7 +147,6 @@
 #include "r_splats.h"   //faB: in dev.
 
 #include "b_game.h"     //added by AC for acbot
-#include "p_fab.h"
 
 
 #if 1

@@ -47,11 +47,13 @@
 
 #include "doomincl.h"
 #include "p_local.h"
+#include "p_tick.h"
+  // think
+#include "g_game.h"
 #include "r_state.h"
 #include "r_main.h"
   //SoM: 3/16/2000
 #include "s_sound.h"
-#include "g_game.h"
 
 
 

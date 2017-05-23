@@ -26,6 +26,8 @@
 
 #include "doomincl.h"
 #include "p_local.h"
+#include "p_tick.h"
+  // think
 #include "r_data.h"
 #include "g_game.h"
 #include "s_sound.h"

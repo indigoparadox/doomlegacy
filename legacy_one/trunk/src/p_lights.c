@@ -42,6 +42,8 @@
 #include "doomincl.h"
 #include "doomstat.h"
 #include "p_local.h"
+#include "p_tick.h"
+  // think
 #include "r_state.h"
 #include "z_zone.h"
 #include "m_random.h"

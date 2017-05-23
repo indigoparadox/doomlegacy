@@ -150,13 +150,16 @@
 //-----------------------------------------------------------------------------
 
 #include "doomincl.h"
-#include "d_main.h"
-#include "byteptr.h"
-#include "g_game.h"
-
 #include "p_local.h"
+#include "p_tick.h"
+  // think
 #include "p_setup.h"
 #include "p_spec.h"
+#include "p_info.h"
+#include "g_game.h"
+
+#include "d_main.h"
+#include "byteptr.h"
 
 #include "i_sound.h"
   // I_PlayCD()..
@@ -173,7 +176,6 @@
 #include "w_wad.h"
 #include "z_zone.h"
 #include "r_splats.h"
-#include "p_info.h"
 #include "t_array.h"
 #include "t_func.h"
 #include "t_script.h"

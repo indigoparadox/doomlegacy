@@ -142,12 +142,14 @@
 //-----------------------------------------------------------------------------
 
 #include "doomincl.h"
-#include "g_game.h"
 #include "p_local.h"
+#include "p_tick.h"
+  // think
 #include "p_setup.h"
   // levelflats for flat animation
 #include "p_inter.h"
   // P_SetMessage
+#include "g_game.h"
 #include "r_data.h"
 #include "m_random.h"
 #include "m_swap.h"

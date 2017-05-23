@@ -320,6 +320,7 @@ extern  int     totalsecret;
 //  WAD, partly set at startup time.
 
 extern  tic_t           gametic;
+extern  tic_t           leveltime;
 
 #ifdef CLIENTPREDICTION2
 extern  tic_t           localgametic;
