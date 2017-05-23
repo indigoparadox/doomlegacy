@@ -45,7 +45,7 @@ typedef struct
     fixed_t	currentSize;	// size of list
 
     SearchNode_t  *first,
-		  *last;
+                  *last;
 } LinkedList_t;
 
 LinkedList_t* B_LLCreate();

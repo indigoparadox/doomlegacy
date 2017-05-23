@@ -56,16 +56,16 @@ typedef enum
 typedef struct SearchNode_s
 {
     boolean  visited;
-	
+
     fixed_t  costDir[NUMBOTDIRS];	//the cost of going from this node in a particular dest
-	
+
     fixed_t  cost,
-	     f,
-	     heuristic,
-	     x, y;
+             f,
+             heuristic,
+             x, y;
 
     struct SearchNode_s  *pprevious, *pnext, *vnext, *vprevious,
-			 *dir[NUMBOTDIRS];
+                         *dir[NUMBOTDIRS];
 
 #ifdef SHOWBOTPATH
     mobj_t   *mo;
@@ -74,7 +74,7 @@ typedef struct SearchNode_s
 
 extern SearchNode_t***    botNodeArray;
 extern int    numbotnodes,
-	      xOffset, yOffset,
+              xOffset, yOffset,
               xSize, ySize;
 
 //boolean B_PTRPathTraverse (intercept_t *in);

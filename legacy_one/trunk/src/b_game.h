@@ -35,8 +35,8 @@
 
 typedef struct
 {
-	int colour;
-	char* name;
+        int colour;
+        char* name;
 } BOTINFOTYPE;
 
 extern BOTINFOTYPE botinfo[MAXPLAYERS];
