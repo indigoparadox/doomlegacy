@@ -873,7 +873,6 @@ void P_ZMovement(mobj_t * mo)
     player_t *player = mo->player;
     boolean voodoo_mo = (player && (player->mo != mo));
 
-#ifdef FIXROVERBUGS
     // Intercept the stupid 'fall through 3dfloors' bug SSNTails 06-13-2002
     if (mo->subsector->sector->ffloors)
     {
@@ -902,7 +901,6 @@ void P_ZMovement(mobj_t * mo)
             }
         }
     }
-#endif
 
     // check for smooth step up
     if (player && (mo->z < mo->floorz)

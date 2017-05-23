@@ -47,11 +47,9 @@
 //#define TILTVIEW              // not finished
 //#define PERSPCORRECT          // not finished
 #define SPLITSCREEN
-#define ABSOLUTEANGLE           // work fine, soon #ifdef and old code remove
 //#define CLIENTPREDICTION2     // differant methode
 #define NEWLIGHT                // compute lighting with bsp (in construction)
 #define FRAGGLESCRIPT           // SoM: Activate FraggleScript
-#define FIXROVERBUGS // Fix some 3dfloor bugs. SSNTails 06-13-2002
 
 // For Boom demo compatibility, spawns friction thinkers
 #define FRICTIONTHINKER

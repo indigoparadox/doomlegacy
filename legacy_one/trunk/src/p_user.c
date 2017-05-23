@@ -284,9 +284,7 @@ void P_CalcHeight (player_t* player)
 
 
 byte  EN_move_doom = 0;
-#ifdef ABSOLUTEANGLE
 byte  EN_cmd_abs_angle = 1;  // legacy absolute angle commands
-#endif
 
 // local version control
 void DemoAdapt_p_user( void )
@@ -297,10 +295,8 @@ void DemoAdapt_p_user( void )
             || (demoversion>=200 && demoversion <=202) // boom demo
             );
 
-#ifdef ABSOLUTEANGLE
     // abs angle in legacy demos only
     EN_cmd_abs_angle = (demoversion >= 125) && (demoversion < 200);
-#endif
 }
 
 
@@ -315,14 +311,10 @@ void P_MovePlayer (player_t* player)
     int  movefactor = ORIG_FRICTION_FACTOR; // default
     int  bobfactor = ORIG_FRICTION_FACTOR;
 
-#ifdef ABSOLUTEANGLE
     if(EN_cmd_abs_angle)
         pmo->angle = (cmd->angleturn<<16);
     else
         pmo->angle += (cmd->angleturn<<16);
-#else
-    pmo->angle += (cmd->angleturn<<16);
-#endif
 
     stat_tic_moved++;
     if( (cmd->angleturn & TICCMD_RECEIVED) == 0)
@@ -1080,10 +1072,9 @@ void P_PlayerThink (player_t* player)
     cmd = &player->cmd;
     if (pmo->flags & MF_JUSTATTACKED)
     {
-// added : now angle turn is a absolute value not relative
-#ifndef ABSOLUTEANGLE
-        cmd->angleturn = 0;
-#endif
+        // added : now angle turn is a absolute value not relative
+        if( ! EN_cmd_abs_angle )
+            cmd->angleturn = 0;
         cmd->forwardmove = 0xc800/512;
         cmd->sidemove = 0;
         pmo->flags &= ~MF_JUSTATTACKED;

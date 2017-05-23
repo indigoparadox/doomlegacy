@@ -906,19 +906,17 @@ void G_BuildTiccmd(ticcmd_t* cmd, int realtics, int which_player)
     pitch = G_ClipAimingPitch(pitch); // clip pitch to a reasonable sector
     cmd->aiming = pitch >> 16; // to short
 
+    // Generated cmd are absolute angles
     if (which_player == 0)
     {
-#ifdef ABSOLUTEANGLE
-    localangle += (cmd->angleturn<<16);
-    cmd->angleturn = localangle >> 16;
-#endif
-      localaiming = pitch;
+        localangle += (cmd->angleturn<<16);
+        cmd->angleturn = localangle >> 16;
+        localaiming = pitch;
     } else {
-#ifdef ABSOLUTEANGLE
-    localangle2 += (cmd->angleturn<<16);
-    cmd->angleturn = localangle2 >> 16;
-#endif
-      localaiming2 = pitch;
+        // Generated command are absolute
+        localangle2 += (cmd->angleturn<<16);
+        cmd->angleturn = localangle2 >> 16;
+        localaiming2 = pitch;
     }
 
     if( gamemode == heretic )

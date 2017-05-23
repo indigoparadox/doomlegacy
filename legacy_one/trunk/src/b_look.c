@@ -105,8 +105,7 @@ boolean B_Reachable(player_t* p, mobj_t* mo)
     destMobj = mo;
     last_s = p->mo->subsector->sector;
 
-#ifdef FIXROVERBUGS
-// Bots shouldn't try to get stuff that's on a 3dfloor they can't get to. SSNTails 06-10-2003
+    // Bots shouldn't try to get stuff that's on a 3dfloor they can't get to. SSNTails 06-10-2003
     if(p->mo->subsector == mo->subsector && p->mo->subsector->sector->ffloors)
     {
       ffloor_t*  rover;
@@ -123,7 +122,6 @@ boolean B_Reachable(player_t* p, mobj_t* mo)
 			return false;
       }
     }
-#endif
 
     return P_PathTraverse (p->mo->x, p->mo->y, mo->x, mo->y, PT_ADDLINES|PT_ADDTHINGS, PTR_QuickReachable);
 }
