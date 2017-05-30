@@ -3692,12 +3692,17 @@ void A_SpawnFly (mobj_t* mo)
         type = MT_BRUISER;
 
     newmobj     = P_SpawnMobj (targ->x, targ->y, targ->z, type);
-    if (P_LookForPlayers (newmobj, true) )
+
+    // MBF: killough 7/18/98: brain friendliness is transferred
+    newmobj->flags = (newmobj->flags & ~MF_FRIEND) | (mo->flags & MF_FRIEND);
+    P_UpdateClassThink(&newmobj->thinker, TH_unknown);
+
+    if( P_LookForTargets(newmobj, true) )
         P_SetMobjState (newmobj, newmobj->info->seestate);
     // cube monsters have no mapthing (spawnpoint=NULL), do not respawn
 
     // telefrag anything in this spot
-    P_TeleportMove (newmobj, newmobj->x, newmobj->y);
+    P_TeleportMove (newmobj, newmobj->x, newmobj->y, true);
 
     // remove self (i.e., cube).
     P_RemoveMobj (mo);

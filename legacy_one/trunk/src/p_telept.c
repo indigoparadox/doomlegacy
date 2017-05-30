@@ -74,7 +74,7 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle)
         fogDelta = TELEFOGHEIGHT;
     aboveFloor = thing->z - thing->floorz;
     
-    if (!P_TeleportMove (thing, x, y))
+    if (!P_TeleportMove (thing, x, y, false))
         return 0;
     
     thing->z = thing->floorz;  //fixme: not needed?
@@ -263,7 +263,7 @@ int EV_SilentTeleport(line_t *line, int side, mobj_t *thing)
           player_t *player = thing->player;
 
           // Attempt to teleport, aborting if blocked
-          if (!P_TeleportMove(thing, m->x, m->y))
+          if (!P_TeleportMove(thing, m->x, m->y, false))
             return 0;
 
           // Rotate thing according to difference in angles
@@ -395,7 +395,7 @@ int EV_SilentLineTeleport(line_t *line, int side, mobj_t *thing,
             x += ((l->dy < 0) != side) ? -1 : 1;
 
         // Attempt to teleport, aborting if blocked
-        if (!P_TeleportMove(thing, x, y))
+        if (!P_TeleportMove(thing, x, y, false))
           return 0;
 
         // Adjust z position to be same height above ground as before.

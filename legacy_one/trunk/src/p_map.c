@@ -157,9 +157,13 @@ static int targ_x, targ_y;
 // TELEPORT MOVE
 //
 
+// Parameter to Stomp
+static byte  tm_stomp_telefrag;  // MBF: enables telefrag
+
 //
 // PIT_StompThing
 //
+// Return false if something in the way, and cannot Stomp it.
 static boolean PIT_StompThing (mobj_t* thing)
 {
     fixed_t     blockdist;
@@ -178,14 +182,8 @@ static boolean PIT_StompThing (mobj_t* thing)
         return true;        // didn't hit it
 
     // monsters don't stomp things except on boss level
-    if ( EN_doom_etc
-         && !tm_thing->player && gamemap != 30)
-        return false;
-
-    // Not allowed to stomp things
-    if ( EN_heretic
-         && !(tm_thing->flags2 & MF2_TELESTOMP))
-        return false;
+    if( !tm_stomp_telefrag ) // killough 8/9/98: make consistent across all levels
+         return false;
 
     int  damage = 10000;  // fatal
     if( (tm_thing->player && (tm_thing->player->mo != tm_thing))
@@ -394,7 +392,7 @@ int  P_GetMoveFactor(mobj_t* mo)
 //
 // P_TeleportMove
 //
-boolean P_TeleportMove( mobj_t* thing, fixed_t x, fixed_t y )
+boolean P_TeleportMove( mobj_t* thing, fixed_t x, fixed_t y, byte stomp )
 {
     int xl, xh;
     int yl, yh;
@@ -426,6 +424,20 @@ boolean P_TeleportMove( mobj_t* thing, fixed_t x, fixed_t y )
 
     validcount++;
     numspechit = 0;
+
+    // [WDJ] MBF, combined telefrag tests.
+    if( EN_doom_etc )
+    {
+        // MBF: Enable stomp for bosses too.
+        tm_stomp_telefrag = (tm_thing->player != NULL)
+            || ( // monsters don't stomp things except on boss level
+                 EN_mbf_telefrag ? stomp : (gamemap == 30) );
+    }
+    else if( EN_heretic )
+    {
+        // Some are allowed to stomp things.
+        tm_stomp_telefrag = (tm_thing->flags2 & MF2_TELESTOMP);
+    }
 
     // stomp on any things contacted
     xl = (tm_bbox[BOXLEFT] - bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;

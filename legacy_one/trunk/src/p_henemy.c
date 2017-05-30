@@ -714,7 +714,7 @@ void P_DSparilTeleport(mobj_t *actor)
     prev_x = actor->x;
     prev_y = actor->y;
     prev_z = actor->z;
-    if(P_TeleportMove(actor, x, y))
+    if(P_TeleportMove(actor, x, y, true)) // stomp uses MF2_TELESTOMP
     {
         mo = P_SpawnMobj(prev_x, prev_y, prev_z, MT_SOR2TELEFADE);
         S_StartObjSound(mo, sfx_telept);

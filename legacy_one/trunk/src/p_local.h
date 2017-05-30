@@ -324,7 +324,7 @@ boolean P_CheckPosition (mobj_t *thing, fixed_t x, fixed_t y);
 boolean P_TryMove (mobj_t* thing, fixed_t x, fixed_t y, byte allowdropoff);
 boolean P_CheckCrossLine (mobj_t* thing, fixed_t x, fixed_t y);
 
-boolean P_TeleportMove (mobj_t* thing, fixed_t x, fixed_t y);
+boolean P_TeleportMove (mobj_t* thing, fixed_t x, fixed_t y, byte stomp);
 void    P_SlideMove (mobj_t* mo);
 
 boolean P_CheckSight (mobj_t* t1, mobj_t* t2);
@@ -414,6 +414,7 @@ extern byte  EN_doorlight;
 // MBF
 extern fixed_t EV_mbf_distfriend;
 extern byte  EN_mbf_speed;
+extern byte  EN_mbf_telefrag;
 
 // Heretic, Hexen
 extern byte  EN_inventory;   // Heretic, Hexen
