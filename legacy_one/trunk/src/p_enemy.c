@@ -3750,4 +3750,165 @@ void A_StartWeaponFS(player_t *player, pspdef_t *psp)
 }
 
 
+// [WDJ] From MBF, PrBoom, EternityEngine.
+// cph - MBF-added codepointer functions.
+
+// killough 11/98: kill an object
+void A_Die(mobj_t *actor)
+{
+    P_DamageMobj(actor, NULL, NULL, actor->health);
+}
+
+//
+// A_Detonate
+// killough 8/9/98: same as A_Explode, except that the damage is variable
+//
+void A_Detonate(mobj_t *mo)
+{
+    P_RadiusAttack(mo, mo->target, mo->info->damage);
+}
+
+//
+// killough 9/98: a mushroom explosion effect, sorta :)
+// Original idea: Linguica
+//
+void A_Mushroom(mobj_t *actor)
+{
+    int i, j, n = actor->info->damage;
+
+    A_Explode(actor);  // First make normal explosion
+
+    // Now launch mushroom cloud
+    for (i = -n; i <= n; i += 8)
+    {
+        for (j = -n; j <= n; j += 8)
+        {
+            mobj_t target = *actor, *mo;
+            // Aim in many directions from source, up fairly high.
+            target.x += i << FRACBITS;
+            target.y += j << FRACBITS;
+            target.z += P_AproxDistance(i,j) << (FRACBITS+2);
+            // Launch fireball
+            mo = P_SpawnMissile(actor, &target, MT_FATSHOT);
+            mo->momx >>= 1;
+            mo->momy >>= 1;  // Slow it down a bit
+            mo->momz >>= 1;
+            mo->flags &= ~MF_NOGRAVITY;  // Make debris fall under gravity
+        }
+    }
+}
+
+//
+// killough 11/98
+//
+// The following were inspired by Len Pitre
+// A small set of highly-sought-after code pointers
+
+
+void A_Spawn(mobj_t *mo)
+{
+    state_ext_t * sep = P_state_ext( mo->state );
+    if( sep->parm1 )
+    {
+//        mobj_t *newmobj = 
+        P_SpawnMobj(mo->x, mo->y, (sep->parm2 << FRACBITS) + mo->z,
+                    sep->parm1 - 1);
+// CPhipps - no friendlyness (yet)
+//      newmobj->flags = (newmobj->flags & ~MF_FRIEND) | (mo->flags & MF_FRIEND);
+    }
+}
+
+void A_Turn(mobj_t *mo)
+{
+    state_ext_t * sep = P_state_ext( mo->state );
+    mo->angle += (uint32_t)((((uint64_t) sep->parm1) << 32) / 360);
+}
+
+void A_Face(mobj_t *mo)
+{
+    state_ext_t * sep = P_state_ext( mo->state );
+    mo->angle = (uint32_t)((((uint64_t) sep->parm1) << 32) / 360);
+}
+
+// Melee attack
+void A_Scratch(mobj_t *mo)
+{
+    state_ext_t * sep = P_state_ext( mo->state );
+
+    // [WDJ] Unraveled from horrible one-liner.
+    A_FaceTarget(mo);       
+    if( ! P_CheckMeleeRange(mo) )  return;
+
+    if( sep->parm2 )
+    {
+       S_StartSound(mo, sep->parm2);
+    }
+
+    P_DamageMobj(mo->target, mo, mo, sep->parm1);
+}
+
+void A_PlaySound(mobj_t *mo)
+{
+    state_ext_t * sep = P_state_ext( mo->state );
+    S_StartSound( sep->parm2 ? NULL : mo, sep->parm1 );
+}
+
+void A_RandomJump(mobj_t *mo)
+{
+    state_ext_t * sep = P_state_ext( mo->state );
+    if( PP_Random(pr_randomjump) < sep->parm2 )
+        P_SetMobjState(mo, sep->parm1);
+}
+
+//
+// This allows linedef effects to be activated inside deh frames.
+//
+void A_LineEffect(mobj_t *mo)
+{
+    // [WDJ] From PrBoom, EternityEngine.
+    // haleyjd 05/02/04: bug fix:
+    // This line can end up being referred to long after this function returns,
+    // thus it must be made static or memory corruption is possible.
+    static line_t  fake_line;
+
+    player_t fake_player;
+    player_t * oldplayer;
+    state_ext_t * sep = P_state_ext( mo->state );
+
+#if 0
+    // From EternityEngine
+    if( mo->eflags & MIF_LINEDONE )  return; // Unless already used up
+#endif
+
+    fake_line = *lines;
+
+    fake_line.special = (short)sep->parm1;  // param linedef type
+    if( !fake_line.special )
+        return;
+
+    fake_line.tag = (short)sep->parm2;  // param sector tag
+
+    // Substitute a fake player to absorb effects.
+    // Do this after tests that return.  Do not leave fake player in mo.
+    fake_player.health = 100;  // make em alive
+    oldplayer = mo->player;
+    mo->player = &fake_player;  // fake player
+
+    // Invoke the fake line, first by invoke, then by crossing.
+    if( !P_UseSpecialLine(mo, &fake_line, 0) )
+        P_CrossSpecialLine(&fake_line, 0, mo);
+
+    mo->player = oldplayer;  // restore player
+
+#if 0
+    // From EternityEngine
+    // If type cleared, no more for this thing.
+    if( !fake_line.special )
+        mo->eflags |= MIF_LINEDONE;
+#else
+    // If type cleared, no more for this state line type.
+    sep->parm1 = fake_line.special;
+#endif
+}
+
 #include "p_henemy.c"

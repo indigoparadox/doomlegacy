@@ -2067,6 +2067,7 @@ void D_DoomMain()
 
     if( verbose > 1 )
         CONS_Printf("Init DEH, cht, menu\n");
+    P_clear_state_ext();  // init state_ext
     // save Doom, Heretic, Chex strings for DEH
     DEH_Init();  // Init DEH before files and lumps loaded
     cht_Init();	 // init iwad independent cheats info, needed by Responder
