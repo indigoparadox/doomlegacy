@@ -595,7 +595,7 @@ typedef enum
 void   S_InitRuntimeSounds (void);
 // Add a new sound fx into a free sfx slot.
 // Return sfx id.
-sfxid_t  S_AddSoundFx (char *name, uint32_t flags);
+sfxid_t  S_AddSoundFx (const char *name, uint32_t flags);
 // Only can remove from sfx slots, the loadable sfx sounds.
 void   S_RemoveSoundFx (sfxid_t sfxid);
 

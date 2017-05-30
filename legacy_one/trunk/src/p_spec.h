@@ -363,12 +363,11 @@ typedef enum
 
 typedef struct
 {
-    line_t*     line;
+    line_t    * line;
+    xyz_t     * soundorg;
     bwhere_e    where;
     int         btexture;
     int         btimer;
-    mobj_t*     soundorg;
-
 } button_t;
 
 

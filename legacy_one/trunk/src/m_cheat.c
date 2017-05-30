@@ -905,7 +905,7 @@ static boolean HandleCheats(byte key)
         if (CheatAddKey(&Cheats[i], key, &eat))
         {
             Cheats[i].func(consoleplayer_ptr, &Cheats[i]);
-            S_StartSound(NULL, sfx_dorcls);
+            S_StartSound(sfx_dorcls);
         }
     }
     return (eat);

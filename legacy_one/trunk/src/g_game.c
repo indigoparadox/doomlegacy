@@ -1606,7 +1606,7 @@ boolean  G_Player_SpawnSpot( int playernum, mapthing_t* spot )
     //added:16-01-98:consoleplayer -> displayplayer (hear snds from viewpt)
     // removed 9-12-98: why not ????
     if ( displayplayer_ptr->viewz != 1 )
-        S_StartSound (mo, sfx_telept);  // don't start sound on first frame
+        S_StartObjSound(mo, sfx_telept);  // don't start sound on first frame
 
 silent_spawn:
     // Spawn the player at the spawn spot.

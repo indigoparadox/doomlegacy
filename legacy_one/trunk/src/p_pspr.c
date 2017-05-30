@@ -333,7 +333,7 @@ void P_FireWeapon (player_t* player)
                                   : player->weaponinfo[player->readyweapon].atkstate;
         // Play the sound for the initial gauntlet attack
         if( player->readyweapon == wp_gauntlets && !player->refire )
-            S_StartSound(pmo, sfx_gntuse);
+            S_StartObjSound(pmo, sfx_gntuse);
     }
     else
     {

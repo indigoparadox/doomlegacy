@@ -508,7 +508,7 @@ void F_CastTicker (void)
         if (castorder[castnum].name == NULL)
             castnum = 0;
         if (mobjinfo[castorder[castnum].type].seesound)
-            S_StartSound (NULL, mobjinfo[castorder[castnum].type].seesound);
+            S_StartSound(mobjinfo[castorder[castnum].type].seesound);
         caststate = &states[mobjinfo[castorder[castnum].type].seestate];
         castframes = 0;
     }
@@ -554,7 +554,7 @@ void F_CastTicker (void)
         }
 
         if (sfx)
-            S_StartSound (NULL, sfx);
+            S_StartSound(sfx);
     }
 
     if (castframes == 12)
@@ -611,7 +611,7 @@ boolean F_CastResponder (event_t* ev)
     castframes = 0;
     castattacking = false;
     if (mobjinfo[castorder[castnum].type].deathsound)
-        S_StartSound (NULL, mobjinfo[castorder[castnum].type].deathsound);
+        S_StartSound(mobjinfo[castorder[castnum].type].deathsound);
 
     return true;
 }
@@ -767,7 +767,7 @@ void F_BunnyScroll (void)
         stage = 6;
     if (stage > laststage)
     {
-        S_StartSound (NULL, sfx_pistol);
+        S_StartSound(sfx_pistol);
         laststage = stage;
     }
 

@@ -100,14 +100,14 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle)
     
     // spawn teleport fog at source and destination
     fog = P_SpawnMobj (oldx, oldy, oldz+fogDelta, MT_TFOG);
-    S_StartSound (fog, sfx_telept);
+    S_StartObjSound(fog, sfx_telept);
 
     angle_t angf = ANGLE_TO_FINE(angle);  // fine angle, used later
     fog = P_SpawnMobj (x+20*finecosine[angf], y+20*finesine[angf],
           thing->z+fogDelta, MT_TFOG);
     
     // emit sound, where?
-    S_StartSound (fog, sfx_telept);
+    S_StartObjSound(fog, sfx_telept);
     
     // don't move for a bit
     if (player)

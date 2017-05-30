@@ -980,9 +980,9 @@ static void CON_Print (byte control, char *msg)
          case '\3' :  // white text + sound
             text_color = 0x80; // white text
             if ( gamemode == doom2_commercial )
-                S_StartSound(0, sfx_radio);
+                S_StartSound(sfx_radio);
             else
-                S_StartSound(0, sfx_tink);
+                S_StartSound(sfx_tink);
             break;
          default:
             break;

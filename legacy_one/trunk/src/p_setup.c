@@ -1641,7 +1641,7 @@ boolean P_SetupLevel (int      to_episode,
     I_Sleep( 100 );  // give menu sound a chance to finish
     // Make sure all sounds are stopped before Z_FreeTags.
     // This will kill the last menu pistol sound too.
-    S_StopSounds();
+    S_StopLevelSound();
 
 #if 0 // UNUSED
     if (debugfile)
@@ -1722,7 +1722,7 @@ boolean P_SetupLevel (int      to_episode,
 #endif
 
     //SoM: We've loaded the music lump, start the music.
-    S_StartSounds();
+    S_StartLevelSound();
 
     //faB: now part of level loading since in future each level may have
     //     its own anim texture sequences, switches etc.

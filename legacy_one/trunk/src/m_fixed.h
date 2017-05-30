@@ -64,6 +64,13 @@ typedef int32_t fixed_t;
 //#define FIXED_TO_FLOAT(x) (((float)(x)) / 65536.0)
 #define FIXED_TO_FLOAT(x) (((float)(x)) * FIXED_TO_FLOAT_MULT)
 
+
+typedef struct
+{
+    fixed_t    x, y, z;
+} xyz_t;
+
+
 //
 // Declare those functions:
 /*

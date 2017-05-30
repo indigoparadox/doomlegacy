@@ -814,7 +814,7 @@ void script_error(const char *fmt, ...)
     va_end(ap);
 
     // make a noise
-    S_StartSound(NULL, sfx_pldeth);
+    S_StartSound(sfx_pldeth);
 
     fs_killscript = true;
 }
