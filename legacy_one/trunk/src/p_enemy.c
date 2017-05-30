@@ -1376,8 +1376,8 @@ static boolean P_IsVisible(mobj_t *actor, mobj_t *mo, boolean allaround)
                      - actor->angle;
 
         if( ( an > ANG90 && an < ANG270 )
-	    && ( P_AproxDistance((mo->x - actor->x), (mo->y - actor->y))
-		 > MELEERANGE )
+            && ( P_AproxDistance((mo->x - actor->x), (mo->y - actor->y))
+                 > MELEERANGE )
           )
             return false;
         // possibly visible, check sight

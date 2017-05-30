@@ -170,7 +170,8 @@ void T_VerticalDoor(vldoor_t * door)
                     case VD_genBlazeClose:
                         dsec->ceilingdata = NULL;       // SoM: 3/6/2000
                         P_RemoveThinker(&door->thinker);        // unlink and free
-                        if (EN_boom)        //SoM: Removes the double closing sound of doors.
+                        //SoM: Removes the double closing sound of doors.
+                        if( EN_blazing_double_sound ) // comp[comp_blazing]
                             S_StartSecSound(dsec, sfx_bdcls);
                         break;
 
@@ -238,7 +239,8 @@ void T_VerticalDoor(vldoor_t * door)
                         break;
                     default:
                         door->direction = 1;
-                        // [WDJ] Bug from DoomWiki, blaze door hits something and raises with normal sound.
+                        // [WDJ] Bug from DoomWiki, blaze door hits something
+                        // and raises with normal sound.
                         // Test for type of door and play appropriate sound.
                         S_StartSecSound(dsec,
                              (door->speed >= 4) ? sfx_bdopn : sfx_doropn);

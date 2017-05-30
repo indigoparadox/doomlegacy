@@ -3681,7 +3681,7 @@ void SF_LineTrigger(void)
     sf_tmpline.frontsector = NULL;
 
     P_UseSpecialLine(fs_run_trigger, &sf_tmpline, 0);      // Try using it
-    P_ActivateCrossedLine(&sf_tmpline, 0, fs_run_trigger); // Try crossing it
+    P_CrossSpecialLine(&sf_tmpline, 0, fs_run_trigger); // Try crossing it
 done:
     return;
 

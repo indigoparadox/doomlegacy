@@ -400,16 +400,20 @@ extern fixed_t  see_bottomslope;
 #include "p_spec.h"
 
 // Secondary features.
+extern byte  EN_monster_friction;
 extern byte  EN_variable_friction;
 extern byte  EN_skull_bounce_fix;  // PrBoom 2001  !comp[comp_soul]
+extern byte  EN_skull_bounce_floor;
 
 // Boom
 extern byte  EN_pushers;
+extern byte  EN_boom_physics;
+extern byte  EN_blazing_double_sound;
+extern byte  EN_doorlight;
 
 // MBF
 extern fixed_t EV_mbf_distfriend;
 extern byte  EN_mbf_speed;
-extern byte  EN_monster_friction;
 
 // Heretic, Hexen
 extern byte  EN_inventory;   // Heretic, Hexen

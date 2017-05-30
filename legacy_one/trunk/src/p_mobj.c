@@ -180,8 +180,8 @@ void P_Set_Voodoo( int playernum, mobj_t * voodoo_mobj )
 #ifdef VOODOO_DEBUG   
     debug_Printf("Set Voodoo mobj\n");
 #endif
-    // Must have player set for P_XYMovement and P_ActivateCrossedLine
-    // NULL player will not trip W1 linedef, P_ActivateCrossedLine uses test
+    // Must have player set for P_XYMovement and P_CrossSpecialLine
+    // NULL player will not trip W1 linedef, P_CrossSpecialLine uses test
     // on player field.
     voodoo_mobj->player = &players[playernum];	// point to real player
     // Code will intercept voodoo doll where it does not want side effects.
@@ -1117,13 +1117,7 @@ zmove_floater:
      // However, this bug was fixed in Doom95, Final/Ultimate Doom, and 
      // the v1.10 source release (which is one reason why it failed to sync 
      // some Doom2 v1.9 demos)
-     // PrBoom has this enabled by comp level.
-     /* (mo->flags & MF_SKULLFLY)
-        && (!comp[comp_soul] ||
-           (compatibility_level > doom2_19_compatibility &&
-            compatibility_level < prboom_4_compatibility)
-      */
-        if (mo->flags & MF_SKULLFLY)
+        if( EN_skull_bounce_floor && (mo->flags & MF_SKULLFLY) )
         {
             // the skull slammed into something
             mo->momz = -mo->momz;  // skull bounces
@@ -1198,10 +1192,9 @@ zmove_floater:
         // PrBoom: cph 2001/04/15 -
         // Lost souls were meant to bounce off of ceilings;
         // PrBoom: if (!comp[comp_soul] && mo->flags & MF_SKULLFLY)
-        if( mo->flags & MF_SKULLFLY )
+        if( EN_skull_bounce_fix && (mo->flags & MF_SKULLFLY) )
         {   // The skull slammed into something.
-            if( EN_skull_bounce_fix )
-                mo->momz = -mo->momz;  // skull bounces
+            mo->momz = -mo->momz;  // skull bounces
         }
        
         // hit the ceiling
