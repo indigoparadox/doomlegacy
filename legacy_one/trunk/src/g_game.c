@@ -1635,15 +1635,15 @@ boolean G_DeathMatchSpawnPlayer (int playernum)
         return false;
     }
 
-    if(demoversion<123)
-        n=20;  // Doom
+    if(demoversion<123 || demoversion>=200)
+        n=20;  // Doom, Boom
     else
         n=64;
 
     // Random select a deathmatch spot.  Try n times for an unoccupied one.
     for (j=0 ; j<n ; j++)
     {
-        i = P_Random() % numdmstarts;
+        i = PP_Random(pr_dmspawn) % numdmstarts;
         if (G_Player_SpawnSpot(playernum, deathmatchstarts[i]) )
             return true;
     }

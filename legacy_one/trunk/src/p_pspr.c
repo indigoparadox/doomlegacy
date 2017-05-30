@@ -870,7 +870,7 @@ void A_FireShotgun2 ( player_t*     player,
         {
             // Old legacy order, slope, damage, angle
             slope = bulletslope + (P_SignedRandom()<<5);
-            damage = 5*(P_Random ()%3+1);
+            damage = 5*(P_Random()%3+1);
             angle = pmo->angle + (P_SignedRandom() << 19);
         }
         else
