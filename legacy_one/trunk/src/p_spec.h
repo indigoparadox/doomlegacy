@@ -325,7 +325,8 @@ void   P_SpawnStrobeFlash ( sector_t* sector, int fastOrSlow, int inSync );
 int    EV_StartLightStrobing(line_t* line);
 int    EV_TurnTagLightsOff(line_t* line);
 
-int    EV_LightTurnOn ( line_t* line, int bright );
+int    EV_LightTurnOn ( line_t* line, lightlev_t bright );
+int    EV_LightTurnOnPartway(line_t *line, fixed_t level);
 
 void   T_Glow(glow_t* g);
 void   P_SpawnGlowingLight(sector_t* sector);
@@ -529,6 +530,8 @@ typedef struct
     // when it reaches 0, start going down
     int         topcountdown;
 
+    // killough 10/98: sector tag for gradual lighting effects.
+    int16_t     lighttag;
 } vldoor_t;
 
 

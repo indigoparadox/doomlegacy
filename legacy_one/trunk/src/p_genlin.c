@@ -914,6 +914,13 @@ manual_locked:
     door->topheight -= 4*FRACUNIT;
     door->direction = 1;
 
+    // [WDJ] MBF gradual light, From MBF, PrBoom.
+    // killough 10/98: implement gradual lighting.
+    door->lighttag =
+        ( EN_doorlight
+          && (line->special&6) == 6
+          && line->special > GenLockedBase ) ? line->tag : 0;
+
     // setup speed of door motion
     switch(Sped)
     {
@@ -1039,6 +1046,13 @@ manual_door:
         break;
     }
     door->line = line;
+
+    // [WDJ] MBF gradual light, From MBF, PrBoom.
+    // killough 10/98: implement gradual lighting.
+    door->lighttag =
+        ( EN_doorlight
+          && (line->special&6) == 6
+          && line->special > GenLockedBase ) ? line->tag : 0;
 
     // set kind of door, whether it opens then close, opens, closes etc.
     // assign target heights accordingly
