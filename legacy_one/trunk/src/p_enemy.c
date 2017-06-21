@@ -1461,8 +1461,9 @@ static boolean PIT_FindTarget(mobj_t *mo)
 static boolean P_LookForPlayers ( mobj_t*       actor,
                                   boolean       allaround )
 {
-    int         c;
-    int         stop, stopc;
+    int  c;
+    int  stop, stopc;
+    int  lastlook = actor->lastlook;
     player_t*   player;
 
     if( EN_heretic
@@ -1470,10 +1471,6 @@ static boolean P_LookForPlayers ( mobj_t*       actor,
     { // Single player game and player is dead, look for monsters
         return(PH_LookForMonsters(actor));  // Heretic version
     }
-
-    // Don't look for a player if ignoring
-    if (actor->eflags & MF_IGNOREPLAYER)
-                return false;
 
     // [WDJ] MBF, From MBF, PrBoom, EternityEngine.
     if( actor->flags & MF_FRIEND )
@@ -1487,7 +1484,7 @@ static boolean P_LookForPlayers ( mobj_t*       actor,
 #endif
 
         // Go back to a player, no matter whether it's visible or not
-        // Once looking for visible, second time anyone.
+        // First time look for visible player, then look for anyone.
         for( anyone=0; anyone<=1; anyone++ )
         {
             for( c=0; c<MAXPLAYERS; c++ )
@@ -1502,7 +1499,6 @@ static boolean P_LookForPlayers ( mobj_t*       actor,
 
                     // killough 12/98:
                     // get out of refiring loop, to avoid hitting player accidentally
-
                     if( actor->info->missilestate )
                     {
                         P_SetMobjState(actor, actor->info->seestate);
@@ -1511,43 +1507,51 @@ static boolean P_LookForPlayers ( mobj_t*       actor,
 
                     return true;
                 }
-
             }
         }
         return false;
     }
 
+    // Monster looking for a player to attack!
+
+    // Don't look for a player if ignoring
+    if( actor->eflags & MF_IGNOREPLAYER )
+        return false;
+
 //        sector = actor->subsector->sector;
 
     // This is not in PrBoom, EnternityEngine, and it uses P_Random !!!
     // BP: first time init, this allow minimum lastlook changes
-    if( (actor->lastlook < 0) && (EV_legacy >= 129) )
-        actor->lastlook = P_Random () % MAXPLAYERS;
+    if( (lastlook < 0) && (EV_legacy >= 129) )
+        lastlook = P_Random () % MAXPLAYERS;
 
-    c = 0;
-    stop = (actor->lastlook-1)&PLAYERSMASK;
+    actor->lastlook = lastlook;
+    stop = (lastlook-1)&PLAYERSMASK;
     stopc = ( !EN_mbf
               && EN_boom  // !demo_compatibility
               && cv_monster_remember.EV )? MAXPLAYERS : 2;  // killough 9/9/98
 
-    for ( ; ; actor->lastlook = (actor->lastlook+1)&PLAYERSMASK )
+    for ( ; ; lastlook = (lastlook+1)&PLAYERSMASK )
     {
-        // done looking
-        if( actor->lastlook == stop )  goto done_looking;
+        actor->lastlook = lastlook;
 
-        if( !playeringame[actor->lastlook] )
+        // done looking
+        if( lastlook == stop )  goto done_looking;
+
+        if( !playeringame[lastlook] )
             continue;
 
-        if( c++ == stopc )  goto done_looking;
+        if( --stopc < 0 )  goto done_looking;
 
-        player = &players[actor->lastlook];
-
+        player = &players[lastlook];
         if (player->health <= 0)
             continue;           // dead
 
         // MBF, PrBoom: IsVisible does same as previous code.
         if( !P_IsVisible( actor, player->mo, allaround) )
             continue;           // out of sight
+
+        // Player found.
 
         if( EN_heretic && player->mo->flags&MF_SHADOW)
         { // Player is invisible
@@ -1556,15 +1560,14 @@ static boolean P_LookForPlayers ( mobj_t*       actor,
                 && P_AproxDistance(player->mo->momx, player->mo->momy)
                 < 5*FRACUNIT)
             { // Player is sneaking - can't detect
-                return(false);
+                goto  none_found;
             }
             if(P_Random() < 225)
             { // Player isn't sneaking, but still didn't detect
-                return(false);
+                goto  none_found;
             }
         }
 
-        
         // Remember old target node for later
         if (actor->target)
         {
@@ -1573,7 +1576,7 @@ static boolean P_LookForPlayers ( mobj_t*       actor,
         }
 
         // New target found
-#if 0	
+#if 0
         actor->target = player->mo;
 #else
         P_SetTarget(&actor->target, player->mo);
@@ -1586,7 +1589,7 @@ static boolean P_LookForPlayers ( mobj_t*       actor,
 
         return true;
     }
-    return false;
+    goto  none_found;
 
 done_looking:
     // [WDJ] MBF, From MBF, PrBoom, EternityEngine.
@@ -1606,6 +1609,8 @@ done_looking:
             return true;
         }
     }
+
+none_found:
     return false;
 }
 
