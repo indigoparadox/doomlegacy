@@ -770,7 +770,7 @@ void P_BulletSlope (mobj_t* mo)
         friend_protect = 0;
     }
     return;
-   
+
 no_target_found:
     if(demoversion>=128)
         bulletslope = AIMINGTOSLOPE(mo->player->aiming);

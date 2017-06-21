@@ -105,8 +105,13 @@ consvar_t cv_fastmonsters =
 consvar_t cv_predictingmonsters =
   {"predictingmonsters","0", CV_NETVAR | CV_SAVE, CV_OnOff};	//added by AC for predmonsters
 
+CV_PossibleValue_t mongravity_cons_t[]={
+   {0,"Off"},
+   {1,"MBF"},
+   {2,"On"},
+   {0,NULL}};
 consvar_t cv_monstergravity =
-  {"monstergravity","1", CV_NETVAR | CV_SAVE, CV_OnOff };
+  {"monstergravity","2", CV_NETVAR | CV_SAVE, mongravity_cons_t };
 
 // DarkWolf95: Monster Behavior
 CV_PossibleValue_t monbehavior_cons_t[]={
@@ -118,7 +123,7 @@ CV_PossibleValue_t monbehavior_cons_t[]={
    {5,"No Infight"},
    {0,NULL}};
 consvar_t cv_monbehavior =
-  { "monsterbehavior", "0", CV_NETVAR | CV_CALL, monbehavior_cons_t, CV_monster_OnChange };
+  { "monsterbehavior", "0", CV_NETVAR | CV_SAVE | CV_CALL, monbehavior_cons_t, CV_monster_OnChange };
 
 CV_PossibleValue_t monsterfriction_t[] = {
    {0,"None"},
@@ -922,8 +927,8 @@ static boolean P_MoveActor (mobj_t* actor, byte dropoff)
     if(! (actor->flags & MF_FLOAT) )
     {
         // Monster gravity, or MBF felldown, blocks this vanilla instant fall.
-        if(! ( cv_monstergravity.EV
-               || (EN_mbf && tmr_felldown) ) )
+        if( ! ( (cv_monstergravity.EV == 2) 
+               || ((cv_monstergravity.EV == 1) && tmr_felldown) ) )
         {
             if(actor->z > actor->floorz)
                P_HitFloor(actor);
