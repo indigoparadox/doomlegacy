@@ -91,8 +91,11 @@ void P_MoveClassThink(thinker_t *thinker, byte first);
 //  thnext: becomes new first in class-list.
 void P_MoveClasslistRangeLast( thinker_t * cap, thinker_t * thnext );
 
+#ifdef REFERENCE_COUNTING
 // Set the target, with reference counting.
-void P_SetTarget(mobj_t **mop, mobj_t *targ);
-
+void P_SetReference(mobj_t *rm_mo, mobj_t *add_mo)
+#else
+# define P_SetReference( r, a )
+#endif
 
 #endif
