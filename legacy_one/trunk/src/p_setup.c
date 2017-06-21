@@ -1788,7 +1788,7 @@ boolean P_SetupLevel (int      to_episode,
             {
                 G_DoReborn(i);
             }
-            else if( demoversion>=128 )
+            else if( EV_legacy >= 128 )
             {
                 G_CoopSpawnPlayer(i);
             }

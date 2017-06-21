@@ -239,6 +239,7 @@ gamemode_e  gamemode = indetermined;   // Game Mode - identify IWAD as shareware
 byte  EN_doom_etc;  // doom, boom, mbf, common behavior  (not heretic, hexen, strife)
 byte  EN_boom;  // Boom features (boom demo compatibility=0)
 byte  EN_mbf;   // MBF (Marines Best Friend) enable (similar prboom mbf_features)
+byte  EV_legacy; // DoomLegacy version, 0 when some other demo.
 
 // Raven: Heretic, Hexen, and Strife may be Raven, but code reader
 // should not need to know that.  Keep names explicit for easy code reading.
@@ -2464,6 +2465,7 @@ void G_gamemode_EN_defaults( void )
 void G_set_gamemode( byte new_gamemode )
 {
     gamemode = new_gamemode;
+    EV_legacy = VERSION;  // current DoomLegacy version
     // Legacy defaults.
     EN_doom_etc = 1;
     EN_boom = 1;
@@ -3017,6 +3019,7 @@ void G_DoPlayDemo (char *defdemoname)
     // Defaults
     EN_boom = 0;
     EN_mbf = 0;
+    EV_legacy = 0;
 
 //
 // load demo file / resource
@@ -3070,6 +3073,7 @@ void G_DoPlayDemo (char *defdemoname)
         // maybe DL header on old demo
         if( demoversion < 111 )  goto broken_header;
         if( demoversion < 143 )  demo144_format = 0;
+        EV_legacy = demoversion;  // is a DoomLegacy version
         // [WDJ] enable of "Marine's Best Friend" feature emulation
         EN_boom = 1;
         EN_mbf = (demoversion >= VERSION147);
@@ -3077,6 +3081,7 @@ void G_DoPlayDemo (char *defdemoname)
     else if( demoversion >= 111 && demoversion <= 143 )
     {
         // Older DoomLegacy Demos
+        EV_legacy = demoversion;
         EN_boom = (demoversion >= 129);
         EN_mbf = 0; // legacy demos before mbf
     }

@@ -112,6 +112,7 @@ extern byte  EN_doom_etc;  // doom, boom, mbf, common behavior  (not heretic, he
 // Set by gamemode, but may be enabled by demos too.
 extern byte  EN_boom;  // Boom features (boom demo compatibility=0)
 extern byte  EN_mbf;   // MBF (Marines Best Friend) enable (similar prboom mbf_features)
+extern byte  EV_legacy; // DoomLegacy version, 0 when some other demo.
 
 
 #if 0

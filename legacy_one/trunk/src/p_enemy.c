@@ -312,14 +312,14 @@ void CV_monster_OnChange(void)
 {
     // Set monster friction for Boom, MBF, prboom demo, by cv_monsterfriction.EV = 1.
     if( (demoplayback && (friction_model != FR_legacy))
-	|| ( cv_monsterfriction.EV > 3 ) )
+        || ( cv_monsterfriction.EV > 3 ) )
     {
         EN_mbf_enemyfactor = (friction_model >= FR_mbf) && (friction_model <= FR_prboom);
         // Where monster friction is determined by friction model,
         // demo settings.
-	// If cv_monsterfriction == 0x80, then EN_monster_friction has
+        // If cv_monsterfriction == 0x80, then EN_monster_friction has
         // already been set from the Boom demo compatiblity flag.
-	if( cv_monsterfriction.EV < 0x80 )
+        if( cv_monsterfriction.EV < 0x80 )
             EN_monster_friction = EN_mbf_enemyfactor;  // MBF, PrBoom default
         EN_monster_momentum = 0;  // 2=momentum
     }
@@ -374,7 +374,7 @@ void DemoAdapt_p_enemy( void )
 
     EN_skull_limit = ( demoversion <= 132 ) ? 20 : 0;  // doom demos
     EN_old_pain_spawn = ( demoversion < 143 );
-    EN_mbf_speed = EN_mbf || (demoversion >= 145 && demoversion < 200);  // Legacy 1.45, 1.46
+    EN_mbf_speed = EN_mbf || (EV_legacy >= 145);  // Legacy 1.45, 1.46
 #if 1
     if( demoplayback && verbose > 1 )
     { 
@@ -495,7 +495,7 @@ static boolean P_CheckMeleeRange (mobj_t* actor)
 
     //added:19-03-98: check height now, so that damn imps cant attack
     //                you if you stand on a higher ledge.
-    if( demoversion>111
+    if( (EV_legacy > 111)
          && ((pl->z > actor->z + actor->height)
              || (actor->z > pl->z + pl->height) )
       )
@@ -554,8 +554,8 @@ static boolean P_CheckMissileRange (mobj_t* actor)
         // so fight back!
         actor->flags &= ~MF_JUSTHIT;
 
-        if( EN_heretic || demoversion < VERSION147 )
-            return true;
+        if( EN_heretic || (demoversion < VERSION147) )
+            return true;  // Old Legacy, Old Doom
 
         // [WDJ] MBF, from MBF, PrBoom
         // Boom has two calls of P_Random, which affect demos
@@ -913,7 +913,7 @@ static boolean P_MoveActor (mobj_t* actor, byte dropoff)
     {
         // Monster gravity, or MBF felldown, blocks this vanilla instant fall.
         if(! ( cv_monstergravity.EV
-	       || (EN_mbf && tmr_felldown) ) )
+               || (EN_mbf && tmr_felldown) ) )
         {
             if(actor->z > actor->floorz)
                P_HitFloor(actor);
@@ -1506,7 +1506,7 @@ static boolean P_LookForPlayers ( mobj_t*       actor,
 
     // This is not in PrBoom, EnternityEngine, and it uses P_Random !!!
     // BP: first time init, this allow minimum lastlook changes
-    if( actor->lastlook<0 && demoversion>=129 && demoversion<200 )
+    if( (actor->lastlook < 0) && (EV_legacy >= 129) )
         actor->lastlook = P_Random () % MAXPLAYERS;
 
     c = 0;
@@ -3101,7 +3101,7 @@ void A_Fall (mobj_t *actor)
     if (!cv_solidcorpse.EV)
         actor->flags &= ~MF_SOLID;  // not solid (vanilla doom)
 
-    if( demoversion >= 131 )
+    if( EV_legacy >= 131 )
     {
         // Before version 131 this is done later in P_KillMobj.
         actor->flags   |= MF_CORPSE|MF_DROPOFF;
