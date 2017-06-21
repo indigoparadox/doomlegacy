@@ -399,17 +399,26 @@ extern fixed_t  see_bottomslope;
 //
 #include "p_spec.h"
 
+
 // Secondary features.
 extern byte  EN_monster_friction;
 extern byte  EN_variable_friction;
+#ifdef FRICTIONTHINKER
+extern byte  EN_boom_friction_thinker;
+#endif
 extern byte  EN_skull_bounce_fix;  // PrBoom 2001  !comp[comp_soul]
 extern byte  EN_skull_bounce_floor;
+extern byte  EN_catch_respawn_0;
 
 // Boom
 extern byte  EN_pushers;
 extern byte  EN_boom_physics;
 extern byte  EN_blazing_double_sound;
 extern byte  EN_doorlight;
+extern byte  EN_skull_limit;
+extern byte  EN_old_pain_spawn;
+extern byte  EN_invul_god;
+extern byte  EN_boom_floor;
 
 // MBF
 extern fixed_t EV_mbf_distfriend;

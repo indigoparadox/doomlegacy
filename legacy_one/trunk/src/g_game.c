@@ -264,6 +264,8 @@ byte  EN_skull_bounce_floor; // PrBoom has this enabled by comp level.
 byte  EN_boom_physics; // !comp[comp_model]
 byte  EN_blazing_double_sound; // comp[comp_blazing]
 byte  EN_doorlight; // !comp[comp_doorlight]
+byte  EN_invul_god; // !comp[comp_god]
+byte  EN_boom_floor; // !comp[comp_floors]
 // MBF  (1998-2000)
 byte  EN_mbf_pursuit;   // !comp[comp_pursuit]
 byte  EN_mbf_telefrag;  // !comp[comp_telefrag]
@@ -2451,10 +2453,16 @@ void G_gamemode_EN_defaults( void )
     // Heretic never fixed this, but PrBoom did.  Default to fixed.
     EN_skull_bounce_fix = 1;  // Off only for old demos, incl Legacy demos.
     EN_skull_bounce_floor = 1;
+    EN_catch_respawn_0 = 1;
     // Boom
     EN_pushers = EN_boom;
     EN_doorlight = EN_boom;
+    EN_invul_god = EN_boom;
+    EN_boom_physics = EN_boom;
+    EN_boom_floor = EN_boom | EN_heretic;
     EN_blazing_double_sound = 0;
+    EN_skull_limit = 0;
+    EN_old_pain_spawn = 0;
     // MBF
     EN_mbf_telefrag = EN_mbf | EN_heretic;
 }
@@ -2521,6 +2529,7 @@ void G_demo_defaults( void )
     cv_monbehavior.EV = 0;  // Vanilla
     cv_monsterfriction.EV = 0; // Vanilla
     EN_skull_bounce_fix = 0;  // Vanilla and DoomLegacy < 1.47
+    EN_catch_respawn_0 = 0;
 
     // Boom
     cv_rndsoundpitch.EV = EN_boom;  // normal in Boom, calls M_Random
@@ -2528,9 +2537,13 @@ void G_demo_defaults( void )
     EN_variable_friction = EN_boom;
     EN_pushers = EN_boom;
     EN_doorlight = EN_boom;
+    EN_invul_god = EN_boom;
     cv_invul_skymap.EV = EN_boom;  // 0=Vanilla, 1=Boom
     cv_zerotags.EV = EN_boom;  // 0=Vanilla, 1=Boom
+    EN_boom_floor = EN_boom;
     EN_blazing_double_sound = EN_doom_etc && ! EN_boom;
+    EN_skull_limit = EN_doom_etc && ! EN_boom;
+    EN_old_pain_spawn = EN_doom_etc && ! EN_boom;
 
     // MBF
     cv_mbf_dropoff.EV = EN_mbf;
@@ -3298,14 +3311,19 @@ void G_DoPlayDemo (char *defdemoname)
             byte * comp = demo_p + 26;
             EN_mbf_telefrag = ! comp[comp_telefrag];
             cv_mbf_dropoff.EV = ! comp[comp_dropoff];
+            EN_skull_limit = comp[comp_pain];
+            EN_old_pain_spawn = comp[comp_skull];
             EN_blazing_double_sound = comp[comp_blazing];  // Vanilla
             EN_doorlight = ! comp[comp_doorlight];
             EN_boom_physics = ! comp[comp_model];
+            EN_invul_god = ! comp[comp_god];
             cv_mbf_falloff.EV = ! comp[comp_falloff];
+            EN_boom_floor = ! comp[comp_floors];
             cv_invul_skymap.EV = ! comp[comp_pursuit];  // 0=Vanilla, 1=Boom
             cv_mbf_pursuit.EV = ! comp[comp_pursuit];
             cv_doorstuck.EV = comp[comp_doorstuck]? 0:2; // Vanilla : MBF
             cv_mbf_staylift.EV = ! comp[comp_staylift];
+            EN_catch_respawn_0 = ! comp[comp_respawn];
             EN_skull_bounce_fix = ! comp[comp_soul];
             cv_zerotags.EV = ! comp[comp_zerotags]; // 0=Vanilla, 1=Boom
         }
