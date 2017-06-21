@@ -1581,6 +1581,12 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
     {
         // TODO: better handling of fixedcolormap
         Surf.FlatColor.s.red = Surf.FlatColor.s.green = Surf.FlatColor.s.blue = 0xff;
+        // See PrBoom use of
+        // glDisable(GL_SHARED_TEXTURE_PALETTE_EXT);
+        // glEnable(GL_TEXTURE_GEN_S);
+        // glEnable(GL_TEXTURE_GEN_T);
+        // glEnable(GL_TEXTURE_GEN_Q);
+        // glColor4fv(gl_whitecolor);
     }
     else
     {
@@ -1904,6 +1910,15 @@ static void HWR_StoreWallRange(float startfrac, float endfrac)
         // [WDJ] Above upper texture is sky
         vxtx[2].y = vxtx[3].y = skybottom;
         vxtx[0].y = vxtx[1].y = 2E10;
+
+        // [WDJ] Does not have skyflat detection, nor colormap,
+        // so no place to apply cv_invul_skymap.EV.
+        // See PrBoom use of
+        // glDisable(GL_SHARED_TEXTURE_PALETTE_EXT);
+        // glEnable(GL_TEXTURE_GEN_S);
+        // glEnable(GL_TEXTURE_GEN_T);
+        // glEnable(GL_TEXTURE_GEN_Q);
+        // glColor4fv(gl_whitecolor);
 
         // Transparent, to set z buffer to block more distant draws.       
         Surf.polyflags = PF_Environment;

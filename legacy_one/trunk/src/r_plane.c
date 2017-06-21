@@ -700,17 +700,14 @@ void R_DrawPlanes (void)
 // cy = centery;
 // centery = (rdraw_viewheight/2);
 
-            // Sky is allways drawn full bright,
-            //  i.e. colormaps[0] is used.
-            // Because of this hack, sky is not affected
-            //  by INVUL inverse mapping.
-#if 0
-            // BP: this fix sky not inversed in invuln but it is a original doom2 feature (bug?)
-            if(fixedcolormap)
+            // [WDJ] Invul sky bug fix from PrBoom.
+            // Vanilla: Sky is always drawn full bright, i.e. colormaps[0],
+            // thus the sky is not affected by INVUL inverse mapping.
+            if(cv_invul_skymap.EV && fixedcolormap)
                 dc_colormap = fixedcolormap;
             else
-#endif
-            dc_colormap = reg_colormaps;  // [0]
+                dc_colormap = reg_colormaps;  // [0]
+
             dc_texturemid = skytexturemid;
             dc_texheight = textureheight[skytexture] >> FRACBITS;
             for (x=pl->minx ; x <= pl->maxx ; x++)

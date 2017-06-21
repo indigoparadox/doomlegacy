@@ -283,6 +283,12 @@ void BoomColormap_detect(void)
     }
 }
 
+CV_PossibleValue_t invul_skymap_cons_t[]={
+   {0,"Vanilla"},  // Vanilla no colormap change
+   {1,"Boom"},     // Boom colormap change
+   {0,NULL} };
+consvar_t cv_invul_skymap  = {"invul_skymap", "1", CV_SAVE, invul_skymap_cons_t};
+
 // matches fogwater_effect_e
 CV_PossibleValue_t  fogwater_effect_cons_t[]={
    {FW_colormap,"Colormap" },
@@ -1608,6 +1614,7 @@ void R_Register_EngineStuff (void)
 #endif
 
     CV_RegisterVar (&cv_boom_colormap);
+    CV_RegisterVar (&cv_invul_skymap);
     CV_RegisterVar (&cv_water_effect);
     CV_RegisterVar (&cv_fog_effect);
 }

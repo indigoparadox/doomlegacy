@@ -344,11 +344,14 @@ void D_Register_MiscCommands (void)
     // for p_enemy
     CV_RegisterVar (&cv_monbehavior);
     CV_RegisterVar (&cv_monsterfriction);
+    CV_RegisterVar (&cv_monster_remember);
     CV_RegisterVar (&cv_monstergravity);
     CV_RegisterVar (&cv_doorstuck);
     CV_RegisterVar (&cv_pickupflash);
     CV_RegisterVar (&cv_weapon_recoil);
+    CV_RegisterVar (&cv_zerotags);
     // MBF
+    CV_RegisterVar (&cv_mbf_falloff);
     CV_RegisterVar (&cv_mbf_monster_avoid_hazard);
     CV_RegisterVar (&cv_mbf_monster_backing);
     CV_RegisterVar (&cv_mbf_dropoff);

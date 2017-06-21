@@ -83,6 +83,9 @@
 
 #define SAVE_VERSION_144
 
+
+extern consvar_t  cv_zerotags;
+
 // at game start
 void    P_InitPicAnims (void);
 
