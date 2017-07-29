@@ -162,6 +162,12 @@ void G_PlayerReborn (int player);
 
 void G_AddPlayer( int playernum );
 
+#ifdef DOGS
+extern byte  extra_dog_count;
+boolean  G_SpawnExtraDog( mapthing_t * spot );
+void  G_KillDog( mobj_t * mo );
+#endif
+
 // ---- Game load
 
 void G_InitNew (skill_e skill, char* mapname, boolean resetplayer);

@@ -418,6 +418,14 @@ typedef enum
     sfx_skesit,
     sfx_skeatk,
     sfx_radio,
+#ifdef DOGS
+    // killough 11/98: dog sounds
+    sfx_dgsit,
+    sfx_dgatk,
+    sfx_dgact,
+    sfx_dgdth,
+    sfx_dgpain,
+#endif
     //added:22-02-98: player avatar jumps
     sfx_jump,
     //added:22-02-98: player hits something hard and says 'ouch!'

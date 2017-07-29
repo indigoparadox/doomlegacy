@@ -1713,6 +1713,12 @@ void P_KillMobj ( mobj_t*  target,
     if (target->type != MT_SKULL)
         target->flags &= ~MF_NOGRAVITY;
 
+#ifdef DOGS
+    // [WDJ] MBF dogs, extension for DoomLegacy.
+    if( (target->type == MT_DOG) || (target->type == helper_MT) )
+        G_KillDog( target );     
+#endif
+
     // scream a corpse :)
     if( target->flags & MF_CORPSE )
     {

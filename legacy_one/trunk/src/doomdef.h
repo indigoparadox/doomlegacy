@@ -135,6 +135,9 @@
 #define LAUNCHER
 #endif
 
+// [WDJ] 7/6/2017  MBF DOGS
+#define DOGS
+
 // Player morph canceling invisibility and MF_SHADOW, is inconsistent.
 // The Heretic vanilla behavior cancels SHADOW when turned into a chicken.
 // #define PLAYER_CHICKEN_KEEPS_SHADOW

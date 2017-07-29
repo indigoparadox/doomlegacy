@@ -1826,6 +1826,12 @@ boolean P_SetupLevel (int      to_episode,
                 G_CoopSpawnPlayer(i);
             }
         }
+#ifdef DOGS       
+        else if( extra_dog_count < cv_mbf_dogs.EV )
+        {
+            G_SpawnExtraDog( playerstarts[i] );
+        }
+#endif       
     }
 
     // clear special respawning que
