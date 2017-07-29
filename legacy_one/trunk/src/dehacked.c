@@ -674,7 +674,6 @@ enum {
 
 // Translate deh frame number to internal state index.
 // return S_NULL when invalid state (deh frame)
-static
 statenum_t  deh_frame_to_state( int deh_frame )
 {
   // Some old wads had negative frame numbers, which should be S_NULL.

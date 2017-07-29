@@ -3990,8 +3990,13 @@ void A_PlaySound(mobj_t *mo)
 void A_RandomJump(mobj_t *mo)
 {
     state_ext_t * sep = P_state_ext( mo->state );
+
+    // As in EternityEngine, test first, then use Random Number.
+    statenum_t si = deh_frame_to_state( sep->parm1 );
+    if( si == S_NULL )  return;
+    
     if( PP_Random(pr_randomjump) < sep->parm2 )
-        P_SetMobjState(mo, sep->parm1);
+        P_SetMobjState(mo, si);
 }
 
 //

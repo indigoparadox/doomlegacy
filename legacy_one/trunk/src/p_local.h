@@ -509,4 +509,6 @@ boolean P_ChickenMorphPlayer(player_t *player);
 void P_Massacre(void);
 void P_AddBossSpot(fixed_t x, fixed_t y, angle_t angle);
 
+statenum_t  deh_frame_to_state( int deh_frame );
+
 #endif  // P_LOCAL_H
