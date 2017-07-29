@@ -1953,12 +1953,9 @@ void A_FreeTargMobj(mobj_t *mo)
 //
 //----------------------------------------------------------------------------
 
-/*#define BODYQUESIZE 32
-mobj_t *bodyque[BODYQUESIZE];
-int bodyqueslot;*/
-
 void A_AddPlayerCorpse(mobj_t *actor)
 {
+    // Using the bodyque defined in g_game.c.
     if(bodyqueslot >= BODYQUESIZE)
     { // Too many player corpses - remove an old one
         P_RemoveMobj(bodyque[bodyqueslot%BODYQUESIZE]);

@@ -1737,7 +1737,7 @@ bex_codeptr_t  bex_action_table[] = {
    {"RandomJump", {A_RandomJump}},  // Random transition to mobj state parm1
       // probability parm2
    {"LineEffect", {A_LineEffect}},  // Trigger line type parm1, tag = parm2
-   
+
    {"KeepChasing", {A_KeepChasing}},  // MBF, from EnternityEngine
    
    { NULL, {NULL} }  // table term
