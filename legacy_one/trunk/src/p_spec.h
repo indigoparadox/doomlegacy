@@ -538,6 +538,21 @@ typedef struct
 } vldoor_t;
 
 
+#ifdef SAVE_VERSION_144
+typedef struct
+{
+ // State to be saved in save game (p_saveg.c)
+ // Savegame saves fields (type ... )
+    vldoor_e    type;
+    fixed_t     topheight;
+    fixed_t     speed;
+    int         direction;
+    int         topwait;
+    int         topcountdown;
+} vldoor_144_t;
+#endif
+
+
 
 #define VDOORSPEED              (FRACUNIT*2/NEWTICRATERATIO)
 #define VDOORWAIT               150
