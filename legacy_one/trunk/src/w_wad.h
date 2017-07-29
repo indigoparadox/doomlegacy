@@ -97,6 +97,9 @@ typedef union {
     uint64_t  namecode;  // name as numerical  (8 bytes)
 } lump_name_t;
 
+void  numerical_name( const char * name, lump_name_t * numname );
+
+
 
 // [WDJ] Track the lump namespace (Wad markers)
 // Lump namespace
@@ -130,13 +133,18 @@ typedef struct
 
 typedef uint32_t   lumpnum_t;
 
-#define WADFILENUM(lump)       ((lump)>>16)   // wad file number in upper word
-#define LUMPNUM(lump)          ((lump)&0xffff)    // lump number for this pwad
+// wad file number in upper word
+#define WADFILENUM(lump)       ((lump)>>16)
+// lump number for this pwad
+#define LUMPNUM(lump)          ((lump)&0xffff)
+// Combined wad and lump parameter.
+#define WADLUMP(wad,lump)      (((wad)<<16)+(lump))
 
-// MAX_WADPATH moved to doomdef.h, for other users
-#define MAX_WADFILES  32       // maximum of wad files used at the same time
-                               // (there is a max of simultaneous open files
-                               // anyway, and this should be plenty)
+// MAX_WADPATH moved to doomdef.h, for other users.
+
+// Maximum of wad files used at the same time (there is a max of
+// simultaneous open files anyway, and this should be plenty)
+#define MAX_WADFILES  32
 
 #define lumpcache_t  void*
 
