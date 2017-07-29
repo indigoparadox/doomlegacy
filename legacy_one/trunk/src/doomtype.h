@@ -251,4 +251,6 @@ typedef union {
 // Lights values 0..255, but signed to detect underflow.
 typedef int16_t   lightlev_t;
 
+typedef uint16_t  statenum_t;
+
 #endif  //__DOOMTYPE__

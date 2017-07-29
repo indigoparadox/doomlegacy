@@ -250,12 +250,12 @@ typedef struct
 {
     ammotype_t  ammo;
     int         ammopershoot;
-    int         upstate;
-    int         downstate;
-    int         readystate;
-    int         atkstate;
-    int         holdatkstate;
-    int         flashstate;
+    statenum_t  upstate;
+    statenum_t  downstate;
+    statenum_t  readystate;
+    statenum_t  atkstate;
+    statenum_t  holdatkstate;
+    statenum_t  flashstate;
 
 } weaponinfo_t;
 

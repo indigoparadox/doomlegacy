@@ -2536,7 +2536,6 @@ S_DUMMY2,
 #if NUMSTATES >= 0xFFFE
 #error  NUMSTATES exceeds 16 bits
 #endif
-typedef uint16_t  statenum_t;
 
 
 typedef struct
