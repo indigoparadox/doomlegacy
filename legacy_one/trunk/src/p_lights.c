@@ -382,7 +382,7 @@ void P_SpawnGlowingLight( sector_t*  sector)
 //
 // Fade all the lights in sectors with a particular tag to a new value
 //
-void P_FadeLight(int tag, lightlev_t destvalue, lightlev_t speed)
+void P_FadeLight( uint16_t tag, lightlev_t destvalue, lightlev_t speed)
 {
   lightfader_t * lf;
 
