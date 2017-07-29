@@ -277,6 +277,7 @@ extern  consvar_t cv_mbf_monkeys;
 extern  consvar_t cv_mbf_dogs;
 extern  consvar_t cv_mbf_dog_jumping;
 #endif
+extern  uint16_t helper_MT;  // Substitute helper thing (like DOG).
 
 // when pushing a line 
 //#define MAXSPECIALCROSS 16

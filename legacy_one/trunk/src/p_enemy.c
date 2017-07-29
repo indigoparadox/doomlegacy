@@ -1873,6 +1873,23 @@ void A_Look (mobj_t* actor)
 }
 
 
+// [WDJ] Functions from PrBoom, MBF, EternityEngine.
+
+// killough 10/98:
+// Allows monsters to continue movement while attacking
+// EternityEngine makes it BEX available.
+//
+void A_KeepChasing(mobj_t *actor)
+{
+  if (actor->movecount)
+  {
+      actor->movecount--;
+      if (actor->strafecount)
+        actor->strafecount--;
+      P_SmartMove(actor);
+  }
+}
+
 //
 // A_Chase
 // Actor has a melee attack,
