@@ -1164,6 +1164,18 @@ zmove_floater:
             mo->momz = 0;
         }
 
+#if 0	   
+        // [WDJ] Original Buggy skull bounce code.
+        // Because momz has already been set to 0, this cannot do anything,
+        // unless the floor hit the skull while the skull had momz > 0.
+        // An important demo with this happening is needed to make this worth it.
+        if( !EN_skull_bounce_floor && (mo->flags & MF_SKULLFLY) )
+        {
+            // the skull slammed into something
+            mo->momz = -mo->momz;  // skull bounces
+        }
+#endif
+
         if (mo->info->crashstate && (mo->flags & MF_CORPSE))
         {
             P_SetMobjState(mo, mo->info->crashstate);
@@ -1253,6 +1265,7 @@ zmove_floater:
         mo->momz = FixedMul(mo->momz, FRICTION_NORM * 3 / 4);
     }
     return;
+
 
 bouncer:
     // [WDJ] From PrBoom and MBF source, modified.

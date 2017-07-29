@@ -2455,8 +2455,33 @@ void A_Tracer (mobj_t* actor)
     mobj_t    * dest;
     mobj_t    * th;
 
-    if (gametic % (4 * NEWTICRATERATIO))
+#ifdef BASETIC_DEMOSYNC   
+  // killough 1/18/98: this is why some missiles do not have smoke and some do.
+  // Also, internal demos start at random gametics, thus the bug in which
+  // revenants cause internal demos to go out of sync.
+  //
+  // killough 3/6/98: fix revenant internal demo bug by subtracting
+  // levelstarttic from gametic.
+  //
+  // killough 9/29/98: use new "basetic" so that demos stay in sync during
+  // pauses and menu activations, while retaining old demo sync.
+  //
+  // It would have been better to use leveltime to start with in Doom,
+  // but since old demos were recorded using gametic, we must stick with it,
+  // and improvise around it (using leveltime causes desync across levels).
+
+
+    if( EV_legacy )
+    {
+      if( gametic % (4 * NEWTICRATERATIO) )
         return;
+    }else if( (gametic - basetic) & 3 )  // PrBoom, MBF
+        return;
+#else
+    // [WDJ] As NEWTICRATERATION = 1, this is same as gametic & 3, 
+    if( gametic % (4 * NEWTICRATERATIO) )
+        return;
+#endif
 
     // spawn a puff of smoke behind the rocket
     P_SpawnPuff (actor->x, actor->y, actor->z);
