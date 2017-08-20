@@ -214,6 +214,10 @@ void V_DrawMappedPatch ( int x, int y,
                          patch_t*      patch,
                          byte*         colormap );
 
+// Limited by box
+void V_DrawMappedPatch_Box(int x, int y, patch_t * patch, byte * colormap,
+                           int box_x, int box_y, int box_w, int box_h );
+
 // with temp patch load to cache
 void V_DrawMappedPatch_Name ( int x, int y,
                               char*         name,

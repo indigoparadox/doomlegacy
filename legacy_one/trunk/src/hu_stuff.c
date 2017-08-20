@@ -243,7 +243,7 @@ void TeamPlay_OnChange(void)
     {
         // skins
         for(i=0; i<numskins; i++)
-            set_team_name( i, skins[i].name);
+            set_team_name( i, skins[i]->name);
     }
 }
 

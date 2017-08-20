@@ -248,7 +248,7 @@
 // Limit MAXPLAYERS (and others) to 250.
 // TODO: ... more!!!
 #define MAXPLAYERS              32
-#define MAXSKINS                MAXPLAYERS
+#define MAXSKINS                128
 #define PLAYERSMASK             (MAXPLAYERS-1)
 #define MAXPLAYERNAME           21
 // Limit MAXTEAMS to 250.
