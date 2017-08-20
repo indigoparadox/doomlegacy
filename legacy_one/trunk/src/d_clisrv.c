@@ -324,9 +324,9 @@ void Send_NetXCmd(byte cmd_id, void *param, int nparam)
    if( (textlen + 1 + nparam) > MAXTEXTCMD)
    {
 #ifdef PARANOIA
-       I_SoftError("Net command exceeds buffer size: netcmd %d\n", cmd_id);
+       I_SoftError("Net command [%i] exceeds buffer: netcmd %d\n", cmd_id, 1);
 #else
-       GenPrintf(EMSG_warn, "\2Net Command exceeds buffer\n");
+       GenPrintf(EMSG_warn, "\2Net Command [%] exceeds buffer\n", 1);
 #endif
        return;
    }
@@ -352,9 +352,9 @@ void Send_NetXCmd2(byte cmd_id, void *param, int nparam)
    if( (textlen + 1 + nparam) > MAXTEXTCMD)
    {
 #ifdef PARANOIA
-       I_SoftError("Net command exceeds buffer size: netcmd %d\n", cmd_id);
+       I_SoftError("Net command [%i] exceeds buffer: netcmd %d\n", cmd_id, 2);
 #else
-       GenPrintf(EMSG_warn, "\2Net Command fail\n");
+       GenPrintf(EMSG_warn, "\2Net Command [%i] exceeds buffer\n", 2);
 #endif
        return;
    }
@@ -2880,7 +2880,12 @@ static void CL_Send_ClientCmd (void)
                 localtextcmd2.buff[0] = 0; // text len
         }
     }
-
+    else
+    {
+        // Clear XCmds that would overflow the buffers.
+        localtextcmd.buff[0] = 0;
+        localtextcmd2.buff[0] = 0;
+    }
 }
 
 
