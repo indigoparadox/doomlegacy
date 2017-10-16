@@ -906,7 +906,7 @@ typedef enum { SRP_NULL, SRP_1, SRP_8, SRP_16 }  sprite_rotation_pattern_e;
 // A sprite is a patch_t that is assumed to represent a three dimensional
 // object and may have multiple rotations pre-drawn.
 // Sprites are patches with a special naming convention so they can be
-// recognized by R_InitSprites.
+// recognized by R_Init_Sprites.
 // The base name is combined with frame (F) and rotation (x) characters.
 // A sprite with only one patch for all views: NNNNF0.
 // With rotation it is named NNNNFx or NNNNFxFx, with

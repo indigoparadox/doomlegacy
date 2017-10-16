@@ -2194,7 +2194,7 @@ void P_UnArchiveThinkers(void)
     }
     // BP: we don't want the removed mobj come back !!!
     iquetail = iquehead = 0;
-    P_InitThinkers();
+    P_Init_Thinkers();
 
     // read in saved thinkers
     while (1)

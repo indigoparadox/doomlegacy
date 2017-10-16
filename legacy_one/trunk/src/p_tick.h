@@ -77,7 +77,7 @@ extern  thinker_t  thinkerclasscap[];
 
 
 
-void P_InitThinkers (void);
+void P_Init_Thinkers (void);
 void P_AddThinker (thinker_t* thinker);
 void P_RemoveThinker (thinker_t* thinker);  // Remove the thinker.
 void T_RemoveThinker (thinker_t* thinker);  // Thinker removal action

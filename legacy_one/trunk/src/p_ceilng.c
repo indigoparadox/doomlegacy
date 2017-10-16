@@ -420,13 +420,13 @@ int EV_CeilingCrushStop(line_t* line)
 
 // SoM: 3/6/2000: Extra, boom only function.
 //
-// P_RemoveAllActiveCeilings()
+// P_Remove_AllActiveCeilings()
 //
 // Removes all ceilings from the active ceiling list
 //
 // Passed nothing, returns nothing
 //
-void P_RemoveAllActiveCeilings(void)
+void P_Remove_AllActiveCeilings(void)
 {
   while (activeceilings)
   {  

@@ -165,15 +165,13 @@ extern int st_borderflat_num;  // st_stuff.c
 //added:26-01-98: called by SCR_Recalc() when video mode changes
 void    R_RecalcFuzzOffsets (void);
 // Initialize color translation tables, for player rendering etc.
-void    R_InitTranslationTables (void);
+void    R_Init_TranslationTables (void);
 
-void    R_InitViewBuffer ( int   width,
-                           int   height );
+void    R_Init_ViewBuffer ( int width, int height );
 
-void    R_InitViewBorder (void);
+void    R_Init_ViewBorder (void);
 
-void    R_VideoErase ( unsigned      ofs,
-                       int           count );
+void    R_VideoErase ( unsigned int ofs, int count );
 
 // Rendering function.
 void    R_FillBackScreen (void);

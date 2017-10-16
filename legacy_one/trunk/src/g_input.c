@@ -436,7 +436,7 @@ char *gamecontrolname[num_gamecontrols] =
 //
 //  Detach any keys associated to the given game control
 //  - pass the pointer to the gamecontrol table for the player being edited
-void  G_ClearControlKeys (int (*setupcontrols)[2], int control)
+void  G_Clear_ControlKeys (int (*setupcontrols)[2], int control)
 {
     setupcontrols[control][0] = KEY_NULL;
     setupcontrols[control][1] = KEY_NULL;

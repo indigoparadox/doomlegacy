@@ -556,7 +556,7 @@ int md2_loadTexture (const char *filename)
     return grpatch->mipmap.downloaded;
 }
 
-void HWR_InitMD2()
+void HWR_Init_MD2()
 {
     int     i;
     FILE    *f;

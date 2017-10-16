@@ -59,13 +59,13 @@ static BossSpot_t BossSpots[MAX_BOSS_SPOTS];
 
 //----------------------------------------------------------------------------
 //
-// PROC P_InitMonsters
+// PROC P_Init_Monsters
 //
 // Called at level load.
 //
 //----------------------------------------------------------------------------
 
-void P_InitMonsters(void)
+void P_Init_Monsters(void)
 {
     BossSpotCount = 0;
 }

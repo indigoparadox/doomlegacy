@@ -138,11 +138,11 @@ button_t      buttonlist[MAXBUTTONS];
 
 
 //
-// P_InitSwitchList
+// P_Init_SwitchList
 // - this is now called at P_SetupLevel () time.
 //
 //SoM: 3/22/2000: Use boom code.
-void P_InitSwitchList(void)
+void P_Init_SwitchList(void)
 {
   int            i, index = 0;
   int            episode; // select switches based on game

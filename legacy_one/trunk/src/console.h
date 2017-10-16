@@ -39,9 +39,9 @@
 #define LOG(x) CONS_Printf(x)
 #endif
 
-void CON_Init (void);
 void CON_Register (void);
-void CON_VideoInit (void);
+void CON_Init_Setup (void);
+void CON_Init_Video (void);
 
 boolean CON_Responder (event_t *ev);
 
@@ -65,11 +65,11 @@ extern byte*   whitemap;
 extern byte*   greenmap;
 extern byte*   graymap;
 
-void CON_ClearHUD (void);       // clear heads up messages
+void CON_Clear_HUD (void);       // clear heads up messages
 
 void CON_Ticker (void);
 void CON_Drawer (void);       // full feature
-void CON_DrawConsole (void);  // text to console
+void CON_Draw_Console (void);  // text to console
 void CONS_Error (char *msg);       // print out error msg, and wait a key
 
 // force console to move out

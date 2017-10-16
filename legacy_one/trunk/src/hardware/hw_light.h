@@ -82,12 +82,12 @@ void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr);
 #endif
 
 
-void HWR_InitLight( void );
+void HWR_Init_Light( void );
 void HWR_DynamicShadowing(vxtx3d_t *clVerts, int nrClipVerts, player_t *p);
 void HWR_PlaneLighting(vxtx3d_t *clVerts, int nrClipVerts);
 void HWR_WallLighting(vxtx3d_t *wlVerts);
-void HWR_ResetLights(void);
-void HWR_SetLights(int viewnumber);
+void HWR_Reset_Lights(void);
+void HWR_Set_Lights(int viewnumber);
 
 #define DL_MAX_LIGHT    256  // maximum number of light (extra light are ignored)
 

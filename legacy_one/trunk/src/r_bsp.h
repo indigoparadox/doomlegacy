@@ -83,9 +83,9 @@ typedef void (*drawfunc_t) (int start, int stop);
 
 
 // BSP
-void R_ClearClipSegs (void);
-void R_SetupClipSegs (void);
-void R_ClearDrawSegs (void);
+void R_Clear_ClipSegs (void);
+void R_Setup_ClipSegs (void);
+void R_Clear_DrawSegs (void);
 
 void R_RenderBSPNode (int bspnum);
 

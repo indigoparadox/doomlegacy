@@ -94,9 +94,9 @@ enum
 
 // variables
 
-void T_ClearHubScript();
+void T_Clear_HubScript();
 
-void init_variables();
+void T_Init_variables();
 fs_variable_t * new_variable(script_t *script, char *name, int vtype);
 fs_variable_t * find_variable(char *name);
 fs_variable_t * variableforname(script_t *script, char *name);

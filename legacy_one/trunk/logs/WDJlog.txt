@@ -6264,3 +6264,11 @@ patchfile = w107_56_corpse_color.patch
 Fix bug from the W107_color_TRAN patch.
 In OpenGL, the corpse color was black due to a missed change
 to using thing->tflags for color translation.
+
+*** W107_initnames
+patchfile = w107_57_initnames.patch
+- commit revision 1361
+Rename functions with Init, Clear, Create, Load, Setup, so
+read clearer.  Get away from the run-together name syntax.
+Fix P_Setup_LevelSky to call R_TextureNumForName in only one place,
+and add one safety test.

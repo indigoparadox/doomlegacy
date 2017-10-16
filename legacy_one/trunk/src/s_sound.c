@@ -535,14 +535,14 @@ void S_Init(int sfxVolume, int musicVolume)
 //
 
 //SoM: Stop all sounds, load level info, THEN start sounds.
-void S_StopLevelSound(void)
+void S_Stop_LevelSound(void)
 {
     int cnum;
 
 #ifdef HW3SOUND
     if (hws_mode != HWS_DEFAULT_MODE)
     {
-        HW3S_StopLevelSound();
+        HW3S_Stop_LevelSound();
         return;
     }
 #endif
@@ -556,7 +556,7 @@ void S_StopLevelSound(void)
 }
 
 // Called by P_SetupLevel.
-void S_StartLevelSound(void)
+void S_Start_LevelSound(void)
 {
     int mnum;
 

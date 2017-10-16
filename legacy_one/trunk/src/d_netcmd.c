@@ -940,7 +940,7 @@ void Command_TeamFrags_f(void)
         return;
     }
 
-    HU_CreateTeamFragTbl(unused, frags, fragtbl);
+    HU_Create_TeamFragTbl(unused, frags, fragtbl);
 
     for (i = 0; i < 11; i++)
     {

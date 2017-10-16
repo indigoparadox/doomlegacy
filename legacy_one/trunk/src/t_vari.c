@@ -70,7 +70,7 @@ script_t hub_script;
 
 // initialise the global script: clear all the variables
 
-void init_variables( void )
+void T_Init_variables( void )
 {
   int i;
   
@@ -83,7 +83,7 @@ void init_variables( void )
   // any hardcoded global variables can be added here
 }
 
-void T_ClearHubScript( void )
+void T_Clear_HubScript( void )
 {
   int i;
 

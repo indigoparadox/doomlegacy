@@ -96,15 +96,15 @@ typedef struct gr_vissprite_s
 extern  poly_subsector_t*   poly_subsectors;
 extern  unsigned int        num_poly_subsector;
 
-void HWR_InitPolyPool (void);
-void HWR_FreePolyPool (void);
+void HWR_Init_PolyPool (void);
+void HWR_Free_PolyPool (void);
 
 
 // --------
 // hw_cache.c
 // --------
-void HWR_InitTextureCache (void);
-void HWR_FreeTextureCache (void);
+void HWR_Init_TextureCache (void);
+void HWR_Free_TextureCache (void);
 
 void HWR_GetFlat (int flatlumpnum);
 MipTexture_t * HWR_GetTexture (int tex, uint32_t drawflags);
@@ -124,8 +124,8 @@ void HWR_SetFlashPalette( byte palette_num );
 extern  float   gr_patch_scalex;
 extern  float   gr_patch_scaley;
 
-void HWR_InitFog (void);
-void HWR_FreeFog (void);
+void HWR_Init_Fog (void);
+void HWR_Free_Fog (void);
 void HWR_FoggingOn (void);
 
 extern  consvar_t cv_grrounddown;   //on/off

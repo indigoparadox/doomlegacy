@@ -46,7 +46,7 @@
   // NUMWEAPONS
 #include "command.h"
 
-void P_LoadLevelInfo(void);
+void P_Load_LevelInfo(void);
 
 void P_CleanLine(char *line);
 
@@ -92,7 +92,7 @@ int isMAPxy(char *name);
                      (isnumchar((s)[4])) &&      \
                      ((s)[5] == '\0'))*/
 
-void P_Info_AddCommands(void);
+void P_Register_Info_Commands(void);
 char *P_LevelName(void);
 char *P_LevelNameByNum( int episode, int map );
 

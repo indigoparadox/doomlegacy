@@ -988,7 +988,7 @@ void HWR_DrawCoronas( void )
 // Remove all the dynamic lights at each frame
 // --------------------------------------------------------------------------
 // Called from P_SetupLevel, and maybe from HWR_RenderPlayerView
-void HWR_ResetLights(void)
+void HWR_Reset_Lights(void)
 {
     dynlights->nb = 0;
 }
@@ -997,7 +997,7 @@ void HWR_ResetLights(void)
 // Change view, thus change lights (splitscreen)
 // --------------------------------------------------------------------------
 // Called from HWR_RenderPlayerView
-void HWR_SetLights(int viewnumber)
+void HWR_Set_Lights(int viewnumber)
 {
     dynlights = &view_dynlights[viewnumber];
 }
@@ -1055,7 +1055,7 @@ void HWR_DL_AddLightSprite(gr_vissprite_t *spr, MipPatch_t *mpatch)
 
 static MipPatch_t lightmappatch;
 
-void HWR_InitLight( void )
+void HWR_Init_Light( void )
 {
     int i;
 
@@ -1148,7 +1148,8 @@ static void HWR_StoreWallRange (int startfrac, int endfrac)
 
 
 // p1 et p2 c'est le deux bou du seg en float
-void HWR_BuildWallLightmaps(v3d_t *p1, v3d_t *p2, int lightnum, seg_t *line)
+static
+void HWR_Create_WallLightmaps(v3d_t *p1, v3d_t *p2, int lightnum, seg_t *line)
 {
     lightmap_t *lp;
 
@@ -1209,7 +1210,7 @@ static void HWR_AddLightMapForLine( int lightnum, seg_t *line)
         return;
 #endif
 
-    HWR_BuildWallLightmaps(&p1, &p2, lightnum, line);
+    HWR_Create_WallLightmaps(&p1, &p2, lightnum, line);
 }
 
 
@@ -1309,10 +1310,10 @@ static void HWR_SearchLightsInMobjs(void)
 #endif
 
 //
-// HWR_CreateStaticLightmaps()
+// HWR_Create_StaticLightmaps()
 //
 // Called from P_SetupLevel
-void HWR_CreateStaticLightmaps( void )
+void HWR_Create_StaticLightmaps( void )
 {
 #ifdef STATICLIGHTMAPS
     //Hurdler: TODO!

@@ -133,7 +133,7 @@ void HW3S_SetSourcesNum()
     // simultaneously) within zone memory.
     if (sources)
     {
-        HW3S_StopLevelSound();
+        HW3S_Stop_LevelSound();
         Z_Free(sources);
     }
 

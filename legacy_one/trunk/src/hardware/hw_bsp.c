@@ -573,7 +573,7 @@ static unsigned int  gr_polypool_free = 0;
 #endif
 
 // only between levels, clear poly pool
-static void HWR_ClearPolys (void)
+static void HWR_Clear_Polys (void)
 {
     Z_FreeTags( PU_HWRPLANE, PU_HWRPLANE );
 #ifndef ZPLANALLOC
@@ -587,15 +587,15 @@ static void HWR_ClearPolys (void)
 static void HWR_Free_poly_subsectors ( void );
 
 // allocate  pool for fast alloc of polys
-void HWR_InitPolyPool (void)
+void HWR_Init_PolyPool (void)
 {
-    HWR_ClearPolys ();
+    HWR_Clear_Polys ();
 }
 
-void HWR_FreePolyPool (void)
+void HWR_Free_PolyPool (void)
 {
     HWR_Free_poly_subsectors ();
-    HWR_ClearPolys();
+    HWR_Clear_Polys();
 }
 
 static poly_t* HWR_AllocPoly (int numpts)
@@ -1002,7 +1002,7 @@ found:
 //   frontpoly : polygon on right side of bsp line
 //   backpoly  : polygon on left side
 //
-// Called from: WalkBSPNode
+// Called from: HWR_WalkBSPNode
 static
 void SplitPoly (fdivline_t* dlnp, wpoly_t* poly,
        /*OUT*/  wpoly_t* frontpoly, wpoly_t* backpoly)
@@ -1827,7 +1827,7 @@ void  CutOutSubsecPoly ( int ssindex, /*INOUT*/ wpoly_t* poly)
 //
 //  ssindex : subsec index, 0..(numsubsectors-1)
 //  poly : surrounding convex polygon, non-destructive
-// Called from WalkBSPNode
+// Called from HWR_WalkBSPNode
 static void HWR_SubsecPoly (int ssindex, wpoly_t* poly)
 {
     sscount++;
@@ -1883,7 +1883,7 @@ void loading_status( void )
 // Recursive
 // Called from HWR_CreatePlanePolygons at load time.
 static
-void WalkBSPNode (int bspnum, wpoly_t* poly, unsigned short* leafnode, fixed_t *bbox)
+void HWR_WalkBSPNode (int bspnum, wpoly_t* poly, unsigned short* leafnode, fixed_t *bbox)
 {
     node_t*     bsp;
 
@@ -1954,7 +1954,7 @@ void WalkBSPNode (int bspnum, wpoly_t* poly, unsigned short* leafnode, fixed_t *
     // Recursively divide front space.
     if (frontpoly.numpts)
     {
-        WalkBSPNode (bsp->children[0], &frontpoly, &bsp->children[0], bsp->bbox[0]);
+        HWR_WalkBSPNode (bsp->children[0], &frontpoly, &bsp->children[0], bsp->bbox[0]);
 
         // copy child bbox
         memcpy(bbox, bsp->bbox[0], 4*sizeof(fixed_t));
@@ -1963,14 +1963,14 @@ void WalkBSPNode (int bspnum, wpoly_t* poly, unsigned short* leafnode, fixed_t *
     {
         // [WDJ] Having no front poly is as likely as no back poly, since
         // logic in Split Poly was changed to check poly direction.
-//        I_SoftError ("WalkBSPNode: no front poly, bspnum= %d\n", bspnum);
+//        I_SoftError ("HWR_WalkBSPNode: no front poly, bspnum= %d\n", bspnum);
     }
 
     // Recursively divide back space.
     if (backpoly.numpts)
     {
         // Correct back bbox to include floor/ceiling convex polygon
-        WalkBSPNode (bsp->children[1], &backpoly, &bsp->children[1], bsp->bbox[1]);
+        HWR_WalkBSPNode (bsp->children[1], &backpoly, &bsp->children[1], bsp->bbox[1]);
 
         // enlarge bbox with second child
         M_AddToBox (bbox, bsp->bbox[1][BOXLEFT  ],
@@ -2001,9 +2001,9 @@ bad_subsector:
                 if( verbose )
                     GenPrintf( EMSG_ver, "Poly: Adding a new subsector !!!\n");
                 if (num_poly_subsector >= num_alloc_poly_subsector)
-                    I_Error ("WalkBSPNode : not enough poly_subsectors\n");
+                    I_Error ("HWR_WalkBSPNode : not enough poly_subsectors\n");
                 else if (num_poly_subsector > 0x7fff)
-                    I_Error ("WalkBSPNode : num_poly_subsector > 0x7fff\n");
+                    I_Error ("HWR_WalkBSPNode : num_poly_subsector > 0x7fff\n");
 
                 *leafnode = (unsigned short)num_poly_subsector | NF_SUBSECTOR;
                 poly_subsectors[num_poly_subsector].planepoly = poly;
@@ -2016,14 +2016,14 @@ bad_subsector:
             
             //add subsectors without segs here?
             //HWR_SubsecPoly (0, NULL);
-            I_Error ("WalkBSPNode : bspnum -1\n");
+            I_Error ("HWR_WalkBSPNode : bspnum -1\n");
     }
-    I_Error ("WalkBSPNode : bad secnum %i, numsectors=%i -1\n",
+    I_Error ("HWR_WalkBSPNode : bad secnum %i, numsectors=%i -1\n",
               subsecnum, numsubsectors );
             
 bad_node:
     // frontpoly and backpoly are empty, and were not init.
-    I_Error ("WalkBSPNode : bad node num %i, numnodes=%i -1\n",
+    I_Error ("HWR_WalkBSPNode : bad node num %i, numnodes=%i -1\n",
               bspnum, numnodes );
 }
 
@@ -2546,7 +2546,7 @@ void  finalize_polygons( void )
 // Call this routine after the BSP of a Doom wad file is loaded,
 // and it will generate all the convex polys for the hardware renderer.
 // Called from P_SetupLevel
-void HWR_CreatePlanePolygons ( void )
+void HWR_Create_PlanePolygons ( void )
 {
     wpoly_t       rootp;
     polyvertex_t** rootpv;
@@ -2558,7 +2558,7 @@ void HWR_CreatePlanePolygons ( void )
     GenPrintf( EMSG_all | EMSG_now, "Creating polygons, please wait...\n");
     ls_percent = ls_count = 0; // reset the loading status
 
-    HWR_ClearPolys ();
+    HWR_Clear_Polys ();
 
     // Enter all vertexes into the root bounding box.
     // find min/max boundaries of map
@@ -2606,7 +2606,7 @@ void HWR_CreatePlanePolygons ( void )
     rootpv[0]->y = rootpv[3]->y = FIXED_TO_FLOAT( rootbbox[BOXBOTTOM] );
 
     // start at head node of bsp tree
-    WalkBSPNode ( numnodes-1, &rootp, NULL, rootbbox);
+    HWR_WalkBSPNode ( numnodes-1, &rootp, NULL, rootbbox);
 
     SolveTProblem ();
 

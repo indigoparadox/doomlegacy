@@ -387,7 +387,7 @@ void P_RemoveActivePlat(plat_t* plat)
 
 
 //SoM: 3/7/2000: Removes all active plats.
-void P_RemoveAllActivePlats(void)
+void P_Remove_AllActivePlats(void)
 {
   while (activeplats)
   {  

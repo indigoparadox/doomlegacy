@@ -82,8 +82,7 @@ SearchNode_t* B_FindClosestNode(fixed_t x, fixed_t y);
 SearchNode_t* B_GetNodeAt(fixed_t x, fixed_t y);
 SearchNode_t* B_GetClosestReachableNode(fixed_t x, fixed_t y);
 boolean B_NodeReachable(mobj_t* mo, fixed_t x, fixed_t y, fixed_t destx, fixed_t desty);
-void B_BuildNodes(SearchNode_t* node);
-void B_InitNodes(void);
+void B_Init_Nodes(void);
 
 #endif
 

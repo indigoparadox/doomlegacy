@@ -224,11 +224,11 @@ ambseq_t * AmbientSfx[NUM_AMBIENT_SFX] =
 
 //----------------------------------------------------------------------------
 //
-// PROC P_InitAmbientSound
+// PROC P_Init_AmbientSound
 //
 //----------------------------------------------------------------------------
 
-void P_InitAmbientSound(void)
+void P_Init_AmbientSound(void)
 {
         AmbSfxCount = 0;
         AmbSfxVolume = 0;

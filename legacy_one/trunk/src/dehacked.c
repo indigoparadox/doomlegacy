@@ -2210,7 +2210,7 @@ void bex_include( char * inclfilename )
   
   include_nested = 1;
 //  DEH_LoadDehackedFile( inclfile );  // do the include file
-  W_LoadWadFile (inclfilename);
+  W_Load_WadFile (inclfilename);
   include_nested = 0;
    
   // restore state

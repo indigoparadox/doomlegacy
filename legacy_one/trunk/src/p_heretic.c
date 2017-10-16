@@ -233,7 +233,7 @@ extern byte cheat_clev_seq[];
 extern byte cheat_mypos_seq[];
 extern byte cheat_amap_seq[];
 
-void HereticPatchEngine(void)
+void Heretic_PatchEngine(void)
 {
     ceilmovesound = sfx_dormov;
     doorclosesound = sfx_doropn;
@@ -524,11 +524,11 @@ mobj_t LavaInflictor;
 
 //----------------------------------------------------------------------------
 //
-// PROC P_InitLava
+// PROC P_Init_Lava
 //
 //----------------------------------------------------------------------------
 
-void P_InitLava(void)
+void P_Init_Lava(void)
 {
     memset(&LavaInflictor, 0, sizeof(mobj_t));
     LavaInflictor.type = MT_PHOENIXFX2;

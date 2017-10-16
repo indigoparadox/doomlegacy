@@ -642,7 +642,7 @@ void HWR_DrawViewBorder (int clearlines)
 // ==========================================================================
 
 // Clear the automap part of the screen
-void HWR_clearAutomap( void )
+void HWR_Clear_Automap( void )
 {
     RGBA_float_t fColor = { 0,0,0,1 };
 

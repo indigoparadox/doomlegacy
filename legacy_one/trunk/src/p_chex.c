@@ -52,7 +52,7 @@ extern byte cheat_mypos_seq[];
 extern byte cheat_amap_seq[];
 
 
-void Chex1PatchEngine(void)
+void Chex1_PatchEngine(void)
 {
 
         //patch new text

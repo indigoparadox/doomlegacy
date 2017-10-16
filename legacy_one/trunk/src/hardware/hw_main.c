@@ -617,7 +617,7 @@ byte LightLevelToLum_extra(lightlev_t l, lightlev_t extra)
 }
 
 
-static void InitLumLut()
+static void Init_LumLut()
 {
     int i, k;
     for (i = 0; i < 256; i++)
@@ -2404,9 +2404,9 @@ static boolean HWR_ClipToSolidSegs(int first, int last)
 }
 
 //
-// HWR_ClearClipSegs
+// HWR_Clear_ClipSegs
 //
-static void HWR_ClearClipSegs(void)
+static void HWR_Clear_ClipSegs(void)
 {
     gr_solidsegs[0].first = -0x7fffffff;
     gr_solidsegs[0].last = -1;
@@ -2698,7 +2698,7 @@ static boolean HWR_CheckBBox(fixed_t * bspcoord)
 // Notes            : Sets gr_cursectorlight to the light of the parent sector, to modulate wall textures
 // -----------------+
 #ifdef DCK_WATER_TEST
-static int doomwaterflat;       //set by R_InitFlats hack
+static int doomwaterflat;       //set by R_Init_Flats hack
 #endif
 static byte  need_sky_background;
 
@@ -3071,7 +3071,7 @@ bad_subsector:
 //
 // Clear 'stack' of subsectors to draw
 //
-static void HWR_ClearDrawSubsectors (void)
+static void HWR_Clear_DrawSubsectors (void)
 {
     gr_drawsubsector_p = gr_drawsubsectors;
 }
@@ -3097,9 +3097,9 @@ static void HWR_RenderSubsectors (void)
 static angle_t anglefov = FIELDOFVIEW;
 #endif
 
-//BP : exactly the same as R_InitTextureMapping
+//BP : exactly the same as R_Init_TextureMapping
 // Called from r_main:R_ExecuteSetViewSize
-void HWR_InitTextureMapping(void)
+void HWR_Init_TextureMapping(void)
 {
     int i;
     int x;
@@ -3192,10 +3192,10 @@ gr_vissprite_t gr_vissprites[MAXVISSPRITES];
 gr_vissprite_t *gr_vissprite_p;
 
 // --------------------------------------------------------------------------
-// HWR_ClearSprites
+// HWR_Clear_Sprites
 // Called at frame start.
 // --------------------------------------------------------------------------
-static void HWR_ClearSprites(void)
+static void HWR_Clear_Sprites(void)
 {
     gr_vissprite_p = gr_vissprites;
 }
@@ -3952,9 +3952,9 @@ void HWR_DrawSkyBackground(player_t * player, byte upper_lower)
 }
 
 // -----------------+
-// HWR_ClearView : clear the viewwindow, with maximum z value
+// HWR_Clear_View : clear the viewwindow, with maximum z value
 // -----------------+
-void HWR_ClearView(void)
+void HWR_Clear_View(void)
 {
     //  3--2
     //  | /|
@@ -4060,7 +4060,7 @@ void HWR_RenderPlayerView(byte viewnumber, player_t * player)
             viewsv_need_sky[0] = viewsv_need_sky[1] = DSB_all;
         }
         viewsv_viewnumber = viewnumber;
-        HWR_SetLights(viewnumber);
+        HWR_Set_Lights(viewnumber);
     }
      
     // note: sets viewangle, viewx, viewy, viewz
@@ -4082,10 +4082,10 @@ void HWR_RenderPlayerView(byte viewnumber, player_t * player)
     }
 
     // hmm solidsegs probably useless here
-    //R_ClearDrawSegs ( );
+    //R_Clear_DrawSegs ( );
     // useless
-    //R_ClearPlanes (player );
-    //HWR_ClearSprites ( );
+    //R_Clear_Planes (player );
+    //HWR_Clear_Sprites ( );
 
     // check for new console commands.
     NetUpdate();
@@ -4117,11 +4117,11 @@ void HWR_RenderPlayerView(byte viewnumber, player_t * player)
 
 #ifdef NO_MLOOK_EXTENDS_FOV
     // enlage fOV when looking up/down
-    HWR_InitTextureMapping();
+    HWR_Init_TextureMapping();
 #endif
 
     //------------------------------------------------------------------------
-    HWR_ClearView();
+    HWR_Clear_View();
 
     if (cv_grfog.value)
         HWR_FoggingOn();
@@ -4141,11 +4141,11 @@ void HWR_RenderPlayerView(byte viewnumber, player_t * player)
     //14/11/99: Hurdler: we will add lights while processing sprites
     //it doesn't work with all subsectors (if we use AddSprites to do that).
     //TOO bad, that's why I removed this line (until this is fixed).
-//    HWR_ResetLights();
+//    HWR_Reset_Lights();
 
-    HWR_ClearSprites();
+    HWR_Clear_Sprites();
 
-    HWR_ClearClipSegs();
+    HWR_Clear_ClipSegs();
 
     //04/01/2000: Hurdler: added for T&L
     //                     Actually it only works on Walls and Planes
@@ -4160,18 +4160,18 @@ void HWR_RenderPlayerView(byte viewnumber, player_t * player)
     if (cv_grmlook_extends_fov.value && (aimingangle || cv_grfov.value > 90))
     {
         dup_viewangle += ANG90;
-        HWR_ClearClipSegs();
+        HWR_Clear_ClipSegs();
         HWR_RenderBSPNode(numnodes - 1);        //left
 
         dup_viewangle += ANG90;
         if (cv_grmlook_extends_fov.value == 2 && ((int) aimingangle > ANG45 || (int) aimingangle < -ANG45))
         {
-            HWR_ClearClipSegs();
+            HWR_Clear_ClipSegs();
             HWR_RenderBSPNode(numnodes - 1);    //back
         }
 
         dup_viewangle += ANG90;
-        HWR_ClearClipSegs();
+        HWR_Clear_ClipSegs();
         HWR_RenderBSPNode(numnodes - 1);        //right
 
         dup_viewangle += ANG90;
@@ -4183,7 +4183,7 @@ void HWR_RenderPlayerView(byte viewnumber, player_t * player)
 
     //14/11/99: Hurdler: moved here because it doesn't work with
     // subsector, see other comments;
-    HWR_ResetLights();
+    HWR_Reset_Lights();
 
     // Draw MD2 and sprites
     HWR_SortVisSprites();
@@ -4297,10 +4297,10 @@ static void Command_GrStats_f(void)
 // **************************************************************************
 
 // --------------------------------------------------------------------------
-// Add hardware engine commands & consvars
+// Register hardware engine commands & consvars
 // --------------------------------------------------------------------------
 //added by Hurdler: console variable that are saved
-void HWR_AddCommands(void)
+void HWR_Register_Gr1Commands(void)
 {
     CV_RegisterVar(&cv_grgammablue);
     CV_RegisterVar(&cv_grgammagreen);
@@ -4325,7 +4325,8 @@ void HWR_AddCommands(void)
     CV_RegisterVar(&cv_grpolyshape);
 }
 
-void HWR_AddEngineCommands(void)
+// HWR Engine state and modes.
+void HWR_Register_Gr2Commands(void)
 {
     CV_RegisterVar(&cv_grpolygonsmooth);
 
@@ -4353,22 +4354,23 @@ void HWR_AddEngineCommands(void)
 // --------------------------------------------------------------------------
 // Setup the hardware renderer
 // --------------------------------------------------------------------------
-void HWR_Startup(void)
+void HWR_Startup_Render(void)
 {
     static int startupdone = 0;
 
     CONS_Printf("HWR_Startup()\n");
 
     // initialize light lut translation
-    InitLumLut();
+    Init_LumLut();
 
     // do this once
     if (!startupdone)
     {
-        HWR_InitPolyPool();
         // add console cmds & vars
-        HWR_AddEngineCommands();
-        HWR_InitTextureCache();
+        HWR_Register_Gr2Commands();
+
+        HWR_Init_PolyPool();
+        HWR_Init_TextureCache();
 
 #ifdef DCK_WATER_TEST
         // for test water translucent surface
@@ -4377,10 +4379,10 @@ void HWR_Startup(void)
             doomwaterflat = W_GetNumForName("WATER0");
 #endif
 
-        HWR_InitMD2();
+        HWR_Init_MD2();
     }
 
-    HWR_InitLight();
+    HWR_Init_Light();
 
     if (rendermode == render_opengl)
         textureformat = patchformat = GR_RGBA;
@@ -4394,11 +4396,11 @@ void HWR_Startup(void)
 // --------------------------------------------------------------------------
 // Free resources allocated by the hardware renderer
 // --------------------------------------------------------------------------
-void HWR_Shutdown(void)
+void HWR_Shutdown_Render(void)
 {
     CONS_Printf("HWR_Shutdown()\n");
-    HWR_FreePolyPool();
-    HWR_FreeTextureCache();
+    HWR_Free_PolyPool();
+    HWR_Free_TextureCache();
 }
 
 

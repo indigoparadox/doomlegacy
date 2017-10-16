@@ -74,7 +74,7 @@ void D_DoomMain (void);
 void D_PostEvent (const event_t* ev);
 void D_PostEvent_end (void);    // delimiter for locking memory
 
-void D_ProcessEvents (void);
+void D_Process_Events (void);
 void D_DoAdvanceDemo (void);
 
 //

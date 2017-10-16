@@ -3630,7 +3630,7 @@ boolean  expand_braintargets( void )
     return 1;
 }
 
-void P_InitBrainTarget()
+void P_Init_BrainTarget()
 {
     thinker_t*  thinker;
 

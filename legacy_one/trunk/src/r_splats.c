@@ -76,7 +76,7 @@ struct rastery_s * prastertab;
 // --------------------------------------------------------------------------
 // setup splat cache
 // --------------------------------------------------------------------------
-void R_ClearLevelSplats (void)
+void R_Clear_LevelSplats (void)
 {
 #ifdef WALLSPLATS
     freewallsplat = 0;
@@ -338,7 +338,7 @@ void R_AddFloorSplat (subsector_t* subsec, char* picname, fixed_t x, fixed_t y, 
 // --------------------------------------------------------------------------
 static floorsplat_t*   visfloorsplats;
 
-void R_ClearVisibleFloorSplats (void)
+void R_Clear_VisibleFloorSplats (void)
 {
     visfloorsplats = NULL;
 }

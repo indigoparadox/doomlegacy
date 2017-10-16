@@ -87,10 +87,11 @@
 extern float gr_baseviewwindowy, gr_viewwindowx, gr_viewheight, gr_viewwidth;
 
 // Startup & Shutdown the hardware mode renderer
-void HWR_Startup (void);
-void HWR_Shutdown (void);
+void HWR_Startup_Render (void);
+void HWR_Shutdown_Render (void);
+void HWR_SetupLevel(void);
 
-void HWR_clearAutomap (void);
+void HWR_Clear_Automap (void);
 void HWR_drawAMline (fline_t* fl, int color);
 void HWR_FadeScreenMenuBack( uint32_t color_rgba, int alpha, int height );
 void HWR_RenderPlayerView (byte viewnumber, player_t* player);
@@ -99,22 +100,22 @@ void HWR_DrawViewBorder (int clearlines);
 //   scale : 0 .. 15
 void HWR_DrawVidFlatFill (int x, int y, int w, int h, int scale, int flatlumpnum);
 boolean HWR_Screenshot (char *lbmname);
-void HWR_InitTextureMapping (void);
+void HWR_Init_TextureMapping (void);
 void HWR_SetViewSize (int blocks);
 void HWR_DrawPatch (MipPatch_t* gpatch, int x, int y, uint32_t option);
 void HWR_DrawMappedPatch (MipPatch_t* gpatch, int x, int y, uint32_t option, byte *colormap);
 void HWR_MakePatch (patch_t* patch, MipPatch_t* grPatch, Mipmap_t *grMipmap,
                     uint32_t drawflags);
-void HWR_CreatePlanePolygons (void);
-void HWR_CreateStaticLightmaps (void);
-void HWR_PrepLevelCache (int numtextures);
+void HWR_Create_PlanePolygons (void);
+void HWR_Create_StaticLightmaps (void);
+void HWR_Prep_LevelCache (int numtextures);
 // Scaled to vid, (0,0) at upper left
 //  x, y : scaled screen coord.
 //  color : palette index
 void HWR_DrawVidFill( int x, int y, int w, int h, int color );
 void HWR_DrawPic(int x,int y,int lumpnum);
 
-void HWR_AddCommands (void);
+void HWR_Register_Gr1Commands (void);
 void HWR_CorrectSWTricks(void);
 void transform_world_to_gr(float *cx, float *cy, float *cz);
 int HWR_TranstableToAlpha(int transtablenum, FSurfaceInfo_t *pSurf);

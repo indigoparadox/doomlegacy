@@ -835,7 +835,7 @@ void HWR_MakePatch (patch_t* patch, MipPatch_t* grPatch, Mipmap_t *grMipmap,
 static int  gr_numtextures;
 static MipTexture_t*  gr_textures;       // for ALL Doom textures
 
-void HWR_InitTextureCache (void)
+void HWR_Init_TextureCache (void)
 {
     gr_numtextures = 0;
     gr_textures = NULL;
@@ -843,7 +843,7 @@ void HWR_InitTextureCache (void)
 
 // Called from P_SetupLevel->HWR_PrepLevelCache
 // Coordinate with malloc in HWR_GetMappedPatch
-void HWR_FreeTextureCache (void)
+void HWR_Free_TextureCache (void)
 {
     int i,j;
 
@@ -891,15 +891,16 @@ void HWR_FreeTextureCache (void)
 }
 
 // Called from P_SetupLevel
-void HWR_PrepLevelCache (int numtextures)
+void HWR_Prep_LevelCache (int numtextures)
 {
     // problem: the mipmap cache management hold a list of mipmaps.. but they are
     //           reallocated on each level..
-    //sub-optimal, but 1) just need re-download stuff in hardware cache VERY fast
-    //   2) sprite/menu stuff mixed with level textures so can't do anything else
+    //sub-optimal, but
+    //  1) just need re-download stuff in hardware cache VERY fast
+    //  2) sprite/menu stuff mixed with level textures so can't do anything else
 
     // we must free it since numtextures changed
-    HWR_FreeTextureCache ();
+    HWR_Free_TextureCache ();
 
     gr_numtextures = numtextures;
     gr_textures = malloc (sizeof(MipTexture_t) * numtextures);
@@ -919,7 +920,7 @@ void HWR_SetPalette( RGBA_t *palette )
     gamma_correction.s.blue  = cv_grgammablue.value;
     HWD.pfnSetPalette( palette, &gamma_correction ); 
 
-    // hardware driver will flush there own cache if cache is non paletized
+    // hardware driver will flush their own cache if cache is non paletized
     // now flush data texture cache so 32 bit texture are recomputed
     if( patchformat == GR_RGBA || textureformat == GR_RGBA )
         Z_FreeTags (PU_HWRCACHE, PU_HWRCACHE);

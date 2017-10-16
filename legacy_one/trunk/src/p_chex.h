@@ -23,7 +23,7 @@
 #ifndef P_CHEX_H
 #define P_CHEX_H
 
-void Chex1PatchEngine(void);
+void Chex1_PatchEngine(void);
 
 // Detect Doom graphics and prevent their display while chexquest mode.
 void* Chex_safe_pictures( char* name, void* lumpptr );

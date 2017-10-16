@@ -464,6 +464,9 @@ void B_DeleteNode(SearchNode_t* node)
 //  CONS_Printf("deleted a node\n");
 }
 
+static
+void B_Build_Nodes(SearchNode_t* node);
+
 void B_SetNodeTeleDest(SearchNode_t* node)
 {
     fixed_t  x = x2ClosestPosX(botteledestx);
@@ -478,7 +481,7 @@ void B_SetNodeTeleDest(SearchNode_t* node)
             node->dir[BDI_TELEPORT] = B_CreateNode(x, y);
             //debug_Printf("created teleporter node at x:%d, y:%d\n", botteledestx>>FRACBITS, botteledesty>>FRACBITS);
             numbotnodes++;
-            B_BuildNodes(node->dir[BDI_TELEPORT]);
+            B_Build_Nodes(node->dir[BDI_TELEPORT]);
         }
         else
             node->dir[BDI_TELEPORT] = botNodeArray[x][y];
@@ -491,7 +494,8 @@ void B_SetNodeTeleDest(SearchNode_t* node)
     }
 }
 
-void B_BuildNodes(SearchNode_t* node)
+static
+void B_Build_Nodes(SearchNode_t* node)
 {
     int      angle;
     fixed_t  nx, ny, extraCost;
@@ -581,7 +585,7 @@ void B_BuildNodes(SearchNode_t* node)
     B_LLDelete(queue);
 }
 
-void B_InitNodes( void )
+void B_Init_Nodes( void )
 {
     int  i, j, px, py;
     int  xMax = -1000000000;
@@ -633,7 +637,7 @@ void B_InitNodes( void )
             {
                 tempNode = B_CreateNode(px, py);
                 numbotnodes++;
-                B_BuildNodes(tempNode);
+                B_Build_Nodes(tempNode);
             }
         }
     }
@@ -648,7 +652,7 @@ void B_InitNodes( void )
             {
                 tempNode = B_CreateNode(px, py);
                 numbotnodes++;
-                B_BuildNodes(tempNode);
+                B_Build_Nodes(tempNode);
             }
         }
     }

@@ -72,9 +72,9 @@ static byte  newthinkerpresent = true;
 
 
 //
-// P_InitThinkers
+// P_Init_Thinkers
 //
-void P_InitThinkers (void)
+void P_Init_Thinkers (void)
 {
     int i;
 

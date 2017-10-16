@@ -142,7 +142,8 @@ const char *md2_getAnimationName (md2_model_t *model, int animation);
 void md2_getAnimationFrames (md2_model_t *model, int animation, int *startFrame, int *endFrame);
 void md2_printModelInfo (md2_model_t *model);
 int  md2_loadTexture (const char *filename);
-void HWR_InitMD2();
+
+void HWR_Init_MD2();
 void HWR_DrawMD2(gr_vissprite_t* spr);
 
 

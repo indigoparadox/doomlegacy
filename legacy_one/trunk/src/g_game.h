@@ -189,23 +189,20 @@ boolean G_Downgrade(int version);
 // Can be called by the startup code or M_Responder,
 // calls P_SetupLevel or W_EnterWorld.
 #ifdef SAVEGAMEDIR
-//void G_LoadGame ( char * savegamedir, int slot );
-void G_LoadGame (int slot);
-void G_DoLoadGame (int slot);
-#else
-void G_LoadGame (int slot);
-void G_DoLoadGame (int slot);
+//void G_Load_Game ( char * savegamedir, int slot );
 #endif
+void G_Load_Game (int slot);
+void G_DoLoadGame (int slot);
+
+// Called by M_Responder.
+void G_Save_Game  (int slot, char* description);
+void G_DoSaveGame(int slot, char* description);
 
 extern char savegamename[MAX_WADPATH];
 
 void G_Savegame_Name( /*OUT*/ char * namebuf, /*IN*/ int slot );
 
 void CheckSaveGame(size_t size);
-
-// Called by M_Responder.
-void G_DoSaveGame(int slot, char* description);
-void G_SaveGame  (int slot, char* description);
 
 // --- Demo
 // Only called by startup code.
