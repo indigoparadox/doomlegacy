@@ -3647,7 +3647,7 @@ static void HWR_ProjectSprite(mobj_t * thing)
     vis->mobj = thing;
 
     //Hurdler: 25/04/2000: now support colormap in hardware mode
-    if (thing->flags & MFT_TRANSLATION6)
+    if (thing->tflags & MFT_TRANSLATION6)
     {
         vis->colormap = MFT_TO_SKINMAP( thing->tflags ); // skins 1..
     }
