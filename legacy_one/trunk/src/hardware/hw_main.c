@@ -3467,11 +3467,11 @@ static void HWR_ProjectSprite(mobj_t * thing)
     float tx1, tx2;  // edges
     float px1, px2;  // projected
 
-    spritedef_t *sprdef;
-    spriteframe_t *sprframe;
+    spritedef_t * sprdef;
+    spriteframe_t * sprframe;
+    sprite_frot_t * sprfrot;
     spritelump_t * sprlump;
-    unsigned rot;
-    boolean flip;
+    unsigned int rot, fr;
     angle_t ang;
 
     // transform the origin point
@@ -3490,7 +3490,10 @@ static void HWR_ProjectSprite(mobj_t * thing)
     // decide which patch to use for sprite relative to player
 #ifdef RANGECHECK
     if ((unsigned) thing->sprite >= numsprites)
-        I_Error("HWR_ProjectSprite: invalid sprite number %i ", thing->sprite);
+    {
+        I_SoftError("HWR_ProjectSprite: invalid sprite number %i ", thing->sprite);
+        return;
+    }
 #endif
 
     //Fab:02-08-98: 'skin' override spritedef currently used for skin
@@ -3499,27 +3502,47 @@ static void HWR_ProjectSprite(mobj_t * thing)
     else
         sprdef = &sprites[thing->sprite];
 
+    fr = thing->frame & FF_FRAMEMASK;
 #ifdef RANGECHECK
-    if ((thing->frame & FF_FRAMEMASK) >= sprdef->numframes)
-        I_Error("HWR_ProjectSprite: invalid sprite frame %i : %i for %s", thing->sprite, thing->frame, sprnames[thing->sprite]);
-#endif
-    sprframe = &sprdef->spriteframes[thing->frame & FF_FRAMEMASK];
-
-    if (sprframe->rotate)
+    if(fr >= sprdef->numframes)
     {
-        // choose a different rotation based on player view
-        ang = R_PointToAngle(thing->x, thing->y);       // uses viewx,viewy
-        rot = (ang - thing->angle + (unsigned) (ANG45 / 2) * 9) >> 29;
-        flip = (boolean) sprframe->flip[rot];
+        I_SoftError("HWR_ProjectSprite: invalid sprite frame %i : %i for %s",
+                    thing->sprite, thing->frame, sprnames[thing->sprite]);
+        return;
+    }
+#endif
+    sprframe = get_spriteframe( sprdef, fr );
+
+    if( sprframe->rotation_pattern == SRP_1 )
+    {
+        // use single rotation for all views
+        rot = 0;                        //Fab: for vis->patch below
     }
     else
     {
-        // use single rotation for all views
-        rot = 0;        //Fab: for vis->patch below
-        flip = (boolean) sprframe->flip[0];
+        // choose a different rotation based on player view
+        ang = R_PointToAngle(thing->x, thing->y);       // uses viewx,viewy
+
+        if( sprframe->rotation_pattern == SRP_8)
+        {
+            // 8 direction rotation pattern
+	    rot = (ang - thing->angle + (unsigned) (ANG45/2) * 9) >> 29;
+        }
+#ifdef ROT16
+        else if( sprframe->rotation_pattern == SRP_16)
+        {
+            // 16 direction rotation pattern
+            rot = (ang - thing->angle + (unsigned) (ANG45/4) * 17) >> 28;
+        }
+#endif
+        else return;
+
     }
-    //Fab: [WDJ] spritelump_id is the index for render tables
-    sprlump = &spritelumps[sprframe->spritelump_id[rot]];
+
+    sprfrot = get_framerotation( sprdef, fr, rot );
+   
+    //Fab: [WDJ] spritelump_id is the index
+    sprlump = &spritelumps[sprfrot->spritelump_id];
 
     // calculate edges of the shape
     tx1 = tx - FIXED_TO_FLOAT( sprlump->offset );
@@ -3619,8 +3642,8 @@ static void HWR_ProjectSprite(mobj_t * thing)
     vis->x1 = tx1;  // left of sprite in view, world coord
     vis->x2 = tx2;  // right of sprite in view, world coord
     vis->tz = tz;   // away depth
-    vis->patchlumpnum = sprframe->lumppat[rot];
-    vis->flip = flip;
+    vis->patchlumpnum = sprfrot->lumppat;
+    vis->flip = sprfrot->flip;
     vis->mobj = thing;
 
     //Hurdler: 25/04/2000: now support colormap in hardware mode
@@ -3652,13 +3675,13 @@ static void HWR_ProjectSprite(mobj_t * thing)
 // Draw parts of the viewplayer weapon
 void HWR_DrawPSprite(pspdef_t * psp,  byte lightlum)
 {
-    spritedef_t *sprdef;
-    spriteframe_t *sprframe;
+    spritedef_t * sprdef;
+//    spriteframe_t * sprframe;
+    sprite_frot_t * sprfrot;
     spritelump_t * sprlump = NULL;
-    boolean flip;
 
     vxtx3d_t vxtx[4];
-    int i;
+    int i, fr;
     float tx, ty;
 //    float x1, x2;
 
@@ -3686,17 +3709,13 @@ void HWR_DrawPSprite(pspdef_t * psp,  byte lightlum)
     }
 #endif
 
-    sprframe = &sprdef->spriteframes[psp->state->frame & FF_FRAMEMASK];
-#ifdef PARANOIA
-    if (sprframe == NULL)
-    {
-        I_SoftError("HWR_ProjectSprite: sprframes NULL for state %d\n", psp->state - states);
-        return;
-    }
-#endif
+    fr = psp->state->frame & FF_FRAMEMASK;
+//    sprframe = get_spriteframe( sprdef, fr );
 
-    sprlump = &spritelumps[sprframe->spritelump_id[0]];
-    flip = (boolean) sprframe->flip[0];
+    // use single rotation for all views
+    sprfrot = get_framerotation( sprdef, fr, 0 );
+   
+    sprlump = &spritelumps[sprfrot->spritelump_id];
 
     // calculate edges of the shape
 
@@ -3719,7 +3738,7 @@ void HWR_DrawPSprite(pspdef_t * psp,  byte lightlum)
 //    vxtx[0].w = vxtx[1].w = vxtx[2].w = vxtx[3].w = 1;  // unused
 
     // cache sprite graphics
-    gpatch = W_CachePatchNum(sprframe->lumppat[0], PU_CACHE);
+    gpatch = W_CachePatchNum(sprfrot->lumppat, PU_CACHE);
     HWR_GetPatch(gpatch);
 
     // set top/bottom coords
@@ -3738,7 +3757,7 @@ void HWR_DrawPSprite(pspdef_t * psp,  byte lightlum)
     ty += gpatch->height;
     vxtx[0].y = vxtx[1].y = (float) BASEYCENTER - ty;
 
-    if (flip)
+    if( sprfrot->flip )
     {
         vxtx[0].sow = vxtx[3].sow = gpatch->max_s;
         vxtx[2].sow = vxtx[1].sow = 0.0f;

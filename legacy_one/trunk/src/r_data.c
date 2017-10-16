@@ -2820,11 +2820,12 @@ void R_PrecacheLevel (void)
     char*  texturepresent;
     char*  spritepresent;
 
-    int i,j,k;
+    int i,j,k,n;
     int lump;
 
     thinker_t*          th;
-    spriteframe_t*      sf;
+    spriteframe_t *     sf;
+    sprite_frot_t *     sv;
 
     //int numgenerated;  //faB:debug
 
@@ -2914,11 +2915,13 @@ void R_PrecacheLevel (void)
 
         for (j=0 ; j<sprites[i].numframes ; j++)
         {
-            sf = &sprites[i].spriteframes[j];
-            for (k=0 ; k<8 ; k++)
+            sf = get_spriteframe( &sprites[i], j );
+            n = srp_to_num_rot[ sf->rotation_pattern ];
+            for (k=0 ; k<n ; k++)
             {
+                sv = get_framerotation( &sprites[i], j, k );
                 //Fab: see R_InitSprites for more about lumppat,lumpid
-                lump = sf->lumppat[k];
+                lump = sv->lumppat;
                 if(devparm)
                    spritememory += W_LumpLength(lump);
                 W_CachePatchNum(lump , PU_CACHE);

@@ -631,8 +631,7 @@ void F_CastDrawer (void)
 {
     // drawinfo : from V_SetupDraw
     spritedef_t*        sprdef;
-    spriteframe_t*      sprframe;
-    int                 lump;
+    sprite_frot_t *     sprfrot;
     patch_t*            patch;
 
     // erase the entire screen to a background
@@ -643,12 +642,11 @@ void F_CastDrawer (void)
 
     // draw the current frame in the middle of the screen
     sprdef = &sprites[caststate->sprite];
-    sprframe = &sprdef->spriteframes[ caststate->frame & FF_FRAMEMASK];
-    lump = sprframe->lumppat[0];      //Fab: see R_InitSprites for more
-    patch = W_CachePatchNum (lump, PU_CACHE);  // endian fix
+    sprfrot = get_framerotation( sprdef, caststate->frame & FF_FRAMEMASK, 0 );
+    patch = W_CachePatchNum (sprfrot->lumppat, PU_CACHE);  // endian fix
 
     // set draw effect flag for this draw only
-    if (sprframe->flip[0])
+    if( sprfrot->flip )
       drawinfo.effectflags = drawinfo.screen_effectflags | V_FLIPPEDPATCH;
     V_DrawScaledPatch (BASEVIDWIDTH>>1, 170, patch);
     drawinfo.effectflags = drawinfo.screen_effectflags;  // restore
