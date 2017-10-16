@@ -353,4 +353,13 @@ void V_DrawPixels(byte * line, int x, int count, byte* src);
 
 void V_Draw_ticrate_graph( void );
 
+// [WDJ] Conversion func to deal with patch_t and MipPatch_t both
+// being stored as patch_t.
+// This identifies where in the code the identical fields are used,
+// and may become a function later if MipPatch_t differs.
+//   p : may be patch_t or MipPatch_t, depending on rendermode
+// Returns a patch_t compatible ptr that can access
+// width, height, topoffset, and leftoffset.
+#define  V_patch( p )       (p)
+
 #endif

@@ -1618,8 +1618,10 @@ void ST_drawOverlayNum (int x, int y,
                         patch_t*  percent,
                         byte      pickup_flash )
 {
-    int  hf = numpat[0]->height;
-    int  wf = numpat[0]->width;
+    // Hardware or software draw.
+    patch_t * pf = V_patch( numpat[0] );
+    int  hf = pf->height;
+    int  wf = pf->width;
     int  wfv = wf * vid.dupx;
     boolean   neg;
 
