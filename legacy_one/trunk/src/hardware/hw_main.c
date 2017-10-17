@@ -3652,7 +3652,9 @@ static void HWR_ProjectSprite(mobj_t * thing)
         vis->colormap = MFT_TO_SKINMAP( thing->tflags ); // skins 1..
     }
     else
+    {
         vis->colormap = & reg_colormaps[0];
+    }
 
     // set top/bottom coords
     vis->ty = FIXED_TO_FLOAT( thing->z + sprlump->topoffset ) - gr_viewz;
@@ -3661,10 +3663,14 @@ static void HWR_ProjectSprite(mobj_t * thing)
     //            thing->sprite, thing->frame, thing->type, sprnames[thing->sprite]);
 
     if (thing->state->frame & FF_FULLBRIGHT)
+    {
         // TODO: disable also the fog
         vis->sectorlight = 0xff;
+    }
     else
+    {
         vis->sectorlight = sectorlight;
+    }
 }
 
 #define BASEYCENTER           (BASEVIDHEIGHT/2)
