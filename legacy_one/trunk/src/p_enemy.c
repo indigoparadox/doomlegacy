@@ -3975,7 +3975,7 @@ void A_Scratch(mobj_t *mo)
 
     if( sep->parm2 )
     {
-       S_StartSound(mo, sep->parm2);
+       S_StartObjSound(mo, sep->parm2);
     }
 
     P_DamageMobj(mo->target, mo, mo, sep->parm1);
@@ -3984,7 +3984,10 @@ void A_Scratch(mobj_t *mo)
 void A_PlaySound(mobj_t *mo)
 {
     state_ext_t * sep = P_state_ext( mo->state );
-    S_StartSound( sep->parm2 ? NULL : mo, sep->parm1 );
+    if( sep->parm2 )
+        S_StartSound( sep->parm1 );
+    else
+        S_StartObjSound( mo, sep->parm1 );
 }
 
 void A_RandomJump(mobj_t *mo)

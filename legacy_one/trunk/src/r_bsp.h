@@ -91,7 +91,7 @@ void R_RenderBSPNode (int bspnum);
 
 sector_t* R_FakeFlat(sector_t *sec, sector_t *tempsec, boolean back,
              /*OUT*/ lightlev_t *floorlightlevel,
-		     lightlev_t *ceilinglightlevel );
+                     lightlev_t *ceilinglightlevel );
 
 // Find light under planeheight, plain version
 ff_light_t *  R_GetPlaneLight(sector_t* sector, fixed_t planeheight);
