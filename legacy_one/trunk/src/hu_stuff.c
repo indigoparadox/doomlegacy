@@ -131,7 +131,7 @@ static char             hu_tick;
 consvar_t*   chat_macros[10];
 
 //added:16-02-98: crosshair 0=off, 1=cross, 2=angle, 3=point, see m_menu.c
-patch_t*           crosshair[3];     //3 precached crosshair graphics
+patch_t*     crosshair[3];     //3 precached crosshair graphics
 
 
 // -------
@@ -146,61 +146,6 @@ static void HU_Draw_Tip();
 //======================================================================
 //                          HEADS UP INIT
 //======================================================================
-
-// just after
-void Command_Say_f (void);
-void Command_Sayto_f (void);
-void Command_Sayteam_f (void);
-void Got_NetXCmd_Saycmd(xcmd_t * xc);
-
-// Initialise Heads up
-// once at game startup.
-//
-void HU_Init(void)
-{
-
-    int         i;
-    int         j;
-    char        buffer[9];
-
-    if(dedicated)
-        return;
-    
-    COM_AddCommand ("say"    , Command_Say_f);
-    COM_AddCommand ("sayto"  , Command_Sayto_f);
-    COM_AddCommand ("sayteam", Command_Sayteam_f);
-    Register_NetXCmd(XD_SAY, Got_NetXCmd_Saycmd);
-
-    // cache the heads-up font for entire game execution
-    use_font1 = 0;
-    j = (EN_heretic)? 1 : HU_FONTSTART;
-    for (i=0; i<HU_FONTSIZE; i++)
-    {
-        if( EN_heretic_hexen )
-            sprintf(buffer, "FONTA%.2d", ((j>59)? 59 : j));
-        else
-            sprintf(buffer, "STCFN%.3d", j);
-
-        j++;
-        if( W_CheckNumForName( buffer ) < 0 )
-        {
-            // font not found
-            hu_font[i] = NULL;
-            use_font1 = 1;
-            continue;
-        }
-        hu_font[i] = (patch_t *) W_CachePatchName(buffer, PU_STATIC); // endian fix
-    }
-
-    // cache the crosshairs, dont bother to know which one is being used,
-    // just cache them 3 all, they're so small anyway.
-    for(i=0; i<HU_CROSSHAIRS; i++)
-    {
-       sprintf(buffer, "CROSHAI%c", '1'+i);
-       crosshair[i] = (patch_t *) W_CachePatchName(buffer, PU_STATIC); // endian fix
-    }
-}
-
 
 void HU_Stop(void)
 {
@@ -221,6 +166,47 @@ void HU_Start(void)
     headsupactive = true;
 }
 
+void HU_Load_Graphics( void )
+{
+    int         i, j;
+    char        buffer[9];
+
+    use_font1 = 0;
+    // cache the heads-up font
+    // Patches are endian fixed when loaded.
+    j = (EN_heretic)? 1 : HU_FONTSTART;
+    for (i=0; i<HU_FONTSIZE; i++)
+    {
+        if( EN_heretic_hexen )
+            sprintf(buffer, "FONTA%.2d", ((j>59)? 59 : j));
+        else
+            sprintf(buffer, "STCFN%.3d", j);
+
+        j++;
+        if( W_CheckNumForName( buffer ) < 0 )
+        {
+            // font not found
+            hu_font[i] = NULL;
+            use_font1 = 1;
+            continue;
+        }
+        hu_font[i] = W_CachePatchName(buffer, PU_STATIC);
+    }
+
+    // cache the crosshairs, dont bother to know which one is being used,
+    // just cache them 3 all, they're so small anyway.
+    for(i=0; i<HU_CROSSHAIRS; i++)
+    {
+       sprintf(buffer, "CROSHAI%c", '1'+i);
+       crosshair[i] = W_CachePatchName(buffer, PU_STATIC);
+    }
+}
+
+void HU_Release_Graphics( void )
+{
+    release_patch_array( hu_font, HU_FONTSIZE );
+    release_patch_array( crosshair, HU_CROSSHAIRS );
+}
 
 
 //======================================================================
@@ -383,6 +369,8 @@ done:
     p += strlen((char*)p) + 1;  // incl term 0
     xc->curpos = p;
 }
+
+
 
 
 //
@@ -928,9 +916,9 @@ void HU_Erase (void)
     if (automapactive || viewwindowx==0)   // hud msgs don't need to be cleared
         return;
 
-    // software mode copies view border pattern & beveled edges from the backbuffer
-    if (rendermode==render_soft)
+    if( rendermode == render_soft )
     {
+        // software mode copies view border pattern & beveled edges from the backbuffer
         topline = 0;
         for (y=topline,yoffset=y*vid.width; y<bottomline ; y++,yoffset+=vid.width)
         {
@@ -946,7 +934,8 @@ void HU_Erase (void)
         con_hudupdate = false;      // if it was set..
     }
 #ifdef HWRENDER 
-    else {
+    else
+    {
         // refresh just what is needed from the view borders
         HWR_DrawViewBorder (secondframelines);
         con_hudupdate = secondframe;
@@ -1138,7 +1127,7 @@ void HU_Draw_Crosshair (void)
 #endif
 
 #ifdef HWRENDER
-    if ( rendermode != render_soft ) 
+    if( rendermode != render_soft ) 
         y = gr_basewindowcentery;
     else
 #endif
@@ -1240,4 +1229,13 @@ void Command_Chatmacro_f (void)
 
     // change a chatmacro
     CV_Set (chat_macros[i], COM_Argv(2));
+}
+
+
+void HU_Register_Commands( void )
+{
+    COM_AddCommand ("say"    , Command_Say_f);
+    COM_AddCommand ("sayto"  , Command_Sayto_f);
+    COM_AddCommand ("sayteam", Command_Sayteam_f);
+    Register_NetXCmd(XD_SAY, Got_NetXCmd_Saycmd);
 }

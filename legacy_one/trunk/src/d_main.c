@@ -2597,7 +2597,8 @@ restart_command:
         // we need the font of the console
         CONS_Printf(text[HU_INIT_NUM]);
         // switch off use_font1 when hu_font is loaded
-        HU_Init();  // dependent upon dedicated and raven
+        HU_Load_Graphics();  // dependent upon dedicated and raven
+
         CON_Init_Video();  // dependent upon vid, hu_font
         EOUT_flags = EOUT_log | EOUT_con;
     }
@@ -2648,6 +2649,7 @@ restart_command:
     ST_Register_Commands();
     T_Register_Commands();
     B_Register_Commands();    //added by AC for acbot
+    HU_Register_Commands();
     P_Register_Info_Commands();
     R_Register_EngineStuff();
     S_Register_SoundStuff();
@@ -3007,6 +3009,7 @@ void D_Quit_Save ( quit_severity_e severity )
             I_Sleep( 3000 );  // to see some messages
         vid.draw_ready = 0;        
         I_ShutdownGraphics();
+        HU_Release_Graphics();
     }
     if( quitseq < 22 )
     {
