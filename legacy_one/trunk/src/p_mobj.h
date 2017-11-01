@@ -295,6 +295,7 @@ typedef enum {
     // Already shifted to indexing position, so MF_TO_SKINMAP has no shift.
     MFT_TRANSLATION6     = 0x00003F00,    // 6 bit color
     MFT_TRANSSHIFT       = 8,
+    // If MFT_TRANSSHIFT is changed, defines in r_draw.h must be fixed too.
 } mobjtflag_e;
 
 

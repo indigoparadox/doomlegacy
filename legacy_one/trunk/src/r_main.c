@@ -1037,6 +1037,14 @@ void R_ExecuteSetViewSize (void)
 
 void R_Init (void)
 {
+#if defined DEBUG_WINDOWED || defined PARANOIA
+    // [WDJ] Some checks that could not be done at compile-time (enum).
+    if( MFT_TO_SKINMAP( 1<<MFT_TRANSSHIFT ) != (&skintranstables[ 0 ]) )
+        I_Error( "MFT_TO_SKINMAP  broken, check MFT_TRANSSHIFT\n" );
+    if( (int)MFT_TRANSSHIFT >= (int)MFO_TRANSSHIFT )
+        I_Error( "MFO_TRANSSHIFT - MFT_TRANSSHIFT  broken, check MFT_TRANSHIFT\n" );
+#endif
+
     if(dedicated)
         return;
 

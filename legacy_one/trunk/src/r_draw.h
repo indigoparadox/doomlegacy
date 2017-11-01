@@ -110,18 +110,16 @@ extern byte*            dc_skintran;  // ptr to selected skin table
 #define SKIN_TO_SKINMAP( skin )  (&skintranstables[ ((skin)-1)<<8 ])
 
 // For flags containing MF_TRANSLATION bits, 0=original skin
-// [WDJ] MFT_TRANSHIFT is a constant, defined in p_mobj.h.
-// Depending upon the value of MFT_TRANSHIFT, there are three possible cases for the shift.
-// Only one of these definitions is used.
-// SVN1363: MFT_TRANSHIFT==8, so only the first definition gets used, there is no need for a shift.
-// All three are here, just in case someone changes MFT_TRANSSHIFT later.  You never know.
-#if MFT_TRANSHIFT == 8
+// [WDJ] MFT_TRANSSHIFT is an enum constant (p_mobj.h) so it cannot be tested in an #ifdef.
+// There is a PARANOIA check in r_main.c.
+// SVN1363: MFT_TRANSSHIFT==8, there is no need for a shift.
+// CASE: MFT_TRANSSHIFT == 8
 #define MFT_TO_SKINMAP( flags )  (&skintranstables[ ((flags) & MFT_TRANSLATION6) - 256 ])
-#elif MFT_TRANSLATE > 8
-#define MFT_TO_SKINMAP( flags )  (&skintranstables[ (((flags) & MFT_TRANSLATION6) >> (MFT_TRANSSHIFT-8)) - 256 ])
-#else
-#define MFT_TO_SKINMAP( flags )  (&skintranstables[ (((flags) & MFT_TRANSLATION6) << (8-MFT_TRANSSHIFT)) - 256 ])
-#endif
+// Just in case someone changes MFT_TRANSSHIFT, I include the other two cases here.  You never know.
+// CASE: MFT_TRANSSHIFT > 8
+// #define MFT_TO_SKINMAP( flags )  (&skintranstables[ (((flags) & MFT_TRANSLATION6) >> (MFT_TRANSSHIFT-8)) - 256 ])
+// CASE: MFT_TRANSSHIFT < 8
+// #define MFT_TO_SKINMAP( flags )  (&skintranstables[ (((flags) & MFT_TRANSLATION6) << (8-MFT_TRANSSHIFT)) - 256 ])
 
 
 extern struct r_lightlist_s*      dc_lightlist;

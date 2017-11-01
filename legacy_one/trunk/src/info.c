@@ -11063,6 +11063,10 @@ void P_PatchInfoTables( void )
         mobjinfo[i].reactiontime *= NEWTICRATERATIO;
         //mobjinfo[i].speed        /= NEWTICRATERATIO;
     }
+#if defined DEBUG_WINDOWED || defined PARANOIA
+    if( NUMSTATES >= 0xFFFE )
+        I_Error( "NUMSTATES exceeds 16 bits\n" );
+#endif
     for (i=0;i<NUMSTATES;i++)
     {
         states[i].tics *= NEWTICRATERATIO;

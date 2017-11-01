@@ -2576,9 +2576,6 @@ S_DUMMY2,
 } statenum_e;
 
 // Has explicit S_NULL, does not use -1.
-#if NUMSTATES >= 0xFFFE
-#error  NUMSTATES exceeds 16 bits
-#endif
 
 
 typedef struct

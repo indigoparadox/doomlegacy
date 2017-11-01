@@ -191,6 +191,8 @@
 //
 //-----------------------------------------------------------------------------
 
+#include "doomincl.h"
+  // MAX_WADPATH
 
 #ifdef __WIN32__
 #include <direct.h>
@@ -206,7 +208,6 @@
 #endif
 
 
-#include "doomincl.h"
 #include "doomstat.h"
 
 #include "command.h"

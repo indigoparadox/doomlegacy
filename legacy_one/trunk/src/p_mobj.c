@@ -127,6 +127,7 @@
 #include "doomincl.h"
   // memset
 #include "p_local.h"
+  // p_mobj.h
 #include "p_tick.h"
   // think
 #include "p_inter.h"

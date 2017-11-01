@@ -296,7 +296,9 @@ ifdef DEBUG
 # Debuggers do not cope with optimization well, so DEBUG ignores OPTLEV.
 # To debug with optimization, include it here, (-O0, -O1, or $(OPTLEV)).
 #     DEBUGFLAGS+=$(OPTLEV)
-
+   WFLAGS+=-Wundef
+#  Causes many warning messages due to const strings
+#  WFLAGS+= -Wwrite-strings
   endif
 # Set DEBUGLIBS to special debugging libraries here.
 
