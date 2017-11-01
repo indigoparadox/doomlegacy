@@ -253,7 +253,7 @@ typedef struct
     int         score;  // current score on entry, modified on return
     // BP: unused for now but don't forget....
     uint16_t    addfrags;
-} wbplayerstruct_t;
+} wb_player_t;
 
 typedef struct
 {
@@ -263,8 +263,8 @@ typedef struct
     boolean     didsecret;
 
     // previous and next levels, origin 0
-    int         last;
-    int         next;
+    int         lev_prev;
+    int         lev_next;
 
     int         maxkills;
     int         maxitems;
@@ -277,9 +277,9 @@ typedef struct
     // index of this player in game
     int         pnum;
 
-    wbplayerstruct_t    plyr[MAXPLAYERS];
+    wb_player_t    plyr[MAXPLAYERS];
 
-} wbstartstruct_t;
+} wb_start_t;
 
 void A_TicWeapon( player_t *player,  pspdef_t *psp );
 

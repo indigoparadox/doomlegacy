@@ -459,7 +459,7 @@ boolean         singledemo;             // quit after playing a demo from cmdlin
 
 boolean         precache = true;        // if true, load all graphics at start
 
-wbstartstruct_t wminfo;                 // parms for world map / intermission
+wb_start_t      wminfo;                 // parms for world map / intermission
 
 
 
@@ -2165,7 +2165,7 @@ void G_DoCompleted (void)
           case 8:
             //BP add comment : no intermission screen
             if( cv_deathmatch.EV )
-                wminfo.next = 0;
+                wminfo.lev_next = 0;
             else
             {
                 // also for heretic
@@ -2187,7 +2187,7 @@ void G_DoCompleted (void)
         if( !modifiedgame && gamemap == 5 )  // original chexquest ends at E1M5
         {
                 if( cv_deathmatch.EV )
-                        wminfo.next=0;
+                        wminfo.lev_next=0;
                 else
                 {
                         CL_Reset();
@@ -2199,12 +2199,13 @@ void G_DoCompleted (void)
 
     if(!dedicated)
         wminfo.didsecret = consoleplayer_ptr->didsecret;
+    // 0 based
     wminfo.epsd = gameepisode -1;
-    wminfo.last = gamemap -1;
+    wminfo.lev_prev = gamemap -1;
 
     // go to next level
-    // wminfo.next is 0 biased, unlike gamemap
-    wminfo.next = gamemap;
+    // wminfo.lev_next is 0 biased, unlike gamemap
+    wminfo.lev_next = gamemap;
     
     // overwrite next level in some cases
     if (gamemode == doom2_commercial)
@@ -2213,9 +2214,9 @@ void G_DoCompleted (void)
         {
             switch(gamemap)
             {
-              case 15 : wminfo.next = 30; break;
-              case 31 : wminfo.next = 31; break;
-              default : wminfo.next = 15;break;
+              case 15 : wminfo.lev_next = 30; break;
+              case 31 : wminfo.lev_next = 31; break;
+              default : wminfo.lev_next = 15;break;
             }
         }
         else
@@ -2223,8 +2224,8 @@ void G_DoCompleted (void)
             switch(gamemap)
             {
               case 31:
-              case 32: wminfo.next = 15; break;
-              default: wminfo.next = gamemap;
+              case 32: wminfo.lev_next = 15; break;
+              default: wminfo.lev_next = gamemap;
             }
         }
     }
@@ -2233,29 +2234,31 @@ void G_DoCompleted (void)
     {
         static const int afterSecret[5] = { 7, 5, 5, 5, 4 };
         if (secretexit)
-            wminfo.next = 8;    // go to secret level
+            wminfo.lev_next = 8;    // go to secret level
         else if (gamemap == 9)
-            wminfo.next = afterSecret[gameepisode-1]-1;
+            wminfo.lev_next = afterSecret[gameepisode-1]-1;
     }
     else
     {
         if (secretexit)
-            wminfo.next = 8;    // go to secret level
+            wminfo.lev_next = 8;    // go to secret level
         else if (gamemap == 9)
         {
             // returning from secret level
             switch (gameepisode)
             {
-              case 1 :  wminfo.next = 3; break;
-              case 2 :  wminfo.next = 5; break;
-              case 3 :  wminfo.next = 6; break;
-              case 4 :  wminfo.next = 2; break;
-              default : wminfo.next = 0; break;
+              case 1 :  wminfo.lev_next = 3; break;
+              case 2 :  wminfo.lev_next = 5; break;
+              case 3 :  wminfo.lev_next = 6; break;
+              case 4 :  wminfo.lev_next = 2; break;
+              default : wminfo.lev_next = 0; break;
             }
         }
         else
+        {
             if (gamemap == 8)
-                wminfo.next = 0; // wrap around in deathmatch
+                wminfo.lev_next = 0; // wrap around in deathmatch
+        }
     }
 
     wminfo.maxkills = totalkills;
@@ -2326,7 +2329,7 @@ void G_NextLevel (void)
         }
         else
             if(gamemap==30)
-                wminfo.next = 0; // wrap around in deathmatch
+                wminfo.lev_next = 0; // wrap around in deathmatch
     }
 }
 
@@ -2334,7 +2337,7 @@ void G_DoWorldDone (void)
 {
     if( demoversion<129 )
     {
-        gamemap = wminfo.next+1;
+        gamemap = wminfo.lev_next+1;
         G_DoLoadLevel (true);
     }
     else
@@ -2344,10 +2347,10 @@ void G_DoWorldDone (void)
         {
             if( cv_deathmatch.EV == 0 )
                 // don't reset player between maps
-                COM_BufAddText (va("map \"%s\" -noresetplayers\n",G_BuildMapName(gameepisode,wminfo.next+1)));
+                COM_BufAddText (va("map \"%s\" -noresetplayers\n",G_BuildMapName(gameepisode, wminfo.lev_next+1)));
             else
                 // resetplayer in deathmatch for more equality
-                COM_BufAddText (va("map \"%s\"\n",G_BuildMapName(gameepisode,wminfo.next+1)));
+                COM_BufAddText (va("map \"%s\"\n",G_BuildMapName(gameepisode, wminfo.lev_next+1)));
         }
     }
     

@@ -36,7 +36,7 @@
 
 #include "doomtype.h"
 #include "d_player.h"
-  // wbstartstruct_t
+  // wb_start_t
 
 //added:05-02-98:
 typedef struct {
@@ -54,7 +54,7 @@ void WI_Ticker (void);
 void WI_Drawer (void);
 
 // Setup for an intermission screen.
-void WI_Start(wbstartstruct_t*   wbstartstruct);
+void WI_Start(wb_start_t *  wb_start);
 
 boolean teamingame(int teamnum);
 

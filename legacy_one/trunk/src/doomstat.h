@@ -335,7 +335,7 @@ extern  mapthing_t      *playerstarts[MAXPLAYERS];
 
 // Intermission stats.
 // Parameters for world map / intermission.
-extern  wbstartstruct_t         wminfo;
+extern  wb_start_t      wminfo;
 
 
 // LUT of ammunition limits for each kind.

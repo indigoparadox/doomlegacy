@@ -845,6 +845,36 @@ void* W_CacheLumpName ( char* name, int ztag )
 // heap memory cache then act as a 'level 2' cache just after the graphics
 // card memory.
 
+
+//  pl : a patch list, maybe offset into a patch list
+void load_patch_list( load_patch_t * pl )
+{
+    while( pl->patch ) {
+        *(pl->patch) = W_CachePatchName(pl->name, PU_LOCK_SB);
+        pl++;
+    }
+}
+
+//  pl : a patch list, maybe offset into a patch list
+void release_patch_list( load_patch_t * pl )
+{
+    while( pl->patch ) {
+        Z_ChangeTag(*(pl->patch), PU_UNLOCK_CACHE);
+        pl++;
+    }
+}
+
+//  pp : an array of patch_t ptr
+//  count : number of patches to release
+void release_patch_array( patch_t ** pp, int count )
+{
+    while( count-- ) {
+        Z_ChangeTag( *pp, PU_UNLOCK_CACHE);
+        pp++;
+    }
+}
+
+
 //
 // Cache a patch into heap memory, convert the patch format as necessary
 //
