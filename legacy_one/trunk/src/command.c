@@ -906,17 +906,17 @@ consvar_t * CV_FindVar (const char * name)
 //  Build a unique Net Variable identifier number, that is used
 //  in network packets instead of the fullname
 //
-unsigned short  CV_ComputeNetid (const char * s)
+uint16_t  CV_ComputeNetid (const char * s)
 {
-    unsigned short ret;
-    static int premiers[16] = {2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53};
+    uint16_t ret;
+    static byte premiers[16] = {2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53};
     int i;
 
     ret=0;
     i=0;
     while(*s)
     {
-        ret += (*s)*premiers[i];
+        ret += ((byte)(*s)) * ((unsigned int) premiers[i]);
         s++;
         i = (i+1)%16;
     }
@@ -926,7 +926,7 @@ unsigned short  CV_ComputeNetid (const char * s)
 
 //  Return the Net Variable, from it's identifier number
 //
-static consvar_t * CV_FindNetVar (unsigned short netid)
+static consvar_t * CV_FindNetVar (uint16_t netid)
 {
     consvar_t  *cvar;
 
@@ -1210,7 +1210,7 @@ void CV_SaveNetVars(xcmd_t * xc)
         {
             // potential buffer overrun test
             if((bp + 2 + strlen( cvar->string)) > xc->endpos )  goto buff_overrun;
-            // Format:  netid int16, var_string str0.
+            // Format:  netid uint16, var_string str0.
             WRITE16(bp,cvar->netid);
             bp = write_string(bp, cvar->string);
         }
@@ -1273,7 +1273,7 @@ void CV_Set (consvar_t *var, const char *value)
         // send the value of the variable
         byte buf[SET_BUFSIZE], *p; // macros want byte*
         p = buf;
-        // Format:  netid int16, var_string str0.
+        // Format:  netid uint16, var_string str0.
         WRITEU16(p, var->netid);
         p = write_stringn(p, value, SET_BUFSIZE-2-1);
         Send_NetXCmd(XD_NETVAR, buf, (p - buf));
