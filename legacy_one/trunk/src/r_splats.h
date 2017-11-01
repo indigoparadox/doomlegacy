@@ -91,7 +91,8 @@ extern float P_SegLength (seg_t* seg);
 // call at P_SetupLevel()
 void R_Clear_LevelSplats (void);
 
-void R_AddWallSplat (line_t* wallline, int sectorside, char* patchname, fixed_t top, fixed_t wallfrac, int flags);
+void R_AddWallSplat (line_t* wallline, int sectorside, const char* patchname,
+                     fixed_t top, fixed_t wallfrac, int flags);
 void R_AddFloorSplat (subsector_t* subsec, char* picname, fixed_t x, fixed_t y, fixed_t z, int flags);
 
 void R_Clear_VisibleFloorSplats (void);

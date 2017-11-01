@@ -49,7 +49,7 @@
 //
 // Stupid function to return function addresses
 //
-void *hwSym(char *funcName)
+void *hwSym(const char *funcName)
 {
     if(0 == strcmp("Init", funcName))
     {

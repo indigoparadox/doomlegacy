@@ -170,12 +170,12 @@ typedef enum {
 
 typedef struct
 {
-    char * 	gname;	       // game name, used in savegame
-    char *	startup_title; // startup page
-    char *	idstr;	       // used for directory and command line
-    char * 	iwad_filename[3]; // possible filenames
+    const char * gname;	       // game name, used in savegame
+    const char * startup_title; // startup page
+    const char * idstr;	       // used for directory and command line
+    const char * iwad_filename[3]; // possible filenames
                                // doom, doom2, heretic, heretic1, hexen, etc.
-    char *	support_wad;   // another wad to support the game
+    const char * support_wad;   // another wad to support the game
     const char * keylump[2];   // required lump names
     byte	require_lump;  // lumps that must appear (bit set)
     byte	reject_lump;   // lumps that must not appear (bit set)

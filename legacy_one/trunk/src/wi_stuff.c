@@ -542,7 +542,7 @@ static void WI_Draw_EL(void)
     // draw "Entering"
     if( FontBBaseLump )
     {
-        char * levname = P_LevelNameByNum(wbs->epsd+1, wbs->lev_next+1);
+        const char * levname = P_LevelNameByNum(wbs->epsd+1, wbs->lev_next+1);
         V_DrawTextB("Entering", (BASEVIDWIDTH - V_TextBWidth("Entering"))/2, y);
         y += (5*V_TextBHeight("Entering"))/4;
         V_DrawTextB( levname, (BASEVIDWIDTH - V_TextBWidth(levname))/2, y);
@@ -1055,7 +1055,7 @@ static void WI_update_DeathmatchStats(void)
 //  Quick-patch for the Cave party 19-04-1998 !!
 //
 //  width : the column width
-void WI_Draw_Ranking(char *title,int x,int y,fragsort_t *fragtable,
+void WI_Draw_Ranking(const char *title, int x, int y, fragsort_t *fragtable,
                     int scorelines, boolean large, int white, int colwidth)
 {
     char  buf[33];

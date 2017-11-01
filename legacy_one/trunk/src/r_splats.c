@@ -147,7 +147,7 @@ static wallsplat_t* R_AllocWallSplat (void)
 // splatpatchname : name of patch to draw
 void R_AddWallSplat (line_t*    wallline,
                      int        sectorside,
-                     char*      patchname,
+                     const char*  patchname,
                      fixed_t    top,
                      fixed_t    wallfrac,
                      int        flags)

@@ -123,7 +123,7 @@ typedef enum
 boolean ST_Responder(event_t* ev);
 
 // face load/unload graphics, called when skin changes
-void ST_Load_FaceGraphics (char *facestr);
+void ST_Load_FaceGraphics (const char *facestr);
 void ST_Release_FaceGraphics (void);
 
 // return if player a is in the same team of the player b

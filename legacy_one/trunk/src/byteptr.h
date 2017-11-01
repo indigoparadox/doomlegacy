@@ -89,8 +89,8 @@ static inline void write_32(byte **p, int32_t val)
 
 // Replace complicated WRITESTRING macros, with proper functions.
 // Implemented in d_netcmd.c
-byte *  write_string( byte *dst, char *src);
-byte *  write_stringn( byte *dst, char* src, int num );
+byte *  write_string( byte *dst, const char* src);
+byte *  write_stringn( byte *dst, const char* src, int num );
 
 
 // [WDJ] Put () around all macros that return values, to ensure closure in expr.

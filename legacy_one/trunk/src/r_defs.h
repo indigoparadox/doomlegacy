@@ -785,13 +785,13 @@ typedef struct drawseg_s
 
 // Patches.
 // A patch holds one or more columns.
-// Patches are used for sprites and all masked pictures,
-// and we compose textures from the TEXTURE1/2 lists
+// Patches are used for sprites and all masked pictures.
+// We compose textures from the TEXTURE1 and TEXTURE2 lists
 // of patches.
 //
 //WARNING: this structure is cloned in GlidePatch_t
 // [WDJ] This is used for reading patches from wad.
-struct patch_s
+typedef struct
 {
     uint16_t            width;          // bounding box size
     uint16_t            height;
@@ -803,9 +803,7 @@ struct patch_s
     // This is used as the head of a patch, and columnofs[8] provides
     // access to an array that is usually [64], [128], or [256].
     // This would not work if the [8] was actually enforced.
-};
-typedef struct patch_s patch_t;
-
+} patch_t;
 
 typedef enum {
     PALETTE         = 0,  // 1 byte is the index in the doom palette (as usual)

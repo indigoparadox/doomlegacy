@@ -67,7 +67,7 @@ struct fs_value_s
   {
     int32_t  i;
     fixed_t  f;
-    char    *s;
+    const char    *s;
     mobj_t  *mobj;
     fs_array_t *a;   // arrays
     char    *labelptr; // goto() label
@@ -108,7 +108,7 @@ struct fs_array_s
 
 
 
-char * stringvalue(fs_value_t v);
+const char * stringvalue(fs_value_t v);
 
 #include "t_vari.h"
 #include "t_prepro.h"
@@ -170,8 +170,8 @@ void missing_arg( const char * funcname, int min_num_args );
 void missing_arg_str( const char * funcname, const char * argstr );
 
 fs_value_t evaluate_expression(int start, int stop);
-int find_operator(int start, int stop, char *value);
-int find_operator_backwards(int start, int stop, char *value);
+int find_operator(int start, int stop, const char *value);
+int find_operator_backwards(int start, int stop, const char *value);
 
 /******* tokens **********/
 

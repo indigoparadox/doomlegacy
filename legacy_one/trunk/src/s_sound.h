@@ -174,7 +174,7 @@ void S_StartMusic(int music_id);
 // Start music using <music_id> from sounds.h.
 //   looping : non-zero if continuous looping of music
 void S_ChangeMusic (int music_num, byte looping);
-void S_ChangeMusicName(char *name, byte looping);
+void S_ChangeMusicName( const char * name, byte looping);
 
 // Stops the music fer sure.
 void S_StopMusic(void);

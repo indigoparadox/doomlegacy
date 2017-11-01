@@ -203,7 +203,7 @@ static chex_picture_replace_t  chex_repl[ NUM_CHEX_REPLACEMENTS ] =
 
 
 // Detect Doom graphics and prevent their display while chexquest mode.
-void* Chex_safe_pictures( char* name, void* lumpptr )
+void* Chex_safe_pictures( const char* name, void* lumpptr )
 {
     int i;
 

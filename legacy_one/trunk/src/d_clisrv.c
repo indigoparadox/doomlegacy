@@ -395,7 +395,7 @@ static void D_Clear_ticcmd(int tic)
 }
 
 
-static void ExtraDataTicker(void)
+void ExtraDataTicker(void)
 {
     int btic = BTIC_INDEX( gametic );
     int pn;

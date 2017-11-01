@@ -1282,7 +1282,7 @@ void S_StartMusic(int m_id)
 // S_ChangeMusicName
 // Changes music by name
 //   looping : non-zero if continuous looping of music
-void S_ChangeMusicName(char *name, byte looping)
+void S_ChangeMusicName( const char * name, byte looping)
 {
     int music;
 

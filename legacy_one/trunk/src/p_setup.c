@@ -1095,9 +1095,6 @@ void P_LoadSideDefs (int lump)
 
 // SoM: 3/22/2000: Delay loading texture names until after loaded linedefs.
 
-//Hurdler: 04/04/2000: proto added
-int R_ColormapNumForName(char *name);
-
 // Interpret Linedef specials in sidedefs,
 // after other supporting data has been loaded.
 void P_LoadSideDefs2(int lump)
@@ -1698,7 +1695,7 @@ boolean P_SetupLevel (int      to_episode,
                       skill_e  to_skill,
                       char*    map_wadname)      // for wad files
 {
-    char  *errstr;
+    const char  *errstr;
     char  *sl_mapname = NULL;
     int   i;
 

@@ -564,7 +564,7 @@ err_else_without_if:
 /***************** Evaluating Expressions ************************/
 
 // find a token, ignoring things in brackets
-int find_operator(int start, int stop, char *value)
+int find_operator(int start, int stop, const char *value)
 {
     int i;
     int bracketlevel = 0;
@@ -588,7 +588,7 @@ int find_operator(int start, int stop, char *value)
 }
 
 // go through tokens the same as find_operator, but backwards
-int find_operator_backwards(int start, int stop, char *value)
+int find_operator_backwards(int start, int stop, const char *value)
 {
     int i;
     int bracketlevel = 0;
@@ -822,7 +822,7 @@ void script_error(const char *fmt, ...)
 //
 // sf: string value of an fs_value_t
 //
-char * stringvalue(fs_value_t v)
+const char * stringvalue(fs_value_t v)
 {
 #define STRVAL_BUFLEN  255
     static char buffer[STRVAL_BUFLEN+1];

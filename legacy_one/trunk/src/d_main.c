@@ -298,7 +298,7 @@ const short min_wadversion = 144;
 //
 int demosequence;
 int pagetic;
-static char * pagename = "TITLEPIC";
+static const char * pagename = "TITLEPIC";
 
 //  PROTOS
 static void Help(void);
@@ -948,7 +948,7 @@ void D_PageTicker(void)
 //                fill the borders with a background pattern (a flat)
 //                if the patch doesn't fit all the screen.
 //
-void D_PageDrawer(char *lumpname)
+void D_PageDrawer(const char *lumpname)
 {
     int x, y;
     byte *src;
@@ -1019,7 +1019,7 @@ void D_AdvanceDemo(void)
 // Called by TryRunTics when demo_ctrl == DEMO_seq_advance
 void D_DoAdvanceDemo(void)
 {
-    char * demo_name;
+    const char * demo_name;
 
     demo_ctrl = 0;  // cancel DEMO_seq_advance
     players[consoleplayer].playerstate = PST_LIVE;      // not reborn
@@ -1181,7 +1181,7 @@ void  Print_search_directories( byte emf, byte enables )
 // D_AddFile
 //
 static
-void D_AddFile(char *filename)
+void D_AddFile(const char *filename)
 {
     int numwadfiles;
     char *newfile;
@@ -1388,7 +1388,7 @@ byte  Check_lumps( const char * wadname, const char * lumpnames[], int count )
     wadinfo_t   header;
     filelump_t  lumpx;
     FILE * 	wadfile;
-    char *      reason;
+    const char * reason;
     int         hli, lc;
     byte        result = 0;
 
@@ -2061,6 +2061,7 @@ void D_DoomMain()
     CONS_Printf("StartupGraphics...\n");
     // setup loading screen with dedicated=0 and vid=800,600
     V_Init_VideoControl();  // before I_StartupGraphics
+
     if( ! dedicated )
     {
         I_StartupGraphics();    // window
@@ -2124,7 +2125,7 @@ restart_command:
         CONS_Printf("Find HOME\n");
     // userhome section
     {
-        char * userhome = NULL;
+        const char * userhome = NULL;
 #ifdef LAUNCHER
         byte   userhome_parm = 0;
 #endif
@@ -2268,7 +2269,7 @@ restart_command:
        
         // [WDJ] configfile must be set whereever legacyhome is on DOS or WIN32
         {
-            char * cfgstr;
+            const char * cfgstr;
             // user specific config file
             // little hack to allow a different config file for opengl
             // may be a problem if opengl cannot really be started

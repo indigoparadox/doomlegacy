@@ -43,7 +43,7 @@ extern  char**  myargv;
 
 // Returns the position of the given parameter
 // in the arg list (0 if not found).
-int  M_CheckParm (char* check);
+int  M_CheckParm (const char* check);
 
 
 // push all parameters bigining by a +, ex : +map map01
@@ -62,11 +62,11 @@ void M_FindResponseFile (void);
 
 #ifdef LAUNCHER
 void M_Remove_Param( int i );
-void M_Remove_matching_Param( char * p1, char * p2 );
+void M_Remove_matching_Param( const char * p1, const char * p2 );
 // add a param from Launcher, p2 is optional
-void M_Add_Param( char * p1, char * p2 );
+void M_Add_Param( const char * p1, const char * p2 );
 // add two param from Launcher, or remove them if p2==NULL or empty string
-void M_Change_2Param( char * p1, char * p2 );
+void M_Change_2Param( const char * p1, const char * p2 );
 // Clear all param from Add_Param
 void M_Clear_Add_Param( void );
 #endif

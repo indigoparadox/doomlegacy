@@ -155,7 +155,7 @@ static transfer_t transfer[MAXNETNODES];
 int cl_num_fileneed;
 fileneed_t cl_fileneed[MAX_WADFILES];
 
-char * downloaddir = "DOWNLOAD";
+const char * downloaddir = "DOWNLOAD";
 
 static void SV_SendFile(byte to_node, char *filename, char fileid);
 

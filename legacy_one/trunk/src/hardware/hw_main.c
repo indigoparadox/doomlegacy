@@ -4234,11 +4234,11 @@ void HWR_RenderPlayerView(byte viewnumber, player_t * player)
 // ==========================================================================
 
 static
-unsigned int hex_val(char *str)
+unsigned int hex_val(const char *str)
 {
     unsigned int val = 0;
     int i, d;
-    char *sc;
+    const char * sc;
     char c;
 
     sc = str;

@@ -654,7 +654,7 @@ void M_DrawGenericMenu(void)
                            w = V_StringWidth(cv->string);
                            if( use_font1 )
                            {
-                               char * sp = cv->string;
+                               const char * sp = cv->string;
                                // Setup is centered, but this needs left justify.
                                M_DrawTextBox(-BASEVIDWIDTH/2,y+12,BASEVIDWIDTH/7,1);
                                while( *sp && w > BASEVIDWIDTH - 8 )
@@ -5422,7 +5422,7 @@ static void CV_game_OnChange(void)
 {
     // Strings come from GameDesc, not a CV_PossibleValue_t
     // Cannot call CV_Set within CV_CALL routine
-    char * rs;
+    const char * rs;
     game_desc_t * gamedesc = D_GameDesc( cv_game.value );
     if( gamedesc )
     {

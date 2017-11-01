@@ -93,7 +93,7 @@ int isMAPxy(char *name);
                      ((s)[5] == '\0'))*/
 
 void P_Register_Info_Commands(void);
-char *P_LevelName(void);
-char *P_LevelNameByNum( int episode, int map );
+char * P_LevelName(void);
+const char * P_LevelNameByNum( int episode, int map );
 
 #endif

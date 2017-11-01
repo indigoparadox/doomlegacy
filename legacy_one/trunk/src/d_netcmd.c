@@ -449,7 +449,7 @@ void D_Register_ClientCommands(void)
 // Only use this on internal strings that are known to have 0 term.
 // Will always terminate the string.
 // Return next buffer location.
-byte *  write_string(byte *dst, char *src)
+byte *  write_string(byte *dst, const char* src)
 {
   // copy src str0 to buffer dst, until reach 0 term.
   do {
@@ -461,7 +461,7 @@ byte *  write_string(byte *dst, char *src)
 
 // Will always terminate the string.
 // Return next buffer location
-byte *  write_stringn( byte *dst, char* src, int num )
+byte *  write_stringn( byte *dst, const char* src, int num )
 {
   // copy src str0 to buffer dst, until reach 0 term or num of char reached.
   for(;;) {

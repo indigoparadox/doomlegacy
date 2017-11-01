@@ -626,7 +626,8 @@ void G_CheckDoubleUsage(int keynum)
     }
 }
 
-void setcontrol(int (*gc)[2], char * cstr)
+static
+void setcontrol(int (*gc)[2], const char * cstr)
 {
     int numctrl;
     char *namectrl;

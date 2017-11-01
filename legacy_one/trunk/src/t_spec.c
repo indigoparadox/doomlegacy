@@ -57,7 +57,6 @@
 #include "t_spec.h"
 #include "t_vari.h"
 
-int find_operator(int start, int stop, char *value);
 
 // ending brace found in parsing
 
@@ -266,7 +265,7 @@ static void create_variable(int start, int stop)
   
   // check if already exists, only checking
   // the current script
-  if( variableforname(newvar_script, tokens[start]) )  goto done;  // already one
+  if( variable_for_name(newvar_script, tokens[start]) )  goto done;  // already one
   
   new_variable(newvar_script, tokens[start], newvar_type);
   

@@ -600,6 +600,7 @@ void S_RemoveSoundFx (sfxid_t sfxid)
         if( verbose > 1 )
             GenPrintf(EMSG_ver, "RemoveSoundFx: %s\n", S_sfx[sfxid].name );
         S_FreeSfx(&S_sfx[sfxid]);
+        // If name is const char *, then this fails.
         Z_Free(S_sfx[sfxid].name);
         S_sfx[sfxid].lumpnum=-1;
         S_sfx[sfxid].name=NULL;  // free sfx slot to use again
@@ -610,7 +611,7 @@ void S_RemoveSoundFx (sfxid_t sfxid)
 //
 // S_AddMusic
 // Adds a single song to the runtime songs.
-int S_AddMusic(char *name)
+int S_AddMusic( const char * name)
 {
   int    i;
   char   lumpname[9];
@@ -633,7 +634,7 @@ int S_AddMusic(char *name)
 }
 
 
-int S_FindMusic(char *name)
+int S_FindMusic( const char * name)
 {
   int   i;
 

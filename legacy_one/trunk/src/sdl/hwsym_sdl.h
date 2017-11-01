@@ -30,7 +30,7 @@
 #ifndef HWSYM_SDL_H
 #define HWSYM_SDL_H
 
-void *hwSym(char *funcName);
+void *hwSym(const char *funcName);
 
 #endif
 

@@ -192,7 +192,7 @@ void FIL_ExtFile_Close ( ExtFIL_t * ft )
 //
 // checks if needed, and add default extension to filename
 // in path[MAX_WADPATH]
-void FIL_DefaultExtension (char *path, char *extension)
+void FIL_DefaultExtension (char *path, const char *extension)
 {
     char    *src;
     // [WDJ] assume MAX_WADPATH buffer
@@ -219,8 +219,10 @@ char * FIL_Filename_of( char * nstr )
     int i;
     // point to start of filename only
     for (i = strlen(nstr) - 1; i >= 0; i--)
+    {
       if (nstr[i] == '\\' || nstr[i] == '/' || nstr[i] == ':')
         break;
+    }
     return &nstr[i+1];
 }
 
@@ -262,7 +264,7 @@ void FIL_ExtractFileBase ( char*  path,  char* dest )
 //  Returns true if a filename extension is found
 //  There are no '.' in wad resource name
 //
-boolean FIL_CheckExtension (char *in)
+boolean FIL_CheckExtension (const char * in)
 {
     while (*in++)
     {
@@ -386,7 +388,7 @@ void M_FirstLoadConfig(void)
 
 //  Save all game config here
 //
-void M_SaveConfig (char *filename)
+void M_SaveConfig (const char *filename)
 {
     FILE    *f;
 
@@ -602,7 +604,7 @@ void M_ScreenShot (void)
 #define VA_BUF_SIZE 1024
 static char  va_buffer[VA_BUF_SIZE];
 //
-char*   va(char *format, ...)
+char*   va(const char *format, ...)
 {
     va_list      argptr;
 
@@ -631,7 +633,7 @@ char *Z_StrDup (const char *in)
 // If directory dn does not end in '/', then a separator will be included.
 void cat_filename( char * dest, const char * dn, const char * fn )
 {
-    char * format = "%s%s";
+    const char * format = "%s%s";
     int dnlen = strlen( dn );
     if( dnlen )
     {
@@ -646,7 +648,7 @@ void cat_filename( char * dest, const char * dn, const char * fn )
 #if 0
 // [WDJ] No longer used
 // s1=s2+s3+s1
-void strcatbf(char *s1,char *s2,char *s3)
+void strcatbf(char *s1, const char *s2, const char *s3)
 {
     char tmp[1024];
 
