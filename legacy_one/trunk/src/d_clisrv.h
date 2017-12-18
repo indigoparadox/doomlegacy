@@ -111,7 +111,7 @@ typedef enum   {
     PT_REQUESTFILE,   // client request a file transfer
     PT_REPAIR,        // repair position, consistency fix
     PT_ACKS,          // all acks
-    PT_DUMMY17,
+    PT_STATE,         // server pause state
     PT_DUMMY18,
     PT_DUMMY19,
 
@@ -190,6 +190,12 @@ typedef struct {
    tic_t       gametic;
    pos_repair_t  pos;
 } repair_pak_t;
+
+typedef struct {
+   tic_t       gametic;
+   byte        p_rand_index; // to sync P_Random
+   byte        server_pause; // silent pause
+} state_pak_t;
 
 // [WDJ] As of 9/2016 there are 37 CV_NETVAR.
 #define NETCVAR_BUFF_LEN  4096
@@ -314,6 +320,7 @@ typedef struct
       askinfo_pak_t      askinfo;
       netwait_pak_t      netwait;
       repair_pak_t       repair;
+      state_pak_t        state;
            } u;
 
 } netbuffer_t;
