@@ -2417,7 +2417,7 @@ void G_DoLoadGame (int slot)
     if( P_Savegame_Readfile( savename ) < 0 )  goto cannot_read_file;
     // file is open and savebuffer allocated
 
-    if( ! P_Read_Savegame_Header( &sginfo ) )  goto load_header_failed;
+    if( ! P_Read_Savegame_Header( &sginfo, 0 ) )  goto load_header_failed;
     if( ! sginfo.have_game )  goto wrong_game;
     if( ! sginfo.have_wad )  goto wrong_wad;
 
@@ -2523,7 +2523,7 @@ void G_DoSaveGame (int   savegameslot, const char* savedescription)
 
     if( P_Savegame_Writefile( savename ) < 0 )  return;
     
-    P_Write_Savegame_Header( savedescription );
+    P_Write_Savegame_Header( savedescription, 0 );
     P_SaveGame();  // Write game data to savegame buffer.
    
     if( P_Savegame_Closefile( 1 ) < 0 )  return;
