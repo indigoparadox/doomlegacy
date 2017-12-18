@@ -36,7 +36,7 @@
 #ifndef I_TCP_H
 #define I_TCP_H
 
-extern int sock_port;
+extern uint16_t server_sock_port;
 
 void I_Init_TCP_Network(void);
 

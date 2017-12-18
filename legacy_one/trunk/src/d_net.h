@@ -49,7 +49,7 @@
 // Max player computers in a game. Limited to 127 by chat.
 #define MAXNETNODES     32
 // Broadcast added xx/5/99: can use broadcast now
-#define BROADCASTADDR   MAXNETNODES
+#define BROADCAST_NODE   MAXNETNODES
 // MasterServer Ping
 #define MS_PINGNODE     (MAXNETNODES+1)
 // Node connection storage, and send. Limited to 254 (byte).
