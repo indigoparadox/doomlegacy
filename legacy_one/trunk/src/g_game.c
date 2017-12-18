@@ -3138,6 +3138,7 @@ void G_BeginRecording (void)
           *demo_p++ = 0;
     }
    
+    byte * demo_p_next = demo_p + 32;
     // more settings that affect playback
     *demo_p++ = cv_solidcorpse.EV;
 #ifdef DOORDELAY_CONTROL
@@ -3153,6 +3154,7 @@ void G_BeginRecording (void)
     *demo_p++ = cv_monbehavior.EV;
     *demo_p++ = cv_doorstuck.EV;
     *demo_p++ = cv_monstergravity.EV;
+    // 10
     // Boom and MBF derived controls.
     *demo_p++ = cv_monster_remember.EV;
     *demo_p++ = cv_weapon_recoil.EV;
@@ -3166,7 +3168,7 @@ void G_BeginRecording (void)
     *demo_p++ = cv_mbf_staylift.EV;
     *demo_p++ = cv_mbf_help_friend.EV;
     *demo_p++ = (cv_mbf_distfriend.value >> 8);  // MSB
-    *demo_p++ = cv_mbf_distfriend.value & 0x0F;  // LSB
+    *demo_p++ = cv_mbf_distfriend.value & 0xFF;  // LSB
     *demo_p++ = cv_mbf_monkeys.EV;
 #ifdef DOGS
     *demo_p++ = cv_mbf_dogs.EV;
@@ -3175,9 +3177,15 @@ void G_BeginRecording (void)
     *demo_p++ = 0;
     *demo_p++ = 0;
 #endif
+    // 26
+    *demo_p++ = (cv_respawnmonsterstime.value >> 8);  // MSB
+    *demo_p++ = cv_respawnmonsterstime.value & 0xFF;  // LSB
+    *demo_p++ = (cv_itemrespawntime.value >> 8);  // MSB
+    *demo_p++ = cv_itemrespawntime.value & 0xFF;  // LSB
+    // 30
     
     // empty space
-    for( i=24; i<32; i++ )  *demo_p++ = 0;
+    while( demo_p < demo_p_next )  *demo_p++ = 0;
 
     *demo_p++ = 0x55;   // Sync mark, start of data
     memset(oldcmd,0,sizeof(oldcmd));
@@ -3238,7 +3246,7 @@ void G_DeferedPlayDemo (const char* name)
 void G_DoPlayDemo (const char *defdemoname)
 {
     skill_e skill;
-    int     i, episode, map;
+    int   i, lmp, episode, map;
     boolean boomdemo = 0;
     byte  demo144_format = 0;
     byte  boom_compatibility_mode = 0;  // Boom 2.00 compatibility flag
@@ -3263,9 +3271,16 @@ void G_DoPlayDemo (const char *defdemoname)
     //it's an internal demo
     strncpy (demoname, defdemoname, DEMONAME_LEN);
     demoname[DEMONAME_LEN-1] = 0;
-    strcat (demoname, ".lmp");
-    if ((i=W_CheckNumForName(defdemoname)) == -1)
+
+    lmp = W_CheckNumForName(defdemoname);
+    if( lmp >= 0 )
     {
+        // lump
+        demobuffer = demo_p = W_CacheLumpNum (lmp, PU_STATIC);
+    }
+    else
+    {
+        // external file
         FIL_DefaultExtension(demoname,".lmp");
         if (!FIL_ReadFile (demoname, &demobuffer) )
         {
@@ -3274,8 +3289,6 @@ void G_DoPlayDemo (const char *defdemoname)
         }
         demo_p = demobuffer;
     }
-    else
-        demobuffer = demo_p = W_CacheLumpNum (i, PU_STATIC);
 
 //
 // read demo header

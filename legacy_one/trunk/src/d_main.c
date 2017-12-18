@@ -2827,8 +2827,8 @@ restart_command:
 
     // demo doesn't need anymore to be added with D_AddFile()
     p = M_CheckParm("-playdemo");
-    if (!p)
-        p = M_CheckParm("-timedemo");
+    if( !p && M_CheckParm("-timedemo") )
+      p = 2500;  // indicate timedemo
     if (p)
     {
       if( ! M_IsNextParm() )
@@ -2860,13 +2860,15 @@ restart_command:
 
         CONS_Printf("Playing demo %s.\n", demo_name);
 
-        if ((p = M_CheckParm("-playdemo")))
-        {
+        if( p == 2500 )
+        {  // timedemo
+            G_TimeDemo(demo_name);
+        }
+        else
+        {  // playdemo
             singledemo = true;  // quit after one demo
             G_DeferedPlayDemo(demo_name);
         }
-        else
-            G_TimeDemo(demo_name);
 
         gamestate = wipegamestate = GS_NULL;
 
