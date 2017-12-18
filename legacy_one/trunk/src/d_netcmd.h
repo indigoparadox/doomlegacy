@@ -95,6 +95,8 @@ extern consvar_t   cv_splats;
 extern consvar_t   cv_maxsplats;
 extern consvar_t   cv_screenslink;
 
+// Network XCmd.
+// These are also saved in DoomLegacy demo, do not alter the order.
 typedef enum {
     XD_NAMEANDCOLOR=1,
     XD_WEAPONPREF,
