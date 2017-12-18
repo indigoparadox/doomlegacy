@@ -257,7 +257,7 @@ consvar_t cv_mbf_monster_backing =
 consvar_t cv_mbf_pursuit = {"pursuit","0", CV_NETVAR | CV_SAVE, CV_OnOff};
   // !comp[comp_pursuit]
 consvar_t cv_mbf_distfriend =
-  {"distfriend","128", CV_NETVAR | CV_SAVE | CV_CALL, CV_Unsigned, mbf_OnChange};
+  {"distfriend","128", CV_NETVAR | CV_VALUE | CV_SAVE | CV_CALL, CV_uint16, mbf_OnChange};
   // MBF distfriend (0..999)
 consvar_t cv_mbf_staylift = {"staylift","1", CV_NETVAR | CV_SAVE, CV_OnOff};
   // !comp[comp_staylift]
@@ -266,8 +266,9 @@ consvar_t cv_mbf_help_friend = {"helpfriend","1", CV_NETVAR | CV_SAVE, CV_OnOff}
 consvar_t cv_mbf_monkeys = {"monkeys","0", CV_NETVAR | CV_SAVE, CV_OnOff};
   // MBF monkeys (climb steep stairs)
 #ifdef DOGS   
-consvar_t cv_mbf_dogs = {"dogs_cnt","0", CV_NETVAR | CV_SAVE, CV_Unsigned};
-  // MBF single player (and coop) dogs (0..3)
+CV_PossibleValue_t dogs_cons_t[] = {{0,"MIN"}, {9,"MAX"}, {0,NULL} };
+consvar_t cv_mbf_dogs = {"dogs_cnt","0", CV_NETVAR | CV_SAVE, dogs_cons_t};
+  // MBF single player (and coop) dogs (0..9)
 consvar_t cv_mbf_dog_jumping = {"dogjump","1", CV_NETVAR | CV_SAVE, CV_OnOff};
   // MBF dog_jumping
 #endif

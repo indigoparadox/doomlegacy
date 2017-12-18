@@ -123,8 +123,8 @@ consvar_t   cv_fuzzymode = {"fuzzymode", "Off", CV_SAVE | CV_CALL, CV_OnOff, CV_
 CV_PossibleValue_t scr_depth_cons_t[]={{8,"8 bits"}, {15,"15 bits"}, {16,"16 bits"}, {24,"24 bits"}, {32,"32 bits"}, {0,NULL}};
 
 //added:03-02-98: default screen mode, as loaded/saved in config
-consvar_t   cv_scr_width  = {"scr_width",  "320", CV_SAVE, CV_Unsigned};
-consvar_t   cv_scr_height = {"scr_height", "200", CV_SAVE, CV_Unsigned};
+consvar_t   cv_scr_width  = {"scr_width",  "320", CV_VALUE|CV_SAVE, CV_uint16};
+consvar_t   cv_scr_height = {"scr_height", "200", CV_VALUE|CV_SAVE, CV_uint16};
 consvar_t   cv_scr_depth =  {"scr_depth",  "8 bits",   CV_SAVE, scr_depth_cons_t};
 consvar_t   cv_fullscreen = {"fullscreen",  "Yes",CV_SAVE | CV_CALL, CV_YesNo, SCR_ChangeFullscreen};
 

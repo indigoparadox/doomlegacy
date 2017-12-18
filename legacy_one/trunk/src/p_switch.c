@@ -561,7 +561,7 @@ boolean P_UseSpecialLine ( mobj_t*       thing,
 
       case 11:
         // Exit level
-        if(cv_allowexitlevel.value)
+        if(cv_allowexitlevel.EV)
         {
             P_ChangeSwitchTexture(line,0);
             G_ExitLevel ();

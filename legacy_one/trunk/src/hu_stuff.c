@@ -218,14 +218,14 @@ void TeamPlay_OnChange(void)
     int i;
     // Change the name of the teams
 
-    if(cv_teamplay.value==1)
+    if(cv_teamplay.EV == 1)
     {
         // color
         for(i=0; i<NUMSKINCOLORS; i++)
             set_team_name( i, Color_Names[i]);
     }
     else
-    if(cv_teamplay.value==2)
+    if(cv_teamplay.EV == 2)
     {
         // skins
         for(i=0; i<numskins; i++)

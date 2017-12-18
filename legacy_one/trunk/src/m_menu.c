@@ -872,11 +872,7 @@ menu_t  SingleMultiDef =
 // Connect Menu
 //===========================================================================
 
-CV_PossibleValue_t serversearch_cons_t[] = {{0,"Local Lan"}
-                                           ,{1,"Internet"}
-                                           ,{0,NULL}};
-
-
+CV_PossibleValue_t serversearch_cons_t[] = {{0,"Local Lan"}, {1,"Internet"}, {0,NULL}};
 consvar_t cv_serversearch = {"serversearch"    ,"0",CV_HIDEN,serversearch_cons_t};
 
 #define FIRSTSERVERLINE 3
@@ -5433,6 +5429,7 @@ static void CV_game_OnChange(void)
         rs = "Auto";
         cv_game.value = (cv_game.value <1)? -1 : GDESC_other;
     }
+    // Update display string from GameDesc.
     if( cv_game.string )
        Z_Free( cv_game.string );  // remove the string from CV_Set
     cv_game.string = Z_StrDup( rs );

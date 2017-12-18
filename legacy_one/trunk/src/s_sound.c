@@ -168,7 +168,8 @@ consvar_t cv_sndserver_arg = { "sndserver_arg", "-quiet", CV_SAVE };
 
 #ifdef MACOS_DI
 // specific to macos directory
-consvar_t play_mode = { "play_mode", "0", CV_SAVE, CV_Unsigned };
+consvar_t play_mode = { "play_mode", "0", CV_SAVE, CV_byte };
+  // enum playmode_t (0..2)
 #endif
 
 
@@ -187,7 +188,7 @@ consvar_t cv_rndsoundpitch = { "rndsoundpitch", "Off", CV_SAVE, CV_OnOff };
 
 // number of channels available
 static void SetChannelsNum(void);
-consvar_t cv_numChannels = { "snd_channels", "16", CV_SAVE | CV_CALL, CV_Unsigned, SetChannelsNum };
+consvar_t cv_numChannels = { "snd_channels", "16", CV_SAVE | CV_CALL, CV_byte, SetChannelsNum };
 
 #ifdef SURROUND
 consvar_t cv_surround = { "surround", "0", CV_SAVE, CV_OnOff };
