@@ -573,7 +573,7 @@ static boolean P_CheckMissileRange (mobj_t* actor)
         // so fight back!
         actor->flags &= ~MF_JUSTHIT;
 
-        if( EN_heretic || (demoversion < VERSION147) )
+        if( EN_heretic || (demoversion < 147) )
             return true;  // Old Legacy, Old Doom
 
         // [WDJ] MBF, from MBF, PrBoom

@@ -3327,7 +3327,7 @@ void G_DoPlayDemo (const char *defdemoname)
         EV_legacy = demoversion;  // is a DoomLegacy version
         // [WDJ] enable of "Marine's Best Friend" feature emulation
         EN_boom = 1;
-        EN_mbf = (demoversion >= VERSION147);
+        EN_mbf = (demoversion >= 147);
     }
     else if( demoversion >= 111 && demoversion <= 143 )
     {
