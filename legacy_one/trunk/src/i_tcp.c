@@ -997,7 +997,7 @@ retry_bind:
                       sizeof(trueval));  // length of value
 #endif
 
-#if NET_NODE_DEBUG
+#ifdef NET_NODE_DEBUG
     // Set SO_DEBUG
 #ifdef LINUX
     stat = setsockopt(s, SOL_SOCKET, SO_DEBUG,
