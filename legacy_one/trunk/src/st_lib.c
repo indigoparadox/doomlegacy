@@ -234,7 +234,7 @@ void STlib_updateMultIcon ( st_multicon_t*  mi )
             mi->command = 0;
         }
         // Draw icon patch.       
-        if(iconindex >= 0)
+        if(iconindex >= 0 && mi->patches[iconindex])
             V_DrawScaledPatch(mi->x, mi->y, mi->patches[iconindex]);
 
         mi->prev_icon_index = iconindex;

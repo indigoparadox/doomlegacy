@@ -1129,9 +1129,9 @@ load_patch_t  st_patches[13] =
 
 static void ST_Load_Graphics(void)
 {
-
     int         i;
-    char        namebuf[9];
+    // [Stylinkski] Compiler complains of possible buffer overrun, requires [10].
+    char        namebuf[12];
     // [WDJ] all ST graphics are loaded endian fixed
     // [WDJ] Lock the status bar graphics against other texture users.
 

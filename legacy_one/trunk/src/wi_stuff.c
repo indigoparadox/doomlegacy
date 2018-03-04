@@ -2045,7 +2045,8 @@ static void WI_Load_Data(void)
     // vid : from video setup
     int   i;
     anim_inter_t*  ai; // interpic animation data
-    char        name[9];
+    // [Stylinski] Compiler warns buffer overrun, requires [17], maybe up to [27].
+    char  name[28];
     byte  j;
     byte  wb_epsd;
 
