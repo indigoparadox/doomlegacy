@@ -711,15 +711,19 @@ static void CL_Send_State( byte server_pause )
 static void state_handler( void )
 {
     // Message is PT_STATE
-    tic_t new_gametic = LE_SWAP32_FAST(netbuffer->u.state.gametic);
-    if( new_gametic != gametic )
+    tic_t serv_gametic = LE_SWAP32_FAST(netbuffer->u.state.gametic);
+    if( serv_gametic != gametic )
     {
-        debug_Printf( "PT_STATE: update gametic\n" );
-        gametic = new_gametic;
+        if( verbose > 1 )
+            GenPrintf( EMSG_ver, "PT_STATE: gametic %i, server gametic %i\n", gametic, serv_gametic );
+        // Gametic cannot be fixed directly, need game commands.        
+        // It may just be behind by a tic or two.
     }
-    if( P_GetRandIndex() != netbuffer->u.state.p_rand_index )
+    else if( P_GetRandIndex() != netbuffer->u.state.p_rand_index )
     {
-        debug_Printf( "PT_STATE: update P_random index\n" );
+        // Same gametic, but different P_Random index.
+        GenPrintf( EMSG_warn, "PT_STATE: gametic %i, update P_random index %i to %i\n",
+		 gametic, P_GetRandIndex(), netbuffer->u.state.p_rand_index );
         P_SetRandIndex( netbuffer->u.state.p_rand_index ); // to sync P_Random
     }
     paused = netbuffer->u.state.server_pause;
