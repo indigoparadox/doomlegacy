@@ -869,7 +869,7 @@ void release_patch_list( load_patch_t * pl )
 void release_patch_array( patch_t ** pp, int count )
 {
     while( count-- ) {
-        Z_ChangeTag( *pp, PU_UNLOCK_CACHE);
+        if( *pp )  Z_ChangeTag( *pp, PU_UNLOCK_CACHE);
         pp++;
     }
 }
