@@ -2451,11 +2451,19 @@ void P_SpawnPlayer( mapthing_t * mthing, int playernum )
 
     mobj->angle = wad_to_angle(mthing->angle);
     if (playernum == consoleplayer)
+    {
         localangle = mobj->angle;
+        localaiming = 0;
+    }
     else if (playernum == displayplayer2)  // player 2
+    {
         localangle2 = mobj->angle;
+        localaiming2 = 0;
+    }
     else if (p->bot)    //added by AC for acbot
+    {
         B_SpawnBot(p->bot);
+    }
 
     mobj->player = p;
     mobj->health = p->health;
@@ -2474,6 +2482,7 @@ void P_SpawnPlayer( mapthing_t * mthing, int playernum )
     p->viewheight = cv_viewheight.value << FRACBITS;
     // added 2-12-98
     p->viewz = p->mo->z + p->viewheight;
+    p->aiming = 0;  // reset freelook 
 
     p->flamecount = 0;
     p->flyheight = 0;
