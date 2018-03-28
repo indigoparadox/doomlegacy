@@ -2718,6 +2718,20 @@ void SF_MoveCamera(void)
 
         if (xydist && !anglespeed)
         {
+#if 1
+	    // [WDJ] Without using ANGLE_1, which has a significant round-off error.
+            fangledist = ((double) angledist * 45.0f / ANG45);
+            fmovestep = ((double) FixedDiv(xydist, movespeed) / FRACUNIT);
+            if (fmovestep)
+                fanglestep = (fangledist / fmovestep);
+            else
+                fanglestep = 360.0f;
+
+            //debug_Printf("fstep: %f, fdist: %f, fmspeed: %f, ms: %i\n", fanglestep, fangledist, fmovestep, FixedDiv(xydist, movespeed) >> FRACBITS);
+
+            anglestep = (fanglestep * ANG45 / 45.0f);
+#else
+	    // [WDJ] ANGLE_1 (from Heretic) has a significant round-off error.
             fangledist = ((double) angledist / ANGLE_1);
             fmovestep = ((double) FixedDiv(xydist, movespeed) / FRACUNIT);
             if (fmovestep)
@@ -2728,6 +2742,7 @@ void SF_MoveCamera(void)
             //debug_Printf("fstep: %f, fdist: %f, fmspeed: %f, ms: %i\n", fanglestep, fangledist, fmovestep, FixedDiv(xydist, movespeed) >> FRACBITS);
 
             anglestep = (fanglestep * ANGLE_1);
+#endif
         }
         else
             anglestep = anglespeed;

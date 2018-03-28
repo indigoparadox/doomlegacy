@@ -3118,6 +3118,7 @@ void HWR_Init_TextureMapping(void)
         return;
     oldclipanglefov = clipanglefov;
     int fov_angf = ANGLE_TO_FINE( clipanglefov );
+    // [WDJ] ANGLE_1 has significant round-off error, but in this usage it does not matter.
     if (fov_angf >= ANGLE_TO_FINE(ANG180 - ANGLE_1))
         fov_angf = ANGLE_TO_FINE(ANG180 - ANGLE_1);
 
