@@ -52,10 +52,13 @@ extern int  legacyhome_len;
 #define MAX_NUM_DOOMWADDIR  28
 extern char *doomwaddir[MAX_NUM_DOOMWADDIR];
 
+extern char * startupwadfiles[MAX_WADFILES+1];
+
 // Setup variable doomwaddir for owner usage.
 void  owner_wad_search_order( void );
 
 extern consvar_t cv_home, cv_doomwaddir, cv_iwad;
+extern consvar_t cv_screenshot_type, cv_screenshot_dir;
 
 extern byte  init_sequence;  // = 0 on first init
 

@@ -99,7 +99,7 @@ void HWR_DrawViewBorder (int clearlines);
 //   x, y, w, h : vid coordinates, relative to center.
 //   scale : 0 .. 15
 void HWR_DrawVidFlatFill (int x, int y, int w, int h, int scale, int flatlumpnum);
-boolean HWR_Screenshot (char *lbmname);
+byte *  HWR_Get_Screenshot ( byte * bitpp );
 void HWR_Init_TextureMapping (void);
 void HWR_SetViewSize (int blocks);
 void HWR_DrawPatch (MipPatch_t* gpatch, int x, int y, uint32_t option);

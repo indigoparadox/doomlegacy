@@ -353,17 +353,17 @@ void  DBG_Print_lines( const char * longstr )
         strncpy( lbf, longstr, LOGLINELEN+1 );  // get some or all
         if( lbf[LOGLINELEN] )  // too long, partial copy
         {
-	    lbf[LOGLINELEN] = 0;
-	    char * lsp = strrchr( lbf, ' ' );  // find last space
-	    if( lsp == NULL )
-	        lsp = & lbf[LOGLINELEN];  // should not happen
-	    *lsp = '\0';  // term string at space
-	    longstr += ( lsp - lbf + 1 );
-	}
+            lbf[LOGLINELEN] = 0;
+            char * lsp = strrchr( lbf, ' ' );  // find last space
+            if( lsp == NULL )
+                lsp = & lbf[LOGLINELEN];  // should not happen
+            *lsp = '\0';  // term string at space
+            longstr += ( lsp - lbf + 1 );
+        }
         else
         {
-	    longstr = NULL;  // end
-	}
+            longstr = NULL;  // end
+        }
         DBG_Printf("  %s\n", lbf);
     }
 }
@@ -654,12 +654,11 @@ EXPORT void HWRAPI( ClearMipMapCache ) ( void )
 
 
 // -----------------+
-// ReadRect         : Read a rectangle region of the truecolor framebuffer
-//                  : store pixels as 16bit 565 RGB
-// Returns          : 16bit 565 RGB pixel array stored in dst_data
+// ReadRect         : Read a rectangle region of the truecolor framebuffer.
+// Returns          : Return 24 bit RGB, set bitpp to 24.
 // -----------------+
 EXPORT void HWRAPI( ReadRect ) (int x, int y, int width, int height,
-                                int dst_stride, unsigned short * dst_data)
+                                /*OUT*/ byte * buf, byte * bitpp )
 {
     // DBG_Printf ("ReadRect()\n");
     GLubyte *image;
@@ -667,17 +666,23 @@ EXPORT void HWRAPI( ReadRect ) (int x, int y, int width, int height,
 
     image = (GLubyte *) malloc(width*height*3*sizeof(GLubyte));
     glReadPixels(x, y, width, height, GL_RGB, GL_UNSIGNED_BYTE, image);
+
+    // Flip vertically, reverse RGB.
+    byte * bp = & buf[0];
     for (i=height-1; i>=0; i--)
     {
+        GLubyte * pix = & image[ i * width * 3 ];
         for (j=0; j<width; j++)
         {
-            dst_data[(height-1-i)*width+j] =
-                                  ((image[(i*width+j)*3]>>3)<<11) |
-                                  ((image[(i*width+j)*3+1]>>2)<<5) |
-                                  ((image[(i*width+j)*3+2]>>3));
+            *(bp++) = pix[2];  // R
+            *(bp++) = pix[1];  // G
+            *(bp++) = pix[0];  // B
+            pix += 3;
         }
     }
+
     free(image);
+    *bitpp = 24;  // return output
 }
 
 
@@ -720,7 +725,7 @@ EXPORT void HWRAPI( ClearBuffer ) ( boolean ColorMask, boolean DepthMask,
         {
             glClearColor( ClearColor->red, ClearColor->green,
                           ClearColor->blue, ClearColor->alpha );
-	}
+        }
         ClearMask |= GL_COLOR_BUFFER_BIT;
     }
     if( DepthMask )
@@ -732,8 +737,8 @@ EXPORT void HWRAPI( ClearBuffer ) ( boolean ColorMask, boolean DepthMask,
     }
 
     SetBlend( (DepthMask ?
-	         (cur_polyflags | PF_Occlude)
-	       : (cur_polyflags & ~PF_Occlude) )  );
+                 (cur_polyflags | PF_Occlude)
+               : (cur_polyflags & ~PF_Occlude) )  );
 
     glClear( ClearMask );
 }
@@ -809,10 +814,10 @@ EXPORT void HWRAPI( SetBlend ) ( FBITFIELD polyflags )
     if( xf & ( PF_Blending|PF_Occlude|PF_NoTexture|PF_Modulated|PF_NoDepthTest|PF_Decal|PF_Invisible|PF_NoAlphaTest ) )
     {
         // One of these flags has changed
-	// PF_Blending = (PF_Environment|PF_Additive|PF_Translucent|PF_Masked|PF_Substractive)
+        // PF_Blending = (PF_Environment|PF_Additive|PF_Translucent|PF_Masked|PF_Substractive)
         if( xf & PF_Blending ) // if blending mode must be changed
         {
-	    // PF_Blending flags are mutually exclusive
+            // PF_Blending flags are mutually exclusive
             switch(polyflags & PF_Blending) {
                 case PF_Translucent & PF_Blending:
                      glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA ); // alpha = level of transparency
@@ -871,7 +876,7 @@ EXPORT void HWRAPI( SetBlend ) ( FBITFIELD polyflags )
         {
             if (oglflags & GLF_NOTEXENV)
             { // [smite] FIXME this was only for LINUX but why?
-	      // WIN32: if not present, menu shading draws only the corner (rest is black), and menu is grayed
+              // WIN32: if not present, menu shading draws only the corner (rest is black), and menu is grayed
                 if ( !(polyflags & PF_Modulated) )
                     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
             }
@@ -1132,7 +1137,7 @@ EXPORT void HWRAPI( DrawPolygon ) ( FSurfaceInfo_t  *pSurf,
     {
         if (tint_color_id)
         {
-	    // Imitate the damage, and special object palette tints
+            // Imitate the damage, and special object palette tints
             c.red   = (tint_rgb.red   + byte2float[pSurf->FlatColor.s.red])  /2.0f;
             c.green = (tint_rgb.green + byte2float[pSurf->FlatColor.s.green])/2.0f;
             c.blue  = (tint_rgb.blue  + byte2float[pSurf->FlatColor.s.blue]) /2.0f;
@@ -1187,7 +1192,7 @@ EXPORT void HWRAPI( DrawPolygon ) ( FSurfaceInfo_t  *pSurf,
         {
             for (j=0; j<8; j++)
                 scalef += (pz > buf[i][j]+0.00005f) ? 0 : 1;
-	}
+        }
 
         // quick test for screen border (not 100% correct, but looks ok)
         if (px < 4) scalef -= 8*(4-px);
@@ -1324,7 +1329,7 @@ FTransform_t  md2_transform;
 // -----------------+
 //EXPORT void HWRAPI( DrawMD2 ) (md2_model_t *model, int frame)
 EXPORT void HWRAPI( DrawMD2 ) (int *gl_cmd_buffer, md2_frame_t *frame,
-			       FTransform_t *pos, float scale)
+                               FTransform_t *pos, float scale)
 {
     int     val, count, index;
     GLfloat s, t;
@@ -1398,13 +1403,13 @@ EXPORT void HWRAPI( SetTransform ) (FTransform_t *transform)
         special_splitscreen = (transform->splitscreen && transform->fovxangle==90.0f);
         if (special_splitscreen)
         {
-	    gluPerspective( 53.13, 2*ASPECT_RATIO,  // 53.13 = 2*atan(0.5)
-			    near_clipping_plane, FAR_CLIPPING_PLANE);
-	}
+            gluPerspective( 53.13, 2*ASPECT_RATIO,  // 53.13 = 2*atan(0.5)
+                            near_clipping_plane, FAR_CLIPPING_PLANE);
+        }
         else
         {
-	    gluPerspective( transform->fovxangle, ASPECT_RATIO, near_clipping_plane, FAR_CLIPPING_PLANE);
-	}
+            gluPerspective( transform->fovxangle, ASPECT_RATIO, near_clipping_plane, FAR_CLIPPING_PLANE);
+        }
 #ifndef MINI_GL_COMPATIBILITY
         glGetDoublev(GL_PROJECTION_MATRIX, projMatrix); // added for new coronas' code (without depth buffer)
 #endif
@@ -1418,14 +1423,14 @@ EXPORT void HWRAPI( SetTransform ) (FTransform_t *transform)
         glLoadIdentity();
         if (special_splitscreen)
         {
-	    gluPerspective( 53.13, 2*ASPECT_RATIO,  // 53.13 = 2*atan(0.5)
-			    near_clipping_plane, FAR_CLIPPING_PLANE);
-	}
+            gluPerspective( 53.13, 2*ASPECT_RATIO,  // 53.13 = 2*atan(0.5)
+                            near_clipping_plane, FAR_CLIPPING_PLANE);
+        }
         else
         {
-	    //Hurdler: is "fov" correct?
-	    gluPerspective( fov, ASPECT_RATIO, near_clipping_plane, FAR_CLIPPING_PLANE);
-	}
+            //Hurdler: is "fov" correct?
+            gluPerspective( fov, ASPECT_RATIO, near_clipping_plane, FAR_CLIPPING_PLANE);
+        }
 #ifndef MINI_GL_COMPATIBILITY
         glGetDoublev(GL_PROJECTION_MATRIX, projMatrix); // added for new coronas' code (without depth buffer)
 #endif

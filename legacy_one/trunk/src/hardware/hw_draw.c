@@ -108,30 +108,6 @@
   // for rendermode != render_glide
 
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
-typedef struct {  // sizeof() = 18
-  byte  id_field_length;
-  byte  color_map_type;
-  byte  image_type;
-  byte  dummy[5];
-/*int16_t c_map_origin;
-  int16_t c_map_length;
-  char  c_map_size;*/
-  int16_t x_origin;
-  int16_t y_origin;
-  uint16_t width;
-  uint16_t height;
-  byte  image_pix_size;
-  byte  image_descriptor;
-} TGAHeader_t;
-// TGAHeader_t * TGAHeaderp;
-#ifdef WIN32
-#pragma pack()
-#endif
-typedef unsigned char GLRGB[3];
-void saveTGA(char *file_name, int width, int height, GLRGB *buffer);
 
 #define BLENDMODE PF_Translucent
 
@@ -718,112 +694,22 @@ void HWR_DrawVidFill( int x, int y, int w, int h, int color )
 // --------------------------------------------------------------------------
 // screen shot
 // --------------------------------------------------------------------------
-extern consvar_t cv_screenshotdir;
-extern char *startupwadfiles[MAX_WADFILES];
 
-boolean HWR_Screenshot (char *lbmname)
+// Return buffer, malloc.
+byte *  HWR_Get_Screenshot ( byte * bitpp )
 {
-    int     i, off;
-    byte*   bufw;
-    uint16_t* bufr;
-    byte*   dest;
-    uint16_t  rgb565;
+    byte* bufr;
 
-    bufr = malloc(vid.width*vid.height*2);
+    // vid.screen_size is not set for OpenGL.
+    // Sized for 24 bit (OpenGL), will work for 16 bit (Glide) too.
+    bufr = malloc( (size_t)vid.width * (size_t)vid.height * 3 );
     if (!bufr)
-        goto done;
-    bufw = malloc(vid.width*vid.height*3);
-    if (!bufw)
-    {
-        free(bufr);
-        goto done;
-    }
+        return NULL;
 
-    //returns 16bit 565 RGB
-    HWD.pfnReadRect (0, 0, vid.width, vid.height, vid.width*2, bufr);
+    // returns 24 bit or 16 bit 565 RGB data, indicated by bitpp
+    HWD.pfnReadRect (0, 0, vid.width, vid.height, /*OUT*/ bufr, bitpp );
 
-    for (dest = bufw,i=0; i<vid.width*vid.height; i++)
-    {
-        rgb565 = bufr[i];
-        *(dest++) = (rgb565 & 31) <<3;
-        *(dest++) = ((rgb565 >> 5) & 63) <<2;
-        *(dest++) = ((rgb565 >> 11) & 31) <<3;
-    }
-    free(bufr);
-
-    if (cv_screenshotdir.string[0]) // Hurdler: Jive's request (save file in other directory)
-    {
-#ifdef WIN32
-        char sep = '\\';
-#else
-        char sep = '/';
-#endif
-        int i;
-        char wadname[MAX_WADPATH];
-        char *shortwadname = NULL;
-        strcpy(wadname, "DOOM");
-        for (i=1; startupwadfiles[i]; i++) // seach the first "real" wad file (also skip iwad).
-        {
-            char *wadfile = startupwadfiles[i];
-            int pos = strlen(wadfile) - 4;
-            if ((pos >= 0) && !strncmp(&wadfile[pos], ".wad", 4))
-            {
-                strcpy(wadname, wadfile);
-                wadname[pos] = '\0';
-                break;
-            }
-        }
-        shortwadname = strrchr(wadname, sep);
-        sprintf(lbmname, "%s%c%s0000.tga", cv_screenshotdir.string, sep, shortwadname ? shortwadname : wadname);
-    }
-    else
-    {
-        strcpy(lbmname,"DOOM0000.tga");
-    }
-    off = strlen(lbmname) - 8;
-    // find a file name to save it to
-    for (i=0 ; i<10000; i++)
-    {
-        lbmname[off + 0] = '0' + ((i/1000) % 10);
-        lbmname[off + 1] = '0' + ((i/100) % 10);
-        lbmname[off + 2] = '0' + ((i/10) % 10);
-        lbmname[off + 3] = '0' + ((i/1) % 10);
-        if (access(lbmname,0) == -1) // file doesn't exist, save the file
-        {
-            saveTGA(lbmname, vid.width, vid.height, (GLRGB *)bufw);
-            free(bufw);
-            return true;
-        }
-    }
-    free(bufw);
-done:
-    return false;
+    return bufr;
 }
 
 
-// --------------------------------------------------------------------------
-// save screenshots with TGA format
-// --------------------------------------------------------------------------
-void saveTGA(char *file_name, int width, int height, GLRGB *buffer)
-{
-    int fd;
-    long size;
-    TGAHeader_t tga_hdr;
-
-    fd = open(file_name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
-    if (fd < 0)
-        return;
-
-    memset(&tga_hdr, 0, sizeof(tga_hdr));
-    // TGA format is little-endian
-    tga_hdr.width = LE_SWAP16(width);
-    tga_hdr.height = LE_SWAP16(height);
-    tga_hdr.image_pix_size = 24;
-    tga_hdr.image_type = 2;
-    tga_hdr.image_descriptor = 32;
-    size = (long)width * (long)height * 3L;
-
-    write(fd, &tga_hdr, sizeof(TGAHeader_t));
-    write(fd, buffer, size);
-    close(fd);
-}

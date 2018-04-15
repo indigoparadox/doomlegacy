@@ -969,14 +969,16 @@ EXPORT void HWRAPI(     SetBlend ) ( FBITFIELD PolyFlags )
 // store pixels as 16bit 565 RGB
 // ==========================================================================
 EXPORT void HWRAPI( ReadRect ) (int x, int y, int width, int height,
-                                int dst_stride, unsigned short * dst_data)
+                                /*OUT*/ byte * buf, byte * bitpp )
 {
     if (!grPreviousContext) {
         DBG_Printf ("HWRAPI ReadRect() : display not set\n");
         return;
     }
+    // dst_stride = width*2
     grLfbReadRegion (GR_BUFFER_FRONTBUFFER,
-                     x, y, width, height, dst_stride, dst_data);
+                     x, y, width, height, width*2, (uint16_t*)buf);
+    *bitpp = 16;  // return output
 }
 
 
@@ -1395,7 +1397,7 @@ EXPORT void HWRAPI( SetSpecialState ) (hwdspecialstate_t IdState, int value)
 // HWRAPI DrawMD2   : Draw an MD2 model with glcommands
 // -----------------+
 EXPORT void HWRAPI( DrawMD2 ) (int *gl_cmd_buffer, md2_frame_t *frame,
-			       FTransform_t *pos, float scale)
+                               FTransform_t *pos, float scale)
 {
 }
 

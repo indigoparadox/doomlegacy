@@ -59,6 +59,8 @@
 #ifndef HW_DRV_H
 #define HW_DRV_H
 
+#include <stdint.h>
+
 // this must be here 19991024 by Kin  (?? why)
 #include "screen.h"
 #include "hw_defs.h"
@@ -138,8 +140,7 @@ EXPORT void HWRAPI( ClearBuffer ) ( boolean ColorMask,
                                     boolean DepthMask,
                                     RGBA_float_t *ClearColor );
 EXPORT void HWRAPI( SetTexture ) ( FTextureInfo_t *TexInfo );
-EXPORT void HWRAPI( ReadRect ) (int x, int y, int width, int height,
-                                int dst_stride, unsigned short * dst_data) ;
+EXPORT void HWRAPI( ReadRect ) (int x, int y, int width, int height, byte * buf, byte * bitpp ) ;
 EXPORT void HWRAPI( GClipRect ) (int minx, int miny, int maxx, int maxy, float nearclip) ;
 EXPORT void HWRAPI( ClearMipMapCache ) (void) ;
 
@@ -148,7 +149,7 @@ EXPORT void HWRAPI( SetSpecialState ) (hwd_specialstate_e IdState, int Value) ;
 
 //Hurdler: added for new development
 EXPORT void HWRAPI( DrawMD2 ) (int *gl_cmd_buffer, md2_frame_t *frame,
-			       FTransform_t *pos, float scale);
+                               FTransform_t *pos, float scale);
 EXPORT void HWRAPI( SetTransform ) (FTransform_t *transform);
 EXPORT int  HWRAPI( GetTextureUsed ) (void);
 EXPORT int  HWRAPI( GetRenderVersion ) (void);
