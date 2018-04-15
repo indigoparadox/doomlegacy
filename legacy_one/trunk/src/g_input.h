@@ -97,6 +97,7 @@ typedef enum
     gc_invprev,
     gc_invuse,
     gc_flydown,     // flyup is jump !
+    gc_screenshot,
     num_gamecontrols
 } gamecontrols_e;
 

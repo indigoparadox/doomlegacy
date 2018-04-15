@@ -235,6 +235,7 @@ static keyname_t keynames[] =
   {KEY_NUMLOCK,    "num lock"},
   {KEY_CAPSLOCK,   "caps lock"},
   {KEY_SCROLLLOCK, "scroll lock"},
+  {KEY_SYSREQ,     "sysreq"},
   {KEY_RSHIFT,     "right shift"},
   {KEY_LSHIFT,     "left shift"},
   {KEY_RCTRL,      "right ctrl"},
@@ -428,7 +429,8 @@ char *gamecontrolname[num_gamecontrols] =
     "inventorynext",
     "inventoryprev",
     "inventoryuse",
-    "down"
+    "down",
+    "screenshot"
 };
 
 #define NUMKEYNAMES (sizeof(keynames)/sizeof(keyname_t))
@@ -552,6 +554,7 @@ void G_Controldefault(void)
     gamecontrol[gc_console    ][0]=KEY_CONSOLE;
     //gamecontrol[gc_nextweapon ][1]=KEY_JOY0BUT4;
     //gamecontrol[gc_prevweapon ][1]=KEY_JOY0BUT5;
+    gamecontrol[gc_screenshot ][0]=KEY_SYSREQ;
 
     if( gamemode == heretic )
     {
