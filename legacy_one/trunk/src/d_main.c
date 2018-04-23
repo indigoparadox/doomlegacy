@@ -2908,7 +2908,7 @@ restart_command:
                  || M_CheckParm("+connect") || M_CheckParm("-connect"))
         {
             //added:27-02-98: reset the current version number
-            G_Downgrade(VERSION);
+            G_setup_VERSION();
             gameaction = ga_nothing;
             if (server && !M_CheckParm("+map"))
                 COM_BufAddText(va("map \"%s\"\n", G_BuildMapName(startepisode, startmap)));

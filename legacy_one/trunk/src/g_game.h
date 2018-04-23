@@ -183,6 +183,7 @@ void G_DeferedPlayDemo (const char* demo);
 // [WDJ] Set the gamemode, and all EN_ that are dependent upon it.
 void G_set_gamemode( byte new_gamemode );
 boolean G_Downgrade(int version);
+void G_setup_VERSION( void );
 
 // --- Save Games
 

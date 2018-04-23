@@ -785,7 +785,7 @@ static void CL_Load_Received_Savegame(void)
 
     GenPrintf(EMSG_hud, "Loading savegame\n");
 
-    G_Downgrade (VERSION);
+    G_setup_VERSION();
 
     // Sever will control pause during download.
     demoplayback  = false;

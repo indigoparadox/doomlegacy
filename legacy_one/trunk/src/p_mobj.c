@@ -3358,6 +3358,7 @@ mobj_t *P_SPMAngle(mobj_t * source, mobjtype_t type, angle_t angle)
     if( !(source->player->autoaim_toggle && cv_allowautoaim.EV )
         || (!lar_linetarget && (EV_legacy > 111)) )
     {
+        // Manual aiming
         if( EV_legacy >= 128 )
             slope = AIMINGTOSLOPE(source->player->aiming);
         else
