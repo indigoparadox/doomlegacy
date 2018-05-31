@@ -53,6 +53,7 @@
 #endif
 
 extern consvar_t cv_fragsweaponfalling;
+extern boolean onground;  // player is onground
 
 // Boris hack : preferred weapons order
 void VerifFavoritWeapon (player_t *player);
