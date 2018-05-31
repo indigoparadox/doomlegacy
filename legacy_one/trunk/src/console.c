@@ -699,8 +699,8 @@ static int     comskips,varskips;
         // metzgermeister: boundary check !!
         if((key < NUMINPUTS) && bindtable[key])
         {
-            COM_BufAddText (bindtable[key]);
-            COM_BufAddText ("\n");
+            // [WDJ] Must be done as one string, it could try to execute a partial string.
+            COM_BufAddText ( va( "%s\n", bindtable[key] ) );
             return true;
         }
         return false;
@@ -827,8 +827,9 @@ static int     comskips,varskips;
             return true;  // nothing significant
 
         // push the command
-        COM_BufAddText (inputlines[inputline]+1);
-        COM_BufAddText ("\n");
+        // [WDJ] Must be done as one string, it could try to execute a partial string.
+	// The first char is prompt, not part of the command.
+        COM_BufAddText ( va( "%s\n", inputlines[inputline]+1 ));
 
         CONS_Printf("%s\n",inputlines[inputline]);
 

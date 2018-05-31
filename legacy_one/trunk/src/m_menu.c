@@ -1054,7 +1054,7 @@ void M_StartServer( int choice )
              && (strcasecmp(cv_skin2.string, skins[displayplayer2_ptr->skin]->name) == 0 )
              ) )
     {
-        COM_BufAddText ( va("%s \"%s\"", cv_skin2.name, cv_skin2.string));
+        COM_BufAddText ( va("%s \"%s\"\n", cv_skin2.name, cv_skin2.string));
     }
 }
 

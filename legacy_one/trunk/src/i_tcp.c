@@ -1495,7 +1495,7 @@ void I_Init_TCP_Network( void )
 #endif
            )
         {
-            COM_BufAddText(va("connect \"%s\"", serverhostname ));
+            COM_BufAddText(va("connect \"%s\"\n", serverhostname ));
 
             // probably modem
             hardware_MAXPACKETLENGTH = INETPACKETLENGTH;
