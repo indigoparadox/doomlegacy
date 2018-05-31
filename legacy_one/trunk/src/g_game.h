@@ -101,6 +101,7 @@ typedef enum
     ga_nothing,
     ga_completed,
     ga_worlddone,
+    ga_playdemo,
     //HeXen
 /*
     ga_initnew,
