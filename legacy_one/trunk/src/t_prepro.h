@@ -47,11 +47,12 @@
 #if __FreeBSD__ < 5
 #include <machine/types.h>
 #endif
+#if __FreeBSD__ > 4
+typedef struct label_s label_t;
+#endif
 #endif
 
 #if !defined(FREEBSD) && !defined(SOLARIS)
-typedef struct label_s label_t;
-#elif __FreeBSD__ > 4
 typedef struct label_s label_t;
 #endif
 

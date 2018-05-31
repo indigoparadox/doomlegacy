@@ -271,7 +271,13 @@ int    addparm_count = 0;
 //  atindex : parameter num
 static void  M_Arg_string( const char * s1, int count, int atindex )
 {
+#ifdef __MINGW32__
+    char * sp = malloc( count+1 );  // malloc
+    strncpy( sp, s1, count );
+    sp[count] = 0;
+#else
     char * sp = strndup( s1, count );  // malloc
+#endif
     if( addparm_low )
     {
         // bounds on memory alloc

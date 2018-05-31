@@ -967,7 +967,12 @@ retry_bind:
     if (stat == -1)
     {
 #ifdef CLIENT_SOCK_PORT_SEARCH
-        if( (errno == EADDRINUSE) && ! server
+#ifdef WIN32
+        if( (errno == WSAEADDRINUSE)
+#else
+        if( (errno == EADDRINUSE)
+#endif
+            && ! server
             && (client_sock_port < IPPORT_CLIENT_MAX) )
         {
             // Try alternative client sock ports.
@@ -1134,7 +1139,12 @@ retry_bind:
     if( stat == -1)
     {
 #ifdef CLIENT_SOCK_PORT_SEARCH
-        if( (errno == EADDRINUSE) && ! server
+#ifdef WIN32
+        if( (errno == WSAEADDRINUSE)
+#else
+        if( (errno == EADDRINUSE)
+#endif
+            && ! server
             && (client_sock_port < IPPORT_CLIENT_MAX) )
         {
             client_sock_port = (client_sock_port < IPPORT_CLIENT)? IPPORT_CLIENT : client_sock_port+1;
