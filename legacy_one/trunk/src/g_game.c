@@ -264,6 +264,7 @@ byte  EN_skull_bounce_floor; // PrBoom has this enabled by comp level.
 byte  EN_boom_physics; // !comp[comp_model]
 byte  EN_blazing_double_sound; // comp[comp_blazing]
 byte  EN_vile_revive_bug; // comp[comp_vile]
+byte  EN_sleeping_sarg_bug;  // fixed PrBoom 4, no comp
 byte  EN_doorlight; // !comp[comp_doorlight]
 byte  EN_invul_god; // !comp[comp_god]
 byte  EN_boom_floor; // !comp[comp_floors]
@@ -2687,6 +2688,7 @@ void G_gamemode_EN_defaults( void )
     EN_boom_floor = EN_boom | EN_heretic;
     EN_blazing_double_sound = 0;
     EN_vile_revive_bug = 0;
+    EN_sleeping_sarg_bug = 0;
     EN_skull_limit = 0;
     EN_old_pain_spawn = 0;
     // MBF
@@ -2777,6 +2779,8 @@ void G_demo_defaults( void )
     EN_vile_revive_bug = EN_doom_etc && !( EN_boom && (demoversion >= 201));  // fixed Boom 2.01
     // introduced Boom 2.02 without demo flag
     cv_doorstuck.EV = EN_boom && (demoversion >= 202);  // Boom 2.02
+    // introduced Boom 2.04
+    EN_sleeping_sarg_bug = EN_doom_etc && (demoversion < 204);  // fixed Boom 2.04
 
     // MBF
     cv_mbf_dropoff.EV = EN_mbf;
@@ -2906,12 +2910,14 @@ boolean G_Downgrade(int version)
         EN_boom = 0;  // expected to be OFF
         EN_pushers = 0;
         EN_variable_friction = 1;  // Needed for ICE E2M4
+        EN_sleeping_sarg_bug = 0;
     }
     else if(version < 129 || ! EN_boom )
     {
         // Boom demo_compatibility mode  (boom demo version < 200)
         EN_pushers = 0;
         EN_variable_friction = 0;
+        EN_sleeping_sarg_bug = 1;
     }
     else if( version < 200 )
     {
@@ -2919,6 +2925,7 @@ boolean G_Downgrade(int version)
         // Flags loaded by (Boom, MBF, prboom) demos, but not others.
         EN_pushers = 1;	// of Boom 2.02
         EN_variable_friction = 1;  // of Boom 2.02
+        EN_sleeping_sarg_bug = EV_legacy < 144;
     }
 
     if( !demoplayback || friction_model == FR_orig )

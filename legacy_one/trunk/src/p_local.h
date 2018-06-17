@@ -416,6 +416,7 @@ extern byte  EN_pushers;
 extern byte  EN_boom_physics;
 extern byte  EN_blazing_double_sound;
 extern byte  EN_vile_revive_bug;
+extern byte  EN_sleeping_sarg_bug;
 extern byte  EN_doorlight;
 extern byte  EN_skull_limit;
 extern byte  EN_old_pain_spawn;

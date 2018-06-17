@@ -69,7 +69,7 @@ static int P_DivlineSide( fixed_t x, fixed_t y, divline_t* node )
 {
     if (!node->dx)
     {
-        if (x==node->x)
+        if (x == node->x)
             return 2;
 
         if (x <= node->x)
@@ -80,8 +80,8 @@ static int P_DivlineSide( fixed_t x, fixed_t y, divline_t* node )
 
     if (!node->dy)
     {
-//        if (x==node->y)
-        if (y==node->y)	// [WDJ] Fix "Sleeping Sargeant" bug from DoomWiki.
+        // [WDJ] Fix "Sleeping Sargeant" bug from DoomWiki.       
+        if( (EN_sleeping_sarg_bug ? x : y) == node->y )
             return 2;
 
         if (y <= node->y)
