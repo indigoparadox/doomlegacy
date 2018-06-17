@@ -897,7 +897,7 @@ void ST_doPaletteStuff( player_t * plyr )
 
     //added:28-02-98:quick hack underwater palette
     /*if (plyr->mo &&
-        (plyr->mo->z + (cv_viewheight.value<<FRACBITS) < plyr->mo->waterz) )
+        (plyr->mo->z + (((unsigned int)cv_viewheight.EV)<<FRACBITS) < plyr->mo->waterz) )
         palette = RADIATIONPAL;*/
 
     if (palette != st_palette)

@@ -2750,6 +2750,7 @@ void G_demo_defaults( void )
     friction_model = FR_orig;
     monster_infight = INFT_infight;  // Default is to infight, DEH can turn it off.
     voodoo_mode = VM_vanilla;
+    cv_viewheight.EV = 41; // vanilla viewheight
     cv_solidcorpse.EV = 0;
     cv_instadeath.EV = 0;  // Die
     cv_monstergravity.EV = 0;
@@ -3723,7 +3724,7 @@ void G_DoPlayDemo (const char *defdemoname)
             }
 
             // header[18..50]: byte: player[1..32] present boolean
-	    num_players = 32;
+            num_players = 32;
         }
     }
 

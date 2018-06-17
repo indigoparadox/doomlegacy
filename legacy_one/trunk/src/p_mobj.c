@@ -1043,7 +1043,7 @@ void P_ZMovement(mobj_t * mo)
     {
         player->viewheight -= mo->floorz - mo->z;
 
-        player->deltaviewheight = ((cv_viewheight.value << FRACBITS) - player->viewheight) >> 3;
+        player->deltaviewheight = ((((unsigned int)cv_viewheight.EV) << FRACBITS) - player->viewheight) >> 3;
     }
 
     // adjust height
@@ -2479,7 +2479,7 @@ void P_SpawnPlayer( mapthing_t * mthing, int playernum )
     p->rain2 = NULL;
     p->extralight = 0;
     p->fixedcolormap = 0;
-    p->viewheight = cv_viewheight.value << FRACBITS;
+    p->viewheight = ((unsigned int)cv_viewheight.EV) << FRACBITS;
     // added 2-12-98
     p->viewz = p->mo->z + p->viewheight;
     p->aiming = 0;  // reset freelook 
