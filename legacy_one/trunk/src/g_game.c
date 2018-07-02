@@ -283,7 +283,7 @@ static   uint16_t  extra_dog_respawn = 0;  // save on extra tests
 #endif
 
 // Demo playback enables
-static const char * playdemo_name = NULL;
+static char * playdemo_name = NULL;  // malloc
 static byte  EN_demotic_109;  // old demo tic format
 static byte  EN_boom_longtics;  // 16 bit boom angle in demo tic
 
@@ -3314,7 +3314,14 @@ void G_DeferedPlayDemo (const char* name)
 //    COM_BufAddText(va("playdemo \"%s\"\n", name));
 
     // Using console command adds extra tics that cause sync problems.
-    playdemo_name = name;     // parameter
+    // Copy the demo name, as some are from stack buffers.
+    if( playdemo_name == NULL )
+    {
+        playdemo_name = (char*) malloc(MAX_WADPATH);
+    }
+    strncpy( playdemo_name, name, MAX_WADPATH-1);     // parameter
+    playdemo_name[MAX_WADPATH-1] = '\0';
+   
     gameaction = ga_playdemo;  // play demo after finishing this
 }
 
@@ -3892,16 +3899,8 @@ void G_DoneLevelLoad(void)
     demostarttime = I_GetTime ();
 }
 
-/*
-===================
-=
-= G_CheckDemoStatus
-=
-= Called after a death or level completion to allow demos to be cleaned up
-= Returns true if a new demo loop action will take place
-===================
-*/
 
+// Called after a death or level completion to allow demos to be cleaned up
 // reset engine variable set for the demos
 // called from stopdemo command, map command, and g_checkdemoStatus.
 void G_StopDemo(void)
@@ -3919,6 +3918,13 @@ void G_StopDemo(void)
     SV_StopServer();
 //    SV_StartServer();
     SV_ResetServer();
+   
+    // cleanup
+    if( playdemo_name )
+    {
+        free(playdemo_name);
+        playdemo_name = NULL;
+    }
 }
 
 // Called by G_DeferedInitNew, G_ReadDemoTiccmd, G_WriteDemoTiccmd
