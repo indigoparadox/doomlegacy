@@ -2165,7 +2165,7 @@ void R_StoreWallRange( int   start, int   stop)
             || backsector->floor_xoffs != frontsector->floor_xoffs
             || backsector->floor_yoffs != frontsector->floor_yoffs
             //SoM: 3/22/2000: Prevents bleeding.
-            || frontsector->modelsec != -1
+            || (frontsector->model > SM_fluid)
             || backsector->modelsec != frontsector->modelsec
             || backsector->floorlightsec != frontsector->floorlightsec
             //SoM: 4/3/2000: Check for colormaps

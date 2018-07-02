@@ -422,6 +422,7 @@ extern byte  EN_skull_limit;
 extern byte  EN_old_pain_spawn;
 extern byte  EN_invul_god;
 extern byte  EN_boom_floor;
+extern byte  EN_doom_movestep_bug;
 
 // MBF
 extern fixed_t EV_mbf_distfriend;

@@ -268,6 +268,7 @@ byte  EN_sleeping_sarg_bug;  // fixed PrBoom 4, no comp
 byte  EN_doorlight; // !comp[comp_doorlight]
 byte  EN_invul_god; // !comp[comp_god]
 byte  EN_boom_floor; // !comp[comp_floors]
+byte  EN_doom_movestep_bug; // comp[comp_moveblock]
 // MBF  (1998-2000)
 byte  EN_mbf_pursuit;   // !comp[comp_pursuit]
 byte  EN_mbf_telefrag;  // !comp[comp_telefrag]
@@ -363,6 +364,7 @@ enum {
 // comp_infcheat - FIXME
 // comp_zerotags - allow zero tags in wads
 // comp_moveblock - enables keygrab and mancubi shots going thru walls
+//   EN_doom_movestep_bug = comp[comp_moveblock]
 // comp_respawn - objects which aren't on the map at game start respawn at (0,0)
 //   cph - this is the inverse of comp_respawnfix from eternity.
 // comp_sound - see s_sound.c
@@ -2691,6 +2693,7 @@ void G_gamemode_EN_defaults( void )
     EN_sleeping_sarg_bug = 0;
     EN_skull_limit = 0;
     EN_old_pain_spawn = 0;
+    EN_doom_movestep_bug = 0;
     // MBF
     EN_mbf_telefrag = EN_mbf | EN_heretic;
 }
@@ -2765,6 +2768,7 @@ void G_demo_defaults( void )
     cv_rndsoundpitch.EV = EN_boom;  // normal in Boom, calls M_Random
     EN_pushers = EN_boom;
     // introduced Boom 2.00 without demo flag
+    EN_doom_movestep_bug = EN_doom_etc && ! EN_boom;
     EN_variable_friction =
     EN_boom_floor = EN_boom && (demoversion >= 200);
     // introduced Boom 2.01 without demo flag
@@ -3679,6 +3683,7 @@ void G_DoPlayDemo (const char *defdemoname)
             EN_catch_respawn_0 = ! comp[comp_respawn];
             EN_skull_bounce_fix = ! comp[comp_soul];
             cv_zerotags.EV = ! comp[comp_zerotags]; // 0=Vanilla, 1=Boom
+            EN_doom_movestep_bug = comp[comp_moveblock];  // 1=Vanilla
         }
         else
         {

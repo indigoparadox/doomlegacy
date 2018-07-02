@@ -387,6 +387,7 @@ typedef struct sector_s
     // [WDJ] 4/20/2010  modelsec is model sector for special linedefs.
     // It will be valid when model != SM_normal.
     // Testing modelsec for water is invalid, it is also used for colormap.
+    // Uses model and modelsec, instead of the PrBoom heightsec.
     int modelsec;    // other sector number, or -1 if no other sector
     sector_model_e  model;  // Boom or Legacy special sector  [WDJ] 11/14/2009
     

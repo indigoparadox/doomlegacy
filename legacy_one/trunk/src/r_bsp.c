@@ -892,8 +892,8 @@ void R_Subsector (int num)
     sub->sector->extra_colormap = frontsector->extra_colormap;
 
     if ((frontsector->floorheight < viewz)
-        || (frontsector->model > SM_fluid &&
-            sectors[frontsector->modelsec].ceilingpic == skyflatnum))
+        || (frontsector->model > SM_fluid
+            && sectors[frontsector->modelsec].ceilingpic == skyflatnum))
     {
         // visplane global parameter
         vsp_floorplane = R_FindPlane (frontsector->floorheight,
@@ -909,8 +909,8 @@ void R_Subsector (int num)
 
     if ((frontsector->ceilingheight > viewz)
         || (frontsector->ceilingpic == skyflatnum)
-        || (frontsector->model > SM_fluid &&
-            sectors[frontsector->modelsec].floorpic == skyflatnum))
+        || (frontsector->model > SM_fluid
+            && sectors[frontsector->modelsec].floorpic == skyflatnum))
     {
         // visplane global parameter
         vsp_ceilingplane = R_FindPlane (frontsector->ceilingheight,

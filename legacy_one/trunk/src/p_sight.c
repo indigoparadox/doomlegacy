@@ -259,7 +259,11 @@ static boolean P_CrossSubsector (int num)
             if (see_topslope <= see_bottomslope)
                return false;               // stop
         }
-        return true;
+
+        // [WDJ] Fix demo sync problems
+        // The return skips some significant sight tests.
+        if( EV_legacy >= 145 && EV_legacy < 147 )
+            return true;
     }
 
     // check lines
@@ -549,6 +553,7 @@ ret_false:
 }
 
 //	added by AC for missle prediction
+// Only called by bots, and when cv_predicting_monsters is on.
 // P_CheckSight2
 // Returns true
 //  if a straight line between t1 and t2's predicted location is unobstructed.
