@@ -458,11 +458,9 @@ player_t *      displayplayer2_ptr = NULL;  // NULL when not in use
 
 tic_t           gametic;
 tic_t           levelstarttic;          // gametic at level start
-#ifdef BASETIC_DEMOSYNC
-// [WDJ] From PrBoom, basetic.
-// A modified levelstarttic for old demos.
-tic_t  basetic;
-#endif
+// [WDJ] Derived from PrBoom basetic.
+// A tic that always starts at 0, and only runs while the demo runs.
+tic_t  game_comp_tic;  // gametic - basetic
 
 int             totalkills, totalitems, totalsecret;    // for intermission
 
@@ -1170,11 +1168,10 @@ void G_DoLoadLevel (boolean resetplayer)
     int             i;
 
     levelstarttic = gametic;        // for time calculation
-#ifdef BASETIC_DEMOSYNC
     // [WDJ] Derived from PrBoom, gametic demosync.
-    basetic = ( !EN_boom && !EN_mbf ) ? gametic  // killough 9/29/98
-                : 0;  // [WDJ] Do not leave it uninitialized
-#endif
+    if( EN_boom && !EN_mbf )
+        game_comp_tic = 0;  // Boom demos start at tic 0
+
     gameplay_msg = false;
 
     // Reset certain attributes
@@ -1428,24 +1425,23 @@ void G_Ticker (void)
         }
     }
 
-#ifdef BASETIC_DEMOSYNC
-  // [WDJ] From PrBoom, MBF, EternityEngine
-  // killough 9/29/98: Skip some commands while pausing during demo playback,
-  // or while the menu is active.
-  //
-  // Increment basetic and skip processing if a demo being played back is
-  // paused or if the menu is active while a non-net game is being played,
-  // to maintain sync while allowing pauses.
-  //
-  // P_Ticker() does not stop netgames if a menu is activated, so
-  // we do not need to stop if a menu is pulled up during netgames.
-    if( paused & 2
+    // [WDJ] From PrBoom, MBF, EternityEngine
+    // killough 9/29/98: Skip some commands while pausing during demo playback,
+    // or while the menu is active.
+    //
+    // Do not increment game_comp_tic and skip processing if a demo being played back
+    // is paused or if the menu is active while a non-net game is being played,
+    // to maintain sync while allowing pauses.
+    //
+    // P_Ticker() does not stop netgames if a menu is activated, so
+    // we do not need to stop if a menu is pulled up during netgames.
+    if( (paused & 0x02)
         || (!demoplayback && menuactive && !netgame ) )
     {
-        basetic++;  // For revenant tracers and RNG -- we must maintain sync
-        goto main_actions;
+       goto main_actions;
     }
-#endif
+       
+    game_comp_tic++;  // For revenant tracers and RNG -- we must maintain sync
 
     buf = gametic%BACKUPTICS;
 
@@ -1479,9 +1475,8 @@ void G_Ticker (void)
         }
     }
 
-#ifdef BASETIC_DEMOSYNC
 main_actions:
-#endif
+
     // do main actions
     switch (gamestate)
     {
@@ -3210,7 +3205,7 @@ void G_BeginRecording (void)
           *demo_p++ = 0;
     }
    
-    byte * demo_p_next = demo_p + 32;
+    byte * demo_p_next = demo_p + 64;
     // more settings that affect playback
     *demo_p++ = cv_solidcorpse.EV;
 #ifdef DOORDELAY_CONTROL
@@ -3255,6 +3250,10 @@ void G_BeginRecording (void)
     *demo_p++ = (cv_itemrespawntime.value >> 8);  // MSB
     *demo_p++ = cv_itemrespawntime.value & 0xFF;  // LSB
     // 30
+    *demo_p++ = (game_comp_tic >> 24); // MSB
+    *demo_p++ = (game_comp_tic >> 16);
+    *demo_p++ = (game_comp_tic >> 8);
+    *demo_p++ = game_comp_tic & 0xFF; // LSB
     
     // empty space
     while( demo_p < demo_p_next )  *demo_p++ = 0;
@@ -3276,6 +3275,8 @@ void G_BeginRecording (void)
 // EN_variable_friction, EN_pushers
 
 static byte      pdss_settings_valid = 0;
+static uint16_t  pdss_respawnmonsterstime;
+static uint16_t  pdss_itemrespawntime;
 
 void playdemo_save_settings( void )
 {
@@ -3283,6 +3284,8 @@ void playdemo_save_settings( void )
     if( pdss_settings_valid == 0 )
     {
         pdss_settings_valid = 1;
+        pdss_respawnmonsterstime = cv_respawnmonsterstime.value;
+        pdss_itemrespawntime = cv_itemrespawntime.value;
     }
 }
 
@@ -3290,6 +3293,8 @@ void playdemo_restore_settings( void )
 {
     if( pdss_settings_valid )
     {
+        cv_respawnmonsterstime.value = pdss_respawnmonsterstime;
+        cv_itemrespawntime.value = pdss_itemrespawntime;
     }
     pdss_settings_valid = 0;  // so user can change settings between demos
 
@@ -3341,10 +3346,8 @@ void G_DoPlayDemo (const char *defdemoname)
     EN_demotic_109 = 0;
     EN_boom_longtics = 0;
 
-#ifdef BASETIC_DEMOSYNC
-    // [WDJ] From PrBoom, keep some old demos in sync.
-    basetic = gametic;  // killough 9/29/98
-#endif
+    // [WDJ] Adapted from PrBoom, keep some old demos in sync.
+    game_comp_tic = 0;
 
 //
 // load demo file / resource
@@ -3766,7 +3769,7 @@ void G_DoPlayDemo (const char *defdemoname)
     // [WDJ]
     if( demo144_format )
     {
-        byte * demo_p_next = demo_p + 32;
+        byte * demo_p_next = demo_p + ((demoversion < 147)? 32 : 64);
         // more settings that affect playback
         cv_solidcorpse.EV = *demo_p++;
 #ifdef DOORDELAY_CONTROL
@@ -3808,6 +3811,12 @@ void G_DoPlayDemo (const char *defdemoname)
         demo_p++;
         demo_p++;
 #endif
+        cv_respawnmonsterstime.value = (demo_p[0]<<8) + demo_p[1];
+        demo_p += 2;
+        cv_itemrespawntime.value = (demo_p[0]<<8) + demo_p[1];
+        demo_p += 2;
+        game_comp_tic = (((((demo_p[0]<<8) + demo_p[1])<<8) + demo_p[2])<<8) + demo_p[3];
+        demo_p += 4;
 
         demo_p = demo_p_next;  // skip rest of settings
         if( *demo_p++ != 0x55 )  goto broken_header;  // Sync mark, start of data

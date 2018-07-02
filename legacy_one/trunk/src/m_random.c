@@ -188,11 +188,12 @@ int P_Random(pr_class_t pr_class)
   // killough 3/31/98: but only if demo insurance requested,
   // since it's unnecessary for random shuffling otherwise
   // killough 9/29/98: but use basetic now instead of levelstarttic
+  // [WDJ] demo_comp_tic = gametic - basetic
   // cph - DEMOSYNC - this change makes MBF demos work,
   //       but does it break Boom ones?
 
   if (demo_insurance)
-    boom += (gametic - basetic)*7;
+    boom += demo_comp_tic * 7;
 
   return boom & 255;
 }
