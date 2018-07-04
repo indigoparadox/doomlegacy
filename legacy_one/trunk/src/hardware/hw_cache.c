@@ -467,10 +467,10 @@ static const int format2bpp[16] = {
     2, //14 GR_TEXFMT_AP_88
 };
 
-static byte * MakeBlock( Mipmap_t *mipmap )
+static byte * Make_Mip_Block( Mipmap_t * mipmap )
 {
     int bytepp = format2bpp[mipmap->grInfo.format];
-    byte *block;
+    byte * block;
 
     if( mipmap->grInfo.data != NULL )  // free any existing data
         Z_Free(mipmap->grInfo.data);
@@ -499,6 +499,17 @@ static byte * MakeBlock( Mipmap_t *mipmap )
     }
 
     return block;
+}
+
+static void release_Mip_Block( Mipmap_t * mipmap )
+{
+    if( mipmap->grInfo.data != NULL )
+    {
+        // free existing data       
+        Z_Free(mipmap->grInfo.data);
+        // some Z_Free methods will clear owner, but not all
+        mipmap->grInfo.data = NULL;  // mark as empty
+    }
 }
 
 //
@@ -543,7 +554,7 @@ static void HWR_GenerateTexture (int texnum, MipTexture_t* grtex,
     mipmap->grInfo.format = textureformat;
     bytepp = format2bpp[mipmap->grInfo.format];
 
-    block = MakeBlock( mipmap );  // sets grInfo.data
+    block = Make_Mip_Block( mipmap );  // sets grInfo.data
 
     if (skyspecial) //Hurdler: not efficient, but better than holes in the sky (and it's done only at level loading)
     {
@@ -642,7 +653,7 @@ static void HWR_GenerateFogTexture (int texnum, Mipmap_t * mipmap,
     mipmap->height = blockheight;
     mipmap->grInfo.format = GR_RGBA;
 
-    rgbablock = (RGBA_t*) MakeBlock( mipmap );  // sets grInfo.data
+    rgbablock = (RGBA_t*) Make_Mip_Block( mipmap );  // sets grInfo.data
     fb = rgbablock;
     endpixel = rgbablock + ((blockheight * blockwidth) - 1);
 
@@ -750,7 +761,7 @@ static void HWR_GenerateFogTexture (int texnum, Mipmap_t * mipmap,
 // drawflags can be TF_Opaquetrans
 // Called from HWR_Draw* -> HWR_LoadMappedPatch
 // Called from HWR_GetPatch
-// Called from W_CachePatchNum
+// Called from W_CachePatchNum, W_CacheMappedPatchNum
 void HWR_MakePatch (patch_t* patch, MipPatch_t* grPatch, Mipmap_t *grMipmap,
                     uint32_t drawflags)
 {
@@ -786,7 +797,7 @@ void HWR_MakePatch (patch_t* patch, MipPatch_t* grPatch, Mipmap_t *grMipmap,
         blocksize = blockwidth * blockheight;
     }
 
-    block = MakeBlock(grMipmap);  // set grInfo.data
+    block = Make_Mip_Block(grMipmap);  // set grInfo.data
 
     // if rounddown, rounddown patches as well as textures
     if (cv_grrounddown.value)
@@ -826,6 +837,15 @@ void HWR_MakePatch (patch_t* patch, MipPatch_t* grPatch, Mipmap_t *grMipmap,
     // Now that the texture has been built in cache, it is purgable from zone memory.
     Z_ChangeTag (block, PU_HWRCACHE);
 }
+
+
+// This releases the allocation made with HWR_MakePatch
+void HWR_release_Patch ( MipPatch_t* grPatch, Mipmap_t *grMipmap )
+{
+    release_Mip_Block( grMipmap );
+    grMipmap->width = 0;
+}
+
 
 
 // =================================================
@@ -1115,10 +1135,10 @@ static void HWR_LoadMappedPatch(Mipmap_t *grmip, MipPatch_t *gpatch)
         !grmip->grInfo.data )
     {
         // Load patch to temp, free it afterwards
-        patch_t *patch = W_CachePatchNum_Endian(gpatch->patchlump, PU_IN_USE);
-        HWR_MakePatch(patch, gpatch, grmip, grmip->tfflags);
+        patch_t* pp = W_CachePatchNum_Endian(gpatch->patchlump, PU_IN_USE);
+        HWR_MakePatch( pp, gpatch, grmip, grmip->tfflags);
 
-        Z_Free(patch);
+        Z_Free(pp);
     }
 
     HWD.pfnSetTexture(grmip);
@@ -1136,12 +1156,12 @@ void HWR_GetPatch( MipPatch_t* gpatch )
     {
         // load the software patch, PU_STATIC or the Z_Malloc for hardware patch will
         // flush the software patch before the conversion! oh yeah I suffered
-        patch_t *ptr = W_CachePatchNum_Endian(gpatch->patchlump, PU_IN_USE);
-        HWR_MakePatch ( ptr, gpatch, &gpatch->mipmap, 0);
+        patch_t* pp = W_CachePatchNum_Endian(gpatch->patchlump, PU_IN_USE);
+        HWR_MakePatch ( pp, gpatch, &gpatch->mipmap, 0);
 
         // this is inefficient.. but the hardware patch in heap is purgeable so it should
         // not fragment memory, and besides the REAL cache here is the hardware memory
-        Z_Free (ptr);
+        Z_Free(pp);
     }
 
     HWD.pfnSetTexture( &gpatch->mipmap );
@@ -1359,7 +1379,7 @@ MipPatch_t *HWR_GetPic( int lumpnum )
             grpatch->mipmap.grInfo.format = picmode2GR[pic->mode];
 
         // allocate block
-        block = MakeBlock(&grpatch->mipmap);
+        block = Make_Mip_Block(&grpatch->mipmap);
 
         // if rounddown, rounddown patches as well as textures
         if (cv_grrounddown.value)

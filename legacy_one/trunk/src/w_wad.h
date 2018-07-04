@@ -222,9 +222,12 @@ void*   W_CacheMappedPatchNum ( int lump, uint32_t drawflags );
 #endif
 
 
+// Release patches made with W_CachePatchNum, W_CachePatchName.
+void W_release_patch( patch_t * patch );
+
 // These are used for loading, and releasing patches.
 typedef struct {
-   patch_t ** patch;
+   patch_t ** patch_owner;  // ptr to patch owner
    char     * name;
 } load_patch_t;
 

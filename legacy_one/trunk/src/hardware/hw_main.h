@@ -104,8 +104,12 @@ void HWR_Init_TextureMapping (void);
 void HWR_SetViewSize (int blocks);
 void HWR_DrawPatch (MipPatch_t* gpatch, int x, int y, uint32_t option);
 void HWR_DrawMappedPatch (MipPatch_t* gpatch, int x, int y, uint32_t option, byte *colormap);
+
 void HWR_MakePatch (patch_t* patch, MipPatch_t* grPatch, Mipmap_t *grMipmap,
                     uint32_t drawflags);
+// This releases the allocation made with HWR_MakePatch
+void HWR_release_Patch ( MipPatch_t* grPatch, Mipmap_t *grMipmap );
+
 void HWR_Create_PlanePolygons (void);
 void HWR_Create_StaticLightmaps (void);
 void HWR_Prep_LevelCache (int numtextures);
