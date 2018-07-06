@@ -141,6 +141,10 @@
 // [WDJ] 8/31/2017  16 rotation sprites option
 #define ROT16
 
+// If surround sound is desired
+#define SURROUND_SOUND
+
+
 // Player morph canceling invisibility and MF_SHADOW, is inconsistent.
 // The Heretic vanilla behavior cancels SHADOW when turned into a chicken.
 // #define PLAYER_CHICKEN_KEEPS_SHADOW

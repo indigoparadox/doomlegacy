@@ -98,10 +98,12 @@ static pascal void soundCallback (SndChannelPtr soundChannel, SndCommand *pCmd)
 //  (eight, usually) of internal channels.
 // Returns a handle.
 //
+//  vol : volume, 0..255
+//  sep : separation, +/- 127, SURROUND_SEP special operation
 static int addsfx ( int		sfxid,
-		    int		volume,
+		    int		vol,
 		    int		step,
-		    int		seperation )
+		    int		sep )
 {
     int  i;
     int	 slot;
@@ -152,18 +154,20 @@ static int addsfx ( int		sfxid,
     // Should be gametic, I presume.
     channelstart[slot] = gametic;
 
-    // Separation, that is, orientation/stereo.
-    //  range is: 1 - 256
-    seperation += 1;
-   
     // volume : range 0..255
     // mix_sfxvolume : range 0..31
-    volume = (volume * mix_sfxvolume) >> 6;
+    vol = (vol * mix_sfxvolume) >> 6;
     // Notice : sdldoom replaced all the calls to avoid this conversion
     
-    leftvol = volume - ((volume*seperation*seperation) >> 16);
-    seperation = seperation - 257;
-    rightvol = volume - ((volume*seperation*seperation) >> 16);	
+#ifdef SURROUND_SOUND
+    if( sep == SURROUND_SEP )   sep = 0;
+#endif
+    // Separation, that is, orientation/stereo.
+    // sep : +/- 127, <0 is left, >0 is right
+    sep += 129;  // 129 +/- 127 ; ( 1 - 256 )
+    leftvol = vol - ((vol * sep * sep) >> 16);
+    sep = 258 - sep;  // 129 +/- 127
+    rightvol = vol - ((vol * sep * sep) >> 16);
 
     // Sanity check, clamp volume.
     if (rightvol < 0 || rightvol > 127)
@@ -321,7 +325,7 @@ void I_SubmitSound(void)
 void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
 {
     SndCommand theCmd;
-    int lvol, rvol;
+    int leftvol, rightvol;
 	
     if(nosoundfx)
         return;
@@ -330,13 +334,19 @@ void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
     // mix_sfxvolume : range 0..31
     vol = (vol * mix_sfxvolume) >> 6;
 
-    lvol = vol - ((vol*sep*sep) >> 16);
-    sep = sep - 257;
-    rvol = vol - ((vol*sep*sep) >> 16);	
+#ifdef SURROUND_SOUND
+    if( sep == SURROUND_SEP )    sep = 0;
+#endif
+    // Separation, that is, orientation/stereo.
+    // sep : +/- 127, <0 is left, >0 is right
+    sep += 129;  // 129 +/- 127 ; ( 1 - 256 )
+    leftvol = vol - ((vol * sep * sep) >> 16);
+    sep = 258 - sep;  // 129 +/- 127
+    rightvol = vol - ((vol * sep * sep) >> 16);
 
     // Send the volume to the channel
     theCmd.param1 = 0;
-    theCmd.param2 = (rvol << 16) + lvol;
+    theCmd.param2 = (rightvol << 16) + leftvol;
     theCmd.cmd = volumeCmd;
     SndDoImmediate (soundChannels[handle], &theCmd);
 }

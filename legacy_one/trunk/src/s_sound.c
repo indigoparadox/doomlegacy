@@ -164,7 +164,6 @@ consvar_t cv_sndserver_cmd = { "sndserver_cmd", "llsndserv", CV_SAVE };
 consvar_t cv_sndserver_arg = { "sndserver_arg", "-quiet", CV_SAVE };
 #endif
 
-#define SURROUND
 
 #ifdef MACOS_DI
 // specific to macos directory
@@ -174,10 +173,10 @@ consvar_t play_mode = { "play_mode", "0", CV_SAVE, CV_byte };
 
 
 // stereo reverse 1=true, 0=false
-consvar_t stereoreverse = { "stereoreverse", "0", CV_SAVE, CV_OnOff };
+consvar_t cv_stereoreverse = { "stereoreverse", "0", CV_SAVE, CV_OnOff };
 
 // if true, all sounds are loaded at game startup
-consvar_t precachesound = { "precachesound", "0", CV_SAVE, CV_OnOff };
+consvar_t cv_precachesound = { "precachesound", "0", CV_SAVE, CV_OnOff };
 
 CV_PossibleValue_t soundvolume_cons_t[] = { {0, "MIN"}, {31, "MAX"}, {0, NULL} };
 
@@ -190,7 +189,7 @@ consvar_t cv_rndsoundpitch = { "rndsoundpitch", "Off", CV_SAVE, CV_OnOff };
 static void SetChannelsNum(void);
 consvar_t cv_numChannels = { "snd_channels", "16", CV_SAVE | CV_CALL, CV_byte, SetChannelsNum };
 
-#ifdef SURROUND
+#ifdef SURROUND_SOUND
 consvar_t cv_surround = { "surround", "0", CV_SAVE, CV_OnOff };
 #endif
 
@@ -215,14 +214,10 @@ consvar_t cv_surround = { "surround", "0", CV_SAVE, CV_OnOff };
 
 #define NORM_PITCH              128
 #define NORM_PRIORITY           64
-#define NORM_SEP                128
 
 #define S_PITCH_PERTURB         1
 #define S_STEREO_SWING          (96<<FRACBITS)
 
-#ifdef SURROUND
-#define SURROUND_SEP            -128
-#endif
 
 // percent attenuation from front to back
 #define S_IFRACVOL              30
@@ -257,7 +252,7 @@ static int nextcleanup;
 //
 typedef struct {
     int volume;
-    int sep;
+    int sep;  // +/- 127, <0 is left, >0 is right
     int pitch;
     int dist; // integer part of sound distance
 } sound_param_t;
@@ -275,8 +270,8 @@ void S_Register_SoundStuff(void)
         return;
 
     //added:11-04-98: stereoreverse
-    CV_RegisterVar(&stereoreverse);
-    CV_RegisterVar(&precachesound);
+    CV_RegisterVar(&cv_stereoreverse);
+    CV_RegisterVar(&cv_precachesound);
 
 #ifdef SNDSERV
     CV_RegisterVar(&cv_sndserver_cmd);
@@ -287,7 +282,7 @@ void S_Register_SoundStuff(void)
     CV_RegisterVar(&cv_musserver_arg);
     CV_RegisterVar(&cv_musserver_opt);
 #endif
-#ifdef SURROUND
+#ifdef SURROUND_SOUND
     CV_RegisterVar(&cv_surround);
 #endif
 
@@ -507,9 +502,9 @@ void S_Init(int sfxVolume, int musicVolume)
     }
 
     //
-    //  precache sounds if requested by cmdline, or precachesound var true
+    //  precache sounds if requested by cmdline, or cv_precachesound var true
     //
-    if (!nosoundfx && (M_CheckParm("-precachesound") || precachesound.value))
+    if (!nosoundfx && (M_CheckParm("-precachesound") || cv_precachesound.value))
     {
         // Initialize external data (all sounds) at start, keep static.
 //        GenPrintf(EMSG_info, "Loading sounds... ");
@@ -722,7 +717,7 @@ void S_StartSoundAtVolume(const xyz_t *origin, const mobj_t * mo,
     }
 #endif
    
-#if 0
+#if 1
     // Debug.
     debug_Printf( "S_StartSoundAtVolume: playing sound %d (%s), volume = %i\n",
                 sfx_id, S_sfx[sfx_id].name, volume );
@@ -741,7 +736,7 @@ void S_StartSoundAtVolume(const xyz_t *origin, const mobj_t * mo,
 //    priority = sfx->priority;  // Heretic
 //    priority = NORM_PRIORITY;  // Boom
     sp1.pitch = NORM_PITCH;
-    sp1.sep = 128;
+    sp1.sep = 0;
 
     if( (sfx->skinsound >= 0) && mo && mo->skin )
     {
@@ -798,6 +793,8 @@ void S_StartSoundAtVolume(const xyz_t *origin, const mobj_t * mo,
         boolean audible1, audible2;
 
         audible1 = S_AdjustSoundParams(displayplayer_ptr->mo, origin, &sp1);
+
+        // sp1 has been adjusted for dist and angle, optional additional adjustments follow.
         if (cv_splitscreen.value && displayplayer2_ptr)
         {
             // splitscreen sound for player2
@@ -813,7 +810,7 @@ void S_StartSoundAtVolume(const xyz_t *origin, const mobj_t * mo,
                 if (origin->x == displayplayer2_ptr->mo->x
                     && origin->y == displayplayer2_ptr->mo->y)
                 {
-                    sp1.sep = NORM_SEP;
+                    sp1.sep = 0;
                 }
             }
         }
@@ -823,12 +820,12 @@ void S_StartSoundAtVolume(const xyz_t *origin, const mobj_t * mo,
         if (origin->x == displayplayer_ptr->mo->x
             && origin->y == displayplayer_ptr->mo->y)
         {
-            sp1.sep = NORM_SEP;
+            sp1.sep = 0;
         }
     }
     else
     {
-        sp1.sep = NORM_SEP;
+        sp1.sep = 0;
     }
 
     // hacks to vary the sfx pitches
@@ -913,18 +910,18 @@ void S_StartSoundAtVolume(const xyz_t *origin, const mobj_t * mo,
     if (sfx->length <= 0)
        goto done;
 
-#ifdef SURROUND
+#ifdef SURROUND_SOUND
     // judgecutor:
     // Avoid channel reverse if surround
-    if (stereoreverse.value && sp1.sep != SURROUND_SEP)
-        sp1.sep = (~sp1.sep) & 255;
+    if (cv_stereoreverse.value && sp1.sep < SURROUND_SEP )
+        sp1.sep = -sp1.sep;
 #else
     //added:11-04-98:
-    if (stereoreverse.value)
-        sp1.sep = (~sp1.sep) & 255;
+    if (cv_stereoreverse.value)
+        sp1.sep = -sp1.sep;
 #endif
 
-    //debug_Printf("stereo %d reverse %d\n", sep, stereoreverse.value);
+debug_Printf("stereo sep %d reverse %d\n", sp1.sep, cv_stereoreverse.value);
 
     // Returns a handle to a mixer/output channel.
     channels[cnum].handle =
@@ -1170,7 +1167,7 @@ void S_UpdateSounds(void)
             // Initialize parameters
             sp1.volume = 255;   //8 bits internal volume precision
             sp1.pitch = NORM_PITCH;
-            sp1.sep = NORM_SEP;
+            sp1.sep = 0;
 
             if (sfx->link)  // strange (BP)
             {
@@ -1221,6 +1218,15 @@ void S_UpdateSounds(void)
                     continue;		   
                 }
 
+#ifdef SURROUND_SOUND
+                // judgecutor:
+                // Avoid channel reverse if surround
+                if (cv_stereoreverse.value && sp1.sep < SURROUND_SEP )
+                sp1.sep = -sp1.sep;
+#else
+                if (cv_stereoreverse.value)
+                    sp1.sep = -sp1.sep;
+#endif
                 I_UpdateSoundParams(c->handle, sp1.volume, sp1.sep, sp1.pitch);
             }
         }
@@ -1456,8 +1462,7 @@ boolean S_AdjustSoundParams(const mobj_t * listener, const xyz_t * source,
     else
         angle = angle + (0xffffffff - listener->angle);
 
-#ifdef SURROUND
-
+#ifdef SURROUND_SOUND
     // Produce a surround sound for angle from 105 till 255
     if (cv_surround.value
         && (angle > (ANG90 + (ANG45 / 3)) && angle < (ANG270 - (ANG45 / 3))))
@@ -1465,10 +1470,10 @@ boolean S_AdjustSoundParams(const mobj_t * listener, const xyz_t * source,
     else
     {
 #endif
-        // stereo separation
-        sp->sep = 128 - (FixedMul(S_STEREO_SWING, sine_ANG(angle)) >> FRACBITS);
+        // stereo separation, <0 is left
+        sp->sep =  - (FixedMul(S_STEREO_SWING, sine_ANG(angle)) >> FRACBITS);
 
-#ifdef SURROUND
+#ifdef SURROUND_SOUND
     }
 #endif
 

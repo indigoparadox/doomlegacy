@@ -372,6 +372,9 @@ int HW3S_I_StartSound(const xyz_t * origin, const mobj_t * mo,
     sfx_data.id = sfx_id;
     sfx_data.pitch = pitch;// < 0 ? NORMAL_PITCH:pitch;
     sfx_data.volume = volume;
+#ifdef SURROUND_SOUND
+    if( sep == SURROUND_SEP )   sep = 0;
+#endif
     sfx_data.sep = sep;
 
     //sfx_data.length = W_LumpLength(sfx->lumpnum);

@@ -154,6 +154,9 @@ int        vol_lookup[128*256];
 // Hardware left and right channel volume lookup.
 int*        channelleftvol_lookup[NUM_CHANNELS];
 int*        channelrightvol_lookup[NUM_CHANNELS];
+#ifdef SURROUND_SOUND
+byte        invert_right[NUM_CHANNELS];
+#endif
 
 
 //
@@ -163,15 +166,15 @@ int*        channelrightvol_lookup[NUM_CHANNELS];
 //  (eight, usually) of internal channels.
 // Returns a handle.
 //
-int  addsfx( int sfxid, int volume, int step, int seperation )
+//  vol : volume, 0..255
+//  sep : separation, +/- 127, SURROUND_SEP special operation
+int  addsfx( int sfxid, int vol, int step, int sep )
 {
     static unsigned short    handlenums = 0;
 
     int        i;
     int        slot;
-
-    int        rightvol;
-    int        leftvol;
+    int        leftvol, rightvol;
 
     // Chainsaw troubles.
     // Play these sound effects only one at a time.
@@ -225,22 +228,32 @@ int  addsfx( int sfxid, int volume, int step, int seperation )
     // Should be gametic, I presume.
     channelstart[slot] = gametic;
 
-    // Separation, that is, orientation/stereo.
-    //  range is: 1 - 256
-    seperation += 1;
-
     // vol : range 0..255
     // mix_sfxvolume : range 0..31
-    volume = (volume * mix_sfxvolume) >> 6;
+    vol = (vol * mix_sfxvolume) >> 6;
 
     // Per left/right channel.
     //  x^2 seperation,
     //  adjust volume properly.
-    leftvol =
-      volume - ((volume*seperation*seperation) >> 16); ///(256*256);
-    seperation = seperation - 257;
-    rightvol =
-      volume - ((volume*seperation*seperation) >> 16);
+#ifdef SURROUND_SOUND
+    invert_right[slot] = 0;
+    if( sep == SURROUND_SEP )
+    {
+        // Use a normal sound data for the left channel (with pan left)
+        // and an inverted sound data for the right channel (with pan right)
+        leftvol = rightvol = (vol * (224 * 224)) >> 16;  // slight reduction going through panning
+        invert_right[slot] = 1;  // invert right channel
+    }
+    else
+#endif
+    {
+        // Separation, that is, orientation/stereo.
+        // sep : +/- 127, <0 is left, >0 is right
+        sep += 129;  // 129 +/- 127 ; ( 1 - 256 )
+        leftvol = vol - ((vol * sep * sep) >> 16);
+        sep = 258 - sep;  // 129 +/- 127
+        rightvol = vol - ((vol * sep * sep) >> 16);
+    }
 
     // Sanity check, clamp volume.
     if (rightvol < 0 || rightvol > 127)
@@ -410,6 +423,7 @@ void I_FreeSfx (sfxinfo_t* sfx)
 //  is set, but currently not used by mixing.
 //
 //  vol : volume, 0..255
+//  sep : separation, +/- 127, SURROUND_SEP special operation
 // Return a channel handle.
 int I_StartSound(sfxid_t sfxid, int vol, int sep, int pitch, int priority)
 {
@@ -528,7 +542,14 @@ void I_UpdateSound( void )
             //  to the current data.
             // Adjust volume accordingly.
             dl += channelleftvol_lookup[ chan ][sample];
+#ifdef SURROUND_SOUND
+            if( chp->invert_right )
+              dr -= channelrightvol_lookup[ chan ][sample];
+            else
+              dr += channelrightvol_lookup[ chan ][sample];
+#else
             dr += channelrightvol_lookup[ chan ][sample];
+#endif
             // Increment index ???
             channelstepremainder[ chan ] += channelstep[ chan ];
             // MSB is next sample???

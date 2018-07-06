@@ -40,17 +40,26 @@
 
 void I_InitMusic(void);
 
-void
-I_InitSound
-( int           samplerate,
-  int           samplesound );
+void I_InitSound( int samplerate, int samplesound );
 
-void
-I_SubmitOutputBuffer
-( void*         samples,
-  int           samplecount );
+void I_SubmitOutputBuffer ( void* samples, int samplecount );
 
 void I_ShutdownSound(void);
 void I_ShutdownMusic(void);
+
+// Format of play sound command.
+typedef struct {
+    uint16_t  sfxid;
+    byte      vol;
+    byte      pitch;
+    int16_t   sep;   // +/- 127, SURROUND_SEP
+    uint16_t  handle;
+} server_play_sound_t;
+
+typedef struct {
+    uint16_t id;
+    uint32_t flags;
+    uint32_t snd_len;
+} server_load_sound_t;
 
 #endif

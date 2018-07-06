@@ -64,14 +64,17 @@
 #include <string.h>
   // memset
 
+#include "doomdef.h"
 #include "doomtype.h"
 #include "soundsrv.h"
 
 // [WDJ] Removed old duplicate sounds.c sounds.h.  Were not kept up.
 #include "../../sounds.h"
   // NUMSFX
+#include "../../s_sound.h"
+  // SURROUND_SEP
 
-// #define DEBUG   1
+#define DEBUG   1
 
 #define NUMCHAN    8
 
@@ -108,9 +111,13 @@ typedef struct {
     // time that the channel started playing
     int  start_time;
     // sfx id of the playing sound effect
-    int  id;                  
+    uint16_t  id;                  
     // the channel handle
     uint16_t  handle;
+
+#ifdef SURROUND_SOUND
+    byte      invert_right;
+#endif
 } channel_info_t;
 
 static channel_info_t   channel[NUMCHAN];
@@ -167,12 +174,6 @@ void set_master_volume( int new_volume )
 
 
 
-static void derror(char* msg)
-{
-    fprintf(stderr, "error: %s\n", msg);
-    exit(-1);
-}
-
 int mix(void)
 {
     register unsigned int   sample;
@@ -201,7 +202,14 @@ int mix(void)
         {
             sample = *channel[0].data;
             dl += channel[0].left_vol_tab[sample];
+#ifdef SURROUND_SOUND
+            if( channel[0].invert_right )
+                dr -= channel[0].right_vol_tab[sample];
+            else
+                dr += channel[0].right_vol_tab[sample];
+#else
             dr += channel[0].right_vol_tab[sample];
+#endif
             channel[0].remainder += channel[0].step;
             channel[0].data += channel[0].remainder >> 16;
             channel[0].remainder &= 0xFFFF;
@@ -214,7 +222,14 @@ int mix(void)
         {
             sample = *channel[1].data;
             dl += channel[1].left_vol_tab[sample];
+#ifdef SURROUND_SOUND
+            if( channel[1].invert_right )
+                dr -= channel[1].right_vol_tab[sample];
+            else
+                dr += channel[1].right_vol_tab[sample];
+#else
             dr += channel[1].right_vol_tab[sample];
+#endif
             channel[1].remainder += channel[1].step;
             channel[1].data += channel[1].remainder >> 16;
             channel[1].remainder &= 0xFFFF;
@@ -227,7 +242,14 @@ int mix(void)
         {
             sample = *channel[2].data;
             dl += channel[2].left_vol_tab[sample];
+#ifdef SURROUND_SOUND
+            if( channel[2].invert_right )
+                dr -= channel[2].right_vol_tab[sample];
+            else
+                dr += channel[2].right_vol_tab[sample];
+#else
             dr += channel[2].right_vol_tab[sample];
+#endif
             channel[2].remainder += channel[2].step;
             channel[2].data += channel[2].remainder >> 16;
             channel[2].remainder &= 0xFFFF;
@@ -240,7 +262,14 @@ int mix(void)
         {
             sample = *channel[3].data;
             dl += channel[3].left_vol_tab[sample];
+#ifdef SURROUND_SOUND
+            if( channel[3].invert_right )
+                dr -= channel[3].right_vol_tab[sample];
+            else
+                dr += channel[3].right_vol_tab[sample];
+#else
             dr += channel[3].right_vol_tab[sample];
+#endif
             channel[3].remainder += channel[3].step;
             channel[3].data += channel[3].remainder >> 16;
             channel[3].remainder &= 0xFFFF;
@@ -253,7 +282,14 @@ int mix(void)
         {
             sample = *channel[4].data;
             dl += channel[4].left_vol_tab[sample];
+#ifdef SURROUND_SOUND
+            if( channel[4].invert_right )
+                dr -= channel[4].right_vol_tab[sample];
+            else
+                dr += channel[4].right_vol_tab[sample];
+#else
             dr += channel[4].right_vol_tab[sample];
+#endif
             channel[4].remainder += channel[4].step;
             channel[4].data += channel[4].remainder >> 16;
             channel[4].remainder &= 0xFFFF;
@@ -266,7 +302,14 @@ int mix(void)
         {
             sample = *channel[5].data;
             dl += channel[5].left_vol_tab[sample];
+#ifdef SURROUND_SOUND
+            if( channel[5].invert_right )
+                dr -= channel[5].right_vol_tab[sample];
+            else
+                dr += channel[5].right_vol_tab[sample];
+#else
             dr += channel[5].right_vol_tab[sample];
+#endif
             channel[5].remainder += channel[5].step;
             channel[5].data += channel[5].remainder >> 16;
             channel[5].remainder &= 0xFFFF;
@@ -279,7 +322,14 @@ int mix(void)
         {
             sample = *channel[6].data;
             dl += channel[6].left_vol_tab[sample];
+#ifdef SURROUND_SOUND
+            if( channel[6].invert_right )
+                dr -= channel[6].right_vol_tab[sample];
+            else
+                dr += channel[6].right_vol_tab[sample];
+#else
             dr += channel[6].right_vol_tab[sample];
+#endif
             channel[6].remainder += channel[6].step;
             channel[6].data += channel[6].remainder >> 16;
             channel[6].remainder &= 0xFFFF;
@@ -292,7 +342,14 @@ int mix(void)
         {
             sample = *channel[7].data;
             dl += channel[7].left_vol_tab[sample];
+#ifdef SURROUND_SOUND
+            if( channel[7].invert_right )
+                dr -= channel[7].right_vol_tab[sample];
+            else
+                dr += channel[7].right_vol_tab[sample];
+#else
             dr += channel[7].right_vol_tab[sample];
+#endif
             channel[7].remainder += channel[7].step;
             channel[7].data += channel[7].remainder >> 16;
             channel[7].remainder &= 0xFFFF;
@@ -366,7 +423,9 @@ void updatesounds(void)
 
 }
 
-void addsfx( int sfxid, int volume, int step, int seperation, uint16_t handle )
+//  vol : volume, 0..255
+//  sep : separation, +/- 127, SURROUND_SEP special operation
+void addsfx( int sfxid, int vol, int step, int sep, uint16_t handle )
 {
     channel_info_t * chp, * chp2;
 
@@ -419,25 +478,38 @@ void addsfx( int sfxid, int volume, int step, int seperation, uint16_t handle )
     chp->start_time = mytime;
     chp->handle = handle;
 
-    // (range: 1 - 256)
-    seperation += 1;
-
-    // (x^2 seperation)
-    leftvol =
-        volume - (volume*seperation*seperation)/(256*256);
-
-    seperation = seperation - 257;
-
-    // (x^2 seperation)
-    rightvol =
-        volume - (volume*seperation*seperation)/(256*256);      
-
-    // sanity check
+#ifdef SURROUND_SOUND
+    chp->invert_right = 0;
+    if( sep == SURROUND_SEP )
+    {
+        // Use a normal sound data for the left channel (with pan left)
+        // and an inverted sound data for the right channel (with pan right)
+        leftvol = rightvol = (vol * (224 * 224)) >> 16;  // slight reduction going through panning
+        chp->invert_right = 1;  // invert right channel
+    }
+    else
+#endif
+    {
+        // Separation, that is, orientation/stereo.
+        // sep : +/- 127, <0 is left, >0 is right
+        sep += 129;  // 129 +/- 127 ; ( 1 - 256 )
+        leftvol = vol - ((vol * sep * sep) >> 16);
+        sep = 258 - sep;  // -129 +/- 127
+        rightvol = vol - ((vol * sep * sep) >> 16);
+    }
+   
+    // Sanity check, clamp volume.
     if (rightvol < 0 || rightvol > 127)
-        derror("rightvol out of bounds");
-    
+    {
+        fprintf(stderr, "rightvol out of bounds\n");
+        rightvol = ( rightvol < 0 ) ? 0 : 127;
+    }
+
     if (leftvol < 0 || leftvol > 127)
-        derror("leftvol out of bounds");
+    {
+        fprintf(stderr, "leftvol out of bounds\n");
+        leftvol = ( leftvol < 0 ) ? 0 : 127;
+    }
     
     set_channel_volume( chp, leftvol, rightvol );
 }
@@ -521,42 +593,44 @@ void  read_pipe( void * buf, int req )
 // Load sfx from pipeline
 void load_sound_data( void )
 {
-    uint16_t id;
-    uint32_t flags;
-    uint32_t bln;
+    server_sfx_t * sfxp;
+    server_load_sound_t  sls;
 
-    read_pipe( &id, sizeof(uint16_t) );   // sfx id
-    read_pipe( &flags, sizeof(uint32_t)); // sfx flags
-    read_pipe( &bln, sizeof(uint32_t) );  // sfx data length
+    read_pipe( &sls, sizeof(sls) );  // sfx id, flags, snd_length
    
 #ifdef DEBUG
-    fprintf(stderr, "SS: load_sound %i, flags=%x, size=%i\n", id, flags, bln );
+    fprintf(stderr, "SS: load_sound %i, flags=%x, size=%i\n", sls.id, sls.flags, sls.snd_len );
 #endif
    
-    if( id >= NUMSFX )  return;
+    if( sls.id >= NUMSFX )  return;
     //fprintf(stderr,"%d in...\n",bln);
-    if( sfx[id].data )
-        free( sfx[id].data );
-    sfx[id].data = malloc(bln);
-    if( sfx[id].data == NULL )
+   
+    sfxp = & sfx[sls.id];
+    if( sfxp->data )
+        free( sfxp->data );
+
+    sfxp->data = malloc(sls.snd_len);
+    if( sfxp->data == NULL )
     {
-        fprintf(stderr, "Soundserver: sfx %i, memory req %i\n", id, bln );
+        fprintf(stderr, "Soundserver: sfx %i, memory req %i\n", sls.id, sls.snd_len );
         exit(-2);
     };
-    sfx[id].flags = flags;
-    sfx[id].length = bln;
-    read_pipe( sfx[id].data, bln );  // the snd data
+    sfxp->flags = sls.flags;
+    sfxp->length = sls.snd_len;
+    read_pipe( sfxp->data, sls.snd_len );  // the snd data
 }
 
 
+#if 0
 // Format of play sound command.
 typedef struct {
     uint16_t  sfxid;
     byte      vol;
     byte      pitch;
-    byte      sep;
+    int16_t   sep;
     uint16_t  handle;
 } server_play_sound_t;
+#endif
 
 
 void play_sound( void )

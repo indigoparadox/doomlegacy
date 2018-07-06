@@ -119,9 +119,8 @@
 
 //#define TESTCODE            // remove this for release version
 
-#ifndef SURROUND
-// comment out this to disable the SurroundSound code
-#define SURROUND
+#ifdef SURROUND_SOUND
+#define SURROUND_SEP  1024
 #endif
 
 // DirectSound3D mode
@@ -176,7 +175,7 @@ LPDIRECTSOUNDBUFFER     DSndPrimary;
                                         // of cv_numChannels
 typedef struct {
     LPDIRECTSOUNDBUFFER lpSndBuf;
-#ifdef SURROUND
+#ifdef SURROUND_SOUND
         // judgecutor:
         // Need for produce surround sound
     LPDIRECTSOUNDBUFFER lpSurround;
@@ -314,7 +313,7 @@ errmsg:
 }
 #endif
 
-#ifdef SURROUND
+#ifdef SURROUND_SOUND
 // judgecutor:
 // Hmmm... May be this function is not too good...
 static void CopyAndInvertMemory(byte *dest, byte *src, int bytes)
@@ -424,7 +423,7 @@ static DWORD sound_buffer_flags = DSBCAPS_CTRLPAN |
 //    +4 : number of samples, each sample is a single byte since it's 8bit
 //    +6 : value 0
 //
-#ifdef SURROUND
+#ifdef SURROUND_SOUND
 // judgecutor:
 // We need an another function definition for supporting the surround sound
 // Invert just cause to copy an inverted sound data
@@ -479,7 +478,7 @@ static LPDIRECTSOUNDBUFFER raw2DS( byte * dsdata, int len)
     if ( FAILED (hr) )
         I_Error ("CreateSoundBuffer() FAILED: %s\n", DXErrorToString(hr));
 
-#ifdef SURROUND
+#ifdef SURROUND_SOUND
         
     if (invert)
         // just invert a sound data for producing the surround sound
@@ -513,7 +512,7 @@ void I_GetSfx (sfxinfo_t*  sfx)
     dssfx = sfx->data;
     // because the data is copied to the DIRECTSOUNDBUFFER, the one here will not be used
 
-#ifdef SURROUND
+#ifdef SURROUND_SOUND
     // Make a normal (not inverted) sound buffer
     sfx->data = (void*)raw2DS (dssfx, size, FALSE);
 #else
@@ -601,13 +600,17 @@ static void I_UpdateSoundVolume (LPDIRECTSOUNDBUFFER lpSnd, int volume)
 // DSBCAPS_CTRLPAN
 // --------------------------------------------------------------------------
 #define DSBPAN_RANGE    (DSBPAN_RIGHT-(DSBPAN_LEFT))
-#define SEP_RANGE       256     //Doom sounds pan range 0-255 (128 is centre)
+// Doom originally has sep range 1..256, but DoomLegacy is now using +/- 127.
+// Doom sounds pan range +/- 127  (0 is centre)
+#define SEP_RANGE       256
+//  sep : +/- 127, 0 is center
 static void I_UpdateSoundPanning (LPDIRECTSOUNDBUFFER lpSnd, int sep)
 {
     HRESULT hr;
-    hr = lpSnd->lpVtbl->SetPan (lpSnd, (sep * DSBPAN_RANGE)/SEP_RANGE - DSBPAN_RIGHT);
+    // DirectSound sep has 0 as center.
+    hr = lpSnd->lpVtbl->SetPan (lpSnd, (sep * DSBPAN_RANGE)/SEP_RANGE);
     //if (FAILED(hr))
-    //    CONS_Printf ("SetPan FAILED for sep %d pan %d\n", sep, (sep * DSBPAN_RANGE)/SEP_RANGE - DSBPAN_RIGHT);
+    //    CONS_Printf ("SetPan FAILED for sep %d pan %d\n", sep, (sep * DSBPAN_RANGE)/SEP_RANGE);
 }
 
 // search a free slot in the stack, free it if needed
@@ -662,7 +665,7 @@ static int GetFreeStackNum(int16_t  newpriority)
     return -1;
 }
 
-#ifdef SURROUND
+#ifdef SURROUND_SOUND
 static LPDIRECTSOUNDBUFFER CreateInvertedSound(int id)
 {
     sfxinfo_t * sfx = &S_sfx[id];
@@ -692,6 +695,7 @@ extern consvar_t cv_rndsoundpitch;
 // FIXME: if a specific sound Id is already being played, another instance
 //        of that sound should be created with DuplicateSound()
 // --------------------------------------------------------------------------
+//  sep : +/- 127, 0 is center, SURROUND_SEP as special operation
 int I_StartSound (int id, int vol, int sep, int pitch, int priority )
 {
     char *  reason;
@@ -702,7 +706,7 @@ int I_StartSound (int id, int vol, int sep, int pitch, int priority )
     int         handle;
     int         i;
     DWORD       freq;
-#ifdef SURROUND
+#ifdef SURROUND_SOUND
     LPDIRECTSOUNDBUFFER     dssurround;
 #endif
 
@@ -772,10 +776,10 @@ int I_StartSound (int id, int vol, int sep, int pitch, int priority )
 
     I_UpdateSoundVolume (dsbuffer, vol);
 
-#ifdef SURROUND
+#ifdef SURROUND_SOUND
     // Prepare the surround sound buffer
-    // Use a normal sound data for the left channel (with pan == 0)
-    // and an inverted sound data for the right channel (with pan == 255)
+    // Use a normal sound data for the left channel (with pan left (-127))
+    // and an inverted sound data for the right channel (with pan right (+127))
     
     dssurround = CreateInvertedSound(id);
 
@@ -783,11 +787,11 @@ int I_StartSound (int id, int vol, int sep, int pitch, int priority )
     if (cv_rndsoundpitch.value)
         IDirectSoundBuffer_SetFrequency(dssurround, freq);
 
-    if (sep == -128)
+    if (sep == SURROUND_SEP)
     {
-        I_UpdateSoundPanning(dssurround, 255);
+        I_UpdateSoundPanning(dssurround, 127);
         I_UpdateSoundVolume(dssurround, vol);
-        I_UpdateSoundPanning(dsbuffer, 0);
+        I_UpdateSoundPanning(dsbuffer, -127);
         dssurround->lpVtbl->SetCurrentPosition(dssurround, 0);
     }
     else
@@ -826,9 +830,8 @@ int I_StartSound (int id, int vol, int sep, int pitch, int priority )
 	}
     }
 
-#ifdef SURROUND
-        
-    if (sep == -128)
+#ifdef SURROUND_SOUND
+    if (sep == SURROUND_SEP)
     {
         hr = dssurround->lpVtbl->Play (dssurround, 0, 0, 0);
         //debug_Printf("Surround playback\n");
@@ -889,7 +892,7 @@ void I_StopSound (int handle)
         dsbuffer->lpVtbl->Release (dsbuffer);
     }
 
-#ifdef SURROUND
+#ifdef SURROUND_SOUND
     // Stop and release the surround sound buffer
     dsbuffer = StackSounds[handle].lpSurround;
     if (dsbuffer != NULL)
@@ -932,7 +935,7 @@ int I_SoundIsPlaying(int handle)
 void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
 {
     LPDIRECTSOUNDBUFFER     dsbuffer;
-#ifdef SURROUND
+#ifdef SURROUND_SOUND
     LPDIRECTSOUNDBUFFER     dssurround;
     DWORD                   dwStatus;
     DWORD                   pos;
@@ -944,7 +947,7 @@ void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
 
     dsbuffer = StackSounds[handle].lpSndBuf;
 
-#ifdef SURROUND
+#ifdef SURROUND_SOUND
     if (dsbuffer == NULL)
         return;
 
@@ -955,7 +958,7 @@ void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
         surround_inuse = (dwStatus & (DSBSTATUS_PLAYING | DSBSTATUS_LOOPING));
     }
         // If pan changed to stereo...
-    if (sep != -128)
+    if (sep != SURROUND_SEP)
     {
         if (surround_inuse)
         {
@@ -970,7 +973,7 @@ void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
         if (!surround_inuse)
         {
             I_UpdateSoundVolume(dssurround, vol);
-            I_UpdateSoundPanning(dsbuffer, 0);
+            I_UpdateSoundPanning(dsbuffer, -127);
             dsbuffer->lpVtbl->GetCurrentPosition(dsbuffer, &pos, NULL);
             dssurround->lpVtbl->SetCurrentPosition(dssurround, pos);
             dssurround->lpVtbl->Play(dssurround, 0, 0, 0);

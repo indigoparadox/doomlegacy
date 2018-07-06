@@ -97,10 +97,10 @@ typedef struct sfx_data_s
     int     length;
     void    *data;
     int16_t priority;   // Heretic style, signed priority, neg is lowest.
-    sfxid_t id;                     // Doom sfx id
+    sfxid_t id;         // Doom sfx id
     int     pitch;
     int     volume;
-    int     sep;                    // Only when source is 2D sound
+    int     sep;        // 0 +/- 127, Only when source is 2D sound
 } sfx_data_t;
 
 
@@ -133,7 +133,7 @@ typedef struct listener_data_s
 } listener_data_t;
 
 
-// Use standart Init and Shutdown functions
+// Use standard Init and Shutdown functions
 
 EXPORT BOOL HWRAPI (Startup) (I_Error_t FatalErrorFunction, snddev_t *snd_dev);
 EXPORT int  HWRAPI (Add3DSource )(source3D_data_t *src, sfx_data_t *sfx);

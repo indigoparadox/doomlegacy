@@ -149,12 +149,16 @@
 #include "musserv/musserver.h"
 
 
+// #define DEBUG_SFX_PIPE
+
 // Master hardware sound volume.
 static int hw_sndvolume = 31;
 
 // UNIX hack, to be removed.
 #ifdef SNDSERV
-static FILE *sndserver = 0;
+#include "sndserv/soundsrv.h"
+
+static FILE *    sndserver = 0;
 static uint16_t  handle_cnt = 0;
 
 #elif SNDINTR
@@ -185,18 +189,20 @@ static int msg_id = -1;
 //  mixing buffer, and the samplerate of the raw data.
 
 // Needed for calling the actual sound output.
-#define SAMPLECOUNT             1024
 #define NUM_CHANNELS            16
 #define CHANNEL_NUM_MASK  (NUM_CHANNELS-1)
+
+
+#ifndef SNDSERV
+
+#define SAMPLECOUNT             1024
+#define SAMPLERATE              11025   // Hz
+#define SAMPLESIZE              2       // 16bit
 // It is 2 for 16bit, and 2 for two channels.
 #define BUFMUL                  4
 #define MIXBUFFERSIZE           (SAMPLECOUNT*BUFMUL)
 
-#define SAMPLERATE              11025   // Hz
-#define SAMPLESIZE              2       // 16bit
 
-
-#ifndef SNDSERV
 // The actual output device and a flag for using 8bit samples.
 static int audio_fd;
 static byte audio_8bit_flag;
@@ -226,7 +232,12 @@ typedef struct {
     int  handle;
     // SFX id of the playing sound effect.
     // Used to catch duplicates (like chainsaw).
-    int  id;                  
+    uint16_t  id;
+   
+#ifdef SURROUND_SOUND
+    byte  invert_right;
+#endif
+
 } channel_info_t;
 
 static channel_info_t   channel[NUM_CHANNELS];
@@ -312,19 +323,24 @@ void I_GetSfx(sfxinfo_t * sfx)
     // write data to llsndserv 19990201 by Kin
     if (sndserver)
     {
+        server_load_sound_t  sls;
         // Send sound data to server.
+        sls.flags = sfx->flags;
         // The sound server does not need padded sound, and if it did
         // it could more easily do that itself.
-        uint32_t snd_size = size - 8;
+        sls.snd_len = size - 8;
         // [WDJ] No longer send volume with load, as it interferes with
         // the automated volume update.
-        uint16_t id = sfx - S_sfx;
+        sls.id = sfx - S_sfx;
+
+#ifdef  DEBUG_SFX_PIPE
+        GenPrintf( EMSG_debug," Command L:  Sfx  size=%x\n", sfx->length );
+        GenPrintf( EMSG_debug," Load sound, sfx=%i, snd_len=%i  flagx=%x\n ", sls.id, sls.snd_len, sls.flags );
+#endif
         // sfx data loaded to sound server at sfx id.
         fputc('l', sndserver);
-        fwrite(&id, sizeof(uint16_t), 1, sndserver);  // sfx id
-        fwrite(&sfx->flags, sizeof(uint32_t), 1, sndserver);  // sfx flags
-        fwrite(&snd_size, sizeof(uint32_t), 1, sndserver);  // size of data
-        fwrite(&dssfx[8], 1, snd_size, sndserver);
+        fwrite((byte*)&sls, sizeof(sls), 1, sndserver);  // sfx id, flags, size
+        fwrite(&dssfx[8], 1, sls.snd_len, sndserver);
         fflush(sndserver);
     }
 #else
@@ -365,15 +381,15 @@ void I_FreeSfx(sfxinfo_t * sfx)
 //  (eight, usually) of internal channels.
 // Returns a handle.
 //
+//  vol : volume, 0..255
+//  sep : separation, +/- 127, SURROUND_SEP special operation
 static
-int addsfx_ch(int sfxid, int volume, int step, int seperation)
+int addsfx_ch(int sfxid, int vol, int step, int sep)
 {
     channel_info_t * chp, * chp2;
     int i, oldest;
     int slot;
-
-    int rightvol;
-    int leftvol;
+    int leftvol, rightvol;
 
     // Chainsaw troubles.
     // Play these sound effects only one at a time.
@@ -428,16 +444,29 @@ int addsfx_ch(int sfxid, int volume, int step, int seperation)
     // Should be gametic, I presume.
     chp->start_time = gametic;
 
-    // Separation, that is, orientation/stereo.
-    //  range is: 1 - 256
-    seperation += 1;
-
     // Per left/right channel.
     //  x^2 seperation,
     //  adjust volume properly.
-    leftvol = volume - ((volume * seperation * seperation) >> 16);      ///(256*256);
-    seperation = seperation - 257;
-    rightvol = volume - ((volume * seperation * seperation) >> 16);
+
+#ifdef SURROUND_SOUND
+    chp->invert_right = 0;
+    if( sep == SURROUND_SEP )
+    {
+        // Use a normal sound data for the left channel (with pan left)
+        // and an inverted sound data for the right channel (with pan right)
+        leftvol = rightvol = (vol * (224 * 224)) >> 16;  // slight reduction going through panning
+        chp->invert_right = 1;  // invert right channel
+    }
+    else
+#endif
+    {
+        // Separation, that is, orientation/stereo.
+        // sep : +/- 127, <0 is left, >0 is right
+        sep += 129;  // 129 +/- 127 ; ( 1 - 256 )
+        leftvol = vol - ((vol * sep * sep) >> 16);
+        sep = 258 - sep;  // 129 +/- 127
+        rightvol = vol - ((vol * sep * sep) >> 16);
+    }
 
     // Sanity check, clamp volume.
     if (rightvol < 0 || rightvol > 127)
@@ -455,7 +484,7 @@ int addsfx_ch(int sfxid, int volume, int step, int seperation)
     // Get the proper lookup table for this volume level.
     chp->left_volume = leftvol;
     chp->left_vol_tab = &vol_lookup[(leftvol * hw_sndvolume / 31)][0];
-    chp->left_volume = rightvol;
+    chp->right_volume = rightvol;
     chp->right_vol_tab = &vol_lookup[(rightvol * hw_sndvolume / 31)][0];
 
     // Assign current handle number.
@@ -515,11 +544,17 @@ void I_SetSfxVolume(int volume)
     // Basically, this should propagate the menu/config file setting
     //  to the state variable used in the mixing.
 
+#ifdef  DEBUG_SFX_PIPE
+        GenPrintf( EMSG_debug," Testing:  volume=%i\n", hw_sndvolume );
+#endif
 #ifdef SNDSERV
     hw_sndvolume = volume;
 
     if (sndserver)
     {
+#ifdef  DEBUG_SFX_PIPE
+        GenPrintf( EMSG_debug," Command V:  volume=%i\n", hw_sndvolume );
+#endif
         fputc('v', sndserver);
         fputc((byte) hw_sndvolume, sndserver);
         fflush(sndserver);
@@ -547,16 +582,6 @@ void I_SetSfxVolume(int volume)
 }
 
 
-#ifdef SNDSERV
-// Format of play sound command.
-typedef struct {
-    uint16_t  sfxid;
-    byte      vol;
-    byte      pitch;
-    byte      sep;
-    uint16_t  handle;
-} server_play_sound_t;
-#endif
 
 //
 // Starting a sound means adding it
@@ -586,11 +611,17 @@ int I_StartSound ( sfxid_t sfxid, int vol, int sep, int pitch, int priority )
     if (sndserver)
     {
         server_play_sound_t  sps;
+
         sps.sfxid = sfxid;
         sps.vol = vol;
         sps.pitch = pitch;
         sps.sep = sep;
         sps.handle = handle_cnt++;
+
+#ifdef  DEBUG_SFX_PIPE
+        GenPrintf( EMSG_debug," Command P:" );
+        GenPrintf( EMSG_debug," Play sound, sfx=%i, vol=%i, pitch=%i, sep=%i, handle=%i\n ", sps.sfxid, sps.vol, sps.pitch, sps.sep, sps.handle );
+#endif
         // play sound
         fputc('p', sndserver);
         fwrite((byte*)&sps, sizeof(sps), 1, sndserver);
@@ -616,6 +647,11 @@ void I_StopSound(int handle)
 {
 #ifdef SNDSERV
     uint16_t  handle16 = handle;
+
+#ifdef  DEBUG_SFX_PIPE
+    GenPrintf( EMSG_debug," Command S:  Stop  handle=%i\n", handle );
+#endif
+   
     // Send stop sound.
     fputc('s', sndserver);
     fwrite(&handle16, sizeof(uint16_t), 1, sndserver);  // handle
@@ -738,7 +774,14 @@ void I_UpdateSound(void)
                 //  to the current data.
                 // Adjust volume accordingly.
                 dl += chp->left_vol_tab[sample];
+#ifdef SURROUND_SOUND
+                if( chp->invert_right )
+                  dr -= chp->right_vol_tab[sample];
+                else
+                  dr += chp->right_vol_tab[sample];
+#else
                 dr += chp->right_vol_tab[sample];
+#endif
                 // Increment fixed point index
                 chp->remainder += chp->step;
                 // MSB is next sample
@@ -865,6 +908,9 @@ void LX_ShutdownSound(void)
 #ifdef SNDSERV
     if (sndserver)
     {
+#ifdef  DEBUG_SFX_PIPE
+        GenPrintf( EMSG_debug," Command Q:\n" );
+#endif
         // Send a "quit" command.
         fputc('q', sndserver);
         fflush(sndserver);
@@ -919,6 +965,9 @@ void LX_InitSound()
     {
         sprintf(buffer, "%s %s", fn_snd, cv_sndserver_arg.string);
         sndserver = popen(buffer, "w");
+#ifdef  DEBUG_SFX_PIPE
+        GenPrintf( EMSG_debug," Started Sound Server:\n" );
+#endif
     }
     else
         GenPrintf(EMSG_error, "Could not start sound server [%s]\n", fn_snd);

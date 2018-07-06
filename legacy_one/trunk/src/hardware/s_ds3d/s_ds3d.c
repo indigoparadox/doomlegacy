@@ -456,14 +456,17 @@ static void UpdateSoundVolume (LPDIRECTSOUNDBUFFER lpSnd, int volume)
 // --------------------------------------------------------------------------
 #define DSBPAN_RANGE    (DSBPAN_RIGHT-(DSBPAN_LEFT))
 
-//Doom sounds pan range 0-255 (128 is centre)
+// Doom originally has sep range 1..256, but DoomLegacy is now using +/- 127.
+// Doom sounds pan range +/- 127  (0 is centre)
 #define SEP_RANGE       256             
+//  sep : +/- 127, 0 is center
 static void Update2DSoundPanning (LPDIRECTSOUNDBUFFER lpSnd, int sep)
 {
     HRESULT hr;
-    hr = IDirectSoundBuffer_SetPan (lpSnd, (sep * DSBPAN_RANGE)/SEP_RANGE - DSBPAN_RIGHT);
+    // DirectSound sep has 0 as center.
+    hr = IDirectSoundBuffer_SetPan (lpSnd, (sep * DSBPAN_RANGE)/SEP_RANGE);
     //if (FAILED(hr))
-    //    CONS_Printf ("SetPan FAILED for sep %d pan %d\n", sep, (sep * DSBPAN_RANGE)/SEP_RANGE - DSBPAN_RIGHT);
+    //    CONS_Printf ("SetPan FAILED for sep %d pan %d\n", sep, (sep * DSBPAN_RANGE)/SEP_RANGE);
 }
 
 

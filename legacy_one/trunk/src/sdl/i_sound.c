@@ -151,6 +151,10 @@ typedef struct {
   int * leftvol_lookup;
   int * rightvol_lookup;
 
+#ifdef SURROUND_SOUND
+  byte  invert_right;
+#endif
+  
 } mix_channel_t;
 
 static mix_channel_t  mix_channel[ NUM_CHANNELS ];  // channel
@@ -254,6 +258,7 @@ static void stop_channel( mix_channel_t * chanp )
 //  is set, but currently not used by mixing.
 //
 //  vol : volume, 0..255
+//  sep : separation, +/- 127, SURROUND_SEP special operation
 // Return a channel handle.
 int I_StartSound(sfxid_t sfxid, int vol, int sep, int pitch, int priority)
 {
@@ -330,10 +335,6 @@ int I_StartSound(sfxid_t sfxid, int vol, int sep, int pitch, int priority)
     chanp->age_priority = sound_age - priority;  // age at start
     sound_age += 16;  // vrs priority 0..256
 
-    // Separation, that is, orientation/stereo.
-    //  range is: 1 - 256
-    sep += 1;
-
     // Per left/right channel.
     //  x^2 seperation,
     //  adjust volume properly.
@@ -344,9 +345,27 @@ int I_StartSound(sfxid_t sfxid, int vol, int sep, int pitch, int priority)
     vol = (vol * mix_sfxvolume) >> 7;
     // Notice : sdldoom replaced all the calls to avoid this conversion
 
-    int leftvol = vol - ((vol * sep * sep) >> 16);      // (256*256);
-    sep = sep - 257;
-    int rightvol = vol - ((vol * sep * sep) >> 16);
+    int leftvol, rightvol;
+
+#ifdef SURROUND_SOUND
+    chanp->invert_right = 0;
+    if( sep == SURROUND_SEP )
+    {
+        // Use a normal sound data for the left channel (with pan left)
+        // and an inverted sound data for the right channel (with pan right)
+        leftvol = rightvol = (vol * (224 * 224)) >> 16;  // slight reduction going through panning
+        chanp->invert_right = 1;  // invert right channel
+    }
+    else
+#endif
+    {
+        // Separation, that is, orientation/stereo.
+        // sep : +/- 127, <0 is left, >0 is right
+        sep += 129;  // 129 +/- 127 ; ( 1 - 256 )
+        leftvol = vol - ((vol * sep * sep) >> 16);
+        sep = 258 - sep;  // 129 +/- 127
+        rightvol = vol - ((vol * sep * sep) >> 16);
+    }
 
     // Sanity check, clamp volume.
     if (rightvol < 0 || rightvol > 127)
@@ -381,16 +400,15 @@ int I_StartSound(sfxid_t sfxid, int vol, int sep, int pitch, int priority)
 
 
 //   handle : the handle returned by StartSound.
+//  vol : volume, 0..255
+//  sep : separation, +/- 127
 void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
 {
     int slot = handle & CHANNEL_NUM_MASK;
+
     if( mix_channel[slot].handle == handle )
     {
         mix_channel_t  *  chanp = & mix_channel[slot];  // channel to use
-
-        // Separation, that is, orientation/stereo.
-        //  range is: 1 - 256
-        sep += 1;
 
         // Per left/right channel.
         //  x^2 seperation,
@@ -400,9 +418,27 @@ void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
         // mix_sfxvolume : range 0..31
         vol = (vol * mix_sfxvolume) >> 7;
 
-        int leftvol = vol - ((vol * sep * sep) >> 16);      // (256*256);
-        sep = sep - 257;
-        int rightvol = vol - ((vol * sep * sep) >> 16);
+        int leftvol, rightvol;
+
+#ifdef SURROUND_SOUND
+        chanp->invert_right = 0;
+        if( sep == SURROUND_SEP )
+        {
+            // Use normal sound data for the left channel (pan left)
+            // and inverted sound data for the right channel (pan right).
+            leftvol = rightvol = (vol * (224 * 224)) >> 16;  // slight reduction going through panning
+            chanp->invert_right = 1;  // invert right channel
+        }
+        else
+#endif
+        {
+            // Separation, that is, orientation/stereo.
+            // sep : +/- 127, <0 is left, >0 is right
+            sep += 129;  // 129 +/- 127 ; ( 1 - 256 )
+            leftvol = vol - ((vol * sep * sep) >> 16);
+            sep = 258 - sep;  // -129 +/- 127
+            rightvol = vol - ((vol * sep * sep) >> 16);
+        }
 
         // Sanity check, clamp volume.
         if (rightvol < 0 || rightvol > 127)
@@ -531,7 +567,14 @@ static void I_UpdateSound_sdl(void *unused, Uint8 *stream, int len)
                 //  to the current data.
                 // Adjust volume accordingly.
                 dl += chanp->leftvol_lookup[sample];
+#ifdef SURROUND_SOUND
+                if( chanp->invert_right )
+                  dr -= chanp->rightvol_lookup[sample];
+                else
+                  dr += chanp->rightvol_lookup[sample];
+#else
                 dr += chanp->rightvol_lookup[sample];
+#endif
 		// 16.16 fixed point step forward in the sound data
                 chanp->step_remainder += chanp->step;
                 // take full steps

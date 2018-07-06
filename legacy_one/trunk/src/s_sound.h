@@ -70,6 +70,10 @@
 #include "r_defs.h"
   // sector_t
 
+#ifdef SURROUND_SOUND
+#define SURROUND_SEP            1024
+#endif
+
 // killough 4/25/98: mask used to indicate sound origin is player item pickup
 #define PICKUP_SOUND (0x8000)
 

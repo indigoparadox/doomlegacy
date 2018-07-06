@@ -199,7 +199,11 @@ int I_StartSound ( int           id,
   priority = 0;
 
   pitch=(pitch-128)/2+128;
-  voice=play_sample(S_sfx[id].data,vol,sep,(pitch*1000)/128,0);
+#ifdef SURROUND_SOUND
+  if( sep == SURROUND_SEP )   sep = 0;
+#endif
+  // Allegro center is 128.
+  voice=play_sample(S_sfx[id].data,vol,sep+128,(pitch*1000)/128,0);
 
   // Returns a handle
   return (id<<VOICESSHIFT)+voice;
@@ -271,6 +275,7 @@ static inline int absolute_freq(int freq, SAMPLE *spl)
 }
 
 // You need the handle returned by StartSound.
+//  sep : separation, +/- 127, SURROUND_SEP special operation
 void I_UpdateSoundParams( int   handle,
                           int   vol,
                           int   sep,
@@ -285,7 +290,11 @@ void I_UpdateSoundParams( int   handle,
   if(voice_check(voice)==S_sfx[numsfx].data)
   {
     voice_set_volume(voice, vol);
-    voice_set_pan(voice, sep);
+#ifdef SURROUND_SOUND
+    if( sep == SURROUND_SEP )   sep = 0;
+#endif
+    // Allegro center is 128.
+    voice_set_pan(voice, sep+128);
     voice_set_frequency(voice, absolute_freq(pitch*1000/128
                              , S_sfx[numsfx].data));
   }
