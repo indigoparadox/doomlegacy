@@ -200,7 +200,7 @@ int I_StartSound ( int           id,
 
   pitch=(pitch-128)/2+128;
 #ifdef SURROUND_SOUND
-  if( sep == SURROUND_SEP )   sep = 0;
+  if( sep > 128 )   sep = 0;   // No SURROUND
 #endif
   // Allegro center is 128.
   voice=play_sample(S_sfx[id].data,vol,sep+128,(pitch*1000)/128,0);
@@ -291,7 +291,7 @@ void I_UpdateSoundParams( int   handle,
   {
     voice_set_volume(voice, vol);
 #ifdef SURROUND_SOUND
-    if( sep == SURROUND_SEP )   sep = 0;
+    if( sep > 128 )   sep = 0;  // No SURROUND
 #endif
     // Allegro center is 128.
     voice_set_pan(voice, sep+128);

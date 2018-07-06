@@ -160,7 +160,7 @@ static int addsfx ( int		sfxid,
     // Notice : sdldoom replaced all the calls to avoid this conversion
     
 #ifdef SURROUND_SOUND
-    if( sep == SURROUND_SEP )   sep = 0;
+    if( sep > 128 )   sep = 0;  // No SURROUND
 #endif
     // Separation, that is, orientation/stereo.
     // sep : +/- 127, <0 is left, >0 is right
@@ -335,7 +335,7 @@ void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
     vol = (vol * mix_sfxvolume) >> 6;
 
 #ifdef SURROUND_SOUND
-    if( sep == SURROUND_SEP )    sep = 0;
+    if( sep > 128 )   sep = 0;  // No SURROUND
 #endif
     // Separation, that is, orientation/stereo.
     // sep : +/- 127, <0 is left, >0 is right
