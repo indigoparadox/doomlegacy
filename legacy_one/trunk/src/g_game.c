@@ -1555,6 +1555,7 @@ mapthing_t extra_coop_spawn;  // roving coop spawn
 static int32_t spind = 1;
 
 
+static
 boolean  scatter_spawn( mobjtype_t spawn_type, int playernum, mapthing_t * spot )
 {
     int i;
@@ -2011,6 +2012,15 @@ boolean G_DeathMatchSpawnPlayer (int playernum)
         P_SpawnPlayer (playerstarts[playernum], playernum);
         return true;
     }
+
+    // [WDJ] Spawn at random offsets from the last random deathmatch spawn location.
+    // This allows more players than spawn spots.
+    if( deathmatchstarts[i] )
+    {
+        if( scatter_spawn( MT_PLAYER, playernum, deathmatchstarts[i] )  )
+            return true;
+    }
+
     return false;
 }
 
@@ -2051,9 +2061,8 @@ void G_CoopSpawnPlayer (int playernum)
 
     // Try to use a deathmatch spot.
     // No message about deathmatch starts in coop mode.
-    if( numdmstarts )
+    if( numdmstarts && (cv_deathmatch.EV == 0))
     {
-        // May be second attempt at deathmatch spots.
         if( G_DeathMatchSpawnPlayer( playernum )  )
             return;
     }
