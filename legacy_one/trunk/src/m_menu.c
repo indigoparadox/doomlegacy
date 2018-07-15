@@ -4729,6 +4729,9 @@ boolean M_Responder (event_t* ev)
 
       case KEY_ESCAPE:
         currentMenu->lastOn = itemOn;
+        if( init_sequence == 1 )
+	    goto ret_true;  // No escape from Launcher
+
         if( menucnt )
         {
             Pop_Menu();
