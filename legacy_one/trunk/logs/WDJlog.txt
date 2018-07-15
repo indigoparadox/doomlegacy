@@ -6715,3 +6715,8 @@ patchfile = w107_103_sprite16_fix.patch
 - commit revision 1408
 Fix the missing 'G' rotation in the sprite name detection.
 
+*** w107_sprite16_fix
+patchfile = w107_104_1.47_docs.patch
+- commit revision 1409
+Docs updated for 1.47, features and bug fixes.
+
