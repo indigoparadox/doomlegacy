@@ -962,17 +962,17 @@ void S_StartSecSound(const sector_t *sec, sfxid_t sfx_id)
 void S_StartObjSound(const mobj_t *mo, sfxid_t sfx_id)
 {
     // Requires that the x,y,z in an mobj_t be the same as xyz_t.
-    S_StartNormSound( (xyz_t*)&mo->x, mo, sfx_id );  // xyz_t *
+    S_StartNormSound( (xyz_t*)&(mo->x), mo, sfx_id );  // xyz_t *
 }
 
 void S_StartAttackSound(const mobj_t * mo, sfxid_t sfx_id)
 {
-    S_StartSoundAtVolume( (xyz_t*)&mo->x, mo, sfx_id, 255, CT_ATTACK);
+    S_StartSoundAtVolume( (xyz_t*)&(mo->x), mo, sfx_id, 255, CT_ATTACK);
 }
 
 void S_StartScreamSound(const mobj_t * mo, sfxid_t sfx_id)
 {  
-    S_StartSoundAtVolume( (xyz_t*)&mo->x, mo, sfx_id, 255, CT_SCREAM);
+    S_StartSoundAtVolume( (xyz_t*)&(mo->x), mo, sfx_id, 255, CT_SCREAM);
 }
 
 void S_StartAmbientSound(sfxid_t sfx_id, int volume)

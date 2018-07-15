@@ -2849,7 +2849,7 @@ void SF_StartSound(void)
     mo = MobjForSvalue(t_argv[0]);
     if (!mo)  goto done;
 
-    S_StartXYZSoundName((xyz_t*)mo->x, mo, t_argv[1].value.s);
+    S_StartXYZSoundName((xyz_t*)&(mo->x), mo, t_argv[1].value.s);
 done:
     return;
 

@@ -1738,9 +1738,8 @@ void P_KillMobj ( mobj_t*  target,
     //                shot the barrel which killed another guy, gets the frag!
     //                (source is passed from barrel to barrel also!)
     //                (only for multiplayer fun, does not remember monsters)
-    if ((target->type == MT_BARREL || target->type == MT_POD) &&
-        source &&
-        source->player)
+    if ((target->type == MT_BARREL || target->type == MT_POD)
+	&& source && source->player)
     {
         P_SetReference(target->target, source);
         target->target = source;
