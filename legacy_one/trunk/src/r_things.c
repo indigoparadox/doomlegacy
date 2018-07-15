@@ -391,11 +391,11 @@ void R_InstallSpriteLump ( uint32_t      lumppat,     // graphics patch
     {
         rotation = rotation_char - '1';  // 0..8
     }
-    else if((rotation_char >= 'A') && (rotation_char <= 'F'))
+    else if((rotation_char >= 'A') && (rotation_char <= 'G'))
     {
         rotation = rotation_char - 'A' + 10 - 1;  // 9..15
     }
-    else if((rotation_char >= 'a') && (rotation_char <= 'f'))
+    else if((rotation_char >= 'a') && (rotation_char <= 'g'))
     {
         rotation = rotation_char - 'a' + 10 - 1;  // 9..15
     }
