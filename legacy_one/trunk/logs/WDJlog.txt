@@ -6720,3 +6720,8 @@ patchfile = w107_104_1.47_docs.patch
 - commit revision 1409
 Docs updated for 1.47, features and bug fixes.
 
+*** w107_Version1472
+patchfile = w107_105_Version1472.patch
+- commit revision 1410
+Release version 1.47.2.
+
