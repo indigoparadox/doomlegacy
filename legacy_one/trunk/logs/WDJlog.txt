@@ -6721,7 +6721,14 @@ patchfile = w107_104_1.47_docs.patch
 Docs updated for 1.47, features and bug fixes.
 
 *** w107_Version1472
-patchfile = w107_105_Version1472.patch
+patchfile = w107_106_Version1472.patch
 - commit revision 1410
 Release version 1.47.2.
+
+*** w107_linux_x11
+patchfile = w107_105_linux_x11.patch
+- commit revision 1411
+Fix some compile warnings in the linux_x port.
+
+
 

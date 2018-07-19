@@ -138,6 +138,12 @@
 #include <X11/extensions/xf86dga.h>
 #endif
 
+#define USE_XKB
+
+#ifdef USE_XKB
+// XKeycodeToKeysym is deprecated, refered to use XkbKeycodeToKeysym
+#include <X11/XKBlib.h>
+#endif
 
 // Had to dig up XShm.c for this one.
 // It is in the libXext, but not in the X headers.
@@ -651,12 +657,20 @@ static int xlatekey( KeyCode keycode, boolean keydown )
     }
     else {
         // X keymapping
+#ifdef USE_XKB
+        keysym = XkbKeycodeToKeysym(X_display, keycode, 0, 0);
+#else       
         keysym = XKeycodeToKeysym(X_display, keycode, 0);
+#endif
         rc = keysym;
     }
 #else
     // X keymapping
+#ifdef USE_XKB
+    keysym = XkbKeycodeToKeysym(X_display, keycode, 0, 0);
+#else       
     keysym = XKeycodeToKeysym(X_display, keycode, 0);
+#endif
     rc = keysym;
 #endif
 
@@ -2077,14 +2091,14 @@ void I_StartupGraphics(void)
     {
         vid.bitpp = x_bitpp;
         vid.bytepp = x_bytepp;
-        GenPrintf(EMSG_info, "Video %i bpp (%i bytes)\n", vid.bitpp, vid.bytepp);
+        GenPrintf(EMSG_info, "Video %s: %i bpp (%i bytes)\n", displayname, vid.bitpp, vid.bytepp);
     }
     else if( verbose )
     {
         // Use 8 bit and do the palette translation.
         vid.bitpp = 8;
         vid.bytepp = 1;
-        GenPrintf(EMSG_ver, "%i bpp rejected\n", x_bitpp );
+        GenPrintf(EMSG_ver, "Video %s: %i bpp rejected\n", displayname, x_bitpp );
     }
     determineColorMask();  // Set color offset and masks
     createColorMap();  // Create X_cmap and x_colormap2/3/4

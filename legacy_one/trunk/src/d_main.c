@@ -276,7 +276,7 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1410"
+#define SVN_REV "1411"
 #endif
 
 

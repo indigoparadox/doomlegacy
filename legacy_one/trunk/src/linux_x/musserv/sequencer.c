@@ -51,6 +51,10 @@
 // Take drastic measures to kill notes that drone on.
 //#define ALL_OFF_FIX 1
 
+// Some operations from soundcard.h cause messages about violating strict aliasing.
+// This is due to an operation  *(short *)&_seqbuf[_seqbufptr+6] = (w14).
+// There is no good way to stop this, as long as -wstrict-aliasing is set.
+
 
 #ifdef DEFAULT_AWE32_SYNTH
 #  define DEFAULT_DEV   DVT_AWE32_SYNTH
