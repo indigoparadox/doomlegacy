@@ -74,7 +74,7 @@
 #include "../../s_sound.h"
   // SURROUND_SEP
 
-#define DEBUG   1
+// #define DEBUG   1
 
 #define NUMCHAN    8
 

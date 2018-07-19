@@ -6730,5 +6730,11 @@ patchfile = w107_105_linux_x11.patch
 - commit revision 1411
 Fix some compile warnings in the linux_x port.
 
+*** w107_linux_x11
+patchfile = w107_105_linux_x11.patch
+- commit revision 1412
+Turn off the DEBUG in linux_x11 sound server.
+
+
 
 
