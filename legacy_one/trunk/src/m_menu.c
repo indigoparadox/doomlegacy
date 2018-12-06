@@ -338,6 +338,7 @@ typedef enum {
   IT_STRING2 =     0x0060,  // a simple string
   IT_GRAYPATCH =   0x0070,  // grayed patch or big font string
   IT_BIGSLIDER =   0x0080,  // volume sound use this
+  IT_EXTERNAL  =   0x00F0,  // nothing, not even a skull
 
 //consvar specific
   IT_CVARTYPE =	  0x0700,   // field
@@ -363,6 +364,8 @@ typedef enum {
 
 
 typedef void (*menufunc_t)(int choice);
+// Return 0= continue, 1= intercept key, 2= testing.
+static byte (*key_handler2)(int key) = NULL;  // keyboard intercept 
 
 // [smite] dirty hack, contains a second parameter to IT_KEYHANDLER functions
 // (int choice is the key)
@@ -419,7 +422,7 @@ static menu_t  * currentMenu = NULL;
 static menuitem_t * menuline = NULL; // menu line that invoked a call or submenu
 static byte    itemOn;             // 0..40, menu item skull is on
 static int8_t  skullAnimCounter;   // 0..10, skull animation counter
-static byte    whichSkull;         // 0,1 which skull to draw
+static byte    whichSkull;         // 0,1 which skull to draw, >128 off
 static int     SkullBaseLump;
 
 // graphic name of skulls
@@ -622,6 +625,7 @@ void M_DrawGenericMenu(void)
                    V_DrawScaledPatch_Name (x,y, mip->patch );
                }
            case IT_NOTHING:
+           case IT_EXTERNAL:
            case IT_DYBIGSPACE:
                y += LINEHEIGHT;
                break;
@@ -713,6 +717,8 @@ void M_DrawGenericMenu(void)
 
         }
     }
+
+    if( whichSkull > 1 )  return;
 
     // DRAW THE SKULL CURSOR
     if (((currentMenu->menuitems[itemOn].status & IT_DISPLAY)==IT_PATCH)
@@ -1792,9 +1798,22 @@ menu_t  EffectsOptionsDef =
 //                        Video OPTIONS MENU
 //===========================================================================
 
+// Which line to modify for some menu options.
+enum
+{
+#ifdef __DJGPP__
+    VO_gamma = 2,
+#else
+    VO_gamma = 3,  // Index of Gamma
+#endif
+} videooptions_e;
+
 menuitem_t VideoOptionsMenu[]=
 {
     {IT_STRING | IT_SUBMENU,0, "Video Modes..."   , &VidModeDef       , 0},
+#ifndef __DJGPP__
+    {IT_STRING | IT_CVAR,0,    "Fullscreen"       , &cv_fullscreen    , 0},
+#endif
 // if these are moved then fix MenuGammaFunc_dependencies
     {IT_STRING | IT_CVAR,0,    "Gamma Function"   , &cv_gammafunc     , 0},
     {IT_STRING | IT_CVAR
@@ -1804,9 +1823,6 @@ menuitem_t VideoOptionsMenu[]=
     {IT_STRING | IT_CVAR
      | IT_CV_SLIDER     ,0,    "Brightness"       , &cv_bright        , 0},
     {IT_STRING | IT_CVAR,0,    "Wait Retrace"     , &cv_vidwait       , 0},
-#ifndef __DJGPP__
-    {IT_STRING | IT_CVAR,0,    "Fullscreen"       , &cv_fullscreen    , 0},
-#endif
     {IT_STRING | IT_CVAR
      | IT_CV_SLIDER     ,0,    "Screen Size"      , &cv_viewsize      , 0},
     {IT_STRING | IT_CVAR,0,    "Scale Status Bar" , &cv_scalestatusbar, 0},
@@ -1837,13 +1853,17 @@ menu_t  VideoOptionsDef =
 void MenuGammaFunc_dependencies( byte gamma_en,
                                  byte black_en, byte bright_en )
 {
-   VideoOptionsMenu[2].status = 
+   // Update menu highlights
+   // Gamma
+   VideoOptionsMenu[VO_gamma].status = 
      ( gamma_en ) ? (IT_STRING | IT_CVAR | IT_CV_SLIDER )
        : (IT_WHITESTRING | IT_SPACE);
-   VideoOptionsMenu[3].status = 
+   // Black Level
+   VideoOptionsMenu[VO_gamma+1].status = 
      ( black_en ) ? (IT_STRING | IT_CVAR | IT_CV_SLIDER )
        : (IT_WHITESTRING | IT_SPACE);
-   VideoOptionsMenu[4].status = 
+   // Brightness
+   VideoOptionsMenu[VO_gamma+2].status = 
      ( bright_en ) ? (IT_STRING | IT_CVAR | IT_CV_SLIDER )
        : (IT_WHITESTRING | IT_SPACE);
 }
@@ -2573,10 +2593,12 @@ void M_ChangeControl(int choice)
 void M_DrawVideoMode(void);             //added:30-01-98:
 
 void M_HandleVideoMode (int ch);
+byte  video_test_key_handler( int key );
 
 menuitem_t VideoModeMenu[]=
 {
-    {IT_KEYHANDLER | IT_NOTHING, 0, "", M_HandleVideoMode, '\0'},     // dummy menuitem for the control func
+//    {IT_STRING | IT_CVAR, 0, "Draw Mode", &cv_drawmode      , 0},
+    {IT_KEYHANDLER | IT_EXTERNAL, 0, "", M_HandleVideoMode, '\0'},     // dummy menuitem for the control func
 };
 
 
@@ -2592,12 +2614,18 @@ menu_t  VidModeDef =
     0                   // lastOn
 };
 
-//added:30-01-98:
-#define MAXCOLUMNMODES   10     //max modes displayed in one column
+//max modes displayed in one column
+//#define MAXCOLUMNMODES   10
+#define MAXCOLUMNMODES   8
 #define MAXMODEDESCS     (MAXCOLUMNMODES*3)
+#define MODES_X          16
+#define MODES_Y          44
+#define MODES_X_INC      (8*13)
+#define MODES_Y_INC      8
+#define MODETXT_Y        (MODES_Y + 60 + 24)
 
 // shhh... what am I doing... nooooo!
-static int vidm_testing_cnt=0;
+static int vidm_testing_cnt=0;  // test videomode failsafe
 static modenum_t  vidm_previousmode;  // modenum in format of setmodeneeded
 static int vidm_current=0;  // modedesc index
 static int vidm_nummodes;
@@ -2606,8 +2634,8 @@ static int vidm_column_size;
 typedef struct
 {
     modenum_t  modenum; // video mode number in format of setmodeneeded
-    char    *desc;      //XXXxYYY
-    int     iscur;      //1 if it is the current active mode
+    char    *desc;      // XXXxYYY
+    int     iscur;      // 1 if it is the current active mode
 } modedesc_t;
 
 static modedesc_t   modedescs[MAXMODEDESCS];
@@ -2627,6 +2655,8 @@ void M_DrawVideoMode(void)
     char    *desc;
     char    temp[80];
 
+    key_handler2 = video_test_key_handler;  // key handler
+   
     // draw title
     M_DrawMenuTitle();
 
@@ -2678,55 +2708,123 @@ void M_DrawVideoMode(void)
 
     vidm_column_size = (vidm_nummodes+2) / 3;
 
-
-    row = 16;
-    col = VidModeDef.y;
+    // list down col first
+    col = MODES_X;
+    row = MODES_Y;
     for(i=0; i<vidm_nummodes; i++)
     {
-        V_DrawString (row, col, modedescs[i].iscur ? V_WHITEMAP : 0, modedescs[i].desc);
+        V_DrawString (col, row, modedescs[i].iscur ? V_WHITEMAP : 0, modedescs[i].desc);
 
-        col += 8;
+        row += MODES_Y_INC;
         if((i % vidm_column_size) == (vidm_column_size-1))
         {
-            row += 8*13;
-            col = 36;
+            // next column
+            col += MODES_X_INC;
+            row = MODES_Y;
         }
     }
 
     if (vidm_testing_cnt>0)
     {
         sprintf(temp, "TESTING MODE %s", modedescs[vidm_current].desc );
-        M_CentreText(VidModeDef.y+80+24, temp );
-        M_CentreText(VidModeDef.y+90+24, "Please wait 5 seconds..." );
+        M_CentreText(MODETXT_Y + 20, temp );
+        M_CentreText(MODETXT_Y + 30, "Please wait 5 seconds..." );
     }
     else
     {
-        M_CentreText(VidModeDef.y+60+24,"Press ENTER to set mode");
+//        M_CentreText(MODETXT_Y,"Press ENTER to set mode");
+        M_CentreText(MODETXT_Y,"Press S to set mode");
 
-        M_CentreText(VidModeDef.y+70+24,"T to test mode for 5 seconds");
+        M_CentreText(MODETXT_Y + 10,"T to test mode for 5 seconds");
 
         sprintf(temp, "D to make %s the default", VID_GetModeName(vid.modenum));
-        M_CentreText(VidModeDef.y+80+24,temp);
+        M_CentreText(MODETXT_Y + 20,temp);
 
         sprintf(temp, "Current default is %dx%d (%d bits)", cv_scr_width.value, cv_scr_height.value, cv_scr_depth.value);
-        M_CentreText(VidModeDef.y+90+24,temp);
+        M_CentreText(MODETXT_Y + 30,temp);
 
-        M_CentreText(VidModeDef.y+100+24,"Press ESC to exit");
+        M_CentreText(MODETXT_Y + 40,"Press ESC to exit");
     }
 
 // Draw the cursor for the VidMode menu
     if (skullAnimCounter<4)    //use the Skull anim counter to blink the cursor
+//    if( (itemOn > 0) && skullAnimCounter<4 )    //use the Skull anim counter to blink the cursor
     {
-        i = 16 - 10 + ((vidm_current / vidm_column_size)*8*13);
-        j = VidModeDef.y + ((vidm_current % vidm_column_size)*8);
+        i = MODES_X - 10 + ((vidm_current / vidm_column_size) * MODES_X_INC);
+        j = MODES_Y + ((vidm_current % vidm_column_size) * MODES_Y_INC);
         V_DrawCharacter( i, j, '*' | 0x80);  // white
     }
+}
+
+
+// keyboard intercept 
+// Return 0= continue, 1= intercept key, 2= testing.
+byte  video_test_key_handler( int key )
+{
+//    cmd_req_drawmode = REQ_default;  // cancel any command line setup
+    req_drawmode = REQ_default;  // cancel any command line setup
+
+    if (vidm_testing_cnt>0)
+    {
+       // change back to the previous mode quickly
+       if (key==KEY_ESCAPE)
+       {
+           setmodeneeded = vidm_previousmode;
+           vidm_testing_cnt = 0;
+       }
+       return 2;
+    }
+
+    switch( key )
+    {
+      case KEY_ESCAPE:      //this one same as M_Responder
+        key_handler2 = NULL;
+        S_StartSound(menu_sfx_esc);
+        Pop_Menu();
+        goto used_key;
+
+      case 'S':
+      case 's':
+        S_StartSound(menu_sfx_enter);
+        if ( setmodeneeded.modetype == MODE_NOP ) //in case the previous setmode was not finished
+            setmodeneeded = modedescs[vidm_current].modenum;
+        goto used_key;
+
+      case 'T':
+      case 't':
+        S_StartSound(menu_sfx_action);
+        vidm_testing_cnt = TICRATE*5;
+        vidm_previousmode = vid.modenum;
+        if ( setmodeneeded.modetype == MODE_NOP ) //in case the previous setmode was not finished
+            setmodeneeded = modedescs[vidm_current].modenum;
+        goto used_key;
+
+      case 'D':
+      case 'd':
+        // current active mode becomes the default mode.
+        S_StartSound(menu_sfx_action);
+        SCR_SetDefaultMode ();
+        goto used_key;
+
+      default:
+        break;
+     }
+    return 0;
+
+ used_key:
+    return 1;
 }
 
 
 //added:30-01-98: special menuitem key handler for video mode list
 void M_HandleVideoMode (int key)
 {
+    byte old_col, new_col;
+
+    if( video_test_key_handler(key) )  return;
+
+    old_col = vidm_current / vidm_column_size;
+
     if (vidm_testing_cnt>0)
     {
        // change back to the previous mode quickly
@@ -2743,33 +2841,29 @@ void M_HandleVideoMode (int key)
       case KEY_DOWNARROW:
         S_StartSound(menu_sfx_updown);
         vidm_current++;
-        if (vidm_current>=vidm_nummodes)
-            vidm_current = 0;
+        new_col = vidm_current / vidm_column_size;
+        if( new_col != old_col )  goto top_menu;
+        if( vidm_current >= vidm_nummodes )  goto top_menu;
         break;
 
       case KEY_UPARROW:
         S_StartSound(menu_sfx_updown);
+        if( vidm_current <= 0 )   goto top_menu;
         vidm_current--;
-        if (vidm_current<0)
-            vidm_current = vidm_nummodes-1;
+        new_col = vidm_current / vidm_column_size;
+        if( new_col != old_col )  goto top_menu;
         break;
 
       case KEY_LEFTARROW:
         S_StartSound(menu_sfx_val);
+        if( (vidm_current - vidm_column_size) < 0  )  return;
         vidm_current -= vidm_column_size;
-        if (vidm_current<0)
-            vidm_current = (vidm_column_size*3) + vidm_current;
-        if (vidm_current>=vidm_nummodes)
-            vidm_current = vidm_nummodes-1;
         break;
 
       case KEY_RIGHTARROW:
         S_StartSound(menu_sfx_val);
+        if( (vidm_current + vidm_column_size) >= vidm_nummodes )  return;
         vidm_current += vidm_column_size;
-        if (vidm_current>=(vidm_column_size*3))
-            vidm_current %= vidm_column_size;
-        if (vidm_current>=vidm_nummodes)
-            vidm_current = vidm_nummodes-1;
         break;
 
       case KEY_ENTER:
@@ -2778,30 +2872,21 @@ void M_HandleVideoMode (int key)
             setmodeneeded = modedescs[vidm_current].modenum;
         break;
 
-      case KEY_ESCAPE:      //this one same as M_Responder
-        S_StartSound(menu_sfx_esc);
-        Pop_Menu();
-        return;
-
-      case 'T':
-      case 't':
-        S_StartSound(menu_sfx_action);
-        vidm_testing_cnt = TICRATE*5;
-        vidm_previousmode = vid.modenum;
-        if ( setmodeneeded.modetype == MODE_NOP ) //in case the previous setmode was not finished
-            setmodeneeded = modedescs[vidm_current].modenum;
-        return;
-
-      case 'D':
-      case 'd':
-        // current active mode becomes the default mode.
-        S_StartSound(menu_sfx_action);
-        SCR_SetDefaultMode ();
-        return;
-
       default:
         break;
     }
+
+    if( vidm_current >= vidm_nummodes )
+        vidm_current = vidm_nummodes-1;
+    if( vidm_current < 0 )
+        vidm_current = 0;
+    return;
+
+top_menu:
+    // Move to the top of menu, outside the mode list.
+    vidm_current = 0;
+    itemOn = 0;
+    return;
 }
 
 #ifdef SAVEGAMEDIR
@@ -4555,6 +4640,12 @@ boolean M_Responder (event_t* ev)
       input_char = ch;
       routine(key);
       goto ret_true;
+    }
+
+    // Handle overriding keyboard input
+    if( key_handler2 )
+    {
+        if( key_handler2(key) )  goto ret_true;
     }
 
     if( r_menuline->status==IT_MSGHANDLER )
