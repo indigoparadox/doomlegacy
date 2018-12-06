@@ -98,7 +98,7 @@ void V_Setup_Wad_VideoResc(void);
 // Set the current RGB palette lookup to use for palettized graphics
 void V_SetPalette( int palettenum );
 
-void V_SetPaletteLump( char *pal );
+void V_SetPaletteLump( const char *pal );
 
 extern RGBA_t  *pLocalPalette;
 

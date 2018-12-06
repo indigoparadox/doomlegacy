@@ -828,7 +828,7 @@ static int     comskips,varskips;
 
         // push the command
         // [WDJ] Must be done as one string, it could try to execute a partial string.
-	// The first char is prompt, not part of the command.
+        // The first char is prompt, not part of the command.
         COM_BufAddText ( va( "%s\n", inputlines[inputline]+1 ));
 
         CONS_Printf("%s\n",inputlines[inputline]);
@@ -1561,7 +1561,7 @@ void CON_Draw_Console (void)
     else
     {
 #ifdef HWRENDER // not win32 only 19990829 by Kin
-        if (rendermode==render_soft)
+        if( rendermode == render_soft )
 #endif
         {
             w = fip->xinc * vid.dupx;  // font1 or wad font

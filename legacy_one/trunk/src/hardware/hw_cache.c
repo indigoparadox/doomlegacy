@@ -162,7 +162,7 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
                            int blockwidth, int blockheight, int blocklinebyte,
                            int texturewidth, int textureheight,
                            int originx, int originy, //where to draw the patch in the surface block
-                           patch_t* realpatch, int bytepp )
+                           patch_t* sw_patch, int bytepp )
 {
     int          x,x1,x2;
     int          col,ncols;
@@ -184,7 +184,7 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
     byte        *dest;
 
     x1 = originx;
-    x2 = x1 + realpatch->width;
+    x2 = x1 + sw_patch->width;
 
     if (x1<0)
         x = 0;
@@ -202,7 +202,7 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
 
 #if 0
     CONS_Printf("patch %dx%d texture %dx%d block %dx%d\n",
-         realpatch->width, realpatch->height,
+         sw_patch->width, sw_patch->height,
          texturewidth, textureheight, blockwidth, blockheight);
     CONS_Printf("      col %d ncols %d x %d\n", col, ncols, x);
 #endif
@@ -219,8 +219,8 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
 
     for (block += col*bytepp; ncols--; block+=bytepp, xfrac+=xfracstep)
     {
-        patchcol = (column_t *)((byte *)realpatch
-                                + realpatch->columnofs[xfrac>>16]);
+        patchcol = (column_t *)((byte *)sw_patch
+                                + sw_patch->columnofs[xfrac>>16]);
 
         scale_y = (blockheight << 16) / textureheight;
 
@@ -527,7 +527,7 @@ static void HWR_GenerateTexture (int texnum, MipTexture_t* grtex,
     byte*               block;
     texture_t*          texture;
     texpatch_t*         texpatch;
-    patch_t*            realpatch;
+    patch_t*            sw_patch;
 
     int         i;
     int         bytepp;  // bytes per pixel
@@ -587,18 +587,18 @@ static void HWR_GenerateTexture (int texnum, MipTexture_t* grtex,
          i<texture->patchcount;
          i++, texpatch++)
     {
-        realpatch = W_CachePatchNum_Endian (texpatch->patchnum, PU_CACHE);
+        sw_patch = W_CachePatchNum_Endian (texpatch->patchnum, PU_CACHE);
         // correct texture size for Legacy's large skies
         if (skyspecial) {
-            //CONS_Printf("sky %d, %d\n",texture->width,realpatch->width);
-            //texture->width = realpatch->width;
-            texture->height = realpatch->height;
+            //CONS_Printf("sky %d, %d\n",texture->width,sw_patch->width);
+            //texture->width = sw_patch->width;
+            texture->height = sw_patch->height;
         }
         HWR_DrawPatchInCache( mipmap,
                               blockwidth, blockheight, blockwidth*bytepp,
                               texture->width, texture->height,
                               texpatch->originx, texpatch->originy,
-                              realpatch, bytepp );
+                              sw_patch, bytepp );
     }
      //Hurdler: not efficient at all but I don't remember exactly how HWR_DrawPatchInCache works :(
     if (bytepp==4)
@@ -867,6 +867,8 @@ void HWR_Free_TextureCache (void)
 {
     int i,j;
 
+    if( HWD.pfnClearMipMapCache == NULL )   return;  // cache never set
+   
     // free references to the textures
     HWD.pfnClearMipMapCache ();
    
@@ -910,7 +912,7 @@ void HWR_Free_TextureCache (void)
     }
 }
 
-// Called from P_SetupLevel
+// Called from P_SetupLevel->HWR_Preload_Graphics
 void HWR_Prep_LevelCache (int numtextures)
 {
     // problem: the mipmap cache management hold a list of mipmaps.. but they are
@@ -1156,12 +1158,12 @@ void HWR_GetPatch( MipPatch_t* gpatch )
     {
         // load the software patch, PU_STATIC or the Z_Malloc for hardware patch will
         // flush the software patch before the conversion! oh yeah I suffered
-        patch_t* pp = W_CachePatchNum_Endian(gpatch->patchlump, PU_IN_USE);
-        HWR_MakePatch ( pp, gpatch, &gpatch->mipmap, 0);
+        patch_t * swpatch = W_CachePatchNum_Endian(gpatch->patchlump, PU_IN_USE);
+        HWR_MakePatch ( swpatch, gpatch, &gpatch->mipmap, 0);
 
         // this is inefficient.. but the hardware patch in heap is purgeable so it should
         // not fragment memory, and besides the REAL cache here is the hardware memory
-        Z_Free(pp);
+        Z_Free(swpatch);
     }
 
     HWD.pfnSetTexture( &gpatch->mipmap );

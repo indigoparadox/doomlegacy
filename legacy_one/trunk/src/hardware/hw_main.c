@@ -437,12 +437,14 @@ consvar_t cv_grgamma = { "gr_gamma", "0", 0, CV_Unsigned };
 
 void CV_FogDensity_ONChange(void)
 {
-    HWD.pfnSetSpecialState(HWD_SET_FOG_DENSITY, cv_grfogdensity.value);
+    if( HWD.pfnSetSpecialState )
+        HWD.pfnSetSpecialState(HWD_SET_FOG_DENSITY, cv_grfogdensity.value);
 }
 
 void CV_filtermode_ONChange(void)
 {
-    HWD.pfnSetSpecialState(HWD_SET_TEXTUREFILTERMODE, cv_grfiltermode.value);
+    if( HWD.pfnSetSpecialState )
+        HWD.pfnSetSpecialState(HWD_SET_TEXTUREFILTERMODE, cv_grfiltermode.value);
 }
 
 // ==========================================================================
@@ -3527,7 +3529,7 @@ static void HWR_ProjectSprite(mobj_t * thing)
         if( sprframe->rotation_pattern == SRP_8)
         {
             // 8 direction rotation pattern
-	    rot = (ang - thing->angle + (unsigned) (ANG45/2) * 9) >> 29;
+            rot = (ang - thing->angle + (unsigned) (ANG45/2) * 9) >> 29;
         }
 #ifdef ROT16
         else if( sprframe->rotation_pattern == SRP_16)
@@ -4280,7 +4282,8 @@ static void CV_grFov_OnChange(void)
 
 static void CV_grPolygonSmooth_OnChange(void)
 {
-    HWD.pfnSetSpecialState(HWD_SET_POLYGON_SMOOTH, cv_grpolygonsmooth.value);
+    if( HWD.pfnSetSpecialState )
+        HWD.pfnSetSpecialState(HWD_SET_POLYGON_SMOOTH, cv_grpolygonsmooth.value);
 }
 
 /*

@@ -93,6 +93,9 @@
   //SoM: 4/10/2000: camera
 #include "z_zone.h"
 
+// Draw
+// rendermode == render_soft
+
 seg_t*          curline;
 side_t*         sidedef;
 line_t*         linedef;

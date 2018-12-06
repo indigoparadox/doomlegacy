@@ -992,7 +992,7 @@ void W_release_patch( patch_t * patch )
         if( ! verify_Z_Malloc(patch))
         {
             GenPrintf( EMSG_error, "Error W_release_patch: Not a memory block %x\n", *patch);
-	    return;
+            return;
         }
 #endif
         Z_ChangeTag( patch, PU_UNLOCK_CACHE );

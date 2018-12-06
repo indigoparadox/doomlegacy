@@ -103,7 +103,7 @@ RGBA_t  gamma_correction = {0x7F7F7F7F};
 #if defined(__APPLE__) && defined(__GNUC__) && (__GNUC__ == 3) && (__GNUC_MINOR__ == 3)
 //[segabor] !!! I had problem compiling this source with gcc 3.3
 // maybe gcc 3.2 does it better
-	SDL_Surface *vidSurface=NULL;
+        SDL_Surface *vidSurface=NULL;
 #else
 static  SDL_Surface *vidSurface=NULL;
 #endif
@@ -164,7 +164,7 @@ void I_StartFrame(void)
 {
     // no longer lock, no more assumed direct access
 #if 0 
-    if(render_soft == rendermode)
+    if( rendermode == render_soft )
     {
         if(SDL_MUSTLOCK(vidSurface))
         {
@@ -190,7 +190,7 @@ void I_UpdateNoBlit(void)
 //
 void I_FinishUpdate(void)
 {
-    if(render_soft == rendermode)
+    if( rendermode == render_soft )
     {
         // [WDJ] Only lock during transfer itself.  The only access
         // to vid.direct is in this routine.
@@ -200,92 +200,92 @@ void I_FinishUpdate(void)
 
 #ifdef TESTBPP
         // [WDJ] To test drawing in 15bpp, 16bpp, 24bpp, convert the
-	// screen drawn in the testbpp mode to the native bpp mode.
+        // screen drawn in the testbpp mode to the native bpp mode.
         if( testbpp )
         {
-	    byte * vidmem = vid.direct;
-	    byte * src = vid.display;
-	    int h = vid.height;
-	    while( h-- )
-	    {
-	        int w=vid.width;
-	        switch( testbpp )
-	        {
-		 case 15:
-	          {
-		    uint32_t * v32 = (uint32_t*) vidmem;
-		    uint16_t * s16 = (uint16_t*) src;
-		    while( w--)
-		    {
-		        *v32 = ((*s16&0x7C00)<<9)|((*s16&0x03E0)<<6)|((*s16&0x001F)<<3);
-		        v32++;
-		        s16++;
-		    }
-		  }
-		  break;
-		 case 16:
-	          {
-		    uint32_t * v32 = (uint32_t*) vidmem;
-		    uint16_t * s16 = (uint16_t*) src;
-		    while( w--)
-		    {
-		        *v32 = ((*s16&0xF800)<<8)|((*s16&0x07E0)<<5)|((*s16&0x001F)<<3);
-		        v32++;
-		        s16++;
-		    }
-		  }
-		  break;
-		 case 24:
-	          {
-		    byte* v = vidmem;
-		    byte* s = src;
-		    while( w--)
-		    {
-		        *(uint16_t*)v = *(uint16_t*)s;  // g, b
-		        v[2] = s[2];  // r
-		        v+=4;
-		        s+=3;
-		    }
-		  }
-		  break;
-		 case 32:
-		  memcpy( vidmem, src, vid.widthbytes );
-		  break;
-		}
-	        src += vid.ybytes;
-	        vidmem += vid.direct_rowbytes;
-	    }
-	}
+            byte * vidmem = vid.direct;
+            byte * src = vid.display;
+            int h = vid.height;
+            while( h-- )
+            {
+                int w=vid.width;
+                switch( testbpp )
+                {
+                 case 15:
+                  {
+                    uint32_t * v32 = (uint32_t*) vidmem;
+                    uint16_t * s16 = (uint16_t*) src;
+                    while( w--)
+                    {
+                        *v32 = ((*s16&0x7C00)<<9)|((*s16&0x03E0)<<6)|((*s16&0x001F)<<3);
+                        v32++;
+                        s16++;
+                    }
+                  }
+                  break;
+                 case 16:
+                  {
+                    uint32_t * v32 = (uint32_t*) vidmem;
+                    uint16_t * s16 = (uint16_t*) src;
+                    while( w--)
+                    {
+                        *v32 = ((*s16&0xF800)<<8)|((*s16&0x07E0)<<5)|((*s16&0x001F)<<3);
+                        v32++;
+                        s16++;
+                    }
+                  }
+                  break;
+                 case 24:
+                  {
+                    byte* v = vidmem;
+                    byte* s = src;
+                    while( w--)
+                    {
+                        *(uint16_t*)v = *(uint16_t*)s;  // g, b
+                        v[2] = s[2];  // r
+                        v+=4;
+                        s+=3;
+                    }
+                  }
+                  break;
+                 case 32:
+                  memcpy( vidmem, src, vid.widthbytes );
+                  break;
+                }
+                src += vid.ybytes;
+                vidmem += vid.direct_rowbytes;
+            }
+        }
         else
 #endif
        
-	// [WDJ] SDL Spec says that you can directly read and write the surface
-	// while it is locked.
+        // [WDJ] SDL Spec says that you can directly read and write the surface
+        // while it is locked.
         if(vid.display != vid.direct)
         {
 #if 0	   
-	    VID_BlitLinearScreen( vid.display, vid.direct, vid.widthbytes, vid.height, vid.ybytes, vid.direct_rowbytes);
+            VID_BlitLinearScreen( vid.display, vid.direct, vid.widthbytes, vid.height, vid.ybytes, vid.direct_rowbytes);
 #else
-	    if( (vid.widthbytes == vid.direct_rowbytes) && (vid.ybytes == vid.direct_rowbytes))
-	    {
-	        // fast, copy entire buffer at once
-	        memcpy(vid.direct, vid.display, vid.direct_size);
-	        //screens[0] = vid.direct; //FIXME: we MUST render directly into the surface
-	    }
-	    else
-	    {
-	        // [WDJ] padded video buffer (Mac)
-	        // Some cards use the padded space, so DO NOT STOMP ON IT.
-	        int h = vid.height;
-	        byte * vidmem = vid.direct;
-	        byte * src = vid.display;
-	        while( h-- )
-	        {
-		    memcpy(vidmem, src, vid.widthbytes);  // width limited
-		    vidmem += vid.direct_rowbytes;
-		    src += vid.ybytes;
-		}
-	    }
+            if( (vid.widthbytes == vid.direct_rowbytes) && (vid.ybytes == vid.direct_rowbytes))
+            {
+                // fast, copy entire buffer at once
+                memcpy(vid.direct, vid.display, vid.direct_size);
+                //screens[0] = vid.direct; //FIXME: we MUST render directly into the surface
+            }
+            else
+            {
+                // [WDJ] padded video buffer (Mac)
+                // Some cards use the padded space, so DO NOT STOMP ON IT.
+                int h = vid.height;
+                byte * vidmem = vid.direct;
+                byte * src = vid.display;
+                while( h-- )
+                {
+                    memcpy(vidmem, src, vid.widthbytes);  // width limited
+                    vidmem += vid.direct_rowbytes;
+                    src += vid.ybytes;
+                }
+            }
 #endif
         }
 
@@ -299,7 +299,7 @@ void I_FinishUpdate(void)
 #ifdef __MACOSX__
         // Setup Flip of DOUBLEBUF
         SDL_Flip(vidSurface);
-	// Hardware that does not support DOUBLEBUF does
+        // Hardware that does not support DOUBLEBUF does
         // SDL_UpdateRect(vidSurface, 0, 0, 0, 0);
 #else
         SDL_UpdateRect(vidSurface, 0, 0, 0, 0);
@@ -322,7 +322,7 @@ void I_FinishUpdate(void)
 // Screen to screen copy
 void I_ReadScreen(byte* scr)
 {
-    if (rendermode != render_soft)
+    if( rendermode != render_soft )
         I_Error ("I_ReadScreen: called while in non-software mode");
 
 #if 0	   
@@ -340,10 +340,10 @@ void I_ReadScreen(byte* scr)
         byte * vidmem = vid.display;
         while( h-- )
         {
-	    memcpy(scr, vidmem, vid.widthbytes);
-	    vidmem += vid.ybytes;
-	    scr += vid.ybytes;
-	}
+            memcpy(scr, vidmem, vid.widthbytes);
+            vidmem += vid.ybytes;
+            scr += vid.ybytes;
+        }
     }
 #endif
 }
@@ -429,14 +429,14 @@ modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
         // search SDL modelist
         for(i=firstEntry; i<numVidModes; i++)
         {
-	    tdist = abs(modeList[i]->w - rw) + abs(modeList[i]->h - rh);
-	    // find closest dist
-	    if( bestdist > tdist )
-	    {
-	        bestdist = tdist;
-	        best = i;
-	        if( tdist == 0 )  break;   // found exact match
-	    }
+            tdist = abs(modeList[i]->w - rw) + abs(modeList[i]->h - rh);
+            // find closest dist
+            if( bestdist > tdist )
+            {
+                bestdist = tdist;
+                best = i;
+                if( tdist == 0 )  break;   // found exact match
+            }
         }
         modenum.index = best - firstEntry + 1;  // 1..
     }
@@ -447,14 +447,14 @@ modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
         // window mode index returned 1..
         for(i=1; i<=MAXWINMODES; i++)
         {
-	    tdist = abs(windowedModes[i][0] - rw) + abs(windowedModes[i][1] - rh);
-	    // find closest dist
-	    if( bestdist > tdist )
-	    {
-	        bestdist = tdist;
-	        best = i;
-	        if( tdist == 0 )  break;   // found exact match
-	    }
+            tdist = abs(windowedModes[i][0] - rw) + abs(windowedModes[i][1] - rh);
+            // find closest dist
+            if( bestdist > tdist )
+            {
+                bestdist = tdist;
+                best = i;
+                if( tdist == 0 )  break;   // found exact match
+            }
         }
         modenum.index = best; // 1..
     }
@@ -474,8 +474,8 @@ static void  VID_SetMode_vid( int req_width, int req_height, int reqflags )
     if( verbose>1 )
     {
         GenPrintf( EMSG_ver,"SDL_SetVideoMode(%i,%i,%i,0x%X)  %s\n",
-		req_width, req_height, request_bitpp, reqflags,
-		(reqflags&SDL_FULLSCREEN)?"Fullscreen":"Window");
+                req_width, req_height, request_bitpp, reqflags,
+                (reqflags&SDL_FULLSCREEN)?"Fullscreen":"Window");
     }
 
     if(vidSurface)
@@ -498,25 +498,25 @@ static void  VID_SetMode_vid( int req_width, int req_height, int reqflags )
     {
         int32_t vflags = vidSurface->flags;
         GenPrintf( EMSG_ver,"  Got %ix%i, %i bpp, %i bytes\n",
-		vidSurface->w, vidSurface->h,
-		vidSurface->format->BitsPerPixel, vidSurface->format->BytesPerPixel );
+                vidSurface->w, vidSurface->h,
+                vidSurface->format->BitsPerPixel, vidSurface->format->BytesPerPixel );
         GenPrintf( EMSG_ver,"  HW-surface= %x, HW-palette= %x, HW-accel= %x, Doublebuf= %x, Async= %x \n",
-		vflags&SDL_HWSURFACE, vflags&SDL_HWPALETTE, vflags&SDL_HWACCEL, vflags&SDL_DOUBLEBUF, vflags&SDL_ASYNCBLIT );
+                vflags&SDL_HWSURFACE, vflags&SDL_HWPALETTE, vflags&SDL_HWACCEL, vflags&SDL_DOUBLEBUF, vflags&SDL_ASYNCBLIT );
         if(SDL_MUSTLOCK(vidSurface))
-	    GenPrintf( EMSG_ver,"  Notice: MUSTLOCK video surface\n" );
+            GenPrintf( EMSG_ver,"  Notice: MUSTLOCK video surface\n" );
     }
     if( vidSurface->w != vid.width || vidSurface->h != vid.height )
     {
         GenPrintf( EMSG_ver,"  Adapting to VideoMode: requested %ix%i, got %ix%i\n",
-		vid.width, vid.height,
-		vidSurface->w, vidSurface->h );
+                vid.width, vid.height,
+                vidSurface->w, vidSurface->h );
         vid.width = vidSurface->w;
         vid.height = vidSurface->h;
     }
     if( vidSurface->format->BitsPerPixel != request_bitpp )
     {
         GenPrintf( EMSG_ver,"  Notice: requested %i bpp, got %i bpp\n",
-		request_bitpp, vidSurface->format->BitsPerPixel );
+                request_bitpp, vidSurface->format->BitsPerPixel );
     }
 
     vid.bitpp = vidSurface->format->BitsPerPixel;
@@ -533,17 +533,17 @@ static void  VID_SetMode_vid( int req_width, int req_height, int reqflags )
         vid.bitpp = testbpp;
         switch( testbpp )
         {
-	 case 15:
-	 case 16:
-	   vid.bytepp = 2;
-	   break;
-	 case 24:
-	   vid.bytepp = 3;
-	   break;
-	 case 32:
-	   vid.bytepp = 4;
-	   break;
-	}
+         case 15:
+         case 16:
+           vid.bytepp = 2;
+           break;
+         case 24:
+           vid.bytepp = 3;
+           break;
+         case 32:
+           vid.bytepp = 4;
+           break;
+        }
     }
 #endif
 #if 1
@@ -577,7 +577,7 @@ int VID_SetMode(modenum_t modenum)
     vid.recalc = true;
 
     GenPrintf( EMSG_info, "VID_SetMode(%s,%i)\n",
-	       modetype_string[modenum.modetype], modenum.index);
+               modetype_string[modenum.modetype], modenum.index);
 
     I_UngrabMouse();
 
@@ -588,34 +588,36 @@ int VID_SetMode(modenum_t modenum)
         req_width = modeList[mi]->w;
         req_height = modeList[mi]->h;
 
-        if(render_soft == rendermode)
+        if( rendermode == render_soft )
         {
-	    VID_SetMode_vid(req_width, req_height, surfaceFlags_fullscreen);  // fullscreen
-	    if( vidSurface == NULL )  goto fail;
+            VID_SetMode_vid(req_width, req_height, surfaceFlags_fullscreen);  // fullscreen
+            if( vidSurface == NULL )  goto fail;
         }
-        else // (render_soft == rendermode)
+        else
         {
+            // HWR rendermode, fullscreen
             if(!OglSdlSurface(req_width, req_height, true))
-	        goto fail;
+                goto fail;
         }
     }
     else
     {
         // not fullscreen, window, 1..
-	// modenum == 0 is INITIAL_WINDOW_WIDTH
+        // modenum == 0 is INITIAL_WINDOW_WIDTH
         int mi = modenum.index;
         req_width = windowedModes[mi][0];
         req_height = windowedModes[mi][1];
 
-        if(render_soft == rendermode)
+        if( rendermode == render_soft )
         {
-	    VID_SetMode_vid( req_width, req_height, surfaceFlags );  // window
+            VID_SetMode_vid( req_width, req_height, surfaceFlags );  // window
             if(vidSurface == NULL)  goto fail;
         }
-        else //(render_soft == rendermode)
+        else
         {
+            // HWR rendermode, window
             if(!OglSdlSurface(req_width, req_height, 0))
-	        goto fail;
+                goto fail;
         }
     }
     vid.modenum = modenum;
@@ -683,7 +685,7 @@ abort_error:
 void I_RequestFullGraphics( byte select_fullscreen )
 {
     SDL_PixelFormat    req_format;
-    char * req_errmsg = NULL;
+    const char * req_errmsg = NULL;
     byte  alt_request_bitpp = 0;
 
     vid.draw_ready = 0;  // disable print reaching console
@@ -706,29 +708,29 @@ void I_RequestFullGraphics( byte select_fullscreen )
     {
         if( verbose )
         {
-	    GenPrintf( EMSG_ver,"SDL video info = { %i bits, %i bytes }\n",
-		videoInfo->vfmt->BitsPerPixel, videoInfo->vfmt->BytesPerPixel );
-	    if( verbose > 1 )
+            GenPrintf( EMSG_ver,"SDL video info = { %i bits, %i bytes }\n",
+                videoInfo->vfmt->BitsPerPixel, videoInfo->vfmt->BytesPerPixel );
+            if( verbose > 1 )
             {
-	      GenPrintf( EMSG_ver," HW_surfaces= %i, blit_hw= %i, blit_sw = %i\n",
-		videoInfo->hw_available, videoInfo->blit_hw, videoInfo->blit_sw );
-	      GenPrintf( EMSG_ver," video_mem= %i K\n",
-		videoInfo->video_mem );
-	    }
-	}
+              GenPrintf( EMSG_ver," HW_surfaces= %i, blit_hw= %i, blit_sw = %i\n",
+                videoInfo->hw_available, videoInfo->blit_hw, videoInfo->blit_sw );
+              GenPrintf( EMSG_ver," video_mem= %i K\n",
+                videoInfo->video_mem );
+            }
+        }
         if( req_drawmode == REQ_native )
         {
-	    vid.bitpp  = videoInfo->vfmt->BitsPerPixel;
-	    vid.bytepp = videoInfo->vfmt->BytesPerPixel;
-	    if( V_CanDraw( vid.bitpp ))
-	    {
-	        request_bitpp = vid.bitpp;
-	        goto get_modelist;
-	    }
-	    // Use 8 bit and let SDL do the palette lookup.
-	    if( verbose )
-	        GenPrintf( EMSG_ver,"Native %i bpp rejected\n", vid.bitpp );
-	}
+            vid.bitpp  = videoInfo->vfmt->BitsPerPixel;
+            vid.bytepp = videoInfo->vfmt->BytesPerPixel;
+            if( V_CanDraw( vid.bitpp ))
+            {
+                request_bitpp = vid.bitpp;
+                goto get_modelist;
+            }
+            // Use 8 bit and let SDL do the palette lookup.
+            if( verbose )
+                GenPrintf( EMSG_ver,"Native %i bpp rejected\n", vid.bitpp );
+        }
     }
     else
     {
@@ -764,7 +766,7 @@ void I_RequestFullGraphics( byte select_fullscreen )
     if( M_CheckParm( "-testbpp" ))
     {
         if( request_bitpp == 8 )
-	   I_Error( "Invalid for SDL port driver: -bpp 8 -testbpp" );
+           I_Error( "Invalid for SDL port driver: -bpp 8 -testbpp" );
         testbpp = request_bitpp;
         request_bitpp = 32;  // native mode
     }
@@ -781,18 +783,18 @@ get_modelist:
         if( request_bitpp == 8 )  break;
         if(req_drawmode == REQ_specific)
         {
-	   GenPrintf( EMSG_info,"No %i bpp modes\n", req_bitpp );
-	   goto abort_error;
+           GenPrintf( EMSG_info,"No %i bpp modes\n", req_bitpp );
+           goto abort_error;
         }
         if( alt_request_bitpp )
         {
-	    if(request_bitpp != alt_request_bitpp)
-	    {
-	       request_bitpp = alt_request_bitpp;
-	       continue;
-	    }
-	    GenPrintf( EMSG_info,"No %s modes\n", req_errmsg );
-	}
+            if(request_bitpp != alt_request_bitpp)
+            {
+               request_bitpp = alt_request_bitpp;
+               continue;
+            }
+            GenPrintf( EMSG_info,"No %s modes\n", req_errmsg );
+        }
         request_bitpp = 8;  // default last attempt
     }
     // requested modes failed, and 8bpp failed
@@ -817,19 +819,19 @@ found_modes:
     {
         if( verbose )
         {
-	    // list the modes
-	    GenPrintf( EMSG_ver, "%s %ix%i",
-		     (((numVidModes&0x03)==0)?(numVidModes)?"\nModes ":"Modes ":""),
-		     modeList[numVidModes]->w, modeList[numVidModes]->h );
-	}
+            // list the modes
+            GenPrintf( EMSG_ver, "%s %ix%i",
+                     (((numVidModes&0x03)==0)?(numVidModes)?"\nModes ":"Modes ":""),
+                     modeList[numVidModes]->w, modeList[numVidModes]->h );
+        }
         if( firstEntry < 0 )
         {
-	    if(modeList[numVidModes]->w <= MAXVIDWIDTH &&
-	       modeList[numVidModes]->h <= MAXVIDHEIGHT)
-	    {
-	        firstEntry = numVidModes;
-	    }
-	}
+            if(modeList[numVidModes]->w <= MAXVIDWIDTH &&
+               modeList[numVidModes]->h <= MAXVIDHEIGHT)
+            {
+                firstEntry = numVidModes;
+            }
+        }
         numVidModes++;
     }
     // Mode List has been prepared
@@ -918,7 +920,7 @@ abort_error:
 }
 
 
-void I_ShutdownGraphics()
+void I_ShutdownGraphics( void )
 {
     // was graphics initialized anyway?
     if( graphics_state <= VGS_shutdown )
@@ -926,9 +928,9 @@ void I_ShutdownGraphics()
 
     graphics_state = VGS_shutdown;  // to catch some repeats due to errors
 
-    if(render_soft == rendermode)
+    if( rendermode == render_soft )
     {
-        if(NULL != vidSurface)
+        if( vidSurface )
         {
             SDL_FreeSurface(vidSurface);
             vidSurface = NULL;

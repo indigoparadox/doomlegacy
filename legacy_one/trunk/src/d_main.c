@@ -454,13 +454,13 @@ void  owner_wad_search_order( void )
         }
         else
         if(    (strcmp( defdir, cv_home.string ) != 0) // not home directory
-	    && (strcmp( defdir, progdir ) != 0)        // not program directory
+            && (strcmp( defdir, progdir ) != 0)        // not program directory
             && (strcmp( defdir, progdir_wads ) != 0) ) // not wads directory
         {
             defdir_search = 1;
             // Search current dir near first, for other wad searches.
             doomwaddir[1] = defdir;
-	}
+        }
     }
     // Search progdir/wads early, for other wad searches.
     doomwaddir[2] = progdir_wads;
@@ -558,7 +558,7 @@ void D_Display(void)
     boolean done;
     boolean wipe;
     boolean redrawsbar;
-    boolean viewactivestate = false;
+    boolean viewactivestate;
 
     if (dedicated)
         return;
@@ -566,7 +566,10 @@ void D_Display(void)
     if (nodrawers)
         return; // for comparative timing / profiling
 
+    wipe = false;
     redrawsbar = false;
+    viewactivestate = false;
+    done = false;
 
     //added:21-01-98: check for change of screen size (video mode)
     if ( setmodeneeded.modetype )
@@ -593,8 +596,6 @@ void D_Display(void)
         wipe = true;
         wipe_StartScreen();
     }
-    else
-        wipe = false;
 
     // draw buffered stuff to screen
     // BP: Used only by linux GGI version
@@ -606,9 +607,12 @@ void D_Display(void)
         case GS_LEVEL:
             if (!gametic)
                 break;
+
+            // On each gametic
             HU_Erase();
             if (automapactive)
                 AM_Drawer();
+
             if (wipe || menuactivestate
 #ifdef HWRENDER
                 || rendermode != render_soft
@@ -2616,7 +2620,7 @@ restart_command:
         // we need the font of the console
         CONS_Printf(text[HU_INIT_NUM]);
         // switch off use_font1 when hu_font is loaded
-        HU_Load_Graphics();  // dependent upon dedicated and raven
+        HU_Load_Graphics();  // dependent upon dedicated and game
 
         CON_Init_Video();  // dependent upon vid, hu_font
         EOUT_flags = EOUT_log | EOUT_con;

@@ -66,7 +66,7 @@
 // sky mapping
 //
 int     skyflatnum;
-int     skytexture;
+int     skytexture = 0;
 int     skytexturemid;
 
 fixed_t skyscale;
@@ -97,6 +97,7 @@ void R_Setup_SkyDraw (void)
     int          max_height;
     int          i;
 
+    if( skytexture == 0 )  return;
 
     // parse the patches composing sky texture for the tallest one
     // patches are usually RSKY1,RSKY2... and unique

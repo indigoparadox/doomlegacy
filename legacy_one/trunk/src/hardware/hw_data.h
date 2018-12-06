@@ -66,8 +66,8 @@ struct Mipmap_s {
     uint16_t        height;
     uint16_t        width;
     unsigned int    downloaded;  // dll driver has it in cache
-   		                 // opengl : texture num, must match GLuint
-				 //   typedef unsigned int GLuint
+                                 // opengl : texture num, must match GLuint
+                                 //   typedef unsigned int GLuint
 
     // multiple texture renderings, by colormap and TF_Opaquetrans
     struct Mipmap_s   *nextcolormap;  // next for this texture
@@ -87,12 +87,11 @@ typedef struct Mipmap_s Mipmap_t;
 //
 // Doom texture info, as cached for hardware rendering
 //
-struct MipTexture_s {
+typedef struct {
     Mipmap_t  mipmap;
     float     scaleX;             //used for scaling textures on walls
     float     scaleY;
-};
-typedef struct MipTexture_s MipTexture_t;
+} MipTexture_t;
 
 
 // A cached patch as converted to hardware format, holding the original patch_t

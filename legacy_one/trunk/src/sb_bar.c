@@ -550,6 +550,8 @@ static void ShadeChain(void)
     }
 }
 
+
+
 //---------------------------------------------------------------------------
 //
 // PROC SB_Heretic_Drawer
@@ -645,7 +647,7 @@ void SB_Heretic_Drawer( boolean refresh )
         // Single Player only, keeps old status.
         if(SB_state == SBS_refresh)
         {
-            if ( rendermode==render_soft )
+            if( rendermode == render_soft )
             {
                 V_CopyRect(0, vid.height-stbar_height, BG, vid.width,
                            stbar_height, 0, vid.height-stbar_height, FG);

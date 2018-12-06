@@ -4730,7 +4730,7 @@ boolean M_Responder (event_t* ev)
       case KEY_ESCAPE:
         currentMenu->lastOn = itemOn;
         if( init_sequence == 1 )
-	    goto ret_true;  // No escape from Launcher
+            goto ret_true;  // No escape from Launcher
 
         if( menucnt )
         {
@@ -5354,7 +5354,7 @@ void M_OGL_DrawColorMenu(void)
 static
 void M_OpenGLOption(int choice)
 {
-    if (rendermode != render_soft )
+    if( rendermode != render_soft )
         Push_Setup_Menu(&OpenGLOptionDef);
     else
         M_SimpleMessage("You are in software mode\nYou cannot change GL options\n");
