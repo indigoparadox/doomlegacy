@@ -1222,7 +1222,7 @@ void S_UpdateSounds(void)
                 // judgecutor:
                 // Avoid channel reverse if surround
                 if (cv_stereoreverse.value && sp1.sep < SURROUND_SEP )
-                sp1.sep = -sp1.sep;
+                    sp1.sep = -sp1.sep;
 #else
                 if (cv_stereoreverse.value)
                     sp1.sep = -sp1.sep;

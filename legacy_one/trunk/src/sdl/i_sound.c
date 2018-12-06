@@ -109,20 +109,24 @@
 
 
 
-#define MIDBUFFERSIZE   128*1024
+// MIDI music buffer
+#define MIDBUFFERSIZE   (128*1024)
 
 #define MUSIC_FADE_TIME 400 // ms
 
 // The number of internal mixing channels,
 //  mixing buffer, and the samplerate of the raw data.
 
-#define DOOM_SAMPLERATE 11025 // Hz, Doom sound effects
+// Doom sound effects
+#define DOOM_SAMPLERATE 11025 // Hz
 
 // Needed for calling the actual sound output.
-#define NUM_CHANNELS  16    // max. number of simultaneous sounds
+// max. number of simultaneous sounds
+#define NUM_CHANNELS  16
 #define CHANNEL_NUM_MASK  (NUM_CHANNELS-1)
 #define SAMPLERATE    22050 // Hz
-#define SAMPLECOUNT   512   // requested audio buffer size (512 means about 46 ms at 11 kHz)
+// requested audio buffer size (512 means about 46 ms at 11 kHz)
+#define SAMPLECOUNT   512
 
 typedef struct {
    
@@ -133,9 +137,12 @@ typedef struct {
   unsigned int step;  // The channel step amount...
   unsigned int step_remainder;   // ... and a 0.16 bit remainder of last step.
 
-  // When the channel started playing, and too many sounds
+  // When the channel starts playing, and there are too many sounds,
   // determine which to kill by oldest and priority.
   unsigned int age_priority;
+   
+  // The data sample rate
+  unsigned int samplerate;
 
   // The sound in channel handles,
   //  determined on registration,
@@ -204,7 +211,9 @@ static void I_SetChannels(void)
 
     // This table provides step widths for pitch parameters.
     for (i = 0; i < 256; i++)
+    {
       steptable[i] = (Sint32)(base_step * pow(2.0, ((i-128) / 64.0)) * 65536.0);
+    }
 
     // Generates volume lookup tables
     //  which also turn the u8 samples into s16 samples.
@@ -319,15 +328,19 @@ int I_StartSound(sfxid_t sfxid, int vol, int sep, int pitch, int priority)
     //  e.g. for avoiding duplicates of chainsaw.
     chanp->sfxid = sfxid;
 
+    byte * header = S_sfx[sfxid].data;
     // Okay, in the less recent channel,
     //  we will handle the new SFX.
     // Set pointer to raw data, skipping header.
     chanp->data_ptr = (unsigned char *) S_sfx[sfxid].data + 8;
     // Set pointer to end of raw data.
     chanp->data_end = chanp->data_ptr + S_sfx[sfxid].length;
+   
+    // Get samplerate from the sfx header, 16 bit, big endian
+    chanp->samplerate = (header[3] << 8) + header[2];
 
     // Set stepping
-    chanp->step = steptable[pitch];
+    chanp->step = steptable[pitch] * chanp->samplerate / DOOM_SAMPLERATE;
     // 16.16 fixed point
     chanp->step_remainder = 0;
     // balanced between age and priority
@@ -459,7 +472,8 @@ void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
         chanp->rightvol_lookup = &vol_lookup[rightvol * 256];
 
         // Set stepping
-        chanp->step = steptable[pitch];
+//        chanp->step = steptable[pitch];
+        chanp->step = steptable[pitch] * chanp->samplerate / DOOM_SAMPLERATE;
     }
 }
 
@@ -838,7 +852,8 @@ void I_StartupSound(void)
   audspec.freq = SAMPLERATE;
   audspec.format = AUDIO_S16SYS;
   audspec.channels = 2;
-  audspec.samples = SAMPLECOUNT;
+  // From eternity, adjust for new samplerate
+  audspec.samples = SAMPLECOUNT * SAMPLERATE / DOOM_SAMPLERATE;
   audspec.callback = I_UpdateSound_sdl;
   I_SetChannels();
 
