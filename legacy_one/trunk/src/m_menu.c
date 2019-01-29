@@ -2761,8 +2761,8 @@ void M_DrawVideoMode(void)
 // Return 0= continue, 1= intercept key, 2= testing.
 byte  video_test_key_handler( int key )
 {
-//    cmd_req_drawmode = REQ_default;  // cancel any command line setup
-    req_drawmode = REQ_default;  // cancel any command line setup
+    set_drawmode = DRM_none;
+    req_drawmode = DRM_none;  // cancel any command line setup
 
     if (vidm_testing_cnt>0)
     {

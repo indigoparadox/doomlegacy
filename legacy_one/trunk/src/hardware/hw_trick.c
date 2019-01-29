@@ -816,7 +816,7 @@ static fixed_t estimateFloorHeight(sector_t *thisSector)
 // and some levels have deep water trick, invisible staircases etc.
 // --------------------------------------------------------------------------
 // FIXME: put some nice default texture in legacy.dat and use it
-// Called from P_SetupLevel
+// Called from P_SetupLevel, HWR_SetupLevel.
 void HWR_CorrectSWTricks(void)
 {
     int i, k;

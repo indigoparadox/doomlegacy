@@ -49,6 +49,11 @@
 #include "r_opengl.h"
 
 
+// public
+byte  native_bitpp, native_bytepp;
+
+
+
 struct modeDescription
 {
     uint16_t  w, h;
@@ -64,7 +69,7 @@ WindowRef mainWindow = NULL;
 #define MAXVIDMODES  33
 char   vidModeName[MAXVIDMODES][32];
 struct modeDescription modeList[MAXVIDMODES];
-int nummodes = 0;
+static int nummodes = 0;
 
 #define MAXWINMODES 8
 // windowed video modes from which to choose from.
@@ -205,6 +210,21 @@ void VID_PrepareModeList(void)
     nummodes = i;
 }
 
+
+//   request_drawmode : vid_drawmode_e
+//   request_fullscreen : true if want fullscreen modes
+//   request_bitpp : bits per pixel
+// Return true if there are viable modes.
+boolean  VID_Query_Modelist( byte request_drawmode, boolean request_fullscreen, byte request_bitpp )
+{
+    if( request_drawmode == DRM_opengl )
+    {
+        return true;
+    }
+    return false;
+}
+
+
 void SetDSpMode(int w, int h, boolean enable)
 {
     static int lastw, lasth, last_enable = -1;
@@ -231,6 +251,7 @@ void SetDSpMode(int w, int h, boolean enable)
     lasth = h;
     last_enable = enable;
 }
+
 
 // Returns FAIL_end, FAIL_create, of status_return_e, 1 on success;
 int VID_SetMode(modenum_t modenum)
@@ -297,6 +318,7 @@ void I_FinishUpdate(void)
 {
     if(rendermode==render_soft)
     {
+        // NOT FINISHED
     }
     else
     {
@@ -315,6 +337,11 @@ void I_StartupGraphics( void )
 
     I_StartupMouse( false );
 
+    native_drawmode = DRM_opengl;
+    // do not assume 32 bit available
+    native_bitpp = 32;
+    native_bytepp = 4;
+
     VID_PrepareModeList();
 
     if( Set_VidMode( initialmode ) < 0 )   goto abort_error
@@ -330,12 +357,9 @@ abort_error:
 }
 
 
-// Called to start rendering graphic screen according to the request switches.
-// Fullscreen modes are possible.
-void I_RequestFullGraphics( byte select_fullscreen )
+// Setup HWR calls according to rendermode.
+int I_Rendermode_setup( void )
 {
-    modenum_t  initialmode;  // the initial mode
-
     HWD.pfnInit             = hwSym("Init");
     HWD.pfnFinishUpdate     = hwSym("FinishUpdate");
     HWD.pfnDraw2DLine       = hwSym("Draw2DLine");
@@ -351,10 +375,43 @@ void I_RequestFullGraphics( byte select_fullscreen )
     HWD.pfnDrawMD2          = hwSym("DrawMD2");
     HWD.pfnSetPalette       = OglMacSetPalette;
     HWD.pfnGetTextureUsed   = GetTextureMemoryUsed;
+    return 1;
+}
+
+
+// Called to start rendering graphic screen according to the request switches.
+// Fullscreen modes are possible.
+// Returns FAIL_select, FAIL_end, FAIL_create, of status_return_e, 1 on success;
+int I_RequestFullGraphics( byte select_fullscreen )
+{
+    modenum_t  initialmode;  // the initial mode
+    byte  select_bitpp = 32;  // to select modes
+
+    // Seems to be OpenGL only.
+    switch( req_drawmode )
+    {
+      case DRM_opengl:
+        select_bitpp = cv_scr_depth.EV;
+//        select_bitpp = native_bitpp;
+        break;
+#if 0
+      case DRM_native;
+        select_bitpp = native_bitpp;
+        // NOT FINISHED
+        break;
+#endif
+      default:
+        goto no_modes;
+    }
+
+    I_Rendermode_setup();
 
     textureformatGL = GL_RGBA;
-    rendermode = render_opengl;
+//    rendermode = render_opengl;  // rendermode is set by v_switch_drawmode
 
+    if( nummodes == 0 )
+        goto no_modes;
+   
     allow_fullscreen = true;
     mode_fullscreen = select_fullscreen;  // initial startup
 
@@ -368,6 +425,9 @@ void I_RequestFullGraphics( byte select_fullscreen )
     if( verbose )
         GenPrintf(EMSG_ver, "RequestFullGraphics completed\n" );
     return;
+
+no_modes:
+    return FAIL_select;
 }
 
 

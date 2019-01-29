@@ -60,11 +60,16 @@
   // cv_fullscreen etc..
 
 
-//dosstuff -newly added
-unsigned long dascreen;
-static int gfx_use_vesa1;
 
-boolean    highcolor; // local
+// This has the modelist in Vid_vesa.
+static byte  mode_bitpp;  // bitpp of modelist
+
+#if 0
+// unused
+//dosstuff -newly added
+static unsigned long dascreen;
+static int gfx_use_vesa1;
+#endif
 
 #define SCREENDEPTH   1     // bytes per pixel, do NOT change.
 
@@ -195,7 +200,8 @@ void I_SetPalette (RGBA_t* palette)
     }
 }
 
-
+#if 0
+// Not used.
 //added 29-12-1997
 /*==========================================================================*/
 // I_BlastScreen : copy the virtual screen buffer to the physical screen mem
@@ -231,6 +237,7 @@ void I_BlitScreenVesa1(void)
    }
 
 }
+#endif
 
 
 //added:08-01-98: now we use Allegro's set_gfx_mode, but we want to
@@ -286,6 +293,8 @@ void I_ShutdownGraphics (void)
 }
 
 
+#if 0
+// Not used.
 //added:08-01-98:
 //  Set VESA1 video mode, coz Allegro set_gfx_mode a larger screenwidth...
 //
@@ -326,6 +335,7 @@ int set_vesa1_mode( int width, int height )
 
     return 0;
 }
+#endif
 
 
 //added:08-01-98: now uses Allegro to setup Linear Frame Buffer video modes.
@@ -343,6 +353,11 @@ void I_StartupGraphics( void )
     graphics_state = VGS_startup;
     // remember the exact screen mode we were...
     I_SaveOldVideoMode();
+   
+    // Do not know current settings, so use this default.
+    native_drawmode = DRM_native;
+    native_bitpp = 8;
+    native_bytepp = 1;
    
     //added:26-01-98: VID_Init() must be done only once,
     //                use VID_SetMode() to change vid mode while in the game.
@@ -372,22 +387,101 @@ abort_error:
 
 // Called to start rendering graphic screen according to the request switches.
 // Fullscreen modes are possible.
-void I_RequestFullGraphics( byte select_fullscreen )
+// Returns FAIL_select, FAIL_end, FAIL_create, of status_return_e, 1 on success;
+int I_RequestFullGraphics( byte select_fullscreen )
 {
+    byte select_bitpp = 0;
+    int ret_value;
     modenum_t initial_mode = {MODE_window, 0};
-    // 0 for 256 color, else use highcolor modes
-    highcolor = (req_drawmode == REQ_highcolor);
-    VID_GetModes();
 
+    switch(req_drawmode)
+    {
+     case DRM_native:
+       if( V_CanDraw( native_bitpp )) {
+           select_bitpp = native_bitpp;
+       }else{
+	   // Use 8 bit and do the palette lookup.
+           GenPrintf(EMSG_ver, "Native %i bpp rejected\n", native_bitpp );
+	   select_bitpp = 8;
+       }
+       break;
+     case DRM_explicit_bpp:
+       select_bitpp = req_bitpp;
+       break;
+     default:
+       goto no_modes;
+       break;
+    }
+   
+    ret_value = VID_GetModes( req_drawmode, select_bitpp );
+    if( ret_value < 0 )
+        return ret_value;
+
+    // DOS did not have windows, but this may run under Windows.
+    if( num_full_vidmodes == 0 )
+        goto no_modes;
+   
     allow_fullscreen = true;
     mode_fullscreen = select_fullscreen;  // initial startup
 
     // set the startup screen
     initial_mode = VID_GetModeForSize( vid.width, vid.height,
 				       (select_fullscreen ? MODE_fullscreen: MODE_window))
-    VID_SetMode ( initial_mode );
+    ret_value = VID_SetMode ( initial_mode );
     graphics_state = VGS_fullactive;
+    return ret_value;  // have video mode
+
+no_modes:
+    return FAIL_select;
 }
+
+// Setup HWR calls according to rendermode.
+int I_Rendermode_setup( void )
+{
+    return 1;
+}
+
+
+#if 0
+// See VID_Query_Modelist in Vid_vesa.c
+
+//   request_drawmode : vid_drawmode_e
+//   request_fullscreen : true if want fullscreen modes
+//   request_bitpp : bits per pixel
+// Return true if there are viable modes.
+boolean  VID_Query_Modelist( byte request_drawmode, boolean request_fullscreen, byte request_bitpp )
+{
+    int ret_value;
+    byte  old_loaded_driver = loaded_driver; // must put this back
+
+    // Require modelist before rendermode is set.
+   
+    // if '-win' is specified on the command line, do not add DirectDraw modes
+    req_win = M_CheckParm ("-win");
+
+    if( req_win || ! request_fullscreen )
+        return true;  // uses window modes
+   
+    // Fullscreen modes
+    // This may change the video driver.
+    ret_value = VID_load_driver( request_drawmode );
+    if( ret_value < 0 )
+        return ret_value;
+
+    ret_value = VID_GetModes( request_drawmode, request_bitpp );
+   
+    if( loaded_driver != old_loaded_driver )
+    {
+        // restore the driver
+	VID_load_driver( old_loaded_driver );
+    }
+
+    if( ret_value < 0 )
+        return false; 
+    
+    return ( num_full_vidmodes > 0 );
+}
+
 
 // for debuging
 void IO_Color( byte color, byte r, byte g, byte b )

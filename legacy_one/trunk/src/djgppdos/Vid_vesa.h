@@ -119,12 +119,13 @@ typedef struct vesamodeinfo_s
 } vesamodeinfo_t;
 
 
+
 // init once
 void VID_Init (void);
 // add the vga modes at the start of the modes list
 void VID_InitVGAModes(void);
 // add the VESA modes to the list
-void VID_GetModes(void);
+int VID_GetModes ( byte request_drawmode, byte select_bitpp );
 // setup a video mode, this is to be called from the menu
 int  VID_SetMode (int modenum);
 

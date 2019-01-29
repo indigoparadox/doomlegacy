@@ -93,6 +93,7 @@
 #include "hardware/hw_main.h"    //calling HWR module Init & Shutdown
 #endif
 
+
 // -------
 // Globals
 // -------
@@ -102,8 +103,7 @@ static  BITMAPINFO* bmi_main = NULL;
 static  HDC         hDC_main = NULL;
 
 static  BOOL  req_win;
-static  byte  request_bitpp = 0;  // to select modes
-static  byte  highcolor = 0;
+static  byte  fdx_created = 0;
 
 
 // -----------------
@@ -119,11 +119,11 @@ static  char        names[MAX_EXTRA_MODES][10];
 // All vidmodes are in the same list, all can be window modes.
 // The first vidmodes are special modes, for window only.
 // The DirectDraw vidmodes can be fullscreen or window.
-int     num_all_vidmodes = 0;   // total number of display modes
-int     num_full_vidmodes = 0;  // total number of DirectDraw display modes
-vmode_t * all_vidmodes = NULL;  // start of videomodes list (window and fullscreen)
-vmode_t * full_vidmodes = NULL; // start of fullscreen (DirectDraw, opengl) vidmodes
-vmode_t * currentmode_p = NULL; // the current active videomode.
+static int     num_all_vidmodes = 0;   // total number of display modes
+static int     num_full_vidmodes = 0;  // total number of DirectDraw display modes
+static vmode_t * all_vidmodes = NULL;  // start of videomodes list (window and fullscreen)
+static vmode_t * full_vidmodes = NULL; // start of fullscreen (DirectDraw, opengl) vidmodes
+static vmode_t * currentmode_p = NULL; // the current active videomode.
 
 static int VID_SetWindowedDisplayMode (viddef_t * lvid, vmode_t * newmode_p);
 
@@ -184,6 +184,7 @@ static  void VID_Command_Mode_f     (void);
 static  int VID_SetDirectDrawMode (viddef_t *lvid, vmode_t * newmode);
 static  int VID_SetWindowedDisplayMode (viddef_t *lvid, vmode_t * newmode);
 static  vmode_t * VID_GetModePtr (modenum_t modenum);
+static  void VID_GetExtraModes ( byte xm_req_bitpp );
 
 // judgecutor:
 extern void I_RestartSysMouse();
@@ -235,7 +236,7 @@ void I_FinishUpdate (void)
         HWD.pfnFinishUpdate ( cv_vidwait.value );
     }
 #endif
-    else
+    else if( fdx_created )
     {
         // DIRECT DRAW
         // copy virtual screen to real screen
@@ -354,7 +355,7 @@ void I_SetPalette (RGBA_t *palette)
         if( palette[7].s.green < 96 )
 	    mainpal[i].peGreen = 96;  // at least get green text on black
 #endif
-        if( graphics_state >= VGS_active )
+        if( graphics_state >= VGS_active && fdx_created )
             FDX_SetDDPalette (mainpal);         // set DirectDraw palette
     }
 }
@@ -372,7 +373,7 @@ outportb( 0x03c9 , (b>>2) & 0x3f );       // B
 }
 
 
-//
+
 // return number of video modes in vidmodes lists
 //
 // modetype is of modetype_e
@@ -435,6 +436,7 @@ done:
 // Enumerate DirectDraw modes available
 //
 static  int     nummodes=0;
+static  byte    mode_bitpp;  // bitpp of the mode list
 
 // Called from FDX_EnumDisplayModes through DirectX EnumDisplayModes
 static BOOL VID_DDModes_callback (int width, int height, int bpp)
@@ -445,14 +447,15 @@ static BOOL VID_DDModes_callback (int width, int height, int bpp)
        GenPrintf( EMSG_ver, "mode %d x %d x %d bpp\n", width, height, bpp);
 
     // skip all unwanted modes
-    if (highcolor && (bpp != 15))
-        goto skip;
-    if (!highcolor && (bpp != 8))
-        goto skip;
+    if( bpp != mode_bitpp )  goto skip
 
+#if 1
+    if( (width > MAXVIDWIDTH) || (height > MAXVIDHEIGHT) )
+#else
     if ((bpp > 16) ||
         (width > MAXVIDWIDTH) ||
         (height > MAXVIDHEIGHT))
+#endif
     {
         goto skip;
     }
@@ -499,9 +502,14 @@ skip:
 //
 // Collect info about DirectDraw display modes we use
 //
-void VID_GetExtraModes (void)
+static
+void VID_GetExtraModes ( byte xm_req_bitpp )
 {
+    mode_bitpp = xm_req_bitpp;
     nummodes = 0;
+   
+    if( ! fdx_created )  return;
+
     FDX_EnumDisplayModes (VID_DDModes_callback);   // fabdxlib
 
     // add the extra modes (non 320x200) at the start of the mode list (if there are any)
@@ -519,6 +527,7 @@ void VID_GetExtraModes (void)
 // Initialize Video modes subsystem
 // *************************************************************************************
 // Called from I_StartupGraphics
+static
 void VID_Init (void)
 {
     // initialize the appropriate display device
@@ -535,161 +544,149 @@ void VID_Init (void)
     vid.fullscreen = FALSE;
 }
 
-// Get Fullscreen modes, append to SPECIAL window modes
-void VID_GetModes (void)
+
+// To handle Query, must be able to load and release the drivers.
+static byte  loaded_driver = 0;  // vid_drawmode_e
+
+static
+void VID_release_driver(void)
 {
-    vmode_t*    pv;
-    int         iMode;
-    char * req_errmsg = NULL;
-    byte  alt_request_bitpp = 0;
-
-//  unsigned int screen_width = GetSystemMetrics(SM_CXFULLSCREEN);
-//  unsigned int screen_height = GetSystemMetrics(SM_CYFULLSCREEN);
-
-    switch(req_drawmode)
+#ifdef HWRENDER
+    if ( loaded_driver >= DRM_opengl )
     {
-     case REQ_native:
-       vid.bitpp = GetDeviceCaps( GetDC( hWnd_main ), BITSPIXEL );
-       vid.bytepp = (vid.bitpp + 7) >> 3;
-       if( V_CanDraw( vid.bitpp )) {
-	   request_bitpp = vid.bitpp;
-       }else{
-	   // Use 8 bit and do the palette lookup.
-	   if( verbose )
-	       GenPrintf(EMSG_ver, "Native %i bpp rejected\n", vid.bitpp );
-	   request_bitpp = 8;
-       }
-       break;
-     case REQ_specific:
-       request_bitpp = req_bitpp;
-       break;
-     case REQ_highcolor:
-       req_errmsg = "highcolor";
-       request_bitpp = 15;
-       alt_request_bitpp = 16;
-//       if( vid.bitpp == 16 )  request_bitpp = 16;  // native preference
-       break;
-     case REQ_truecolor:
-       req_errmsg = "truecolor";
-       request_bitpp = 24;
-       alt_request_bitpp = 32;
-//       if( vid.bitpp == 32 )  request_bitpp = 32;  // native preference
-       break;
-     default:
-       request_bitpp = 8;  // default native
-       break;
+        HWD.pfnShutdown ();   //close 3d card display
+        Shutdown3DDriver ();  //free the driver DLL
+    }
+    else
+#endif
+    if( loaded_driver == DRM_native )
+    {
+        FDX_CloseDirectDraw ();
+        fdx_created = false;
+    }
+    loaded_driver = 0;
+}
+
+static
+int VID_load_driver( byte request_drawmode )
+{
+    char * errmsg = NULL;
+    char * drvname = NULL;
+
+    if( loaded_driver == request_drawmode )
+        return 1;
+
+    if( loaded_driver )
+        VID_release_driver();
+   
+    if( request_drawmode <= DRM_native )
+    {
+        // Software draw, direct draw driver
+	// Only load if not "windows modes only".
+        if( ! fdx_created &&  ! req_win )
+        {
+            FDX_create_main_instance();
+	    fdx_created = true;
+	    loaded_driver = DRM_native;
+	}
+        return 1;
     }
 
-    // initialize the appropriate display device
 #ifdef HWRENDER
-    if ( rendermode != render_soft )
+    // Hardware drivers only.
+    // initialize the appropriate display device
+    switch ( request_drawmode )
     {
-        char* drvname;
+      case DRM_opengl:
+        drvname = "r_opengl.dll";
+        errmsg = "OpenGL";
+        break;
+      case DRM_glide:
+        drvname = "r_glide.dll";
+        errmsg = "Glide";
+        break;
+      case DRM_minigl:
+        // Here is the only difference between OpenGL and MiniGL in the main code
+        drvname = "r_minigl.dll";
+        errmsg = "MiniGL";
+        break;
+      case DRM_d3d:
+        drvname = "r_d3d.dll";
+        errmsg = "D3d";
+        break;
+      default:
+        I_SoftError ("Unknown hardware drawmode");
+        return FAIL_invalid_input;
+    }
 
-        switch (rendermode)
-        {
-            case render_glide: drvname = "r_glide.dll"; break;
-            case render_opengl: 
-            // Here is the only difference between OpenGL and MiniGL in the main code
-                if (M_CheckParm ("-opengl"))
-                    drvname = "r_opengl.dll";
-                else
-                    drvname = "r_minigl.dll";
-                break;
-            case render_d3d:   drvname = "r_d3d.dll"; break;
-            default:
-	       I_Error ("Unknown hardware render mode");
-	       return;
-        }
-
+    if( drvname )
+    {
         // load the DLL
         if ( Init3DDriver (drvname) )
         {
             int hwdversion = HWD.pfnGetRenderVersion();
             if ( hwdversion != VERSION)
             {
-                if (rendermode != render_glide)
+                if( request_drawmode == DRM_glide )
                 {
-                    I_Error ("The version of the renderer (v%d.%d) doesn't match the version of the executable (v%d.%d)\n"
+                    GenPrintf( EMSG_warn, "WARNING: This r_glide version is not supported, use it at your own risks.\n");
+                }
+                else
+                {   
+                    I_Error ("The version of the renderer (v%d.%d) does not match the version of the executable (v%d.%d)\n"
                              "Be sure you have installed Doom Legacy properly.\n"
                              "Eventually verify the launcher settings.\n", 
                              hwdversion/100, hwdversion%100,
                              VERSION/100, VERSION%100);
                 }
-                else
-                {   
-                    GenPrintf( EMSG_warn, "WARNING: This r_glide version is not supported, use it at your own risks.\n");
-                }
             }
+
             // perform initialisations
             HWD.pfnInit ((I_Error_t)I_Error);
-            // get available display modes for the device
-            HWD.pfnGetModeList (&pv, &nummodes);
-	    append_full_vidmodes( pv, nummodes ); // append to window modes
+            loaded_driver = request_drawmode;
+            return 1;
         }
         else
         {
-            switch (rendermode) {
-                case render_glide:
-                    I_Error ("Error initializing Glide\n");
-                    break;
-                case render_opengl:
-                    I_Error ("Error initializing OpenGL\n");
-                    break;
-                case render_d3d:
-                    I_Error ("Error initializing Direct3D\n");
-                    break;
-                default: break;
-            }
-            rendermode = render_soft;
+	    I_SoftError( "Error initializing %s, driver %s", errmsg, drvname );
+	    return FAIL_create;
         }
     }
+
 #endif
-    if (rendermode == render_soft && !req_win )
+    return 0;  // not an error
+}
+
+// Get Fullscreen modes, append to SPECIAL window modes
+// This may change the video driver.
+static
+int VID_GetModes ( byte request_drawmode, byte select_bitpp )
+{
+    vmode_t * pv;
+    int  iMode;
+    // This must be able to get modes before rendermode is set.
+
+#ifdef HWRENDER
+    // initialize the appropriate display device
+    if( request_drawmode >= DRM_opengl )
     {
-        FDX_create_main_instance();
-
-        // try the requested bpp, then alt, then 8bpp
-        for(;;)  // try request, alt, 8bpp, until modes found
-        {
-	    // get available display modes for the device
-	    VID_GetExtraModes ();
-	    if(num_full_vidmodes) goto found_modes;
-
-	    // if modes not found
-	    if( request_bitpp == 8 )  break;
-	    if(req_drawmode == REQ_specific)
-	    {
-	        GenPrintf(EMSG_error, "No %i bpp modes\n", req_bitpp );
-	        goto abort_error;
-	    }
-	    if( alt_request_bitpp )
-	    {
-	        if(request_bitpp != alt_request_bitpp)
-	        {
-		    request_bitpp = alt_request_bitpp;
-		    continue;
-		}
-	        GenPrintf(EMSG_error, "No %s modes\n", req_errmsg );
-	        // win32 had -highcolor as binding, so do not change that behavior
-	        goto abort_error;
-	    }
-	    request_bitpp = 8;  // default last attempt
-	}
+        // Hardware draw
+        // get available display modes for the device
+        HWD.pfnGetModeList (&pv, &nummodes);
+        append_full_vidmodes( pv, nummodes ); // append to window modes
     }
-    // assumes there is always a default 8bpp mode
+#endif
+   
+    if( request_drawmode < DRM_opengl && !req_win )
+    {
+        // Software draw, extra modes
+        // test for the requested bpp
+        // get available display modes for the device
+	VID_GetExtraModes ( select_bitpp );
+    }
 
-    // the game boots in 320x200 standard VGA, but
-    // we need a highcolor mode to run the game in highcolor
-    if (request_bitpp>8 && num_full_vidmodes==0)
-        I_Error ("No highcolor/truecolor VESA2 video mode found, cannot run in highcolor/truecolor.\n");
-
-found_modes:
-    vid.bitpp = request_bitpp;
-    vid.bytepp = (request_bitpp + 7) >> 3;
-
-    if (num_full_vidmodes==0)
-        I_SoftError ("No display modes available.\n");
+    if( num_full_vidmodes == 0 )
+        goto no_modes;
 
     //DEBUG
     for (iMode=1,pv=full_vidmodes; pv; pv=pv->next)
@@ -697,11 +694,10 @@ found_modes:
         GenPrintf( EMSG_debug, "%#02d: %dx%dx%dbpp (desc: '%s')\n",iMode++,
                      pv->width,pv->height,pv->bytesperpixel,pv->name);
     }
-    return;
+    return 1;
 
-abort_error:
-    I_SoftError("VID_GetModes Abort\n");
-    return;
+no_modes:
+    return FAIL_select;
 }
 
 
@@ -985,6 +981,8 @@ BOOL    VID_FreeAndAllocVidbuffer (viddef_t *lvid)
 static int VID_SetDirectDrawMode (viddef_t *lvid, vmode_t * newmode)
 {
 
+    if( ! fdx_created )  return -1;
+   
 #ifdef DEBUG
     GenPrintf( EMSG_debug, "VID_SetDirectDrawMode...\n");
 #endif
@@ -1015,6 +1013,51 @@ static int VID_SetDirectDrawMode (viddef_t *lvid, vmode_t * newmode)
 
 
 // ========================================================================
+//                     VIDEO modelist query
+// ========================================================================
+
+
+//   request_drawmode : vid_drawmode_e
+//   request_fullscreen : true if want fullscreen modes
+//   request_bitpp : bits per pixel
+// Return true if there are viable modes.
+boolean  VID_Query_Modelist( byte request_drawmode, boolean request_fullscreen, byte request_bitpp )
+{
+    int ret_value;
+    byte  old_loaded_driver = loaded_driver; // must put this back
+
+    // Require modelist before rendermode is set.
+   
+    // if '-win' is specified on the command line, do not add DirectDraw modes
+    req_win = M_CheckParm ("-win");
+
+    if( req_win || ! request_fullscreen )
+        return true;  // uses window modes
+   
+    // Fullscreen modes
+    // This may change the video driver.
+    ret_value = VID_load_driver( request_drawmode );
+    if( ret_value < 0 )
+        return ret_value;
+
+    ret_value = VID_GetModes( request_drawmode, request_bitpp );
+   
+    if( loaded_driver != old_loaded_driver )
+    {
+        // restore the driver
+	VID_load_driver( old_loaded_driver );
+    }
+
+    if( ret_value < 0 )
+        return false; 
+    
+    return ( num_full_vidmodes > 0 );
+}
+
+
+
+
+// ========================================================================
 //                     VIDEO STARTUP and SHUTDOWN
 // ========================================================================
 
@@ -1042,6 +1085,10 @@ void I_StartupGraphics(void)
     //added:03-01-98: register exit code for graphics
     I_AddExitFunc (I_ShutdownGraphics);
 
+    native_drawmode = DRM_native;
+    native_bitpp = GetDeviceCaps( GetDC( hWnd_main ), BITSPIXEL );
+    native_bytepp = (vid.bitpp + 7) >> 3;
+
     // set the startup window
     if( VID_SetMode ( initial_mode ) < 0 )
     {
@@ -1060,43 +1107,102 @@ abort_error:
 
 // Called to start rendering graphic screen according to the request switches.
 // Fullscreen modes are possible.
-void I_RequestFullGraphics( byte select_fullscreen )
+// Returns FAIL_select, FAIL_end, FAIL_create, of status_return_e, 1 on success;
+int I_RequestFullGraphics( byte select_fullscreen )
 {
     modenum_t initial_mode = {MODE_window, 0};
-    // 0 for 256 color, else use highcolor modes
-    highcolor = (req_drawmode == REQ_highcolor);
-
-#ifdef HWRENDER   
-    if (M_CheckParm ("-3dfx"))
-        rendermode = render_glide;
-    else if (M_CheckParm ("-glide"))
-        rendermode = render_glide;
-    else if (M_CheckParm ("-opengl"))
-        rendermode = render_opengl;
-    else if (M_CheckParm ("-minigl")) // MiniGL is considered like ...
-        rendermode = render_opengl;   // ... OpenGL in the main code
-    else if (M_CheckParm ("-d3d"))
-        rendermode = render_d3d;
-    else
-#endif
-        rendermode = render_soft;
+    byte  select_bitpp = 8;  // to select modes
+    int ret_value = 0;
 
     // if '-win' is specified on the command line, do not add DirectDraw modes
     req_win = M_CheckParm ("-win");
 //    if ( req_win )
 //        rendermode  = render_soft;
 
-    VID_GetModes();
 
+//  unsigned int screen_width = GetSystemMetrics(SM_CXFULLSCREEN);
+//  unsigned int screen_height = GetSystemMetrics(SM_CYFULLSCREEN);
+
+    switch(req_drawmode)
+    {
+     case DRM_native:
+       if( V_CanDraw( native_bitpp )) {
+           select_bitpp = native_bitpp;
+       }else{
+	   // Use 8 bit and do the palette lookup.
+#if 0
+	   if( verbose )
+	       GenPrintf(EMSG_ver, "Native %i bpp rejected\n", native_bitpp );
+#else
+           GenPrintf(EMSG_ver, "Native %i bpp rejected\n", native_bitpp );
+#endif
+	   select_bitpp = 8;
+       }
+       break;
+     case DRM_explicit_bpp:
+       select_bitpp = req_bitpp;
+       break;
+     case DRM_opengl:
+     case DRM_minigl:
+     case DRM_glide:
+     case DRM_d3d:
+       select_bitpp = native_bitpp;
+       break;       
+     default:
+       select_bitpp = 8;  // default native
+       break;
+    }
+   
+    // Change the video driver.
+    ret_value = VID_load_driver( request_drawmode );
+    if( ret_value < 0 )
+        return ret_value;
+
+    ret_value = VID_GetModes( req_drawmode, select_bitpp );
+    if( ret_value < 0 )
+        return ret_value;
+
+    if( select_fullscreen && (num_full_vidmodes == 0) )
+    {
+        // if modes not found
+	if( req_drawmode == DRM_explicit_bpp && !req_win )
+	{
+	    GenPrintf(EMSG_error, "No %i bpp modes\n", select_bitpp );
+	    goto no_modes;
+	}
+
+        // the game boots in 320x200 standard VGA, but
+        // we need a highcolor mode to run the game in highcolor
+        if( select_bitpp>8 )
+        {
+            GenPrintf( EMSG_info,"No highcolor/truecolor VESA2 video mode found, cannot run in highcolor/truecolor.\n");
+            goto no_modes;
+        }
+   
+        GenPrint(EMSG_info, "No display modes available.\n");
+        goto no_modes;
+    }
+   
+    if( num_all_vidmodes == 0 )
+        goto no_modes;
+
+    vid.bitpp = select_bitpp;
+    vid.bytepp = (select_bitpp + 7) >> 3;
     allow_fullscreen = true;
     mode_fullscreen = select_fullscreen;  // initial startup
 
     // set the startup screen
     initial_mode = VID_GetModeForSize( vid.width, vid.height,
 		   (select_fullscreen ? MODE_fullscreen: MODE_window));
-    VID_SetMode ( initial_mode );
+    ret_value = VID_SetMode ( initial_mode );
+    if( ret_value < 0 )
+        return ret_value;
 
     graphics_state = VGS_fullactive;
+    return 1;
+
+no_modes:
+    return FAIL_select;
 }
 
 
@@ -1123,17 +1229,11 @@ void I_ShutdownGraphics (void)
         bmi_main = NULL;
     }
 
-#ifdef HWRENDER
-    if ( rendermode != render_soft )
+    if( loaded_driver )
     {
-        // Hurdler: swap des deux lignes comme ça on close
-        //          l'environnement OpenGL/glide après avoir 
-        //          vidé la cache ce qui est bcp plus propre
-        HWR_Shutdown ();      //free stuff from the hardware renderer
-        HWD.pfnShutdown ();   //close 3d card display
-        Shutdown3DDriver ();  //free the driver DLL
+        // graphics are released by render shutdown
+        VID_release_driver();
     }
-#endif
 
     // free the last video mode screen buffers
     if (vid.buffer) {
@@ -1142,16 +1242,14 @@ void I_ShutdownGraphics (void)
         vid.display = NULL;
     }
 
-    if ( rendermode == render_soft )
-    {
-        //HWD.pfnShutdown ();
-        //ShutdownSoftDriver ();
-        FDX_CloseDirectDraw ();
-    }
-
     graphics_state = VGS_off;
 }
 
+// Setup HWR calls according to rendermode.
+int I_Rendermode_setup( void )
+{
+    return 1;
+}
 
 // ========================================================================
 //                     VIDEO MODE CONSOLE COMMANDS

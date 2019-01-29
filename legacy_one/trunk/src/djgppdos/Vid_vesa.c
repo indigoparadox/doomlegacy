@@ -57,7 +57,7 @@
 
 // PROTOS
 static vmode_t *VID_GetModePtr (modenum_t modenum);
-int  VID_VesaGetModeInfo (int modenum);
+int  VID_VesaGetModeInfo (int modenum, byte gmi_req_bitpp);
 void VID_VesaGetExtraModes (void);
 int  VID_VesaInitMode (viddef_t *lvid, vmode_t *currentmode_p);
 
@@ -77,7 +77,7 @@ void VID_Command_Mode_f (void);
 // -----------------------------------------------------
 
 static int totalvidmem;
-
+static byte  vesa_bitpp;
 static vmode_t      vesa_modes[MAX_VESA_MODES] = {{NULL, NULL}};
 static vesa_extra_t vesa_extra[MAX_VESA_MODES];
 
@@ -190,6 +190,7 @@ void VID_InitVGAModes(void)
     // do not include Mode 0 (INITIAL) in count
     all_vidmodes = &vgavidmodes[0];
     num_all_vidmodes = NUMVGAMODES-1;
+    num_full_vidmodes = 0;
 }
 
 static void append_full_vidmodes( vmode_t newmodes, int nummodes )
@@ -201,6 +202,39 @@ static void append_full_vidmodes( vmode_t newmodes, int nummodes )
     num_all_vidmodes += nummodes;
 }
 
+
+static inline
+int  VID_NumModes(void)
+{
+    return ( vid.fullscreen )? num_full_vidmodes : num_all_vidmodes;
+}
+
+//   request_drawmode : vid_drawmode_e
+//   request_fullscreen : true if want fullscreen modes
+//   request_bitpp : bits per pixel
+// Return true if there are viable modes.
+boolean  VID_Query_Modelist( byte request_drawmode, boolean request_fullscreen, byte request_bitpp )
+{
+    // Require modelist before rendermode is set.
+    if( request_drawmode >= DRM_opengl )
+        return false;
+   
+    if( request_fullscreen )
+    {
+        full_vidmodes = NULL;
+        currentmode_p = NULL;
+        num_full_vidmodes = 0;
+        // get available display modes for the device
+        VID_VesaGetExtraModes ( request_bitpp );
+        if( num_full_vidmodes )  return true;
+    }
+    else
+    {
+        if( num_all_vidmodes )
+            return true;
+    }
+    return false;
+}
 
 // modetype is of modetype_e
 range_t  VID_ModeRange( byte modetype )
@@ -293,24 +327,32 @@ void VID_Init (void)
 }
 
 // Get Fullscreen, VESA modes, append to VGA window modes
-void VID_GetModes(void)
+int VID_GetModes ( byte request_drawmode, byte select_bitpp )
 {
     // setup the video modes list,
     // note that mode 0 must always be VGA mode 0x13
     full_vidmodes = NULL;
     currentmode_p = NULL;
-    numvidmodes = 0;
+    num_full_vidmodes = 0;
+   
     // setup the vesa_modes list
-    VID_VesaGetExtraModes ();
+    VID_VesaGetExtraModes ( select_bitpp );
 
+    if (num_full_vidmodes==0)
+        goto no_modes;
+   
     // the game boots in 320x200 standard VGA, but
     // we need a highcolor mode to run the game in highcolor
-    if (highcolor && numvidmodes==0)
+    if( select_bitpp > 8 && num_full_vidmodes == 0)
     {
-        I_SoftError ("No highcolor VESA2 video mode found, cannot run in highcolor.\n");
-        highcolor = 0;
-        VID_VesaGetExtraModes ();
+        GenPrintf( EMSG_info, "No highcolor VESA2 video mode found, cannot run in highcolor.\n");
+//        VID_VesaGetExtraModes ( 8 );
+        goto no_modes; // must return correct signaling to v_video logic
     }
+    return 1;
+
+no_modes:
+    return FAIL_select;
 }
 
 
@@ -403,7 +445,7 @@ int VID_SetMode (modenum_t modenum)
         if (stat == FAIL_create)
         {
             // hardware could not setup mode
-            //if (!VID_SetMode (vid.modenum))
+            //if (VID_SetMode (vid.modenum) < 0)
             //    I_Error ("VID_SetMode: couldn't set video mode (hard failure)");
             I_SoftError("Couldn't set video mode %d\n", modenum);
         }
@@ -473,7 +515,8 @@ void *VID_ExtraFarToLinear (void *ptr)
 // In:  vesa mode number, from the vesa videomodenumbers list
 // Out: false, if no info for given modenum
 // ========================================================================
-int VID_VesaGetModeInfo (int modenum)
+static
+int VID_VesaGetModeInfo (int modenum, byte gmi_req_bitpp)
 {
     int     bytes_per_pixel;
     int     i;
@@ -493,15 +536,24 @@ int VID_VesaGetModeInfo (int modenum)
     {
         dosmemget (MASK_LINEAR(__tb), sizeof(vesamodeinfo_t), &vesamodeinfo);
 
-        bytes_per_pixel = (vesamodeinfo.BitsPerPixel+1)/8;
+        bytes_per_pixel = (vesamodeinfo.BitsPerPixel+7)/8;
 
+#if 1
+        if (vesamodeinfo.BitsPerPixel != gmi_req_bitpp)
+            return false;
+#else
         // we add either highcolor or lowcolor video modes, not the two
         if (highcolor && (vesamodeinfo.BitsPerPixel != 15))
             return false;
         if (!highcolor && (vesamodeinfo.BitsPerPixel != 8))
             return false;
+#endif
 
+#if 1       
+        if ((bytes_per_pixel > 4) ||
+#else
         if ((bytes_per_pixel > 2) ||
+#endif
             (vesamodeinfo.XResolution > MAXVIDWIDTH) ||
             (vesamodeinfo.YResolution > MAXVIDHEIGHT))
         {
@@ -576,7 +628,8 @@ int VID_VesaGetModeInfo (int modenum)
 #define MAXVESADESC 100
 static char vesadesc[MAXVESADESC] = "";
 
-void VID_VesaGetExtraModes (void)
+// append modes to modelist
+void VID_VesaGetExtraModes ( byte select_bitpp )
 {
     int             i;
     unsigned long   addr;
@@ -607,17 +660,10 @@ void VID_VesaGetExtraModes (void)
     dosmemget(MASK_LINEAR(__tb), sizeof(vbeinfoblock_t), &vesainfo);
 
     if (strncmp(vesainfo.VESASignature, "VESA", 4) != 0)
-    {
-no_vesa:
-        CONS_Printf ("No VESA driver\n");
-        return;
-    }
+        goto no_vesa;
 
     if (vesainfo.VESAVersion < (VBEVERSION<<8))
-    {
-        CONS_Printf ("VESA VBE %d.0 not available\n", VBEVERSION);
-        return;
-    }
+        goto wrong_vesa;
 
     //
     // vesa version number
@@ -643,6 +689,8 @@ no_vesa:
 
     totalvidmem = vesainfo.TotalMemory << 16;
 
+    vesa_bitpp = select_bitpp;
+
    //
    // find 8 bit modes
    //
@@ -663,7 +711,7 @@ no_vesa:
     while ( ((vesamode=vmode[numvmodes++]) != 0xFFFF) && (nummodes < MAX_VESA_MODES) )
     {
         //fill the modeinfo struct.
-        if (VID_VesaGetModeInfo (vesamode))
+        if (VID_VesaGetModeInfo (vesamode, select_bitpp))
         {
             vesa_modes[nummodes].next = &vesa_modes[nummodes+1];
             if (vesamodeinfo.XResolution > 999)
@@ -752,7 +800,15 @@ no_vesa:
         vesa_modes[nummodes-1].next = NULL; //full_vidmodes;
         append_full_vidmodes( &vesa_modes[0], nummodes );
     }
+    return;
+   
+no_vesa:
+    CONS_Printf ("No VESA driver\n");
+    return;
 
+wrong_vesa:
+    CONS_Printf ("VESA VBE %d.0 not available\n", VBEVERSION);
+    return;
 }
 
 

@@ -32,6 +32,8 @@
 
 #include "doomtype.h"
 
+extern byte  ogl_active;
+
 boolean OglSdlSurface(int w, int h, int isFullscreen);
 
 void OglSdlFinishUpdate(boolean vidwait);

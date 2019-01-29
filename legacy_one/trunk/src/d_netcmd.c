@@ -318,7 +318,7 @@ void D_Register_ClientCommands(void)
     CV_RegisterVar(&cv_timelimit);
     CV_RegisterVar(&cv_fraglimit);
     CV_RegisterVar(&cv_netstat);
-   
+
     // r_things.c (skin NAME)
     CV_RegisterVar(&cv_skin);
     // secondary player (splitscreen)

@@ -62,6 +62,8 @@ rcsid[] = "$Id$";
 #include "m_argv.h"
 #include "d_main.h"
 
+
+
 #define MAXWINMODES (8)
 static char vidModeName[MAXWINMODES][32];
 static int windowedModes[MAXWINMODES+1][2] = {
@@ -77,6 +79,8 @@ static int windowedModes[MAXWINMODES+1][2] = {
    {1280, 1024},
    {1600, 1200},
 };
+
+static byte  mode_bitpp; // bitpp of mode tables.
 
 
 //
@@ -210,7 +214,12 @@ void I_StartupGraphics(void)
     } else {
         InitDIVE( pmData);
     }
-    CV_RegisterVar (&cv_vidwait);
+
+    // This is an old driver that only handles 8 bit palette mode.
+    native_drawmode = DRM_8pal;
+    native_bitpp = 8;
+    native_bytepp = 1;
+
     //added:03-01-98: register exit code for graphics
     I_AddExitFunc(I_ShutdownGraphics);
     graphics_state = VGS_active;
@@ -218,7 +227,7 @@ void I_StartupGraphics(void)
     // Has fixed vidmode list
     // set the default video mode
     if( VID_SetMode(0) < 0 )  goto abort_error;
-
+   
     if( verbose )
         GenPrintf(EMSG_ver, "StartupGraphics completed\n" );
     return;
@@ -230,26 +239,42 @@ abort_error:
 
 // Called to start rendering graphic screen according to the request switches.
 // Fullscreen modes are possible.
-void I_RequestFullGraphics( byte select_fullscreen )
+// Returns FAIL_select, FAIL_end, FAIL_create, of status_return_e, 1 on success;
+int I_RequestFullGraphics( byte select_fullscreen )
 {
+    int ret_value;
     modenum_t  initialmode;
 
+    // This is an old driver that only handles 8 bit palette mode.
+    if( req_bitpp != native_bitpp )  goto no_modes;
+   
     mode_fullscreen = select_fullscreen;
+    mode_bitpp = native_bitpp;
+    // Modes are fixed, so no need to get them.
+
     initialmode = VID_GetModeForSize( vid.width, vid.height, select_fullscreen );
-    VID_SetMode( initialmode );
+    ret_value = VID_SetMode( initialmode );
+    if( ret_value < 0 )
+        return ret_value;
 
     vid.recalc = true;
     graphics_state = VGS_fullactive;
 
     if( verbose )
         GenPrintf(EMSG_ver, "StartupGraphics completed\n" );
-    return;
+    return ret_value;
 
-abort_error:
-    // cannot return without a display screen
-    I_Error("RequestFullGraphics Abort\n");
+no_modes:
+    return FAIL_select;
 }
-   
+
+// Setup HWR calls according to rendermode.
+int I_Rendermode_setup( void )
+{
+    return 1;
+}
+
+
 // return number of fullscreen or window modes, for listing
 // modetype is of modetype_e
 range_t  VID_ModeRange( byte modetype )
@@ -296,12 +321,34 @@ char * VID_GetModeName( modenum_t modenum )
    return vidModeName[mi];
 }
 
+
+//   request_drawmode : vid_drawmode_e
+//   request_fullscreen : true if want fullscreen modes
+//   request_bitpp : bits per pixel
+// Return true if there are viable modes.
+boolean  VID_Query_Modelist( byte request_drawmode, boolean request_fullscreen, byte request_bitpp )
+{
+    if( request_drawmode == DRM_explicit_bpp )
+    {
+        // Fixed modes, 8 bit palette only.
+        if( request_bitpp == 8 )  return true;
+    }
+    else if( request_drawmode == DRM_native )
+        return true;
+
+    return false;
+}
+
+
 // ========================================================================
 // Sets a video mode
 // ========================================================================
+// Returns FAIL_end, FAIL_create, of status_return_e, 1 on success;
 int VID_SetMode( modenum_t modenum )
 {
     boolean set_fullscreen = (modenum.modetype == MODE_fullscreen);
+   
+   // Only handles 8 bit palette mode.
 
    vid.draw_ready = 0;  // disable print reaching console
 

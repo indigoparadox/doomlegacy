@@ -76,6 +76,8 @@ extern  byte*   screens[NUMSCREENS+1];
 extern  int     dirtybox[4];
 #endif
 
+extern  CV_PossibleValue_t drawmode_sel_t[];  // for menu
+extern  consvar_t cv_drawmode;
 extern  consvar_t cv_ticrate;
 extern  consvar_t cv_darkback;
 extern  consvar_t cv_con_fontsize;
@@ -86,7 +88,18 @@ extern  consvar_t cv_gammafunc;
 extern  consvar_t cv_black;	// input to gammafunc
 extern  consvar_t cv_bright;	// input to gammafunc
 
+extern byte  set_drawmode;
+extern byte  drawmode_recalc;
+extern byte  rendermode_recalc;
 extern byte  HWR_patchstore;  // patches are stored in HWR format
+
+extern const byte num_drawmode_sel;
+extern byte drawmode_to_drawmode_sel_t[];
+extern byte drawmode_sel_avail[];
+extern const char * rendermode_name[];
+
+//  drawmode : drawmode_sel_t
+byte  V_switch_drawmode( byte drawmode );
 
 // Early setup of video controls, register cv_ vars
 void V_Init_VideoControl( void );

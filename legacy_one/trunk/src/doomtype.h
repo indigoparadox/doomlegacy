@@ -100,6 +100,7 @@ typedef enum {
     FAIL_invalid_input = -3,  // invalid input to the function
     FAIL_create = -100,
     FAIL_memory = -101,
+    FAIL_select = -102,
 } status_return_e;
 
 

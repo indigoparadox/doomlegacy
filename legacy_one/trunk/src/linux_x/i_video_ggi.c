@@ -85,7 +85,7 @@ boolean expand_buffer = false;
 //static byte* out_buffer;
 #endif
 
-static ggi_visual_t screen;
+static ggi_visual_t  g_screen;
 static const ggi_pixelformat* pixelformat;
 
 #ifdef MULTIPLY_ENABLE
@@ -223,7 +223,7 @@ void I_StartFrame (void)
 #ifdef EXPAND_BUFFER_ENABLE
   if (!expand_buffer)
 #endif
-    ggiFlush(screen);
+    ggiFlush(g_screen);
 }
 
 void I_OsPolling(void) {
@@ -250,7 +250,7 @@ void I_GetEvent(void)
 #ifdef LJOYSTICK
   I_GetJoyEvent();
 #endif
-  while (ggiEventPoll(screen, ev_mask, &nowait)!=evNothing) {
+  while (ggiEventPoll(g_screen, ev_mask, &nowait)!=evNothing) {
     // There is a desirable event
     ggi_event ggi_ev;
     event_t doom_ev;
@@ -259,7 +259,7 @@ void I_GetEvent(void)
     int i,j;
     // GII will return modified button "number"
 
-    ggiEventRead(screen, &ggi_ev, ev_mask);
+    ggiEventRead(g_screen, &ggi_ev, ev_mask);
 
     switch(ggi_ev.any.type) {
     case evKeyPress:
@@ -321,7 +321,7 @@ void I_GetEvent(void)
 void I_UpdateNoBlit (void)
 {
   // Finish up any output
-  ggiFlush(screen);
+  ggiFlush(g_screen);
 }
 
 //
@@ -339,7 +339,7 @@ void I_FinishUpdate (void)
 #endif
 
   // Blit it
-  ggiPutBox(screen, 0, 0, vid.width, vid.height, vid.display);
+  ggiPutBox(g_screen, 0, 0, vid.width, vid.height, vid.display);
 }
 
 //
@@ -367,7 +367,7 @@ void I_SetPalette(RGBA_t* palette)
       p++; palette++;
     }
 
-    ggiSetPalette(screen, 0, 256, ggi_pal);
+    ggiSetPalette(g_screen, 0, 256, ggi_pal);
     //  } else {
     // TrueColor mode, so rewrite conversion table
 
@@ -382,7 +382,7 @@ void I_ShutdownGraphics(void)
 
   graphics_state = VGS_shutdown;  // to catch some repeats due to errors
 
-  ggiRemoveFlags(screen, GGIFLAG_ASYNC);
+  ggiRemoveFlags(g_screen, GGIFLAG_ASYNC);
 
   if (vid.buffer)
     free(vid.buffer);
@@ -465,6 +465,79 @@ found_i:
   return modenum;
 }
 
+
+int VID_GetModes( byte select_bpp )
+{
+    int gt_parm =
+         (select_bpp==8)? GT_8BIT
+       : (select_bpp==15)? GT_15BIT
+       : (select_bpp==16)? GT_16BIT
+       : (select_bpp==24)? GT_24BIT
+       : (select_bpp==32)? GT_32BIT ;
+
+    // check available modes
+    num_vidmodes=0;
+    for(i=0;i<MAX_GGIMODES;i++) {
+      ggi_mode * vmp = &vidmodes[num_vidmodes];
+      int rx = temp_res[i];
+      int ry = temp_res[i];
+      if(!ggiCheckSimpleMode(g_screen, rx,ry, 2, gt_parm, vmp))
+      {
+	memcpy(&vidmode_res[num_vidmodes],&temp_res[i],sizeof(ggi_coord));
+        sprintf(vidname[num_vidmodes],"%dx%d",rx,ry);
+        if( verbose )
+            GenPrintf( EMSG_info,"mode %s\n",vidname[num_vidmodes]);
+        num_vidmodes++;
+      } else {
+        if( GT_DEPTH(vmp->graphtype) == select_bpp ) {
+          //if((vmp->.visible.x>temp_res[i-1].x &&
+          //    vmp->visible.x<temp_res[i+1].x &&
+          //    vmp->visible.y>=temp_res[i-1].y) ||
+          //   (vmp->visible.y>temp_res[i-1].y &&
+          //    vmp->visible.y<temp_res[i+1].y &&
+          //    vmp->visible.x>=temp_res[i-1].x)) {
+          if(vmp->visible.x==rx
+             && vmp->visible.y==ry )
+	  {
+            vidmode_res[num_vidmodes].x = vmp->visible.x;
+            vidmode_res[num_vidmodes].y = vmp->visible.y;
+            sprintf(vidname[num_vidmodes],"%dx%d",
+                    vidmode_res[num_vidmodes].x,vidmode_res[num_vidmodes].y);
+            if( verbose )
+                GenPrintf( EMSG_info,"suggested mode %s\n",vidname[num_vidmodes]);
+            num_vidmodes++;
+          }
+        }
+      }
+    }
+    return 1;
+}
+
+
+//   request_drawmode : vid_drawmode_e
+//   request_fullscreen : true if want fullscreen modes
+//   request_bitpp : bits per pixel
+// Return true if there are viable modes.
+boolean  VID_Query_Modelist( byte request_drawmode, boolean request_fullscreen, byte request_bitpp )
+{
+    int ret_value;
+    
+    // No hardware draw modes.
+    if( request_drawmode >= DRM_opengl )
+        return false;
+   
+    // Seems to be fullscreen only.
+    if( ! request_fullscreen )
+        return false;
+
+    ret_value = VID_GetModes( request_bitpp );
+    if( ret_value < 0 )
+        return ret_value;
+
+    return ( num_vidmodes > 0 );
+}
+
+
 // Called once. Init with basic error message screen.
 void I_StartupGraphics(void)
 {
@@ -475,8 +548,13 @@ void I_StartupGraphics(void)
   if (ggiInit())
     I_Error("Failed to initialise GGI\n");
 
-  if (!(screen = ggiOpen(NULL))) // Open default visual
+  if (!(g_screen = ggiOpen(NULL))) // Open default visual
     I_Error("Failed to get default visual\n");
+
+  native_drawmode = DRM_native;
+  // FIXME: get native from ggi
+  native_bitpp = 32;
+  native_bytepp = 4;
 
   // ??? No window mode
   
@@ -491,12 +569,14 @@ void I_StartupGraphics(void)
 
 // Called to start rendering graphic screen according to the request switches.
 // Fullscreen modes are possible.
+// Returns FAIL_select, FAIL_end, FAIL_create, of status_return_e, 1 on success;
 void I_RequestFullGraphics( byte select_fullscreen )
 {
   char * req_errmsg = NULL;
-  byte  request_bitpp = 0;
-  byte  alt_request_bitpp = 0;
   int i;
+  byte  select_bitpp = 0;
+  byte  select_bytepp = 1;
+  int ret_value;
 
   vid.draw_ready = 0;  // disable print reaching console
   graphics_state = VGS_startup;
@@ -513,120 +593,60 @@ void I_RequestFullGraphics( byte select_fullscreen )
   }
 #endif
 
-#if 0
-  // detect native bpp
-  vid.bitpp == screen.bpp; // default bpp  FIXME
-#endif
-
   switch(req_drawmode)
   {
-#if 0
-   case REQ_native:
-     if( V_CanDraw( vid.bitpp )) {
-         request_bitpp = vid.bitpp;
+   case DRM_native:
+     if( V_CanDraw( native_bitpp )) {
+         select_bitpp = native_bitpp;
+	 select_bytepp = native_bytepp;
      }else{
 	 // Use 8 bit and do the palette lookup.
 	 if( verbose )
 	     GenPrintf( EMSG_ver,"Native %i bpp rejected\n", vid.bitpp );
-	 request_bitpp = 8;
+	 select_bitpp = 8;
+         select_bytepp = 1;
      }
      break;
-#endif
-   case REQ_specific:
-     request_bpp = req_bitpp;
-     break;
-   case REQ_highcolor:
-     req_errmsg = "highcolor";
-     request_bitpp = 15;
-     alt_request_bitpp = 16;
-//     if( vid.bitpp == 16 )  request_bitpp = 16;  // native preference
-     break;
-   case REQ_truecolor:
-     req_errmsg = "truecolor";
-     request_bitpp = 24;
-     alt_request_bitpp = 32;
-//     if( vid.bitpp == 32 )  request_bitpp = 32;  // native preference
+   case DRM_explicit_bpp:
+     select_bitpp = req_bitpp;
+     select_bytepp = (select_bpp + 7) >> 3;
      break;
    default:
-     request_bitpp = 8;
+     select_bitpp = 8;
+     select_bytepp = 1;
      break;
   }
    
-  // try the requested bpp, then alt, then 8bpp
-  for(;;)
+  ret_value = VID_GetModes( select_bitpp );
+  if( ret_value < 0 )
+      return ret_value;
+
+  if( num_vidmodes )  goto found_modes;
+     
+  if(req_drawmode == DRM_explicit_bpp)
   {
-    int gt_parm = (request_bpp==8)? GT_8BIT
-       : (request_bpp==15)? GT_15BIT
-       : (request_bpp==16)? GT_16BIT
-       : (request_bpp==24)? GT_24BIT
-       : (request_bpp==32)? GT_32BIT ;
-    // check available modes
-    num_vidmodes=0;
-    for(i=0;i<MAX_GGIMODES;i++) {
-      ggi_mode * vmp = &vidmodes[num_vidmodes];
-      int rx = temp_res[i];
-      int ry = temp_res[i];
-      if(!ggiCheckSimpleMode(screen, rx,ry, 2, gt_parm, vmp))
-      {
-	memcpy(&vidmode_res[num_vidmodes],&temp_res[i],sizeof(ggi_coord));
-        sprintf(vidname[num_vidmodes],"%dx%d",rx,ry);
-        GenPrintf( EMSG_info,"mode %s\n",vidname[num_vidmodes]);
-        num_vidmodes++;
-      } else {
-        if(GT_DEPTH(vmp->graphtype)==(highcolor?15:8)) {
-          //if((vmp->.visible.x>temp_res[i-1].x &&
-          //    vmp->visible.x<temp_res[i+1].x &&
-          //    vmp->visible.y>=temp_res[i-1].y) ||
-          //   (vmp->visible.y>temp_res[i-1].y &&
-          //    vmp->visible.y<temp_res[i+1].y &&
-          //    vmp->visible.x>=temp_res[i-1].x)) {
-          if(vmp->visible.x==rx &&
-             vmp->visible.y==ry) {
-            vidmode_res[num_vidmodes].x = vmp->visible.x;
-            vidmode_res[num_vidmodes].y = vmp->visible.y;
-            sprintf(vidname[num_vidmodes],"%dx%d",
-                    vidmode_res[num_vidmodes].x,vidmode_res[num_vidmodes].y);
-            GenPrintf( EMSG_info,"suggested mode %s\n",vidname[num_vidmodes]);
-            num_vidmodes++;
-          }
-        }
-      }
-    }
-    if( num_vidmodes )  goto found_modes;
-    if( request_bitpp == 8 )  break;
-    if(req_drawmode == REQ_specific)
-    {
       GenPrintf( EMSG_warn,"No %i bpp modes\n", req_bitpp );
-      goto abort_error;
-    }
-    if( alt_request_bitpp )
-    {
-      if(request_bitpp != alt_request_bitpp)
-      {
-	request_bitpp = alt_request_bitpp;
-	continue;
-      }
-      GenPrintf( EMSG_warn,"No %s modes\n", req_errmsg );
-    }
-    request_bitpp = 8;  // default last attempt
-  }
-  if(num_vidmodes == 0) {
-    GenPrintf( EMSG_error, "No video modes available!");
-    goto abort_error;
+      goto no_modes;
   }
 
+draw_8pal:
+  select_bitpp = 8;
+  select_bytepp = 1;
+  goto found_modes;
+
 found_modes:
-  vid.bitpp = request_bpp;
-  vid.bytepp = (request_bpp + 7) >> 3;
+  vid.bitpp = select_bpp;
+  vid.bytepp = select_bytepp;
   vid.buffer = NULL;
   vid.display = NULL;
   vid.screen1 = NULL;
+
   VID_SetMode(0);
   // Go asynchronous
-  ggiAddFlags(screen, GGIFLAG_ASYNC);
+  ggiAddFlags(g_screen, GGIFLAG_ASYNC);
 
   // Mask events
-  ggiSetEventMask(screen, ev_mask);
+  ggiSetEventMask(g_screen, ev_mask);
 
   graphics_state = VGS_fullactive;
 
@@ -634,9 +654,8 @@ found_modes:
         GenPrintf(EMSG_ver, "StartupGraphics completed\n" );
   return;
 
-abort_error:
-    // cannot return without a display screen
-    I_Error("RequestFullGraphics Abort\n");
+no_modes:
+    return FAIL_select;
 }
 
 
@@ -648,7 +667,7 @@ int VID_SetMode(modenum_t modenum)
 
   vid.draw_ready = 0;  // disable print reaching console
    
-  if (ggiSetMode(screen,&vidmodes[mi])) {
+  if (ggiSetMode(g_screen,&vidmodes[mi])) {
     I_SoftError("Failed to set mode");
     return  FAIL_create;
   }

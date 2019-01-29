@@ -48,7 +48,7 @@
 
 #include "hardware/r_opengl/r_opengl.h"
   // OpenGL, gl.h, glu.h
-#include "v_video.h"
+//#include "v_video.h"
 
 
 #ifdef MAC_SDL
@@ -174,15 +174,10 @@ void mac_close_context( void )
 
 #endif
 
-
-// [WDJ] appeared in 143beta_macosx without static, shared
-//   It may be the MAC version of gcc 3.3, so make it conditional
-#if defined(__APPLE__) && defined(__GNUC__) && (__GNUC__ == 3) && (__GNUC_MINOR__ == 3)
-//[segabor]
-extern SDL_Surface *vidSurface; // use the one from sdl/i_video.c
-#else
-static SDL_Surface *vidSurface = NULL;  // OGL gets separate ptr
-#endif
+// public
+// Only one vidSurface, else releasing oldest faults in SDL.
+extern SDL_Surface * vidSurface;
+byte  ogl_active = 0;
 
 
 
@@ -207,7 +202,7 @@ boolean OglSdlSurface(int w, int h, int isFullscreen)
 	    "\n" );
 #endif
 
-    if(NULL != vidSurface)
+    if( vidSurface )
     {
         SDL_FreeSurface(vidSurface);
         vidSurface = NULL;
@@ -297,7 +292,8 @@ boolean OglSdlSurface(int w, int h, int isFullscreen)
     vid.height = vidSurface->h;
     vid.ybytes = vidSurface->pitch;
     vid.recalc = true;
-
+    ogl_active = 1;
+   
 #ifdef DEBUG_SDL
     GenPrintf( EMSG_debug, " vid set: height=%i, width=%i\n", vid.height, vid.width );
     if( vidSurface->pitch != (vid.width * vid.bytepp))
@@ -364,7 +360,9 @@ void OglSdlFinishUpdate(boolean vidwait)
 
 void OglSdlShutdown(void)
 {
-    if(NULL != vidSurface)
+    ogl_active = 0;
+
+    if( vidSurface )
     {
         SDL_FreeSurface(vidSurface);
         vidSurface = NULL;

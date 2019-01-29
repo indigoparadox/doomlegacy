@@ -192,6 +192,8 @@ int XShmGetEventBase( Display* dpy );
 #include "r_data.h"
   // R_Init_color8_translate, color8
 
+
+
 // Voodoo card has video switch, produces fullscreen 3d graphics,
 // and we cannot use window mode with it.
 static boolean haveVoodoo = false;  // have Voodoo card in hardware mode
@@ -338,7 +340,6 @@ static void determine_VidModes(void)
         vidmodes_to_vidmap();
 
         lowest_vidmode = num_vidmodes - 1;
-        allow_fullscreen = true;
     }
     else
     {
@@ -349,7 +350,7 @@ static void determine_VidModes(void)
 
 
 // Set vidmode_ext
-static void checkVidModeExtension(void)
+static void check_vidmode_extension(void)
 {
    int MajorVersion, MinorVersion;
 
@@ -1541,6 +1542,7 @@ static void grabsharedmemory(int size)
   return;
 }
 
+
 // return number of fullscreen or window modes, for listing
 // modetype is of modetype_e
 range_t  VID_ModeRange( byte modetype )
@@ -1739,6 +1741,7 @@ static int createWindow(boolean set_fullscreen, modenum_t modenum)
         // Move the viewport to top left
         XF86VidModeSetViewPort(X_display, X_screen, 0, 0);
     }
+
     if(rendermode==render_soft) {
         // setup attributes for main window
         if (vidmode_active) {
@@ -2062,6 +2065,136 @@ void detect_Voodoo( void )
 }
 
 
+//   request_drawmode : vid_drawmode_e
+//   request_fullscreen : true if want fullscreen modes
+//   request_bitpp : bits per pixel
+// Return true if there are viable modes.
+boolean  VID_Query_Modelist( byte request_drawmode, boolean request_fullscreen, byte request_bitpp )
+{
+    int num;
+
+    // Require modelist before rendermode is set.
+   
+    // Only has native bpp and opengl (using native).
+    if( request_drawmode < DRM_opengl )
+    {
+        if( request_bitpp != native_bitpp )
+            return false;
+    }
+
+    if(haveVoodoo)
+    {
+        num = NUM_VOODOOMODES;
+    }
+    else if( request_fullscreen )
+    {
+        // once we have the vidmodes, it is not going to change
+        if( num_vidmodes == 0 ) 
+            determine_VidModes();
+        num = num_vidmodes;
+    }
+    else
+        num = MAXWINMODES;
+
+    return (num > 0);
+}
+
+
+
+// Setup HWR calls according to rendermode.
+int I_Rendermode_setup( void )
+{
+    static byte  HWD_current = 0;
+    void *dlptr;
+
+    if( rendermode == render_opengl )
+    {
+        if( HWD_current == render_opengl )  return;
+
+        // only set MESA_GLX_FX if not set by set user
+        if(!getenv("MESA_GLX_FX"))
+        {
+            if(M_CheckParm("-winvoodoo"))
+            {
+                // use windowed mode for voodoo cards if requested
+                putenv("MESA_GLX_FX=window");
+                putenv("SSTV2_VGA_PASS=1");
+                putenv("SSTV2_NOSHUTDOWN=1");
+            }
+            else
+            {
+                // Tell Mesa GLX to use 3Dfx driver in fullscreen mode.
+                putenv("MESA_GLX_FX=fullscreen");
+            }
+
+            // Disable 3Dfx Glide splash screen
+            putenv("FX_GLIDE_NO_SPLASH=0");
+        }
+
+       // try to open library in CWD
+       dlptr = dlopen("./r_opengl.so",RTLD_NOW | RTLD_GLOBAL);
+
+       if(!dlptr) {
+           // try to open in LIBPATH
+           dlptr = dlopen("r_opengl.so",RTLD_NOW | RTLD_GLOBAL);
+       }
+
+       if(!dlptr)
+       {
+           // to get first error messages
+           dlopen("./r_opengl.so",RTLD_NOW | RTLD_GLOBAL);
+           GenPrintf(EMSG_error, "Error opening r_opengl.so\n%s\n", dlerror());
+#if 0	  
+           {
+               // [WDJ] Troubleshoot why cannot open it
+               char * cwd2 = getcwd( NULL, 0 );  // malloc
+               GenPrintf(EMSG_error, "CWD: %s \n", cwd2 );
+               free( cwd2 );
+               char * readperm = (access( "r_opengl.so", R_OK ) == 0 )? "OK": "NOT PERMITTED";
+               char * execperm = (access( "r_opengl.so", X_OK ) == 0 )? "OK": "NOT PERMITTED";
+               GenPrintf(EMSG_error, "Access r_opengl.so: READ %s, EXECUTE %s\n", readperm, execperm );
+           }
+#endif	  
+           // Fail to software rendering
+           rendermode = render_soft;
+	   return FAIL;
+       }
+       
+       // linkage to dll r_opengl.so
+       HWD.pfnInit = dlsym(dlptr,"Init");
+       HWD.pfnShutdown = dlsym(dlptr,"Shutdown");
+       HWD.pfnHookXwin = dlsym(dlptr,"HookXwin");
+       HWD.pfnSetPalette = dlsym(dlptr,"SetPalette");
+       HWD.pfnFinishUpdate = dlsym(dlptr,"FinishUpdate");
+       HWD.pfnDraw2DLine = dlsym(dlptr,"Draw2DLine");
+       HWD.pfnDrawPolygon = dlsym(dlptr,"DrawPolygon");
+       //HWD.pfnGetState = dlsym(dlptr,"GetState");
+       HWD.pfnSetBlend = dlsym(dlptr,"SetBlend");
+       HWD.pfnClearBuffer = dlsym(dlptr,"ClearBuffer");
+       HWD.pfnSetTexture = dlsym(dlptr,"SetTexture");
+       HWD.pfnReadRect = dlsym(dlptr,"ReadRect");
+       HWD.pfnGClipRect = dlsym(dlptr,"GClipRect");
+       HWD.pfnClearMipMapCache = dlsym(dlptr,"ClearMipMapCache");
+       HWD.pfnSetSpecialState = dlsym(dlptr,"SetSpecialState");
+       HWD.pfnGetRenderer = dlsym(dlptr, "GetRenderer");
+       //FIXME: check if all this is ok:
+       HWD.pfnDrawMD2 = dlsym(dlptr, "DrawMD2");
+       HWD.pfnSetTransform = dlsym(dlptr, "SetTransform");
+       HWD.pfnGetTextureUsed = dlsym(dlptr, "GetTextureUsed");
+       HWD.pfnGetRenderVersion = dlsym(dlptr, "GetRenderVersion");
+
+       // check gl renderer lib
+       if (HWD.pfnGetRenderVersion() != DOOMLEGACY_COMPONENT_VERSION)
+       {
+           I_Error ("The version of the renderer doesn't match the version of the executable\nBe sure you have installed Doom Legacy properly.\n");
+       }
+
+       HWD_current = render_opengl;
+    }
+    return 1;
+}
+
+
 // Called once. Init with basic error message screen.
 void I_StartupGraphics(void)
 {
@@ -2084,7 +2217,11 @@ void I_StartupGraphics(void)
     findVisual();  // Set X_screen, X_visualinfo, X_visual, x_drawmode
 
     determineBPP(); // Sets x_bitpp and x_bytepp from X_visualinfo.depth
+    native_drawmode = DRM_native;
+    native_bitpp = x_bitpp;
+    native_bytepp = x_bytepp;
 
+    check_vidmode_extension();  // Set vidmode_ext
     checkForShm();  // Set doShm
 
     if( V_CanDraw( x_bitpp ))
@@ -2125,10 +2262,12 @@ abort_error:
 
 // Called to start rendering graphic screen according to the request switches.
 // Fullscreen modes are possible.
-void I_RequestFullGraphics( byte select_fullscreen )
+// Returns FAIL_select, FAIL_end, FAIL_create, of status_return_e, 1 on success;
+int I_RequestFullGraphics( byte select_fullscreen )
 {
     modenum_t  initialmode;
-    void *dlptr;
+    byte  req_bytepp = 1;
+    int ret_value;
 
     vid.draw_ready = 0;  // disable print reaching console
     graphics_state = VGS_startup;
@@ -2136,93 +2275,19 @@ void I_RequestFullGraphics( byte select_fullscreen )
 
     // setup vid 19990110 by Kin
 
-    if(M_CheckParm("-opengl")) {
-        // only set MESA_GLX_FX if not set by set user
-        if(!getenv("MESA_GLX_FX"))
-        {
-            if(M_CheckParm("-winvoodoo"))
-            {
-                // use windowed mode for voodoo cards if requested
-                putenv("MESA_GLX_FX=window");
-                putenv("SSTV2_VGA_PASS=1");
-                putenv("SSTV2_NOSHUTDOWN=1");
-            }
-            else
-            {
-                // Tell Mesa GLX to use 3Dfx driver in fullscreen mode.
-                putenv("MESA_GLX_FX=fullscreen");
-            }
-
-            // Disable 3Dfx Glide splash screen
-            putenv("FX_GLIDE_NO_SPLASH=0");
-        }
-
-       rendermode = render_opengl;
-
-       // try to open library in CWD
-       dlptr = dlopen("./r_opengl.so",RTLD_NOW | RTLD_GLOBAL);
-
-       if(!dlptr) {
-           // try to open in LIBPATH
-           dlptr = dlopen("r_opengl.so",RTLD_NOW | RTLD_GLOBAL);
-       }
-
-       if(!dlptr)
-       {
-           // to get first error messages
-           dlopen("./r_opengl.so",RTLD_NOW | RTLD_GLOBAL);
-           GenPrintf(EMSG_error, "Error opening r_opengl.so\n%s\n", dlerror());
-#if 0	  
-           {
-               // [WDJ] Troubleshoot why cannot open it
-               char * cwd2 = getcwd( NULL, 0 );  // malloc
-               GenPrintf(EMSG_error, "CWD: %s \n", cwd2 );
-               free( cwd2 );
-               char * readperm = (access( "r_opengl.so", R_OK ) == 0 )? "OK": "NOT PERMITTED";
-               char * execperm = (access( "r_opengl.so", X_OK ) == 0 )? "OK": "NOT PERMITTED";
-               GenPrintf(EMSG_error, "Access r_opengl.so: READ %s, EXECUTE %s\n", readperm, execperm );
-           }
-#endif	  
-           // Fail to software rendering
-           rendermode = render_soft;
-       } else {
-           // linkage to dll r_opengl.so
-           HWD.pfnInit = dlsym(dlptr,"Init");
-           HWD.pfnShutdown = dlsym(dlptr,"Shutdown");
-           HWD.pfnHookXwin = dlsym(dlptr,"HookXwin");
-           HWD.pfnSetPalette = dlsym(dlptr,"SetPalette");
-           HWD.pfnFinishUpdate = dlsym(dlptr,"FinishUpdate");
-           HWD.pfnDraw2DLine = dlsym(dlptr,"Draw2DLine");
-           HWD.pfnDrawPolygon = dlsym(dlptr,"DrawPolygon");
-           //HWD.pfnGetState = dlsym(dlptr,"GetState");
-           HWD.pfnSetBlend = dlsym(dlptr,"SetBlend");
-           HWD.pfnClearBuffer = dlsym(dlptr,"ClearBuffer");
-           HWD.pfnSetTexture = dlsym(dlptr,"SetTexture");
-           HWD.pfnReadRect = dlsym(dlptr,"ReadRect");
-           HWD.pfnGClipRect = dlsym(dlptr,"GClipRect");
-           HWD.pfnClearMipMapCache = dlsym(dlptr,"ClearMipMapCache");
-           HWD.pfnSetSpecialState = dlsym(dlptr,"SetSpecialState");
-           HWD.pfnGetRenderer = dlsym(dlptr, "GetRenderer");
-           //FIXME: check if all this is ok:
-           HWD.pfnDrawMD2 = dlsym(dlptr, "DrawMD2");
-           HWD.pfnSetTransform = dlsym(dlptr, "SetTransform");
-           HWD.pfnGetTextureUsed = dlsym(dlptr, "GetTextureUsed");
-           HWD.pfnGetRenderVersion = dlsym(dlptr, "GetRenderVersion");
-
-           // check gl renderer lib
-           if (HWD.pfnGetRenderVersion() != DOOMLEGACY_COMPONENT_VERSION)
-           {
-               I_Error ("The version of the renderer doesn't match the version of the executable\nBe sure you have installed Doom Legacy properly.\n");
-           }
-       }
-       // requires HWD.pfnGetRenderer
-       detect_Voodoo();
+    if( req_drawmode == REQ_opengl ) 
+    {
+        ret_value = I_Rendermode_setup();  // some functions needed immediately
+        if( ret_value < 0 )
+	    return ret_value;
+       
+        // requires HWD.pfnGetRenderer
+        detect_Voodoo();
     }
 
     // Set hardware vidmodes and vidmap, from X_display, X_screen
-    checkVidModeExtension();  // Set vidmode_ext
 
-    determine_VidModes();  // set allow_fullscreen
+    determine_VidModes();
 
     findVisual();  // Set X_screen, X_visualinfo, X_visual, x_drawmode
 
@@ -2232,41 +2297,51 @@ void I_RequestFullGraphics( byte select_fullscreen )
 
     switch(req_drawmode)
     {
-     case REQ_specific:
+     case DRM_explicit_bpp:
+       if( req_bitpp == 8 )
+	   goto draw_pal8;
+
        if( x_bitpp != req_bitpp )
        {
            GenPrintf(EMSG_error, "Not in %i bpp mode\n", req_bitpp );
-           goto abort_error;
+           goto no_modes;
        }
-       break;
-     case REQ_highcolor:
-       if( x_bitpp == 15 || x_bitpp == 16 ) goto accept_bitpp;
-       GenPrintf(EMSG_warn, "Do not have highcolor mode, use 8bpp\n");
-       break;
-     case REQ_truecolor:
-       if( x_bitpp == 24 || x_bitpp == 32 ) goto accept_bitpp;
-       GenPrintf(EMSG_warn, "Do not have truecolor mode, use 8bpp\n");
-       break;
-     case REQ_native:
-      
-     accept_bitpp: 
-       if( V_CanDraw( x_bitpp ))
+       vid.bitpp = x_bitpp;
+       vid.bytepp = x_bytepp;
+       goto accept;
+
+     case DRM_native:
+       if( V_CanDraw( native_bitpp ))
        {
-           vid.bitpp = x_bitpp;
-           vid.bytepp = x_bytepp;
-           GenPrintf(EMSG_info, "Video %i bpp (%i bytes)\n", vid.bitpp, vid.bytepp);
+	   if( verbose )
+               GenPrintf(EMSG_info, "Video %i bpp (%i bytes)\n", native_bitpp, native_bytepp);
+           goto draw_native;
        }
-       else if( verbose )
+       else
        {
+           GenPrintf( EMSG_info,"Native %i bpp rejected\n", native_bitpp );
            // Use 8 bit and do the palette translation.
-           vid.bitpp = 8;
-           vid.bytepp = 1;
-           GenPrintf(EMSG_ver, "%i bpp rejected\n", x_bitpp );
+	   goto draw_pal8;
        }
-     default:
        break;
+
+     case DRM_opengl:
+     default:
+       goto draw_native;
     }
 
+draw_pal8:
+    // Use 8 bit and do the palette translation.
+    vid.bitpp = 8;
+    vid.bytepp = 1;
+    goto accept;
+
+draw_native:
+    vid.bitpp = native_bitpp;
+    vid.bytepp = native_bytepp;
+    goto accept;
+
+accept:   
     determineColorMask();  // Set color offset and masks
     createColorMap();  // Create X_cmap and x_colormap2/3/4
 
@@ -2277,9 +2352,12 @@ void I_RequestFullGraphics( byte select_fullscreen )
         // switch to windowed
         select_fullscreen = 0;
         GenPrintf(EMSG_info,"No modes below 1600x1200 available\nSwitching to windowed mode ...\n");
+        goto no_modes;
     }
-
+   
+    allow_fullscreen = true;
     mode_fullscreen = select_fullscreen;
+
     initialmode = VID_GetModeForSize( vid.width, vid.height,
                    (select_fullscreen ? MODE_fullscreen: MODE_window));
     createWindow( select_fullscreen, initialmode );
@@ -2294,10 +2372,10 @@ void I_RequestFullGraphics( byte select_fullscreen )
     graphics_state = VGS_fullactive;
     return;
 
-abort_error:
-    // cannot return without a display screen
-    I_Error("RequestFullGraphics Abort\n");
+no_modes:
+    return FAIL_select;
 }
+
 
 void I_ShutdownGraphics(void)
 {
