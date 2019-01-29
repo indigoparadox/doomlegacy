@@ -266,12 +266,16 @@ static void S_StopChannel(int cnum);
 
 void S_Register_SoundStuff(void)
 {
-    if (dedicated)
-        return;
-
-    //added:11-04-98: stereoreverse
+    // Any cv_ with CV_SAVE needs to be registered, even if it is not used.
+    // Otherwise there will be error messages when config is loaded.
     CV_RegisterVar(&cv_stereoreverse);
     CV_RegisterVar(&cv_precachesound);
+#ifdef SURROUND_SOUND
+    CV_RegisterVar(&cv_surround);
+#endif
+
+    if (dedicated)
+        return;
 
 #ifdef SNDSERV
     CV_RegisterVar(&cv_sndserver_cmd);
@@ -281,9 +285,6 @@ void S_Register_SoundStuff(void)
     CV_RegisterVar(&cv_musserver_cmd);
     CV_RegisterVar(&cv_musserver_arg);
     CV_RegisterVar(&cv_musserver_opt);
-#endif
-#ifdef SURROUND_SOUND
-    CV_RegisterVar(&cv_surround);
 #endif
 
 #if 0

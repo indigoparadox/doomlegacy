@@ -171,6 +171,7 @@ byte* R_GetFlat (int  flatnum);
 void R_Init_Data (void);
 void R_PrecacheLevel (void);
 
+void R_Init_rdata(void);
 
 // Retrieval.
 // Floor/ceiling opaque texture tiles,

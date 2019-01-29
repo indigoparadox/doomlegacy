@@ -322,15 +322,16 @@ void wpoly_free_alloc( int num_alloc, /*INOUT*/ wpoly_t * wpoly )
 {
     wpoly->numpts = 0;
     if( wpoly->ppts )
+    {
         Z_Free( wpoly->ppts );
+        wpoly->ppts = NULL;
+    }
 
     // New array allocation within the wpoly
     wpoly->num_alloc = num_alloc;
     if( num_alloc <= 0 )
-    {
-        wpoly->ppts = NULL;        
         return;
-    }
+
     wpoly->ppts = Z_Malloc((sizeof(void*) * num_alloc), PU_HWRPLANE, NULL);
 }
 #endif
@@ -632,6 +633,7 @@ static void HWR_FreePoly (poly_t* poly)
 {
 #ifdef ZPLANALLOC
     Z_Free(poly);
+    // poly = NULL;
 #else
     // No free list, cannot reclaim memory.
     // Each poly is a different size.
@@ -2032,7 +2034,10 @@ static
 void HWR_Free_poly_subsectors (void)
 {
     if (poly_subsectors)
+    {
         Z_Free(poly_subsectors);
+        poly_subsectors = NULL;
+    }
 }
 
 
@@ -2617,6 +2622,7 @@ void HWR_Create_PlanePolygons ( void )
 
     finalize_polygons();  // wpoly_t to drawing polygons
     Z_Free( wpoly_subsectors );
+    wpoly_subsectors = NULL;
 
 #ifdef DEBUG_HWBSP
     //debug debug..

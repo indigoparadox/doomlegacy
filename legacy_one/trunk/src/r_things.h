@@ -111,6 +111,8 @@ void R_DrawMasked (void);
 
 void R_ClipVisSprite ( vissprite_t* vis, int xl, int xh );
 
+void R_DrawPlayerSprites (void);
+
 
 // -----------
 // SKINS STUFF

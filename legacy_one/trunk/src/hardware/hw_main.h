@@ -90,6 +90,8 @@ extern float gr_baseviewwindowy, gr_viewwindowx, gr_viewheight, gr_viewwidth;
 void HWR_Startup_Render (void);
 void HWR_Shutdown_Render (void);
 void HWR_SetupLevel(void);
+void HWR_Preload_Graphics( void );
+void HWR_Release_Graphics( void );
 
 void HWR_Clear_Automap (void);
 void HWR_drawAMline (fline_t* fl, int color);

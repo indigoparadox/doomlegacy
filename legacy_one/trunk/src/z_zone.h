@@ -74,6 +74,7 @@ typedef enum
   PU_SOUND,    // static while playing
   PU_MUSIC,    // static while playing
   PU_DAVE,     // anything else Dave wants static
+  PU_COLORMAP,
   PU_HWRPATCHINFO,      // Hardware MipPatch_t struct for OpenGl/Glide texture cache
   PU_HWRPATCHCOLMIPMAP, // Hardware Mipmap_t struct colormap variation of patch
   PU_LOCK_SB,  // static and protected against change, must use PU_UNLOCK_CACHE

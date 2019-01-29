@@ -4312,6 +4312,8 @@ static void Command_GrStats_f(void)
 //added by Hurdler: console variable that are saved
 void HWR_Register_Gr1Commands(void)
 {
+    // [WDJ] Any cv_ with CV_SAVE needs to be registered, even if it is not used.
+    // Otherwise there will be error messages when config is loaded.
     CV_RegisterVar(&cv_grgammablue);
     CV_RegisterVar(&cv_grgammagreen);
     CV_RegisterVar(&cv_grgammared);
@@ -4401,6 +4403,25 @@ void HWR_Startup_Render(void)
     EN_HWR_flashpalette = (rendermode == render_opengl) || (rendermode == render_d3d);
 
     startupdone = 1;
+}
+
+
+// Called after setup level, and when change drawmode to HWR draw.
+void  HWR_SetupLevel( void )
+{
+    // Setup structures needed for HWR draw.
+    // BP: reset light between levels (we draw preview frame lights on current frame)
+    HWR_Reset_Lights();
+    // Correct missing sidedefs & deep water trick
+    HWR_CorrectSWTricks();
+    HWR_Create_PlanePolygons();
+}
+
+// Called after setup level, and when change drawmode to HWR draw.
+void  HWR_Preload_Graphics( void )
+{
+    HWR_Prep_LevelCache (numtextures);
+    HWR_Create_StaticLightmaps();
 }
 
 // --------------------------------------------------------------------------

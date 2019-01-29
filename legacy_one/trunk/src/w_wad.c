@@ -401,13 +401,13 @@ int W_Load_WadFile (const char *filename)
     //     because these were causing a lot of fragmentation of the heap,
     //     considering they are never freed.
     length = numlumps * sizeof(MipPatch_t);
-    grPatch = Z_Malloc (length, PU_HWRPATCHINFO, 0);    //never freed
+    grPatch = Z_Malloc (length, PU_HWRPATCHINFO, NULL);    //never freed
     // set mipmap.downloaded to false
     memset (grPatch, 0, length);
     for (i=0; i<numlumps; i++)
     {
         // store the software patch lump number for each MipPatch
-        grPatch[i].patchlump = WADLUMP(filenum,i);  // form file/lump
+        grPatch[i].patch_lumpnum = WADLUMP(filenum,i);  // form file/lump
     }
     wadfile->hwrcache = grPatch;
 #endif
@@ -946,7 +946,7 @@ void* W_CachePatchNum ( lumpnum_t lumpnum, int ztag )
     if( ! grPatch->mipmap.grInfo.data ) 
     {   // first time init grPatch fields
         // we need patch w,h,offset,...
-        patch_t* tmp_patch = W_CachePatchNum_Endian(grPatch->patchlump, PU_LUMP); // temp use
+        patch_t* tmp_patch = W_CachePatchNum_Endian(grPatch->patch_lumpnum, PU_LUMP); // temp use
         // default no TF_Opaquetrans
         HWR_MakePatch ( tmp_patch, grPatch, &grPatch->mipmap, 0);
         Z_Free (tmp_patch);
@@ -979,7 +979,7 @@ void* W_CacheMappedPatchNum ( lumpnum_t lumpnum, uint32_t drawflags )
     if( ! grPatch->mipmap.grInfo.data )
     {   // first time init grPatch fields
         // we need patch w,h,offset,...
-        patch_t *tmp_patch = W_CachePatchNum_Endian(grPatch->patchlump, PU_LUMP); // temp use
+        patch_t *tmp_patch = W_CachePatchNum_Endian(grPatch->patch_lumpnum, PU_LUMP); // temp use
         // pass TF_Opaquetrans
         HWR_MakePatch ( tmp_patch, grPatch, &grPatch->mipmap, drawflags);
         Z_Free (tmp_patch);

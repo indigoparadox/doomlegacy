@@ -907,9 +907,6 @@ void WI_Draw_wait( int net_nodes, int net_players, int wait_players, int wait_ti
 
 
 
-static void WI_Release_Data(void);
-
-
 // used for write introduce next level
 static void WI_Init_NoState(void)
 {
@@ -2040,7 +2037,7 @@ load_patch_t  heretic_wi_patches[13] =
 
      
 
-static void WI_Load_Data(void)
+void WI_Load_Data(void)
 {
     // vid : from video setup
     int   i;
@@ -2177,7 +2174,7 @@ static void WI_Load_Data(void)
     stpb = W_CachePatchName("STPB0", PU_LOCK_SB);  // never unlocked
 }
 
-static void WI_Release_Data(void)
+void WI_Release_Data(void)
 {
     byte j;
     byte wb_epsd;

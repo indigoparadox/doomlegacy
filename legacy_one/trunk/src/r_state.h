@@ -64,8 +64,6 @@
   // m_fixed.h, r_defs.h
 #include "r_defs.h"
   // m_fixed.h
-#include "command.h"
-  // consvar_t
 
 
 #ifdef __GNUG__
@@ -165,8 +163,6 @@ extern angle_t          viewangle;
 extern angle_t          aimingangle;
 extern angle_t          bspangle;
 extern player_t*        viewplayer;
-
-extern consvar_t        cv_allowmlook;
 
 // ?
 extern angle_t          clipangle;

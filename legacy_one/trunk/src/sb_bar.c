@@ -137,7 +137,7 @@ static int H_UpdateState;  // HUS_
 #endif
 
 // [WDJ] all patches loaded by CachePatch and are saved endian fixed
-static patch_t *PatchLTFACE;
+static patch_t *PatchLTFACE = NULL;
 static patch_t *PatchRTFACE;
 static patch_t *PatchBARBACK;
 static patch_t *PatchCHAIN;
@@ -205,7 +205,7 @@ load_patch_t  heretic_sb_release_patches[] =
 };
 
 
-void SB_Heretic_Init(void)
+void SB_Heretic_Load_Graphics(void)
 {
     int i;
     int startLump;

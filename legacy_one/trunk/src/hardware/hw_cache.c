@@ -852,8 +852,8 @@ void HWR_release_Patch ( MipPatch_t* grPatch, Mipmap_t *grMipmap )
 //             CACHING HANDLING
 // =================================================
 
-static int  gr_numtextures;
-static MipTexture_t*  gr_textures;       // for ALL Doom textures
+static int  gr_numtextures = 0;
+static MipTexture_t*  gr_textures = NULL;  // for ALL Doom textures
 
 void HWR_Init_TextureCache (void)
 {
@@ -909,6 +909,7 @@ void HWR_Free_TextureCache (void)
             }
         }
         free (gr_textures);
+        gr_textures = NULL;
     }
 }
 
@@ -1137,7 +1138,7 @@ static void HWR_LoadMappedPatch(Mipmap_t *grmip, MipPatch_t *gpatch)
         !grmip->grInfo.data )
     {
         // Load patch to temp, free it afterwards
-        patch_t* pp = W_CachePatchNum_Endian(gpatch->patchlump, PU_IN_USE);
+        patch_t* pp = W_CachePatchNum_Endian(gpatch->patch_lumpnum, PU_IN_USE);
         HWR_MakePatch( pp, gpatch, grmip, grmip->tfflags);
 
         Z_Free(pp);
@@ -1158,7 +1159,15 @@ void HWR_GetPatch( MipPatch_t* gpatch )
     {
         // load the software patch, PU_STATIC or the Z_Malloc for hardware patch will
         // flush the software patch before the conversion! oh yeah I suffered
-        patch_t * swpatch = W_CachePatchNum_Endian(gpatch->patchlump, PU_IN_USE);
+        patch_t * swpatch = W_CachePatchNum_Endian(gpatch->patch_lumpnum, PU_IN_USE);
+
+#ifdef PARANOIA
+        if( swpatch->width != gpatch->width || swpatch->height != gpatch->height
+            || swpatch->leftoffset != gpatch->leftoffset || swpatch->topoffset != gpatch->topoffset ) {
+            printf("HWR_GetPatch, bad patch: patch_lumpnum = %i\n", gpatch->patch_lumpnum);
+        }
+#endif
+
         HWR_MakePatch ( swpatch, gpatch, &gpatch->mipmap, 0);
 
         // this is inefficient.. but the hardware patch in heap is purgeable so it should

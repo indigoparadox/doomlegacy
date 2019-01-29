@@ -56,6 +56,10 @@ void WI_Drawer (void);
 // Setup for an intermission screen.
 void WI_Start(wb_start_t *  wb_start);
 
+void WI_Load_Data(void);
+void WI_Release_Data(void);
+
+
 boolean teamingame(int teamnum);
 
 // draw rankings

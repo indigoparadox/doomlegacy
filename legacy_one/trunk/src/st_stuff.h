@@ -129,13 +129,17 @@ void ST_Release_FaceGraphics (void);
 // return if player a is in the same team of the player b
 boolean ST_SameTeam(player_t *a,player_t *b);
 
+void ST_Load_Graphics(void);
+void ST_Release_Graphics(void);
+
 // get the frags of the player
 // only one function for calculation : more simple code
 int  ST_PlayerFrags (int playernum);
 
 
 // Heretic status bar
-void SB_Heretic_Init(void);
+void SB_Heretic_Load_Graphics(void);
+void SB_Heretic_Release_Graphics(void);
 void SB_Heretic_Ticker(void);
 void SB_Heretic_Drawer( boolean refresh );
 

@@ -142,10 +142,6 @@ extern int             dclicktime2;
 extern int             dclickstate2;
 extern int             dclicks2;
 
-extern consvar_t       cv_allowjump;
-extern consvar_t       cv_allowrocketjump;
-extern consvar_t       cv_allowautoaim;
-
 extern boolean gamekeydown[NUMINPUTS];
 extern boolean gamekeytapped[NUMINPUTS];
 

@@ -662,6 +662,13 @@ void V_Init_VideoControl( void )
     CV_RegisterVar(&cv_black);
     CV_RegisterVar(&cv_bright);
     CV_RegisterVar(&cv_gammafunc);
+   
+    // Screen
+    CV_RegisterVar(&cv_fullscreen);     // only for opengl so use differant name please and move it to differant place
+    CV_RegisterVar(&cv_scr_depth);
+    CV_RegisterVar(&cv_scr_width);
+    CV_RegisterVar(&cv_scr_height);
+    CV_RegisterVar(&cv_fuzzymode);
 }
 
 

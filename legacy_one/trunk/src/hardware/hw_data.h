@@ -99,20 +99,21 @@ typedef struct {
 // This is returned by W_CachePatchNum()/W_CachePatchName(), when rendermode
 // is 'render_glide'. Else it returns the normal patch_t data.
 
+// Derived from:   pat_hdr_t;
 // [WDJ] This is used for reading patches from wad.
-struct MipPatch_s {
+typedef struct {
     // the 4 first fields come right away from the original patch_t
-    uint16_t       width;          // bounding box size
-    uint16_t       height;
-    int16_t        leftoffset;     // pixels to the left of origin
-    int16_t        topoffset;      // pixels below the origin
-    //
-    float          max_s,max_t;
-    int            patchlump;      // the software patch lump num for when the hardware patch
-                                   // was flushed, and we need to re-create it
-    Mipmap_t       mipmap;
-};
-typedef struct MipPatch_s MipPatch_t;
+    // pat_hdr_t
+    uint16_t   width;          // bounding box size
+    uint16_t   height;
+    int16_t    leftoffset;     // pixels to the left of origin
+    int16_t    topoffset;      // pixels below the origin
+    // hardware patch fields
+    lumpnum_t  patch_lumpnum;  // the software patch lump num for when the hardware patch
+                               // was flushed, and we need to re-create it
+    float      max_s, max_t;
+    Mipmap_t   mipmap;
+} MipPatch_t;
 
 // [WDJ] Fixed size fog textures
 #define FOG_WIDTH  256
