@@ -661,8 +661,8 @@ void Extracolormap_to_Surf( /*IN*/ extracolormap_t * extracmap, byte lightlum,
     }
 
     // [WDJ] the rgba color can change according to light level
-    // This accomodates the fade in CreateColormap, and Colormap_Analyze.
-    temp.rgba = extracmap->rgba[ light >> LIGHT_TO_RGBA_SHIFT ];
+    // This accomodates the fade in Create_Colormap, and Colormap_Analyze.
+    temp.rgba = extracmap->rgba[ light >> LIGHT_TO_RGBA_SHIFT ].rgba;
     // prevent sign extension
     // alpha -> 1..256, so can >> 8
     unsigned int alpha = ((unsigned int)temp.s.alpha) + 1;

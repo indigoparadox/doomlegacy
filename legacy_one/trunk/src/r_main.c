@@ -1055,8 +1055,8 @@ void R_Init (void)
 
     //added:24-01-98: screensize independent
     if(devparm)
-        GenPrintf(EMSG_dev, "\nR_Init_Data");
-    R_Init_Data ();
+        GenPrintf(EMSG_dev, "\nR_Load_Data");
+    R_Load_Data ();
 
     if(devparm)
         GenPrintf(EMSG_dev, "\nR_Init_PointToAngle");

@@ -167,16 +167,16 @@ typedef byte    lighttable_t;  // light map table
 // SoM: ExtraColormap type. Use for extra_colormaps from now on.
 typedef struct
 {
-  uint32_t        maskcolor;  // 16 bit bright color
-  uint32_t        fadecolor;  // 16 bit dark color
-  double          maskalpha;  // 0.0 .. 1.0
+  RGBA_t          maskcolor;  // 32 bit bright color
+  RGBA_t          fadecolor;  // 32 bit dark color
+//  [WDJ] maskalpha is in maskcolor.alpha
+//  double          maskalpha;  // 0.0 .. 1.0
   uint16_t        fadestart, fadeend;
   int             fog;
 
   //Hurdler: rgba is used in hw mode for coloured sector lighting
   // [WDJ] Separate rgba for light levels [0]=darkest, [NUM-1]=brightest
-  // This is cast into a union of byte components.
-  uint32_t        rgba[NUM_RGBA_LEVELS]; // similar to maskcolor in sw mode
+  RGBA_t          rgba[NUM_RGBA_LEVELS]; // similar to maskcolor in sw mode
      // alpha=0..255, 0=black/white tint, 255=saturated color
      // r,g,b are the saturated color, 0..255
 

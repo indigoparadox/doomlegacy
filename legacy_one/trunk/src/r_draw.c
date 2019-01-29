@@ -78,6 +78,7 @@
 #include "console.h"
   //Som: Until I get buffering finished
 #include "r_draw.h"
+#include "r_data.h"
 
 #ifdef HWRENDER
 #include "hardware/hw_main.h"
