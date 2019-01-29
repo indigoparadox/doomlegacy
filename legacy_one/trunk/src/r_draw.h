@@ -175,6 +175,9 @@ void    R_Init_ViewBuffer ( int width, int height );
 
 void    R_Init_ViewBorder (void);
 
+// Changes in drawmode
+void    R_Setup_Drawmode (void);
+
 void    R_VideoErase ( unsigned int ofs, int count );
 
 // Rendering function.

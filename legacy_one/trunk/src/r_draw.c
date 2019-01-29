@@ -367,6 +367,12 @@ void R_Init_TranslationTables (void)
     }
 }
 
+// Changes in drawmode
+void  R_Setup_Drawmode( void )
+{
+    R_PrecacheLevel();
+    R_rdata_setup_rendermode();
+}
 
 
 // ==========================================================================

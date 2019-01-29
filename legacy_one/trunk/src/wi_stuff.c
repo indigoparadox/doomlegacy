@@ -2037,6 +2037,7 @@ load_patch_t  heretic_wi_patches[13] =
 
      
 
+// Called by WI_Start, SCR_SetMode
 void WI_Load_Data(void)
 {
     // vid : from video setup
@@ -2174,6 +2175,7 @@ void WI_Load_Data(void)
     stpb = W_CachePatchName("STPB0", PU_LOCK_SB);  // never unlocked
 }
 
+// Called by  WI_update_NoState, SCR_SetMode
 void WI_Release_Data(void)
 {
     byte j;

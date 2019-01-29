@@ -590,6 +590,25 @@ void D_Display(void)
         draw_refresh = true;
     }
 
+    if( rendermode_recalc )
+    {
+        if( gamestate == GS_LEVEL )
+        {
+//            R_FillBackScreen();
+            R_Setup_Drawmode();
+            draw_refresh = true;
+            oldgamestate = GS_FORCEWIPE;  // force background redraw
+#ifdef HWRENDER
+            if( rendermode != render_soft )	       
+            {
+                // Hardware draw only
+                HWR_SetupLevel();
+                HWR_Preload_Graphics();
+            }
+#endif
+        }
+    }
+
     // save the current screen if about to wipe
     if (gamestate != wipegamestate && rendermode == render_soft)
     {
@@ -2112,6 +2131,7 @@ void D_DoomMain()
 
     if( verbose > 1 )
         CONS_Printf("Init DEH, cht, menu\n");
+
     P_clear_state_ext();  // init state_ext
     // save Doom, Heretic, Chex strings for DEH
     DEH_Init();  // Init DEH before files and lumps loaded
@@ -2617,7 +2637,8 @@ restart_command:
 
     //----------------------------------------------------
    
-    // Load the config before the full graphics.
+    // The drawmode and video settings are now part of the config.
+    // It needs to be loaded before the full graphics.
    
     M_FirstLoadConfig();        // WARNING : this do a "COM_BufExecute()"
 
@@ -2698,14 +2719,14 @@ restart_command:
         //--------------------------------------------------------- CONSOLE
         // setup loading screen
         CONS_Printf("RequestFullGraphics...\n");
-        V_switch_drawmode( set_drawmode );  // command line, do not change config files
+        V_switch_drawmode( set_drawmode );
+        I_Rendermode_setup();  // need HWR_SetPalette
 #ifdef DEBUG_WINDOWED
         I_RequestFullGraphics( false );
 #else
         I_RequestFullGraphics( cv_fullscreen.EV );
 #endif
         // text only, incomplete for rendering
-        I_Rendermode_setup();  // need HWR_SetPalette
         SCR_Recalc();
         V_SetPalette (0);  // on new screen
         V_Clear_Display();

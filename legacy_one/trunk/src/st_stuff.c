@@ -1127,7 +1127,7 @@ load_patch_t  st_patches[13] =
 };
 
 
-// Called by ST_Init
+// Called by ST_Init, SCR_SetMode
 void ST_Load_Graphics(void)
 {
     int         i;
@@ -1244,7 +1244,6 @@ void ST_Load_FaceGraphics (const char *facestr)
     ST_Invalidate();
     facegraphics_loaded = true;
 }
-
 
 
 void ST_Release_Graphics(void)
@@ -1556,7 +1555,7 @@ void ST_Init (void)
 
     if( EN_heretic )
         return;
-   
+
     // Doom only
     //
     // cache the status bar overlay icons  (fullscreen mode)
