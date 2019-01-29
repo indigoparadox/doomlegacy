@@ -93,7 +93,7 @@ typedef struct
 {
     char                name[8];
     uint32_t		masked;		// [8] must be 4 bytes
-   					// boolean size cannot be trusted
+                                        // boolean size cannot be trusted
     uint16_t            width;		// [12]
     uint16_t            height;		// [14]
     char                columndirectory[4]; //void **columndirectory; // OBSOLETE 
