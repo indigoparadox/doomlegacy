@@ -1727,6 +1727,8 @@ boolean P_SetupLevel (int      to_episode,
     // will be set by player think.
     players[consoleplayer].viewz = 1;
 
+    P_Release_PicAnims();
+   
     // [WDJ] 7/2010 Free allocated memory in sectors before PU_LEVEL purge
     for (i=0 ; i<numsectors ; i++)
     {

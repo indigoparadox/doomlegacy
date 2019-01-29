@@ -56,6 +56,9 @@ extern  mapthing_t      *deathmatchstarts[MAX_DM_STARTS];
 extern  int             numdmstarts;
 //extern  mapthing_t**    deathmatch_p;
 
+// Animate flats using anim structure instead of using levelflat fields.
+#define ANIM_FLAT_2
+
 // MAP used flats lookup table
 //
 typedef struct
@@ -63,11 +66,13 @@ typedef struct
     // most often used reference first, keeps it aligned
     lumpnum_t   lumpnum;        // lump number of the flat (mod by animation)
 
+#ifndef ANIM_FLAT_2   
     // for flat animation
-    lumpnum_t   baselumpnum;    // first flat in animation
+    lumpnum_t   base_lumpnum;   // first flat in animation
     int16_t     animseq;        // start pos. in the anim sequence
     uint16_t    numpics;
     int16_t     speed;
+#endif
 
     // for better packing, odd bytes last
     uint16_t    size_index;     // flat size index

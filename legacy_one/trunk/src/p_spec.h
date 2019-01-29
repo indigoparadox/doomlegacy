@@ -87,6 +87,7 @@
 extern consvar_t  cv_zerotags;
 
 // at game start
+void    P_Release_PicAnims(void);
 void    P_Init_PicAnims (void);
 
 // at map load (sectors)

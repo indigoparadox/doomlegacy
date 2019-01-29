@@ -153,6 +153,8 @@ typedef enum {
 #define LUMPNUM(lump)          ((lump)&0xffff)
 // Combined wad and lump parameter.
 #define WADLUMP(wad,lump)      (((wad)<<16)+(lump))
+// This is tricky math that is dependent upon the lumpnum representation.
+#define ADD_TO_LUMPNUM(lump,offset)    ((lump)+(offset))
 
 // MAX_WADPATH moved to doomdef.h, for other users.
 
