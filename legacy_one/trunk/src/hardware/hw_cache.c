@@ -1336,7 +1336,7 @@ void HWR_DrawPicInCache (byte* block,
 // HWR_GetPic       : Download a Doom pic (raw row encoded with no 'holes')
 // Returns          :
 // -----------------+
-MipPatch_t *HWR_GetPic( lumpnum_t lumpnum )
+MipPatch_t * HWR_GetPic( lumpnum_t lumpnum )
 {
     MipPatch_t *grpatch;
 

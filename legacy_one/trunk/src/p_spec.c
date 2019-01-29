@@ -204,7 +204,9 @@ void P_FindAnimatedFlat (int i);
 typedef struct
 {
     boolean     istexture; // false= flat, true= texture
+   // lumpnum_t  FIXME
     int         picnum;
+   // lumpnum_t  FIXME
     int         basepic; // starting texture or flat id number
     int         numpics;
     int         speed;	// in tics
@@ -390,14 +392,14 @@ void P_Init_PicAnims (void)
 void P_FindAnimatedFlat (int animnum)
 {
     int            i;
-    int            startflatnum,endflatnum;
+    lumpnum_t      startflatnum,endflatnum;
     levelflat_t*   foundflats = levelflats;
 
     startflatnum = anims[animnum].basepic;
     endflatnum   = anims[animnum].picnum;
 
     // note: high word of lumpnum is the wad number
-    if ( (startflatnum>>16) != (endflatnum>>16) )
+    if( WADFILENUM(startflatnum) != WADFILENUM(endflatnum) )
     {
        I_Error ("AnimatedFlat start %s not in same wad as end %s\n",
                 animdefs[animnum].startname, animdefs[animnum].endname);

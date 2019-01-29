@@ -971,7 +971,7 @@ void* W_CacheMappedPatchNum ( lumpnum_t lumpnum, uint32_t drawflags )
     // check the return value of a previous W_CheckNumForName()
     if ( ( ! VALID_LUMP(lumpnum) )
 	 || (LUMPNUM(lumpnum) >= wadfiles[WADFILENUM(lumpnum)]->numlumps) )
-        I_Error ("W_CachePatchNum: %i >= numlumps", LUMPNUM(lumpnum));
+        I_Error ("W_CacheMappedPatchNum: %i >= numlumps", LUMPNUM(lumpnum));
 #endif
 
     grPatch = &(wadfiles[WADFILENUM(lumpnum)]->hwrcache[LUMPNUM(lumpnum)]);

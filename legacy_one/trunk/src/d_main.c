@@ -1887,12 +1887,12 @@ void D_CheckWadVersion()
     int wadversion = 0;
     char hs[128];
     int wv2, hlen;
-    lumpnum_t ln;
+    lumpnum_t ver_lumpnum;
 /* BP: disabled since this should work fine now...
     // check main iwad using demo1 version 
-    ln = W_CheckNumForNameFirst("demo1");
+    ver_lumpnum = W_CheckNumForNameFirst("demo1");
     // well no demo1, this is not a main wad file
-    if( ! VALID_LUMP(ln) )
+    if( ! VALID_LUMP(ver_lumpnum) )
         I_Error("%s is not a Main wad file (IWAD)\n"
                 "try with Doom.wad or Doom2.wad\n"
                 "\n"
@@ -1908,14 +1908,14 @@ void D_CheckWadVersion()
                 "but this can cause Legacy to hang\n",wadfiles[0]->filename,wadversion/100,wadversion%100);
 */
     // check version, of legacy.wad using version lump
-    ln = W_CheckNumForName("version");
-    if( ! VALID_LUMP(ln) )
+    ver_lumpnum = W_CheckNumForName("version");
+    if( ! VALID_LUMP(ver_lumpnum) )
     {
         I_SoftError("No legacy.wad file.\n");
         fatal_error = 1;
         return;
     }
-    hlen = W_ReadLumpHeader(ln, &hs, 128);
+    hlen = W_ReadLumpHeader(ver_lumpnum, &hs, 128);
     if (hlen < 128)
     {
         hs[hlen] = '\0';

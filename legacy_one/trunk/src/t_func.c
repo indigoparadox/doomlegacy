@@ -3317,7 +3317,7 @@ void SF_FloorTexture(void)
     if (t_argc > 1)
     {
         // set texture
-        int picnum = R_FlatNumForName(t_argv[1].value.s);
+        lumpnum_t picnum = R_FlatNumForName(t_argv[1].value.s);
             // when flat not found, defaults to first flat
 
         // set all sectors with tag

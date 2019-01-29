@@ -429,8 +429,8 @@ static int      st_randomnumber;
 
 // Doom only.
 // Icons for status bar.
-static int   sbo_health, sbo_frags, sbo_armor;
-static int   sbo_ammo[NUMWEAPONS];
+static lumpnum_t  sbo_health, sbo_frags, sbo_armor;
+static lumpnum_t  sbo_ammo[NUMWEAPONS];
 
 
 // ------------------------------------------
@@ -1514,7 +1514,7 @@ void ST_Start (void)
 //
 
 //faB: used by Glide mode, holds lumpnum of flat used to fill space around the viewwindow
-int  st_borderflat_num;  // extern in r_draw.h
+lumpnum_t  st_borderflat_num;  // extern in r_draw.h
 
 void ST_Init (void)
 {

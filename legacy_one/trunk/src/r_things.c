@@ -737,9 +737,15 @@ void R_AddSpriteDefs (char** namelist, int wadnum)
     if( ! VALID_LUMP(start_ln) )
         start_ln = W_CheckNumForNamePwad ("SS_START",wadnum,0); //deutex compatib.
     if( ! VALID_LUMP(start_ln) )
-        ln1 = 0;      // search frames from start of wad
+    {
+        // search frames from start of wad
+        ln1 = 0;
+    }
     else
-        ln1 = LUMPNUM(start_ln) + 1;   // just after S_START
+    {
+        // just after S_START
+        ln1 = LUMPNUM( start_ln ) + 1;
+    }
 
 
     end_ln = W_CheckNumForNamePwad ("S_END",wadnum,0);

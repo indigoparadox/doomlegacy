@@ -440,7 +440,7 @@ void R_Init_ViewBuffer ( int   width,
 //
 // Store the lumpnumber of the viewborder patches.
 //
-int viewborderlump[8];
+lumpnum_t  viewborderlump[8];
 
 void R_Init_ViewBorder (void)
 {
@@ -483,7 +483,7 @@ void R_FillBackScreen (void)
     int         step,boff; 
     
     //faB: quickfix, don't cache lumps in both modes
-    if (rendermode!=render_soft)
+    if( rendermode != render_soft )
         return;
 
      //added:08-01-98:draw pattern around the status bar too (when hires),

@@ -110,7 +110,7 @@ void HWR_GetFlat (lumpnum_t flatlumpnum);
 MipTexture_t * HWR_GetTexture (int tex, uint32_t drawflags);
 void HWR_GetPatch (MipPatch_t* gpatch);
 void HWR_GetMappedPatch(MipPatch_t* gpatch, byte *colormap);
-MipPatch_t *HWR_GetPic( lumpnum_t lumpnum );
+MipPatch_t * HWR_GetPic( lumpnum_t lumpnum );
 void HWR_SetPalette( RGBA_t *palette );
 
 extern byte  EN_HWR_flashpalette;

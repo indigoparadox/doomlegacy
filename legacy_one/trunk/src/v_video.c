@@ -474,7 +474,8 @@ int    num_palette = 0;
 // value for a color index at any time.
 static void LoadPalette(const char *lumpname)
 {
-  int i, palsize;
+  lumpnum_t ln;
+  int palsize, i;
   byte * pal;  // stepping through pal lump;
    
   if( ! VALID_LUMP( W_CheckNumForName( lumpname ) ) )
@@ -487,10 +488,10 @@ static void LoadPalette(const char *lumpname)
   else
   {
       // load the palette from a wad
-      i = W_GetNumForName(lumpname);
+      ln = W_GetNumForName(lumpname);
       // the palsize will be multiples of 256, ( and 3 colors )
-      palsize = W_LumpLength(i) / 3;
-      pal = W_CacheLumpNum(i, PU_CACHE);
+      palsize = W_LumpLength(ln) / 3;
+      pal = W_CacheLumpNum(ln, PU_CACHE);
   }
 
   if (pLocalPalette)
