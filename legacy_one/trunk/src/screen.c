@@ -165,6 +165,11 @@ void SCR_SetMode (void)
     if (setmodeneeded.modetype == MODE_NOP)
         return;                 //should never happen
 
+#ifdef HWRENDER
+    // Set the rendermode patch storage.
+    HWR_patchstore = (rendermode > render_soft);
+#endif
+   
     // VID_SetMode will clear vid.draw_ready if it has print messages.
 #ifdef DEBUG_WINDOWED
     {

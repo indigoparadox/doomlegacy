@@ -2616,6 +2616,8 @@ restart_command:
         V_Clear_Display();
 
 #ifdef HWRENDER
+        // Set the rendermode patch storage.
+        HWR_patchstore = (rendermode > render_soft);
         EN_HWR_flashpalette = 0;  // software and default
         if( rendermode != render_soft )
             HWR_Startup_Render();  // hardware render init
@@ -2704,7 +2706,7 @@ restart_command:
     B_Init_Bots();       //added by AC for acbot
 
     //Fab:29-04-98: do some dirty chatmacros strings initialisation
-    HU_HackChatmacros();
+    HU_Init_Chatmacros();
     //--------------------------------------------------------- CONFIG.CFG
     M_FirstLoadConfig();        // WARNING : this do a "COM_BufExecute()"
 
@@ -3055,6 +3057,12 @@ void D_Quit_Save ( quit_severity_e severity )
         vid.draw_ready = 0;        
         I_ShutdownGraphics();
         HU_Release_Graphics();
+        if( HWR_patchstore )
+        {
+#ifdef HWRENDER
+            HWR_Shutdown_Render();
+#endif       
+        }
     }
     if( quitseq < 22 )
     {

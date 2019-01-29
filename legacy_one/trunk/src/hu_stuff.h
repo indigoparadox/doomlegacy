@@ -97,9 +97,8 @@ void    HU_Erase(void);
 // used by console input
 char ForeignTranslation(unsigned char ch);
 
-// set chatmacros cvars point the original or dehacked texts, before
-// config.cfg is executed !!
-void HU_HackChatmacros (void);
+// Initialize the chatmacros.
+void HU_Init_Chatmacros (void);
 
 // chatmacro <0-9> "message" console command
 void Command_Chatmacro_f (void);
@@ -115,9 +114,9 @@ void HU_Clear_Tips();
 
 void HU_Draw_FSPics();
 void HU_Clear_FSPics();
-int  HU_Get_FSPic(int lumpnum, int xpos, int ypos);
+int  HU_Get_FSPic( lumpnum_t lumpnum, int xpos, int ypos );
 int  HU_Delete_FSPic(int handle);
-int  HU_Modify_FSPic(int handle, int lumpnum, int xpos, int ypos);
+int  HU_Modify_FSPic(int handle, lumpnum_t lumpnum, int xpos, int ypos);
 
 int  HU_FS_Display(int handle, boolean enable_draw);
 #endif
