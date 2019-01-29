@@ -1420,7 +1420,7 @@ void M_DrawSetupMultiPlayerMenu(void)
 
     // draw player sprite
     // temp usage of sprite lump, until end of function
-    patch = W_CachePatchNum (sprfrot->lumppat, PU_CACHE_DEFAULT);  // endian fix
+    patch = W_CachePatchNum (sprfrot->pat_lumpnum, PU_CACHE_DEFAULT);  // endian fix
     if( itemOn>0 )  // Edit skin or color
     {
       // Some skins are too large for the screen, cause segfault.
@@ -5158,25 +5158,25 @@ void M_Configure (void)
     }
 
     // irreversible
-    if( W_CheckNumForName("E2M1")<0 )
+    if( ! VALID_LUMP( W_CheckNumForName("E2M1") ) )
     {
         exmy_cons_t[9].value = 0;
         exmy_cons_t[9].strvalue = NULL;
     }
     else
-    if( W_CheckNumForName("E3M1")<0 )
+    if( ! VALID_LUMP( W_CheckNumForName("E3M1") ) )
     {
         exmy_cons_t[18].value = 0;
         exmy_cons_t[18].strvalue = NULL;
     }
     else
-    if( W_CheckNumForName("E4M1")<0 )
+    if( ! VALID_LUMP( W_CheckNumForName("E4M1") ) )
     {
         exmy_cons_t[27].value = 0;
         exmy_cons_t[27].strvalue = NULL;
     }
     else
-    if( W_CheckNumForName("E5M1")<0 )
+    if( ! VALID_LUMP( W_CheckNumForName("E5M1") ) )
     {
         exmy_cons_t[36].value = 0;
         exmy_cons_t[36].strvalue = NULL;

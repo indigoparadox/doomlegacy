@@ -2164,7 +2164,7 @@ void G_SecretExitLevel (void)
 {
     // IF NO WOLF3D LEVELS, NO SECRET EXIT!
     if ( (gamemode == doom2_commercial)
-      && (W_CheckNumForName("map31")<0))
+      && ( ! VALID_LUMP( W_CheckNumForName("map31") ) ))
         secretexit = false;
     else
         secretexit = true;
@@ -2647,7 +2647,7 @@ void G_InitNew (skill_e skill, const char* mapname, boolean resetplayer)
         // internal game map
         // well this  check is useless because it is done before (d_netcmd.c::command_map_f)
         // but in case of for demos....
-        if (W_CheckNumForName(mapname)==-1)
+        if( ! VALID_LUMP( W_CheckNumForName(mapname) ) )
         {
             CONS_Printf("\2Internal game map '%s' not found\n"
                         "(use .wad extension for external maps)\n",mapname);
@@ -3343,7 +3343,8 @@ void G_DeferedPlayDemo (const char* name)
 void G_DoPlayDemo (const char *defdemoname)
 {
     skill_e skill;
-    int   i, lmp, episode, map;
+    lumpnum_t  lmp;
+    int   i, episode, map;
     int   demo_size;
     int   num_players = 4;
     boolean boomdemo = 0;
@@ -3374,7 +3375,7 @@ void G_DoPlayDemo (const char *defdemoname)
     demoname[DEMONAME_LEN-1] = 0;
 
     lmp = W_CheckNumForName(defdemoname);
-    if( lmp >= 0 )
+    if( VALID_LUMP( lmp ) )
     {
         // lump
         demobuffer = demo_p = W_CacheLumpNum (lmp, PU_STATIC);

@@ -929,7 +929,7 @@ typedef enum { SRP_NULL, SRP_1, SRP_8, SRP_16 }  sprite_rotation_pattern_e;
 // size 8
 typedef struct
 {
-    uint32_t    lumppat;   // lump number 16:16 wad:lump
+    lumpnum_t   pat_lumpnum;   // lump number of patch
     uint16_t    spritelump_id; // into spritelumps[]
     byte        flip;    // Flip bit (1 = flip)
 } sprite_frot_t;

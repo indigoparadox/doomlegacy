@@ -1096,7 +1096,7 @@ void D_DoAdvanceDemo(void)
             else if (gamemode == heretic)
             {
                 pagetic = 200;
-                if (W_CheckNumForName("e2m1") == -1)
+                if( ! VALID_LUMP( W_CheckNumForName("e2m1") ) )
                     pagename = "ORDER";
                 else
                     pagename = "CREDIT";
@@ -1886,12 +1886,13 @@ void D_CheckWadVersion()
 {
     int wadversion = 0;
     char hs[128];
-    int wv2, lump, hlen;
+    int wv2, hlen;
+    lumpnum_t ln;
 /* BP: disabled since this should work fine now...
     // check main iwad using demo1 version 
-    lump = W_CheckNumForNameFirst("demo1");
+    ln = W_CheckNumForNameFirst("demo1");
     // well no demo1, this is not a main wad file
-    if(lump == -1)
+    if( ! VALID_LUMP(ln) )
         I_Error("%s is not a Main wad file (IWAD)\n"
                 "try with Doom.wad or Doom2.wad\n"
                 "\n"
@@ -1907,14 +1908,14 @@ void D_CheckWadVersion()
                 "but this can cause Legacy to hang\n",wadfiles[0]->filename,wadversion/100,wadversion%100);
 */
     // check version, of legacy.wad using version lump
-    lump = W_CheckNumForName("version");
-    if (lump == -1)
+    ln = W_CheckNumForName("version");
+    if( ! VALID_LUMP(ln) )
     {
         I_SoftError("No legacy.wad file.\n");
         fatal_error = 1;
         return;
     }
-    hlen = W_ReadLumpHeader(lump, &hs, 128);
+    hlen = W_ReadLumpHeader(ln, &hs, 128);
     if (hlen < 128)
     {
         hs[hlen] = '\0';
@@ -2482,8 +2483,10 @@ restart_command:
         {
             int i;
             for (i = 0; i < 23; i++)
-                if (W_CheckNumForName(name[i]) < 0)
+            {
+                if( ! VALID_LUMP( W_CheckNumForName(name[i]) ) )
                     CONS_Printf("\nThis is not the registered version.");
+            }
         }
       }
    
@@ -2553,7 +2556,7 @@ restart_command:
     // After this line, are committed to the game and video port selected.
     // Use I_Error.
 
-    if ( W_CheckNumForName ( "PLAYPAL" ) < 0 )
+    if( ! VALID_LUMP( W_CheckNumForName ( "PLAYPAL" ) ) )
     {
         //Hurdler: I'm tired of that question ;)
         I_Error (
@@ -3026,8 +3029,8 @@ void D_Quit_Save ( quit_severity_e severity )
         {
             // [WDJ] Check on errors during I_Error shutdown.
             // Avoid repeat errors during bad environment shutdown.
-            int endtxt_num = W_CheckNumForName("ENDOOM");
-            if( endtxt_num >= 0 )
+            lumpnum_t endtxt_num = W_CheckNumForName("ENDOOM");
+            if( VALID_LUMP(endtxt_num) )
                 endtext = W_CacheLumpNum( endtxt_num, PU_STATIC );
             // If there are any more errors, then do not show the end text.
         }

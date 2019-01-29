@@ -185,7 +185,7 @@ void HU_Load_Graphics( void )
             sprintf(buffer, "STCFN%.3d", j);
 
         j++;
-        if( W_CheckNumForName( buffer ) < 0 )
+        if( ! VALID_LUMP( W_CheckNumForName( buffer ) ) )
         {
             // font not found
             hu_font[i] = NULL;

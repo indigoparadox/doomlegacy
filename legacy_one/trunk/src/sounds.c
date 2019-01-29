@@ -578,11 +578,11 @@ sfxid_t  S_AddSoundFx (const char *name, uint32_t flags)
     S_sfx[sfxid].link=NULL;
     S_sfx[sfxid].link_mod=0;
     S_sfx[sfxid].limit_channels=99;
-//    S_sfx[sfxid].pitch=-1;
-//    S_sfx[sfxid].volume=-1;
-    S_sfx[sfxid].lumpnum=-1;
-    S_sfx[sfxid].skinsound=-1;
-    S_sfx[sfxid].usefulness=-1;
+//    S_sfx[sfxid].pitch= -1;
+//    S_sfx[sfxid].volume= -1;
+    S_sfx[sfxid].lumpnum = NO_LUMP;
+    S_sfx[sfxid].skinsound= -1;
+    S_sfx[sfxid].usefulness= -1;
 
     // if precache load it here ! todo !
     S_sfx[sfxid].data=NULL;
@@ -602,7 +602,7 @@ void S_RemoveSoundFx (sfxid_t sfxid)
         S_FreeSfx(&S_sfx[sfxid]);
         // If name is const char *, then this fails.
         Z_Free(S_sfx[sfxid].name);
-        S_sfx[sfxid].lumpnum=-1;
+        S_sfx[sfxid].lumpnum = NO_LUMP;
         S_sfx[sfxid].name=NULL;  // free sfx slot to use again
     }
 }

@@ -253,4 +253,10 @@ typedef int16_t   lightlev_t;
 
 typedef uint16_t  statenum_t;
 
+// [WDJ] I would prefer this was uint32_t, but it is being kept signed so that
+// tests for -1 can be preserved.  This reduces the chance of logical errors
+// due to older fail tests that have not been discovered yet (2018).
+// The number of wads is limited to 32, and signed allows over 8000 wads.
+typedef int32_t  lumpnum_t;
+
 #endif  //__DOOMTYPE__

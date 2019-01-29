@@ -177,7 +177,7 @@ void P_Init_SwitchList(void)
   }
 
   // Check for Boom SWITCHES lump.
-  if(W_CheckNumForName("SWITCHES") != -1)
+  if( VALID_LUMP( W_CheckNumForName("SWITCHES") ) )
   {
     // Load the SWITCHES lump.
     switches_lump = (switchlist_t *)W_CacheLumpName("SWITCHES", PU_IN_USE);

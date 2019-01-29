@@ -115,7 +115,7 @@ void I_ResumeSong(int handle);
 // Information for ports with music servers.
 //  name : name of song
 //  lumpnum : lumpnum of the song data
-int I_PlayServerSong( char * name, int lumpnum, byte looping );
+int I_PlayServerSong( char * name, lumpnum_t lumpnum, byte looping );
 #else
 // Registers a song handle to song data.
 //  data : ptr to lump data

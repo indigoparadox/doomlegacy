@@ -274,7 +274,7 @@ void HWR_DrawMappedPatch (MipPatch_t* gpatch, int x, int y, uint32_t option, byt
     }
 }
 
-void HWR_DrawPic(int x, int y, int lumpnum)
+void HWR_DrawPic(int x, int y, lumpnum_t lumpnum)
 {
     vxtx3d_t      v[4];
     MipPatch_t  *   mpatch;
@@ -346,7 +346,7 @@ static uint16_t  fill_size_tab[ 8 ] =
 // Does not obey V_CENTERSCREEN, it is stretched to fill screen instead.
 //   x, y, w, h : vid coordinates, (0,0) at upper left
 //   scale : 1 .. 4
-void HWR_DrawVidFlatFill (int x, int y, int w, int h, int scale, int flatlumpnum)
+void HWR_DrawVidFlatFill (int x, int y, int w, int h, int scale, lumpnum_t flat_lumpnum)
 {
     vxtx3d_t  v[4];
 
@@ -370,10 +370,10 @@ void HWR_DrawVidFlatFill (int x, int y, int w, int h, int scale, int flatlumpnum
 
     v[0].z = v[1].z = v[2].z = v[3].z = 1.0f;
 
-    HWR_GetFlat (flatlumpnum);
+    HWR_GetFlat (flat_lumpnum);
    
     // The index may someday be supplied from the flat structure.
-    int sizeindex = P_flatsize_to_index( W_LumpLength(flatlumpnum), NULL );
+    int sizeindex = P_flatsize_to_index( W_LumpLength(flat_lumpnum), NULL );
     int size = fill_size_tab[ sizeindex ];
     // Scale 0..15 ==> (size/2) .. (size/2 * vid.fdupy)
     double sc = ((double)(scale) * vid.fdupy + (15 - scale))/15 * size / 2;

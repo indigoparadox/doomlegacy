@@ -1112,11 +1112,11 @@ static void HWR_CacheFlat (Mipmap_t* grMipmap, int flatlumpnum)
 
 
 // Download a Doom 'flat' to the hardware cache and make it ready for use
-void HWR_GetFlat (int flatlumpnum)
+void HWR_GetFlat (lumpnum_t flatlumpnum)
 {
     Mipmap_t * grmip;
 
-    grmip = &(wadfiles[flatlumpnum>>16]->hwrcache[flatlumpnum & 0xffff].mipmap);
+    grmip = &(wadfiles[ WADFILENUM(flatlumpnum) ]->hwrcache[ LUMPNUM(flatlumpnum) ].mipmap);
 
     if (!grmip->downloaded &&
         !grmip->grInfo.data)
@@ -1336,11 +1336,11 @@ void HWR_DrawPicInCache (byte* block,
 // HWR_GetPic       : Download a Doom pic (raw row encoded with no 'holes')
 // Returns          :
 // -----------------+
-MipPatch_t *HWR_GetPic( int lumpnum )
+MipPatch_t *HWR_GetPic( lumpnum_t lumpnum )
 {
     MipPatch_t *grpatch;
 
-    grpatch = &(wadfiles[lumpnum>>16]->hwrcache[lumpnum & 0xffff]);
+    grpatch = &(wadfiles[ WADFILENUM(lumpnum) ]->hwrcache[ LUMPNUM(lumpnum) ]);
 
     if(    !grpatch->mipmap.downloaded
         && !grpatch->mipmap.grInfo.data )
@@ -1364,7 +1364,7 @@ MipPatch_t *HWR_GetPic( int lumpnum )
             pic = W_CachePicNum( lumpnum, PU_IN_USE ); // endian fixed
             grpatch->width = pic->width;
             grpatch->height = pic->height;
-            len = W_LumpLength(lumpnum)-sizeof(pic_t); 
+            len = W_LumpLength(lumpnum) - sizeof(pic_t); 
         }
 
         grpatch->leftoffset = 0;

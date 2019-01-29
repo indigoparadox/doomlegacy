@@ -130,7 +130,8 @@ void T_Clear_Scripts( void )
 void T_LoadThingScript( void )
 {
 /*  char *scriptlump;
-  int lumpnum, lumplen;
+  lumpnum_t lumpnum;
+  int lumplen;
   
   if(thingscript.data)
     Z_Free(thingscript.data);
@@ -140,7 +141,7 @@ void T_LoadThingScript( void )
   // get lumpnum, lumplen
   
   lumpnum = W_CheckNumForName("THINGSCR");
-  if(lumpnum == -1)
+  if( ! VALID_LUMP(lumpnum) )
     return;
   
   lumplen = W_LumpLength(lumpnum);

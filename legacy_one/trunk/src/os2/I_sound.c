@@ -397,7 +397,7 @@ void I_FreeSfx (sfxinfo_t* sfx)
 {
     byte*    dssfx;
 
-    if (sfx->lumpnum<0)
+    if( ! VALID_LUMP(sfx->lumpnum) )
         return;
 
     // free sample data
@@ -407,7 +407,7 @@ void I_FreeSfx (sfxinfo_t* sfx)
     }
 
     sfx->data = NULL;
-    sfx->lumpnum = -1;
+    sfx->lumpnum = NO_LUMP;
 }
 
 //

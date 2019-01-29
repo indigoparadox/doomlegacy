@@ -1258,7 +1258,7 @@ void I_UnRegisterSong(int handle)
 // Information for ports with music servers.
 //  name : name of song
 // Return handle
-int I_PlayServerSong( char * name, int lumpnum, byte looping )
+int I_PlayServerSong( char * name, lumpnum_t lumpnum, byte looping )
 {
     if (nomusic)
     {
@@ -1280,7 +1280,7 @@ int I_PlayServerSong( char * name, int lumpnum, byte looping )
             sent_genmidi = 1;
             // Music server needs the GENMIDI lump, which may depend
             // upon the IWAD and PWAD order.
-            int genmidi_lumpnum = W_GetNumForName( "GENMIDI" );
+            lumpnum_t  genmidi_lumpnum = W_GetNumForName( "GENMIDI" );
             wadp = lumpnum_to_wad( genmidi_lumpnum );
             if( wadp )
             {

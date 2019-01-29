@@ -792,7 +792,7 @@ void HWR_PlaneLighting(vxtx3d_t *clVerts, int nrClipVerts)
 }
 
 
-static int coronalumpnum;
+static lumpnum_t  corona_lumpnum;
 
 #ifdef SPDR_CORONAS
 // --------------------------------------------------------------------------
@@ -892,7 +892,7 @@ void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr)
         light[2].sow = 1.0f;   light[2].tow = 1.0f;
         light[3].sow = 0.0f;   light[3].tow = 1.0f;
 
-        HWR_GetPic(coronalumpnum);  // TODO: use different coronas
+        HWR_GetPic(corona_lumpnum);  // TODO: use different coronas
 
         HWD.pfnDrawPolygon ( &Surf, light, 4, PF_Modulated | PF_Additive | PF_Clip | PF_Corona | PF_NoDepthTest);
     }
@@ -914,7 +914,7 @@ void HWR_DrawCoronas( void )
     if( !cv_grcoronas.value || dynlights->nb<=0)
         return;
     
-    HWR_GetPic(coronalumpnum);  // TODO: use different coronas
+    HWR_GetPic(corona_lumpnum);  // TODO: use different coronas
     for( j=0;j<dynlights->nb;j++ )
     {
         light_pos = & dynlights->position[j];
@@ -1064,7 +1064,7 @@ void HWR_Init_Light( void )
         lspr[i].dynamic_sqrradius = lspr[i].dynamic_radius*lspr[i].dynamic_radius;
 
     lightmappatch.mipmap.downloaded = false;
-    coronalumpnum = W_GetNumForName("corona");
+    corona_lumpnum = W_GetNumForName("corona");
 }
 
 // -----------------+

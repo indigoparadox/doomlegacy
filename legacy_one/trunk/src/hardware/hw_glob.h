@@ -78,7 +78,7 @@ typedef struct gr_vissprite_s
     float               x2;
     float               tz;
     float               ty;
-    int                 patchlumpnum;
+    lumpnum_t           patch_lumpnum;
     boolean             flip;
     byte                translucency;       //alpha level 0-255
     byte                sectorlight;        // ...
@@ -106,11 +106,11 @@ void HWR_Free_PolyPool (void);
 void HWR_Init_TextureCache (void);
 void HWR_Free_TextureCache (void);
 
-void HWR_GetFlat (int flatlumpnum);
+void HWR_GetFlat (lumpnum_t flatlumpnum);
 MipTexture_t * HWR_GetTexture (int tex, uint32_t drawflags);
 void HWR_GetPatch (MipPatch_t* gpatch);
 void HWR_GetMappedPatch(MipPatch_t* gpatch, byte *colormap);
-MipPatch_t * HWR_GetPic (int lumpnum);
+MipPatch_t *HWR_GetPic( lumpnum_t lumpnum );
 void HWR_SetPalette( RGBA_t *palette );
 
 extern byte  EN_HWR_flashpalette;

@@ -286,9 +286,9 @@ void V_DrawScaledFill(int x, int y, int w, int h, byte color);
 //  For fullscreen, set w=vid.width.
 //   x, y, w, h : screen coordinates
 //   scale : 0 .. 15
-void V_DrawFlatFill(int x, int y, int w, int h, int scale, int flatnum);
+void V_DrawFlatFill(int x, int y, int w, int h, int scale, lumpnum_t flatnum);
 // Fill entire screen with flat.
-void V_ScreenFlatFill( int flatnum );
+void V_ScreenFlatFill( lumpnum_t flatnum );
 
 //added:10-02-98: fade down the screen buffer before drawing the menu over
 void V_FadeScreen (void);
@@ -321,7 +321,7 @@ int V_StringWidth (const char* string);
 int V_StringHeight (const char* string);
 
 // draw text with fontB (big font)
-extern int FontBBaseLump;
+extern lumpnum_t  FontBBaseLump;
 void V_DrawTextB(const char *text, int x, int y);
 void V_DrawTextBGray(const char *text, int x, int y);
 int V_TextBWidth(const char *text);

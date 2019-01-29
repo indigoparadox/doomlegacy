@@ -403,12 +403,13 @@ void parse_data(char *data, char *end); // t_parse.c
 
 void parse_include(char *lumpname)
 {
-  int lumpnum;
+  lumpnum_t lumpnum;
   char *temp;
   char *lump, *end;
   char *saved_src_cp;
   
-  if(-1 == (lumpnum = W_GetNumForName(lumpname)) )
+  lumpnum = W_GetNumForName(lumpname);
+  if( ! VALID_LUMP(lumpnum) )
   {
       script_error("include lump '%s' not found!\n", lumpname);
       return;

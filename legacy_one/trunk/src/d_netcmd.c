@@ -747,7 +747,7 @@ void Command_Map_f(void)
     else
     {
         // internal wad lump
-        if (W_CheckNumForName(MAPNAME) == -1)
+        if( ! VALID_LUMP( W_CheckNumForName(MAPNAME) ) )
         {
             CONS_Printf("\2Internal game map '%s' not found\n" "(use .wad extension for external maps)\n", MAPNAME);
             return;

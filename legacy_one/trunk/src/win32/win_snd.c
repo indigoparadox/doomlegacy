@@ -530,7 +530,7 @@ void I_FreeSfx (sfxinfo_t* sfx)
 {
     LPDIRECTSOUNDBUFFER dsbuffer;
 
-    if (sfx->lumpnum<0)
+    if( ! VALID_LUMP(sfx->lumpnum) )
         return;
 
 #ifdef HW3SOUND
@@ -550,7 +550,7 @@ void I_FreeSfx (sfxinfo_t* sfx)
             dsbuffer->lpVtbl->Release (dsbuffer);
     }
     sfx->data = NULL;
-    sfx->lumpnum = -1;
+    sfx->lumpnum = NO_LUMP;
 }
 
 
@@ -1799,7 +1799,7 @@ void I_StartFMODSong (char* musicname, int looping)
 {
 	char filename[9];
 	void* data;
-	int lumpnum;
+	lumpnum_t lumpnum;
 
 	if(!fmod_music)
 		return;
@@ -1815,7 +1815,7 @@ void I_StartFMODSong (char* musicname, int looping)
 	
 	lumpnum = W_CheckNumForName(filename);
 
-	if(lumpnum == -1)
+	if( ! VALID_LUMP(lumpnum) )
 	{
 		CONS_Printf("Music file %s not found!\n", filename);
 		fmus = NULL;

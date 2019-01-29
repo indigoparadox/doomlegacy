@@ -1133,7 +1133,7 @@ static void CheatWarpFunc(player_t * player, Cheat_t * cheat)
     episode = cheat->args[0] - '0';
     map = cheat->args[1] - '0';
     mapname = G_BuildMapName(episode, map);
-    if (W_CheckNumForName(mapname) > 0)
+    if( VALID_LUMP( W_CheckNumForName(mapname) ) )
     {
         G_DeferedInitNew(gameskill, mapname, false);
         P_SetMessage(player, TXT_CHEATWARP, 58);

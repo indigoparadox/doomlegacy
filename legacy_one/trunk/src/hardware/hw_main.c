@@ -2700,7 +2700,7 @@ static boolean HWR_CheckBBox(fixed_t * bspcoord)
 // Notes            : Sets gr_cursectorlight to the light of the parent sector, to modulate wall textures
 // -----------------+
 #ifdef DCK_WATER_TEST
-static int doomwaterflat;       //set by R_Init_Flats hack
+static lumpnum_t  doomwaterflat;       //set by R_Init_Flats hack
 #endif
 static byte  need_sky_background;
 
@@ -3243,7 +3243,7 @@ static void HWR_DrawSprite(gr_vissprite_t * spr)
         Surf.texflags = TF_Opaquetrans;
     }
     // get patch and draw to hardware cache
-    gpatch = W_CacheMappedPatchNum(spr->patchlumpnum, Surf.texflags );
+    gpatch = W_CacheMappedPatchNum(spr->patch_lumpnum, Surf.texflags );
 
     // dynamic lighting
     HWR_DL_AddLightSprite(spr, gpatch);
@@ -3645,7 +3645,7 @@ static void HWR_ProjectSprite(mobj_t * thing)
     vis->x1 = tx1;  // left of sprite in view, world coord
     vis->x2 = tx2;  // right of sprite in view, world coord
     vis->tz = tz;   // away depth
-    vis->patchlumpnum = sprfrot->lumppat;
+    vis->patch_lumpnum = sprfrot->pat_lumpnum;
     vis->flip = sprfrot->flip;
     vis->mobj = thing;
 
@@ -3747,7 +3747,7 @@ void HWR_DrawPSprite(pspdef_t * psp,  byte lightlum)
 //    vxtx[0].w = vxtx[1].w = vxtx[2].w = vxtx[3].w = 1;  // unused
 
     // cache sprite graphics
-    gpatch = W_CachePatchNum(sprfrot->lumppat, PU_CACHE);
+    gpatch = W_CachePatchNum(sprfrot->pat_lumpnum, PU_CACHE);
     HWR_GetPatch(gpatch);
 
     // set top/bottom coords
@@ -4385,7 +4385,7 @@ void HWR_Startup_Render(void)
 #ifdef DCK_WATER_TEST
         // for test water translucent surface
         doomwaterflat = W_CheckNumForName("FWATER1");
-        if (doomwaterflat == -1)        // if FWATER1 not found (in doom shareware)
+        if( ! VALID_LUMP(doomwaterflat) )        // if FWATER1 not found (in doom shareware)
             doomwaterflat = W_GetNumForName("WATER0");
 #endif
 

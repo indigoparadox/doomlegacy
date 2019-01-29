@@ -122,7 +122,7 @@ struct sfxinfo_struct
     int16_t     usefulness;  // lowest is removed
 
     // lump number of sfx
-    int16_t     lumpnum;
+    lumpnum_t   lumpnum;
 
     void*       data;      // sound data
 
@@ -147,7 +147,7 @@ typedef struct
       // Allocated strings for loaded names and deh.
 
     // lump number of music
-    int         lumpnum;
+    lumpnum_t   lumpnum;
 
     // music data
     void*       data;

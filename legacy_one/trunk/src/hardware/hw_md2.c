@@ -655,7 +655,7 @@ void HWR_DrawMD2( gr_vissprite_t* spr )
     {
         Surf.texflags = TF_Opaquetrans;
     }
-    gpatch = W_CacheMappedPatchNum(spr->patchlumpnum, Surf.texflags );
+    gpatch = W_CacheMappedPatchNum(spr->patch_lumpnum, Surf.texflags );
 
     //TODO: manage spr->flip
 

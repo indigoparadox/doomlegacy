@@ -310,7 +310,7 @@ void P_Init_PicAnims (void)
   //  Init animation
   int         i;
 
-  if(W_CheckNumForName("ANIMATED") != -1)
+  if( VALID_LUMP( W_CheckNumForName("ANIMATED") ) )
   {
     animdefs = (animdef_t *)W_CacheLumpName("ANIMATED", PU_IN_USE);
     // [WDJ] From wad, Do endian conversion on speed
@@ -357,7 +357,7 @@ void P_Init_PicAnims (void)
     }
     else
     {
-      if ((W_CheckNumForName(animdefs[i].startname)) == -1)
+      if( ! VALID_LUMP( W_CheckNumForName(animdefs[i].startname) ) )
           continue;
 
       lastanim->picnum = R_FlatNumForName (animdefs[i].endname);
@@ -3011,7 +3011,7 @@ void P_SpawnSpecials (void)
     // [WDJ] At one time this may have been important, but is not used now.
     // Appears in prboom.
     int episode = 1;
-    if (W_CheckNumForName("texture2") >= 0)
+    if( VALID_LUMP( W_CheckNumForName("texture2") ) )
         episode = 2;
 #endif
 

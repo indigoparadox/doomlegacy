@@ -98,7 +98,7 @@ void HWR_RenderPlayerView (byte viewnumber, player_t* player);
 void HWR_DrawViewBorder (int clearlines);
 //   x, y, w, h : vid coordinates, relative to center.
 //   scale : 0 .. 15
-void HWR_DrawVidFlatFill (int x, int y, int w, int h, int scale, int flatlumpnum);
+void HWR_DrawVidFlatFill (int x, int y, int w, int h, int scale, lumpnum_t flatlumpnum);
 byte *  HWR_Get_Screenshot ( byte * bitpp );
 void HWR_Init_TextureMapping (void);
 void HWR_SetViewSize (int blocks);
@@ -117,7 +117,7 @@ void HWR_Prep_LevelCache (int numtextures);
 //  x, y : scaled screen coord.
 //  color : palette index
 void HWR_DrawVidFill( int x, int y, int w, int h, int color );
-void HWR_DrawPic(int x,int y,int lumpnum);
+void HWR_DrawPic(int x, int y, lumpnum_t lumpnum);
 
 void HWR_Register_Gr1Commands (void);
 void HWR_CorrectSWTricks(void);

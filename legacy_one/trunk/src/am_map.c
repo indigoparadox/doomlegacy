@@ -577,7 +577,8 @@ static void AM_loadPics(void)
         sprintf(namebuf, "AMMNUM%d", i);
         marknums[i] = W_CachePatchName(namebuf, PU_STATIC);
     }
-    if( W_CheckNumForName("AUTOPAGE")>=0 )
+
+    if( VALID_LUMP( W_CheckNumForName("AUTOPAGE") ) )
         maplump = W_CacheLumpName("AUTOPAGE", PU_STATIC);
     else
         maplump = NULL;
