@@ -250,8 +250,21 @@ fs_value_t getvariablevalue(fs_variable_t *v)
   else
   {
       returnvar.type = v->type;
-      // copy the value
+      // default copy of the union value
+#if 1
+      returnvar.value.mobj = v->value.mobj;
+      // Copy the mobj ptr field because it is the largest field,
+      // and will effectively copy any of the other union members.
+      // It does a 64 bit copy on a 64 bit machine, and does
+      // not sign extend.
+      // This is easier than creating a big case stmt with special
+      // copies for all the union members.
+#else
       returnvar.value.i = v->value.i;
+      // This will cause segfaults on 64 bit machines.
+      // It does not fully copy the 64 bit ptrs, instead
+      // copying the lower 32 bits and sign extending it.
+#endif
   }
   
   return returnvar;
