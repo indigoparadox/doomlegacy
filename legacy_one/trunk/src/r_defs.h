@@ -346,7 +346,8 @@ typedef struct sector_s
     short       special;	 // special type code (highly encoded with fields)
     short       oldspecial;      //SoM: 3/6/2000: Remember if a sector was secret (for automap)
     uint16_t    tag;
-    int nexttag,firsttag;        //SoM: 3/6/2000: by killough: improves searches for tags.
+//    int nexttag,firsttag;        //SoM: 3/6/2000: by killough: improves searches for tags.
+    int32_t     nexttag;         // linked list of sectors with that tag, improves searches for tags.
 
     // 0 = untraversed, 1,2 = sndlines -1
     byte        soundtraversed;
@@ -539,7 +540,8 @@ typedef struct line_s
     //SoM: 3/6/2000
     int translu_eff;       // translucency effect table, 0 == none 
                            // TRANSLU_med or (TRANSLU_ext + translu_store index)
-    int firsttag,nexttag;  // improves searches for tags.
+//    int firsttag,nexttag;  // improves searches for tags.
+    int32_t     nexttag;   // linked list of lines with that tag value, improves searches for tags.
 
 //    int ecolormap;         // SoM: Used for 282 linedefs
 } line_t;
