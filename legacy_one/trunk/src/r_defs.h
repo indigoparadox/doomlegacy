@@ -281,7 +281,7 @@ typedef struct lightlist_s {
   uint32_t                flags;
   lightlev_t *            lightlevel;
   extracolormap_t*        extra_colormap;
-  ffloor_t*               caster;
+  ffloor_t*               caster;  // ffloor that is source of light or shadow
 } ff_light_t;
 
 
@@ -292,9 +292,10 @@ typedef struct r_lightlist_s {
   fixed_t                 botheight;
   fixed_t                 botheightstep;
   lightlev_t              lightlevel;
-  lightlev_t              vlight;  // visible light 0..255
-  extracolormap_t*        extra_colormap;
-  lighttable_t*           rcolormap;
+//  lightlev_t              vlight;  // visible light 0..255
+  lighttable_t**          vlightmap;  // scalelights
+  extracolormap_t*        extra_colormap; // colormap tables
+  lighttable_t*           rcolormap;  // rendering colormap
   uint32_t                flags;
 } r_lightlist_t;
 

@@ -249,6 +249,8 @@ static void R_DrawSplatColumn (column_t* column)
 }
 
 
+// Draw splats for a lineseg.
+// Caller sets frontsector.
 static void R_DrawWallSplats (void)
 {
     wallsplat_t*    splat;
@@ -258,6 +260,7 @@ static void R_DrawWallSplats (void)
     int         x1, x2;
     column_t*   col;
     patch_t*    patch;
+    lighttable_t  * ro_colormap = NULL;  // override colormap
     fixed_t     texturecolumn;
 
     splat = (wallsplat_t*) linedef->splats;
@@ -268,6 +271,18 @@ static void R_DrawWallSplats (void)
 #endif
 
 //    seg = ds_p->curline;
+
+    // [WDJ] Initialize dc_colormap.
+    // If fixedcolormap == NULL, then the loop will scale the light and colormap.
+    dc_colormap = fixedcolormap;
+    // [WDJ] Fixed determinations, taken out of draw loop.
+    // Overrides of colormap, with same usage.
+    if( fixedcolormap )
+        ro_colormap = fixedcolormap;
+    else if( view_colormap )
+        ro_colormap = view_colormap;
+    else if( frontsector->extra_colormap )  // over the whole line
+        ro_colormap = frontsector->extra_colormap->colormap;
 
     // draw all splats from the line that touches the range of the seg
     for ( ; splat ; splat=splat->next)
@@ -363,8 +378,6 @@ static void R_DrawWallSplats (void)
                 colfunc = shadecolfunc;
                 break;
         }
-        if (fixedcolormap)
-            dc_colormap = fixedcolormap;
 
         dc_texheight = 0;
 
@@ -372,20 +385,19 @@ static void R_DrawWallSplats (void)
         // x1,x2 are already limited to 0..rdraw_viewwidth
         for (dc_x = x1 ; dc_x <= x2 ; dc_x++, dm_yscale += rw_scalestep)
         {
-            if (!fixedcolormap)
+            if( !fixedcolormap )
             {
                 // distance effect on light, yscale is smaller at distance.
                 unsigned  dlit = dm_yscale>>LIGHTSCALESHIFT;
                 if (dlit >=  MAXLIGHTSCALE )
                    dlit = MAXLIGHTSCALE-1;
-                dc_colormap = walllights[dlit];
 
-                if(frontsector->extra_colormap || view_colormap)
+                dc_colormap = walllights[dlit];
+                if( ro_colormap )
                 {
                     // reverse indexing, and change to extra_colormap
                     int lightindex = dc_colormap - reg_colormaps;
-                    lighttable_t* cm = view_colormap? view_colormap : frontsector->extra_colormap->colormap;
-                    dc_colormap = & cm[ lightindex ];
+                    dc_colormap = & ro_colormap[ lightindex ];
                 }
             }
 
@@ -429,6 +441,7 @@ void  expand_lightlist( void )
 {
     struct r_lightlist_s *  newlist = 
         realloc(dc_lightlist, sizeof(r_lightlist_t) * dc_numlights);
+
     if( newlist )
     {
         dc_lightlist = newlist;
@@ -561,6 +574,7 @@ void R_Render2sidedMultiPatchColumn (column_t* column)
 
 
 // Render with fog, translucent, and transparent, over range x1..x2
+// Called from R_DrawMasked.
 void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
 {
     column_t*       col;
@@ -571,8 +585,10 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
     fixed_t	    windowclip_top, windowclip_bottom;
     fixed_t         lightheight;
     fixed_t         realbot;
-    ff_light_t      *ff_light;  // lightlist item
-    r_lightlist_t   *rlight;  // rover dc_lightlist
+    // Setup lightlist for all 3dfloors, then use it over all x.
+    r_lightlist_t * rlight;  // dc_lightlist
+    ff_light_t    * ff_light;  // ffloor lightlist item
+    lighttable_t  * ro_colormap = NULL;  // override colormap
 
     void (*colfunc_2s) (column_t*);
 
@@ -682,24 +698,32 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
     dm_yscale = ds->scale1 + (x1 - ds->x1)*rw_scalestep;
 
     // Setup lighting based on the presence/lack-of 3D floors.
-    dc_numlights = 0;
-    if(frontsector->numlights)
+    dc_numlights = frontsector->numlights;
+    if( dc_numlights )
     {
-      dc_numlights = frontsector->numlights;
       if(dc_numlights >= dc_maxlights)   expand_lightlist();
 
       // setup lightlist
+      // highest light to lowest light, [0] is sector light at top
       for(i = 0; i < dc_numlights; i++)
       {
         // setup a lightlist entry
         ff_light = &frontsector->lightlist[i];
         rlight = &dc_lightlist[i];  // create in this list slot
+
         // fake floor light heights in screen coord.
         rlight->height = (centeryfrac) - FixedMul((ff_light->height - viewz), dm_yscale);
         rlight->heightstep = -FixedMul (rw_scalestep, (ff_light->height - viewz));
         rlight->lightlevel = *ff_light->lightlevel;
         rlight->extra_colormap = ff_light->extra_colormap;
         rlight->flags = ff_light->flags;
+
+#if 0
+        // [WDJ] When NOSHADE, the light is not used.
+        // Questionable if really worth it, for the few times it could skip the light setup.
+        if( ff_light->flags & FF_NOSHADE )
+           continue; // next 3dfloor light
+#endif
 
         if(rlight->flags & FF_FOG)
           vlight = rlight->lightlevel + extralight_fog;
@@ -710,10 +734,17 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
         else
           vlight = rlight->lightlevel + extralight + orient_light;
 
-        rlight->vlight =
-            (vlight < 0) ? 0
-          : (vlight >= 255) ? 255
-          : vlight;
+        rlight->vlightmap =
+            (vlight < 0) ? scalelight[0]
+          : (vlight >= 255) ? scalelight[LIGHTLEVELS-1]
+          : scalelight[vlight>>LIGHTSEGSHIFT];
+
+        // [WDJ] Fixed determinations, taken out of draw loop.
+        // Overrides of colormap, with same usage.
+        if( fixedcolormap )
+            rlight->rcolormap = fixedcolormap;
+        else if( view_extracolormap )
+            rlight->extra_colormap = view_extracolormap;
       }  // for
     }
     else
@@ -732,6 +763,15 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
           (vlight < 0) ? scalelight[0]
         : (vlight >= 255) ? scalelight[LIGHTLEVELS-1]
         : scalelight[vlight>>LIGHTSEGSHIFT];
+       
+      // [WDJ] Fixed determinations, taken out of loop.
+      // Overrides of colormap, with same usage.
+      if( fixedcolormap )
+        ro_colormap = fixedcolormap;
+      else if( view_colormap )
+        ro_colormap = view_colormap;
+      else if( frontsector->extra_colormap )
+        ro_colormap = frontsector->extra_colormap->colormap;
     }
 
     maskedtexturecol = ds->maskedtexturecol;
@@ -762,8 +802,9 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
 
     dc_texheight = textureheight[texnum] >> FRACBITS;
 
-    if (fixedcolormap)
-        dc_colormap = fixedcolormap;
+    // [WDJ] Initialize dc_colormap.
+    // If fixedcolormap == NULL, then the loop will scale the light and colormap.
+    dc_colormap = fixedcolormap;
 
     // draw the columns
     // [WDJ] x1,x2 are limited to 0..rdraw_viewwidth to protect [dc_x] access.
@@ -790,7 +831,11 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
             
             col = (column_t *)((byte *)R_GetColumn(texnum,maskedtexturecol[dc_x]) - 3);
 
+            // top floor colormap, or fixedcolormap
+            dc_colormap = dc_lightlist[0].rcolormap;
+
             // for each 3Dfloor light
+            // highest light to lowest light, [0] is sector light at top
             for(i = 0; i < dc_numlights; i++)
             {
               rlight = &dc_lightlist[i];
@@ -798,23 +843,20 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
               if((rlight->flags & FF_NOSHADE))
                 continue; // next 3dfloor light
 
-              if( fixedcolormap )
-                 rlight->rcolormap = fixedcolormap;
-              else
+              if( !fixedcolormap )
               {
                  // distance effect on light, yscale is smaller at distance.
                  unsigned dlit = dm_yscale>>LIGHTSCALESHIFT;
                  if (dlit >=  MAXLIGHTSCALE )
                      dlit = MAXLIGHTSCALE-1;
 
-                 // local selection of light table
-                 rlight->rcolormap = scalelight[rlight->vlight>>LIGHTSEGSHIFT][dlit];
-                 if(rlight->extra_colormap || view_colormap)
+                 // light table for the distance
+                 rlight->rcolormap = rlight->vlightmap[dlit];
+                 if( rlight->extra_colormap )
                  {
                      // reverse indexing, and change to extra_colormap
                      int lightindex = rlight->rcolormap - reg_colormaps;
-                     lighttable_t* cm = view_colormap? view_colormap : rlight->extra_colormap->colormap;
-                     rlight->rcolormap = & cm[ lightindex ];
+                     rlight->rcolormap = & rlight->extra_colormap->colormap[ lightindex ];
                  }
               }
 
@@ -823,6 +865,7 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
               lightheight = rlight->height;
               if(lightheight <= dm_windowtop)
               {
+                // above view window, just get the colormap
                 dc_colormap = rlight->rcolormap;
                 continue;  // next 3dfloor light
               }
@@ -831,17 +874,23 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
               dm_windowbottom = lightheight;
               if(dm_windowbottom >= realbot)
               {
+                // past bottom of view window
                 dm_windowbottom = realbot;
                 colfunc_2s (col);
+
+                // Finish dc_lightlist height adjustments.
+                // highest light to lowest light, [0] is sector light at top
                 for(i++ ; i < dc_numlights; i++)
                 {
                   rlight = &dc_lightlist[i];
                   rlight->height += rlight->heightstep;
                 }
-
-                continue;  // next 3dfloor light
+                goto next_x;
               }  // if( dm_windowbottom >= realbot )
+
               colfunc_2s (col);
+
+              // for next draw, downward from this light height
               dm_windowtop = dm_windowbottom + 1;
               dc_colormap = rlight->rcolormap;
             } // for( dc_numlights )
@@ -850,13 +899,14 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
             if(dm_windowtop < dm_windowbottom)
               colfunc_2s (col);
 
+          next_x:
             dm_yscale += rw_scalestep;
             continue;  // next x
           }  // if( dc_numlights )
 
 
           // Where there are no 3Dfloors ...
-          // calculate lighting
+          // calculate lighting for distance using dm_yscale
           if (!fixedcolormap)
           {
               // distance effect on light, yscale is smaller at distance.
@@ -864,14 +914,13 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
               if (dlit >=  MAXLIGHTSCALE )
                  dlit = MAXLIGHTSCALE-1;
 
+              // light table for the distance
               dc_colormap = walllights[dlit];
-
-              if(frontsector->extra_colormap || view_colormap)
+              if( ro_colormap )
               {
                  // reverse indexing, and change to extra_colormap
                  int lightindex = dc_colormap - reg_colormaps;
-                 lighttable_t* cm = view_colormap? view_colormap : frontsector->extra_colormap->colormap;
-                 dc_colormap = & cm[ lightindex ];
+                 dc_colormap = & ro_colormap[ lightindex ];
               }
           } // fixedcolormap
 
@@ -903,8 +952,10 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
 
 //
 // R_RenderThickSideRange
-// Renders all the thick sides in the given range.
-
+// Renders all the thick sides for 3dfloors.
+//  x1, x2 : the x range of the seg, to be rendered
+//  ffloor : the fake-floor whose thick side is to be rendered
+// Called by R_DrawMasked.
 void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
 {
     column_t*       col;
@@ -917,9 +968,11 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
     fixed_t         bottombounds = rdraw_viewheight << FRACBITS;
     fixed_t         topbounds = (con_clipviewtop - 1) << FRACBITS;
     fixed_t         offsetvalue = 0;
-    ff_light_t      *ff_light; // light list item
-    r_lightlist_t   *rlight; // rover dc_lightlist
     fixed_t         lheight;
+    r_lightlist_t * rlight; // dc_lightlist
+    ff_light_t    * ff_light; // light list item
+    lighttable_t  * ro_colormap = NULL;  // override colormap
+    extracolormap_t  * ro_extracolormap = NULL;  // override extracolormap
 
     void (*colfunc_2s) (column_t*);
 
@@ -931,6 +984,7 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
     backsector = ffloor->taggedtarget;
     frontsector = (curline->frontsector == ffloor->taggedtarget) ?
                    curline->backsector : curline->frontsector;
+
     if (curline->v1->y == curline->v2->y)
         orient_light = -ORIENT_LIGHT;
     else if (curline->v1->x == curline->v2->x)
@@ -964,30 +1018,50 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
     }
     base_fog_alpha = dr_alpha;
 
+    // [WDJ] Overrides of colormap.
+    if( fixedcolormap )
+        ro_colormap = fixedcolormap;
+    else if( view_extracolormap )
+    {
+        ro_extracolormap = view_extracolormap;
+    }
+    else if(ffloor->flags & FF_FOG)   // Same result if test for colormap, or not.
+    {
+        // [WDJ] FF_FOG has optional colormap.
+        // Use that colormap if it is present, there usually is only one colormap in a situation.
+        // If no colormap (ro_extracolormap == NULL), then ff_light->extra_colormap can be used.
+        ro_extracolormap = ffloor->master->frontsector->extra_colormap;
+    }
+
     //SoM: Moved these up here so they are available for my lightlist calculations
     rw_scalestep = ds->scalestep;
     dm_yscale = ds->scale1 + (x1 - ds->x1)*rw_scalestep;
 
-    dc_numlights = 0;
-    if(frontsector->numlights)
+    dc_numlights = frontsector->numlights;
+    if( dc_numlights )
     {
-      dc_numlights = frontsector->numlights;
       if(dc_numlights > dc_maxlights)    expand_lightlist();
 
       cnt = 0; // cnt of rlight created, some ff_light will be skipped
+      // highest light to lowest light, [0] is sector light at top
       for(i = 0; i < dc_numlights; i++)
       {
+        // Limit list to lights that affect this thickside.
         ff_light = &frontsector->lightlist[i];
         rlight = &dc_lightlist[cnt];	// create in this list slot
 
         if(ff_light->height < *ffloor->bottomheight)
-          continue;  // next ff_light
+          continue;  // too low, next ff_light
 
         if(ff_light->height > *ffloor->topheight)
         {
+          // This light is above the ffloor thickside.
+          // Ignore it if the next light down is also above the ffloor thickside, when
+          // that light will block.
           if(i+1 < dc_numlights
-             && frontsector->lightlist[i+1].height > *ffloor->topheight)
-            continue;  // next ff_light
+             && frontsector->lightlist[i+1].height > *ffloor->topheight
+             && !(frontsector->lightlist[i+1].flags & FF_NOSHADE) )
+            continue;  // too high, next ff_light
         }
 
         lheight = ff_light->height;// > *ffloor->topheight ? *ffloor->topheight + FRACUNIT : ff_light->height;
@@ -1005,9 +1079,12 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
         rlight->extra_colormap = ff_light->extra_colormap;
 
         // Check if the current light affects the colormap/lightlevel
-        if((dc_lightlist[i].flags & FF_NOSHADE))
+        if( ff_light->flags & FF_NOSHADE )
           continue; // next ff_light
 
+        // Allows FOG on ffloor thickside to override lights.
+        // Really is only meant to handle one of these options at a time.
+        // Light and colormap precedence should match.
         if(ffloor->flags & FF_FOG)
           vlight = ffloor->master->frontsector->lightlevel + extralight_fog;
         else if(rlight->flags & FF_FOG)
@@ -1017,10 +1094,19 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
         else
           vlight = rlight->lightlevel + extralight + orient_light;
 
-        rlight->vlight =
-             (vlight < 0) ? 0
-           : (vlight >= 255) ? 255
-           : vlight;
+        rlight->vlightmap =
+             (vlight < 0) ? scalelight[0]
+           : (vlight >= 255) ? scalelight[LIGHTLEVELS-1]
+           : scalelight[vlight>>LIGHTSEGSHIFT];
+
+        // [WDJ] Fixed determinations, taken out of loop.
+        // Overrides of colormap, with same usage.
+        // colormap precedence:
+        //  fixedcolormap, ffloor FF_FOG colormap, rlight->extra_colormap
+        if( fixedcolormap )
+            rlight->rcolormap = fixedcolormap;
+        else if( ro_extracolormap ) // override light extracolormap
+            rlight->extra_colormap = ro_extracolormap;
 
         cnt++;
       }
@@ -1028,6 +1114,8 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
     }
     else
     {
+      // Render ffloor thickside when frontsector does not have lightlist.
+      // This happens for fog effects in otherwise normal sector, and probably others.
       //SoM: Get correct light level!
       if(ffloor->flags & FF_FOG)
         vlight = ffloor->master->frontsector->lightlevel + extralight_fog;
@@ -1046,6 +1134,16 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
            (vlight < 0) ? scalelight[0]
          : (vlight >= 255) ? scalelight[LIGHTLEVELS-1]
          : scalelight[vlight>>LIGHTSEGSHIFT];
+
+      // colormap precedence:
+      //  fixedcolormap, ffloor FF_FOG colormap, frontsector->extra_colormap
+      if( !ro_extracolormap )
+      {
+        ro_extracolormap = frontsector->extra_colormap;
+      }
+       
+      if( ro_extracolormap )
+        ro_colormap = ro_extracolormap->colormap;
     }
 
     maskedtexturecol = ds->thicksidecol;
@@ -1063,8 +1161,10 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
 
     dc_texturemid += offsetvalue;
 
-    if (fixedcolormap)
-        dc_colormap = fixedcolormap;
+    // [WDJ] Initialize dc_colormap.
+    // If fixedcolormap == NULL, then the loop will scale the light and colormap.
+    dc_colormap = fixedcolormap;
+
 
     //faB: handle case where multipatch texture is drawn on a 2sided wall, multi-patch textures
     //     are not stored per-column with post info anymore in Doom Legacy
@@ -1102,21 +1202,22 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
     {
       if(maskedtexturecol[dc_x] != MAXSHORT)
       {
+        dm_top_patch = dm_windowtop = (centeryfrac - FixedMul((dc_texturemid - offsetvalue), dm_yscale));
+        dm_bottom_patch = dm_windowbottom = FixedMul(*ffloor->topheight - *ffloor->bottomheight, dm_yscale) + dm_top_patch;
+
         // SoM: New code does not rely on r_drawColumnShadowed_8 which
         // will (hopefully) put less strain on the stack.
         if(dc_numlights)
         {
           fixed_t        height;
           fixed_t        bheight = 0;
-          int            solid = 0;
-          int            lighteffect = 0;
+          byte   solid = 0;  // when light source is treated as a solid
+          byte   lighteffect = 0;  // when not NOSHADE, light affects the colormap and lightlevel
 
-          dm_top_patch = dm_windowtop = (centeryfrac - FixedMul((dc_texturemid - offsetvalue), dm_yscale));
-          dm_bottom_patch = dm_windowbottom = FixedMul(*ffloor->topheight - *ffloor->bottomheight, dm_yscale) + dm_top_patch;
-
-          // SoM: If column is out of range, why bother with it??
           if(dm_windowbottom < topbounds || dm_windowtop > bottombounds)
           {
+            // Apply dc_lightlist height adjustments. The height at the following x are dependent upon this.
+            // highest light to lowest light, [0] is sector light at top
             for(i = 0; i < dc_numlights; i++)
             {
               rlight = &dc_lightlist[i];
@@ -1124,8 +1225,7 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
               if(rlight->flags & (FF_CUTSOLIDS|FF_CUTEXTRA))
                 rlight->botheight += rlight->botheightstep;
             }
-            dm_yscale += rw_scalestep;
-            continue;
+            goto next_x;	    
           }
 
           dc_iscale = 0xffffffffu / (unsigned)dm_yscale;
@@ -1133,6 +1233,11 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
           // draw the texture
           col = (column_t *)((byte *)R_GetColumn(texnum,maskedtexturecol[dc_x]) - 3);
 
+          // Top level colormap, or fixedcolormap.
+          dc_colormap = dc_lightlist[0].rcolormap;
+
+          // Setup dc_lightlist as to the 3dfloor light sources and effects.
+          // highest light to lowest light, [0] is sector light at top
           for(i = 0; i < dc_numlights; i++)
           {
             // Check if the current light affects the colormap/lightlevel
@@ -1141,65 +1246,21 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
             if(lighteffect)
             {
               // use rlight->rcolormap only when lighteffect
-              if(fixedcolormap)
-                rlight->rcolormap = fixedcolormap;
-              else
+              if( !fixedcolormap )
               {
                 // distance effect on light, yscale is smaller at distance.
                 unsigned  dlit = dm_yscale>>LIGHTSCALESHIFT;
                 if (dlit >=  MAXLIGHTSCALE )
                   dlit = MAXLIGHTSCALE-1;
 
-                // local selection of lighttable
-                rlight->rcolormap = scalelight[rlight->vlight>>LIGHTSEGSHIFT][dlit];
-                if( view_colormap )
-                {
-                  // reverse indexing, and change to extra_colormap
-                  int lightindex = rlight->rcolormap - reg_colormaps;
-                  rlight->rcolormap = & view_colormap[ lightindex ];
-                }
-                else
-                // fake floor without colormap overrides sector colormap ??
-#if 0
-                // [WDJ] To not have FF_FOG totally block ffloor colormap.
-                // Not sure which is correct, but is more consistent with other code.
-                // This way it will follow other colormap changes.
-                if( (ffloor->flags & FF_FOG)
-                    &&(ffloor->master->frontsector->extra_colormap) )
-                {
-                  // reverse indexing, and change to extra_colormap
-                  int lightindex = rlight->rcolormap - reg_colormaps;
-                  rlight->rcolormap = & ffloor->master->frontsector->extra_colormap->colormap[ lightindex ];
-                }
-                // no FOG, or FOG and no FOG colormap
-                else if(rlight->extra_colormap)
+                // light table for the distance
+                rlight->rcolormap = rlight->vlightmap[dlit];
+                if( rlight->extra_colormap )
                 {
                   // reverse indexing, and change to extra_colormap
                   int lightindex = rlight->rcolormap - reg_colormaps;
                   rlight->rcolormap = & rlight->extra_colormap->colormap[ lightindex ];
                 }
-#else
-                if(ffloor->flags & FF_FOG)
-                {
-                  // fog model sector has precedence, even if it does not have an extra_colormap
-                  if(ffloor->master->frontsector->extra_colormap)
-                  {
-                    // reverse indexing, and change to extra_colormap
-                    int lightindex = rlight->rcolormap - reg_colormaps;
-                    rlight->rcolormap = & ffloor->master->frontsector->extra_colormap->colormap[ lightindex ];
-                  }
-                }
-                else
-                {
-                  // no FOG
-                  if(rlight->extra_colormap)
-                  {
-                    // reverse indexing, and change to extra_colormap
-                    int lightindex = rlight->rcolormap - reg_colormaps;
-                    rlight->rcolormap = & rlight->extra_colormap->colormap[ lightindex ];
-                  }
-                }
-#endif
               } // not fixedcolormap
             } // lighteffect
 
@@ -1247,14 +1308,18 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
                 dc_colormap = rlight->rcolormap;
               if(solid && dm_windowtop < bheight)
                 dm_windowtop = bheight;
-              continue;
+              continue;  // next light
             }
 
             dm_windowbottom = height;
             if(dm_windowbottom >= dm_bottom_patch)
             {
+              // bottom of view window
               dm_windowbottom = dm_bottom_patch;
               colfunc_2s (col);
+
+              // Finish dc_lightlist height adjustments.
+              // highest light to lowest light, [0] is sector light at top
               for(i++ ; i < dc_numlights; i++)
               {
                 rlight = &dc_lightlist[i];
@@ -1262,57 +1327,45 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
                 if(rlight->flags & (FF_CUTSOLIDS|FF_CUTEXTRA))
                   rlight->botheight += rlight->botheightstep;
               }
-              continue;
+              goto next_x;
             }
+
             colfunc_2s (col);  // draw
+
+            // downward light from this light level
             dm_windowtop = solid ? bheight : (dm_windowbottom + 1);
             if(lighteffect)
               dc_colormap = rlight->rcolormap;
           } // for lights
+          // bottom floor
           dm_windowbottom = dm_bottom_patch;
           if(dm_windowtop < dm_windowbottom)
             colfunc_2s (col);
 
+        next_x:
           dm_yscale += rw_scalestep;
-          continue;
+          continue;  // dc_x
         }
 
-        // calculate lighting
+        // No ffloor.
+        // calculate lighting for distance using dm_yscale
         if (!fixedcolormap)
         {
             // distance effect on light, yscale is smaller at distance.
             unsigned  dlit = dm_yscale>>LIGHTSCALESHIFT;
             if (dlit >=  MAXLIGHTSCALE )
                 dlit = MAXLIGHTSCALE-1;
-                
-            dc_colormap = walllights[dlit];
 
-            if( view_colormap )
+            // light table for the distance
+            dc_colormap = walllights[dlit];
+            if( ro_colormap )
             {
                 // reverse indexing, and change to extra_colormap
                 int lightindex = dc_colormap - reg_colormaps;
-                dc_colormap = & view_colormap[ lightindex ];
-            }
-            else
-            // FOG precedence
-            // one or other, simultaneous usage will crash
-            if(ffloor->flags & FF_FOG && ffloor->master->frontsector->extra_colormap)
-            {
-                // reverse indexing, and change to extra_colormap
-                int lightindex = dc_colormap - reg_colormaps;
-                dc_colormap = & ffloor->master->frontsector->extra_colormap->colormap[ lightindex ];
-            }
-            else // one or other, simultaneous usage will crash
-            if(frontsector->extra_colormap)
-            {
-                // reverse indexing, and change to extra_colormap
-                int lightindex = dc_colormap - reg_colormaps;
-                dc_colormap = & frontsector->extra_colormap->colormap[ lightindex ];
+                dc_colormap = & ro_colormap[ lightindex ];
             }
         }
 
-        dm_top_patch = dm_windowtop = (centeryfrac - FixedMul((dc_texturemid - offsetvalue), dm_yscale));
-        dm_bottom_patch = dm_windowbottom = FixedMul(*ffloor->topheight - *ffloor->bottomheight, dm_yscale) + dm_top_patch;
         dc_iscale = 0xffffffffu / (unsigned)dm_yscale;
             
         // draw the texture
@@ -1334,6 +1387,7 @@ void R_RenderFog( ffloor_t* fff, sector_t * intosec, lightlev_t foglight,
     side_t * fogside = & sides[ fogline->sidenum[0] ];
     sector_t * modelsec = fogside->sector;
     lighttable_t** xwalllights = scalelight[0];  // local selection of light table
+    lighttable_t  * ro_colormap = NULL;  // override colormap
 
     int      texnum, texheight;
     fixed_t  windowclip_top, windowclip_bottom;
@@ -1429,11 +1483,20 @@ void R_RenderFog( ffloor_t* fff, sector_t * intosec, lightlev_t foglight,
     dc_texturemid = modelsec->ceilingheight + fogside->rowoffset - viewz;
     dc_texheight = texheight >> FRACBITS;
 
-    if (fixedcolormap)
-    {
-        dc_colormap = fixedcolormap;
-    }
-    else
+    // [WDJ] Initialize dc_colormap.
+    // If fixedcolormap == NULL, then the loop will scale the light and colormap.
+    dc_colormap = fixedcolormap;
+
+    // [WDJ] Fixed determinations, taken out of loop.
+    // Overrides of colormap, with same usage.
+    if( fixedcolormap )
+        ro_colormap = fixedcolormap;
+    else if( view_colormap )
+        ro_colormap = view_colormap;
+    else if( modelsec->extra_colormap )
+        ro_colormap = modelsec->extra_colormap->colormap;;
+
+    if( !fixedcolormap )
     {
         lightlev_t vlight = modelsec->lightlevel + foglight;
         xwalllights =
@@ -1467,13 +1530,13 @@ void R_RenderFog( ffloor_t* fff, sector_t * intosec, lightlev_t foglight,
                 if (dlit >=  MAXLIGHTSCALE )
                     dlit = MAXLIGHTSCALE-1;
 
+                // light table for the distance
                 dc_colormap = xwalllights[dlit];
-                if(modelsec->extra_colormap || view_colormap)
+                if( ro_colormap )
                 {
                     // reverse indexing, and change to extra_colormap
                     int lightindex = dc_colormap - reg_colormaps;
-                    lighttable_t* cm = view_colormap? view_colormap : modelsec->extra_colormap->colormap;
-                    dc_colormap = & cm[ lightindex ];
+                    dc_colormap = & ro_colormap[ lightindex ];
                 }
             }
 
@@ -1516,6 +1579,10 @@ unsigned long   nombre = 100000;
 //profile stuff ---------------------------------------------------------
 
 
+// Software Render
+// IN: rw_ parameters
+// Called by R_StoreWallRange
+static
 void R_RenderSegLoop (void)
 {
     int        orient_light = 0;  // wall orientation effect
@@ -1526,6 +1593,8 @@ void R_RenderSegLoop (void)
     fixed_t    texturecolumn = 0;
     int        mid, top, bottom;
     int        i;
+    lighttable_t  * ro_colormap = NULL;  // override colormap
+    extracolormap_t  * ro_extracolormap = NULL;  // override colormap
     
 
 #if 0   
@@ -1537,16 +1606,70 @@ void R_RenderSegLoop (void)
 //        printf("limiting rw_stopx %i\n", rw_stopx);
         rw_stopx = rdraw_viewwidth;
     }
-#endif   
-    if (fixedcolormap)
-        dc_colormap = fixedcolormap;
+#endif
 
     // line orientation light, out of the loop
     if (curline->v1->y == curline->v2->y)
         orient_light = -ORIENT_LIGHT;
     else if (curline->v1->x == curline->v2->x)
         orient_light = ORIENT_LIGHT;
-     
+
+    // [WDJ] Initialize dc_colormap.
+    // If fixedcolormap == NULL, then the loop will scale the light and colormap.
+    dc_colormap = fixedcolormap;
+
+    if( dc_numlights )
+    {
+        r_lightlist_t * rlight;
+        lightlev_t  vlight;
+
+        // Setup dc_lightlist as to the 3dfloor light and colormaps.
+        // The lightlevel and extra_colormap were copied from ffloor by R_StoreWallRange.
+        // NOTE: Due to StoreWallRange, the dc_lightlist entries do NOT correspond to
+        // the sector lightlist[i].
+        for(i = 0; i < dc_numlights; i++)
+        {
+            rlight = & dc_lightlist[i];
+
+            // [WDJ] FF_FOG is also set when frontsector lightlist caster has FF_FOG.
+            if( rlight->flags & FF_FOG )
+                vlight = rlight->lightlevel + extralight_fog;
+            else if( rlight->extra_colormap && rlight->extra_colormap->fog)
+                vlight = rlight->lightlevel + extralight_cm;
+            else
+                vlight = rlight->lightlevel + extralight + orient_light;
+
+            rlight->vlightmap =
+                  (vlight < 0) ? scalelight[0]
+                : (vlight >= 255) ? scalelight[LIGHTLEVELS-1]
+                : scalelight[vlight>>LIGHTSEGSHIFT];
+
+            // [WDJ] Fixed determinations, taken out of line loop.
+            // Colormap overrides, with the same usage.
+            if( fixedcolormap )
+                rlight->rcolormap = fixedcolormap;
+            else if( view_extracolormap )
+                rlight->extra_colormap = view_extracolormap;
+        }
+        // Select draw function that will step through dc_lightlist, and sets dc_colormap.
+        colfunc = R_DrawColumnShadowed;  // generic 8 16
+    }
+    else
+    {
+        // [WDJ] Fixed determinations, taken out of line loop.
+        // Colormap overrides, with the same usage.
+        if( fixedcolormap )
+            ro_colormap = fixedcolormap;
+        else if( view_extracolormap )
+            ro_extracolormap = view_extracolormap;
+        else  // over the whole line
+            ro_extracolormap = frontsector->extra_colormap;
+   
+        if( ro_extracolormap )
+            ro_colormap = ro_extracolormap->colormap;
+    }
+
+
     for ( ; rw_x < rw_stopx ; rw_x++)
     {
         // mark floor / ceiling areas
@@ -1655,63 +1778,46 @@ void R_RenderSegLoop (void)
                 if (dlit >=  MAXLIGHTSCALE )
                     dlit = MAXLIGHTSCALE-1;
 
+                // light table for the distance
                 dc_colormap = walllights[dlit];
-
-                if(frontsector->extra_colormap || view_colormap)
+                if( ro_colormap )
                 {
                     // reverse indexing, and change to extra_colormap
                     int lightindex = dc_colormap - reg_colormaps;
-                    lighttable_t* cm = view_colormap? view_colormap : frontsector->extra_colormap->colormap;
-                    dc_colormap = & cm[ lightindex ];
+                    dc_colormap = & ro_colormap[ lightindex ];
                 }
             }
         }
 
         if(dc_numlights)
         {
-          lightlev_t  vlight;
           r_lightlist_t * rlight;
 
+          // Setup dc_lightlist as to the 3dfloor light and colormaps.
+          // highest light to lowest light, [0] is sector light at top
           for(i = 0; i < dc_numlights; i++)
           {
             rlight = & dc_lightlist[i];
 
-            if(fixedcolormap)
-              rlight->rcolormap = fixedcolormap;
-            else
+            if( !fixedcolormap )
             {
-              if( frontsector->lightlist[i].caster
-                  && frontsector->lightlist[i].caster->flags & FF_FOG
-                  && (frontsector->lightlist[i].height != *frontsector->lightlist[i].caster->bottomheight))
-                vlight = rlight->lightlevel + extralight_fog;
-              else if(dc_lightlist[i].extra_colormap && dc_lightlist[i].extra_colormap->fog)
-                vlight = rlight->lightlevel + extralight_cm;
-              else
-                vlight = rlight->lightlevel + extralight + orient_light;
-   
-              lighttable_t** xwalllights =  // local selection of light table
-                  (vlight < 0) ? scalelight[0]
-                : (vlight >= 255) ? scalelight[LIGHTLEVELS-1]
-                : scalelight[vlight>>LIGHTSEGSHIFT];
-
               // distance effect on light, rw_scale is smaller at distance.
               unsigned  dlit = rw_scale>>LIGHTSCALESHIFT;
               if (dlit >=  MAXLIGHTSCALE )
                 dlit = MAXLIGHTSCALE-1;
 
-              rlight->rcolormap = xwalllights[dlit];
-              if(rlight->extra_colormap || view_colormap)
+              // light table for the distance
+              rlight->rcolormap = rlight->vlightmap[dlit];
+              if( rlight->extra_colormap )
               {
                 // reverse indexing, and change to extra_colormap
                 int lightindex = rlight->rcolormap - reg_colormaps;
-                lighttable_t* cm = view_colormap? view_colormap : rlight->extra_colormap->colormap;
-                rlight->rcolormap = & cm[ lightindex ];
+                rlight->rcolormap = & rlight->extra_colormap->colormap[ lightindex ];
               }
             }
-
-            colfunc = R_DrawColumnShadowed;  // generic 8 16
           }
-        } // if dclights
+          // The colfunc will step through dc_lightlist, and sets dc_colormap.
+        } // if dc_numlights
 
         backscale[rw_x] = rw_scale;
 
@@ -1878,6 +1984,8 @@ void R_RenderSegLoop (void)
 
         if(dc_numlights)
         {
+          // Apply dc_lightlist height adjustments.
+          // highest light to lowest light, [0] is sector light at top
           for(i = 0; i < dc_numlights; i++)
           {
             dc_lightlist[i].height += dc_lightlist[i].heightstep;
@@ -1929,7 +2037,7 @@ void R_RenderSegLoop (void)
 
 
 //
-// R_StoreWallRange
+// R_StoreWallRange, software render.
 // A wall segment will be drawn
 //  between start and stop pixels (inclusive).
 //
@@ -1942,9 +2050,9 @@ void R_StoreWallRange( int   start, int   stop)
     lightlev_t          vlight;  // visible light 0..255
     lightlev_t          orient_light = 0;  // wall orientation effect
     int                 i, cnt;
-    ff_light_t          *ff_light;  // light list item
-    r_lightlist_t       *rlight;
-    ffloor_t 		* bff, * fff;  // backsector fake floor, frontsector fake floor
+    ff_light_t        * ff_light;  // light list item
+    r_lightlist_t     * rlight;
+    ffloor_t          * bff, * fff;  // backsector fake floor, frontsector fake floor
 //    fixed_t             lheight;  // unused
 
     if (ds_p == &drawsegs[maxdrawsegs])   expand_drawsegs();
@@ -2520,16 +2628,19 @@ void R_StoreWallRange( int   start, int   stop)
        return;
     }
 
-    dc_numlights = 0;
-
-    if(frontsector->numlights)  // has ff_lights
+    dc_numlights = frontsector->numlights;
+    if( dc_numlights )  // has ff_lights
     {
-      dc_numlights = frontsector->numlights;
       if(dc_numlights >= dc_maxlights)    expand_lightlist();
 
       cnt = 0; // cnt of rlight created, some ff_light will be skipped
+      // Setup dc_lightlist, as to 3dfloor heights, lights, and extra_colormap.
+      // highest light to lowest light, [0] is sector light at top
       for(i = 0; i < dc_numlights; i++)
       {
+        // [WDJ] This makes the dc_lightlist shorter in the render loop, but the resultant
+        // entries dc_lightlist[i] will not correspond to the sector lightlist[i].
+        // All references to ff_light must be done here.
         ff_light = &frontsector->lightlist[i];
         rlight = &dc_lightlist[cnt];
 
@@ -2558,8 +2669,23 @@ void R_StoreWallRange( int   start, int   stop)
           rlight->botheightstep = -FixedMul (rw_scalestep, (*ff_light->caster->bottomheight - viewz) >> 4);
         }
 
+#if 1
+// Was in SegLoop, which was an error, because the dc_lightlist entries do NOT correspond to
+// the sector lightlist[i] entries.
+// From R_Prep3DFloors:
+//   ff_light->caster = ff_floor, NULL for top floor
+//   ff_light->caster->flags = ff_floor->flags = ff_light->flags = rlight->flags
+//   ff_light->height = sector->ceilingheight + 1;
+        // [WDJ] Cannot figure out what the height test accomplishes.
+        // This seems to be close to the original, whatever it did.
+        if( ff_light->caster && ff_light->caster->flags & FF_FOG
+            && (ff_light->height != *ff_light->caster->bottomheight))
+            rlight->flags |= FF_FOG;
+#endif
+
         rlight->lightlevel = *ff_light->lightlevel;
         rlight->extra_colormap = ff_light->extra_colormap;
+
         cnt++;
       }
       dc_numlights = cnt;
