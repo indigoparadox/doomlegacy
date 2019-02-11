@@ -1083,18 +1083,18 @@ void R_DrawFogSpan_8(void)
         while (count4--)
         {
             *dest = ds_colormap[ ftranslucent[3][ (*dest) << 8 ]];
-            dest += vid.ybytes;
+            dest ++;
             *dest = ds_colormap[ ftranslucent[2][ (*dest) << 8 ]];
-            dest += vid.ybytes;
+            dest ++;
             *dest = ds_colormap[ ftranslucent[1][ (*dest) << 8 ]];
-            dest += vid.ybytes;
+            dest ++;
             *dest = ds_colormap[ ftranslucent[0][ (*dest) << 8 ]];
-            dest += vid.ybytes;
+            dest ++;
         }
         while( count-- )
         {
             *dest = ds_colormap[ ftranslucent[count&0x03][ (*dest) << 8 ]];
-            dest += vid.ybytes;
+            dest ++;
         }
     }
 }
