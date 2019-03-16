@@ -896,7 +896,8 @@ typedef struct vissprite_s
     sector_t*           sector; //The sector containing the thing.
 
     //SoM: Precalculated top and bottom screen coords for the sprite.
-    // [WDJ] sz_ only used in r_things.c, these are NOT fixed point nor frac
+    // [WDJ] sz_ only used in r_things.c, as cut, used for clip tests.
+    // Do not really need cut, just set sz_top, and sz_bot properly.
     int                 sz_bot;
     int                 sz_top;
 

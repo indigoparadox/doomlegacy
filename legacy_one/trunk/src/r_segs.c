@@ -217,21 +217,52 @@ static void R_DrawSplatColumn (column_t* column)
         dc_yl = (top_post_sc+FRACUNIT-1)>>FRACBITS;
         dc_yh = (bottom_post_sc-1)>>FRACBITS;
 
-
 #ifndef BORIS_FIX
+#ifdef CLIP_IN_BAND
+        if (dc_yh > dm_floorclip[dc_x])
+            dc_yh = dm_floorclip[dc_x];
+        if (dc_yl < dm_ceilingclip[dc_x])
+            dc_yl = dm_ceilingclip[dc_x];
+#else
         if (dc_yh >= dm_floorclip[dc_x])
             dc_yh = dm_floorclip[dc_x] - 1;
         if (dc_yl < dm_ceilingclip[dc_x])
             dc_yl = dm_ceilingclip[dc_x] + 1;
+#endif
+#else
+#ifdef CLIP_IN_BAND
+        if (dc_yh > last_floorclip[dc_x])
+            dc_yh =  last_floorclip[dc_x];
+        if (dc_yl < last_ceilingclip[dc_x])
+            dc_yl =  last_ceilingclip[dc_x];
 #else
         if (dc_yh >= last_floorclip[dc_x])
             dc_yh =  last_floorclip[dc_x]-1;
         if (dc_yl <= last_ceilingclip[dc_x])
             dc_yl =  last_ceilingclip[dc_x]+1;
 #endif
+#endif
+
+#ifdef CLIP_IN_BAND
+#ifdef RANGECHECK
+    // Temporary check code.
+    // Due to better clipping, this extra clip should no longer be needed.
+    if( dc_yl < 0 )
+    {
+        printf( "DrawSplat dc_yl  %i < 0\n", dc_yl );
+        dc_yl = 0;
+    }
+    if ( dc_yh >= rdraw_viewheight )
+    {
+        printf( "DrawSplat dc_yh  %i > rdraw_viewheight\n", dc_yh );
+        dc_yh = rdraw_viewheight - 1;
+    }
+#endif
+#else
         //[WDJ] phobiata.wad has many views that need clipping
         if ( dc_yl < 0 ) dc_yl = 0;
         if ( dc_yh >= rdraw_viewheight )   dc_yh = rdraw_viewheight - 1;
+#endif
         if (dc_yl <= dc_yh && dc_yh >= 0 )
         {
             dc_source = (byte *)column + 3;
@@ -552,19 +583,43 @@ void R_Render2sidedMultiPatchColumn (column_t* column)
     }
 
     {
+#ifdef CLIP_IN_BAND
+      if(dc_yh > dm_floorclip[dc_x])
+          dc_yh =  dm_floorclip[dc_x];
+      if(dc_yl < dm_ceilingclip[dc_x])
+          dc_yl =  dm_ceilingclip[dc_x];
+#else
       if (dc_yh >= dm_floorclip[dc_x])
           dc_yh =  dm_floorclip[dc_x]-1;
       if (dc_yl <= dm_ceilingclip[dc_x])
           dc_yl =  dm_ceilingclip[dc_x]+1;
+#endif
     }
 
     // [WDJ] Draws only within borders
     if (dc_yl >= rdraw_viewheight || dc_yh < 0)
       return;
 
+#ifdef CLIP_IN_BAND
+#ifdef RANGECHECK
+    // Temporary check code.
+    // Due to better clipping, this extra clip should no longer be needed.
+    if( dc_yl < 0 )
+    {
+        printf( "DrawMulti dc_yl  %i < 0\n", dc_yl );
+        dc_yl = 0;
+    }
+    if ( dc_yh >= rdraw_viewheight )
+    {
+        printf( "DrawMulti dc_yh  %i > rdraw_viewheight\n", dc_yh );
+        dc_yh = rdraw_viewheight - 1;
+    }
+#endif
+#else
     //[WDJ] phobiata.wad has many views that need clipping
     if ( dc_yl < 0 )   dc_yl = 0;
     if ( dc_yh >= rdraw_viewheight )   dc_yh = rdraw_viewheight - 1;
+#endif
     if (dc_yl <= dc_yh)
     {
         dc_source = (byte *)column + 3;
@@ -966,7 +1021,11 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
     int             base_fog_alpha;
     int             i, cnt;
     fixed_t         bottombounds = rdraw_viewheight << FRACBITS;
+#ifdef CLIP_IN_BAND
+    fixed_t         topbounds = (con_clipviewtop - 2) << FRACBITS;
+#else
     fixed_t         topbounds = (con_clipviewtop - 1) << FRACBITS;
+#endif
     fixed_t         offsetvalue = 0;
     fixed_t         lheight;
     r_lightlist_t * rlight; // dc_lightlist
@@ -1196,7 +1255,7 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
        I_Error( "R_RenderThickSideRange: %i  %i\n", x1, x2);
 #endif
     if( x1 < 0 )  x1 = 0;
-    if( x2 >= rdraw_viewwidth )  x2 = rdraw_viewwidth-1;
+    if( x2 >= rdraw_viewwidth )  x2 = rdraw_viewwidth - 1;
     // draw the columns
     for (dc_x = x1 ; dc_x <= x2 ; dc_x++)
     {
@@ -1216,6 +1275,7 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
 
           if(dm_windowbottom < topbounds || dm_windowtop > bottombounds)
           {
+            // The dm_window is outside the view window (topbounds, bottombounds).
             // Apply dc_lightlist height adjustments. The height at the following x are dependent upon this.
             // highest light to lowest light, [0] is sector light at top
             for(i = 0; i < dc_numlights; i++)
@@ -1476,8 +1536,8 @@ void R_RenderFog( ffloor_t* fff, sector_t * intosec, lightlev_t foglight,
     // Setup lighting based on the presence/lack-of 3D floors.
     dc_numlights = 1;
 
-    dm_floorclip = screenheightarray;  // noclip
-    dm_ceilingclip = negonearray;  // noclip
+    dm_floorclip = clip_screen_bot_max;  // noclip
+    dm_ceilingclip = clip_screen_top_min;  // noclip
 
     // top of texture, relative to viewer, with rowoffset, world coord.
     dc_texturemid = modelsec->ceilingheight + fogside->rowoffset - viewz;
@@ -1563,8 +1623,12 @@ nofog:
 //  textures.
 // CALLED: CORE LOOPING ROUTINE.
 //
+
+// HEIGHTFRAC, a fixed point with 12 fraction bits.
 #define HEIGHTBITS              12
 #define HEIGHTUNIT              (1<<HEIGHTBITS)
+#define HEIGHTFRAC_TO_INT( x )      ((x)>>HEIGHTBITS)
+#define FIXED_TO_HEIGHTFRAC( x )    ((x)>>(FRACBITS-HEIGHTBITS))
 
 
 //profile stuff ---------------------------------------------------------
@@ -1596,17 +1660,6 @@ void R_RenderSegLoop (void)
     lighttable_t  * ro_colormap = NULL;  // override colormap
     extracolormap_t  * ro_extracolormap = NULL;  // override colormap
     
-
-#if 0   
-    // [WDJ] R_StoreWallRange violates rdraw_viewwidth.
-#define INDIVIDUAL_X_CLIP 
-    // [WDJ] R_StoreWallRange fixed 3/24/2010, keep just in case problems arise.
-    if( rw_stopx >= rdraw_viewwidth )
-    {
-//        printf("limiting rw_stopx %i\n", rw_stopx);
-        rw_stopx = rdraw_viewwidth;
-    }
-#endif
 
     // line orientation light, out of the loop
     if (curline->v1->y == curline->v2->y)
@@ -1673,19 +1726,33 @@ void R_RenderSegLoop (void)
     for ( ; rw_x < rw_stopx ; rw_x++)
     {
         // mark floor / ceiling areas
-        yl = (topfrac+HEIGHTUNIT-1)>>HEIGHTBITS;
+        yl = HEIGHTFRAC_TO_INT( (topfrac + HEIGHTUNIT - 1) );  // rounded up
         
         // no space above wall?
+#ifdef CLIP_IN_BAND
+        if (yl < ceilingclip[rw_x])
+            yl = ceilingclip[rw_x];
+#else
         if (yl < ceilingclip[rw_x]+1)
             yl = ceilingclip[rw_x]+1;
+#endif
         
         if (markceiling)
         {
+#ifdef CLIP_IN_BAND
+            top = ceilingclip[rw_x];
+#else
             top = ceilingclip[rw_x]+1;
+#endif
             bottom = yl-1;
-            
+
+#ifdef CLIP_IN_BAND
+            if (bottom > floorclip[rw_x])
+                bottom = floorclip[rw_x];
+#else	   
             if (bottom >= floorclip[rw_x])
                 bottom = floorclip[rw_x]-1;
+#endif
             
             // visplane global parameter vsp_ceilingplane
             if (top <= bottom)
@@ -1696,17 +1763,28 @@ void R_RenderSegLoop (void)
         }
 
         
-        yh = bottomfrac>>HEIGHTBITS;
+        yh = HEIGHTFRAC_TO_INT( bottomfrac );
         
+#ifdef CLIP_IN_BAND
+        if (yh > floorclip[rw_x])
+            yh = floorclip[rw_x];
+#else
         if (yh >= floorclip[rw_x])
             yh = floorclip[rw_x]-1;
+#endif
         
         if (markfloor)
         {
             top = yh+1;
+#ifdef CLIP_IN_BAND
+            bottom = floorclip[rw_x];
+            if (top < ceilingclip[rw_x])
+                top = ceilingclip[rw_x];
+#else
             bottom = floorclip[rw_x]-1;
             if (top <= ceilingclip[rw_x])
                 top = ceilingclip[rw_x]+1;
+#endif
             // visplane global parameter vsp_floorplane
             if (top <= bottom && vsp_floorplane)
             {
@@ -1718,20 +1796,38 @@ void R_RenderSegLoop (void)
 
         if (numffplane)
         {
+          // Over all ffloor planes.
           firstseg->backscale[rw_x] = backscale[rw_x];
 //	  firstseg->frontscale[rw_x] = rw_scale;
           for(i = 0; i < numffplane; i++)
           {
             if(ffplane[i].height < viewz)
             {
-              int top_w = (ffplane[i].front_frac >> HEIGHTBITS) + 1;
-              int bottom_w = ffplane[i].front_clip[rw_x];
+              int top_w = HEIGHTFRAC_TO_INT( ffplane[i].front_frac ) + 1;
+#ifdef CLIP_IN_BAND
+              // [WDJ] To prevent little black lines, front_clip_bot is +1 from a normal clip.
+//              int bottom_w = ffplane[i].front_clip_bot[rw_x] - 1;  // get black lines
+              int bottom_w = ffplane[i].front_clip_bot[rw_x];
+#else
+//              int bottom_w = ffplane[i].front_clip_bot[rw_x] - 1;  // get black lines
+              int bottom_w = ffplane[i].front_clip_bot[rw_x];
+#endif
 
+#ifdef CLIP_IN_BAND
+              if(top_w < ceilingclip[rw_x])
+                top_w = ceilingclip[rw_x];
+#else
               if(top_w < ceilingclip[rw_x] + 1)
                 top_w = ceilingclip[rw_x] + 1;
+#endif
 
+#ifdef CLIP_IN_BAND
+              if (bottom_w > floorclip[rw_x])
+                bottom_w = floorclip[rw_x];
+#else
               if (bottom_w > floorclip[rw_x] - 1)
                 bottom_w = floorclip[rw_x] - 1;
+#endif
 
               if (top_w <= bottom_w)
               {
@@ -1741,14 +1837,28 @@ void R_RenderSegLoop (void)
             }
             else if (ffplane[i].height > viewz)
             {
-              int top_w = ffplane[i].con_clip[rw_x] + 1;
-              int bottom_w = (ffplane[i].front_frac >> HEIGHTBITS);
+#ifdef CLIP_IN_BAND
+              int top_w = ffplane[i].plane_clip_top[rw_x];
+#else
+              int top_w = ffplane[i].plane_clip_top[rw_x] + 1;
+#endif
+              int bottom_w = HEIGHTFRAC_TO_INT( ffplane[i].front_frac );
 
+#ifdef CLIP_IN_BAND
+              if (top_w < ceilingclip[rw_x])
+                top_w = ceilingclip[rw_x];
+#else
               if (top_w < ceilingclip[rw_x] + 1)
                 top_w = ceilingclip[rw_x] + 1;
+#endif
 
+#ifdef CLIP_IN_BAND
+              if (bottom_w > floorclip[rw_x])
+                bottom_w = floorclip[rw_x];
+#else
               if (bottom_w > floorclip[rw_x] - 1)
                 bottom_w = floorclip[rw_x] - 1;
+#endif
 
               if (top_w <= bottom_w)
               {
@@ -1821,25 +1931,34 @@ void R_RenderSegLoop (void)
 
         backscale[rw_x] = rw_scale;
 
-        // [WDJ] if(dx_x >= viewwidth),  either return
-        // or individual clip and execute bottom of loop
-
         // draw the wall tiers
         if (midtexture)
         {
-#ifdef INDIVIDUAL_X_CLIP
-          if( yl < rdraw_viewheight && yh >= 0 && yh >= yl
-              && ((unsigned) dc_x < rdraw_viewwidth) ) // not disabled
-#else
           if( yl < rdraw_viewheight && yh >= 0 && yh >= yl ) // not disabled
-#endif
           {
             // single sided line
             dc_yl = yl;
             dc_yh = yh;
+#ifdef CLIP_IN_BAND
+#ifdef RANGECHECK
+    // Temporary check code.
+    // Due to better clipping, this extra clip should no longer be needed.
+    if( dc_yl < 0 )
+    {
+        printf( "RenderSeg mid dc_yl  %i < 0\n", dc_yl );
+        dc_yl = 0;
+    }
+    if ( dc_yh >= rdraw_viewheight )
+    {
+        printf( "RenderSeg mid dc_yh  %i > rdraw_viewheight\n", dc_yh );
+        dc_yh = rdraw_viewheight - 1;
+    }
+#endif
+#else
             //[WDJ] phobiata.wad has many views that need clipping
             if ( dc_yl < 0 )   dc_yl = 0;
             if ( dc_yh >= rdraw_viewheight )   dc_yh = rdraw_viewheight - 1;
+#endif
 
             dc_texturemid = rw_midtexturemid;
             dc_source = R_GetColumn(midtexture,texturecolumn);
@@ -1865,8 +1984,13 @@ void R_RenderSegLoop (void)
           }
             // dont draw anything more for this column, since
             // a midtexture blocks the view
+#ifdef CLIP_IN_BAND
+            ceilingclip[rw_x] = rdraw_viewheight;  // block all
+            floorclip[rw_x] = 0;  // block all
+#else
             ceilingclip[rw_x] = rdraw_viewheight;
             floorclip[rw_x] = -1;
+#endif
         }
         else
         {
@@ -1874,26 +1998,44 @@ void R_RenderSegLoop (void)
             if (toptexture)
             {
                 // top wall
-                mid = pixhigh>>HEIGHTBITS;
+                mid = HEIGHTFRAC_TO_INT( pixhigh );
                 pixhigh += pixhighstep;
                 
+#ifdef CLIP_IN_BAND
+                if (mid > floorclip[rw_x])
+                    mid = floorclip[rw_x];
+#else
                 if (mid >= floorclip[rw_x])
                     mid = floorclip[rw_x]-1;
+#endif
                 
                 if (mid >= yl)
                 {
-#ifdef INDIVIDUAL_X_CLIP
-                  if( yl < rdraw_viewheight && mid >= 0
-                      && ((unsigned) dc_x < rdraw_viewwidth) ) // not disabled
-#else
                   if( yl < rdraw_viewheight && mid >= 0 ) // not disabled
-#endif
                   {
                     dc_yl = yl;
                     dc_yh = mid;
+
+#ifdef CLIP_IN_BAND
+#ifdef RANGECHECK
+    // Temporary check code.
+    // Due to better clipping, this extra clip should no longer be needed.
+    if( dc_yl < 0 )
+    {
+        printf( "RenderSeg top dc_yl  %i < 0\n", dc_yl );
+        dc_yl = 0;
+    }
+    if ( dc_yh >= rdraw_viewheight )
+    {
+        printf( "RenderSeg top dc_yh  %i > rdraw_viewheight\n", dc_yh );
+        dc_yh = rdraw_viewheight - 1;
+    }
+#endif
+#else
                     //[WDJ] phobiata.wad has many views that need clipping
                     if ( dc_yl < 0 )   dc_yl = 0;
                     if ( dc_yh >= rdraw_viewheight )   dc_yh = rdraw_viewheight - 1;
+#endif
 
                     dc_texturemid = rw_toptexturemid;
                     dc_source = R_GetColumn(toptexture,texturecolumn);
@@ -1904,12 +2046,20 @@ void R_RenderSegLoop (void)
                     colfunc ();
 #endif
                   } // if mid >= 0
+#ifdef CLIP_IN_BAND
+                    ceilingclip[rw_x] = mid + 1;  // next drawable row
+#else
                     ceilingclip[rw_x] = mid;
+#endif
                 }
                 else
                 {
                     // mid < yl
+#ifdef CLIP_IN_BAND
+                    ceilingclip[rw_x] = yl;  // undrawn
+#else		   
                     ceilingclip[rw_x] = yl-1;
+#endif
                 }
             }
             else
@@ -1917,34 +2067,55 @@ void R_RenderSegLoop (void)
                 // no top wall
                 if (markceiling)
                 {
+#ifdef CLIP_IN_BAND
+                    ceilingclip[rw_x] = yl;  // undrawn
+#else
                     ceilingclip[rw_x] = yl-1;
+#endif
                 }
             }
             
             if (bottomtexture)
             {
                 // bottom wall
-                mid = (pixlow+HEIGHTUNIT-1)>>HEIGHTBITS;
+                mid = HEIGHTFRAC_TO_INT( pixlow + HEIGHTUNIT - 1 );  // rounded up
                 pixlow += pixlowstep;
                 
                 // no space above wall?
+#ifdef CLIP_IN_BAND
+                if (mid < ceilingclip[rw_x])
+                    mid = ceilingclip[rw_x];
+#else
                 if (mid <= ceilingclip[rw_x])
                     mid = ceilingclip[rw_x]+1;
+#endif
 
                 if (mid <= yh)
                 {
-#ifdef INDIVIDUAL_X_CLIP
-                  if( mid < rdraw_viewheight && yh >= 0
-                      && ((unsigned) dc_x < rdraw_viewwidth) ) // not disabled
-#else
                   if( mid < rdraw_viewheight && yh >= 0 ) // not disabled
-#endif
                   {
                     dc_yl = mid;
                     dc_yh = yh;
+#ifdef CLIP_IN_BAND
+#ifdef RANGECHECK
+    // Temporary check code.
+    // Due to better clipping, this extra clip should no longer be needed.
+    if( dc_yl < 0 )
+    {
+        printf( "RenderSeg bottom dc_yl  %i < 0\n", dc_yl );
+        dc_yl = 0;
+    }
+    if ( dc_yh >= rdraw_viewheight )
+    {
+        printf( "RenderSeg bottom dc_yh  %i > rdraw_viewheight\n", dc_yh );
+        dc_yh = rdraw_viewheight - 1;
+    }
+#endif
+#else
                     //[WDJ] phobiata.wad has many views that need clipping
                     if ( dc_yl < 0 )   dc_yl = 0;
                     if ( dc_yh >= rdraw_viewheight )   dc_yh = rdraw_viewheight - 1;
+#endif
 
                     dc_texturemid = rw_bottomtexturemid;
                     dc_source = R_GetColumn(bottomtexture,
@@ -1957,11 +2128,19 @@ void R_RenderSegLoop (void)
                     colfunc ();
 #endif
                   } // if mid >= 0
+#ifdef CLIP_IN_BAND
+                    floorclip[rw_x] = mid - 1;  // next drawable row
+#else
                     floorclip[rw_x] = mid;
+#endif
                 }
                 else
                 {
+#ifdef CLIP_IN_BAND
+                    floorclip[rw_x] = yh;  // undrawn row
+#else
                     floorclip[rw_x] = yh+1;
+#endif
                 }
 
             }
@@ -1970,7 +2149,11 @@ void R_RenderSegLoop (void)
                 // no bottom wall
                 if (markfloor)
                 {
+#ifdef CLIP_IN_BAND
+                    floorclip[rw_x] = yh;  // undrawn row
+#else
                     floorclip[rw_x] = yh+1;
+#endif
                 }
             }
         }
@@ -2010,9 +2193,17 @@ void R_RenderSegLoop (void)
         {
           if (ffplane[i].valid_mark)
           {
-            int y_w = ffplane[i].back_frac >> HEIGHTBITS;
+            int y_w = HEIGHTFRAC_TO_INT( ffplane[i].back_frac );
 
-            ffplane[i].front_clip[rw_x] = ffplane[i].con_clip[rw_x] = y_w;
+#ifdef CLIP_IN_BAND
+            // [WDJ] Would think this should just be (y_w - 1),
+            // but adding 1 prevents little black lines between joined sector plane draws.
+//            ffplane[i].front_clip_bot[rw_x] = y_w - 1;  // get little black lines
+            ffplane[i].front_clip_bot[rw_x] = y_w;
+            ffplane[i].plane_clip_top[rw_x] = y_w + 1;
+#else
+            ffplane[i].front_clip_bot[rw_x] = ffplane[i].plane_clip_top[rw_x] = y_w;
+#endif
             ffplane[i].back_frac += ffplane[i].back_step;
           }
 
@@ -2175,10 +2366,10 @@ void R_StoreWallRange( int   start, int   stop)
         }
         rw_midtexturemid += sidedef->rowoffset;
 
-        // drawseg does not clip sprites
+        // drawseg blocks sprites
         ds_p->silhouette = SIL_TOP|SIL_BOTTOM; // BOTH
-        ds_p->spr_topclip = screenheightarray;
-        ds_p->spr_bottomclip = negonearray;
+        ds_p->spr_topclip = clip_screen_bot_max;  // clip all
+        ds_p->spr_bottomclip = clip_screen_top_min; // clip all
         ds_p->sil_bottom_height = FIXED_MAX;
         ds_p->sil_top_height = FIXED_MIN;
     }
@@ -2199,7 +2390,7 @@ void R_StoreWallRange( int   start, int   stop)
             // backsector floor not visible, clip sprites
             ds_p->silhouette = SIL_BOTTOM;
             ds_p->sil_bottom_height = FIXED_MAX;
-            // ds_p->spr_bottomclip = negonearray;
+            // ds_p->spr_bottomclip = clip_screen_top_min;  // clip all
         }
         
         if (frontsector->ceilingheight < backsector->ceilingheight)
@@ -2213,7 +2404,7 @@ void R_StoreWallRange( int   start, int   stop)
             // backsector ceiling not visible, clip sprites
             ds_p->silhouette |= SIL_TOP;
             ds_p->sil_top_height = FIXED_MIN;
-            // ds_p->spr_topclip = screenheightarray;
+            // ds_p->spr_topclip = clip_screen_bot_max;  // clip all
         }
         
 
@@ -2222,7 +2413,7 @@ void R_StoreWallRange( int   start, int   stop)
         if (backsector->ceilingheight <= frontsector->floorheight)
         {
             // backsector below frontsector
-            ds_p->spr_bottomclip = negonearray;
+            ds_p->spr_bottomclip = clip_screen_top_min;  // clip all
             ds_p->sil_bottom_height = FIXED_MAX;
             ds_p->silhouette |= SIL_BOTTOM;
         }
@@ -2230,7 +2421,7 @@ void R_StoreWallRange( int   start, int   stop)
         if (backsector->floorheight >= frontsector->ceilingheight)
         {
             // backsector above frontsector
-            ds_p->spr_topclip = screenheightarray;
+            ds_p->spr_topclip = clip_screen_bot_max;  // clip all
             ds_p->sil_top_height = FIXED_MIN;
             ds_p->silhouette |= SIL_TOP;
         }
@@ -2241,13 +2432,15 @@ void R_StoreWallRange( int   start, int   stop)
         // Without the following code, sprites get displayed behind closed doors.
         if (doorclosed || backsector->ceilingheight<=frontsector->floorheight)
         {
-            ds_p->spr_bottomclip = negonearray;
+            // backsector below frontsector
+            ds_p->spr_bottomclip = clip_screen_top_min;  // clip all
             ds_p->sil_bottom_height = FIXED_MAX;
             ds_p->silhouette |= SIL_BOTTOM;
         }
         if (doorclosed || backsector->floorheight>=frontsector->ceilingheight)
         {                   // killough 1/17/98, 2/8/98
-            ds_p->spr_topclip = screenheightarray;
+            // backsector above frontsector
+            ds_p->spr_topclip = clip_screen_bot_max;  // clip all
             ds_p->sil_top_height = FIXED_MIN;
             ds_p->silhouette |= SIL_TOP;
         }
@@ -2611,14 +2804,14 @@ void R_StoreWallRange( int   start, int   stop)
     }
 
     // calculate incremental stepping values for texture edges
-    worldtop >>= 4;
-    worldbottom >>= 4;
+    worldtop = FIXED_TO_HEIGHTFRAC(worldtop);
+    worldbottom = FIXED_TO_HEIGHTFRAC(worldbottom);
     
     topstep = -FixedMul (rw_scalestep, worldtop);
-    topfrac = (centeryfrac>>4) - FixedMul (worldtop, rw_scale);
+    topfrac = FIXED_TO_HEIGHTFRAC(centeryfrac) - FixedMul (worldtop, rw_scale);
 
     bottomstep = -FixedMul (rw_scalestep,worldbottom);
-    bottomfrac = (centeryfrac>>4) - FixedMul (worldbottom, rw_scale);        
+    bottomfrac = FIXED_TO_HEIGHTFRAC(centeryfrac) - FixedMul (worldbottom, rw_scale);        
 
     // [WDJ] Intercept overflow in FixedMul math
     if( bottomfrac < topfrac )
@@ -2653,8 +2846,8 @@ void R_StoreWallRange( int   start, int   stop)
             if(i+1 < dc_numlights && frontsector->lightlist[i+1].height > frontsector->ceilingheight)
               continue;
         }
-        rlight->height = (centeryfrac>>4) - FixedMul((ff_light->height - viewz) >> 4, rw_scale);
-        rlight->heightstep = -FixedMul (rw_scalestep, (ff_light->height - viewz) >> 4);
+        rlight->height = FIXED_TO_HEIGHTFRAC(centeryfrac) - FixedMul( FIXED_TO_HEIGHTFRAC(ff_light->height - viewz), rw_scale );
+        rlight->heightstep = - FixedMul (rw_scalestep, FIXED_TO_HEIGHTFRAC(ff_light->height - viewz) );
         rlight->flags = ff_light->flags;
         if(ff_light->caster && ff_light->caster->flags & FF_SOLID)
         {
@@ -2665,8 +2858,8 @@ void R_StoreWallRange( int   start, int   stop)
              : *ff_light->caster->bottomheight;
 #endif
           // in screen coord.
-          rlight->botheight = (centeryfrac >> 4) - FixedMul((*ff_light->caster->bottomheight - viewz) >> 4, rw_scale);
-          rlight->botheightstep = -FixedMul (rw_scalestep, (*ff_light->caster->bottomheight - viewz) >> 4);
+          rlight->botheight = FIXED_TO_HEIGHTFRAC(centeryfrac) - FixedMul( FIXED_TO_HEIGHTFRAC(*ff_light->caster->bottomheight - viewz), rw_scale);
+          rlight->botheightstep = - FixedMul (rw_scalestep, FIXED_TO_HEIGHTFRAC(*ff_light->caster->bottomheight - viewz) );
         }
 
 #if 1
@@ -2695,26 +2888,26 @@ void R_StoreWallRange( int   start, int   stop)
     {
       for(i = 0; i < numffplane; i++)
       {
-        ffplane[i].front_pos >>= 4;
+        ffplane[i].front_pos = FIXED_TO_HEIGHTFRAC( ffplane[i].front_pos );
         ffplane[i].front_step = FixedMul(-rw_scalestep, ffplane[i].front_pos);
-        ffplane[i].front_frac = (centeryfrac>>4) - FixedMul(ffplane[i].front_pos, rw_scale);
+        ffplane[i].front_frac = FIXED_TO_HEIGHTFRAC(centeryfrac) - FixedMul(ffplane[i].front_pos, rw_scale);
       }
     }
 
     if (backsector)
     {
-        worldbacktop >>= 4;
-        worldbackbottom >>= 4;
+        worldbacktop = FIXED_TO_HEIGHTFRAC( worldbacktop );
+        worldbackbottom = FIXED_TO_HEIGHTFRAC( worldbackbottom );
         
         if (worldbacktop < worldtop)
         {
-            pixhigh = (centeryfrac>>4) - FixedMul (worldbacktop, rw_scale);
+            pixhigh = FIXED_TO_HEIGHTFRAC(centeryfrac) - FixedMul (worldbacktop, rw_scale);
             pixhighstep = -FixedMul (rw_scalestep,worldbacktop);
         }
         
         if (worldbackbottom > worldbottom)
         {
-            pixlow = (centeryfrac>>4) - FixedMul (worldbackbottom, rw_scale);
+            pixlow = FIXED_TO_HEIGHTFRAC(centeryfrac) - FixedMul (worldbackbottom, rw_scale);
             pixlowstep = -FixedMul (rw_scalestep,worldbackbottom);
         }
 
@@ -2735,9 +2928,9 @@ void R_StoreWallRange( int   start, int   stop)
                        || (viewz > *bff->bottomheight && (bff->flags & FF_INNER_PLANES))))
                 {
                   ffplane[i].valid_mark = true;
-                  ffplane[i].back_pos = (*bff->bottomheight - viewz) >> 4;
+                  ffplane[i].back_pos = FIXED_TO_HEIGHTFRAC(*bff->bottomheight - viewz);
                   ffplane[i].back_step = FixedMul(-rw_scalestep, ffplane[i].back_pos);
-                  ffplane[i].back_frac = (centeryfrac >> 4) - FixedMul(ffplane[i].back_pos, rw_scale);
+                  ffplane[i].back_frac = FIXED_TO_HEIGHTFRAC(centeryfrac) - FixedMul(ffplane[i].back_pos, rw_scale);
                   i++;
                   if(i >= MAXFFLOORS)
                       break;
@@ -2748,9 +2941,9 @@ void R_StoreWallRange( int   start, int   stop)
                        || (viewz < *bff->topheight && (bff->flags & FF_INNER_PLANES))))
                 {
                   ffplane[i].valid_mark = true;
-                  ffplane[i].back_pos = (*bff->topheight - viewz) >> 4;
+                  ffplane[i].back_pos = FIXED_TO_HEIGHTFRAC(*bff->topheight - viewz);
                   ffplane[i].back_step = FixedMul(-rw_scalestep, ffplane[i].back_pos);
-                  ffplane[i].back_frac = (centeryfrac >> 4) - FixedMul(ffplane[i].back_pos, rw_scale);
+                  ffplane[i].back_frac = FIXED_TO_HEIGHTFRAC(centeryfrac) - FixedMul(ffplane[i].back_pos, rw_scale);
                   i++;
                   if(i >= MAXFFLOORS)
                       break;
@@ -2772,9 +2965,9 @@ void R_StoreWallRange( int   start, int   stop)
                        || (viewz > *fff->bottomheight && (fff->flags & FF_INNER_PLANES))))
                 {
                   ffplane[i].valid_mark = true;
-                  ffplane[i].back_pos = (*fff->bottomheight - viewz) >> 4;
+                  ffplane[i].back_pos = FIXED_TO_HEIGHTFRAC(*fff->bottomheight - viewz);
                   ffplane[i].back_step = FixedMul(-rw_scalestep, ffplane[i].back_pos);
-                  ffplane[i].back_frac = (centeryfrac >> 4) - FixedMul(ffplane[i].back_pos, rw_scale);
+                  ffplane[i].back_frac = FIXED_TO_HEIGHTFRAC(centeryfrac) - FixedMul(ffplane[i].back_pos, rw_scale);
                   i++;
                   if(i >= MAXFFLOORS)
                       break;
@@ -2785,9 +2978,9 @@ void R_StoreWallRange( int   start, int   stop)
                        || (viewz < *fff->topheight && (fff->flags & FF_INNER_PLANES))))
                 {
                   ffplane[i].valid_mark = true;
-                  ffplane[i].back_pos = (*fff->topheight - viewz) >> 4;
+                  ffplane[i].back_pos = FIXED_TO_HEIGHTFRAC(*fff->topheight - viewz);
                   ffplane[i].back_step = FixedMul(-rw_scalestep, ffplane[i].back_pos);
-                  ffplane[i].back_frac = (centeryfrac >> 4) - FixedMul(ffplane[i].back_pos, rw_scale);
+                  ffplane[i].back_frac = FIXED_TO_HEIGHTFRAC(centeryfrac) - FixedMul(ffplane[i].back_pos, rw_scale);
                   i++;
                   if(i >= MAXFFLOORS)
                       break;
@@ -2869,7 +3062,7 @@ void R_StoreWallRange( int   start, int   stop)
     if ( ((ds_p->silhouette & SIL_TOP) || maskedtexture)
         && !ds_p->spr_topclip)
     {
-        memcpy (lastopening, &ceilingclip[start], 2*(rw_stopx-start));
+        memcpy (lastopening, &ceilingclip[start], (rw_stopx - start) * sizeof(short));
         ds_p->spr_topclip = lastopening - start;
         lastopening += rw_stopx - start;
     }
@@ -2877,7 +3070,7 @@ void R_StoreWallRange( int   start, int   stop)
     if ( ((ds_p->silhouette & SIL_BOTTOM) || maskedtexture)
         && !ds_p->spr_bottomclip)
     {
-        memcpy (lastopening, &floorclip[start], 2*(rw_stopx-start));
+        memcpy (lastopening, &floorclip[start], (rw_stopx - start) * sizeof(short));
         ds_p->spr_bottomclip = lastopening - start;
         lastopening += rw_stopx - start;
     }

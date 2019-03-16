@@ -64,6 +64,7 @@
   // consvar_t
 #include "d_player.h"
   
+#define CLIP_IN_BAND
 
 // MAXVISSPRITES was 128, then 256 (2-2-98)
 #define MAXVISSPRITES   16000
@@ -72,8 +73,8 @@ extern consvar_t  cv_spritelim;
 
 // Constant arrays used for psprite clipping
 //  and initializing clipping.
-extern short            negonearray[MAXVIDWIDTH];
-extern short            screenheightarray[MAXVIDWIDTH];
+extern short            clip_screen_top_min[MAXVIDWIDTH];
+extern short            clip_screen_bot_max[MAXVIDWIDTH];
 
 // vars for R_DrawMaskedColumn
 // clipping array[x], in int screen coord.

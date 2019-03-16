@@ -976,7 +976,11 @@ void R_ExecuteSetViewSize (void)
 
     // thing clipping
     for (i=0 ; i<rdraw_viewwidth ; i++)
-        screenheightarray[i] = rdraw_viewheight;
+#ifdef CLIP_IN_BAND
+        clip_screen_bot_max[i] = rdraw_viewheight - 1;
+#else
+        clip_screen_bot_max[i] = rdraw_viewheight;
+#endif
 
     // setup sky scaling for old/new skies (uses pspriteyscale)
     R_SetSkyScale ();

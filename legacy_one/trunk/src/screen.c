@@ -516,7 +516,7 @@ void SCR_Recalc (void)
         //              -> allocated at the maximum vidsize, static.
 
     // r_main : x_to_viewangle, allocated at the maximum size.
-    // r_things : negonearray, screenheightarray allocated max. size.
+    // r_things : clip_screen_top_min, clip_screen_bot_max allocated max. size.
 
     // scr_viewsize doesn't change, neither detailLevel, but the pixels
     // per screenblock is different now, since we've changed resolution.
