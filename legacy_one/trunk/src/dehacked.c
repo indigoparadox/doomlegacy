@@ -708,6 +708,10 @@ statenum_t  deh_frame_to_state( int deh_frame )
        return S_MUSHROOM;
   }
 
+  // Necessary for DEH that add new states, like chex newmaps.wad.
+  if( deh_frame >= 0 && deh_frame < NUMSTATES )
+       return  deh_frame;  // emulate old behavior, without translation
+
 null_frame:
   return S_NULL;
 }
