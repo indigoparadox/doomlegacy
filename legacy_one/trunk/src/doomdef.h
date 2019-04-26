@@ -115,6 +115,11 @@
 # define ENABLE_DRAW32
 #endif
 
+#define ENABLE_DRAW_ALPHA
+
+// Used for palette draw fade operations
+#define ENABLE_DRAW8_USING_12
+
 // [WDJ] 6/5/2012 Boom global colormap
 // Boom global colormap is selectable, now a standard feature, 12/15/2015.
 
@@ -147,6 +152,15 @@
 
 // If surround sound is desired
 #define SURROUND_SOUND
+
+// Coronas in dynlights
+#define DYLT_CORONAS
+// Coronas drawn with sprite draw
+#define SPDR_CORONAS
+
+#if ( defined(DYLT_CORONAS) && defined(SPDR_CORONAS) )
+#define CORONA_CHOICE
+#endif
 
 
 // Player morph canceling invisibility and MF_SHADOW, is inconsistent.

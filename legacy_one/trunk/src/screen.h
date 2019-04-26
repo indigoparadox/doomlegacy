@@ -216,6 +216,7 @@ typedef union {
 // hicolor masks  15 bit / 16 bit
 extern uint16_t mask_01111, mask_01110, mask_11110, mask_11100, mask_11000;
 extern uint16_t mask_r, mask_g, mask_b, mask_rb;
+extern byte     shift_r, shift_g, shift_b;
 
 // ---------------------------------------------
 // color mode dependent drawer function pointers
@@ -233,6 +234,9 @@ extern void     (*transcolfunc) (void);  // translucent
 extern void     (*skintranscolfunc) (void); // SSNTails 11-11-2002
 extern void     (*shadecolfunc) (void);
 extern void     (*fogcolfunc) (void);
+#ifdef ENABLE_DRAW_ALPHA
+extern void     (*alpha_colfunc) (void);
+#endif
 extern void     (*spanfunc) (void);
 extern void     (*basespanfunc) (void);
 extern void     (*fogspanfunc) (void);

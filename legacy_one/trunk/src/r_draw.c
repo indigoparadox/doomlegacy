@@ -120,6 +120,10 @@ int             hcolumnofs[MAXVIDHEIGHT];
 #endif
 
 byte            dr_alpha;  // translucent and fog alpha, 0..255
+#ifdef ENABLE_DRAW_ALPHA
+byte            dr_color8;
+RGBA_t          dr_color;  // draw alpha
+#endif
 
 // =========================================================================
 //                      COLUMN DRAWING CODE STUFF

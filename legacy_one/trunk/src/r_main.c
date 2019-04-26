@@ -1061,6 +1061,7 @@ void R_Init (void)
     if(devparm)
         GenPrintf(EMSG_dev, "\nR_Load_Data");
     R_Load_Data ();
+    R_Load_Corona();
 
     if(devparm)
         GenPrintf(EMSG_dev, "\nR_Init_PointToAngle");

@@ -841,7 +841,12 @@ void V_SetPalette(int palettenum)
             R_Init_color8_translate(&pLocalPalette[palettenum * 256]);  // palette change
         else
 #endif
+        {
+#ifdef ENABLE_DRAW8_USING_12
+            R_Init_color12_translate( &pLocalPalette[palettenum * 256] );
+#endif
             I_SetPalette(&pLocalPalette[palettenum * 256]);
+        }
     }
 }
 
@@ -862,7 +867,12 @@ void V_SetPaletteLump(const char *pal)
             R_Init_color8_translate(pLocalPalette);  // palette change
         else
 #endif
+        {
+#ifdef ENABLE_DRAW8_USING_12
+            R_Init_color12_translate( pLocalPalette );
+#endif
             I_SetPalette(pLocalPalette);
+        }
     }
 }
 

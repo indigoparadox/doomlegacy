@@ -64,14 +64,6 @@
 #include "hw_drv.h"
 #include "hw_defs.h"
 
-// Coronas in dynlights
-#define DYLT_CORONAS
-// Coronas drawn with sprite draw
-#define SPDR_CORONAS
-
-#if ( defined(DYLT_CORONAS) && defined(SPDR_CORONAS) )
-#define CORONA_CHOICE
-#endif
 
 #ifdef DYLT_CORONAS
 void HWR_DL_Draw_Coronas( void );
@@ -93,47 +85,9 @@ void HWR_Set_Lights(int viewnumber);
 
 typedef struct {
     int        nb;  // number of dynamic lights
-    light_t    *p_lspr[DL_MAX_LIGHT];
+    spr_light_t * p_lspr[DL_MAX_LIGHT];
     v3d_t      position[DL_MAX_LIGHT]; // actually maximum DL_MAX_LIGHT lights
     mobj_t     *mo[DL_MAX_LIGHT];
 } dynlights_t;
-
-// Defined constants for Fragglescript.
-typedef enum {
-    NOLIGHT = 0,
-    PLASMA_L,
-    PLASMAEXP_L,
-    ROCKET_L,
-    ROCKETEXP_L,
-    BFG_L,
-    BFGEXP_L,
-    BLUETALL_L,
-    GREENTALL_L,
-    REDTALL_L,
-    BLUESMALL_L,
-    GREENSMALL_L,
-    REDSMALL_L,
-    TECHLAMP_L,
-    TECHLAMP2_L,
-    COLUMN_L,
-    CANDLE_L,
-    CANDLEABRE_L,
-    REDBALL_L,
-    GREENBALL_L,
-    ROCKET2_L,
-    FX03_L,
-    FX17_L,
-    FX00_L,
-    FX08_L,
-    FX04_L,
-    FX02_L,
-    WTRH_L,
-    SRTC_L,
-    CHDL_L,
-    KFR1_L,
-    NUMLIGHTS
-} lightspritenum_t;
-
-extern light_t lspr[NUMLIGHTS];
 
 #endif

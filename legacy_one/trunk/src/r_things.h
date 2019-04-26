@@ -63,7 +63,7 @@
 #include "command.h"
   // consvar_t
 #include "d_player.h"
-  
+
 #define CLIP_IN_BAND
 #define CLIP2_LIMIT
 
@@ -120,6 +120,10 @@ void R_DrawMasked (void);
 void R_ClipVisSprite ( vissprite_t* vis, int xl, int xh );
 
 void R_DrawPlayerSprites (void);
+
+void R_Load_Corona( void );
+void R_Release_Corona( void );
+
 
 
 // -----------
