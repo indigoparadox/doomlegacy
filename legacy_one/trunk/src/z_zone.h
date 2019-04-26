@@ -138,7 +138,7 @@ void*   Z_MallocAlign(int reqsize, memtag_e tag, void **user, int alignbits);
 #define Z_Malloc(s,t,p) Z_MallocAlign(s,t,p,0)
 #endif
 
-char *Z_Strdup(const char *s, memtag_e tag, void **user);
+char * Z_Strdup(const char *s, memtag_e tag, void **user);
 
 // return size of data of this block.
 int Z_Datasize( void* ptr );

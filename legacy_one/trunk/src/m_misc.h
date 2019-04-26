@@ -40,9 +40,6 @@
   // MAX_WADPATH
 #include "doomtype.h"
 
-// the file where all game vars and settings are saved
-#define CONFIGFILENAME   "config.cfg"
-
 
 //
 // MISC
@@ -96,15 +93,18 @@ void M_ScreenShot (void);
 
 //===========================================================================
 
-extern char   configfile[MAX_WADPATH];
+extern char * configfile_main;
+extern char * configfile_drawmode;
 
 void Command_SaveConfig_f (void);
 void Command_LoadConfig_f (void);
 void Command_ChangeConfig_f (void);
 
-void M_FirstLoadConfig(void);
-//Fab:26-04-98: save game config : cvars, aliases..
-void M_SaveConfig (const char *filename);
+void M_Set_configfile_main( const char * filename );
+void M_Set_configfile_drawmode( byte drawmode );
+void M_LoadConfig( byte cs_config, const char * cfgfile );
+void M_SaveConfig( byte cs_config, const char * cfgfile );
+void M_SaveAllConfig( void );
 
 //===========================================================================
 

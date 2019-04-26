@@ -276,7 +276,7 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1421"
+#define SVN_REV "1432"
 #endif
 
 
@@ -907,6 +907,7 @@ void D_DoomLoop(void)
     // make sure to do a d_display to init mode _before_ load a level
     if( setmodeneeded.modetype || drawmode_recalc )
     {
+        // This may also execute accumulated commands.
         SCR_SetMode();      // change video mode
         SCR_Recalc();
         drawmode_recalc = 0;
@@ -920,6 +921,9 @@ void D_DoomLoop(void)
     D_Clear_Events();  // clear input events to prevent startup jerks,
                          // motion during screen wipe still gets through
 
+    // Execute accumulated commands.
+    COM_BufExecute( CFG_none );
+   
     while (1)
     {
         // get real tics
@@ -1675,7 +1679,7 @@ void IdentifyVersion()
         {
             devparm = true;
 #if 0
-            strcpy(configfile, DEVDATA CONFIGFILENAME); // moved
+            M_Set_configfile_main( DEVDATA CONFIGFILENAME );
             // [WDJ] Old, irrelevant, and it was interfering with new
             // GDESC changes.
             // Better to just use -file so I am disabling it.
@@ -1740,7 +1744,7 @@ void IdentifyVersion()
 
 #ifdef LAUNCHER
         CV_Set( & cv_iwad, pathiwad );  // for launcher
-        cv_iwad.flags &= ~CV_MODIFIED;
+        cv_iwad.state &= ~CS_MODIFIED;
 #endif
 
         if ( access(pathiwad, R_OK) < 0 )
@@ -1983,6 +1987,7 @@ void D_DoomMain()
     int p, wdi;
     char fbuf[FILENAME_SIZE];
     char dirbuf[_MAX_PATH ];
+    char cfgbuf[_MAX_PATH ];
 
     int startepisode;
     int startmap;
@@ -2165,7 +2170,7 @@ void D_DoomMain()
     CV_RegisterVar(&cv_doomwaddir);
     CV_RegisterVar(&cv_iwad);
     CV_Set( &cv_doomwaddir, doomwaddir[0] ? doomwaddir[0] : "" );
-    cv_doomwaddir.flags &= ~CV_MODIFIED;
+    cv_doomwaddir.state &= ~CS_MODIFIED;
 #endif
 
     //Fab:29-04-98: do some dirty chatmacros strings initialisation
@@ -2285,14 +2290,15 @@ restart_command:
         {
             // Save the input userhome for the Launcher, unless it came from -home.
             CV_Set( &cv_home, userhome );
-            cv_home.flags &= ~CV_MODIFIED;
+            cv_home.state &= ~CS_MODIFIED;
         }
 #endif
 
 #if defined(__APPLE__) && defined(__MACH__) && defined( EXT_MAC_DIR_SPEC )
         //[segabor] ... ([WDJ] MAC port has vars handy)
 //        sprintf(configfile, "%s/DooMLegacy.cfg", mac_user_home);
-        cat_filename( configfile, mac_user_home, "DooMLegacy.cfg" );
+        cat_filename( cfgbuf, mac_user_home, "DooMLegacy.cfg" );
+        M_Set_configfile_main( cfgbuf );
         sprintf(savegamename, "%s/Saved games/Game %%d.doomSaveGame", mac_user_home);
         if ( ! userhome)
             userhome = mac_user_home;
@@ -2358,14 +2364,7 @@ restart_command:
         {
             const char * cfgstr;
             // user specific config file
-            // little hack to allow a different config file for opengl
-            // may be a problem if opengl cannot really be started
-            if (M_CheckParm("-opengl"))
-            {
-                // example: /home/user/.legacy/glconfig.cfg
-                cfgstr = "gl" CONFIGFILENAME;
-            }
-            else if( devparm )
+            if( devparm )
             {
                 // example: /home/user/.legacy/devdataconfig.cfg
                 cfgstr = DEVDATA CONFIGFILENAME;
@@ -2375,7 +2374,8 @@ restart_command:
                 // example: /home/user/.legacy/config.cfg
                 cfgstr = CONFIGFILENAME;
             }
-            cat_filename( configfile, legacyhome, cfgstr );
+            cat_filename( cfgbuf, legacyhome, cfgstr );
+            M_Set_configfile_main( cfgbuf );
         }
 
 #ifdef SAVEGAMEDIR
@@ -2418,7 +2418,7 @@ restart_command:
 
     if( verbose )
     {
-        GenPrintf(EMSG_ver, "Config: %s\n", configfile );
+        GenPrintf(EMSG_ver, "Config: %s\n", configfile_main );
         GenPrintf(EMSG_ver, "Savegames: %s\n", savegamename );
     }
 
@@ -2640,7 +2640,19 @@ restart_command:
     // The drawmode and video settings are now part of the config.
     // It needs to be loaded before the full graphics.
    
-    M_FirstLoadConfig();        // WARNING : this do a "COM_BufExecute()"
+    // check for an alternative config file
+    p = M_CheckParm ("-config");
+    if (p && p<myargc-1)
+    {
+        // substitute config file
+        strncpy (cfgbuf, myargv[p+1], MAX_WADPATH-1);
+        cfgbuf[MAX_WADPATH-1] = '\0';
+        M_Set_configfile_main( cfgbuf );
+        CONS_Printf ("config file: %s\n", configfile_main);
+    }
+    // This config will load the config drawmode setting.
+    M_LoadConfig( CFG_main, configfile_main );        // WARNING : this do a "COM_BufExecute()"
+
 
     //---------------------------------------------------- READY SCREEN
     // we need to check for dedicated before initialization of some subsystems
@@ -2716,10 +2728,18 @@ restart_command:
         }
 #endif
 #endif
+
+        // Load the config file for this drawmode.       
+        // example: /home/user/.legacy/config32.cfg
+        M_Set_configfile_drawmode( set_drawmode );
+        // Conditional on name defined and file existing.
+        // This cannot change the drawmode, but can load screen sizes.
+        M_LoadConfig( CFG_drawmode, configfile_drawmode );        // WARNING : this do a "COM_BufExecute()"
+
         //--------------------------------------------------------- CONSOLE
         // setup loading screen
         CONS_Printf("RequestFullGraphics...\n");
-        V_switch_drawmode( set_drawmode );
+        V_switch_drawmode( set_drawmode, 0 );  // command line, do not change config files
         I_Rendermode_setup();  // need HWR_SetPalette
 #ifdef DEBUG_WINDOWED
         I_RequestFullGraphics( false );
@@ -2747,6 +2767,20 @@ restart_command:
         CON_Init_Video();  // dependent upon vid, hu_font
         EOUT_flags = EOUT_log | EOUT_con;
     }
+
+#if 0   
+    p = M_CheckParm ("-cfgmod");
+    if (p && p<myargc-1)
+    {
+        // Add mod config file
+        strncpy (cfgbuf, myargv[p+1], MAX_WADPATH-1);
+        cfgbuf[MAX_WADPATH-1] = '\0';
+        // not saveable, so do not need to save name
+        CONS_Printf ("add config file: %s\n", cfgbuf);
+        // This cannot change the drawmode.
+        M_LoadConfig( CFG_other, cfgbuf );        // WARNING : this do a "COM_BufExecute()"
+    }
+#endif
 
     // get skill / episode / map from parms
     gameskill = sk_medium;
@@ -3029,6 +3063,7 @@ restart_command:
 
     }
     Clear_SoftError();
+    // This leaves commands for the first COM_BufExecute in D_DoomLoop to execute.
 }
 
 
@@ -3123,7 +3158,9 @@ void D_Quit_Save ( quit_severity_e severity )
     {
         quitseq = 8;
         if( severity == QUIT_normal )
-            M_SaveConfig (NULL);
+        {
+            M_SaveAllConfig();
+        }
     }
     if( quitseq < 10 )
     {

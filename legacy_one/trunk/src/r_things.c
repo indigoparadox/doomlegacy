@@ -1143,7 +1143,7 @@ void R_DrawMaskedColumn (column_t* column)
     if ( dc_yh >= rdraw_viewheight )
     {
         printf( "DrawMasked dc_yh  %i > rdraw_viewheight\n", dc_yh );
-	dc_yh = rdraw_viewheight - 1;
+        dc_yh = rdraw_viewheight - 1;
     }
 #endif
 #endif

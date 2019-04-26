@@ -99,7 +99,7 @@ extern byte drawmode_sel_avail[];
 extern const char * rendermode_name[];
 
 //  drawmode : drawmode_sel_t
-byte  V_switch_drawmode( byte drawmode );
+byte  V_switch_drawmode( byte drawmode, byte change_config );
 
 // Early setup of video controls, register cv_ vars
 void V_Init_VideoControl( void );

@@ -175,7 +175,7 @@ void SCR_SetMode (void)
     if( drawmode_recalc )
     {
         // Switch the drawmode, this may change the rendermode.
-        ret_value = V_switch_drawmode( set_drawmode );
+        ret_value = V_switch_drawmode( set_drawmode, 1 );
         if( setmodeneeded.modetype == MODE_NOP )
 	{
             if( ! ret_value )  goto done;

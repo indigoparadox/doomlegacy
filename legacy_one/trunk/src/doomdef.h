@@ -135,6 +135,10 @@
 #define LAUNCHER
 #endif
 
+// [WDJ] Multiple config file, main and drawmode, with cvar tracking.
+// This enables editing them in the menus.
+#define CONFIG_MENU_PAGE
+
 // [WDJ] 7/6/2017  MBF DOGS
 #define DOGS
 
@@ -150,6 +154,10 @@
 // #define PLAYER_CHICKEN_KEEPS_SHADOW
 
 // =========================================================================
+
+// File where all game vars and settings are saved
+#define CONFIGFILENAME  "config.cfg"
+#define DRAWMODE_CONFIGFILENAME  "config%s.cfg"
 
 // Name of local directory for config files and savegames
 #ifdef LINUX

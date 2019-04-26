@@ -125,6 +125,8 @@
   // gamemode
 #include "p_setup.h"
   // P_flatsize_to_index
+#include "m_misc.h"
+  // drawmode, configfile functions
 
 
 #ifdef HWRENDER
@@ -204,7 +206,7 @@ CV_PossibleValue_t drawmode_sel_t[] = {
 #endif
 #endif
    {0,NULL} };
-consvar_t cv_drawmode = { "drawmode", "Software 8bit", CV_SAVE | CV_CALL, drawmode_sel_t, Setmode_OnChange  };
+consvar_t cv_drawmode = { "drawmode", "Software 8bit", CV_SAVE | CV_CALL | CV_CFG1, drawmode_sel_t, Setmode_OnChange  };
 
 byte set_drawmode = 255;  // vid_drawmode_e
 const byte num_drawmode_sel = 8;
@@ -320,10 +322,10 @@ const char * rendermode_name[] = {
 
 
 // Set rendermode
-//  drawmode : drawmode_sel_t
+//  drawmode : vid_drawmode_e
 //  change_config : boolean
 // Called by D_DoomMain, SCR_SetMode
-byte  V_switch_drawmode( byte drawmode )
+byte  V_switch_drawmode( byte drawmode, byte change_config )
 {
     unsigned int old_drawmode = cv_drawmode.EV;
     unsigned int old_render = rendermode;
@@ -382,7 +384,7 @@ byte  V_switch_drawmode( byte drawmode )
         {
             // use the alt
             req_bitpp = req_alt_bitpp;
-	    req_alt_bitpp = 0;
+            req_alt_bitpp = 0;
         }
         else
             goto query_reject;
@@ -402,6 +404,27 @@ byte  V_switch_drawmode( byte drawmode )
 
     // Any HWR functions triggered by any OnChange functions
     // must have been setup in I_Rendermode_setup.
+
+    // Must not execute on first drawmode change.
+    if( change_config )
+    {
+        // Need to change the configfile_drawmode.
+        if( old_drawmode <= DRM_END )
+        {
+            M_SaveConfig( CFG_drawmode, configfile_drawmode );
+        }
+
+        // Remove the config values from the previous drawmode.
+        CV_Clear_Config( CFG_drawmode );
+
+        if( drawmode <= DRM_END )
+        {
+            // Change to the new drawmode config file.
+            M_Set_configfile_drawmode( drawmode );
+            // WARNING : this do a "COM_BufExecute()"
+            M_LoadConfig( CFG_drawmode, configfile_drawmode );
+        }
+    }
 
     if( drawmode <= DRM_END )
     {

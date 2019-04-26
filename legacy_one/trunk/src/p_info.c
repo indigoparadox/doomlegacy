@@ -636,7 +636,7 @@ void P_Load_LevelInfo( void )
           COM_BufAddText(va("gravity %f\n", ((double)gravity) / FRACUNIT));
   }
 
-  COM_BufExecute(); //Hurdler: flush the command buffer
+  COM_BufExecute( CFG_none ); //Hurdler: flush the command buffer
   return;
 }
 

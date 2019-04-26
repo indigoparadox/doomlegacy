@@ -3238,7 +3238,7 @@ void TryRunTics (tic_t realtics)
         realtics = 1;
 
     if( realtics > 0 )
-        COM_BufExecute();            
+        COM_BufExecute( CFG_none );
 
     NetUpdate();
 
