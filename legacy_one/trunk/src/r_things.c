@@ -1146,7 +1146,8 @@ void R_DrawMaskedColumn (column_t* column)
 	dc_yh = rdraw_viewheight - 1;
     }
 #endif
-#else
+#endif
+#ifdef CLIP2_LIMIT
             //[WDJ] phobiata.wad has many views that need clipping
             if ( dc_yl < 0 )   dc_yl = 0;
             if ( dc_yh >= rdraw_viewheight )   dc_yh = rdraw_viewheight - 1;
