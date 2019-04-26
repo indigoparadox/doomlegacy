@@ -189,7 +189,7 @@ int I_GIITranslateKey(const ggi_key_event* key, event_t * ev)
             rc = label;
           } else if (sym < 256) {
               /* ASCII key - we want those */
-	    ev->data2 = sym; // ASCII character
+            ev->data2 = sym; // ASCII character
             rc = sym;
               /* We want lowercase */
             if (rc >='A' && rc <='Z') rc -= ('A' - 'a');
@@ -393,6 +393,7 @@ void I_ShutdownGraphics(void)
 }
 
 #define MAX_GGIMODES 19
+#define MAX_LEN_VIDMODENAME  10
 
 const ggi_coord temp_res[MAX_GGIMODES]= {
         {320,200},
@@ -419,7 +420,7 @@ const ggi_coord temp_res[MAX_GGIMODES]= {
 int num_vidmodes;  // number of vidmodes
 ggi_mode vidmodes[MAX_GGIMODES+1];      // the ggi mode
 ggi_coord vidmode_res[MAX_GGIMODES+1];  // the actual resolution
-char vidname[MAX_GGIMODES+1][10];
+char vidname[MAX_GGIMODES+1][MAX_LEN_VIDMODENAME];
 
 // return number of fullscreen or window modes, for listing
 // modetype is of modetype_e
@@ -431,10 +432,35 @@ range_t  VID_ModeRange( byte modetype )
 }
 
 
+modestat_t  VID_GetMode_Stat( modenum_t modenum )
+{
+    modestat_t  ms;
+
+    if( mi > num_vidmodes )
+        goto fail;
+
+    ms.width = vidmode_res[mi].x;
+    ms.height = vidmode_res[mi].y;
+    ms.type = MODE_fullscreen;
+    ms.mark = "";
+    return ms;
+   
+ fail:
+    ms.type = MODE_NOP;
+    ms.width = ms.height = 0;
+    ms.mark = NULL;
+    return ms;
+}
+
 char * VID_GetModeName( modenum_t modenum )
 {
+    int mi = modenum.index - 1;
+
+    if( mi > num_vidmodes )
+        return NULL;
+
     // fullscreen modes  1..
-    return vidname[modenum.index-1];
+    return vidname[ mi ];
 }
 
 modenum_t  VID_GetModeForSize( int w, int h, byte modetype )
@@ -448,12 +474,12 @@ modenum_t  VID_GetModeForSize( int w, int h, byte modetype )
       // fullscreen modes
       // find exact match
       for (i=0; i<num_vidmodes;i++) {
-	  if(vidmode_res[i].x==w && vidmode_res[i].y==h )  goto found_i;
+          if(vidmode_res[i].x==w && vidmode_res[i].y==h )  goto found_i;
       }
 
       // find next larger
       for (i=0; i<num_vidmodes;i++) {
-	  if(vidmode_res[i].x>=w  &&  vidmode_res[i].y>=h )  goto found_i;
+          if(vidmode_res[i].x>=w  &&  vidmode_res[i].y>=h )  goto found_i;
       }
   }
   // not found
@@ -483,8 +509,9 @@ int VID_GetModes( byte select_bpp )
       int ry = temp_res[i];
       if(!ggiCheckSimpleMode(g_screen, rx,ry, 2, gt_parm, vmp))
       {
-	memcpy(&vidmode_res[num_vidmodes],&temp_res[i],sizeof(ggi_coord));
-        sprintf(vidname[num_vidmodes],"%dx%d",rx,ry);
+        memcpy(&vidmode_res[num_vidmodes],&temp_res[i],sizeof(ggi_coord));
+        snprintf(vidname[num_vidmodes], MAX_LEN_VIDMODENAME, "%dx%d",rx,ry);
+        vidname[num_vidmodes][MAX_LEN_VIDMODENAME-1] = 0;
         if( verbose )
             GenPrintf( EMSG_info,"mode %s\n",vidname[num_vidmodes]);
         num_vidmodes++;
@@ -498,7 +525,7 @@ int VID_GetModes( byte select_bpp )
           //    vmp->visible.x>=temp_res[i-1].x)) {
           if(vmp->visible.x==rx
              && vmp->visible.y==ry )
-	  {
+          {
             vidmode_res[num_vidmodes].x = vmp->visible.x;
             vidmode_res[num_vidmodes].y = vmp->visible.y;
             sprintf(vidname[num_vidmodes],"%dx%d",
@@ -598,12 +625,12 @@ void I_RequestFullGraphics( byte select_fullscreen )
    case DRM_native:
      if( V_CanDraw( native_bitpp )) {
          select_bitpp = native_bitpp;
-	 select_bytepp = native_bytepp;
+         select_bytepp = native_bytepp;
      }else{
-	 // Use 8 bit and do the palette lookup.
-	 if( verbose )
-	     GenPrintf( EMSG_ver,"Native %i bpp rejected\n", vid.bitpp );
-	 select_bitpp = 8;
+         // Use 8 bit and do the palette lookup.
+         if( verbose )
+             GenPrintf( EMSG_ver,"Native %i bpp rejected\n", vid.bitpp );
+         select_bitpp = 8;
          select_bytepp = 1;
      }
      break;

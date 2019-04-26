@@ -88,6 +88,12 @@ typedef struct {
     byte  index;
 } modenum_t;
 
+typedef struct {
+    int   width, height;
+    const char *  mark;  // const string, only NULL when invalid mode
+    byte  type;  // modetype_e, MODE_NOP when not found
+} modestat_t;
+
 
 extern boolean  allow_fullscreen;  // controlled by i_video
 extern boolean  mode_fullscreen;   // can window before going to cv_fullscreen
@@ -146,6 +152,7 @@ typedef struct {
 // modetype is of modetype_e
 range_t  VID_ModeRange( byte modetype );
 char  *  VID_GetModeName(modenum_t modenum);
+modestat_t  VID_GetMode_Stat(modenum_t modenum);
 
 // rmodetype is of modetype_e
 // Returns MODE_NOP when none found

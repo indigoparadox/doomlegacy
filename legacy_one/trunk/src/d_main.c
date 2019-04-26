@@ -2727,6 +2727,7 @@ restart_command:
         I_RequestFullGraphics( cv_fullscreen.EV );
 #endif
         // text only, incomplete for rendering
+        V_Setup_VideoDraw();
         SCR_Recalc();
         V_SetPalette (0);  // on new screen
         V_Clear_Display();

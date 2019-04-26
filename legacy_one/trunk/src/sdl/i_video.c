@@ -106,8 +106,10 @@ SDL_Surface * vidSurface = NULL;
 static  SDL_Color    localPalette[256];
 
 // Video mode list
+#define  MAX_NUM_VIDMODE      33
+#define  MAX_LEN_VIDMODENAME  16
 static  int   numVidModes= 0;
-static  char  vidModeName[33][32]; // allow 33 different modes
+static  char  vidModeName[MAX_NUM_VIDMODE][MAX_LEN_VIDMODENAME]; // allow 33 different modes
 // Fullscreen modelist
 // modelist is not our memory to manage, do not free
 static  SDL_Rect   **modelist = NULL;  // fullscreen video modes
@@ -408,32 +410,57 @@ range_t  VID_ModeRange( byte modetype )
     return mrange;
 }
 
-char * VID_GetModeName( modenum_t modenum )
+
+modestat_t  VID_GetMode_Stat( modenum_t modenum )
 {
+    modestat_t  ms;
+
     if( modenum.modetype == MODE_fullscreen )
     {
         // fullscreen modes  1..
         int mi = modenum.index - 1 + ml_first_entry;
         if(mi >= numVidModes)   goto fail;
 
-        sprintf(&vidModeName[modenum.index][0], "%dx%d",
-                modelist[mi]->w,
-                modelist[mi]->h);
+        ms.width = modelist[mi]->w;
+        ms.height = modelist[mi]->h;
+        ms.type = MODE_fullscreen;
+        ms.mark = "";
     }
     else
     {
         // windowed modes  1.., sometimes 0
         if(modenum.index > MAXWINMODES)   goto fail;
 
-        sprintf(&vidModeName[modenum.index][0], "win %dx%d",
-                windowedModes[modenum.index][0],
-                windowedModes[modenum.index][1]);
+        ms.width = windowedModes[modenum.index][0];
+        ms.height = windowedModes[modenum.index][1];
+        ms.type = MODE_window;
+        ms.mark = "win ";
     }
-    return &vidModeName[modenum.index][0];
+    return  ms;
 
 fail:
-    return NULL;
+    ms.type = MODE_NOP;
+    ms.width = ms.height = 0;
+    ms.mark = NULL;
+    return ms;
 }
+
+
+char * VID_GetModeName( modenum_t modenum )
+{
+    modestat_t  ms = VID_GetMode_Stat( modenum );
+    if( ! ms.mark )
+       return NULL;
+
+    if( modenum.index >= MAX_NUM_VIDMODE )
+       return NULL;
+
+    snprintf(&vidModeName[modenum.index][0], MAX_LEN_VIDMODENAME, "%s%dx%d",
+                ms.mark, ms.width, ms.height  );
+    vidModeName[modenum.index][MAX_LEN_VIDMODENAME-1] = 0;  // term string
+    return &vidModeName[modenum.index][0];
+}
+
 
 //   rmodetype : modetype_e
 // Returns MODE_NOP when none found
@@ -448,8 +475,8 @@ modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
 #if 0
         if( ! modelist )
         {
-	    if( ! VID_Query_Modelist( 1, modelist_bitpp ) )  goto done;
-	}
+            if( ! VID_Query_Modelist( 1, modelist_bitpp ) )  goto done;
+        }
 #endif
 
         if( numVidModes == 0 )  goto done;
@@ -815,7 +842,7 @@ int I_RequestFullGraphics( byte select_fullscreen )
        {
            // Use 8 bit and let SDL do the palette lookup.
            GenPrintf( EMSG_info,"Native %i bpp rejected\n", native_bitpp );
-	   goto draw_8pal;
+           goto draw_8pal;
        }
        select_bitpp = native_bitpp;
        select_bytepp = native_bytepp;
@@ -878,7 +905,7 @@ found_modes:
     if( modelist < 0 )
     {
          // SDL return value that indicates that all modes are valid.
-	 if( verbose )
+         if( verbose )
          {
             GenPrintf( EMSG_ver, "All modes are valid.\n" );
          }

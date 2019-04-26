@@ -65,7 +65,8 @@ rcsid[] = "$Id$";
 
 
 #define MAXWINMODES (8)
-static char vidModeName[MAXWINMODES][32];
+#define MAX_LEN_VIDMODENAME  16
+static char vidModeName[MAXWINMODES][MAX_LEN_VIDMODENAME];
 static int windowedModes[MAXWINMODES+1][2] = {
    // hidden from display
    {INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT},  // initial mode
@@ -206,10 +207,10 @@ void I_StartupGraphics(void)
     {
 #if 0
         if (!MGL_init("..\\..\\..\\", NULL))
-	        MGL_fatalError("MGL init failed");
+                MGL_fatalError("MGL init failed");
         MGL_enableAllDrivers();
-	    //if ((mglMode = MGL_findMode(SCREENWIDTH, SCREENHEIGHT, 8)) == -1)
-	    //  MGL_fatalError("Graphics mode not found");
+            //if ((mglMode = MGL_findMode(SCREENWIDTH, SCREENHEIGHT, 8)) == -1)
+            //  MGL_fatalError("Graphics mode not found");
 #endif
     } else {
         InitDIVE( pmData);
@@ -300,10 +301,10 @@ modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
         // find closest dist
         if( bestdist > tdist )
         {
-	    bestdist = tdist;
-	    best = i;
-	    if( tdist == 0 )  break;   // found exact match
-	}
+            bestdist = tdist;
+            best = i;
+            if( tdist == 0 )  break;   // found exact match
+        }
     }
     modenum.index = best;  // 1..
     modenum.modetype = rmodetype;
@@ -311,13 +312,36 @@ done:
     return modenum;
 }
 
+modestat_t  VID_GetMode_Stat( modenum_t modenum )
+{
+    modestat_t  ms;
+
+    // fullscreen and window modes  1..
+    if( modenum.index <= MAXWINMODES )  // inclusive
+    {
+        ms.width = windowedModes[modenum.index][0];
+        ms.height = windowedModes[modenum.index][1]);
+        ms.type = MODE_either;
+        ms.mark = "";
+    }
+    else
+    {
+        ms.type = MODE_NOP;
+        ms.width = ms.height = 0;
+        ms.mark = NULL;
+    }
+    return ms;
+}
+
+
 //added:30-01-98:return the name of a video mode
 char * VID_GetModeName( modenum_t modenum )
 {
    int mi = modenum.index;
-   sprintf( vidModeName[mi], "%dx%d",
+   snprintf( vidModeName[mi], MAX_LEN_VIDMODENAME, "%dx%d",
             windowedModes[mi][0],
             windowedModes[mi][1]);
+   vidModeName[mi][MAX_LEN_VIDMODENAME-1] = 0;
    return vidModeName[mi];
 }
 

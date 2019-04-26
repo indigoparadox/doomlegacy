@@ -111,8 +111,9 @@ static  byte  fdx_created = 0;
 // -----------------
 
 #define MAX_EXTRA_MODES         30
+#define MAX_LEN_VIDMODENAME     10
 static  vmode_t     extra_modes[MAX_EXTRA_MODES] = {{NULL, NULL}};
-static  char        names[MAX_EXTRA_MODES][10];
+static  char        names[MAX_EXTRA_MODES][MAX_LEN_VIDMODENAME];
 
 //static  int     totalvidmem;
 
@@ -168,7 +169,7 @@ static void append_full_vidmodes( vmode_t * newmodes, int nummodes )
 {
     full_vidmodes = newmodes;
     specialmodes[NUMSPECIALMODES-1].next = newmodes;
-	    
+
     num_full_vidmodes += nummodes;
     num_all_vidmodes += nummodes;
 }
@@ -351,9 +352,9 @@ void I_SetPalette (RGBA_t *palette)
 #if ( defined(DEBUG_WINDOWED) && defined(WIN32) )
         // Palette fix during debug, otherwise black text on black background
         if( palette[6].s.red < 96 )
-	    mainpal[6].peRed = 96;  // at least get red text on black
+            mainpal[6].peRed = 96;  // at least get red text on black
         if( palette[7].s.green < 96 )
-	    mainpal[i].peGreen = 96;  // at least get green text on black
+            mainpal[i].peGreen = 96;  // at least get green text on black
 #endif
         if( graphics_state >= VGS_active && fdx_created )
             FDX_SetDDPalette (mainpal);         // set DirectDraw palette
@@ -420,11 +421,11 @@ modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
         // find closest dist
         if( bestdist > tdist )
         {
-	    bestdist = tdist;
-	    modenum.index = mi;
-	    if( tdist == 0 )  break;   // found exact match
-	}
-	mi++;
+            bestdist = tdist;
+            modenum.index = mi;
+            if( tdist == 0 )  break;   // found exact match
+        }
+        mi++;
     }
 
 done:
@@ -475,8 +476,8 @@ static BOOL VID_DDModes_callback (int width, int height, int bpp)
     nmp = & extra_modes[nummodes];
     nmp->next = &extra_modes[nummodes+1];
     // [WDJ] Same print for all, easier to read in columns without extra spaces
-    snprintf (&names[nummodes][0], 10, "%dx%d", width, height);
-    names[nummodes][9] = 0;
+    snprintf (&names[nummodes][0], MAX_LEN_VIDMODENAME, "%dx%d", width, height);
+    names[nummodes][MAX_LEN_VIDMODENAME-1] = 0;
     nmp->name = &names[nummodes][0];
     nmp->width = width;
     nmp->height = height;
@@ -582,13 +583,13 @@ int VID_load_driver( byte request_drawmode )
     if( request_drawmode <= DRM_native )
     {
         // Software draw, direct draw driver
-	// Only load if not "windows modes only".
+        // Only load if not "windows modes only".
         if( ! fdx_created &&  ! req_win )
         {
             FDX_create_main_instance();
-	    fdx_created = true;
-	    loaded_driver = DRM_native;
-	}
+            fdx_created = true;
+            loaded_driver = DRM_native;
+        }
         return 1;
     }
 
@@ -648,8 +649,8 @@ int VID_load_driver( byte request_drawmode )
         }
         else
         {
-	    I_SoftError( "Error initializing %s, driver %s", errmsg, drvname );
-	    return FAIL_create;
+            I_SoftError( "Error initializing %s, driver %s", errmsg, drvname );
+            return FAIL_create;
         }
     }
 
@@ -682,7 +683,7 @@ int VID_GetModes ( byte request_drawmode, byte select_bitpp )
         // Software draw, extra modes
         // test for the requested bpp
         // get available display modes for the device
-	VID_GetExtraModes ( select_bitpp );
+        VID_GetExtraModes ( select_bitpp );
     }
 
     if( num_full_vidmodes == 0 )
@@ -799,6 +800,29 @@ fail:
 }
 
 
+modestat_t  VID_GetMode_Stat( modenum_t modenum )
+{
+    modestat_t  ms;
+
+    // fullscreen and window modes  1..
+    vmode_t *pv = VID_GetModePtr(modenum);
+    if( pv )
+    {
+        ms.width = pv->width;
+        ms.height = pv->height;
+        ms.type = MODE_either;
+        ms.mark = "";
+    }
+    else
+    {
+        ms.type = MODE_NOP;
+        ms.width = ms.height = 0;
+        ms.mark = NULL;
+    }
+    return ms;
+}
+
+
 //
 // return the name of a video mode
 //
@@ -829,11 +853,11 @@ int VID_SetMode (modenum_t modenum)
     if ((modenum.index > range.last) || (modenum.index < range.first))
     {
         if (currentmode_p == NULL)
-	    modenum.index = 0;    // revert to the default base vid mode
+            modenum.index = 0;    // revert to the default base vid mode
         else
         {
-	    I_SoftError ("Unknown video mode\n");
-	    return  FAIL_end;
+            I_SoftError ("Unknown video mode\n");
+            return  FAIL_end;
         }
     }
 
@@ -886,21 +910,21 @@ int VID_SetMode (modenum_t modenum)
         }
         else if (stat == FAIL_memory)
         {
-	    I_SoftError ("Not enough mem for VID_SetMode\n");
-	}
+            I_SoftError ("Not enough mem for VID_SetMode\n");
+        }
         if( oldvid.display )
         {
-	    // restore previous state
-	    currentmode_p = oldmode_p;
-	    // cannot just copy oldvid because of buffer pointers that
-	    // are no longer valid
-	    vid.width  = oldvid.width;
-	    vid.height = oldvid.height;
-	    vid.bytepp = oldvid.bytepp;
-	    vid.bitpp = oldvid.bitpp;
-	    (*currentmode_p->setmode_func) (&vid, currentmode_p);
-	    return FAIL_create;
-	}
+            // restore previous state
+            currentmode_p = oldmode_p;
+            // cannot just copy oldvid because of buffer pointers that
+            // are no longer valid
+            vid.width  = oldvid.width;
+            vid.height = oldvid.height;
+            vid.bytepp = oldvid.bytepp;
+            vid.bitpp = oldvid.bitpp;
+            (*currentmode_p->setmode_func) (&vid, currentmode_p);
+            return FAIL_create;
+        }
     }
 
     vid.drawmode = (vid.bytepp==1)? DRAW8PAL:DRAW15;
@@ -1045,7 +1069,7 @@ boolean  VID_Query_Modelist( byte request_drawmode, boolean request_fullscreen, 
     if( loaded_driver != old_loaded_driver )
     {
         // restore the driver
-	VID_load_driver( old_loaded_driver );
+        VID_load_driver( old_loaded_driver );
     }
 
     if( ret_value < 0 )
@@ -1129,14 +1153,14 @@ int I_RequestFullGraphics( byte select_fullscreen )
        if( V_CanDraw( native_bitpp )) {
            select_bitpp = native_bitpp;
        }else{
-	   // Use 8 bit and do the palette lookup.
+           // Use 8 bit and do the palette lookup.
 #if 0
-	   if( verbose )
-	       GenPrintf(EMSG_ver, "Native %i bpp rejected\n", native_bitpp );
+           if( verbose )
+               GenPrintf(EMSG_ver, "Native %i bpp rejected\n", native_bitpp );
 #else
            GenPrintf(EMSG_ver, "Native %i bpp rejected\n", native_bitpp );
 #endif
-	   select_bitpp = 8;
+           select_bitpp = 8;
        }
        break;
      case DRM_explicit_bpp:
@@ -1165,11 +1189,11 @@ int I_RequestFullGraphics( byte select_fullscreen )
     if( select_fullscreen && (num_full_vidmodes == 0) )
     {
         // if modes not found
-	if( req_drawmode == DRM_explicit_bpp && !req_win )
-	{
-	    GenPrintf(EMSG_error, "No %i bpp modes\n", select_bitpp );
-	    goto no_modes;
-	}
+        if( req_drawmode == DRM_explicit_bpp && !req_win )
+        {
+            GenPrintf(EMSG_error, "No %i bpp modes\n", select_bitpp );
+            goto no_modes;
+        }
 
         // the game boots in 320x200 standard VGA, but
         // we need a highcolor mode to run the game in highcolor
@@ -1193,7 +1217,7 @@ int I_RequestFullGraphics( byte select_fullscreen )
 
     // set the startup screen
     initial_mode = VID_GetModeForSize( vid.width, vid.height,
-		   (select_fullscreen ? MODE_fullscreen: MODE_window));
+                   (select_fullscreen ? MODE_fullscreen: MODE_window));
     ret_value = VID_SetMode ( initial_mode );
     if( ret_value < 0 )
         return ret_value;

@@ -1555,39 +1555,62 @@ range_t  VID_ModeRange( byte modetype )
     return mrange;
 }
 
+
+modestat_t  VID_GetMode_Stat( modenum_t modenum )
+{
+    modestat_t  ms;
+
+    if(haveVoodoo)
+    { // voodoo modes
+        int mi = modenum.index - 1;
+        if(mi >= NUM_VOODOOMODES)   goto fail;
+
+        ms.width = voodooModes[mi][0];
+        ms.height = voodooModes[mi][1];
+        ms.type = MODE_voodoo;
+        ms.mark = "fx";
+    }
+    else if( modenum.modetype == MODE_fullscreen )
+    { // fullscreen modes
+        int mi = modenum.index - 1;
+        if(mi >= num_vidmodes)   goto fail;
+
+        ms.width = vidmodes[vidmap[mi]]->hdisplay;
+        ms.height = vidmodes[vidmap[mi]]->vdisplay;
+        ms.type = MODE_fullscreen;
+        ms.mark = "";
+    }
+    else
+    { // X11 window modes
+        int mi = modenum.index;
+        if(mi > MAXWINMODES)    goto fail;
+
+        ms.width = windowedModes[mi][0];
+        ms.height = windowedModes[mi][1];
+        ms.type = MODE_window;
+        ms.mark = "X11";
+    }
+    return  ms;
+
+ fail:
+    ms.type = MODE_NOP;
+    ms.width = ms.height = 0;
+    ms.mark = NULL;
+    return ms;
+}
+
+
 // to display selection name of modes
 char * VID_GetModeName( modenum_t modenum )
 {
     const char * mark_str = "";
-    int mode_x, mode_y;
 
-    if(haveVoodoo) { // voodoo modes
-        int mi = modenum.index - 1;
-        if(mi >= NUM_VOODOOMODES)   goto fail;
+    modestat_t ms = VID_GetMode_Stat( modenum );
+    if( ! ms.mark )  goto fail;
 
-        mark_str = "fx";
-        mode_x = voodooModes[mi][0];
-        mode_y = voodooModes[mi][1];
-    }
-    else if( modenum.modetype == MODE_fullscreen ) { // fullscreen modes
-        int mi = modenum.index - 1;
-        if(mi >= num_vidmodes)   goto fail;
-
-        mark_str = "";
-        mode_x = vidmodes[vidmap[mi]]->hdisplay;
-        mode_y = vidmodes[vidmap[mi]]->vdisplay;
-    }
-    else { // X11 window modes
-        int mi = modenum.index;
-        if(mi > MAXWINMODES)    goto fail;
-
-        mark_str = "X11";
-        mode_x = windowedModes[mi][0];
-        mode_y = windowedModes[mi][1];
-    }
     // form the string
     snprintf( &vidModeName[modenum.index][0], MAX_LEN_VIDMODENAME, "%s %dx%d",
-              mark_str, mode_x, mode_y );
+              ms.mark, ms.width, ms.height );
     vidModeName[modenum.index][MAX_LEN_VIDMODENAME] = 0;
     return &vidModeName[modenum.index][0];
 
@@ -2157,7 +2180,7 @@ int I_Rendermode_setup( void )
 #endif	  
            // Fail to software rendering
            rendermode = render_soft;
-	   return FAIL;
+           return FAIL;
        }
        
        // linkage to dll r_opengl.so
@@ -2279,7 +2302,7 @@ int I_RequestFullGraphics( byte select_fullscreen )
     {
         ret_value = I_Rendermode_setup();  // some functions needed immediately
         if( ret_value < 0 )
-	    return ret_value;
+            return ret_value;
        
         // requires HWD.pfnGetRenderer
         detect_Voodoo();
@@ -2299,7 +2322,7 @@ int I_RequestFullGraphics( byte select_fullscreen )
     {
      case DRM_explicit_bpp:
        if( req_bitpp == 8 )
-	   goto draw_pal8;
+           goto draw_pal8;
 
        if( x_bitpp != req_bitpp )
        {
@@ -2313,7 +2336,7 @@ int I_RequestFullGraphics( byte select_fullscreen )
      case DRM_native:
        if( V_CanDraw( native_bitpp ))
        {
-	   if( verbose )
+           if( verbose )
                GenPrintf(EMSG_info, "Video %i bpp (%i bytes)\n", native_bitpp, native_bytepp);
            goto draw_native;
        }
@@ -2321,7 +2344,7 @@ int I_RequestFullGraphics( byte select_fullscreen )
        {
            GenPrintf( EMSG_info,"Native %i bpp rejected\n", native_bitpp );
            // Use 8 bit and do the palette translation.
-	   goto draw_pal8;
+           goto draw_pal8;
        }
        break;
 

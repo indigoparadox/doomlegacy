@@ -67,7 +67,8 @@ WindowRef mainWindow = NULL;
 
 // all modes, used for window modes or fullscreen modes
 #define MAXVIDMODES  33
-char   vidModeName[MAXVIDMODES][32];
+#define MAX_LEN_VIDMODENAME  32
+char   vidModeName[MAXVIDMODES][MAX_LEN_VIDMODENAME];
 struct modeDescription modeList[MAXVIDMODES];
 static int nummodes = 0;
 
@@ -158,11 +159,34 @@ range_t  VID_ModeRange( byte modetype )
 }
 
 //------------------------------
+
+modestat_t  VID_GetMode_Stat( modenum_t modenum )
+{
+    modestat_t  ms;
+
+    // fullscreen and window modes  1..
+    if( modenum.index < nummodes )
+    {
+        ms.width = modeList[modenum.index].w;
+        ms.height = modeList[modenum.index].h;
+        ms.type = MODE_either;
+        ms.mark = "";
+    }
+    else
+    {
+        ms.type = MODE_NOP;
+        ms.width = ms.height = 0;
+        ms.mark = NULL;
+    }
+    return ms;
+}
+
 // VID_GetModeName
 // Used in the video mode menu
 char * VID_GetModeName( modenum_t modenum )
 {
-    sprintf(&vidModeName[modenum.index][0], "%ix%i", modeList[modenum.index].w, modeList[modenum.index].h);
+    snprintf(&vidModeName[modenum.index][0], MAX_LEN_VIDMODENAME, "%ix%i", modeList[modenum.index].w, modeList[modenum.index].h);
+    vidModeName[modenum.index][MAX_LEN_VIDMODENAME-1] = 0;
 
     return &vidModeName[modenum.index][0];
 }
@@ -184,10 +208,10 @@ modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
         // find closest dist
         if( bestdist > tdist )
         {
-	    bestdist = tdist;
-	    best = i;
-	    if( tdist == 0 )  break;   // found exact match
-	}
+            bestdist = tdist;
+            best = i;
+            if( tdist == 0 )  break;   // found exact match
+        }
     }
     modenum.index = best;  // 1..
     modenum.modetype = rmodetype;
@@ -273,7 +297,7 @@ int VID_SetMode(modenum_t modenum)
     vid.widthbytes = vid.width * vid.bytepp;
 
     GenPrintf( EMSG_info, "VID_SetMode(%s,%i) %dx%d\n",
-	       modetype_string[modenum.modetype], modenum.index, vid.width, vid.height);
+               modetype_string[modenum.modetype], modenum.index, vid.width, vid.height);
 
     // OpenGL only
     vid.direct_rowbytes = 0;
@@ -416,7 +440,7 @@ int I_RequestFullGraphics( byte select_fullscreen )
     mode_fullscreen = select_fullscreen;  // initial startup
 
     initialmode = VID_GetModeForSize( vid.width, vid.height,
-		   (select_fullscreen ? MODE_fullscreen: MODE_window));
+                   (select_fullscreen ? MODE_fullscreen: MODE_window));
 
     VID_SetMode( initialmode );
 

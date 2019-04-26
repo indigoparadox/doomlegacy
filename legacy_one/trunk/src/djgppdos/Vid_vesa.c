@@ -197,7 +197,7 @@ static void append_full_vidmodes( vmode_t newmodes, int nummodes )
 {
     full_vidmodes = newmodes;
     vgavidmodes[NUMVGAVIDMODES-1].next = newmodes;
-	    
+
     num_full_vidmodes += nummodes;
     num_all_vidmodes += nummodes;
 }
@@ -300,11 +300,11 @@ modenum_t  VID_GetModeForSize( int w, int h, byte modetype )
         // find closest dist
         if( bestdist > tdist )
         {
-	    bestdist = tdist;
-	    best = i;
-	    if( tdist == 0 )  break;   // found exact match
-	}
-	mi++;
+            bestdist = tdist;
+            best = i;
+            if( tdist == 0 )  break;   // found exact match
+        }
+        mi++;
     }
     modenum.index = mi;
     modenum.modetype = rmodetype;
@@ -384,6 +384,29 @@ fail:
 }
 
 
+modestat_t  VID_GetMode_Stat( modenum_t modenum )
+{
+    modestat_t  ms;
+
+    // fullscreen and window modes  1..
+    vmode_t * pv = VID_GetModePtr(modenum);
+    if( pv )
+    {
+        ms.width = pv->width;
+        ms.height = pv->height;
+        ms.type = MODE_either;
+        ms.mark = "";
+    }
+    else
+    {
+        ms.type = MODE_NOP;
+        ms.width = ms.height = 0;
+        ms.mark = NULL;
+    }
+    return ms;
+}
+
+
 //added:30-01-98:return the name of a video mode
 char * VID_GetModeName( modenum_t modenum )
 {
@@ -410,12 +433,12 @@ int VID_SetMode (modenum_t modenum)
     {
         if (currentmode_p == NULL)
         {
-	    modenum.index = 0;    // revert to the default base vid mode
+            modenum.index = 0;    // revert to the default base vid mode
         }
         else
         {
-	    I_SoftError ("Unknown video mode\n");
-	    return  FAIL_end;
+            I_SoftError ("Unknown video mode\n");
+            return  FAIL_end;
         }
     }
 
@@ -453,7 +476,7 @@ int VID_SetMode (modenum_t modenum)
         if (stat == FAIL_memory)
         {
             I_SoftError ("Not enough mem for VID_SetMode...\n");
-	}
+        }
         // not enough memory; just put things back the way they were
         currentmode_p = oldmode_p;
         // cannot just copy oldvid because of buffer pointers that
