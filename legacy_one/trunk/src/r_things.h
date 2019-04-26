@@ -71,6 +71,7 @@
 # undef CLIP2_LIMIT
 #endif
 
+
 // MAXVISSPRITES was 128, then 256 (2-2-98)
 #define MAXVISSPRITES   16000
  // [WDJ] Remove sprite limits. This is tuning not a hard limit.
@@ -91,6 +92,7 @@ extern fixed_t          dm_yscale;  // world to fixed_t screen coord
 extern fixed_t          dm_top_patch, dm_bottom_patch;
 // draw window clipping, in fixed_t screen coord
 extern fixed_t          dm_windowtop, dm_windowbottom;
+extern fixed_t          dm_texturemid;
 
 extern fixed_t          pspritescale;
 extern fixed_t          pspriteiscale;

@@ -74,7 +74,7 @@
 #endif
 
 #ifdef DYLT_CORONAS
-void HWR_DrawCoronas( void );
+void HWR_DL_Draw_Coronas( void );
 void HWR_DL_AddLightSprite(gr_vissprite_t *spr, MipPatch_t *mpatch);
 #endif
 #ifdef SPDR_CORONAS

@@ -82,10 +82,11 @@ extern fixed_t*         textureheight;
 
 // needed for pre rendering (fracs)
 // [WDJ] Made into one record, sprite lump values, endian swapped.
+// Patch header stored as fixed_t.
 typedef struct {
     fixed_t  width;
     fixed_t  height;
-    fixed_t  offset;
+    fixed_t  leftoffset;
     fixed_t  topoffset;
 } spritelump_t;
 

@@ -792,11 +792,19 @@ void HWR_PlaneLighting(vxtx3d_t *clVerts, int nrClipVerts)
 }
 
 
+//======
+// Corona
+
 static lumpnum_t  corona_lumpnum;
+
+// Proportional fade of corona from Z1 to Z2
+#define  Z1  (250.0f)
+#define  Z2  ((255.0f*8) + 250.0f)
+
 
 #ifdef SPDR_CORONAS
 // --------------------------------------------------------------------------
-// coronas lighting
+// coronas lighting with the sprite
 // --------------------------------------------------------------------------
 void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr) 
 {
@@ -861,10 +869,10 @@ void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr)
 #endif
 
         // more realistique corona !
-        if( cz>=255*8+250 )
+        if( cz >= Z2 )
             return;
         Surf.FlatColor.rgba = p_lspr->corona_color;
-        Surf.FlatColor.s.alpha = ( cz>250.0f )? 0xff-((int)cz-250)/8 : 0xff;
+        Surf.FlatColor.s.alpha = ( cz>Z1 )? 0xff - ((int)cz - Z1)/8 : 0xff;
 
         // put light little forward of the sprite so there is no 
         // z-blocking or z-fighting
@@ -901,7 +909,8 @@ void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr)
 
 #ifdef DYLT_CORONAS
 // Draw coronas from dynamic light list
-void HWR_DrawCoronas( void )
+// Fireflys created by Fragglescript, do not get entered into dynamic list.
+void HWR_DL_Draw_Coronas( void )
 {
     int j;
     float           size;
@@ -917,25 +926,24 @@ void HWR_DrawCoronas( void )
     HWR_GetPic(corona_lumpnum);  // TODO: use different coronas
     for( j=0;j<dynlights->nb;j++ )
     {
-        light_pos = & dynlights->position[j];
-        cx=light_pos->x;
-        cy=light_pos->y;
-        cz=light_pos->z; // gravity center
         p_lspr = dynlights->p_lspr[j];
         
         // it's an object which emits light
         if ( !(p_lspr->splgt_flags & SPLGT_corona) )
             continue;
 
-        transform_world_to_gr(&cx,&cy,&cz);
+        // gravity center
+        light_pos = & dynlights->position[j];
+        transform_world_to_gr(light_pos->x, light_pos->y, light_pos->z,
+                              /*OUT*/ &cx, &cy, &cz);
 
         // more realistique corona !
-        if( cz>=255*8+250 )
+        if( cz >= Z2 )
             continue;
 
         Surf.FlatColor.rgba = p_lspr->corona_color;
-        if( cz>250.0f )
-            Surf.FlatColor.s.alpha = 0xff-((int)cz-250)/8;
+        if( cz > Z1 )
+            Surf.FlatColor.s.alpha = 0xff - ((int)cz - Z1)/8;
         else
             Surf.FlatColor.s.alpha = 0xff;
 
