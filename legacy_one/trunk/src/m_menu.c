@@ -4841,8 +4841,9 @@ void M_Change_cvar_value(int choice)
     {
         if(cv->flags & CV_FLOAT)
         {
+            // This is the string that gets displayed too.
             char s[20];
-            sprintf(s,"%f",(float)cv->value/FRACUNIT + d * (1.0/16.0));
+            sprintf(s,"%.4f",(float)cv->value/FRACUNIT + d * (1.0/16.0));
             CV_Set(cv,s);
         }
         else

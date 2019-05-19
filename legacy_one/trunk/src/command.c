@@ -1143,7 +1143,7 @@ void  CV_Set_cv_str_value( consvar_t * cvar, const char * valstr, byte call_enab
     char  value_str[64];  // print %d cannot exceed 64
     CV_PossibleValue_t * pv0, * pv;
     int  ival;
-    byte is_a_number;
+    byte is_a_number = 0;
 
 #ifdef PARANOIA
     if( valstr == NULL )
@@ -1153,7 +1153,6 @@ void  CV_Set_cv_str_value( consvar_t * cvar, const char * valstr, byte call_enab
     }
 #endif
 
-    is_a_number = (valstr[0] >= '0' && valstr[0] <= '9');
     // [WDJ] If the value is a float, then all comparisons must be fixed_t.
     // Any PossibleValues would be fixed_t too.
     if( cvar->flags & CV_FLOAT )
@@ -1165,6 +1164,18 @@ void  CV_Set_cv_str_value( consvar_t * cvar, const char * valstr, byte call_enab
     else
     {
         ival = atoi(valstr);  // enum and integer values
+    }
+
+    if( ival )
+    {
+        is_a_number = 1;  // atoi or atof found a number
+    }
+    else
+    {
+        // Deal with the case where there are leading spaces.
+        const char * c = valstr;
+        while( *c == ' ' )  c++;  // skip spaces
+        is_a_number = (*c >= '0' && *c <= '9');
     }
 
     pv0 = cvar->PossibleValue;
