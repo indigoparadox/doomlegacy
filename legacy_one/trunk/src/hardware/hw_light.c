@@ -385,6 +385,7 @@ void HWR_PlaneLighting(vxtx3d_t *clVerts, int nrClipVerts)
         Surf.FlatColor.rgba = LE_SWAP32(dynlights->p_lspr[j]->dynamic_color.rgba);
 #endif
 #ifdef DL_HIGH_QUALITY
+        // dist_p2d < lsp->dynamic_sqrradius
         Surf.FlatColor.s.alpha *= (1 - dist_p2d/lsp->dynamic_sqrradius);
 #endif
         if( !dynlights->mo[j]->state )
@@ -445,8 +446,8 @@ void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr)
         float cx = (outVerts[0].x + outVerts[2].x) / 2.0;
         float cy = (outVerts[0].y + outVerts[2].y) / 2.0;
 #else
-        // compute position doing average
         float cx=0.0f, cy=0.0f; // gravity center
+        // compute position doing average
         int i;
         for (i=0; i<4; i++) {
             cx += outVerts[i].x;

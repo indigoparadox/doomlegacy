@@ -522,6 +522,7 @@ void  Setup_sprite_light( byte  mons_ball_light );
 //extern consvar_t cv_staticlight;
 extern consvar_t cv_corona;
 extern consvar_t cv_coronasize;
+extern consvar_t cv_corona_draw_mode;
 extern consvar_t cv_monball_light;
 
 #endif  // P_LOCAL_H

@@ -71,6 +71,8 @@ extern int              hcolumnofs[MAXVIDHEIGHT];
 
 extern byte             dr_alpha;  // translucent and fog alpha, 0..255
 #ifdef ENABLE_DRAW_ALPHA
+extern byte             dr_alpha_mode;  // alpha combine modes
+extern byte             dr_alpha_background;  // alpha applied to background
 extern byte             dr_color8;
 extern RGBA_t           dr_color;  // draw alpha
 #endif

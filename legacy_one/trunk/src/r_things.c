@@ -2897,6 +2897,9 @@ void Draw_Sprite_Corona_Light( vissprite_t * vis )
         dr_color8 = NearestColor( dr_color.s.red, dr_color.s.green, dr_color.s.blue);
     }
 # endif
+    dr_alpha_mode = cv_corona_draw_mode.EV;
+    // alpha to dim the background through the corona   
+    dr_alpha_background = (cv_corona_draw_mode.EV == 1)? (255 - dr_alpha) : 240;
 #else
     colfunc = transcolfunc;  // R_DrawTranslucentColumn
     // Get the corona patch specifically colored for this light.
