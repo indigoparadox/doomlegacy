@@ -1191,7 +1191,7 @@ EXPORT void HWRAPI( DrawPolygon ) ( FSurfaceInfo_t  *pSurf,
         for (i=0; i<8; i++)
         {
             for (j=0; j<8; j++)
-                scalef += (pz > buf[i][j]+0.00005f) ? 0 : 1;
+                scalef += ( buf[i][j] < (pz - 0.00005f) )? 0 : 1;
         }
 
         // quick test for screen border (not 100% correct, but looks ok)

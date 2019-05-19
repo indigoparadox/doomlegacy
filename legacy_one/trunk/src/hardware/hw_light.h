@@ -83,11 +83,12 @@ void HWR_Set_Lights(int viewnumber);
 
 #define DL_MAX_LIGHT    256  // maximum number of light (extra light are ignored)
 
+// Per player
 typedef struct {
-    int        nb;  // number of dynamic lights
+    unsigned int   nb;  // number of dynamic lights
     spr_light_t * p_lspr[DL_MAX_LIGHT];
     v3d_t      position[DL_MAX_LIGHT]; // actually maximum DL_MAX_LIGHT lights
-    mobj_t     *mo[DL_MAX_LIGHT];
+    mobj_t   * mo[DL_MAX_LIGHT];
 } dynlights_t;
 
 #endif

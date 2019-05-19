@@ -3341,6 +3341,8 @@ static void HWR_DrawSprite(gr_vissprite_t * spr)
 #ifdef SPDR_CORONAS
 #ifdef CORONA_CHOICE
     if( corona_draw_choice == 1 )
+#else
+    if( cv_corona.EV )
 #endif
     {
         HWR_DoCoronasLighting(vxtx, spr);

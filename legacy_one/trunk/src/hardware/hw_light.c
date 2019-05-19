@@ -257,9 +257,8 @@ void HWR_WallLighting(vxtx3d_t *wlVerts)
         lsp = dynlights->p_lspr[j];
         light_pos = & dynlights->position[j];
         // check bounding box first
-        if( SphereTouchBBox3D(&wlVerts[2], &wlVerts[0], light_pos, lsp->dynamic_radius )
-	    ==false )
-            continue;
+        if( ! SphereTouchBBox3D(&wlVerts[2], &wlVerts[0], light_pos, lsp->dynamic_radius ) )
+             continue;
 
         d[0] = wlVerts[2].x - wlVerts[0].x;
         d[1] = wlVerts[2].z - wlVerts[0].z;
@@ -302,9 +301,13 @@ void HWR_WallLighting(vxtx3d_t *wlVerts)
 
         HWR_SetLight();
 
+#if 1
+        Surf.FlatColor.rgba = dynlights->p_lspr[j]->dynamic_color.rgba;
+#else
         // [WDJ] FIXME: Do not know why this is swap, it is not done for corona.
         // Is hardware little-endian ??
         Surf.FlatColor.rgba = LE_SWAP32(dynlights->p_lspr[j]->dynamic_color.rgba);
+#endif
 #ifdef DL_HIGH_QUALITY
         Surf.FlatColor.s.alpha *= (1 - dist_p2d/lsp->dynamic_sqrradius);
 #endif
@@ -347,9 +350,8 @@ void HWR_PlaneLighting(vxtx3d_t *clVerts, int nrClipVerts)
         lsp = dynlights->p_lspr[j];
         light_pos = & dynlights->position[j];
         // BP: The kickass Optimization: check if light touch bounding box
-        if( SphereTouchBBox3D(&p1, &p2, light_pos, lsp->dynamic_radius)
-	    ==false )
-            continue;
+        if( ! SphereTouchBBox3D(&p1, &p2, light_pos, lsp->dynamic_radius) )
+             continue;
 
         // backface cull
         //Hurdler: doesn't work with new TANDL code
@@ -375,9 +377,13 @@ void HWR_PlaneLighting(vxtx3d_t *clVerts, int nrClipVerts)
 
         HWR_SetLight();
 
+#if 1
+        Surf.FlatColor.rgba = dynlights->p_lspr[j]->dynamic_color.rgba;
+#else
         // [WDJ] FIXME: Do not know why this is swap, it is not done for corona.
         // Is hardware little-endian ??
         Surf.FlatColor.rgba = LE_SWAP32(dynlights->p_lspr[j]->dynamic_color.rgba);
+#endif
 #ifdef DL_HIGH_QUALITY
         Surf.FlatColor.s.alpha *= (1 - dist_p2d/lsp->dynamic_sqrradius);
 #endif
@@ -413,76 +419,41 @@ void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr)
     FSurfaceInfo_t  Surf;
     vxtx3d_t        light[4];
     spr_light_t   * lsp;
-    float size;
-    byte li = 0;
 
-
-    //CONS_Printf("sprite (type): %d (%s)\n", spr->type, sprnames[spr->type]);
-    li = sprite_light_ind[spr->mobj->sprite];
-    if( (spr->mobj->state >= &states[S_EXPLODE1]
-         && spr->mobj->state <= &states[S_EXPLODE3])
-     || (spr->mobj->state >= &states[S_FATSHOTX1]
-         && spr->mobj->state <= &states[S_FATSHOTX3]))
-    {
-        li = LT_ROCKETEXP;
-    }
-
-//    if( li == LT_NOLIGHT )  goto no_corona;
-    lsp = &sprite_light[li];
+    lsp = Sprite_Corona_Light_lsp( spr->mobj->sprite, spr->mobj->state );
+    if( lsp == NULL )  goto no_corona;
    
     // Objects which emit light.
-    if( lsp->splgt_flags & SPLGT_corona )
+    if( lsp->splgt_flags & (SPLGT_corona|SPLT_type_field) )
     {
-        // Sprite has a corona, and coronas are enabled.
-        float cx=0.0f, cy=0.0f, cz=0.0f; // gravity center
-
-        // Each of these types (flag combinations) has a corona.
-        switch (lsp->splgt_flags)
-        {
-            case SPLGT_light:
-                // dimming with distance
-                // d'ou vienne ces constante ?
-                size  = lsp->corona_radius  * ((outVerts[0].z+120.0f)/950.0f);
-                break;
-            case SPLGT_rocket:
-                // vary the alpha
-                lsp->corona_color.s.alpha = 7 + (M_Random()>>1);
-//                lsp->corona_color = (((M_Random()>>1)&0xff)<<24)|0x0040ff;
-                // don't need a break, has corona too
-            case SPLGT_corona:
-                // d'ou vienne ces constante ?
-                size  = lsp->corona_radius  * ((outVerts[0].z+60.0f)/100.0f);
-                break;
-            default:
-                I_SoftError("HWR_DoCoronasLighting: unknown light type %x", lsp->splgt_flags);
-                goto no_corona;
-        }
-        if (size > lsp->corona_radius) 
-            size = lsp->corona_radius;
-        size *= FIXED_TO_FLOAT( cv_coronasize.value<<1 );
-
-#if 1
-        // compute position doing average
-        cx = (outVerts[0].x + outVerts[2].x) / 2.0;
-        cy = (outVerts[0].y + outVerts[2].y) / 2.0;
-        cz = (outVerts[0].z + outVerts[2].z) / 2.0;
-#else
-        // compute position doing average
-        int i;
-        for (i=0; i<4; i++) {
-            cx += outVerts[i].x;
-            cy += outVerts[i].y;
-            cz += outVerts[i].z;
-        }
-        cx /= 4.0f;  cy /= 4.0f;  cz /= 4.0f;
-#endif
+        float cz = (outVerts[0].z + outVerts[2].z) / 2.0;
 
         // more realistique corona !
         if( cz >= Z2 )
             return;
 
+        if( Sprite_Corona_Light_fade( lsp, cz, ((int)spr->mobj) ) ==  0 )  goto no_corona;
+       
+        // Sprite has a corona, and coronas are enabled.
         Surf.FlatColor.rgba = lsp->corona_color.rgba;
-        Surf.FlatColor.s.alpha = ( cz>Z1 )? 0xff - ((int)cz - Z1)/8 : 0xff;
+        Surf.FlatColor.s.alpha = corona_alpha;
+
+        float size = corona_size * 2.0;
+
+#if 1
+        // compute position doing average
+        float cx = (outVerts[0].x + outVerts[2].x) / 2.0;
+        float cy = (outVerts[0].y + outVerts[2].y) / 2.0;
+#else
+        // compute position doing average
+        float cx=0.0f, cy=0.0f; // gravity center
+        int i;
+        for (i=0; i<4; i++) {
+            cx += outVerts[i].x;
+            cy += outVerts[i].y;
+        }
+        cx /= 4.0f;  cy /= 4.0f;
+#endif
 
         // put light little forward of the sprite so there is no 
         // z-blocking or z-fighting
@@ -555,29 +526,11 @@ void HWR_DL_Draw_Coronas( void )
             continue;
 
         Surf.FlatColor.rgba = lsp->corona_color.rgba;
-        if( cz > Z1 )
-            Surf.FlatColor.s.alpha = 0xff - ((int)cz - Z1)/8;
-        else
-            Surf.FlatColor.s.alpha = 0xff;
 
-        switch (lsp->splgt_flags)
-        {
-            case SPLGT_light:
-                size  = lsp->corona_radius  * ((cz+120.0f)/950.0f); // d'ou vienne ces constante ?
-                break;
-            case SPLGT_rocket:
-                Surf.FlatColor.s.alpha = (M_Random()>>1)&0xff;
-                // don't need a break
-            case SPLGT_corona:
-                size  = lsp->corona_radius  * ((cz+60.0f)/100.0f); // d'ou vienne ces constante ?
-                break;
-            default:
-                I_SoftError("HWR_DoCoronasLighting: unknown light type %d",lsp->splgt_flags);
-                continue;
-        }
-        if (size > lsp->corona_radius)
-            size = lsp->corona_radius;
-        size *= FIXED_TO_FLOAT( cv_coronasize.value<<1 );
+        if( Sprite_Corona_Light_fade( lsp, cz, j ) ==  0 )  goto no_corona;
+
+        size = corona_size * 2.0;
+        Surf.FlatColor.s.alpha = corona_alpha;
 
         // put light little forward the sprite so there is no 
         // z-buffer problem (coplanaire polygons)
@@ -601,6 +554,8 @@ void HWR_DL_Draw_Coronas( void )
 
         HWD.pfnDrawPolygon ( &Surf, light, 4, PF_Modulated | PF_Additive | PF_Clip | PF_NoDepthTest | PF_Corona );
     }
+no_corona:
+    return;
 }
 #endif
 
@@ -629,7 +584,8 @@ void HWR_Set_Lights(int viewnumber)
 void HWR_DL_AddLightSprite(gr_vissprite_t *spr, MipPatch_t *mpatch)
 {
     v3d_t *    light_pos;
-    spr_light_t *  lsp;
+    spr_light_t * lsp;
+    mobj_t *   sprmobj;
     byte li;
 
     //Hurdler: moved here because it's better ;-)
@@ -643,30 +599,33 @@ void HWR_DL_AddLightSprite(gr_vissprite_t *spr, MipPatch_t *mpatch)
         return;
     }
 #endif
+
+    sprmobj = spr->mobj;
+
     // check if sprite contain dynamic light
-    li = sprite_light_ind[spr->mobj->sprite];
-//    if( li == LT_NOLIGHT )  return;
+    li = sprite_light_ind[sprmobj->sprite];
+    if( li == LT_NOLIGHT )  return;
 
     lsp = &sprite_light[li];
     //CONS_Printf("sprite (sprite): %d (%s): %d\n", spr->mobj->sprite, sprnames[spr->mobj->sprite], lsp->splgt_flags);
     if ( (lsp->splgt_flags & SPLGT_dynamic)
-         && ((lsp->splgt_flags!=SPLGT_light) || cv_grstaticlighting.value)
+         && (((lsp->splgt_flags & (SPLGT_light|SPLGT_corona|SPLGT_rocket)) != SPLGT_light) || cv_grstaticlighting.value) 
          && (dynlights->nb < DL_MAX_LIGHT) 
-         && spr->mobj->state )
+         && sprmobj->state )
     {
         // Create a dynamic light.
         // Dynamic light position.
         light_pos = & dynlights->position[ dynlights->nb ];
-        light_pos->x = FIXED_TO_FLOAT( spr->mobj->x );
-        light_pos->y = FIXED_TO_FLOAT( spr->mobj->z )
-	 + FIXED_TO_FLOAT( spr->mobj->height>>1 ) + lsp->light_yoffset;
-        light_pos->z = FIXED_TO_FLOAT( spr->mobj->y );
+        light_pos->x = FIXED_TO_FLOAT( sprmobj->x );
+        light_pos->y = FIXED_TO_FLOAT( sprmobj->z )
+         + FIXED_TO_FLOAT( sprmobj->height>>1 ) + lsp->light_yoffset;
+        light_pos->z = FIXED_TO_FLOAT( sprmobj->y );
 
-        dynlights->mo[dynlights->nb] = spr->mobj;
-        if( (spr->mobj->state>=&states[S_EXPLODE1]
-             && spr->mobj->state<=&states[S_EXPLODE3])
-         || (spr->mobj->state>=&states[S_FATSHOTX1]
-             && spr->mobj->state<=&states[S_FATSHOTX3]))
+        dynlights->mo[dynlights->nb] = sprmobj;
+        if( (sprmobj->state >= &states[S_EXPLODE1]
+             && sprmobj->state <= &states[S_EXPLODE3])
+         || (sprmobj->state >= &states[S_FATSHOTX1]
+             && sprmobj->state <= &states[S_FATSHOTX3]))
         {
             // Rocket explosion
             lsp = &sprite_light[LT_ROCKETEXP];
@@ -783,7 +742,7 @@ void HWR_Create_WallLightmaps(v3d_t *p1, v3d_t *p2, int lightnum, seg_t *line)
 
     // (...) calcul presit de la projection et de la distance
 
-//    if (dist_p2d >= dynamic_light->p_lspr[lightnum]->dynamic_sqrradius)
+//    if (dist_p2d >= dynamic_light->lsp[lightnum]->dynamic_sqrradius)
 //        return;
 
     // (...) attention faire le backfase cull histoir de faire mieux que Q3 !
@@ -889,7 +848,7 @@ static void HWR_CheckSubsector( int num, fixed_t *bbox )
 static void HWR_AddMobjLights(mobj_t *thing)
 {
     byte li = sprite_light_ind[thing->sprite];
-//    if( li == LT_NOLIGHT )  return;
+    if( li == LT_NOLIGHT )  return;
 
     spr_light_t * lsp = &sprite_light[li];
     if ( lsp->splgt_flags & SPLGT_corona )
