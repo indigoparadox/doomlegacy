@@ -2114,11 +2114,10 @@ static void R_Create_DrawNodes( void )
             if(x1 < dnp->plane->minx) x1 = dnp->plane->minx;
             if(x2 > dnp->plane->maxx) x2 = dnp->plane->maxx;
 
-            fixed_t * bsr = & dnp->seg->backscale_r[ x1 ];
-            for(  ; bsr <= & dnp->seg->backscale_r[ x2 ]; bsr++)
+            for(i = x1; i <= x2; i++)
             {
               // keeps sprite from being seen through floors
-              if(*(bsr++) > vsp->scale)
+              if(dnp->seg->backscale[i] > vsp->scale)
               {
                   // this plane needs to be drawn after sprite
                   goto  dnp_closer_break;
