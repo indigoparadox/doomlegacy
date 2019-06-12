@@ -64,10 +64,9 @@
   // consvar_t
 #include "d_player.h"
 
-#define CLIP_IN_BAND
 #define CLIP2_LIMIT
 
-#if defined(CLIP_IN_BAND) && defined(RANGECHECK) && defined(CLIP2_LIMIT)
+#if defined(RANGECHECK) && defined(CLIP2_LIMIT)
 # undef CLIP2_LIMIT
 #endif
 
