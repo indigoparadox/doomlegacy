@@ -851,7 +851,10 @@ typedef struct drawseg_s
     struct ffloor_s*    thicksides[MAXFFLOORS];
     short*              thicksidecol;
     int                 numthicksides;
-    fixed_t             backscale[MAXVIDWIDTH]; // z check for sprite clipping
+
+    // z check for sprite clipping
+    fixed_t          *  backscale_r;  // ref to array [0..vid.width]
+//    fixed_t             backscale[MAXVIDWIDTH]; // z check for sprite clipping
 //    fixed_t             frontscale[MAXVIDWIDTH]; // z check for sprite clipping
 } drawseg_t;
 

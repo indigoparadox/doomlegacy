@@ -103,29 +103,6 @@ sector_t*       frontsector;
 sector_t*       backsector;
 
 
-//faB:  very ugly realloc() of drawsegs at run-time, I upped it to 512
-//      instead of 256.. and someone managed to send me a level with
-//      896 drawsegs! So too bad here's a limit removal …-la-Boom
-//Hurdler: with Legacy 1.43, drawseg_t is 6780 bytes and thus if having 512 segs, it will take 3.3 Mb of memory
-//         default is 128 segs, so it means nearly 1Mb allocated
-// Drawsegs set by R_StoreWallRange, used by R_Create_DrawNodes
-drawseg_t*      drawsegs=NULL;  // allocated drawsegs
-uint16_t        maxdrawsegs;    // number allocated
-drawseg_t*      ds_p = NULL;    // last drawseg used (tail)
-drawseg_t*      firstnewseg = NULL;  // unused
-
-
-//
-// R_Clear_DrawSegs
-//
-// Called by R_RenderPlayerView
-void R_Clear_DrawSegs (void)
-{
-    ds_p = drawsegs;
-}
-
-
-
 //
 // ClipWallSegment
 // Clips the given range of columns
@@ -830,15 +807,17 @@ boolean R_CheckBBox (fixed_t*   bspcoord)
 // Draw one or more line segments.
 //
 
+// First seg of subsector. It has the backscale for the plane.
 drawseg_t*   firstseg;
 
 // Called by R_RenderBSPNode
 void R_Subsector (int num)
 {
+    static sector_t     tempsec; //SoM: 3/17/2000: Deep water hack
+
     int                 segcount;
     seg_t*              lineseg;
     subsector_t*        sub;
-    static sector_t     tempsec; //SoM: 3/17/2000: Deep water hack
     lightlev_t          floorlightlevel;
     lightlev_t          ceilinglightlevel;
     extracolormap_t*    floorcolormap;

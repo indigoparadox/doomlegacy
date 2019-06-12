@@ -398,6 +398,9 @@ static visplane_t*  new_visplane(unsigned hash)
 // R_FindPlane : cherche un visplane ayant les valeurs identiques:
 //               meme hauteur, meme flattexture, meme lightlevel.
 //               Sinon en alloue un autre.
+//  Search the existing visplanes for one matching :
+//    height, flattexture, lightlevel, etc..
+//  If none found, return a new visplane with these settings.
 //
 visplane_t* R_FindPlane( fixed_t height,
                          int     picnum,
