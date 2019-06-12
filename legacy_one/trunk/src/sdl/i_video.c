@@ -96,7 +96,6 @@ static int testbpp = 0;
 //Hudler: 16/10/99: added for OpenGL gamma correction
 RGBA_t  gamma_correction = {0x7F7F7F7F};
 
-
 // SDL vars
 
 // Only one vidSurface, else releasing oldest faults in SDL.
@@ -105,15 +104,23 @@ SDL_Surface * vidSurface = NULL;
 
 static  SDL_Color    localPalette[256];
 
+
 // Video mode list
-#define  MAX_NUM_VIDMODE      33
-#define  MAX_LEN_VIDMODENAME  16
-static  int   numVidModes= 0;
-static  char  vidModeName[MAX_NUM_VIDMODE][MAX_LEN_VIDMODENAME]; // allow 33 different modes
+
+// [WDJ] SDL returned modelist is not our memory to manage, do not free.
+// Several SDL functions, on some platforms, will call SDL_ListModes again, which can release
+// the previous modelist.
+// The SDL modelist cannot be trusted after: SDL_VideoModeOK, SDL_GetVideoMode, SDL_ListModes.
+// We will immediately make a copy of the modes we want, and let go of the SDL modelist.
+
 // Fullscreen modelist
-// modelist is not our memory to manage, do not free
-static  SDL_Rect   **modelist = NULL;  // fullscreen video modes
-static  int        ml_first_entry = 0; // first entry in modelist which is not bigger than 1600x1200
+typedef struct {
+    uint16_t  w, h;
+} vid_mode_t;
+
+static  vid_mode_t *  vid_modelist = NULL;
+static  int  num_vid_mode_allocated = 0;
+static  int  num_vid_mode = 0;
 static  byte       modelist_bitpp = 0;  // with modelist
 static  byte       request_NULL = 0;  // with modelist
 
@@ -152,6 +159,27 @@ static int windowedModes[MAXWINMODES+1][2] = {
     {400, 300},
     {320, 200}
 };
+
+
+// Add a video mode to the list.
+static
+void  add_vid_mode( int w, int h )
+{
+    vid_mode_t * vm;
+
+    if( num_vid_mode >= num_vid_mode_allocated )
+    {
+       // Expand the video mode list.
+       int req_num = num_vid_mode_allocated + 16;
+       vm = realloc( vid_modelist, sizeof(vid_mode_t) * req_num );
+       if( vm == NULL )  return;
+       vid_modelist = vm;
+       num_vid_mode_allocated = req_num;
+    }
+    vm = & vid_modelist[ num_vid_mode++ ];
+    vm->w = w;
+    vm->h = h;
+}
 
 
 //
@@ -405,7 +433,7 @@ range_t  VID_ModeRange( byte modetype )
 {
     range_t  mrange = { 1, 1 };  // first is always 1
     mrange.last = (modetype == MODE_fullscreen) ?
-     numVidModes - ml_first_entry  // fullscreen
+     num_vid_mode   // fullscreen
      : MAXWINMODES;  // windows
     return mrange;
 }
@@ -418,11 +446,11 @@ modestat_t  VID_GetMode_Stat( modenum_t modenum )
     if( modenum.modetype == MODE_fullscreen )
     {
         // fullscreen modes  1..
-        int mi = modenum.index - 1 + ml_first_entry;
-        if(mi >= numVidModes)   goto fail;
+        int mi = modenum.index - 1;
+        if(mi >= num_vid_mode)   goto fail;
 
-        ms.width = modelist[mi]->w;
-        ms.height = modelist[mi]->h;
+        ms.width = vid_modelist[mi].w;
+        ms.height = vid_modelist[mi].h;
         ms.type = MODE_fullscreen;
         ms.mark = "";
     }
@@ -445,20 +473,26 @@ fail:
     return ms;
 }
 
+// Static mode name storage
+#define  MAX_NUM_VIDMODENAME  42
+#define  MAX_LEN_VIDMODENAME  16
+static char  mode_name_store[MAX_NUM_VIDMODENAME][MAX_LEN_VIDMODENAME];
 
+// The menu code will keep a ptr to this description string.
 char * VID_GetModeName( modenum_t modenum )
 {
     modestat_t  ms = VID_GetMode_Stat( modenum );
     if( ! ms.mark )
        return NULL;
 
-    if( modenum.index >= MAX_NUM_VIDMODE )
+    if( modenum.index >= MAX_NUM_VIDMODENAME )  // unreasonable
        return NULL;
 
-    snprintf(&vidModeName[modenum.index][0], MAX_LEN_VIDMODENAME, "%s%dx%d",
+    char * mode_name = & mode_name_store[modenum.index][0];
+    snprintf(mode_name, MAX_LEN_VIDMODENAME, "%s%dx%d",
                 ms.mark, ms.width, ms.height  );
-    vidModeName[modenum.index][MAX_LEN_VIDMODENAME-1] = 0;  // term string
-    return &vidModeName[modenum.index][0];
+    mode_name[MAX_LEN_VIDMODENAME-1] = 0;  // term string
+    return mode_name;
 }
 
 
@@ -472,20 +506,13 @@ modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
 
     if( rmodetype == MODE_fullscreen )
     {
-#if 0
-        if( ! modelist )
-        {
-            if( ! VID_Query_Modelist( 1, modelist_bitpp ) )  goto done;
-        }
-#endif
+        if( num_vid_mode == 0 )  goto done;
+        best = num_vid_mode - 1;  // default is smallest mode
 
-        if( numVidModes == 0 )  goto done;
-        best = numVidModes-1;  // default is smallest mode
-
-        // search SDL modelist
-        for(i=ml_first_entry; i<numVidModes; i++)
+        // search our copy of the SDL modelist
+        for(i=0; i<num_vid_mode; i++)
         {
-            tdist = abs(modelist[i]->w - rw) + abs(modelist[i]->h - rh);
+            tdist = abs(vid_modelist[i].w - rw) + abs(vid_modelist[i].h - rh);
             // find closest dist
             if( bestdist > tdist )
             {
@@ -494,7 +521,7 @@ modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
                 if( tdist == 0 )  break;   // found exact match
             }
         }
-        modenum.index = best - ml_first_entry + 1;  // 1..
+        modenum.index = best + 1;  // 1..
     }
     else
     {
@@ -523,6 +550,8 @@ done:
 // Set video mode and vidSurface, with verbose
 static void  VID_SetMode_vid( int req_width, int req_height, int reqflags )
 {
+    // [WDJ] SDL_VideoModeOK calls SDL_ListModes which invalidates the previous modelist.
+    // This is why we keep our own copy.
     int cbpp = SDL_VideoModeOK(req_width, req_height, modelist_bitpp, reqflags);
     if( cbpp == 0 )
         return; // SetMode would have failed, keep current buffers
@@ -645,9 +674,11 @@ int VID_SetMode(modenum_t modenum)
     if( set_fullscreen )
     {
         // fullscreen
-        int mi = modenum.index - 1 + ml_first_entry;
-        req_width = modelist[mi]->w;
-        req_height = modelist[mi]->h;
+        int mi = modenum.index - 1;   // modenum.index is 1..
+        if( mi >= num_vid_mode )  goto fail;
+        // Our copy of the modelist.
+        req_width = vid_modelist[mi].w;
+        req_height = vid_modelist[mi].h;
 
         if( rendermode == render_soft )
         {
@@ -811,8 +842,10 @@ abort_error:
 int I_RequestFullGraphics( byte select_fullscreen )
 {
     SDL_PixelFormat    req_format;
+    SDL_Rect   ** modelist;
     byte  select_bitpp, select_bytepp;
     int  ret_value = 0;
+    int  i;
 
     vid.draw_ready = 0;  // disable print reaching console
 
@@ -912,32 +945,27 @@ found_modes:
          goto set_modes;
     }
 
-    numVidModes=0;
-    ml_first_entry = -1;
     // Prepare Mode List
-    while(modelist[numVidModes])
+    num_vid_mode = 0;
+    // SDL modelist is array of ptr, last ptr is NULL.
+    for( i=0; modelist[i]; i++ )
     {
         if( verbose )
         {
             // list the modes
             GenPrintf( EMSG_ver, "%s %ix%i",
-                     (((numVidModes&0x03)==0)?(numVidModes)?"\nModes ":"Modes ":""),
-                     modelist[numVidModes]->w, modelist[numVidModes]->h );
+                     (((i&0x03)==0)?(i)?"\nModes ":"Modes ":""),
+                     modelist[i]->w, modelist[i]->h );
         }
-        if( ml_first_entry < 0 )
+        if((modelist[i]->w <= MAXVIDWIDTH) && (modelist[i]->h <= MAXVIDHEIGHT))
         {
-            if(modelist[numVidModes]->w <= MAXVIDWIDTH &&
-               modelist[numVidModes]->h <= MAXVIDHEIGHT)
-            {
-                ml_first_entry = numVidModes;
-            }
+            add_vid_mode( modelist[i]->w, modelist[i]->h );
         }
-        numVidModes++;
     }
     // Mode List has been prepared
 
     if( verbose )
-       GenPrintf( EMSG_ver, "\nFound %d Video Modes at %i bpp\n", numVidModes, vid.bitpp);
+       GenPrintf( EMSG_ver, "\nFound %d Video Modes at %i bpp\n", num_vid_mode, vid.bitpp);
 
 set_modes:
     allow_fullscreen = true;
