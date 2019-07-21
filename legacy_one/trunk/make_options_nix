@@ -4,9 +4,10 @@
 #
 MAKE_OPTIONS_PRESENT=1
 
-# Select an OS: LINUX FREEBSD
+# Select an OS: LINUX FREEBSD NETBSD
 #  Linux works for all other *nix platforms, as far as we know.
 #  FreeBSD requires differences in the Makefile and code.
+#  NetBSD requires COMP_ENVIRONMENT too.
 OS=LINUX
 
 # Select a draw library:
@@ -17,6 +18,10 @@ SMIF=SDL
 
 # SDL_Mixer library is a separate library from SDL
 HAVE_MIXER=1
+
+# Enable compile environment settings be used:
+# NETBSD seems to require this be enabled.
+#COMP_ENVIRONMENT=1
 
 # Put other options here, see the src/Makefile or README_compiling.
 # Compiler select: GCC MINGW WATCOM CLANG

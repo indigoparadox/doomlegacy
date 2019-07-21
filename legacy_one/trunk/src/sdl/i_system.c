@@ -74,7 +74,7 @@
    // meminfo
 #  include <sys/types.h>
 #  include <sys/sysctl.h>
-# elif defined( __MACH__ )
+# elif defined( __MACH__ ) || defined( NETBSD )
 #  include <sys/statvfs.h>
 # else
 #  include <sys/vfs.h>
@@ -861,7 +861,7 @@ uint64_t I_GetDiskFreeSpace(void)
 # ifdef SOLARIS
   goto guess;
 
-# elif defined( __MACH__ )
+# elif defined( __MACH__ ) || defined( NETBSD )
   struct statvfs stfs;
   if (statvfs(".", &stfs) == -1)
     goto guess;
