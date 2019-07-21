@@ -99,7 +99,7 @@ extern fixed_t          pspriteyscale;  //added:02-02-98:for aspect ratio
 
 extern const int PSpriteSY[];
 
-void R_DrawMaskedColumn (column_t* column);
+void R_DrawMaskedColumn ( byte * column_data );
 
 void R_SortVisSprites (void);
 

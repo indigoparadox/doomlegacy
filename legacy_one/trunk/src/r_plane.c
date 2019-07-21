@@ -701,6 +701,8 @@ void R_Draw_Planes (void)
         // sky flat
         if (pl->picnum == skyflatnum)
         {
+            texture_render_t * sky_texren = & texture_render[ skytexture ];
+
             //added:12-02-98: use correct aspect ratio scale
             dc_iscale = skyscale;
 
@@ -730,7 +732,7 @@ void R_Draw_Planes (void)
                     if ( dc_yh >= rdraw_viewheight )   dc_yh = rdraw_viewheight - 1;
                     angle = (viewangle + x_to_viewangle[x])>>ANGLETOSKYSHIFT;
                     dc_x = x;
-                    dc_source = R_GetColumn(skytexture, angle);
+                    dc_source = R_GetColumn( sky_texren, angle );
                     skycolfunc ();
                 }
             }

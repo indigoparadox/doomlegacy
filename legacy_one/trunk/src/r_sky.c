@@ -131,7 +131,7 @@ void R_Setup_SkyDraw (void)
         skytexturemid = 100<<FRACBITS;
         sky_240 = 0;
     }
-
+   
     // get the right drawer, it was set by screen.c, depending on the
     // current video mode bytes per pixel (quick fix)
     skycolfunc = skydrawerfunc[sky_240];
