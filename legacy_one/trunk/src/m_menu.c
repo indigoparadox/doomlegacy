@@ -1283,10 +1283,10 @@ void M_StartServer( int choice )
     }
     D_WaitPlayer_Setup();
 
-    COM_BufAddText(va("stopdemo;splitscreen %d;deathmatch %d;map \"%s\" -monsters %d skill %d\n", 
+    COM_BufAddText(va("stopdemo;splitscreen %d;deathmatch %d;map \"%s\" -skill %d -monsters %d\n", 
                       StartSplitScreenGame, cv_newdeathmatch.value, 
                       (gamemode==doom2_commercial)? cv_nextmap.string : cv_nextepmap.string,
-                      cv_monsters.value, cv_skill.value));
+                      cv_skill.value, cv_monsters.value));
     // skin change
     if (StartSplitScreenGame
         && ! ( displayplayer2_ptr
