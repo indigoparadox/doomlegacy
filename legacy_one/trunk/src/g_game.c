@@ -1328,6 +1328,11 @@ void G_DoLoadLevel (boolean resetplayer)
     extra_dog_count = 0;
 #endif
 
+    if( server )
+    {
+        B_Regulate_Bots( cv_bots.EV );
+    }
+
     // game_map_filename is external wad
     if (!P_SetupLevel (gameepisode, gamemap, gameskill, game_map_filename ))
     {

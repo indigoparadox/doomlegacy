@@ -153,7 +153,7 @@ void B_Init_Bots()
 
 void Command_AddBot(void)
 {
-    byte buf = 0;
+    byte pn = 0;
 
     if( !server )
     {
@@ -161,16 +161,37 @@ void Command_AddBot(void)
         return;
     }
 
-    while ((buf < MAXPLAYERS) && playeringame[buf])	//find free playerspot
-       buf++;
+    while ((pn < MAXPLAYERS) && playeringame[pn])	//find free playerspot
+       pn++;
 
-    if( buf>=MAXPLAYERS )
+    if( pn >= MAXPLAYERS )
     {
         CONS_Printf ("You can only have %d players.\n", MAXPLAYERS);
         return;
     }
 
-    Send_NetXCmd(XD_ADDBOT, &buf, 1);
+    Send_NetXCmd(XD_ADDBOT, &pn, 1);
+}
+
+// Only call after console player and splitscreen players have grabbed their player slots.
+void B_Regulate_Bots( int req_numbots )
+{
+    byte pn;
+    for( pn = 0; pn < MAXPLAYERS; pn++ )
+    {
+        if( playeringame[pn] && players[pn].bot )  req_numbots--;
+    }
+
+    pn = 0;
+    for( pn = 0; pn < MAXPLAYERS; pn++ )
+    {
+        if( req_numbots <= 0 )  return;
+        if( ! playeringame[pn] ) // find free player slot
+        {
+            Send_NetXCmd(XD_ADDBOT, &pn, 1);
+            req_numbots --;
+        }
+    }
 }
 
 void B_Register_Commands()

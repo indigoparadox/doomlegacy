@@ -254,6 +254,9 @@ mobj_t *P_SpawnMissile (mobj_t* source, mobj_t* dest, mobjtype_t type);
 mobj_t *P_SPMAngle ( mobj_t* source, mobjtype_t type, angle_t angle );
 #define P_SpawnPlayerMissile(s,t) P_SPMAngle(s,t,s->angle)
 
+// Bots
+extern  consvar_t cv_bots;
+
 //
 // P_ENEMY
 //
