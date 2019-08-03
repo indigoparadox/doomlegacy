@@ -226,7 +226,7 @@ static boolean PIT_StompThing (mobj_t* thing)
            break;
          default:
            // Block damage in deathmatch, it would always kill player1
-           if( cv_deathmatch.EV > 0 )
+           if( deathmatch )
               damage = 0;
         }
     }

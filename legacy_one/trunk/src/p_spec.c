@@ -2735,7 +2735,7 @@ void P_ProcessSpecialSector(player_t* player, sector_t* sector, boolean instantd
 found_secret_area:
    player->secretcount++;
    //faB: useful only in single & coop.
-   if( !cv_deathmatch.EV )
+   if( ! deathmatch )
    {
        if( player == displayplayer_ptr )
            GenPrintf(EMSG_playmsg, "\2You found a secret area!\n");

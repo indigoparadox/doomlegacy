@@ -525,4 +525,6 @@ extern consvar_t cv_coronasize;
 extern consvar_t cv_corona_draw_mode;
 extern consvar_t cv_monball_light;
 
+void  Deathmatch_OnChange( void );
+
 #endif  // P_LOCAL_H

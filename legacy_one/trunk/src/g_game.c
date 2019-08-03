@@ -168,6 +168,7 @@
 #include "r_draw.h"
 #include "r_main.h"
 #include "r_sky.h"
+#include "r_things.h"
 
 #include "s_sound.h"
 
@@ -555,6 +556,99 @@ char    player_names[MAXPLAYERS][MAXPLAYERNAME] =
 };
 
 
+// DEATHMATCH
+void Deathmatch_OnChange(void);
+
+// Coop 0: multiple players, coop map objects
+// Deathmatch 1:  placed weapons respawn immediately
+// Deathmatch 2:  items respawn
+// Deathmatch 3:  items respawn, placed weapons respawn immediately
+// Keep original values for demo and savegame compatibility.
+CV_PossibleValue_t deathmatch_cons_t[] = {
+  {0x80, "Coop_SP_Map"}, {0x30, "Coop_60"}, {0x20, "Coop_80"}, {0x10, "Coop"}, {0, "Coop_weapons"},
+  {4, "DM"}, {1, "DM_weapons"}, {2, "DM_items"}, {3, "DM_both"}, {0, NULL} };
+consvar_t cv_deathmatch = { "deathmatch", "0", CV_NETVAR | CV_CALL, deathmatch_cons_t, Deathmatch_OnChange };
+
+byte  deathmatch;
+byte  weapon_persist;         // deathmatch weapon pickup multiple times
+
+// deathmatch (0..3)
+byte  deathmatch_to_itemrespawn[4]    = { 0, 0, 1, 1 };
+
+void Deathmatch_OnChange(void)
+{
+    deathmatch = (cv_deathmatch.EV < 0x0F)?  (cv_deathmatch.EV & 0x07) : 0;
+    weapon_persist = 0;
+
+    if( cv_deathmatch.EV < 4 )
+    {
+        weapon_persist = (cv_deathmatch.EV != 2);  // only the orig modes
+
+        // Within a CV_CALL routine, use CV_Set_by_OnChange.
+        if (server)
+        {
+            // itemrespawn for deathmatch 2,3
+            CV_Set_by_OnChange( &cv_itemrespawn,
+                deathmatch_to_itemrespawn[ deathmatch & 0x03 ] );
+        }
+        // [WDJ] Respawn weapons in the itemrespawn queue, for weapon_persist.
+        // Fixed code inconsistency: it did not do this when going to coop mode.
+        if( weapon_persist )
+            P_RespawnWeapons();
+    }
+
+    // give all key to the players
+    if( deathmatch )
+    {
+        int j;
+        for (j = 0; j < MAXPLAYERS; j++)
+        {
+            if (playeringame[j])
+                players[j].cards = it_allkeys;
+        }
+    }
+}
+
+
+// TIMELIMIT, FRAGLIMIT
+
+void TimeLimit_OnChange(void);
+consvar_t cv_timelimit = { "timelimit", "0", CV_NETVAR | CV_VALUE | CV_CALL | CV_NOINIT, CV_Unsigned, TimeLimit_OnChange };
+
+uint32_t  timelimit_tics = 0;
+
+void TimeLimit_OnChange(void)
+{
+    // CV_VALUE, may be too large for EV
+    if (cv_timelimit.value)
+    {
+        GenPrintf(EMSG_hud, "Levels will end after %d minute(s).\n", cv_timelimit.value);
+        timelimit_tics = cv_timelimit.value * 60 * TICRATE;
+    }
+    else
+    {
+        GenPrintf(EMSG_hud, "Time limit disabled\n");
+        timelimit_tics = 0;
+    }
+}
+
+void FragLimit_OnChange(void);
+CV_PossibleValue_t fraglimit_cons_t[] = { {0, "MIN"}, {1000, "MAX"}, {0, NULL} };
+consvar_t cv_fraglimit = { "fraglimit", "0", CV_NETVAR | CV_VALUE | CV_CALL | CV_NOINIT, fraglimit_cons_t, FragLimit_OnChange };
+
+void FragLimit_OnChange(void)
+{
+    int i;
+
+    // CV_VALUE, may be too large for EV
+    if (cv_fraglimit.value > 0)
+    {
+        for (i = 0; i < MAXPLAYERS; i++)
+            P_CheckFragLimit(&players[i]);
+    }
+}
+
+
 // TEAM STATE
 
 team_info_t*  team_info[MAXTEAMS];  // allocated
@@ -605,6 +699,36 @@ char * get_team_name( int team_num )
     return "Unknown team";
 }
 
+
+CV_PossibleValue_t teamplay_cons_t[] = { {0, "Off"}, {1, "Color"}, {2, "Skin"}, {3, NULL} };
+
+void  TeamPlay_OnChange( void );
+consvar_t cv_teamplay = { "teamplay", "0", CV_NETVAR | CV_CALL, teamplay_cons_t, TeamPlay_OnChange };
+consvar_t cv_teamdamage = { "teamdamage", "0", CV_NETVAR, CV_OnOff };
+
+
+void TeamPlay_OnChange(void)
+{
+    int i;
+    // Change the name of the teams
+
+    if(cv_teamplay.EV == 1)
+    {
+        // color
+        for(i=0; i<NUMSKINCOLORS; i++)
+            set_team_name( i, Color_Names[i]);
+    }
+    else
+    if(cv_teamplay.EV == 2)
+    {
+        // skins
+        for(i=0; i<numskins; i++)
+            set_team_name( i, skins[i]->name);
+    }
+}
+
+
+// Support
 
 // Simplified body queue.  The Doom bodyqueue was way complicated.
 // A way to have player corpses stay around, but limit how many.
@@ -1269,7 +1393,7 @@ boolean G_Responder (event_t* ev)
     // allow spy mode changes even during the demo
     if (gamestate == GS_LEVEL && ev->type == ev_keydown
         && ev->data1 == KEY_F12
-        && (singledemo || !cv_deathmatch.EV) )
+        && ( singledemo || ! deathmatch ) )
     {
         // spy mode
         do
@@ -1622,7 +1746,7 @@ boolean  G_SpawnExtraDog( mapthing_t * spot )
     // Extra playerstarts will already be voodoo doll spots.
     if( extra_dog_count >= cv_mbf_dogs.EV )  goto no_more_dogs;
 
-    if( cv_deathmatch.EV )  goto no_more_dogs;
+    if( deathmatch )  goto no_more_dogs;
    
     if( spot == NULL )
     {
@@ -1677,7 +1801,7 @@ void  G_KillDog( mobj_t * mo )
 
     if( !(mo->flags & MF_FRIEND) )  return;
 
-    if( multiplayer && (cv_deathmatch.EV == 0)  // coop respawn
+    if( multiplayer && ( ! deathmatch )  // coop respawn
         && !cv_respawnmonsters.EV  )  // not otherwise respawned
     {
         extra_dog_count --;
@@ -1727,7 +1851,7 @@ void G_PlayerFinishLevel (int player)
         if( p->inventory[i].count>1) 
             p->inventory[i].count = 1;
     }
-    if(!cv_deathmatch.EV)
+    if( ! deathmatch )
     {
         for(i = 0; i < MAXARTECONT; i++)
             P_PlayerUseArtifact(p, arti_fly);
@@ -2068,7 +2192,7 @@ void G_CoopSpawnPlayer (int playernum)
 
     // Try to use a deathmatch spot.
     // No message about deathmatch starts in coop mode.
-    if( numdmstarts && (cv_deathmatch.EV == 0))
+    if( numdmstarts && ( ! deathmatch ) )
     {
         if( G_DeathMatchSpawnPlayer( playernum )  )
             return;
@@ -2088,7 +2212,7 @@ void G_DoReborn (int playernum)
 
     // boris comment : this test is like 'single player game'
     //                 all this kind of hiden variable must be removed
-    if( !multiplayer && !cv_deathmatch.EV )
+    if( (! multiplayer) && (! deathmatch) )
     {
         // reload the level from scratch
         G_DoLoadLevel (true);
@@ -2104,7 +2228,7 @@ void G_DoReborn (int playernum)
             player->mo->flags2 &= ~MF2_DONTDRAW;
         }
         // spawn at random spot if in death match
-        if( cv_deathmatch.EV )   // 0=COOP
+        if( deathmatch )
         {
             if(G_DeathMatchSpawnPlayer (playernum))
                return;
@@ -2199,7 +2323,7 @@ void G_DoCompleted (void)
         {
           case 8:
             //BP add comment : no intermission screen
-            if( cv_deathmatch.EV )
+            if( deathmatch )
                 wminfo.lev_next = 0;
             else
             {
@@ -2221,14 +2345,14 @@ void G_DoCompleted (void)
     {
         if( !modifiedgame && gamemap == 5 )  // original chexquest ends at E1M5
         {
-                if( cv_deathmatch.EV )
-                        wminfo.lev_next=0;
-                else
-                {
-                        CL_Reset();
-                        F_StartFinale();
-                        return;
-                }
+            if( deathmatch )
+                wminfo.lev_next = 0;
+            else
+            {
+                CL_Reset();
+                F_StartFinale();
+                return;
+            }
         }
     }
 
@@ -2343,7 +2467,12 @@ void G_NextLevel (void)
 
     if ( gamemode == doom2_commercial)
     {
-        if( cv_deathmatch.EV == 0 )
+        if( deathmatch )
+        {
+            if( gamemap == 30 )
+                wminfo.lev_next = 0; // wrap around in deathmatch
+        }
+        else
         {
             switch (gamemap)
             {
@@ -2362,9 +2491,6 @@ void G_NextLevel (void)
                 break;
             }
         }
-        else
-            if(gamemap==30)
-                wminfo.lev_next = 0; // wrap around in deathmatch
     }
 }
 
@@ -2380,12 +2506,16 @@ void G_DoWorldDone (void)
         // not in demo because demo have the mapcommand on it
         if(server && !demoplayback) 
         {
-            if( cv_deathmatch.EV == 0 )
+            if( ! deathmatch )
+            {
                 // don't reset player between maps
                 COM_BufAddText (va("map \"%s\" -noresetplayers\n",G_BuildMapName(gameepisode, wminfo.lev_next+1)));
+            }
             else
+            {
                 // resetplayer in deathmatch for more equality
                 COM_BufAddText (va("map \"%s\"\n",G_BuildMapName(gameepisode, wminfo.lev_next+1)));
+            }
         }
     }
     
@@ -2594,6 +2724,7 @@ void G_DeferedInitNew (skill_e skill, const char* mapname, boolean StartSplitScr
     // this leave the actual game if needed
     SV_StartSinglePlayerServer();
     
+    // Setup before start of game.
     COM_BufAddText (va("splitscreen %d;deathmatch 0;fastmonsters 0;"
                        "respawnmonsters 0;timelimit 0;fraglimit 0\n",
                        StartSplitScreenGame));
@@ -3558,8 +3689,8 @@ void G_DoPlayDemo (const char *defdemoname)
     debug_Printf( " map %i.\n", (int)map );
 #endif
     // header[4]: byte: play mode 0..2
-    //   0 = single player
-    //   1 = deathmatch or cooperative
+    //   0 = single player or coop
+    //   1 = deathmatch
     //   2 = alt deathmatch
 #ifdef DEBUG_DEMO
     debug_Printf( " play mode/deathmatch %i.\n", (int)demo_p[0] );
@@ -3568,6 +3699,7 @@ void G_DoPlayDemo (const char *defdemoname)
     {
         // store it, using the console will set it too late
         cv_deathmatch.EV = *demo_p++;
+        Deathmatch_OnChange();
     }
     else
         demo_p++;  // old legacy demo, ignore deathmatch

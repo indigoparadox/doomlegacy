@@ -975,8 +975,7 @@ void P_ArchiveWorld(void)
         diff2 = 0;
 
         // we don't care of map in deathmatch !
-        if(((cv_deathmatch.EV == 0) && (li->flags != LE_SWAP16(mld->flags)))
-           || ((cv_deathmatch.EV != 0) && ((li->flags & ~ML_MAPPED) != LE_SWAP16(mld->flags))))
+        if( (( deathmatch )? (li->flags & ~ML_MAPPED) : li->flags) != LE_SWAP16(mld->flags) )
             diff |= LD_FLAG;
         if (li->special != LE_SWAP16(mld->special))
             diff |= LD_SPECIAL;

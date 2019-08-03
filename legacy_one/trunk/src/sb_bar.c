@@ -215,7 +215,7 @@ void SB_Heretic_Load_Graphics(void)
     heretic_sb_patches_loaded = 1;
 
     PatchSTATBAR = W_CachePatchName(
-        (( cv_deathmatch.EV )? "STATBAR" : "LIFEBAR" ), PU_LOCK_SB );
+        (( deathmatch )? "STATBAR" : "LIFEBAR" ), PU_LOCK_SB );
 
     if(!multiplayer)
     { // single player game uses red life gem
@@ -919,7 +919,7 @@ static void H_DrawMainBar( player_t * plyr )
     }
 
     // Frags
-    if( cv_deathmatch.EV )
+    if( deathmatch )
     {
         temp = ST_PlayerFrags(plyr-players);
         if(temp != oldfrags)
@@ -1116,9 +1116,9 @@ static void H_OverlayDrawer( byte status_position, player_t * plyr )
     else
         DrBNumber(0, 5, sby+22);
 
-    if( cv_deathmatch.EV )
+    if( deathmatch )
     {
-        temp = ST_PlayerFrags(plyr-players);
+        temp = ST_PlayerFrags(plyr - players);
         DrINumber(temp, 45, sby+27);
     }
 

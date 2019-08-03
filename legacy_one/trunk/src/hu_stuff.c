@@ -231,7 +231,7 @@ void HU_Release_Graphics( void )
         
 #ifdef HU_HWR_PATCHSTORE_SAVE
         // Must use setting from when fonts were saved.
-	// This is necessary because releasing the font is delayed until the last second.
+        // This is necessary because releasing the font is delayed until the last second.
         HWR_patchstore = hu_HWR_patchstore;
 #endif
 
@@ -249,26 +249,6 @@ void HU_Release_Graphics( void )
 //======================================================================
 //                            EXECUTION
 //======================================================================
-
-void TeamPlay_OnChange(void)
-{
-    int i;
-    // Change the name of the teams
-
-    if(cv_teamplay.EV == 1)
-    {
-        // color
-        for(i=0; i<NUMSKINCOLORS; i++)
-            set_team_name( i, Color_Names[i]);
-    }
-    else
-    if(cv_teamplay.EV == 2)
-    {
-        // skins
-        for(i=0; i<numskins; i++)
-            set_team_name( i, skins[i]->name);
-    }
-}
 
 
 // SAY: Broadcast to all players.
@@ -447,7 +427,7 @@ void HU_Ticker(void)
     }
     
     //deathmatch rankings overlay if press key or while in death view
-    if( cv_deathmatch.EV )
+    if( deathmatch )
     {
         if (gamekeydown[gamecontrol[gc_scores][0]] ||
             gamekeydown[gamecontrol[gc_scores][1]] )

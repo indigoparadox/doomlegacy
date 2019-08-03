@@ -723,7 +723,7 @@ static void state_handler( void )
     {
         // Same gametic, but different P_Random index.
         GenPrintf( EMSG_warn, "PT_STATE: gametic %i, update P_random index %i to %i\n",
-		 gametic, P_GetRandIndex(), netbuffer->u.state.p_rand_index );
+                 gametic, P_GetRandIndex(), netbuffer->u.state.p_rand_index );
         P_SetRandIndex( netbuffer->u.state.p_rand_index ); // to sync P_Random
     }
     paused = netbuffer->u.state.server_pause;
@@ -1880,7 +1880,7 @@ void SV_ResetServer( void )
     for (i=0 ; i<MAXPLAYERS ; i++)
     {
         playeringame[i]=false;
-        player_to_nnode[i]=-1;
+        player_to_nnode[i] = -1;
     }
 
     cl_nnode=0;

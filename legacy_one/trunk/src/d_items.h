@@ -74,7 +74,7 @@ typedef enum
   MTF_AMBUSH      = 0x0008,
 
 // 24/5/04: Exl: werent defined before
-  MTF_MPSPAWN     = 0x0010,  // Spawn in multiplayer
+  MTF_MPSPAWN     = 0x0010,  // Spawn only in multiplayer
   MTF_NODM        = 0x0020,  // Do not spawn in deathmatch mode
   MTF_NOCOOP      = 0x0040,  // Do not spawn in coop mode
 

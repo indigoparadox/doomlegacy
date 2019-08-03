@@ -242,9 +242,11 @@ extern  boolean         netgame;
 // Only true if >1 player. netgame => multiplayer but not (multiplayer=>netgame)
 extern  boolean         multiplayer;
 
-// Flag: true only if started as net deathmatch.
-// An enum might handle altdeath/cooperative better.
-extern  consvar_t       cv_deathmatch;
+// Now an enum to handle altdeath/cooperative better.
+extern  consvar_t       cv_deathmatch;  // deathmatch and coop
+extern  byte            deathmatch;  // deathmatch only
+extern  byte            weapon_persist; // deathmatch weapon pickup multiple times
+
 
 
 // ========================================

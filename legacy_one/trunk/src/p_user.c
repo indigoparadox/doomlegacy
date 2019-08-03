@@ -1470,7 +1470,7 @@ void P_ArtiTele(player_t *player)
     angle_t destAngle;
     mapthing_t * mtp;
     
-    if( cv_deathmatch.EV )
+    if( deathmatch )
     {
         // Heretic use of P_Random
         i = P_Random()%numdmstarts;
@@ -1480,6 +1480,7 @@ void P_ArtiTele(player_t *player)
     {
         mtp = playerstarts[0];
     }
+
     destX = mtp->x<<FRACBITS;
     destY = mtp->y<<FRACBITS;
     destAngle = wad_to_angle(mtp->angle);
