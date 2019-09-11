@@ -71,4 +71,13 @@ byte P_GetRandIndex(void);
 
 void P_SetRandIndex(byte rindex);
 
+// [WDJ] Extended random, has long repeat period.
+//  returns unsigned 16 bit
+int  E_Random(void);
+//  returns -range, 0, +range
+int  E_SignedRandom( int range );
+
+// True for the percentage of the calls.
+#define E_RandomPercent( per )   (E_Random() < ((unsigned int)(per * (0.01f * 0xFFFF))))
+
 #endif
