@@ -112,7 +112,7 @@ void R_Setup_SkyDraw (void)
     {
         W_ReadLumpHeader (texpatch->patchnum, &wpatch, sizeof(patch_t));
         // [WDJ] Do endian fix as this is read.
-        wpatch.height = LE_SWAP16(wpatch.height);
+        wpatch.height = (uint16_t)( LE_SWAP16(wpatch.height) );
         if( wpatch.height > max_height )
             max_height = wpatch.height;
         texpatch++;

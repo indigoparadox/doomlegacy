@@ -190,7 +190,7 @@ void P_Init_SwitchList(void)
     {
       // endian conversion only when loading from extra lump
       for (i=0;alphSwitchList[i].episode!=0;i++)
-        alphSwitchList[i].episode = LE_SWAP16(alphSwitchList[i].episode);
+        alphSwitchList[i].episode = (uint16_t)( LE_SWAP16(alphSwitchList[i].episode) );
     }
 #endif
   }
