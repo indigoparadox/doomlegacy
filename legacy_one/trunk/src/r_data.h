@@ -248,7 +248,7 @@ extern union color8_u  color8;
 extern uint16_t*  hicolormaps;
 void R_Init_color8_translate ( RGBA_t * palette );
 #ifdef ENABLE_DRAW8_USING_12
-extern byte  color12_to_8[ 0x0FFF ];
+extern byte  color12_to_8[ 0x1000 ];
 void R_Init_color12_translate( RGBA_t * palette );
 #endif
 
