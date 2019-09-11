@@ -497,7 +497,7 @@ void B_SetNodeTeleDest(SearchNode_t* node)
 static
 void B_Build_Nodes(SearchNode_t* node)
 {
-    int      angle;
+    int      angle;  // botdirtype_t
     fixed_t  nx, ny, extraCost;
 
     LinkedList_t *queue = B_LLCreate();

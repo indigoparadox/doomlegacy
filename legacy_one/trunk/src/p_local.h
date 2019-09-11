@@ -256,6 +256,10 @@ mobj_t *P_SPMAngle ( mobj_t* source, mobjtype_t type, angle_t angle );
 
 // Bots
 extern  consvar_t cv_bots;
+extern  consvar_t cv_bot_skill;
+extern  consvar_t cv_bot_speed;
+extern  consvar_t cv_bot_respawn_time;
+extern  consvar_t cv_bot_random;
 
 //
 // P_ENEMY
@@ -289,6 +293,8 @@ extern  int     *spechit;                //SoM: 3/15/2000: Limit removal
 extern  int     numspechit;
 
 void P_NoiseAlert (mobj_t* target, mobj_t* emmiter);
+boolean P_IsOnLift( const mobj_t *actor );
+int P_IsUnderDamage(mobj_t *actor);
 
 void P_UnsetThingPosition (mobj_t* thing);
 void P_SetThingPosition (mobj_t* thing);

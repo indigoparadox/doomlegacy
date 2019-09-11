@@ -174,7 +174,7 @@ SearchNode_t* B_LLRemoveLastNode(LinkedList_t* list)
 void B_NodePushSuccessors(PriorityQ_t* open, SearchNode_t* parent_node, SearchNode_t* dest)
 {
     int cost, heuristic, f;
-    int angle;  // bot angles
+    int angle;  // bot angles, botdirtype_t
 
     SearchNode_t *node;
 

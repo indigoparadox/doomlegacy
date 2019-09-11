@@ -37,9 +37,9 @@ typedef struct
 {
         int colour;
         char* name;
-} BOTINFOTYPE;
+} bot_info_t;
 
-extern BOTINFOTYPE botinfo[MAXPLAYERS];
+extern bot_info_t  botinfo[MAXPLAYERS];
 
 void B_Register_Commands(void);
 void B_BuildTiccmd(player_t* p, ticcmd_t* cmd);

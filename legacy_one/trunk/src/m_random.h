@@ -70,6 +70,7 @@ void M_ClearRandom (void);
 byte P_GetRandIndex(void);
 
 void P_SetRandIndex(byte rindex);
+void B_SetRandIndex(byte rindex);
 
 // [WDJ] Extended random, has long repeat period.
 //  returns unsigned 16 bit

@@ -139,6 +139,12 @@ byte B_Random (void)
     return rndtable[brndindex];
 }
 
+void B_SetRandIndex(byte rindex)
+{
+    brndindex = rindex;
+}
+
+
 #if 0
 // [WDJ] This mess is one reason we do not want get caught up in
 // maintaining demo sync.

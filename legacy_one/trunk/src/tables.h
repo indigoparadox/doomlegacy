@@ -25,6 +25,7 @@
 
 // Binary Angle as fraction of PI*2, unsigned, wrap at 0.
 typedef uint32_t angle_t;
+typedef int32_t  signed_angle_t;  // for angle differences
 
 extern const angle_t ANG45;  // 0x20000000;
 extern const angle_t ANG90;  // 0x40000000;

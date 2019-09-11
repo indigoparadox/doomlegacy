@@ -34,7 +34,9 @@
 #include "m_fixed.h"
 #include "p_mobj.h"
 
-#define BOTNODEGRIDSIZE	/*8388608		//128<<16	*/2097152		//32<<16
+//#define BOTNODEGRIDSIZE	/*8388608		//128<<16	*/2097152		//32<<16
+// BOT NODE GRID SIZE 32<<16
+#define BOTNODEGRIDSIZE   0x00200000
 #define posX2x(a) (((a) + xOffset)*BOTNODEGRIDSIZE)
 #define posY2y(a) (((a) + yOffset)*BOTNODEGRIDSIZE)
 
