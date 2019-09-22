@@ -2636,7 +2636,7 @@ static uint16_t  coop_doom2_mon_table[ 8 ] = {
 };
 
 // sk_baby, sk_easy, sk_medium, sk_hard, sk_nightmare
-static byte  gameskill_bit[ 5 ] = { MTF_EASY, MTF_EASY, MTF_NORMAL, MTF_NORMAL, MTF_HARD };
+static byte  gameskill_bit[ 5 ] = { MTF_EASY, MTF_EASY, MTF_NORMAL, MTF_HARD, MTF_HARD };
 
 
 //
