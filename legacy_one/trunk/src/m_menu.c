@@ -2303,8 +2303,10 @@ menuitem_t BotOptionMenu[]=
 {
     {IT_STRING | IT_CVAR,0,"Bot skill"           ,&cv_bot_skill          ,0},
     {IT_STRING | IT_CVAR,0,"Bot speed"           ,&cv_bot_speed          ,0},
+    {IT_STRING | IT_CVAR,0,"Bot skin"            ,&cv_bot_skin           ,0},
     {IT_STRING | IT_CVAR,0,"Bot respawn"         ,&cv_bot_respawn_time   ,0},
-    {IT_STRING | IT_CVAR,0,"Bot random"          ,&cv_bot_random         ,0},
+    {IT_STRING | IT_CVAR,0,"Bot seed"            ,&cv_bot_randseed       ,0},
+    {IT_STRING | IT_CVAR,0,"Bot gen"             ,&cv_bot_gen            ,0},
 };
 
 menu_t  BotDef =
@@ -5742,8 +5744,11 @@ void M_Init (void)
     CV_RegisterVar(&cv_bots);
     CV_RegisterVar(&cv_bot_skill);
     CV_RegisterVar(&cv_bot_speed);
-    CV_RegisterVar(&cv_bot_random);
+    CV_RegisterVar(&cv_bot_skin);
     CV_RegisterVar(&cv_bot_respawn_time);
+    CV_RegisterVar(&cv_bot_random);
+    CV_RegisterVar(&cv_bot_randseed);
+    CV_RegisterVar(&cv_bot_gen);
     CV_RegisterVar(&cv_nextmap );
     CV_RegisterVar(&cv_nextepmap );
     CV_RegisterVar(&cv_deathmatch_menu);

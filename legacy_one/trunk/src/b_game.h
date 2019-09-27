@@ -35,8 +35,9 @@
 
 typedef struct
 {
-        int colour;
-        char* name;
+    char* name;    // botnames
+    byte  colour;  // 0..10
+    uint16_t  skinrand;
 } bot_info_t;
 
 extern bot_info_t  botinfo[MAXPLAYERS];

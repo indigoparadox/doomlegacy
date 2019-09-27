@@ -258,8 +258,11 @@ mobj_t *P_SPMAngle ( mobj_t* source, mobjtype_t type, angle_t angle );
 extern  consvar_t cv_bots;
 extern  consvar_t cv_bot_skill;
 extern  consvar_t cv_bot_speed;
+extern  consvar_t cv_bot_skin;
 extern  consvar_t cv_bot_respawn_time;
 extern  consvar_t cv_bot_random;
+extern  consvar_t cv_bot_randseed;
+extern  consvar_t cv_bot_gen;
 
 //
 // P_ENEMY
