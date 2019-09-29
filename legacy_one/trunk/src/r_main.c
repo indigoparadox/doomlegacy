@@ -979,7 +979,7 @@ void R_ExecuteSetViewSize (void)
         clip_screen_bot_max[i] = rdraw_viewheight - 1;
 
     // setup sky scaling for old/new skies (uses pspriteyscale)
-    R_SetSkyScale ();
+    R_Set_Sky_Scale ();
 
     // planes
     //added:02-02-98:now correct aspect ratio!
@@ -1587,6 +1587,7 @@ void R_Register_EngineStuff (void)
     CV_RegisterVar (&cv_boom_colormap);
     CV_RegisterVar (&cv_invul_skymap);
     CV_RegisterVar (&cv_water_effect);
+    CV_RegisterVar (&cv_sky_gen);
 
     CV_RegisterVar(&cv_screenshot_dir);
     CV_RegisterVar(&cv_screenshot_type);

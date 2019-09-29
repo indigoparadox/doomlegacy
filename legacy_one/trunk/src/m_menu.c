@@ -555,7 +555,7 @@ menu_t MainDef, SoundDef, EpiDef, NewDef,
   ReadDef2, ReadDef1, SaveDef, LoadDef, 
   ControlDef, ControlDef2, ControlDef3, MControlDef,
   OptionsDef, EffectsOptionsDef, GameOptionDef, AdvOption1Def, AdvOption2Def,
-  LightingDef, BotDef,
+  MenuOptionsDef, LightingDef, BotDef,
   NetOptionDef, ConnectOptionDef, ServerOptionsDef,
   MPOptionDef;
 
@@ -1982,14 +1982,15 @@ menuitem_t OptionsMenu[]=
 //    {IT_STRING | IT_CVAR,0,"Crosshair scale" ,&cv_crosshairscale  ,0},
     {IT_STRING | IT_CVAR,0,"Autoaim"         ,&cv_autoaim         ,0},
 
-    {IT_SUBMENU | IT_WHITESTRING | IT_YOFFSET, 0,"Effects Options >>",&EffectsOptionsDef ,60},
+    {IT_SUBMENU | IT_WHITESTRING | IT_YOFFSET, 0,"Effects Options >>",&EffectsOptionsDef ,50},
     {IT_CALL    | IT_WHITESTRING,0,"Game Options >>"  ,M_GameOption       ,0},
     {IT_SUBMENU | IT_WHITESTRING,0,"Connect Options >>",&ConnectOptionDef ,0},
     {IT_CALL    | IT_WHITESTRING,0,"Network Options >>",M_NetOption     ,0},
     {IT_SUBMENU | IT_WHITESTRING,0,"Server Options >>",&ServerOptionsDef  ,0},
+    {IT_SUBMENU | IT_WHITESTRING,0,"Menu Options >>"  ,&MenuOptionsDef    ,0},
     {IT_SUBMENU | IT_WHITESTRING,0,"Sound Volume >>"  ,&SoundDef          ,0},
     {IT_SUBMENU | IT_WHITESTRING,0,"Video Options >>" ,&VideoOptionsDef   ,0},
-    {IT_SUBMENU | IT_WHITESTRING,0,"Setup Controls >>",&MControlDef       ,0}
+    {IT_SUBMENU | IT_WHITESTRING,0,"Setup Controls >>",&MControlDef       ,0},
 };
 
 menu_t  OptionsDef =
@@ -2031,6 +2032,28 @@ void M_DrawSlider (int x, int y, int range)
 }
 
 //===========================================================================
+//                        Menu OPTIONS MENU
+//===========================================================================
+
+menuitem_t MenuOptionsMenu[]=
+{
+    {IT_STRING | IT_CVAR,0, "Menu Sounds"     , &cv_menusound     , 0},
+    {IT_STRING | IT_CVAR,0, "Screens Link"    , &cv_screenslink   , 0},
+};
+
+menu_t  MenuOptionsDef =
+{
+    "M_OPTTTL",
+    "Effects",
+    MenuOptionsMenu,
+    M_DrawGenericMenu,
+    NULL,
+    sizeof(MenuOptionsMenu)/sizeof(menuitem_t),
+    60,40,
+    0
+};
+
+//===========================================================================
 //                        Effects OPTIONS MENU
 //===========================================================================
 
@@ -2044,11 +2067,10 @@ menuitem_t EffectsOptionsMenu[]=
     {IT_STRING | IT_CVAR,0, "Sprites limit"   , &cv_spritelim     , 0},
     {IT_STRING | IT_CVAR,0, "Pickup Flash"    , &cv_pickupflash   , 0},
     {IT_STRING | IT_CVAR,0, "Boom Colormap"   , &cv_boom_colormap , 0},
+    {IT_STRING | IT_CVAR,0, "Sky"             , &cv_sky_gen       , 0},
     {IT_STRING | IT_CVAR,0, "Invul skymap"    , &cv_invul_skymap  , 0},
     {IT_STRING | IT_CVAR,0, "Water Effect"    , &cv_water_effect  , 0},
     {IT_STRING | IT_CVAR,0, "Fog Effect"      , &cv_fog_effect    , 0},
-    {IT_STRING | IT_CVAR,0, "Menu Sounds"     , &cv_menusound     , 0},
-    {IT_STRING | IT_CVAR,0, "Screens Link"    , &cv_screenslink   , 0},
     {IT_SUBMENU | IT_WHITESTRING, 0, "Light Options >>"  , &LightingDef  , 'l'},
 };
 

@@ -1177,7 +1177,7 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
     lighttable_t  * ro_colormap = NULL;  // override colormap
     extracolormap_t  * ro_extracolormap = NULL;  // override extracolormap
     texture_render_t * texren;
-   
+
     // TM_picture does not use column_t.
     // Each colfunc_2s for each format will have to convert type.
     byte * col_data;
@@ -2490,8 +2490,8 @@ void R_StoreWallRange( int   start, int   stop)
         worldbackbottom = backsector->floorheight - viewz;
         
         // hack to allow height changes in outdoor areas
-        if (frontsector->ceilingpic == skyflatnum
-            && backsector->ceilingpic == skyflatnum)
+        if (frontsector->ceilingpic == sky_flatnum
+            && backsector->ceilingpic == sky_flatnum)
         {
             // SKY to SKY
             // [WDJ] Prevent worldtop < worldbottom, is used as error test
@@ -2532,7 +2532,7 @@ void R_StoreWallRange( int   start, int   stop)
             //SoM: 3/22/2000: Prevents bleeding.
 //            || (frontsector->modelsec != -1 &&
             || (frontsector->model > SM_fluid &&
-                frontsector->ceilingpic != skyflatnum)
+                frontsector->ceilingpic != sky_flatnum)
             || backsector->modelsec != frontsector->modelsec
             || backsector->floorlightsec != frontsector->floorlightsec
             //SoM: 4/3/2000: Check for colormaps
@@ -2843,7 +2843,7 @@ void R_StoreWallRange( int   start, int   stop)
         }
 
         if (frontsector->ceilingheight <= viewz
-            && frontsector->ceilingpic != skyflatnum)
+            && frontsector->ceilingpic != sky_flatnum)
         {
             // below view plane
             markceiling = false;

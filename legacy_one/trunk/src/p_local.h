@@ -539,4 +539,7 @@ extern consvar_t cv_monball_light;
 
 void  Deathmatch_OnChange( void );
 
+// Sky
+extern consvar_t cv_sky_gen;
+
 #endif  // P_LOCAL_H

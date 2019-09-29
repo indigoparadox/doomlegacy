@@ -192,6 +192,10 @@ void  R_Flush_Texture_Cache (void);
 patch_t * R_Create_Patch( unsigned int width, unsigned int height, byte column_oriented, byte * data, byte bytepp, byte sel_offset, uint16_t blank_value, byte enable_blank_trim );
 #endif
 
+#if 0
+void  R_Set_Texture_Patch( int texnum, patch_t * patch );
+#endif
+
 // Generate a texture from texture desc. and patches.
 byte* R_GenerateTexture ( texture_render_t *  texren );
 
