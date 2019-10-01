@@ -106,7 +106,8 @@
 
 extern void D_PostEvent(event_t*);
 
-#define MAX_JOYSTICKS 4 // 4 should be enough for most purposes
+// 4 joysticks should be enough for most purposes
+#define MAX_JOYSTICKS 4
 int num_joysticks = 0;
 SDL_Joystick *joysticks[MAX_JOYSTICKS]; 
 
@@ -146,8 +147,8 @@ int  I_GetKey          (void)
             rc = ev->data1;
         }
 
-	eventtail++;
-	eventtail = eventtail & (MAXEVENTS-1);
+        eventtail++;
+        eventtail = eventtail & (MAXEVENTS-1);
     }
 
     return rc;
@@ -168,7 +169,7 @@ static int xlatekey(SDLKey sym)
 
 
 //! Translates a SDL joystick button to a doom key_input_e number.
-static int TranslateJoybutton(Uint8 which, Uint8 button)
+static int Translate_Joybutton(Uint8 which, Uint8 button)
 {
   if (which >= MAXJOYSTICKS) 
     which = MAXJOYSTICKS-1;
@@ -230,164 +231,164 @@ void I_GetEvent(void)
       switch (inputEvent.type)
       {
         case SDL_KEYDOWN:
-	  event.type = ev_keydown;
-	  sym = inputEvent.key.keysym.sym;
-	  event.data1 = xlatekey(sym); // key symbol
+          event.type = ev_keydown;
+          sym = inputEvent.key.keysym.sym;
+          event.data1 = xlatekey(sym); // key symbol
 
-	  mod = inputEvent.key.keysym.mod; // modifier key states
-	  // this might actually belong in D_PostEvent
-	  shiftdown = mod & KMOD_SHIFT;
-	  altdown = mod & KMOD_ALT;
+          mod = inputEvent.key.keysym.mod; // modifier key states
+          // this might actually belong in D_PostEvent
+          shiftdown = mod & KMOD_SHIFT;
+          altdown = mod & KMOD_ALT;
 
-	  // Corresponding ASCII char, if applicable (for console etc.)
-	  // NOTE that SDL handles international keyboards and shift maps for us!
-	  Uint16 unicode = inputEvent.key.keysym.unicode; // SDL uses UCS-2 encoding (or maybe UTF-16?)
-	  if ((unicode & 0xff80) == 0)
-	  {
-	      event.data2 = unicode & 0x7F;
-	  }
-	  else
-	    event.data2 = 0; // non-ASCII char
+          // Corresponding ASCII char, if applicable (for console etc.)
+          // NOTE that SDL handles international keyboards and shift maps for us!
+          Uint16 unicode = inputEvent.key.keysym.unicode; // SDL uses UCS-2 encoding (or maybe UTF-16?)
+          if ((unicode & 0xff80) == 0)
+          {
+              event.data2 = unicode & 0x7F;
+          }
+          else
+            event.data2 = 0; // non-ASCII char
 
-	  D_PostEvent(&event);
-	  break;
+          D_PostEvent(&event);
+          break;
 
         case SDL_KEYUP:
-	  event.type = ev_keyup;
-	  sym = inputEvent.key.keysym.sym;
-	  event.data1 = xlatekey(sym);
+          event.type = ev_keyup;
+          sym = inputEvent.key.keysym.sym;
+          event.data1 = xlatekey(sym);
 
-	  mod = inputEvent.key.keysym.mod; // modifier key states
-	  shiftdown = mod & KMOD_SHIFT;
-	  altdown = mod & KMOD_ALT;
+          mod = inputEvent.key.keysym.mod; // modifier key states
+          shiftdown = mod & KMOD_SHIFT;
+          altdown = mod & KMOD_ALT;
 
-	  D_PostEvent(&event);
-	  break;
+          D_PostEvent(&event);
+          break;
 
         case SDL_MOUSEMOTION:
-	  if(cv_usemouse.value)
-	  {
-	      event.type = ev_mouse;
-	      event.data1 = 0;
-	      // [WDJ] 8/2012 Some problems with Absolute mouse motion in OpenBSD.
-	      // Could not predict which would work best for a particular port,
-	      // so both are here, selected from mouse menu.
-	      if( cv_mouse_motion.value )
-	      {
-		  // Relative mouse motion interface.
-		  // Seems to be used by prboom and some other SDL Doom ports.
-		  // SDL 2001 docs: Windows and Linux, otherwise don't know.
-		  // Requires that SDL xrel and yrel report motion even when
-		  // abs mouse position is limited at window border by grabinput.
-		  // Linux: rel motion continues even when abs motion stopped by grabinput.
-		  // OpenBSD: seems to work except when grabinput=0.
+          if(cv_usemouse.value)
+          {
+              event.type = ev_mouse;
+              event.data1 = 0;
+              // [WDJ] 8/2012 Some problems with Absolute mouse motion in OpenBSD.
+              // Could not predict which would work best for a particular port,
+              // so both are here, selected from mouse menu.
+              if( cv_mouse_motion.value )
+              {
+                  // Relative mouse motion interface.
+                  // Seems to be used by prboom and some other SDL Doom ports.
+                  // SDL 2001 docs: Windows and Linux, otherwise don't know.
+                  // Requires that SDL xrel and yrel report motion even when
+                  // abs mouse position is limited at window border by grabinput.
+                  // Linux: rel motion continues even when abs motion stopped by grabinput.
+                  // OpenBSD: seems to work except when grabinput=0.
 #ifdef DEBUG_MOUSEMOTION
-		  fprintf(stderr, "Mouse %i,%i, rel %i,%i\n",
-		      inputEvent.motion.x, inputEvent.motion.y,
-		      inputEvent.motion.xrel, inputEvent.motion.yrel);
+                  fprintf(stderr, "Mouse %i,%i, rel %i,%i\n",
+                      inputEvent.motion.x, inputEvent.motion.y,
+                      inputEvent.motion.xrel, inputEvent.motion.yrel);
 #endif
-		  // y is negated because screen + is down, but map + is up.
-		  event.data2 = inputEvent.motion.xrel << 2;
-		  event.data3 = - (inputEvent.motion.yrel << 2);
-	      }
-	      else
-	      {
-	          // Absolute mouse motion interface.  Default.
-		  // Linux: works in all combinations.
-		  // Windows: works, untested on newer
-		  // OpenBSD: works, except that when grabinput=0 mouse
-		  // cannot escape window.
+                  // y is negated because screen + is down, but map + is up.
+                  event.data2 = inputEvent.motion.xrel << 2;
+                  event.data3 = - (inputEvent.motion.yrel << 2);
+              }
+              else
+              {
+                  // Absolute mouse motion interface.  Default.
+                  // Linux: works in all combinations.
+                  // Windows: works, untested on newer
+                  // OpenBSD: works, except that when grabinput=0 mouse
+                  // cannot escape window.
 #ifdef DEBUG_MOUSEMOTION
-		  fprintf(stderr, "Mouse %i,%i,  old %i,%i,  rel %i,%i\n",
-		      inputEvent.motion.x, inputEvent.motion.y,
-		      lastmousex, lastmousey,
-		      inputEvent.motion.x - lastmousex, inputEvent.motion.y - lastmousey);
+                  fprintf(stderr, "Mouse %i,%i,  old %i,%i,  rel %i,%i\n",
+                      inputEvent.motion.x, inputEvent.motion.y,
+                      lastmousex, lastmousey,
+                      inputEvent.motion.x - lastmousex, inputEvent.motion.y - lastmousey);
 #endif
-		  // First calc relative motion using lastmouse,
-		  // so can save lastmouse before WarpMouse test
-		  event.data2 = (inputEvent.motion.x - lastmousex) << 2;
-		  lastmousex = inputEvent.motion.x;
-		  // y is negated because screen + is down, but map + is up. 
-		  event.data3 = (lastmousey - inputEvent.motion.y) << 2;
-		  lastmousey = inputEvent.motion.y;
-	      }
+                  // First calc relative motion using lastmouse,
+                  // so can save lastmouse before WarpMouse test
+                  event.data2 = (inputEvent.motion.x - lastmousex) << 2;
+                  lastmousex = inputEvent.motion.x;
+                  // y is negated because screen + is down, but map + is up.
+                  event.data3 = (lastmousey - inputEvent.motion.y) << 2;
+                  lastmousey = inputEvent.motion.y;
+              }
 #ifdef DEBUG_WINDOWED
-	      // DEBUG_WINDOWED blocks grabinput effects to get easy access to
-	      // debugging window, so it always needs WarpMouse.
+              // DEBUG_WINDOWED blocks grabinput effects to get easy access to
+              // debugging window, so it always needs WarpMouse.
 #else
-	      // With Relative mouse motion and input grabbed,
-	      // SDL will limit range with (xrel, yrel) still working
-	      // Known to work on Linux, OpenBSD, and Windows.
-	      // Absolute mouse motion requires WarpMouse centering always.
-	      // Keyboard will be affected by grabinput, independently of this.
-	      if( (cv_mouse_motion.value==0) || ! cv_grabinput.value )
+              // With Relative mouse motion and input grabbed,
+              // SDL will limit range with (xrel, yrel) still working
+              // Known to work on Linux, OpenBSD, and Windows.
+              // Absolute mouse motion requires WarpMouse centering always.
+              // Keyboard will be affected by grabinput, independently of this.
+              if( (cv_mouse_motion.value==0) || ! cv_grabinput.value )
 #endif
-	      {
-		  static byte lastmouse_warp = 0;
-		  // If the event is from warping the pointer back to middle
-		  // of the screen then ignore it.  Not often, 45 degree turn.
-		  if (lastmouse_warp
-		      && (inputEvent.motion.x == vid_center_x)
-		      && (inputEvent.motion.y == vid_center_y) )
-		  {
-		      lastmouse_warp = 0;
-		      break;  // skip PostEvent
-		  }
+              {
+                  static byte lastmouse_warp = 0;
+                  // If the event is from warping the pointer back to middle
+                  // of the screen then ignore it.  Not often, 45 degree turn.
+                  if (lastmouse_warp
+                      && (inputEvent.motion.x == vid_center_x)
+                      && (inputEvent.motion.y == vid_center_y) )
+                  {
+                      lastmouse_warp = 0;
+                      break;  // skip PostEvent
+                  }
 
-		  // Warp the pointer back to the middle of the window
-		  //  or we cannot move any further when it reaches a border.
-		  if ((inputEvent.motion.x < mouse_x_min) ||
-		      (inputEvent.motion.y < mouse_y_min) ||
-		      (inputEvent.motion.x > mouse_x_max) ||
-		      (inputEvent.motion.y > mouse_y_max)   )
-		  {
-		      // Warp the pointer back to the middle of the window
-		      SDL_WarpMouse(vid_center_x, vid_center_y);
-		      // this issues a mouse event that needs to be ignored
-		      lastmouse_warp = 1;
-		  }
-	      }
-	      // issue mouse event
-	      D_PostEvent(&event);
-	  }
-	  break;
+                  // Warp the pointer back to the middle of the window
+                  //  or we cannot move any further when it reaches a border.
+                  if ((inputEvent.motion.x < mouse_x_min) ||
+                      (inputEvent.motion.y < mouse_y_min) ||
+                      (inputEvent.motion.x > mouse_x_max) ||
+                      (inputEvent.motion.y > mouse_y_max)   )
+                  {
+                      // Warp the pointer back to the middle of the window
+                      SDL_WarpMouse(vid_center_x, vid_center_y);
+                      // this issues a mouse event that needs to be ignored
+                      lastmouse_warp = 1;
+                  }
+              }
+              // issue mouse event
+              D_PostEvent(&event);
+          }
+          break;
 
         case SDL_MOUSEBUTTONDOWN:
         case SDL_MOUSEBUTTONUP:
-	  if(cv_usemouse.value)
-	  {
-	      if (inputEvent.type == SDL_MOUSEBUTTONDOWN)
+          if(cv_usemouse.value)
+          {
+              if (inputEvent.type == SDL_MOUSEBUTTONDOWN)
                 event.type = ev_keydown;
-	      else
+              else
                 event.type = ev_keyup;
 
-	      event.data1 = KEY_MOUSE1 + inputEvent.button.button - SDL_BUTTON_LEFT;
-	      event.data2 = 0; // does not correspond to any character
-	      D_PostEvent(&event);
-	  }
-	  break;
+              event.data1 = KEY_MOUSE1 + inputEvent.button.button - SDL_BUTTON_LEFT;
+              event.data2 = 0; // does not correspond to any character
+              D_PostEvent(&event);
+          }
+          break;
 
-	case SDL_JOYBUTTONDOWN: 
-	  event.type = ev_keydown;
-	  event.data1 = TranslateJoybutton(inputEvent.jbutton.which, 
-					   inputEvent.jbutton.button);
-	  D_PostEvent(&event);
-	  break;
+        case SDL_JOYBUTTONDOWN:
+          event.type = ev_keydown;
+          event.data1 = Translate_Joybutton(inputEvent.jbutton.which,
+                                           inputEvent.jbutton.button);
+          D_PostEvent(&event);
+          break;
 
-	case SDL_JOYBUTTONUP: 
-	  event.type = ev_keyup;
-	  event.data1 = TranslateJoybutton(inputEvent.jbutton.which, 
-					   inputEvent.jbutton.button);
-	  D_PostEvent(&event);
-	  break;
+        case SDL_JOYBUTTONUP:
+          event.type = ev_keyup;
+          event.data1 = Translate_Joybutton(inputEvent.jbutton.which,
+                                           inputEvent.jbutton.button);
+          D_PostEvent(&event);
+          break;
 
         case SDL_QUIT:
-	  I_Quit();
-	  //M_QuitResponse('y');
-	  break;
+          I_Quit();
+          //M_QuitResponse('y');
+          break;
 
         default:
-	  break;
+          break;
       }
   }
 }
@@ -401,9 +402,9 @@ static void I_GrabMouse(void)
       if(SDL_GRAB_OFF == SDL_WM_GrabInput(SDL_GRAB_QUERY))
       {
 #ifdef DEBUG_WINDOWED
-	 // do not grab so can use debugger
+         // do not grab so can use debugger
 #else
-	 SDL_WM_GrabInput(SDL_GRAB_ON);
+         SDL_WM_GrabInput(SDL_GRAB_ON);
 #endif
       }
   }
@@ -476,12 +477,12 @@ static void I_JoystickInit(void)
       joysticks[i] = joy;
       if (devparm || verbose > 1)
       {
-	  CONS_Printf(" Properties of joystick %d:\n", i);
-	  CONS_Printf("    %s.\n", SDL_JoystickName(i));
-	  CONS_Printf("    %d axes.\n", SDL_JoystickNumAxes(joy));
-	  CONS_Printf("    %d buttons.\n", SDL_JoystickNumButtons(joy));
-	  CONS_Printf("    %d hats.\n", SDL_JoystickNumHats(joy));
-	  CONS_Printf("    %d trackballs.\n", SDL_JoystickNumBalls(joy));
+          CONS_Printf(" Properties of joystick %d:\n", i);
+          CONS_Printf("    %s.\n", SDL_JoystickName(i));
+          CONS_Printf("    %d axes.\n", SDL_JoystickNumAxes(joy));
+          CONS_Printf("    %d buttons.\n", SDL_JoystickNumButtons(joy));
+          CONS_Printf("    %d hats.\n", SDL_JoystickNumHats(joy));
+          CONS_Printf("    %d trackballs.\n", SDL_JoystickNumBalls(joy));
       }
   }
 }
@@ -572,14 +573,14 @@ static void I_GetMouse2Event()
         if(om2b&(1<<j)) {
           if(!(button&(1<<j))) { //keyup
             event.type = ev_keyup;
-            event.data1 = KEY_2MOUSE1+j;
+            event.data1 = KEY_MOUSE2+j;
             D_PostEvent(&event);
             om2b ^= 1 << j;
           }
         } else {
           if(button&(1<<j)) {
             event.type = ev_keydown;
-            event.data1 = KEY_2MOUSE1+j;
+            event.data1 = KEY_MOUSE2+j;
             D_PostEvent(&event);
             om2b ^= 1 << j;
           }
@@ -907,8 +908,8 @@ char *I_GetUserName(void)
   if ((p = getenv("USER")) == NULL)
     if ((p = getenv("user")) == NULL)
       if ((p = getenv("USERNAME")) == NULL)
-	if ((p = getenv("username")) == NULL)
-	  return NULL;
+        if ((p = getenv("username")) == NULL)
+          return NULL;
 
   strncpy(username, p, MAXPLAYERNAME);
 

@@ -444,14 +444,14 @@ void I_GetMouse2Event(void)
         if(om2b&(1<<j)) {
           if(!(button&(1<<j))) { //keyup
             event.type = ev_keyup;
-            event.data1 = KEY_2MOUSE1+j;
+            event.data1 = KEY_MOUSE2+j;
             D_PostEvent(&event);
             om2b ^= 1 << j;
           }
         } else {
           if(button&(1<<j)) {
             event.type = ev_keydown;
-            event.data1 = KEY_2MOUSE1+j;
+            event.data1 = KEY_MOUSE2+j;
             D_PostEvent(&event);
             om2b ^= 1 << j;
           }

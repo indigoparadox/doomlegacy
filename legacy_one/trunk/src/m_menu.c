@@ -2171,14 +2171,15 @@ menuitem_t MouseOptionsMenu[]=
     {IT_STRING | IT_CVAR,0,"Always MouseLook", &cv_alwaysfreelook  ,0},
     {IT_STRING | IT_CVAR,0,"Mouse Move",    &cv_mouse_move      ,0},
     {IT_STRING | IT_CVAR,0,"Invert Mouse",  &cv_mouse_invert    ,0},
+    {IT_STRING | IT_CVAR
+     | IT_CV_SLIDER     ,0,"Mouse x Speed", &cv_mouse_sens_x    ,0},
+    {IT_STRING | IT_CVAR
+     | IT_CV_SLIDER     ,0,"Mouse y Speed", &cv_mouse_sens_y    ,0},
+    {IT_STRING | IT_CVAR,0,"Mouse Doubleclick" ,&cv_mouse_double  ,0},
 #ifdef SMIF_SDL
     {IT_STRING | IT_CVAR,0,"Mouse motion",  &cv_mouse_motion    ,0},
 #endif
     {IT_STRING | IT_CVAR,0,"Grab input", &cv_grabinput ,0},
-    {IT_STRING | IT_CVAR
-     | IT_CV_SLIDER     ,0,"Mouse x Speed", &cv_mouse_sens_x    ,0},
-    {IT_STRING | IT_CVAR
-     | IT_CV_SLIDER     ,0,"Mouse y Speed", &cv_mouse_sens_y    ,0}
 #if 0
 //[WDJ] disabled in 143beta_macosx
 //[segabor]
@@ -2636,7 +2637,7 @@ menu_t  SoundDef =
 //===========================================================================
 menuitem_t MControlMenu[]=
 {
-    {IT_STRING | IT_CVAR,0,"Control per key" ,&cv_controlperkey   ,0},
+    {IT_STRING | IT_CVAR, 0,"Control per key" ,&cv_controlperkey   ,0},
     {IT_SUBMENU | IT_WHITESTRING, 0,"Mouse Options >>" ,&MouseOptionsDef   , 'm'},
     {IT_SUBMENU | IT_WHITESTRING, 0,"Second Mouse config >>", &SecondMouseCfgdef, 0},
     {IT_CALL | IT_WHITESTRING, 0,"Player1 Controls >>", M_Setup_P1_Controls, '1'},
@@ -2736,7 +2737,7 @@ menuitem_t ControlMenu3[]=
   {IT_CONTROL, 0,"Talk key"       ,M_ChangeControl,gc_talkkey},
   {IT_CONTROL, 0,"Rankings/Scores",M_ChangeControl,gc_scores },
   {IT_CONTROL, 0,"Console"        ,M_ChangeControl,gc_console},
-  {IT_CONTROL, 0,"Screenshot"     ,M_ChangeControl,gc_screenshot},  
+  {IT_CONTROL, 0,"Screenshot"     ,M_ChangeControl,gc_screenshot},
                        
   {IT_SUBMENU | IT_WHITESTRING | IT_YOFFSET, 0,"next"    ,&ControlDef,128}
 };
@@ -2841,7 +2842,9 @@ void M_ChangecontrolResponse(event_t* ev)
     int        found;
     int        ch=ev->data1;
 
+    // The new key for a control function.
     // ESCAPE cancels
+    // Not allowed to assign KEY_ESCAPE nor KEY_PAUSE to another control function.
     if (ch!=KEY_ESCAPE && ch!=KEY_PAUSE)
     {
 
@@ -2849,7 +2852,7 @@ void M_ChangecontrolResponse(event_t* ev)
         {
           // ignore mouse/joy movements, just get buttons
           case ev_mouse:
-               ch = KEY_NULL;      // no key
+            ch = KEY_NULL;      // no key
             break;
 
           // keypad arrows are converted for the menu in cursor arrows
@@ -2873,38 +2876,61 @@ void M_ChangecontrolResponse(event_t* ev)
             found = 1;
         if (found>=0)
         {
-            // replace mouse and joy clicks by double clicks
+            // If controltochange has existing assignment of same button, then
+            // replace mouse and joy clicks by double clicks.
+#if 1
+            if( ch>=KEY_MOUSE1 && ch<KEY_JOY0BUT0 )  // For all MOUSE input
+            {
+                // Spacing of KEY_MOUSEx to KEY_MOUSExDBL is uniform for all MOUSE.
+                setupcontrols[control][found] = ch + (KEY_MOUSE1DBL - KEY_MOUSE1);
+                goto done;
+            }
+#else
             // FIXME: first mouse only
             if (ch>=KEY_MOUSE1 && ch<=KEY_MOUSE1+MOUSEBUTTONS)
-                setupcontrols[control][found] = ch-KEY_MOUSE1+KEY_DBLMOUSE1;
-#ifdef DBL_JOY_BUTTONS
-            // joystick doubleclicks
+            {
+                setupcontrols[control][found] = ch + (KEY_MOUSE1DBL - KEY_MOUSE1);
+                goto done;
+            }
+#endif
+
+#ifdef JOY_BUTTONS_DOUBLE
+#if 1
+            else if( ch>=KEY_JOY0BUT0 && ch<=(KEY_JOYLAST) )  // all JOY input
+#else
             // FIXME: JOY0 only
-            else
-//              if (ch>=KEY_JOY0BUT0 && ch<=(KEY_JOYLAST))  // all JOY
-              if (ch>=KEY_JOY0BUT0 && ch<=(KEY_JOY0BUT0+JOYBUTTONS))  // one JOY
-                setupcontrols[control][found] = ch + (KEY_DBLJOY0BUT0 - KEY_JOY0BUT0);
+            else if (ch>=KEY_JOY0BUT0 && ch<=(KEY_JOY0BUT0+JOYBUTTONS))  // one JOY
+#endif
+            {
+                // Change to joystick doubleclicks.
+                // Spacing of JOYxBUTn to JOYxBUTnDBL is uniform for all JOY and all BUT.
+                setupcontrols[control][found] = ch + (KEY_JOY0BUT0DBL - KEY_JOY0BUT0);
+                goto done;
+            }
 #endif
         }
-        else
+
+        // Direct replacement is default.
         {
+            // [WDJ] FIXME: This is flaky logic.
             // check if change key1 or key2, or replace the two by the new
             found = 0;
             if (setupcontrols[control][0] == KEY_NULL)
                 found++;
             if (setupcontrols[control][1] == KEY_NULL)
                 found++;
+
             if (found==2)
             {
                 found = 0;
-                setupcontrols[control][1] = KEY_NULL;  //replace key 1 ,clear key2
+                setupcontrols[control][1] = KEY_NULL;  //replace key1 ,clear key2
             }
             G_CheckDoubleUsage(ch);
             setupcontrols[control][found] = ch;
         }
-
     }
 
+done:
     M_StopMessage(0);
 }
 
@@ -5028,32 +5054,35 @@ boolean M_Responder (event_t* ev)
         ch  = ev->data2;  // ASCII char
         if( key >= KEY_MOUSE1 )
         {
-            if( key <= KEY_2MOUSE1 )
+            // Menu slider, all buttons of mouse1, 1st button of mouse2 ???
+            if( key <= KEY_MOUSE2 )
                 button_down = 1;
         
             // added 5-2-98 remap virtual keys (mouse & joystick buttons)
-            switch(key) {
+            switch(key)
+            {
              case KEY_MOUSE1:
              case KEY_JOY0BUT0:
                 // [WDJ] No mouse ENTER key on the sliders, it makes them move right.
-               key = ( currentMenu
+                key = ( currentMenu
                        && (currentMenu->menuitems[itemOn].status & (IT_BIGSLIDER | IT_CV_SLIDER | IT_CV_NOMOD ) )
                        ) ? KEY_NULL : KEY_ENTER;
-               break;
+                break;
              case KEY_MOUSE1+1:
              case KEY_JOY0BUT1:
-               key = KEY_BACKSPACE;
-               break;
+                key = KEY_BACKSPACE;
+                break;
             }
         }
         else
-        {
+        {   // Keyboard keys,  key < KEY_MOUSE1.
             // on key press, inhibit menu responses to the mouse for a while
             mousewait = I_GetTime() + TICRATE*2;  // 4 sec
         }
         break;
      case ev_keyup:
-        if( ev->data1 >= KEY_MOUSE1 && ev->data1 <= KEY_2MOUSE1 )
+        // Menu slider, all buttons of mouse1, 1st button of mouse2 ???
+        if( ev->data1 >= KEY_MOUSE1 && ev->data1 <= KEY_MOUSE2 )
             button_down = 0;
         break;
      case ev_mouse:
@@ -6270,6 +6299,11 @@ void M_Register_Menu_Controls( void )
     CV_RegisterVar(&cv_mouse2port);
 #ifdef LMOUSE2
     CV_RegisterVar(&cv_mouse2opt);
+#endif
+
+    CV_RegisterVar(&cv_mouse_double);
+#ifdef JOY_BUTTONS_DOUBLE
+    CV_RegisterVar(&cv_joy_double);
 #endif
 
     CV_RegisterVar(&cv_controlperkey);

@@ -836,7 +836,7 @@ static void I_ShutdownMouse2 (void)
         for(i=0;i<MOUSEBUTTONS;i++)
         {
             event.type=ev_keyup;
-            event.data1=KEY_2MOUSE1+i;
+            event.data1=KEY_MOUSE2+i;
             D_PostEvent(&event);
         }
 
@@ -1209,7 +1209,7 @@ static void I_GetMouseEvents (void)
                         event.type=ev_keydown;
                     else
                         event.type=ev_keyup;
-                    event.data1=KEY_2MOUSE1+i;
+                    event.data1=KEY_MOUSE2+i;
                     D_PostEvent(&event);
                 }
         }
