@@ -162,6 +162,8 @@
 #include "b_game.h"	//added by AC for acbot
 #include "r_things.h"
   // skins
+#include "g_input.h"
+  // gamecontrol
 
 
 //
@@ -1125,9 +1127,18 @@ wait_ret:
 
 boolean  D_WaitPlayer_Response( int key )
 {
+    // [WDJ] This should not respond to the ENTER key.  Users will be pressing ENTER quickly and often.
+    // This message will stop them, and only the correct response will start the unreversible action.
+
+    // Translate for joystick.  The PAUSE is not otherwise used during WAITPLAYER and does not conflict.
+    if( key == gamecontrol[gc_pause][0] || key == gamecontrol[gc_pause][1]
+        || (key >= KEY_JOY0BUT2 && key <= KEY_JOY0BUT5 ) )
+        key = 's';
+   
     // User response handler
     switch( key )
     {
+     // Also gc_menuesc (translated to KEY_ESCAPE)
      case 'q':
      case KEY_ESCAPE:
         if( ! dedicated )

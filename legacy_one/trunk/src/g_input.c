@@ -413,6 +413,38 @@ static keyname_t keynames[] =
   {KEY_JOY3BUT13, "Joy3 b13"},
   {KEY_JOY3BUT14, "Joy3 b14"},
   {KEY_JOY3BUT15, "Joy3 b15"},
+  
+  {KEY_JOY0HATUP, "Joy0 hu"},
+  {KEY_JOY0HATRIGHT, "Joy0 hr"},
+  {KEY_JOY0HATDOWN, "Joy0 hd"},
+  {KEY_JOY0HATLEFT, "Joy0 hl"},
+  
+  {KEY_JOY1HATUP, "Joy1 hu"},
+  {KEY_JOY1HATRIGHT, "Joy1 hr"},
+  {KEY_JOY1HATDOWN, "Joy1 hd"},
+  {KEY_JOY1HATLEFT, "Joy1 hl"},
+  
+  {KEY_JOY2HATUP, "Joy2 hu"},
+  {KEY_JOY2HATRIGHT, "Joy2 hr"},
+  {KEY_JOY2HATDOWN, "Joy2 hd"},
+  {KEY_JOY2HATLEFT, "Joy2 hl"},
+  
+  {KEY_JOY3HATUP, "Joy3 hu"},
+  {KEY_JOY3HATRIGHT, "Joy3 hr"},
+  {KEY_JOY3HATDOWN, "Joy3 hd"},
+  {KEY_JOY3HATLEFT, "Joy3 hl"},
+  
+  {KEY_JOY0LEFTTRIGGER, "Joy0 lt"},
+  {KEY_JOY0RIGHTTRIGGER, "Joy0 rt"},
+  
+  {KEY_JOY1LEFTTRIGGER, "Joy1 lt"},
+  {KEY_JOY1RIGHTTRIGGER, "Joy1 rt"},
+  
+  {KEY_JOY2LEFTTRIGGER, "Joy2 lt"},
+  {KEY_JOY2RIGHTTRIGGER, "Joy2 rt"},
+  
+  {KEY_JOY3LEFTTRIGGER, "Joy3 lt"},
+  {KEY_JOY3RIGHTTRIGGER, "Joy3 rt"},
 };
 
 // Index gamecontrols_e
@@ -452,7 +484,11 @@ char *gamecontrolname[num_gamecontrols] =
     "inventoryprev",
     "inventoryuse",
     "down",
-    "screenshot"
+    "screenshot",
+// Mouse and joystick only, Fixed assignment for keyboard.
+    "menuesc",  // joystick enter menu, and menu escape key
+    "pause",
+    "automap",
 };
 
 #define NUMKEYNAMES (sizeof(keynames)/sizeof(keyname_t))
@@ -591,6 +627,11 @@ void G_Controldefault(void)
         gamecontrol[gc_nextweapon ][0]=']';
         gamecontrol[gc_prevweapon ][0]='[';
     }
+
+// Mouse and joystick only, Fixed assignment for keyboard.
+    gamecontrol[gc_menuesc    ][0]=KEY_JOY0BUT7; // Start button on Xbox360 controllers
+    gamecontrol[gc_pause      ][0]=KEY_JOY0BUT6; // Back button on Xbox360 controllers
+    gamecontrol[gc_automap    ][0]=KEY_JOY0BUT8;
 }
 
 void G_SaveKeySetting(FILE *f)

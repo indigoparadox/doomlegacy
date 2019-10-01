@@ -98,6 +98,10 @@ typedef enum
     gc_invuse,
     gc_flydown,     // flyup is jump !
     gc_screenshot,
+// Mouse and joystick only, Fixed assignment for keyboard.
+    gc_menuesc,  // joystick menu enter and escape key
+    gc_pause,
+    gc_automap,
     num_gamecontrols
 } gamecontrols_e;
 
@@ -106,6 +110,8 @@ extern consvar_t  cv_autorun;
 extern consvar_t  cv_autorun2;
 
 extern consvar_t   cv_grabinput;
+
+extern consvar_t   cv_joy_deadzone;
 
 // mouse
 extern consvar_t   cv_usemouse;

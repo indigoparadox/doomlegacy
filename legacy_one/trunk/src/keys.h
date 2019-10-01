@@ -26,6 +26,7 @@ enum aux_controller_e
   MAXJOYSTICKS =  4,  // "Only" 4 joysticks per machine.
   JOYBUTTONS   = 16,  // Max number of buttons for a joystick.
   JOYHATBUTTONS = 4,  // Four hat directions.
+  XBOXTRIGGERS =  2,  // Two triggers on Xbox-like controllers.
 };
 
 /// These are the key event codes posted by the keyboard handler, and closely match the SDLKey symbols.
@@ -197,6 +198,38 @@ enum key_input_e
   KEY_JOY3BUT14,
   KEY_JOY3BUT15,
   KEY_JOYLAST = KEY_JOY3BUT15,
+
+  KEY_JOY0HATUP,
+  KEY_JOY0HATRIGHT,
+  KEY_JOY0HATDOWN,
+  KEY_JOY0HATLEFT,
+  
+  KEY_JOY1HATUP,
+  KEY_JOY1HATRIGHT,
+  KEY_JOY1HATDOWN,
+  KEY_JOY1HATLEFT,
+  
+  KEY_JOY2HATUP,
+  KEY_JOY2HATRIGHT,
+  KEY_JOY2HATDOWN,
+  KEY_JOY2HATLEFT,
+ 
+  KEY_JOY3HATUP,
+  KEY_JOY3HATRIGHT,
+  KEY_JOY3HATDOWN,
+  KEY_JOY3HATLEFT,
+ 
+  KEY_JOY0LEFTTRIGGER,
+  KEY_JOY0RIGHTTRIGGER,
+  
+  KEY_JOY1LEFTTRIGGER,
+  KEY_JOY1RIGHTTRIGGER,
+  
+  KEY_JOY2LEFTTRIGGER,
+  KEY_JOY2RIGHTTRIGGER,
+  
+  KEY_JOY3LEFTTRIGGER,
+  KEY_JOY3RIGHTTRIGGER,
      
 #ifdef JOY_BUTTONS_DOUBLE     
   // duplicate all joy, all buttons, KEY_JOY0BUT0 .. KEY_JOY3BUT15

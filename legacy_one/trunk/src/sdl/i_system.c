@@ -116,6 +116,10 @@ int fdmouse2 = -1;
 int mouse2_started = 0;
 #endif
 
+#ifdef XBOX_CONTROLLER
+boolean check_Joystick_Xbox[ MAX_JOYSTICKS ] = {false, false, false, false};
+#endif
+
 //
 //I_OutputMsg
 //
@@ -180,6 +184,54 @@ static int Translate_Joybutton(Uint8 which, Uint8 button)
   return KEY_JOY0BUT0 + JOYBUTTONS*which + button;
 }
 
+static int Translate_Joyhat(Uint8 which, Uint8 value)
+{
+  if (which >= MAXJOYSTICKS) 
+    which = MAXJOYSTICKS-1;
+
+  if(value == SDL_HAT_UP)
+  {
+    return KEY_JOY0HATUP + JOYHATBUTTONS*which;
+  }
+  else if(value == SDL_HAT_RIGHT)
+  {
+    return KEY_JOY0HATRIGHT + JOYHATBUTTONS*which;
+  }
+  else if(value == SDL_HAT_DOWN)
+  {
+    return KEY_JOY0HATDOWN + JOYHATBUTTONS*which;
+  }
+  else if(value == SDL_HAT_LEFT)
+  {
+    return KEY_JOY0HATLEFT + JOYHATBUTTONS*which;
+  }
+  else
+  {
+    return 0;
+  }
+}
+
+#ifdef XBOX_CONTROLLER
+static int Translate_Xbox_controller_Trigger(Uint8 which, Uint8 axis)
+{
+  if (which >= MAXJOYSTICKS) 
+    which = MAXJOYSTICKS-1;
+    
+  if(axis == 2)
+  {
+    return KEY_JOY0LEFTTRIGGER + XBOXTRIGGERS*which;
+  }
+  else if(axis == 5)
+  {
+    return KEY_JOY0RIGHTTRIGGER + XBOXTRIGGERS*which;
+  }
+  else
+  {
+    return 0;
+  }
+}
+#endif
+
 int I_JoystickNumAxes(int joynum)
 {
   if (joynum < num_joysticks)
@@ -212,6 +264,18 @@ static void I_GetMouse2Event(void);
 // current modifier key status
 boolean shiftdown = false;
 boolean altdown = false;
+
+Uint8 jhat_directions[8] = {
+  SDL_HAT_UP,
+  SDL_HAT_RIGHTUP,
+  SDL_HAT_RIGHT,
+  SDL_HAT_RIGHTDOWN,
+  SDL_HAT_DOWN,
+  SDL_HAT_LEFTDOWN,
+  SDL_HAT_LEFT,
+  SDL_HAT_LEFTUP
+};
+Uint8 previous_jhat[2] = {0, 0};
 
 
 void I_GetEvent(void)
@@ -382,6 +446,126 @@ void I_GetEvent(void)
           D_PostEvent(&event);
           break;
 
+        case SDL_JOYHATMOTION: // Adding event to allow joy hat mapping
+          // [Leonardo Montenegro]
+          if(inputEvent.jhat.value != SDL_HAT_CENTERED)
+          {
+              // Joy hat pressed
+
+              // Releasing previous value
+              int i;
+              for(i=0; i<2; i++)
+              {
+                  if(previous_jhat[i] != 0)
+                  {
+                      event.type = ev_keyup;
+                      event.data1 = Translate_Joyhat(inputEvent.jhat.which, previous_jhat[i]);
+                      D_PostEvent(&event);
+
+                      previous_jhat[i] = 0;
+                  }
+              }
+
+              // Dealing with diagonal directions
+              if(inputEvent.jhat.value == SDL_HAT_RIGHTUP)
+              {
+                  event.type = ev_keydown;
+                  event.data1 = Translate_Joyhat(inputEvent.jhat.which, SDL_HAT_RIGHT);
+                  D_PostEvent(&event);
+                  previous_jhat[0] = SDL_HAT_RIGHT;
+
+                  event.type = ev_keydown;
+                  event.data1 = Translate_Joyhat(inputEvent.jhat.which, SDL_HAT_UP);
+                  D_PostEvent(&event);
+                  previous_jhat[1] = SDL_HAT_UP;
+              }
+              else if(inputEvent.jhat.value == SDL_HAT_RIGHTDOWN)
+              {
+                  event.type = ev_keydown;
+                  event.data1 = Translate_Joyhat(inputEvent.jhat.which, SDL_HAT_RIGHT);
+                  D_PostEvent(&event);
+                  previous_jhat[0] = SDL_HAT_RIGHT;
+
+                  event.type = ev_keydown;
+                  event.data1 = Translate_Joyhat(inputEvent.jhat.which, SDL_HAT_DOWN);
+                  D_PostEvent(&event);
+                  previous_jhat[1] = SDL_HAT_DOWN;
+              }
+              else if(inputEvent.jhat.value == SDL_HAT_LEFTDOWN)
+              {
+                  event.type = ev_keydown;
+                  event.data1 = Translate_Joyhat(inputEvent.jhat.which, SDL_HAT_LEFT);
+                  D_PostEvent(&event);
+                  previous_jhat[0] = SDL_HAT_LEFT;
+
+                  event.type = ev_keydown;
+                  event.data1 = Translate_Joyhat(inputEvent.jhat.which, SDL_HAT_DOWN);
+                  D_PostEvent(&event);
+                  previous_jhat[1] = SDL_HAT_DOWN;
+              }
+              else if(inputEvent.jhat.value == SDL_HAT_LEFTUP)
+              {
+                  event.type = ev_keydown;
+                  event.data1 = Translate_Joyhat(inputEvent.jhat.which, SDL_HAT_LEFT);
+                  D_PostEvent(&event);
+                  previous_jhat[0] = SDL_HAT_LEFT;
+
+                  event.type = ev_keydown;
+                  event.data1 = Translate_Joyhat(inputEvent.jhat.which, SDL_HAT_UP);
+                  D_PostEvent(&event);
+                  previous_jhat[1] = SDL_HAT_UP;
+              }
+              else
+              {
+                  event.type = ev_keydown;
+                  event.data1 = Translate_Joyhat(inputEvent.jhat.which, inputEvent.jhat.value);
+                  D_PostEvent(&event);
+
+                  previous_jhat[0] = inputEvent.jhat.value;
+              }
+          }
+          else
+          {
+              // Joy hat released
+              int i;
+              for(i=0; i<8; i++)
+              {
+                  event.type = ev_keyup;
+                  event.data1 = Translate_Joyhat(inputEvent.jhat.which, jhat_directions[i]);
+                  D_PostEvent(&event);
+              }
+
+              previous_jhat[0] = 0;
+              previous_jhat[1] = 0;
+          }
+          break;
+
+#ifdef XBOX_CONTROLLER
+        case SDL_JOYAXISMOTION: // Adding event for mapping triggers for Xbox-like controllers
+          // [Leonardo Montenegro]
+          if(check_Joystick_Xbox[inputEvent.jaxis.which])
+          {
+              if(inputEvent.jaxis.axis == 2 || inputEvent.jaxis.axis == 5)
+              {
+                  if(inputEvent.jaxis.value > 0)
+                  {
+                      // Trigger pressed
+                      event.type = ev_keydown;
+                      event.data1 = Translate_Xbox_controller_Trigger(inputEvent.jaxis.which, inputEvent.jaxis.axis);
+                      D_PostEvent(&event);
+                  }
+                  else
+                  {
+                      // Trigger released
+                      event.type = ev_keyup;
+                      event.data1 = Translate_Xbox_controller_Trigger(inputEvent.jaxis.which, inputEvent.jaxis.axis);
+                      D_PostEvent(&event);
+                  }
+              }
+          }
+          break;
+#endif
+ 
         case SDL_QUIT:
           I_Quit();
           //M_QuitResponse('y');
@@ -484,6 +668,12 @@ static void I_JoystickInit(void)
           CONS_Printf("    %d hats.\n", SDL_JoystickNumHats(joy));
           CONS_Printf("    %d trackballs.\n", SDL_JoystickNumBalls(joy));
       }
+      
+#ifdef XBOX_CONTROLLER     
+      check_Joystick_Xbox[i] =
+        (  strcmp(SDL_JoystickName(i), "Xbox 360 Wireless Receiver (XBOX)") == 0
+        || strcmp(SDL_JoystickName(i), "Microsoft X-Box 360 pad") == 0  );
+#endif     
   }
 }
 

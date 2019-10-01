@@ -499,6 +499,9 @@ consvar_t cv_mouse2_invert    = {"invertmouse2","0",CV_SAVE,CV_OnOff};
 consvar_t cv_mouse2_move      = {"mousemove2"  ,"1",CV_SAVE,CV_OnOff};
 consvar_t cv_alwaysfreelook2  = {"alwaysmlook2","0",CV_SAVE,CV_OnOff};
 
+CV_PossibleValue_t joy_deadzone_cons_t[]={{0,"MIN"},{20,"INC"},{2000,"MAX"},{0,NULL}};
+consvar_t cv_joy_deadzone     = {"joydeadzone" ,"800",CV_SAVE,joy_deadzone_cons_t};
+
 consvar_t cv_showmessages     = {"showmessages","2",CV_SAVE | CV_CALL | CV_NOINIT,showmessages_cons_t,ShowMessage_OnChange};
 consvar_t cv_pickupflash      = {"pickupflash" ,"1",CV_SAVE, pickupflash_cons_t};
 consvar_t cv_weapon_recoil    = {"weaponrecoil","0",CV_SAVE | CV_NETVAR, CV_OnOff};  // Boom weapon recoil
@@ -1184,14 +1187,28 @@ void G_BuildTiccmd(ticcmd_t* cmd, int realtics, int which_player)
       if (j.playnum != which_player)
         continue;
 
-      int value = (int)(j.scale * I_JoystickGetAxis(j.joynum, j.axisnum));
+      int joyvalue = I_JoystickGetAxis(j.joynum, j.axisnum);
+      if( joyvalue >= -cv_joy_deadzone.value && joyvalue <= cv_joy_deadzone.value)  joyvalue = 0; // Deadzone
+      int value = (int)(j.scale * joyvalue);
+
       switch (j.action)
       {
-        case ja_pitch  : pitch = value << 16; break;
-        case ja_move   : forward += value; break;
-        case ja_turn   : cmd->angleturn += value; break;
-        case ja_strafe : side += value; break;
-        default: break;
+        case ja_pitch:
+          pitch = value << 16;
+          break;
+        case ja_move:
+          if(speed == 1) value *= 2; // Double value if player is running
+          forward += value;
+          break;
+        case ja_turn:
+          cmd->angleturn += value;
+          break;
+        case ja_strafe:
+          if(speed == 1) value *= 2; // Double value if player is running
+          side += value;
+          break;
+        default:
+          break;
       }
     }
 
@@ -1474,7 +1491,8 @@ boolean G_Responder (event_t* ev)
     switch (ev->type)
     {
       case ev_keydown:
-        if (ev->data1 == KEY_PAUSE)
+        if (ev->data1 == KEY_PAUSE  // keyboard
+            || ev->data1 == gamecontrol[gc_pause][0] || ev->data1 == gamecontrol[gc_pause][1] )  // joystick
         {
             COM_BufAddText("pause\n");
             goto handled;

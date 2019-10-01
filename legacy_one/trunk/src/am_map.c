@@ -695,7 +695,9 @@ boolean AM_Responder ( event_t *  ev )
 
     if (!automapactive)
     {
-        if (ev->type == ev_keydown && ev->data1 == AM_STARTKEY)
+        if (ev->type == ev_keydown
+            && (ev->data1 == AM_STARTKEY  // Keyboard
+                || ev->data1 == gamecontrol[gc_automap][0] || ev->data1 == gamecontrol[gc_automap][1]))  // Gamepad buttons
         {
             //faB: prevent alt-tab in win32 version to activate automap just before minimizing the app
             //         doesn't do any harm to the DOS version
@@ -771,6 +773,12 @@ boolean AM_Responder ( event_t *  ev )
           default:
             rc = false;
             break;
+        }
+
+        // Gamepad buttons
+        if(ev->data1 == gamecontrol[gc_automap][0] || ev->data1 == gamecontrol[gc_automap][1])
+        {
+            AM_Stop ();
         }
     }
 
