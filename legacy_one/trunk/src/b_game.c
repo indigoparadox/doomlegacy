@@ -285,14 +285,23 @@ static byte bot_init_done = 0;
 
 static void CV_botrandom_OnChange( void )
 {
+    byte  was_paused = paused;
+
 #ifdef BOT_VERSION_DETECT
     if( demoversion < 148 )  return;
 #endif
-
+   
+    // [WDJ] Updating the random number generators in the middle of a game, ugh.
+    if( server && netgame )
+        SV_Send_State( 1 );  // pause everybody
+    
     B_Rand_SetIndex( cv_bot_randseed.value );
     // Only re-init after initial loading of config.
     if( bot_init_done )
        B_Init_Names();
+
+    if( server && netgame )
+        SV_Send_State( was_paused );  // sync bot random numbers
 }
 
 
