@@ -1536,7 +1536,7 @@ void CV_ValueIncDec (consvar_t *cvar, int increment)
         {
             // MIN .. MAX
             int min_value = pv0->value;  // MIN value
-            int max_value = MAXINT;
+            int max_value = INT_MAX;
             CV_PossibleValue_t *  pv;
 
             // Search the list for MAX value, or INC.

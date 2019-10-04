@@ -393,7 +393,7 @@ typedef struct sector_s
     sector_model_e  model;  // Boom or Legacy special sector  [WDJ] 11/14/2009
     
     // [WDJ] 3/2011, (killough 8/28/98 Friction as sector property).
-    // friction=MAXINT when unused
+    // friction=INT_MAX when unused
     fixed_t  friction;
     int movefactor;
   

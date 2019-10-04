@@ -501,7 +501,7 @@ char * VID_GetModeName( modenum_t modenum )
 modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
 {
     modenum_t  modenum = { MODE_NOP, 0 };
-    int bestdist = MAXINT;
+    int bestdist = INT_MAX;
     int best, tdist, i;
 
     if( rmodetype == MODE_fullscreen )

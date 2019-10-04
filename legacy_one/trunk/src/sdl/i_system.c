@@ -1079,7 +1079,7 @@ uint64_t I_GetDiskFreeSpace(void)
 #endif
 
 guess:
-  return MAXINT;
+  return INT_MAX;
 }
 
 

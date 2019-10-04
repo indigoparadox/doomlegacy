@@ -1021,7 +1021,7 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
     if( x2 >= rdraw_viewwidth )  x2 = rdraw_viewwidth-1;
     for (dc_x = x1 ; dc_x <= x2 ; dc_x++)
     {
-        if (maskedtexturecol[dc_x] != MAXSHORT)
+        if (maskedtexturecol[dc_x] != SHRT_MAX)
         {
           // if not masked
           // calculate 3Dfloor lighting
@@ -1144,7 +1144,7 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
           col_data = R_GetColumn(texren, maskedtexturecol[dc_x]);
           colfunc_2s( col_data );
 
-        } // if (maskedtexturecol[dc_x] != MAXSHORT)
+        } // if (maskedtexturecol[dc_x] != SHRT_MAX)
         dm_yscale += rw_scalestep;
     } // for( dx_x = x1..x2 )
     colfunc = basecolfunc;
@@ -1398,7 +1398,7 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
     // draw the columns
     for (dc_x = x1 ; dc_x <= x2 ; dc_x++)
     {
-      if(maskedtexturecol[dc_x] != MAXSHORT)
+      if(maskedtexturecol[dc_x] != SHRT_MAX)
       {
         dm_top_patch = dm_windowtop = (centeryfrac - FixedMul((dm_texturemid - offsetvalue), dm_yscale));
         dm_bottom_patch = dm_windowbottom = FixedMul(*ffloor->topheight - *ffloor->bottomheight, dm_yscale) + dm_top_patch;

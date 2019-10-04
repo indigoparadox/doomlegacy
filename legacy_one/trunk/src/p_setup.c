@@ -2190,7 +2190,7 @@ boolean P_AddWadFile (char* wadfilename, /*OUT*/ level_id_t * firstmap_out )
     // search for maps
     //
     lumpinfo = wadfile->lumpinfo;
-    firstmapreplaced = MAXINT;  // invalid
+    firstmapreplaced = INT_MAX;  // invalid
     for (i=0; i<wadfile->numlumps; i++,lumpinfo++)
     {
         name = lumpinfo->name;

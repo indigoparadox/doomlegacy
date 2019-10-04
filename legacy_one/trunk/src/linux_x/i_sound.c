@@ -412,7 +412,7 @@ int addsfx_ch(int sfxid, int vol, int step, int sep)
 
     // Find inactive channel, or oldest channel.
     chp = &channel[0];  // default
-    oldest = MAXINT;
+    oldest = INT_MAX;
     for ( chp2 = &channel[0]; chp2 < &channel[cv_numChannels.value]; chp2++ )
     {
         if( chp2->data == NULL )

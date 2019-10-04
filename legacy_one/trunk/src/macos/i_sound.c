@@ -131,7 +131,7 @@ static int addsfx ( int		sfxid,
 
     // Loop all channels to find oldest SFX.
     slot = 0;  // default
-    int oldest = MAXINT;
+    int oldest = INT_MAX;
     for (i=0; i<NUM_CHANNELS; i++)
     {
         if ( channels[i] == 0 )  // unused

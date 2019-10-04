@@ -404,7 +404,7 @@ modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
 {
     modenum_t  modenum = { MODE_NOP, 0 };
     int tdist;
-    int bestdist = MAXINT;
+    int bestdist = INT_MAX;
     int mi = 1;  // window modes
     vmode_t * pv = all_vidmodes;  // window modes
 

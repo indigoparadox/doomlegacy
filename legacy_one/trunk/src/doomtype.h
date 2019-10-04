@@ -183,14 +183,19 @@ int strlwr(char *n);
 #if ! defined(MAXINT) && defined( INT_MAX )
 // [WDJ] Define the values.h symbols using defines from limits.h.
 // This is what values.h does now.
-#define MAXCHAR   CHAR_MAX
-#define MINCHAR   CHAR_MIN
-#define MAXSHORT  SHRT_MAX
-#define MINSHORT  SHRT_MIN
 #define MAXINT    INT_MAX
 #define MININT    INT_MIN
+#endif
+#if ! defined(MAXCHAR) && defined( CHAR_MAX )
+#define MAXCHAR   CHAR_MAX
+#define MINCHAR   CHAR_MIN
+#endif
+#if ! defined(MAXSHORT) && defined( SHRT_MAX )
+#define MAXSHORT  SHRT_MAX
+#define MINSHORT  SHRT_MIN
+#endif
 
-#else
+#if 0
 // [WDJ] This is very dangerous considering 32 bit and 64 bit systems,
 // should use stdint.h values instead.
 // These are obsolete defines from values.h.
@@ -227,7 +232,6 @@ int strlwr(char *n);
 // used in many places
 #define MININT    ((int)0x80000000)
 #endif
-
 #endif
 
 // Sound effect id type.

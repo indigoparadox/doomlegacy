@@ -845,7 +845,7 @@ void vissprites_tablesize ( void )
     if ( request == (vspr_max+1) )
         return;		// same as existing allocation
 
-    if( vspr_change_delay < MAXINT )
+    if( vspr_change_delay < INT_MAX )
     {
         vspr_change_delay ++;
     }
@@ -3621,7 +3621,7 @@ next_token:
 
             // not found so make a new one
             if( !found )
-                R_AddSingleSpriteDef (sprname, &sk->spritedef, wadnum, 0, MAXINT);
+                R_AddSingleSpriteDef (sprname, &sk->spritedef, wadnum, 0, INT_MAX);
 
         }
 

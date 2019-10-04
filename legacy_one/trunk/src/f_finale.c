@@ -309,7 +309,7 @@ void F_Ticker (void)
                 keypressed = false;
                 if( (unsigned)finalecount < strlen (finaletext)*TEXTSPEED )
                     // force text to be write 
-                    finalecount += MAXINT/2;
+                    finalecount += INT_MAX/2;
                 else
                 {
                     if (gamemode == doom2_commercial)
@@ -319,20 +319,20 @@ void F_Ticker (void)
                         else
                         {
                             gameaction = ga_worlddone;
-                            finalecount = MININT;    // wait until map is lunched
+                            finalecount = INT_MIN;    // wait until map is lunched
                         }
                     }
                     else
                         // next animation state (just above)
-                        finalecount = MAXINT;
+                        finalecount = INT_MAX;
                 }
             }
 
             if( gamemode != doom2_commercial)
             {
                 uint32_t  f = finalecount;
-                if( f >= MAXINT/2 )
-                    f -= MAXINT/2;
+                if( f >= INT_MAX/2 )
+                    f -= INT_MAX/2;
 
                 if( f > strlen (finaletext)*TEXTSPEED + TEXTWAIT )
                 {

@@ -504,7 +504,7 @@ void I_ShutdownSystem()
 
 void I_GetDiskFreeSpace(INT64 *freespace)
 {
-        *freespace = MAXINT;
+        *freespace = INT_MAX;
 }
 
 char *I_GetUserName(void)

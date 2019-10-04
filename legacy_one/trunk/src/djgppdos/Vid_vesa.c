@@ -283,7 +283,7 @@ modenum_t  VID_GetModeForSize( int w, int h, byte modetype )
 {
     modenum_t  modenum = { MODE_NOP, 0 };
     int mi = 1;
-    int tdist = MAXINT;
+    int tdist = INT_MAX;
     int bestdist;
     vmode_t * best;
     vmode_t * pv = all_vidmodes;

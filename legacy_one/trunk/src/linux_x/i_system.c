@@ -776,7 +776,7 @@ uint64_t I_GetDiskFreeSpace(void)
 {
   struct statfs stfs;
   if(statfs(".",&stfs)==-1) {
-    return MAXINT;
+    return INT_MAX;
   }
   return stfs.f_bavail*stfs.f_bsize;
 }

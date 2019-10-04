@@ -290,7 +290,7 @@ range_t  VID_ModeRange( byte modetype )
 modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
 {
     modenum_t  modenum = { MODE_NOP, 0 };
-    int bestdist = MAXINT;
+    int bestdist = INT_MAX;
     int best, tdist, i;
     
     // fullscreen and windowed modes, 1..

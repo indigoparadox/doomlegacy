@@ -273,7 +273,7 @@ player_err:
     goto errexit;
 
 errexit:
-    return  MAXINT;  //  > MAXPLAYERS, indicates error
+    return  INT_MAX;  //  > MAXPLAYERS, indicates error
 }
 
 

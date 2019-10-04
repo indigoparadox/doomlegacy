@@ -2290,7 +2290,7 @@ static boolean testwin95 = false;
         if (pfnGetDiskFreeSpaceEx(NULL, &ul_freespace, &ul_usedbytes, NULL))
 	    freespace = ul_freespace.QuadPart;
 	else
-            freespace = MAXINT;
+            freespace = INT_MAX;
     }
     else
     {

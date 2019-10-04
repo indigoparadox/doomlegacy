@@ -955,7 +955,7 @@ byte* R_GenerateTexture2 ( int texnum, texture_render_t *  texren )
     {
         compat_t * cp = &compat[p];
         cp->postptr = NULL;	// disable until reach starting column
-        cp->nxt_y = MAXINT;	// disable
+        cp->nxt_y = INT_MAX;	// disable
 
         // Track patch memory usage to detect reused columns.
         cp->usedpatchdata = 0;
@@ -1056,8 +1056,8 @@ byte* R_GenerateTexture2 ( int texnum, texture_render_t *  texren )
         destpost = (post_t*)destpixels;	// first post in column
         postlength = 0;  // length of current post
         bottom = 0;	 // next y in column
-        segnxt_y = MAXINT - 10;	// init to very large, but less than disabled
-        segbot_y = MAXINT - 10;
+        segnxt_y = INT_MAX - 10;	// init to very large, but less than disabled
+        segbot_y = INT_MAX - 10;
 
         // setup the columns, active or inactive
         for (p=0; p<patchcount; p++ )
@@ -1161,8 +1161,8 @@ byte* R_GenerateTexture2 ( int texnum, texture_render_t *  texren )
                patch_off: // empty post
                 // clip left and right by turning this patch off
                 cp->postptr = NULL;
-                cp->nxt_y = MAXINT;
-                cp->bot_y = MAXINT;
+                cp->nxt_y = INT_MAX;
+                cp->bot_y = INT_MAX;
             }
         }  // for all patches
 
@@ -1188,7 +1188,7 @@ byte* R_GenerateTexture2 ( int texnum, texture_render_t *  texren )
             // Find next post y in this column.
             // Only need the last patch, as that overwrites every other patch.
             nxtpat = -1;	// patch with next post
-            segnxt_y = MAXINT-64;	// may be negative, must be < MAXINT
+            segnxt_y = INT_MAX-64;	// may be negative, must be < INT_MAX
             compat_t * cp = &compat[0];
             for (p=0; p<patchcount; p++, cp++)
             {
@@ -1202,8 +1202,8 @@ byte* R_GenerateTexture2 ( int texnum, texture_render_t *  texren )
                     {
                         // turn this patch off
                         cp->postptr = NULL;
-                        cp->nxt_y = MAXINT;	// beyond texture size
-                        cp->bot_y = MAXINT;
+                        cp->nxt_y = INT_MAX;	// beyond texture size
+                        cp->bot_y = INT_MAX;
                         break;
                     }
                     cp->nxt_y = cp->originy + cp->postptr->topdelta;
