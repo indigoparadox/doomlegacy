@@ -67,10 +67,11 @@ byte B_Random (void);  // bots etc..
 // Fix randoms for demos.
 void M_ClearRandom (void);
 
-byte P_GetRandIndex(void);
+byte P_Rand_GetIndex(void);
+byte B_Rand_GetIndex(void);
 
-void P_SetRandIndex(byte rindex);
-void B_SetRandIndex(byte rindex);
+void P_Rand_SetIndex(byte rindex);
+void B_Rand_SetIndex(byte rindex);
 
 // [WDJ] Extended random, has long repeat period.
 //  returns unsigned 16 bit
@@ -80,5 +81,8 @@ int  E_SignedRandom( int range );
 
 // True for the percentage of the calls.
 #define E_RandomPercent( per )   (E_Random() < ((unsigned int)(per * (0.01f * 0xFFFF))))
+
+uint32_t  E_Rand_Get( uint32_t * rs );
+void  E_Rand_Set( uint32_t rn, uint32_t rs );
 
 #endif

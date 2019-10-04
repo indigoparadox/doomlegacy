@@ -3323,7 +3323,7 @@ void P_ArchiveMisc()
     WRITEU32(save_p, pig);
 
     WRITEU32(save_p, leveltime);
-    WRITEBYTE(save_p, P_GetRandIndex());
+    WRITEBYTE(save_p, P_Rand_GetIndex());
     SG_Writebuf();
 }
 
@@ -3352,7 +3352,7 @@ boolean P_UnArchiveMisc()
 
     // get the time
     leveltime = READU32(save_p);
-    P_SetRandIndex(READBYTE(save_p));
+    P_Rand_SetIndex(READBYTE(save_p));
 
     return true;
 }

@@ -289,7 +289,7 @@ static void CV_botrandom_OnChange( void )
     if( demoversion < 148 )  return;
 #endif
 
-    B_SetRandIndex( cv_bot_randseed.value );
+    B_Rand_SetIndex( cv_bot_randseed.value );
     // Only re-init after initial loading of config.
     if( bot_init_done )
        B_Init_Names();
