@@ -3324,6 +3324,13 @@ void P_ArchiveMisc()
 
     WRITEU32(save_p, leveltime);
     WRITEBYTE(save_p, P_Rand_GetIndex());
+    // ver 1.48, save B_Random, E_Random
+    WRITEBYTE(save_p, B_Rand_GetIndex());
+    uint32_t rand1, rand2; // cannot trust compiler to keep order
+    rand1 = E_Rand_Get( & rand2 );
+    WRITEU32(save_p, rand1);
+    WRITEU32(save_p, rand2);
+
     SG_Writebuf();
 }
 
@@ -3353,6 +3360,13 @@ boolean P_UnArchiveMisc()
     // get the time
     leveltime = READU32(save_p);
     P_Rand_SetIndex(READBYTE(save_p));
+    if( sg_version >= 148 )
+    {
+        B_Rand_SetIndex(READBYTE(save_p));
+        uint32_t rand1 = READU32(save_p); // cannot trust compiler to keep order
+        uint32_t rand2 = READU32(save_p);
+        E_Rand_Set( rand1, rand2 );
+    }
 
     return true;
 }
