@@ -110,7 +110,7 @@ typedef struct
 {
     int32_t     originx;
     int32_t     originy;
-    int		patchnum;  // because it uses -1 for no lump
+    lumpnum_t	lumpnum;
 } texpatch_t;
 
 // [WDJ] 2/8/2010

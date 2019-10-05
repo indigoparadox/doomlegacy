@@ -587,7 +587,7 @@ static void HWR_GenerateTexture (int texnum, MipTexture_t* grtex,
          i<texture->patchcount;
          i++, texpatch++)
     {
-        sw_patch = W_CachePatchNum_Endian (texpatch->patchnum, PU_CACHE);
+        sw_patch = W_CachePatchNum_Endian( texpatch->lumpnum, PU_CACHE );
         // correct texture size for Legacy's large skies
         if (skyspecial) {
             //CONS_Printf("sky %d, %d\n",texture->width,sw_patch->width);

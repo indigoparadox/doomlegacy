@@ -7473,4 +7473,10 @@ Fix sky wrap to handle sky where a horz row is all the same color
 (eventual segfault).
 Improve the embebedded sky blob handling.
 
+*** w108_swap16
+patchfile = w108_59_swap16.patch
+- commit revision 1473
+Hunt down some LE_SWAP16 that need to be unsigned.
+Attempting to fix BUG 0633.
+
 
