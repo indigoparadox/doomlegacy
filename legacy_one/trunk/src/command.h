@@ -50,7 +50,20 @@
 
 typedef void (*com_func_t) (void);
 
-void  COM_AddCommand (const char * name, com_func_t func);
+typedef enum {
+  // need 0 as noop
+  CC_info = 1,
+  CC_cheat,   // cheats
+  CC_command, // general commands
+  CC_savegame, // savegames
+  CC_config,  // config files
+  CC_control, // keys, bind
+  CC_fs, // fragglescript
+  CC_chat, // chat
+  CC_net, // network
+  CC_console // console
+} command_type_e;
+void  COM_AddCommand (const char * name, com_func_t func, byte command_type );
 
 typedef struct {
   byte   num;     // number of actual args

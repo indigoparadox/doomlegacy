@@ -388,8 +388,8 @@ void CON_Register(void)
     CV_RegisterVar (&cons_speed);
     CV_RegisterVar (&cons_height);
     CV_RegisterVar (&cons_backpic);
-    COM_AddCommand ("cls", CONS_Clear_f);
-    COM_AddCommand ("bind", CONS_Bind_f);
+    COM_AddCommand ("cls", CONS_Clear_f, CC_console);
+    COM_AddCommand ("bind", CONS_Bind_f, CC_console);
 }
 
 // after FullGraphics

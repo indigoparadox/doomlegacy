@@ -382,7 +382,7 @@ void I_InitCD (void)
       return;
   }
 
-  COM_AddCommand ("cd", command_CD_f);
+  COM_AddCommand ("cd", command_CD_f, CC_command);
 }
 
 

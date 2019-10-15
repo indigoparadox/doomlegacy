@@ -261,7 +261,7 @@ void MS_Register_Commands(void)
     CV_RegisterVar(&cv_internetserver);
     CV_RegisterVar(&cv_masterserver);
     CV_RegisterVar(&cv_servername);
-    COM_AddCommand("listserv", Command_Listserv_f);
+    COM_AddCommand("listserv", Command_Listserv_f, CC_net);
 }
 
 static void MS_Close_socket(void)

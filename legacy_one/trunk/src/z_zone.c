@@ -437,7 +437,7 @@ void Z_Init (void)
 #endif
 
     // calls Z_Malloc, so must be last
-    COM_AddCommand ("meminfo", Command_MemInfo_f);
+    COM_AddCommand("meminfo", Command_MemInfo_f, CC_info);
 }
 
 

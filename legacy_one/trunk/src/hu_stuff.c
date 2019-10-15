@@ -1255,8 +1255,8 @@ void Command_Chatmacro_f (void)
 
 void HU_Register_Commands( void )
 {
-    COM_AddCommand ("say"    , Command_Say_f);
-    COM_AddCommand ("sayto"  , Command_Sayto_f);
-    COM_AddCommand ("sayteam", Command_Sayteam_f);
+    COM_AddCommand ("say"    , Command_Say_f, CC_chat);
+    COM_AddCommand ("sayto"  , Command_Sayto_f, CC_chat);
+    COM_AddCommand ("sayteam", Command_Sayteam_f, CC_chat);
     Register_NetXCmd(XD_SAY, Got_NetXCmd_Saycmd);
 }

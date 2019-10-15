@@ -654,7 +654,7 @@ void COM_MapInfo_f(void)
 
 void P_Register_Info_Commands(void)
 {
-  COM_AddCommand("mapinfo",  COM_MapInfo_f);
+  COM_AddCommand("mapinfo",  COM_MapInfo_f, CC_info);
 }
 
 

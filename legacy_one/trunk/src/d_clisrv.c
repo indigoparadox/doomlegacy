@@ -1868,9 +1868,9 @@ void D_Init_ClientServer (void)
     }
 //    debug_Printf( "viewangleoffset=%i\n", viewangleoffset );
 
-    COM_AddCommand("playerinfo",Command_PlayerInfo);
-    COM_AddCommand("kick",Command_Kick);
-    COM_AddCommand("connect",Command_connect);
+    COM_AddCommand("playerinfo",Command_PlayerInfo, CC_info);
+    COM_AddCommand("kick",Command_Kick, CC_net);
+    COM_AddCommand("connect",Command_connect, CC_net);
 
     Register_NetXCmd(XD_KICK, Got_NetXCmd_KickCmd);
     Register_NetXCmd(XD_ADDPLAYER, Got_NetXCmd_AddPlayer);

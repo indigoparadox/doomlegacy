@@ -4362,7 +4362,7 @@ void HWR_Register_Gr2Commands(void)
     CV_RegisterVar(&cv_grclipwalls);
 
     // engine commands
-    COM_AddCommand("gr_stats", Command_GrStats_f);
+    COM_AddCommand("gr_stats", Command_GrStats_f, CC_info);
 }
 
 // --------------------------------------------------------------------------
