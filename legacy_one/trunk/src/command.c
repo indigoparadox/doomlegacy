@@ -1435,9 +1435,9 @@ void CV_Restore_User_Settings( void )
 void Got_NetXCmd_NetVar(xcmd_t * xc)
 {
     byte * bp = xc->curpos;	// macros READ,SKIP want byte*
-    char *svalue = (char *)bp;
 
-    consvar_t *cvar = CV_FindNetVar(READU16(bp));
+    consvar_t *cvar = CV_FindNetVar(READU16(bp));  // netvar id
+    char *svalue = (char *)bp;  // after netvar id
 
     while( *(bp++) ) {  // find 0 term
        if( bp > xc->endpos )  goto buff_overrun;  // bad string
