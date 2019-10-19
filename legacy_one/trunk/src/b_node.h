@@ -75,9 +75,9 @@ typedef struct SearchNode_s
 } SearchNode_t;
 
 extern SearchNode_t***    botNodeArray;
-extern int    numbotnodes,
-              xOffset, yOffset,
-              xSize, ySize;
+extern int  numbotnodes;
+extern int  xOffset, yOffset;
+extern int  xSize, ySize;
 
 //boolean B_PTRPathTraverse (intercept_t *in);
 SearchNode_t* B_FindClosestNode(fixed_t x, fixed_t y);

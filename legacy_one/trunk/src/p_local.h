@@ -468,6 +468,7 @@ extern byte  legacy_detect;
 void  DemoAdapt_p_user( void );
 void  DemoAdapt_p_enemy( void );
 void  DemoAdapt_p_floor( void );
+void  DemoAdapt_bots( void );
 
 // Alter for Doom or Heretic.
 extern int ceilmovesound;
