@@ -1123,6 +1123,7 @@ void M_Connect( int choice )
     // do not call menuexitfunc 
     M_Clear_Menus(false);
 
+    // Invoke Command_connect
     COM_BufAddText(va("connect node %d\n",
                       serverlist[choice-FIRSTSERVERLINE].server_node));
     setup_net_savegame();
@@ -1175,7 +1176,7 @@ void M_DrawConnectMenu( void )
         V_DrawString (currentMenu->x, sly, 0, serverlist[i].info.servername);
         p = va("%d", serverlist[i].info.trip_time);  // ping time
         V_DrawString (currentMenu->x + 200 - V_StringWidth(p), sly, 0, p);
-        p = va("%d/%d  %d", serverlist[i].info.numberofplayer,
+        p = va("%d/%d  %d", serverlist[i].info.num_active_players,
                             serverlist[i].info.maxplayer,
                             serverlist[i].info.deathmatch);
         V_DrawString (currentMenu->x + 250 - V_StringWidth(p), sly, 0, p);

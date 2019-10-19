@@ -328,8 +328,7 @@ void Command_AddBot(void)
         return;
     }
 
-    while ((pn < MAXPLAYERS) && playeringame[pn])  // find free player slot
-       pn++;
+    pn = SV_get_player_num();
 
     if( pn >= MAXPLAYERS )
     {

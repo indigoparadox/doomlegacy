@@ -1069,12 +1069,12 @@ static void DebugPrintpacket(char *header)
    case PT_SERVERTICS:
     fprintf(debugfile, "    firsttic %d ply %d tics %d ntxtcmd %d\n    ",
       ExpandTics (netbuffer->u.serverpak.starttic),
-      netbuffer->u.serverpak.numplayers,
+      netbuffer->u.serverpak.num_player_slot,
       netbuffer->u.serverpak.numtics,
-      (int)(&((char *)netbuffer)[doomcom->datalength] - (char *)&netbuffer->u.serverpak.cmds[netbuffer->u.serverpak.numplayers*netbuffer->u.serverpak.numtics]) );
+      (int)(&((char *)netbuffer)[doomcom->datalength] - (char *)&netbuffer->u.serverpak.cmds[netbuffer->u.serverpak.num_player_slot*netbuffer->u.serverpak.numtics]) );
     fprintfstring(
-      (byte *)&netbuffer->u.serverpak.cmds[netbuffer->u.serverpak.numplayers*netbuffer->u.serverpak.numtics],
-      &((char *)netbuffer)[doomcom->datalength] - (char *)&netbuffer->u.serverpak.cmds[netbuffer->u.serverpak.numplayers*netbuffer->u.serverpak.numtics] );
+      (byte *)&netbuffer->u.serverpak.cmds[netbuffer->u.serverpak.num_player_slot*netbuffer->u.serverpak.numtics],
+      &((char *)netbuffer)[doomcom->datalength] - (char *)&netbuffer->u.serverpak.cmds[netbuffer->u.serverpak.num_player_slot*netbuffer->u.serverpak.numtics] );
     break;
    case PT_CLIENTCMD:
    case PT_CLIENT2CMD:
@@ -1191,6 +1191,10 @@ boolean HSendPacket(int to_node, boolean reliable, byte acknum,
     // backup the current packet.
     doomcom->remotenode = to_node;
     if(doomcom->datalength <= 0)   goto empty_packet;
+
+#ifdef DOSNET_SUPPORT
+    doomcom->numplayers = num_player_slot;
+#endif
 
     // Include any pending return_ack, player nodes only.
     netbuffer->ack_return = (to_node<MAXNETNODES)?
@@ -1446,14 +1450,18 @@ boolean D_Startup_NetGame(void)
         doomcom=Z_Malloc(sizeof(doomcom_t),PU_STATIC,NULL);
         memset(doomcom,0,sizeof(doomcom_t));
         doomcom->id = DOOMCOM_ID;        
+#ifdef DOSNET_SUPPORT
         doomcom->unused_deathmatch = 0;  // unused
         doomcom->consoleplayer = 0;
+#endif
         doomcom->extratics = 0;
 
         I_Init_TCP_Network();
     }
+#ifdef DOSNET_SUPPORT
     doomcom->num_player_netnodes = 0;
     doomcom->unused_ticdup = 1;  // unused
+#endif
     netbuffer = (netbuffer_t *)&doomcom->data;
 
     if (M_CheckParm ("-extratic"))
@@ -1515,9 +1523,14 @@ boolean D_Startup_NetGame(void)
     if (M_CheckParm ("-debugfile"))
     {
         char    filename[20];
+#ifdef DOSNET_SUPPORT
         int     k=doomcom->consoleplayer-1;
+#else
+        int     k= consoleplayer - 1;
+#endif
         if( M_IsNextParm() )
             k = atoi(M_GetNextParm())-1;
+
         while (!debugfile && k<MAXPLAYERS)
         {
             k++;
