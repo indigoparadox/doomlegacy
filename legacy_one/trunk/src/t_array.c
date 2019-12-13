@@ -78,7 +78,7 @@ void T_Add_FSArray(fs_array_t *array)
 
 static void * initsave_levelclear = NULL;  // indicates when PU_LEVEL cleared
   
-// call from P_SetupLevel and P_SaveGame
+// call from P_SetupLevel and P_Savegame_Save_game
 // Clears added array values but not base of fs_arraylist
 void T_Init_FSArrayList(void)
 {

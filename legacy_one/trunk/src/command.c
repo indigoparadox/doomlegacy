@@ -1471,7 +1471,7 @@ buff_overrun:
 }
 
 
-// Called by SV_Send_ServerConfig, P_SaveGame.
+// Called by SV_Send_ServerConfig, P_Savegame_Save_game.
 void CV_SaveNetVars(xcmd_t * xc)
 {
     char buf[32];

@@ -4116,7 +4116,7 @@ void M_ReadSaveStrings( int scroll_direction )
             // read the savegame header and react
             read( handle, savebuffer, savebuffer_size );
             close (handle);
-            if( P_Read_Savegame_Header( &sginfo, 0 ) )
+            if( P_Savegame_Read_header( &sginfo, 0 ) )
             {
                 if( sginfo.map == NULL ) sginfo.map = " -  ";
                 if( sginfo.levtime == NULL ) sginfo.levtime = "";

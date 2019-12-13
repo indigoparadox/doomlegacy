@@ -954,7 +954,7 @@ void Net_CloseConnection(int nnode)
 
     // No waiting for ack from this net node.
     InitNode(nnode);
-    AbortSendFiles(nnode);
+    Abort_SendFiles(nnode);
 #if 0
 // [WDJ] GCC 4.5.2 Using this label triggers a compiler bug that costs 3K size.
 // An if {}, also costs 3K in program size ! All variations.
