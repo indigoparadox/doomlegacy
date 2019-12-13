@@ -65,8 +65,9 @@ extern consvar_t   cv_splitscreen;
 extern consvar_t   cv_playername[2];
 extern consvar_t   cv_playercolor[2];
 extern consvar_t   cv_skin[2];
+extern consvar_t   cv_autoaim[2];
+extern consvar_t   cv_weaponpref[2];
 
-extern consvar_t   cv_autoaim;
 extern consvar_t   cv_controlperkey;
 
 extern consvar_t   cv_itemrespawntime;

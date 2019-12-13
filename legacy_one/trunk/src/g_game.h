@@ -140,9 +140,6 @@ extern  boolean   singledemo;
 // gametic at level start
 extern  tic_t     levelstarttic;  
 
-// used in game menu
-extern consvar_t  cv_crosshair;
-//extern consvar_t  cv_crosshairscale;
 extern consvar_t  cv_showmessages;
 extern consvar_t  cv_pickupflash;
 extern consvar_t  cv_weapon_recoil;  // Boom weapon recoil

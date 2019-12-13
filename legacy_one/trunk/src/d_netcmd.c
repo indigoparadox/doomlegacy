@@ -206,9 +206,13 @@ void Send_NameColor2(void)
 }
 
 static
-void Send_WeaponPref(void)
+void Send_WeaponPref1(void)
 {
     Send_WeaponPref_pind(0);
+}
+static
+void Send_WeaponPref2(void)
+{
     Send_WeaponPref_pind(1);
 }
 
@@ -230,9 +234,22 @@ consvar_t cv_skin[2] = {
   { "skin2", DEFAULTSKIN, CV_SAVE | CV_CALL | CV_NOINIT | CV_CFG1, NULL /*skin_cons_t */ , Send_NameColor2 }
 };
 
-consvar_t cv_weaponpref = { "weaponpref", "014576328", CV_SAVE | CV_CALL | CV_NOINIT, NULL, Send_WeaponPref };
-consvar_t cv_autoaim = { "autoaim", "1", CV_SAVE | CV_CALL | CV_NOINIT, CV_OnOff, Send_WeaponPref };
-consvar_t cv_originalweaponswitch = { "originalweaponswitch", "0", CV_SAVE | CV_CALL | CV_NOINIT, CV_OnOff, Send_WeaponPref };
+consvar_t cv_autoaim[2] = {
+  { "autoaim",  "1", CV_SAVE | CV_CALL | CV_NOINIT, CV_OnOff, Send_WeaponPref1 },
+  { "autoaim2", "1", CV_SAVE | CV_CALL | CV_NOINIT, CV_OnOff, Send_WeaponPref2 }
+};
+
+consvar_t cv_weaponpref[2] = {
+  { "weaponpref", "014576328", CV_SAVE | CV_STRING | CV_CALL | CV_NOINIT, NULL, Send_WeaponPref1 },
+  { "weaponpref2", "014576328", CV_SAVE | CV_STRING | CV_CALL | CV_NOINIT, NULL, Send_WeaponPref2 },
+};
+
+consvar_t cv_originalweaponswitch[2] = {
+  { "originalweaponswitch", "0", CV_SAVE | CV_CALL | CV_NOINIT, CV_OnOff, Send_WeaponPref1 },
+  { "originalweaponswitch2", "0", CV_SAVE | CV_CALL | CV_NOINIT, CV_OnOff, Send_WeaponPref2 }
+};
+   
+
 
 CV_PossibleValue_t usemouse_cons_t[] = { {0, "Off"}, {1, "On"}, {2, "Force"}, {0, NULL} };
 consvar_t cv_usemouse[2] = {
@@ -322,16 +339,18 @@ void D_Register_ClientCommands(void)
     CV_RegisterVar(&cv_playername[0]);
     CV_RegisterVar(&cv_playercolor[0]);
     CV_RegisterVar(&cv_skin[0]);  // r_things.c (skin NAME)
+    CV_RegisterVar(&cv_autoaim[0]);
+    CV_RegisterVar(&cv_weaponpref[0]);
+    CV_RegisterVar(&cv_originalweaponswitch[0]);
 
     // Splitscreen player
     CV_RegisterVar(&cv_playername[1]);
     CV_RegisterVar(&cv_playercolor[1]);
     CV_RegisterVar(&cv_skin[1]);
+    CV_RegisterVar(&cv_autoaim[1]);
+    CV_RegisterVar(&cv_weaponpref[1]);
+    CV_RegisterVar(&cv_originalweaponswitch[1]);
    
-    CV_RegisterVar(&cv_weaponpref);
-    CV_RegisterVar(&cv_autoaim);
-    CV_RegisterVar(&cv_originalweaponswitch);
-
     //misc
     CV_RegisterVar(&cv_netstat);
 
@@ -511,21 +530,22 @@ done:
 static
 void Send_WeaponPref_pind( byte pind )
 {
-    char buf[NUMWEAPONS + 2];
+    char buf[NUMWEAPONS + 4];  // need NUMWEAPONS+2
 
-    int wplen = strlen(cv_weaponpref.string);
-    if( wplen != NUMWEAPONS)
-    {
-        CONS_Printf("weaponpref invalid length: %d, should be %d\n", wplen, NUMWEAPONS);
-        return;
-    }
     // Format: original_weapon_switch  byte,
     //         weapon_pref  char[NUMWEAPONS],
     //         autoaim  byte.
-    buf[0] = cv_originalweaponswitch.value;
-    memcpy(buf + 1, cv_weaponpref.string, NUMWEAPONS);
-    buf[1 + NUMWEAPONS] = cv_autoaim.value;
-    // FIXME : the split screen player have the same weapon pref of the first player
+    buf[0] = cv_originalweaponswitch[pind].value;
+   
+    int wplen = strlen(cv_weaponpref[pind].string);
+    memcpy(buf + 1, cv_weaponpref[pind].string, wplen);
+    if( wplen != NUMWEAPONS)
+    {
+        CONS_Printf("weaponpref invalid length: %d, should be %d, player pind=%d\n", wplen, NUMWEAPONS, pind);
+        // pad with 0
+	for( ; wplen < NUMWEAPONS; wplen++ )  buf[wplen+1] = '0';
+    }
+    buf[1 + NUMWEAPONS] = cv_autoaim[pind].value;
 
     Send_NetXCmd_pind(XD_WEAPONPREF, buf, NUMWEAPONS + 2, pind);
 }

@@ -44,6 +44,8 @@
 #include "w_wad.h"
 #include "wi_stuff.h"
 #include "r_defs.h"
+#include "command.h"
+  // consvar_t
 
 //------------------------------------
 //           heads up font
@@ -56,8 +58,8 @@
 #define HU_FONTSIZE     (HU_FONTEND - HU_FONTSTART + 1)
 
 
-// maximum 9
-#define HU_CROSSHAIRS   3
+extern consvar_t  cv_crosshair[2];
+//extern consvar_t  cv_crosshairscale;
 
 extern char*   shiftxform;   // french/english translation shift table
 
