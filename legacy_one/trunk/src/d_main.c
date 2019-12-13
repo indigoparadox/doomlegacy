@@ -453,9 +453,11 @@ void  owner_wad_search_order( void )
                 GenPrintf( EMSG_ver, "Desktop, Pictures, or Music dir detected, default dir not searched.\n");
         }
         else
-        if(    (strcmp( defdir, cv_home.string ) != 0) // not home directory
-            && (strcmp( defdir, progdir ) != 0)        // not program directory
-            && (strcmp( defdir, progdir_wads ) != 0) ) // not wads directory
+        if( defdir
+            &&( !(strcmp( defdir, cv_home.string ) == 0) ) // not home directory
+            &&( !(progdir && (strcmp( defdir, progdir ) == 0)) ) // not program directory
+            &&( !(progdir_wads && (strcmp( defdir, progdir_wads ) == 0)) ) // not wads directory
+          )
         {
             defdir_search = 1;
             // Search current dir near first, for other wad searches.
@@ -902,13 +904,13 @@ void D_DoomLoop(void)
     if( access( acbuf, R_OK) == 0 )
     {
         // user settings
-	GenPrintf( EMSG_ver, "Exec Local autoexec: %s\n", acbuf );
+        GenPrintf( EMSG_ver, "Exec Local autoexec: %s\n", acbuf );
         COM_BufAddText( va( "exec %s\n", acbuf) );
     }
     else if( access( "autoexec.cfg", R_OK) == 0 )  // file with executable
     {
         // file with executable, may be system settings
-	GenPrintf( EMSG_ver, "Exec System autoexec\n" );
+        GenPrintf( EMSG_ver, "Exec System autoexec\n" );
         COM_BufAddText("exec autoexec.cfg\n");
     }
 
@@ -2073,9 +2075,11 @@ void D_DoomMain()
         }
     }
 
+    // [WDJ] When I_Get_Prog_Dir fails, progdir will be NULL.
+    // Protect all uses of progdir and progdir_wads accordingly.
     if( I_Get_Prog_Dir( defdir, /*OUT*/ dirbuf ) )
     {
-
+        // At worst, dirbuf may be an empty string.  OS dependent.
         progdir = strdup( dirbuf );
         if( verbose )
           GenPrintf(EMSG_ver, "Program directory: %s\n", progdir);
