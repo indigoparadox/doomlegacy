@@ -314,7 +314,7 @@ static void CV_botrandom_OnChange( void )
     // The random number generatators will be updated.
     if( ! server )
         return;
-   
+
     // [WDJ] Updating the random number generators in the middle of a game, ugh.
     if( netgame )
         SV_Send_State( 1 );  // pause everybody
@@ -1206,6 +1206,6 @@ void B_SpawnBot(bot_t* bot)
          break;
     }
     bot->skill = sk; // 0=crippled, 1=baby .. 5=nightmare
-   
+
     B_LLClear(bot->path);
 }
