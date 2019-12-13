@@ -82,7 +82,7 @@ boolean HGetPacket (void);
 boolean D_Startup_NetGame(void);
 void    D_CloseConnection( void );
 void    Net_Cancel_Packet_Ack(int nnode);
-void    Net_CloseConnection(int nnode);
+void    Net_CloseConnection(byte nnode, byte forceclose);
 void    Net_AbortPacketType(byte packettype);
 void    Net_Send_AcksPacket(int to_node);
 void    Net_Wait_AllAckReceived( uint32_t timeout );
