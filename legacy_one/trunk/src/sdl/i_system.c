@@ -330,7 +330,7 @@ void I_GetEvent(void)
           break;
 
         case SDL_MOUSEMOTION:
-          if(cv_usemouse.value)
+          if(cv_usemouse[0].value)
           {
               event.type = ev_mouse;
               event.data1 = 0;
@@ -419,7 +419,7 @@ void I_GetEvent(void)
 
         case SDL_MOUSEBUTTONDOWN:
         case SDL_MOUSEBUTTONUP:
-          if(cv_usemouse.value)
+          if(cv_usemouse[0].value)
           {
               if (inputEvent.type == SDL_MOUSEBUTTONDOWN)
                 event.type = ev_keydown;
@@ -611,7 +611,7 @@ void I_StartupMouse( boolean play_mode )
     vid_center_y = vid.height >> 1;
     lastmousex = vid_center_x;
     lastmousey = vid_center_y;
-    if( cv_usemouse.value && play_mode )
+    if( cv_usemouse[0].value && play_mode )
     {
         // Enable mouse containment during play.
         SDL_Event inputEvent;
@@ -807,12 +807,15 @@ void I_StartupMouse2 (void)
 #ifdef LMOUSE2
   struct termios m2tio;
   int i,dtr,rts;
+
   I_ShutdownMouse2();
-  if(cv_usemouse2.value == 0) return;
+  if(cv_usemouse[1].value == 0) return;
+
   if((fdmouse2 = open(cv_mouse2port.string,O_RDONLY|O_NONBLOCK|O_NOCTTY))==-1) {
     CONS_Printf("Error opening %s!\n",cv_mouse2port.string);
     return;
   }
+
   tcflush(fdmouse2, TCIOFLUSH);
   m2tio.c_iflag = IGNBRK;
   m2tio.c_oflag = 0;

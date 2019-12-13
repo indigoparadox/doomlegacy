@@ -116,9 +116,10 @@ boolean P_Teleport(mobj_t *thing, fixed_t x, fixed_t y, angle_t angle)
             thing->reactiontime = 18;
         // added : absolute angle position
         if(thing== consoleplayer_ptr->mo)
-            localangle = angle;
+            localangle[0] = angle;
         if(displayplayer2_ptr && thing== displayplayer2_ptr->mo) // NULL when unused
-            localangle2 = angle;
+            localangle[1] = angle;
+
 #ifdef CLIENTPREDICTION2
         if(thing== consoleplayer_ptr->mo)
         {

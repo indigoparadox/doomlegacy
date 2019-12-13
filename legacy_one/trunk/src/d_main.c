@@ -276,7 +276,7 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1480"
+#define SVN_REV "1481"
 #endif
 
 
@@ -706,7 +706,7 @@ void D_Display(void)
                     HWR_RenderPlayerView(0, displayplayer_ptr);
                 else    //if (rendermode == render_soft)
 #endif
-                    R_RenderPlayerView(displayplayer_ptr);
+                    R_RenderPlayerView(0, displayplayer_ptr);
 #ifdef CLIENTPREDICTION2
                 displayplayer_ptr->mo->flags2 &= ~MF2_DONTDRAW;
 #endif
@@ -729,7 +729,7 @@ void D_Display(void)
                     viewwindowy = vid.height / 2;
                     memcpy(ylookup, ylookup2, rdraw_viewheight * sizeof(ylookup[0]));
 
-                    R_RenderPlayerView(displayplayer2_ptr);
+                    R_RenderPlayerView(1, displayplayer2_ptr);
 
                     // Restore first player tables
                     viewwindowy = 0;

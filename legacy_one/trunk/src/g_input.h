@@ -106,17 +106,16 @@ typedef enum
 } gamecontrols_e;
 
 
-extern consvar_t  cv_autorun;
-extern consvar_t  cv_autorun2;
-
 extern consvar_t   cv_grabinput;
 
-extern consvar_t   cv_joy_deadzone;
+// Player control
+// [0]=main player [1]=splitscreen player
+extern consvar_t   cv_autorun[2];
+extern consvar_t   cv_usemouse[2];
+extern consvar_t   cv_mouse_move[2];
+extern consvar_t   cv_alwaysfreelook[2];
 
-// mouse
-extern consvar_t   cv_usemouse;
-extern consvar_t   cv_alwaysfreelook;
-extern consvar_t   cv_mouse_move;
+// mouse1
 extern consvar_t   cv_mouse_invert;
 extern consvar_t   cv_mouse_sens_x;
 extern consvar_t   cv_mouse_sens_y;
@@ -124,19 +123,18 @@ extern consvar_t   cv_mouse_sens_y;
 extern consvar_t   cv_mouse_motion;
 #endif
 
-// splitscreen with second mouse
-extern consvar_t   cv_usemouse2;
+// mouse2
 extern consvar_t   cv_mouse2port;
 #ifdef LMOUSE2
 extern consvar_t   cv_mouse2opt;
 #endif
-extern consvar_t   cv_alwaysfreelook2;
-extern consvar_t   cv_mouse2_move;
 extern consvar_t   cv_mouse2_invert;
 extern consvar_t   cv_mouse2_sens_x;
 extern consvar_t   cv_mouse2_sens_y;
 
 extern consvar_t   cv_mouse_double;
+
+extern consvar_t   cv_joy_deadzone;
 #ifdef JOY_BUTTONS_DOUBLE     
 extern consvar_t   cv_joy_double;
 #endif

@@ -573,7 +573,7 @@ void HWR_Reset_Lights(void)
 // Change view, thus change lights (splitscreen)
 // --------------------------------------------------------------------------
 // Called from HWR_RenderPlayerView
-void HWR_Set_Lights(int viewnumber)
+void HWR_Set_Lights(byte viewnumber)
 {
     dynlights = &view_dynlights[viewnumber];
 }

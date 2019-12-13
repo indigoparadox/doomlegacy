@@ -551,7 +551,7 @@ static void M_OpenGLOption(int choice);
 
 menu_t MainDef, SoundDef, EpiDef, NewDef,
   VideoModeDef, VideoOptionsDef, DrawmodeDef, MouseOptionsDef,
-  SingleMultiDef, TwoPlayerDef, MultiPlayerDef, SetupMultiPlayerDef,
+  SingleMultiDef, TwoPlayerDef, PlayerOptionsDef, MultiPlayerDef, SetupMultiPlayerDef,
   ReadDef2, ReadDef1, SaveDef, LoadDef, 
   ControlDef, ControlDef2, ControlDef3, MControlDef, JoystickOptionsDef,
   OptionsDef, EffectsOptionsDef, GameOptionDef, AdvOption1Def, AdvOption2Def,
@@ -1308,10 +1308,10 @@ void M_StartServer( int choice )
     if (StartSplitScreenGame
         && ! ( displayplayer2_ptr
              && displayplayer2_ptr->skin
-             && (strcasecmp(cv_skin2.string, skins[displayplayer2_ptr->skin]->name) == 0 )
+             && (strcasecmp(cv_skin[1].string, skins[displayplayer2_ptr->skin]->name) == 0 )
              ) )
     {
-        COM_BufAddText ( va("%s \"%s\"\n", cv_skin2.name, cv_skin2.string));
+        COM_BufAddText ( va("%s \"%s\"\n", cv_skin[1].name, cv_skin[1].string));
     }
    
 #if 0
@@ -1462,9 +1462,9 @@ void M_TwoPlayerMenu(int choice)
 menuitem_t  SecondMouseCfgMenu[] =
 {
     {IT_STRING | IT_CVAR,0,"Second Mouse Serial Port", &cv_mouse2port,0},
-    {IT_STRING | IT_CVAR,0,"Use Mouse2", &cv_usemouse2        ,0},
-    {IT_STRING | IT_CVAR,0,"Always Mouse2Look", &cv_alwaysfreelook2  ,0},
-    {IT_STRING | IT_CVAR,0,"Mouse2 Move",       &cv_mouse2_move       ,0},
+    {IT_STRING | IT_CVAR,0,"Use Mouse2",        &cv_usemouse[1]      ,0},
+    {IT_STRING | IT_CVAR,0,"Always Mouse2Look", &cv_alwaysfreelook[1],0},
+    {IT_STRING | IT_CVAR,0,"Mouse2 Move",       &cv_mouse_move[1]    ,0},
     {IT_STRING | IT_CVAR,0,"Invert Mouse2",     &cv_mouse2_invert     ,0},
     {IT_STRING | IT_CVAR
      | IT_CV_SLIDER     ,0,"Mouse2 x Speed",    &cv_mouse2_sens_x    ,0},
@@ -1485,28 +1485,39 @@ menu_t  SecondMouseCfgdef =
 };
 
 //===========================================================================
-// Second options for the splitscreen player
+// Options for the main player and the splitscreen player
 //===========================================================================
 
-menuitem_t  Player2OptionsMenu[] =
+// Customized by M_SetupMultiPlayer1 and M_SetupMultiPlayer2
+menuitem_t  PlayerOptionsMenu[] =
 {
-    //Hurdler: for now, only autorun is implemented 
-    //         others should be implemented as well if we want to be complete
 //    {IT_STRING | IT_CVAR,"Messages:"       ,&cv_showmessages2    ,0},
-    {IT_STRING | IT_CVAR,0,"Always Run"      ,&cv_autorun2         ,0},
+    {IT_STRING | IT_CVAR,0, "Use Mouse"     ,&cv_usemouse[1]       ,0},
+    {IT_STRING | IT_CVAR,0, "Always MouseLook", &cv_alwaysfreelook[1],0},
+    {IT_STRING | IT_CVAR,0, "Mouse Move"    ,&cv_mouse_move[1]     ,0},
+    {IT_STRING | IT_CVAR,0, "Always Run"    ,&cv_autorun[1]        ,0},
 //    {IT_STRING | IT_CVAR,"Crosshair"       ,&cv_crosshair2       ,0},
 //    {IT_STRING | IT_CVAR,"Autoaim"         ,&cv_autoaim2         ,0},
 //    {IT_STRING | IT_CVAR,"Control per key" ,&cv_controlperkey2   ,0},
 };
 
-menu_t  P2_OptionsDef =
+// index to above menu lines
+enum {
+    playeroption_usemouse,
+    playeroption_mouselook,
+    playeroption_mousemove,
+    playeroption_alwaysrun,
+    playeroption_end
+};
+
+menu_t  PlayerOptionsDef =
 {
     "M_OPTTTL",
     "Options",
-    Player2OptionsMenu,
+    PlayerOptionsMenu,
     M_DrawGenericMenu,
     NULL,
-    sizeof(Player2OptionsMenu)/sizeof(menuitem_t),
+    sizeof(PlayerOptionsMenu)/sizeof(menuitem_t),
     27,40,
     0,
 };
@@ -1526,28 +1537,24 @@ static boolean M_QuitMultiPlayerMenu(void);
 #define PLBOXY    8
 #define PLSKINNAMEY 96
 
+// Customized by M_SetupMultiPlayer1 and M_SetupMultiPlayer2
 menuitem_t SetupMultiPlayerMenu[] =
 {
     {IT_KEYHANDLER | IT_STRING          ,0,"Your name" ,M_MultiPlayer_Responder,0},
-    {IT_CVAR | IT_STRING | IT_CV_NOPRINT | IT_YOFFSET, 0,"Your color",&cv_playercolor         ,16},
+    {IT_CVAR | IT_STRING | IT_CV_NOPRINT | IT_YOFFSET, 0,"Your color",&cv_playercolor[0], 16},
     {IT_KEYHANDLER | IT_STRING | IT_YOFFSET, 0,"Your skin" ,M_MultiPlayer_Responder, PLSKINNAMEY},
-#if 0
-    // This line calls the setup controls for player2, only if numitems is > 3
-    //Hurdler: uncomment this line when other options are available
-    {IT_SUBMENU | IT_WHITESTRING | IT_YOFFSET, 0,"Player2 config >>", &P2_OptionsDef, PLSKINNAMEY+14},
-#else
-    //... and remove this one
-    {IT_STRING | IT_CVAR | IT_YOFFSET,   0,"Always Run"      ,&cv_autorun2         ,  PLSKINNAMEY+14},
-#endif
+    {IT_SUBMENU | IT_WHITESTRING | IT_YOFFSET, 0,"Player config >>", &PlayerOptionsDef, PLSKINNAMEY+14},
+ // Player2 only
     {IT_CALL | IT_WHITESTRING | IT_YOFFSET, 0,"Player2 Controls >>", M_Setup_P2_Controls, PLSKINNAMEY+24},
     {IT_SUBMENU | IT_WHITESTRING | IT_YOFFSET, 0,"Second Mouse config >>", &SecondMouseCfgdef, PLSKINNAMEY+34}
 };
 
+// index to above menu lines
 enum {
     setupmultiplayer_name = 0,
     setupmultiplayer_color,
     setupmultiplayer_skin,
-    setupmultiplayer_options2,
+    setupmultiplayer_options,
     setupmultiplayer_controls,
     setupmultiplayer_mouse2,
     setupmulti_end
@@ -1579,22 +1586,38 @@ static  consvar_t* setupm_cvcolor;
 static  consvar_t* setupm_cvname;
 static  byte       setupm_skinindex;
 
+void M_SetupMultiPlayer_pind( byte pind )
+{
+    // SetupMultiPlayerMenu
+    setupm_cvname = &cv_playername[pind];
+    strcpy (setupm_name, cv_playername[pind].string);
+    setupm_cvskin = &cv_skin[pind];
+    setupm_skinindex = R_SkinAvailable( cv_skin[pind].string );
+    setupm_cvcolor = &cv_playercolor[pind];
+
+    SetupMultiPlayerMenu[setupmultiplayer_color].itemaction = setupm_cvcolor;
+
+    // PlayerOptionsMenu
+    PlayerOptionsMenu[playeroption_usemouse].itemaction = &cv_usemouse[pind];
+    PlayerOptionsMenu[playeroption_mouselook].itemaction = &cv_alwaysfreelook[pind];
+    PlayerOptionsMenu[playeroption_mousemove].itemaction = &cv_mouse_move[pind];
+    PlayerOptionsMenu[playeroption_alwaysrun].itemaction = &cv_autorun[pind];
+
+    // skin display
+    multi_state = &states[mobjinfo[MT_PLAYER].seestate];
+    multi_tics = multi_state->tics;
+}
+
 static
 void M_SetupMultiPlayer1 (int choice)
 {
     // set for player 1
     setupm_player = consoleplayer_ptr;
-    setupm_cvname = &cv_playername;
-    strcpy (setupm_name, cv_playername.string);
-    setupm_cvskin = &cv_skin;
-    setupm_skinindex = R_SkinAvailable( cv_skin.string );
-    setupm_cvcolor = &cv_playercolor;
+    M_SetupMultiPlayer_pind(0);
 
-    SetupMultiPlayerDef.numitems = setupmultiplayer_skin +1;      //remove player2 setup controls and mouse2 
-    SetupMultiPlayerMenu[setupmultiplayer_color].itemaction = setupm_cvcolor;
+    SetupMultiPlayerMenu[setupmultiplayer_options].text = "Player1 config >>";   
+    SetupMultiPlayerDef.numitems = setupmultiplayer_options +1;      //remove player2 setup controls and mouse2 
 
-    multi_state = &states[mobjinfo[MT_PLAYER].seestate];
-    multi_tics = multi_state->tics;
     Push_Setup_Menu (&SetupMultiPlayerDef);
 }
 
@@ -1604,17 +1627,11 @@ void M_SetupMultiPlayer2 (int choice)
 {
     // set for splitscreen player 2
     setupm_player = displayplayer2_ptr;  // player 2
-    setupm_cvname = &cv_playername2;
-    strcpy (setupm_name, cv_playername2.string);
-    setupm_cvskin = &cv_skin2;
-    setupm_skinindex = R_SkinAvailable( cv_skin2.string );
-    setupm_cvcolor = &cv_playercolor2;
+    M_SetupMultiPlayer_pind(1);
 
+    SetupMultiPlayerMenu[setupmultiplayer_options].text = "Player2 config >>";   
     SetupMultiPlayerDef.numitems = setupmulti_end;          //activate the setup controls for player 2
-    SetupMultiPlayerMenu[setupmultiplayer_color].itemaction = setupm_cvcolor;
    
-    multi_state = &states[mobjinfo[MT_PLAYER].seestate];
-    multi_tics = multi_state->tics;
     Push_Setup_Menu (&SetupMultiPlayerDef);
 }
 
@@ -1978,7 +1995,7 @@ void M_VerifyNightmare(int ch)
 menuitem_t OptionsMenu[]=
 {
     {IT_STRING | IT_CVAR,0,"Messages:"       ,&cv_showmessages    ,0},
-    {IT_STRING | IT_CVAR,0,"Always Run"      ,&cv_autorun         ,0},
+    {IT_STRING | IT_CVAR,0,"Always Run"      ,&cv_autorun[0]      ,0},
     {IT_STRING | IT_CVAR,0,"Crosshair"       ,&cv_crosshair       ,0},
 //    {IT_STRING | IT_CVAR,0,"Crosshair scale" ,&cv_crosshairscale  ,0},
     {IT_STRING | IT_CVAR,0,"Autoaim"         ,&cv_autoaim         ,0},
@@ -2168,9 +2185,9 @@ void MenuGammaFunc_dependencies( byte gamma_en,
 
 menuitem_t MouseOptionsMenu[]=
 {
-    {IT_STRING | IT_CVAR,0,"Use Mouse",        &cv_usemouse        ,0},
-    {IT_STRING | IT_CVAR,0,"Always MouseLook", &cv_alwaysfreelook  ,0},
-    {IT_STRING | IT_CVAR,0,"Mouse Move",    &cv_mouse_move      ,0},
+    {IT_STRING | IT_CVAR,0,"Use Mouse",        &cv_usemouse[0]  ,0},
+    {IT_STRING | IT_CVAR,0,"Always MouseLook", &cv_alwaysfreelook[0]  ,0},
+    {IT_STRING | IT_CVAR,0,"Mouse Move",    &cv_mouse_move[0]   ,0},
     {IT_STRING | IT_CVAR,0,"Invert Mouse",  &cv_mouse_invert    ,0},
     {IT_STRING | IT_CVAR
      | IT_CV_SLIDER     ,0,"Mouse x Speed", &cv_mouse_sens_x    ,0},
@@ -6318,19 +6335,22 @@ void M_Register_Menu_Controls( void )
     // Any cv_ with CV_SAVE needs to be registered, even if it is not used.
     // Otherwise there will be error messages when config is loaded.
 
+    // Player1
+    CV_RegisterVar(&cv_autorun[0]);
+
+    // Player2
+    CV_RegisterVar(&cv_autorun[1]);
+
     CV_RegisterVar(&cv_crosshair);
     //CV_RegisterVar (&cv_crosshairscale); // doesn't work for now
-    CV_RegisterVar(&cv_autorun);
     CV_RegisterVar(&cv_showmessages);
-
     //CV_RegisterVar (&cv_showmessages2);
-    CV_RegisterVar(&cv_autorun2);
     //CV_RegisterVar (&cv_crosshair2);
     //CV_RegisterVar (&cv_autoaim2);
     //CV_RegisterVar (&cv_controlperkey2);
 
     CV_RegisterVar(&cv_screenslink);
-
+   
     // p_mobj.c
     CV_RegisterVar(&cv_itemrespawntime);
     CV_RegisterVar(&cv_itemrespawn);
@@ -6370,16 +6390,16 @@ void M_Register_Menu_Controls( void )
 #ifdef SMIF_SDL
     CV_RegisterVar(&cv_mouse_motion);
 #endif
-    CV_RegisterVar(&cv_usemouse);
-    CV_RegisterVar(&cv_alwaysfreelook);
-    CV_RegisterVar(&cv_mouse_move);
+    CV_RegisterVar(&cv_usemouse[0]);
+    CV_RegisterVar(&cv_alwaysfreelook[0]);
+    CV_RegisterVar(&cv_mouse_move[0]);
     CV_RegisterVar(&cv_mouse_invert);
     CV_RegisterVar(&cv_mouse_sens_x);
     CV_RegisterVar(&cv_mouse_sens_y);
 
-    CV_RegisterVar(&cv_usemouse2);
-    CV_RegisterVar(&cv_alwaysfreelook2);
-    CV_RegisterVar(&cv_mouse2_move);
+    CV_RegisterVar(&cv_usemouse[1]);
+    CV_RegisterVar(&cv_alwaysfreelook[1]);
+    CV_RegisterVar(&cv_mouse_move[1]);
     CV_RegisterVar(&cv_mouse2_invert);
     CV_RegisterVar(&cv_mouse2_sens_x);
     CV_RegisterVar(&cv_mouse2_sens_y);

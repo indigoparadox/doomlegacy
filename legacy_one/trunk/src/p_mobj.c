@@ -2519,13 +2519,13 @@ void P_SpawnPlayer( mapthing_t * mthing, int playernum )
     mobj->angle = wad_to_angle(mthing->angle);
     if (playernum == consoleplayer)
     {
-        localangle = mobj->angle;
-        localaiming = 0;
+        localangle[0] = mobj->angle;
+        localaiming[0] = 0;
     }
     else if (playernum == displayplayer2)  // player 2
     {
-        localangle2 = mobj->angle;
-        localaiming2 = 0;
+        localangle[1] = mobj->angle;
+        localaiming[1] = 0;
     }
     else if (p->bot)    //added by AC for acbot
     {

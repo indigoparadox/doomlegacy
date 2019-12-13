@@ -161,13 +161,14 @@ void Command_Turbo_f (void);
 
 // build an internal map name ExMx MAPxx from episode,map numbers
 char* G_BuildMapName (int episode, int map);
-void G_BuildTiccmd (ticcmd_t* cmd, int realtics, int which_player);
+void G_BuildTiccmd (ticcmd_t* cmd, int realtics, byte pind);
 
 //added:22-02-98: clip the console player aiming to the view
 angle_t G_ClipAimingPitch(angle_t aiming);
 
-extern angle_t localangle,localangle2;
-extern angle_t localaiming,localaiming2; // should be a angle_t but signed
+// [0]=main player [1]=splitscreen player
+extern angle_t localangle[2];
+extern angle_t localaiming[2]; // should be a angle_t but signed
 
 extern int extramovefactor;		// Extra speed to move at
 
