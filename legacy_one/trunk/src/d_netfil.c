@@ -176,7 +176,7 @@ static
 void update_download_done( void )
 {
     int i;
-    for( i=cl_num_fileneed; i>=0; i-- )
+    for( i=0; i<cl_num_fileneed; i++ )
     {
         byte st = cl_fileneed[i].status;
         if( st > FS_FOUND )  return;
