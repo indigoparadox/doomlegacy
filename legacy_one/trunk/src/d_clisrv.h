@@ -125,6 +125,7 @@ typedef enum   {
     PT_CLIENTJOIN,    // client want to join used in start game
     PT_NODE_TIMEOUT,  // packet is sent to self when connection timeout
     PT_NETWAIT,       // network game wait timer info
+    PT_CLIENTREADY,   // client is ready
  // count for table
     NUMPACKETTYPE
 } packettype_t;
@@ -225,11 +226,13 @@ typedef struct {
    byte        netvar_buf[NETVAR_BUFF_LEN];
 } serverconfig_pak_t;
 
+// PT_CLIENTJOIN
 typedef struct {
-   byte        version;    // exe from differant version don't work
-   uint32_t    subversion; // contain build version and maybe crc
+   byte        version;    // different versions are not compatible
+   uint32_t    subversion; // build version
    byte        num_node_players; // 0,1,2
    byte        mode;
+   byte        flags;  // NF_drone, NF_download_savegame
 } clientconfig_pak_t;
 
 typedef struct {
@@ -347,7 +350,10 @@ extern consvar_t cv_playdemospeed;
 extern consvar_t cv_server1;
 extern consvar_t cv_server2;
 extern consvar_t cv_server3;
-extern consvar_t cv_downloadfiles;
+extern consvar_t cv_download_files;
+extern consvar_t cv_download_savegame;
+extern consvar_t cv_SV_download_files;
+extern consvar_t cv_SV_download_savegame;
 extern consvar_t cv_wait_players;
 extern consvar_t cv_wait_timeout;
 
@@ -399,7 +405,7 @@ void    NetUpdate (void);
 void    D_PredictPlayerPosition(void);
 
 byte    SV_get_player_num( void );
-boolean SV_AddWaitingPlayers(void);
+void    SV_Add_waiting_players(void);
 void    SV_StartSinglePlayerServer(void);
 boolean SV_SpawnServer( void );
 void    SV_SpawnPlayer(int playernum, int x, int y, angle_t angle);

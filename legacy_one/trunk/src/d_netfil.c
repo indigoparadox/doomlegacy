@@ -349,7 +349,7 @@ reqfile_e  Send_RequestFile(void)
     fileneed_t * fnp;
 
     if( M_CheckParm("-nodownload")
-      || cv_downloadfiles.value == 1 )  // no download
+      || (cv_download_files.EV == 0) )  // download not allowed
     {
         int j;
         int len;

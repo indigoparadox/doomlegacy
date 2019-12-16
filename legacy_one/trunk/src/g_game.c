@@ -899,11 +899,9 @@ boolean G_InventoryResponder(player_t *ply, byte pind,
   // use up an inventory item when game saving.
   static byte keyup_armed[2] = {0,0};   // player1, player2
 
-#if 1
   // Do not mess with inventory when menu or console are open.
   if( menuactive || console_open )
     return false;
-#endif
 
   if (! EN_inventory)
     return false;
@@ -1327,6 +1325,10 @@ void G_DoLoadLevel (boolean resetplayer)
         wipegamestate = GS_FORCEWIPE;  // force a wipe
 
     gamestate = GS_LEVEL;
+
+    if( server )
+        SV_Add_waiting_players();
+
     for (i=0 ; i<MAXPLAYERS ; i++)
     {
         if( resetplayer || (playeringame[i] && players[i].playerstate == PST_DEAD))
@@ -1374,7 +1376,7 @@ void G_DoLoadLevel (boolean resetplayer)
     {
         B_Regulate_Bots( cv_bots.EV );
     }
-   
+
     gameaction = ga_nothing;
 #ifdef PARANOIA
     Z_CheckHeap (-2);

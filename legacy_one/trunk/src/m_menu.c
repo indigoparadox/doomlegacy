@@ -2547,7 +2547,8 @@ void M_NetOption(int choice)
 
 menuitem_t ConnectOptionMenu[]=
 {
-    {IT_STRING | IT_CVAR,0,"Download files", &cv_downloadfiles , 0},
+    {IT_STRING | IT_CVAR,0,"Download files", &cv_download_files , 0},
+    {IT_STRING | IT_CVAR,0,"Download savegame", &cv_download_savegame , 0},
     {IT_STRING | IT_CVAR | IT_CV_STRING,0,"Server 1", &cv_server1 , 0},
     {IT_STRING | IT_CVAR | IT_CV_STRING,0,"Server 2", &cv_server2 , 0},
     {IT_STRING | IT_CVAR | IT_CV_STRING,0,"Server 3", &cv_server3 , 0},
@@ -2581,12 +2582,14 @@ menuitem_t ServerOptionsMenu[]=
         | IT_CV_STRING  ,0, "Master server",       &cv_masterserver     ,  0},
     {IT_STRING | IT_CVAR
         | IT_CV_STRING  ,0, "Server name",         &cv_servername       ,  0},
+    {IT_STRING | IT_CVAR,0,"Download files", &cv_SV_download_files , 0},
+    {IT_STRING | IT_CVAR,0,"Download savegame", &cv_SV_download_savegame , 0},
 };
 
 menu_t  ServerOptionsDef =
 {
-    "M_OPTTTL",
-    "Server Options",
+    "NULL",
+    "Server Settings",
     ServerOptionsMenu,
     M_DrawGenericMenu,
     NULL,
@@ -6006,7 +6009,10 @@ void M_Init (void)
     CV_RegisterVar(&cv_wait_players);
     CV_RegisterVar(&cv_wait_timeout);
     CV_RegisterVar(&cv_serversearch);
-    CV_RegisterVar(&cv_downloadfiles);
+    CV_RegisterVar(&cv_download_files);
+    CV_RegisterVar(&cv_download_savegame);
+    CV_RegisterVar(&cv_SV_download_files);
+    CV_RegisterVar(&cv_SV_download_savegame);
     CV_RegisterVar(&cv_menusound);
 }
 

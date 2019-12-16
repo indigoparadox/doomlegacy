@@ -224,6 +224,10 @@ byte     num_player_slots = 0;  // for messages with slots
 // nnode_state[] = NOS_idle, when net node is unused
 // The netnodes are counted, 0..32
 static byte  player_to_nnode[MAXPLAYERS];
+static byte  player_pind[MAXPLAYERS];
+static byte  num_player_used = 0;
+static byte  num_join_waiting_players = 0;
+static byte  num_wait_game_start = 0;  // waiting until next game
 
 // Server net node state for
 // tracking client nodes.
@@ -268,8 +272,7 @@ static byte     nnode_state[MAXNETNODES];  // nnode_state_e
 // [0]=main player [1]=splitscreen player
 static byte     nnode_to_player[2][MAXNETNODES];  // 255= unused
 static byte     playerpernode[MAXNETNODES]; // used specialy for splitscreen
-static byte     nodewaiting[MAXNETNODES];  // num of players waiting to join
-static byte     num_waiting_players;
+static byte     join_waiting[MAXNETNODES];  // num of players waiting to join
 static byte     consistency_faults[MAXNETNODES];
 static tic_t    nettics[MAXNETNODES];     // what tic the client have received
 static tic_t    nextsend_tic[MAXNETNODES]; // what server sent to client
@@ -291,7 +294,7 @@ static tic_t    cl_prev_tic = 0;  // client tests once per tic
 
 // server net node, 251=none (to not match invalid node)
 byte            servernode = 251;
-static byte     cl_server_state = NOS_idle; // nnode_state_e
+static byte     cl_server_state = NOS_idle; // nnode_state_e, client view of server
 
 // Index for netcmds and textcmds
 #define BTIC_INDEX( tic )  ((tic)%BACKUPTICS)
@@ -313,11 +316,11 @@ consvar_t cv_server1 = { "server1", "192.168.1.255", CV_STRING|CV_SAVE, NULL };
 consvar_t cv_server2 = { "server2", "", CV_STRING|CV_SAVE, NULL };
 consvar_t cv_server3 = { "server3", "", CV_STRING|CV_SAVE, NULL };
 
-CV_PossibleValue_t downloadfiles_cons_t[] = {{0,"Allowed"}
-                                           ,{1,"No Download"}
-                                           ,{0,NULL}};
-
-consvar_t cv_downloadfiles = {"downloadfiles"  ,"0", CV_SAVE, downloadfiles_cons_t};
+CV_PossibleValue_t download_cons_t[] = {{0,"No Download"},{1,"Allowed"},{0,NULL}};
+consvar_t cv_download_files = {"download_files"  ,"1", CV_SAVE, download_cons_t};
+consvar_t cv_SV_download_files = {"sv_download_files"  ,"1", CV_SAVE, download_cons_t};
+consvar_t cv_download_savegame = {"download_savegame"  ,"1", CV_SAVE, download_cons_t};
+consvar_t cv_SV_download_savegame = {"sv_download_savegame"  ,"1", CV_SAVE, download_cons_t};
 
 
 // some software don't support largest packet
@@ -621,6 +624,7 @@ typedef enum {
    CLM_wait_join_response,
    CLM_download_savegame,
    CLM_download_done,
+   CLM_wait_game_start,  // ready but must wait for next game start
    CLM_connected
 } cl_mode_t;
 
@@ -629,26 +633,48 @@ static cl_mode_t  cl_mode = CLM_idle;
 static void CL_ConnectToServer(void);
 static int16_t  Consistency(void);
 static void Net_Packet_Handler(void);
+static void SV_Reset_NetNode(byte nnode);
+static boolean SV_Add_Join_Waiting(void);
+static byte SV_update_player_counts(void);
 
+// send a simple packet
+static boolean  SendPacket( byte nnode, byte packettype )
+{
+    netbuffer->packettype = packettype;
+    return HSendPacket( nnode, true, 0, 0 );
+}
+
+
+// Flags used by Join msg.
+typedef enum {
+  NF_drone = 0x80,
+  NF_big_endian = 0x40,
+  NF_download_savegame = 0x10,
+} join_flags_e;
 
 // By Client.
 // Send a request to join game.
 // Called by CL_ConnectToServer.
 static boolean  CL_Send_Join( void )
 {
+    byte flg = 0;
+    if( cv_download_savegame.EV )  flg |= NF_download_savegame;
+    if( cl_drone )  flg |= NF_drone;
+#ifdef __BIG_ENDIAN__
+    flg |= NF_big_endian;
+#endif
+   
     GenPrintf(EMSG_hud, "Send join request...\n");
     netbuffer->packettype=PT_CLIENTJOIN;
     netbuffer->u.clientcfg.version = VERSION;
     netbuffer->u.clientcfg.subversion = LE_SWAP32(NETWORK_VERSION);
+    netbuffer->u.clientcfg.mode = 0;
+    netbuffer->u.clientcfg.flags = flg;
 
     // Declare how many players at this node.
-    if (cl_drone)
-        netbuffer->u.clientcfg.num_node_players=0;
-    else
-    if (cv_splitscreen.value)
-        netbuffer->u.clientcfg.num_node_players=2;
-    else
-        netbuffer->u.clientcfg.num_node_players=1;
+    netbuffer->u.clientcfg.num_node_players =
+        (cl_drone)? 0
+      : ( (cv_splitscreen.value)? 2 : 1 );
 
     return HSendPacket(servernode,true,0,sizeof(clientconfig_pak_t));
 }
@@ -722,6 +748,7 @@ static boolean SV_Send_ServerConfig(int to_node)
 }
 
 
+// By Server
 // Broadcast to all connected nodes
 static void SV_SendPacket_All( boolean reliable, size_t size_packet, const char * msg )
 {
@@ -784,12 +811,14 @@ void SV_Send_State( byte server_pause )
 // By Client
 static void state_handler( void )
 {
+    byte nnode = doomcom->remotenode;
+
     // Message is PT_STATE
     tic_t serv_gametic = LE_SWAP32_FAST(netbuffer->u.state.gametic);
     if( serv_gametic != gametic )
     {
         if( verbose > 1 )
-            GenPrintf( EMSG_ver, "PT_STATE: gametic %i, server gametic %i\n", gametic, serv_gametic );
+            GenPrintf( EMSG_ver, "PT_STATE: node %i, client gametic %i, server gametic %i\n", nnode, gametic, serv_gametic );
         // Gametic cannot be fixed directly, need game commands.        
         // It may just be behind by a tic or two.
     }
@@ -806,8 +835,26 @@ static void state_handler( void )
 #endif
 }
 
+// By Server
+static void  ready_handler( byte nnode )
+{
+    byte  ns = nnode_state[nnode];
+
+    // Client is ready
+    if( ns == NOS_join_savegame )
+    {
+        nnode_state[nnode] = NOS_join_sg_loaded;  // signal to SV_Add_Join_Waiting()
+        SV_Add_Join_Waiting();
+    }
+}
 
 #ifdef JOININGAME
+
+// [WDJ] For little-endian and big-endian machines to play together, must fix savegames.
+// Each machine writes savegames in its native format, and must be able
+// to read its own older savegames, so cannot just change to LE savegames.
+// A big-endian machine needs to be able to read either endian savegames.
+// Other possibilities require also changing the write of savegames, at least for big-endian servers.
 
 // By Server.
 // Send a save game to the client.
@@ -826,7 +873,7 @@ static void SV_Send_SaveGame(int to_node)
     // buffer will automatically grow as needed.
 
     length = P_Savegame_length();
-    if( length < 0 )   return;	// overrun buffer
+    if( length < 0 )   goto buffer_err;	// overrun buffer
    
     // then send it !
     SV_SendData(to_node, "SAVEGAME", savebuffer, length, TAH_MALLOC_FREE, SAVEGAME_FILEID);
@@ -1098,6 +1145,7 @@ static byte  num_netplayer;  // wait for netplayer, some nodes are 2 players
 static byte  wait_netplayer = 0;
 static tic_t wait_tics  = 0;
 
+// By Server
 static void SV_Send_NetWait( void )
 {
     netbuffer->packettype = PT_NETWAIT;
@@ -1119,6 +1167,7 @@ void D_WaitPlayer_Drawer( void )
     WI_Draw_wait( num_netnodes, num_netplayer, wait_netplayer, wait_tics );
 }
 
+// Called by Menu M_StartServer
 void D_WaitPlayer_Setup( void )
 {
     if( netgame )
@@ -1265,7 +1314,7 @@ boolean  D_WaitPlayer_Response( int key )
 // Ask the server for some info.
 //   to_node : when BROADCAST_NODE then all servers will respond
 // Called by: CL_Broadcast_AskInfo, CL_Update_ServerList, CL_ConnectToServer
-static void CL_Send_AskInfo( int to_node )
+static void CL_Send_AskInfo( byte to_node )
 {
     netbuffer->packettype = PT_ASKINFO;
     netbuffer->u.askinfo.version = VERSION;
@@ -1524,7 +1573,7 @@ static void CL_ConnectToServer( void )
                 break;
             case CLM_download_req:
                 // Must download something.
-                // Check -nodownload switch, or request downloads.
+                // Check -nodownload switch, cv_download_files, or request downloads.
                 switch( Send_RequestFile() )
                 {
                  case RFR_success:
@@ -1564,6 +1613,7 @@ static void CL_ConnectToServer( void )
                     cl_mode = CLM_wait_join_response;
                 break;
             case CLM_wait_join_response :
+                // waiting for server response	   
                 // see server_cfg_handler()
                 break;
 #ifdef JOININGAME
@@ -1581,14 +1631,16 @@ static void CL_ConnectToServer( void )
                 }
 
                 // got samegame
+                if( ! SendPacket( servernode, PT_CLIENTREADY ) )
+                    goto reset_to_searching;
+
                 gamestate = GS_LEVEL;  // game loaded
                 cl_mode = CLM_connected;
-                // don't break case continue to CLM_connected
-#endif
-            case CLM_connected :
                 break;
+#endif
             default:
                 break;
+            // CLM_connected will exit the loop
         }
 
         Net_Packet_Handler();
@@ -1616,12 +1668,16 @@ static void CL_ConnectToServer( void )
             if( Filetx_file_cnt )  // File download in progress.
                 Filetx_Ticker();
 
-#if 0
+#if 1
+   if( cl_mode > CLM_searching )
+   {
+      // Nothing bad, just not the problem
             // Supporting the wait during connect, like it was in the previous
             // code, has marginal value.  Seems to cause more problems.
             D_WaitPlayer_Ticker( 0 );
             if( wait_tics > 0 || wait_netplayer > 0 )
                 D_WaitPlayer_Drawer();
+   }
 #endif
             CON_Drawer ();
             I_FinishUpdate ();              // page flip or blit buffer
@@ -1638,6 +1694,10 @@ static void CL_ConnectToServer( void )
     return;
 
 reset_to_searching:
+    if( cl_mode >= CLM_download_req )
+    {
+        SendPacket( servernode, PT_CLIENTQUIT );  // ignore failure
+    }
     cl_mode = CLM_searching;
     return;
 
@@ -1668,7 +1728,7 @@ void Command_connect(void)
     if( strcasecmp(COM_Argv(1),"self")==0 )
     {
         servernode = 0;  // server is self
-        cl_server_state = NOS_server;
+        cl_server_state = NOS_idle;
         server = true;
         // should be but...
         //SV_SpawnServer();
@@ -1718,7 +1778,6 @@ void Command_connect(void)
     CL_ConnectToServer();
 }
 
-static void Reset_NetNode(byte nnode);
 
 // Called by Kick cmd.
 static void CL_RemovePlayer(int playernum)
@@ -1734,7 +1793,7 @@ static void CL_RemovePlayer(int playernum)
         {
             // No more players at this node.	   
             Net_CloseConnection(nnode, 0);
-            Reset_NetNode(nnode);  // node_state
+            SV_Reset_NetNode(nnode);  // node_state
         }
     }
 
@@ -1928,8 +1987,8 @@ consvar_t cv_allownewplayer = {"sv_allownewplayers","1",0,CV_OnOff};
 consvar_t cv_maxplayers     =
   {"sv_maxplayers","32",CV_NETVAR,maxplayers_cons_t,NULL,32};
 
-void Got_NetXCmd_AddPlayer(xcmd_t * xc);
-void Got_NetXCmd_AddBot(xcmd_t * xc);	//added by AC for acbot
+static void Got_NetXCmd_AddPlayer(xcmd_t * xc);
+static void Got_NetXCmd_AddBot(xcmd_t * xc);	//added by AC for acbot
 
 // Called one time at init, by D_Startup_NetGame.
 void D_Init_ClientServer (void)
@@ -1984,15 +2043,16 @@ void D_Init_ClientServer (void)
     SV_StopServer();  // as an Init
 }
 
+// By Server
 // nnode: 0..(MAXNETNODES-1)
-static void Reset_NetNode(byte nnode)
+static void SV_Reset_NetNode(byte nnode)
 {
     nnode_state[nnode] = NOS_idle;
     nnode_to_player[0][nnode] = 255;
     nnode_to_player[1][nnode] = 255;
     nettics[nnode]=gametic;
     nextsend_tic[nnode]=gametic;
-    nodewaiting[nnode]=0;
+    join_waiting[nnode]=0;
     playerpernode[nnode]=0;
 }
 
@@ -2013,7 +2073,7 @@ void SV_ResetServer( void )
     next_tic_clear=maketic;
 
     for (i=0 ; i<MAXNETNODES ; i++)
-        Reset_NetNode(i);
+        SV_Reset_NetNode(i);
 
     for (i=0 ; i<MAXPLAYERS ; i++)
     {
@@ -2041,6 +2101,7 @@ void SV_ResetServer( void )
         cl_server_state = NOS_idle;
     }
 
+    SV_update_player_counts();
     num_player_slots = 0;
     quit_netgame_status = 0;
 
@@ -2053,6 +2114,7 @@ void SV_ResetServer( void )
 // Called before quitting to leave a net game
 // without hanging the other players
 //
+// Called by D_Quit_Save, D_WaitPlayer_Response, Command_ExitGame_f, repair_handler
 void D_Quit_NetGame (void)
 {
     if (!netgame)
@@ -2072,12 +2134,11 @@ void D_Quit_NetGame (void)
     if( server )
     {
         // Server sends shutdown to all clients.
-        netbuffer->packettype=PT_SERVERSHUTDOWN;
         byte nn; // net node num
         for(nn=0; nn<MAXNETNODES; nn++)
         {
             if( nnode_state[nn] >= NOS_recognized )
-                HSendPacket(nn,true,0,0);  // ignore failures
+                SendPacket( nn, PT_SERVERSHUTDOWN );  // ignore failure
         }
         // Close registration with the Master Server.
         if ( serverrunning && cv_internetserver.value )
@@ -2088,8 +2149,7 @@ void D_Quit_NetGame (void)
        && (cl_server_state == NOS_server) )  // client connected to server
     {
         // Client sends quit to server.
-        netbuffer->packettype=PT_CLIENTQUIT;
-        HSendPacket(servernode,true,0,0);  // ignore failure
+        SendPacket( servernode, PT_CLIENTQUIT );  // ignore failure
     }
 
     D_CloseConnection();
@@ -2106,6 +2166,7 @@ void D_Quit_NetGame (void)
 #endif
 }
 
+// By Server.
 // Add a node to the game (player will follow at map change or at savegame....)
 static
 void SV_AddNode(byte nnode, byte set_nnode_state)
@@ -2137,18 +2198,147 @@ byte  SV_get_player_num( void )
     return pn;
 }
 
+// Commit to using a player num slot.
+//   nnode : node of the player
+//   new_state : the new player state
+// Return the new player num.
+// Return 255 if too many players or too many player for the node.
+byte SV_commit_player( byte nnode, byte new_state )
+{
+    byte newplayernum, pind;
+    // Search for a free playernum.
+    // New players will have playeringame set as a result of XCmd AddPlayer.
+    pind = playerpernode[nnode];  // next pind
+    if( pind > 1 )
+        return 255;
+    
+    newplayernum = SV_get_player_num();
+            
+#ifdef PARANOIA
+    // Should never happen because we check the number of players
+    // before accepting the join.
+    if(newplayernum >= MAXPLAYERS)
+    {
+        I_SoftError("SV_commit_player: Reached MAXPLAYERS\n");
+        return 255;
+    }
+#endif
+    
+    // Commit the server network settings.
+    playerpernode[nnode]++;
+
+    player_state[newplayernum] = new_state;
+    player_pind[newplayernum] = pind;
+    player_to_nnode[newplayernum] = nnode;
+    nnode_to_player[pind][nnode] = newplayernum;
+    return newplayernum;
+}
+
+
+
+// Server
+// More accurate than purely inc and dec. There are too many odd ways to kill a node.
+static byte  SV_update_player_counts( void )
+{
+    int pn, nn;
+
+    num_join_waiting_players = 0;
+    num_wait_game_start = 0;
+    num_player_used = 0;   
+    num_game_players = 0;
+    num_player_slots = 1;
+
+    for(nn=0; nn<MAXNETNODES; nn++)
+    {
+        num_join_waiting_players += join_waiting[nn];
+    }
+
+    for(pn=0; pn<MAXPLAYERS; pn++)
+    {
+        // count remaining players
+        if( playeringame[pn] )
+        {
+            num_player_slots = pn+1;
+            num_game_players++;
+        }
+        if( player_state[pn] )
+        {
+            num_player_used++;
+            if( player_state[pn] == PS_join_wait_game_start )
+                num_wait_game_start++;
+        }
+    }
+   
+    return num_player_used;
+}
+
+
+// Broadcast the XD_ADDPLAYER
+//  nnode : new player is at this node
+//  pn : new player num
+//  flags : any flags that may be needed (future)
+static
+void  SV_Send_AddPlayer( byte nnode, byte pn, byte flags )
+{
+    byte buf[6];
+   
+    player_state[pn] = PS_added_commit;
+
+    // Format: XD_ADDPLAYER   (ver 1.48)
+    //  byte:  nnode
+    //  byte:  player num
+    //  byte:  pind
+    //  byte:  flags
+    buf[0] = nnode;
+    buf[1] = pn;
+    buf[2] = player_pind[pn];
+    buf[3] = flags;
+
+    // Message from server to everyone, to add the player.
+    Send_NetXCmd(XD_ADDPLAYER, buf, 4);
+
+    DEBFILE(va("Server added player %d net node %d\n", pn, nnode));
+
+    if( nnode_state[nnode] < NOS_client )
+        nnode_state[nnode] = NOS_active;
+}
+
+
 // Xcmd XD_ADDPLAYER
 // Sent by server to all client.
+static
 void Got_NetXCmd_AddPlayer(xcmd_t * xc)
 {
     static uint32_t sendconfigtic = 0xffffffff;
+    byte nnode, newplayernum, pind, flags;
+
+    // Format: XD_ADDPLAYER
+    // Older, from demo
+    //  byte:  nnode
+    //  byte:  (player num) | (splitscreen pind at 0x80)
+    // ver 1.48
+    //  byte:  nnode
+    //  byte:  player num
+    //  byte:  pind
+    //  byte:  flags
 
     // [WDJ] Having error due to sign extension of byte read (signed char).
-    byte nnode = READBYTE(xc->curpos);  // unsigned
-    byte newplayernum = READBYTE(xc->curpos);  // unsigned
-    boolean splitscreenplayer = newplayernum&0x80;
-
-    newplayernum&=0x7F;  // remove flag bit, and any sign extension
+    nnode = READBYTE(xc->curpos);  // unsigned
+    newplayernum = READBYTE(xc->curpos);  // unsigned
+    // NetXCmd are issued by demos.
+    if( EV_legacy >= 148 )
+    {
+        pind = READBYTE(xc->curpos);
+        flags = READBYTE(xc->curpos);
+        if( flags )
+            GenPrintf(EMSG_warn, "AddPlayer %d unsupported flags=%x\n", (newplayernum+1), flags);
+    }
+    else
+    {
+        // Old format
+        pind = (newplayernum & 0x80)? 1:0;
+        newplayernum &= 0x1F;
+    }
 
     // Make play engine player data.
     // Do not set playeringame until player is created.
@@ -2166,19 +2356,20 @@ void Got_NetXCmd_AddPlayer(xcmd_t * xc)
     {
         // The server is creating my player.
         player_to_nnode[newplayernum]=0;  // for information only
-        if(!splitscreenplayer)
+        if( pind == 0 )
         {
+            // mainplayer
             consoleplayer=newplayernum;
             displayplayer=newplayernum;
             displayplayer_ptr = consoleplayer_ptr = &players[newplayernum];
-            DEBFILE("Spawning me\n");
         }
         else
         {
+            // splitscreen
             displayplayer2=newplayernum;
             displayplayer2_ptr = &players[displayplayer2];
-            DEBFILE("Spawning my brother\n");
         }
+        DEBFILE(va("Spawning player[%i] pind=%i at this node.\n", newplayernum, pind));
     }
 
     // the new player send there config
@@ -2197,6 +2388,7 @@ void Got_NetXCmd_AddPlayer(xcmd_t * xc)
 }
 
 // Xcmd XD_ADDBOT
+static
 void Got_NetXCmd_AddBot(xcmd_t * xc)  //added by AC for acbot
 {
     bot_info_t bi;
@@ -2243,65 +2435,64 @@ void Got_NetXCmd_AddBot(xcmd_t * xc)  //added by AC for acbot
 // By Server.
 // Called by SV_SpawnServer, client_join_handler.
 // Return true when a new player is added.
-boolean SV_AddWaitingPlayers(void)
+static
+boolean SV_Add_Join_Waiting(void)
 {
     boolean  newplayer_added = false;  // return
-    byte nnode;
-    byte newplayernum, addplayer_param;
+    byte nnode, ns;
+    byte newplayernum;
 
-    if( num_waiting_players == 0 )  return 0;
+    if( num_join_waiting_players == 0 )  return 0;
 
-    // The code below always clears the nodewaiting queues.
-    num_waiting_players = 0;
+    // The code below usually clears the join_waiting queues.
+    num_join_waiting_players = 0;
    
     for(nnode=0; nnode<MAXNETNODES; nnode++)
     {
+        ns = nnode_state[nnode];
+        if( (ns >= NOS_join_file) && (ns <= NOS_join_savegame) )
+        {
+            // Join download in progress
+            num_join_waiting_players += join_waiting[nnode];
+            continue;
+        }
+ 
         // splitscreen can allow 2 player in one node
-        for(; nodewaiting[nnode]>0; nodewaiting[nnode]--)
+        for(; join_waiting[nnode]>0; join_waiting[nnode]--)
         {
             // Search for a free playernum.
             // New players will have playeringame set as a result of XCmd AddPlayer.
-            newplayernum = SV_get_player_num();
-            
-#ifdef PARANOIA
-            // Should never happen because we check the number of players
-            // before accepting the join.
-            if(newplayernum >= MAXPLAYERS)
-                I_Error("SV_AddWaitingPlayers: Reached MAXPLAYERS\n");
-#endif
-            // Before NetCmd to avoid race condition.
-            if( num_player_slots == 0 )
-                num_player_slots++;  //we must send the change to other players
-
-            // Commit
-            player_to_nnode[newplayernum] = nnode;
-
-            if( playerpernode[nnode]<1 )
-            {
-                nnode_to_player[0][nnode] = newplayernum;
-                addplayer_param = newplayernum;
-            }
-            else
-            {
-                nnode_to_player[1][nnode] = newplayernum;
-                addplayer_param = newplayernum | 0x80;  // player 2 flag
-            }
-            playerpernode[nnode]++;
+            newplayernum = SV_commit_player( nnode, PS_added_commit );
+            if( newplayernum >= MAXPLAYERS )  continue;
 
             // Message from server to everyone, to add the player.
-            Send_NetXCmd_p2(XD_ADDPLAYER, nnode, addplayer_param);
+            SV_Send_AddPlayer( nnode, newplayernum, 0 );  // PS_added_commit
             // XD_ADDPLAYER commands will stay in the cmd buffers.
             // When cl_mode==CLM_connected is achieved, they will be transmitted and acted upon.
-
-            DEBFILE(va("Server added player %d net node %d\n",
-                       newplayernum, nnode));
 
             newplayer_added = true;
         }
     }
 
+    SV_update_player_counts();
+
     return newplayer_added;
 }
+
+// Add players waiting for game start
+void SV_Add_waiting_players( void )
+{
+    byte pn;
+
+    for( pn=0; pn<MAXPLAYERS; pn++)
+    {
+        if( player_state[pn] == PS_join_wait_game_start )
+        {
+            SV_Send_AddPlayer( player_to_nnode[pn], pn, 0 );  // PS_added_commit
+        }
+    }
+}
+
 
 void CL_AddSplitscreenPlayer( void )
 {
@@ -2358,8 +2549,8 @@ boolean SV_SpawnServer( void )
             CL_ConnectToServer();
     }
 
-    if( num_waiting_players )
-        return SV_AddWaitingPlayers();
+    if( num_join_waiting_players )
+        return SV_Add_Join_Waiting();
 
     return 0;
 }
@@ -2407,7 +2598,7 @@ static void SV_Send_Refuse(int to_node, char *reason)
     netbuffer->u.stringpak.str[MAX_STRINGPAK_LEN-1] = 0;
 
     netbuffer->packettype = PT_SERVERREFUSE;
-    HSendPacket(to_node, true, 0, strlen(netbuffer->u.stringpak.str)+1);
+    HSendPacket(to_node, true, 0, strlen(netbuffer->u.stringpak.str)+1);  // ignore failure
     Net_CloseConnection(to_node, 0);
 }
 
@@ -2431,22 +2622,16 @@ static void server_askinfo_handler( byte nnode )
 static void client_join_handler( byte nnode )
 {
     byte num_to_join;
-#ifdef JOININGAME
+    byte join_flags = netbuffer->u.clientcfg.flags;
     boolean newnode=false;
-#endif
+
     if( netbuffer->u.clientcfg.version != VERSION
         || LE_SWAP32(netbuffer->u.clientcfg.subversion) != NETWORK_VERSION)
     {
         SV_Send_Refuse(nnode,
-#if 1
            // Text is automatically centered, must not be too long.
            va("Incompatible client\nServer %i Net %i\nLegacy %i Net %i",
                VERSION, NETWORK_VERSION, netbuffer->u.clientcfg.version, LE_SWAP32(netbuffer->u.clientcfg.subversion) )
-#else
-           // Too long
-           va("Different DOOM versions cannot play a net game!\n (server version %s)",
-               VERSION_BANNER)
-#endif
         );
         return;
     }
@@ -2460,9 +2645,10 @@ static void client_join_handler( byte nnode )
     }
 
     num_to_join = netbuffer->u.clientcfg.num_node_players - playerpernode[nnode];
+    // DRONE will have 0 players
    
-    // TODO; compute it using nodewaiting and playeringame
-    if( (num_game_players + num_waiting_players + num_to_join) > cv_maxplayers.value )
+    // Compute it using join and player counts.
+    if( (SV_update_player_counts() + num_to_join) > cv_maxplayers.value )
     {
         SV_Send_Refuse(nnode,
            va("Maximum players reached (max:%d)", cv_maxplayers.value));
@@ -2470,37 +2656,78 @@ static void client_join_handler( byte nnode )
     }
    
     // Client authorized to join.
-    nodewaiting[nnode] = num_to_join;
-    num_waiting_players += num_to_join;
-
     if( nnode_state[nnode] < NOS_join )
     {
         // The nnode is new to this server.
         SV_AddNode(nnode, NOS_join);
 
         if(!SV_Send_ServerConfig(nnode))
-        {
-            // TODO : fix this !!!
-            GenPrintf(EMSG_error, "Client Join Comm Failure: client lost\n");
-            return;
-        }
+            goto kill_node;
+
         DEBFILE("New node joined\n");
-#ifdef JOININGAME
         newnode = true;
-#endif
+    }
+   
+    if( join_flags & NF_drone )
+    {
+        // drone only watches another player
+        playerpernode[nnode] = 0;  // indicator that is DRONE node
+        return;
     }
 
-#ifdef JOININGAME
     if( num_to_join )
     {
+        // If cannot download, then wait for next game start.
+        if( !(join_flags & NF_download_savegame) )
+            goto wait_for_game_start;  // joiner does not allow savegame download
+        // For savegame downloads to work, the endian must match.
+#ifdef __BIG_ENDIAN__
+        // Server is big-endian
+        if( (join_flags & NF_big_endian) == 0 )
+            goto wait_for_game_start;  // joiner is little-endian
+#else
+        // Server is little-endian
+        if( join_flags & NF_big_endian )
+            goto wait_for_game_start;  // joiner is big-endian
+#endif
+        if( cv_SV_download_savegame.EV == 0 )
+            goto wait_for_game_start;  // server does not allow savegame download
+
+        // If there is an existing player at the node, then will not be newnode.
         if( (gamestate == GS_LEVEL) && newnode)
         {
+            // New node with new players joining existing game.
+#ifdef JOININGAME
+            // Update the nnode with game in progress.
+            nnode_state[nnode] = NOS_join_savegame;
             SV_Send_SaveGame(nnode); // send game data
             GenPrintf(EMSG_info, "Send savegame\n");
-        }
-        SV_AddWaitingPlayers();
-    }
+            // Client will return  PT_CLIENTREADY or PT_CLIENTQUIT
+#else
+            goto wait_for_game_start;
 #endif
+        }
+
+        // Add node players to join_waiting
+        join_waiting[nnode] = num_to_join;
+        num_join_waiting_players += num_to_join;
+        SV_Add_Join_Waiting();
+    }
+    return;
+ 
+wait_for_game_start:
+    // These players will wait until the next game start.
+    while( num_to_join-- )
+    {
+        SV_commit_player( nnode, PS_join_wait_game_start );
+    }
+    return;
+    
+kill_node:
+    DEBFILE("Client Join: Failure to Send.\n");
+    GenPrintf(EMSG_error, "Client Join: Failure to Send\n" );
+    SV_Reset_NetNode(nnode);
+    return;
 }
 
 // BY Server.
@@ -2512,7 +2739,7 @@ static void client_quit_handler( byte nnode, byte client_pn )
     // Set nnode_state to NOS_shutdown at the end of the kick command.
     // This allows the sending of some packets to the quiting client
     // and to have them ack back.
-    nodewaiting[nnode]= 0;
+    join_waiting[nnode]= 0;
     if( (client_pn < MAXPLAYERS) && playeringame[client_pn])
     {
         byte reason = (netbuffer->packettype == PT_NODE_TIMEOUT) ?
@@ -2611,7 +2838,7 @@ static void server_cfg_handler( byte nnode )
         for(j=0;j<MAXPLAYERS;j++)
         {
             playeringame[j] = (( playerdet & (1<<j) ) != 0);
-            player_state[j] = (playeringame[j])? PS_from_server : 0;
+            player_state[j] = (playeringame[j])? PS_player_from_server : 0;
         }
 
         xc.playernum = 0;
@@ -3011,6 +3238,7 @@ static void Net_Packet_Handler(void)
                 if( !server )
                 {
                     // Updates of wait for players, from the server.
+                    num_netplayer = netbuffer->u.netwait.num_netplayer;
                     wait_netplayer = netbuffer->u.netwait.wait_netplayer;
                     wait_tics = LE_SWAP16( netbuffer->u.netwait.wait_tics );
                     set_random_state( & netbuffer->u.netwait.rs, NULL ); // to sync P_Random
@@ -3050,6 +3278,7 @@ static void Net_Packet_Handler(void)
         // Infrequent messages, from anybody.
         if( server )
         {
+            // Packet can be from client trying to join server.
             if( (nnode != servernode) && (nodestate < NOS_recognized) )
             {
                 // Client trying to Join.
@@ -3060,10 +3289,18 @@ static void Net_Packet_Handler(void)
             switch(packettype)
             {
              case PT_ASKINFO:  // client has asked server for info
+                // May have been sent to BROADCAST_NODE, but nnode is sender.
                 server_askinfo_handler( nnode );
                 continue;
              case PT_REQUESTFILE :
-                Got_RequestFilePak(nnode);
+                if( cv_SV_download_files.EV )
+                {
+                    Got_RequestFilePak(nnode);
+                }
+                else
+                {
+                    GenPrintf(EMSG_ver, "RequestFile: Blocked, Not Allowed\n" );
+                }
                 continue;
              case PT_CLIENTJOIN:
                 client_join_handler( nnode );
@@ -3076,6 +3313,9 @@ static void Net_Packet_Handler(void)
                 if( nodestate >= NOS_recognized )
                     repair_handler( nnode );  // from client
                 continue;
+             case PT_CLIENTREADY:
+                ready_handler( nnode );
+                break;	        
             }
         }
 
@@ -3086,6 +3326,7 @@ static void Net_Packet_Handler(void)
             switch(packettype)
             {
              case PT_SERVERINFO:
+                // response from server to BROADCAST_NODE message, should have nnode same as new servernode
                 server_info_handler( nnode );
                 continue;
              case PT_SERVERREFUSE : // negative response of client join request
@@ -3111,10 +3352,21 @@ static void Net_Packet_Handler(void)
         {
          case PT_SERVERCFG :  // server cfg at wrong time
             continue;  // ignore
+
+             case PT_NETWAIT:
+                if( !server )
+                {
+                    // Updates of wait for players, from the server.
+                    wait_netplayer = netbuffer->u.netwait.wait_netplayer;
+                    wait_tics = LE_SWAP16( netbuffer->u.netwait.wait_tics );
+                    set_random_state( & netbuffer->u.netwait.rs, NULL ); // to sync P_Random
+printf( "ANY PacketHandler: wait_netplayer=%d cl_mode=%d\n", wait_netplayer, cl_mode );
+                }
+                continue;
         }
 
         // Packet not accepted.
-        if((nnode >= MAXNETNODES) || (nnode_state[nnode] < NOS_recognized))
+        if((nnode >= MAXNETNODES) || (nodestate < NOS_recognized))
         {
             DEBFILE(va("Unknown packet received (%d) from unknown host !\n", packettype));
             Net_CloseConnection(nnode, 0);  // a temp connection

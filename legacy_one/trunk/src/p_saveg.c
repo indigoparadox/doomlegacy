@@ -3496,7 +3496,7 @@ boolean P_UnArchiveMisc()
     for (i = 0; i < MAXPLAYERS; i++)
     {
         playeringame[i] = (pig & (1 << i)) != 0;
-        player_state[i] = (playeringame[i])? PS_from_savegame : 0;
+        player_state[i] = (playeringame[i])? PS_player_from_savegame : 0;
         players[i].playerstate = PST_REBORN;
     }
 
