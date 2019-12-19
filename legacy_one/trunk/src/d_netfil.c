@@ -335,6 +335,13 @@ void CL_Prepare_download_savegame(const char *tmpsave)
     netfile_download = 1;
 }
 
+// By Client.
+void CL_Cancel_download_savegame( void )
+{
+    cl_num_fileneed = 0;
+    netfile_download = 0;
+}
+
 
 // By Client.
 // Send to the server the names of requested files.
@@ -606,6 +613,7 @@ void  append_to_txlist( byte to_node, filetx_t * ftp )
 
     Filetx_file_cnt++;
 }
+
 
 // By Server.
 // Send a file to client, using client fileid.

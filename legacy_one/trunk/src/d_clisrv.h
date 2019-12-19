@@ -127,6 +127,7 @@ typedef enum   {
     PT_NETWAIT,       // network game wait timer info
     PT_CLIENTREADY,   // client is ready
     PT_REPAIR,        // repair position, consistency fix
+    PT_CONTROL,       // server to client node specific control
  // count for table
     NUMPACKETTYPE
 } packettype_t;
@@ -255,6 +256,13 @@ typedef struct {
     random_state_t  rs;  // P_Random, etc.
 } netwait_pak_t;
 
+// ver 1.48
+typedef struct {
+    byte       command;  // net_control_command_e
+    byte       player_num;  // player num (may be 255)
+    byte       player_state;  // the state to put the player into
+} control_pak_t;
+
 #define MAXSERVERNAME 32
 #define FILENEED_BUFF_LEN  4096
 // [WDJ] Do not change this, so older server version can be identified.
@@ -342,6 +350,7 @@ typedef struct
       netwait_pak_t      netwait;
       repair_pak_t       repair;
       state_pak_t        state;
+      control_pak_t      control;
            } u;
 
 } netbuffer_t;

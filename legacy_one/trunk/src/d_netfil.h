@@ -77,6 +77,7 @@ void D_NetFileInit(void);
 byte * Put_Server_FileNeed(void);
 void CL_Got_Fileneed(int num_fileneed_parm, byte *fileneed_str);
 void CL_Prepare_download_savegame(const char *tmpsave);
+void CL_Cancel_download_savegame( void );
 boolean  CL_waiting_on_fileneed( void );
 
 // Check file list in wadfiles return.
