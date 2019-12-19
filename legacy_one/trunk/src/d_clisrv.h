@@ -421,7 +421,9 @@ void    SV_ResetServer( void );
 
 // [WDJ] Update state by sever.
 // By Server
-void SV_Send_State( byte server_pause );
+void    SV_Send_State( byte server_pause );
+//  wait_timeout : wait timeout in ticks
+void    SV_network_wait_timer( uint16_t wait_timeout );
 
 void    CL_AddSplitscreenPlayer( void );
 void    CL_RemoveSplitscreenPlayer( void );
