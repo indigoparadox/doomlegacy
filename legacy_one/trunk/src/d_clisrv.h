@@ -84,7 +84,6 @@
 
 // Networking and tick handling related.
 #define BACKUPTICS            32
-#define DRONE               0x80    // bit set in consoleplayer
 
 //
 // Packet structure
@@ -105,11 +104,12 @@ typedef enum   {
     PT_SERVERREFUSE,  // server refuse joiner (reason inside)
     PT_SERVERSHUTDOWN,// server is shutting down
     PT_CLIENTQUIT,    // client close the connection
-                      
-    PT_ASKINFO,       // to ask info of the server (anyone)
+               
+    // ASKINFO must be at 12 so can identify server version
+    PT_ASKINFO = 12,  // to ask info of the server (anyone)
     PT_SERVERINFO,    // send game & server info (gamespy)
     PT_REQUESTFILE,   // client request a file transfer
-    PT_REPAIR,        // repair position, consistency fix
+    PT_DUMMY15,
     PT_ACKS,          // all acks
     PT_STATE,         // server pause state
     PT_DUMMY18,
@@ -126,6 +126,7 @@ typedef enum   {
     PT_NODE_TIMEOUT,  // packet is sent to self when connection timeout
     PT_NETWAIT,       // network game wait timer info
     PT_CLIENTREADY,   // client is ready
+    PT_REPAIR,        // repair position, consistency fix
  // count for table
     NUMPACKETTYPE
 } packettype_t;
@@ -180,9 +181,13 @@ typedef enum   {
   RQ_MONSTER,  // not yet implemented
   RQ_OBJECT,   // not yet implemented
 // to server
-  RQ_REQ_TO_SERVER = 100,
+  RQ_REQ_TO_SERVER = 32,
   RQ_REQ_SAVEGAME,  // Request of savegame
   RQ_REQ_PLAYER,    // Request of player update
+// Ack/Nak
+  RQ_CLOSE_ACK = 64,  // client repair done
+  RQ_CLOSE_NACK, // failed in repair
+  RQ_SAVEGAME_REJ, // server reject savegame
 } repair_type_e;
 
 typedef struct {
@@ -352,8 +357,10 @@ extern consvar_t cv_server2;
 extern consvar_t cv_server3;
 extern consvar_t cv_download_files;
 extern consvar_t cv_download_savegame;
+extern consvar_t cv_netrepair;
 extern consvar_t cv_SV_download_files;
 extern consvar_t cv_SV_download_savegame;
+extern consvar_t cv_SV_netrepair;
 extern consvar_t cv_wait_players;
 extern consvar_t cv_wait_timeout;
 

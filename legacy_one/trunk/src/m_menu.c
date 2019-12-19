@@ -2549,6 +2549,7 @@ menuitem_t ConnectOptionMenu[]=
 {
     {IT_STRING | IT_CVAR,0,"Download files", &cv_download_files , 0},
     {IT_STRING | IT_CVAR,0,"Download savegame", &cv_download_savegame , 0},
+    {IT_STRING | IT_CVAR,0,"Netgame repair", &cv_netrepair , 0},
     {IT_STRING | IT_CVAR | IT_CV_STRING,0,"Server 1", &cv_server1 , 0},
     {IT_STRING | IT_CVAR | IT_CV_STRING,0,"Server 2", &cv_server2 , 0},
     {IT_STRING | IT_CVAR | IT_CV_STRING,0,"Server 3", &cv_server3 , 0},
@@ -2556,7 +2557,7 @@ menuitem_t ConnectOptionMenu[]=
 
 menu_t  ConnectOptionDef =
 {
-    "M_OPTTTL",
+    NULL,
     "Connect Options",
     ConnectOptionMenu,
     M_DrawGenericMenu,
@@ -2582,13 +2583,14 @@ menuitem_t ServerOptionsMenu[]=
         | IT_CV_STRING  ,0, "Master server",       &cv_masterserver     ,  0},
     {IT_STRING | IT_CVAR
         | IT_CV_STRING  ,0, "Server name",         &cv_servername       ,  0},
-    {IT_STRING | IT_CVAR,0,"Download files", &cv_SV_download_files , 0},
-    {IT_STRING | IT_CVAR,0,"Download savegame", &cv_SV_download_savegame , 0},
+    {IT_STRING | IT_CVAR,0, "Serve files",    &cv_SV_download_files , 0},
+    {IT_STRING | IT_CVAR,0, "Serve savegame", &cv_SV_download_savegame , 0},
+    {IT_STRING | IT_CVAR,0, "Serve repair",   &cv_SV_netrepair , 0},
 };
 
 menu_t  ServerOptionsDef =
 {
-    "NULL",
+    NULL,
     "Server Settings",
     ServerOptionsMenu,
     M_DrawGenericMenu,
@@ -6011,8 +6013,10 @@ void M_Init (void)
     CV_RegisterVar(&cv_serversearch);
     CV_RegisterVar(&cv_download_files);
     CV_RegisterVar(&cv_download_savegame);
+    CV_RegisterVar(&cv_netrepair);
     CV_RegisterVar(&cv_SV_download_files);
     CV_RegisterVar(&cv_SV_download_savegame);
+    CV_RegisterVar(&cv_SV_netrepair);
     CV_RegisterVar(&cv_menusound);
 }
 

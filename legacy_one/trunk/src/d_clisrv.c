@@ -288,6 +288,7 @@ tic_t localgametic;
 // Client specific.
 boolean         cl_drone; // client displays, no commands
 static byte     cl_nnode; // net node for this client, assigned by server
+static byte     cl_error_status = 0;  // repair
 static boolean  cl_packetmissed;
 static tic_t    cl_need_tic;
 static tic_t    cl_prev_tic = 0;  // client tests once per tic
@@ -321,6 +322,16 @@ consvar_t cv_download_files = {"download_files"  ,"1", CV_SAVE, download_cons_t}
 consvar_t cv_SV_download_files = {"sv_download_files"  ,"1", CV_SAVE, download_cons_t};
 consvar_t cv_download_savegame = {"download_savegame"  ,"1", CV_SAVE, download_cons_t};
 consvar_t cv_SV_download_savegame = {"sv_download_savegame"  ,"1", CV_SAVE, download_cons_t};
+
+CV_PossibleValue_t netrepair_cons_t[] = {{0,"None"},{1,"Minimal"},{2,"Medium"},{3,"Aggressive"},{0,NULL}};
+consvar_t cv_netrepair = {"netrepair","2", CV_SAVE, netrepair_cons_t};
+consvar_t cv_SV_netrepair = {"sv_netrepair","2", CV_SAVE, netrepair_cons_t};
+
+// consistency check, index by cv_SV_netrepair
+static byte consistency_limit_fatal[4] = { 1, 2, 6, 9 };
+static byte consistency_sg_bit[4]    = { 0, 0x02, 0x14, 0xAA };  // bit on when should req savegame
+
+
 
 
 // some software don't support largest packet
@@ -774,26 +785,50 @@ static void get_random_state( random_state_t * rs )
     rs->e_rand2 = LE_SWAP32_FAST( rand2 );
 }
 
-// Receive: Update our random state.
-static void set_random_state( random_state_t * rs, const char * msg )
+#define SET_RANDOM    1
+// Client
+//   set_enable : 1=enable set,  0=check only
+// Receive: Update client random state.
+static void random_state_checkset( random_state_t * rs, const char * msg, byte set_enable )
 {
-    if( msg )
+    uint32_t  o_ernd1, o_ernd2, rs_ernd1, rs_ernd2;
+    byte  o_pr, o_br, rs_pr, rs_br;
+
+    if( ! msg )
     {
-        byte rp = P_Rand_GetIndex();
-        if( rp != rs->p_rand_index )
-        {
-            // Warn when different P_Random index.
-            GenPrintf( EMSG_warn, "%s: gametic %i, update P_random index %i to %i\n",
-                 msg, gametic, rp, rs->p_rand_index );
-            P_Rand_SetIndex( rs->p_rand_index ); // to sync P_Random
-        }
+        msg = "Client random state repair";
     }
-    else
+
+    o_pr = P_Rand_GetIndex();
+    rs_pr = rs->p_rand_index;
+    if( o_pr != rs_pr )
     {
-        P_Rand_SetIndex( rs->p_rand_index ); // to sync P_Random
+        // Warn when different P_Random index.
+        GenPrintf( EMSG_warn, "%s: gametic %i, update P_random index %i to %i\n",
+             msg, gametic, o_pr, rs_pr );
+        if( set_enable )
+            P_Rand_SetIndex( rs_pr ); // to sync P_Random
     }
-    B_Rand_SetIndex( rs->b_rand_index ); // to sync B_Random
-    E_Rand_Set( LE_SWAP32_FAST(rs->e_rand1), LE_SWAP32_FAST(rs->e_rand2) ); // to sync E_Random
+   
+    o_br = B_Rand_GetIndex();
+    rs_br = rs->b_rand_index;
+    if( o_br != rs_br )
+    {
+        GenPrintf( EMSG_warn, "%s: update B_Random index %i to %i\n", msg, o_br, rs_br );
+        if( set_enable )
+            B_Rand_SetIndex( rs_br ); // to sync B_Random
+    }
+
+    o_ernd1 = E_Rand_Get( & o_ernd2 );
+    rs_ernd1 = LE_SWAP32_FAST(rs->e_rand1);
+    rs_ernd2 = LE_SWAP32_FAST(rs->e_rand2);
+    if( o_ernd1 != rs_ernd1 || o_ernd2 != rs_ernd2 )
+    {
+        GenPrintf( EMSG_warn, "%s: update E_Random (%08X,%08X) to (%08X,%08X)\n",
+                   msg, o_ernd1, o_ernd2, rs_ernd1, rs_ernd2 );
+        if( set_enable )
+            E_Rand_Set( rs_ernd1, rs_ernd2 ); // to sync E_Random
+    }
 }
 
 // [WDJ] Update state by sever.
@@ -825,7 +860,7 @@ static void state_handler( void )
     else
     {
         // Update the random generators.
-        set_random_state( & netbuffer->u.state.rs, "PT_STATE" ); // to sync P_Random
+        random_state_checkset( & netbuffer->u.state.rs, "PT_STATE", SET_RANDOM ); // to sync P_Random
     }
     paused = netbuffer->u.state.server_pause;
 
@@ -955,27 +990,53 @@ failed_exit:
 
 // By Server.
 // Send a player repair message.
-//  pn : player number
-//  to_node : the net node
-static void SV_Send_player_repair( int pn, byte to_node )
+//   pind : player index, 0=main player, 1=splitscreen player
+//   to_node : the net node
+static void SV_Send_player_repair( byte pind, byte to_node )
 {
+    const char * fail_msg;
     mobj_t * mo;
 
-    netbuffer->u.repair.repair_type = RQ_PLAYER;
-    netbuffer->u.repair.pos.id_num = pn;
-    if( ! playeringame[pn] )  return;
+    byte pn = nnode_to_player[pind][ to_node ];
+    if( pn >= MAXPLAYERS )  return;
+
+    if( ! playeringame[pn] )
+    {
+        fail_msg = "not in game";
+        goto fail;
+    }
 
     mo = players[pn].mo;
-    if( ! mo )  return;
+    if( ! mo )
+    {
+        fail_msg = "no mobj";
+        goto fail;
+    }
 
-    netbuffer->u.repair.pos.angle = mo->angle;
-    netbuffer->u.repair.pos.x = mo->x;
-    netbuffer->u.repair.pos.y = mo->y;
-    netbuffer->u.repair.pos.z = mo->z;
-    netbuffer->u.repair.pos.momx = mo->momx;
-    netbuffer->u.repair.pos.momy = mo->momy;
-    netbuffer->u.repair.pos.momz = mo->momz;
-    HSendPacket(to_node, false, 0, sizeof(repair_pak_t));
+    // Enough to fix a small difference in player position.
+    netbuffer->u.repair.repair_type = RQ_PLAYER;
+    netbuffer->u.repair.pos.id_num = LE_SWAP16( pn );
+    netbuffer->u.repair.pos.angle = LE_SWAP32( mo->angle );
+    netbuffer->u.repair.pos.x = LE_SWAP32( mo->x );
+    netbuffer->u.repair.pos.y = LE_SWAP32( mo->y );
+    netbuffer->u.repair.pos.z = LE_SWAP32( mo->z );
+    netbuffer->u.repair.pos.momx = LE_SWAP32( mo->momx );
+    netbuffer->u.repair.pos.momy = LE_SWAP32( mo->momy );
+    netbuffer->u.repair.pos.momz = LE_SWAP32( mo->momz );
+
+    if( ! HSendPacket(to_node, true, 0, sizeof(repair_pak_t)) )  // reliable
+    {
+        nnode_state[to_node] = NOS_fatal;
+        fail_msg = "Send fail";       
+        goto fail;
+    }
+
+    GenPrintf( EMSG_warn, "Server Send_player_repair: player %i\n", pn );
+    return;
+
+fail:
+    GenPrintf( EMSG_warn, "Server Send_player_repair: player %i, %s\n", pn, fail_msg );
+    return;
 }
 
 
@@ -983,100 +1044,151 @@ static void SV_Send_player_repair( int pn, byte to_node )
 // Repair the player from the repair message in the netbuffer.
 static void CL_player_repair( void )
 {
-    int pn;
+    const char * fail_msg;
     mobj_t * mo;
+    byte pn;
 
-    pn = netbuffer->u.repair.pos.id_num;
-    if( ! playeringame[pn] )  return;
+    pn = (uint16_t) LE_SWAP16( netbuffer->u.repair.pos.id_num );
+    if( ! playeringame[pn] )
+    {
+        fail_msg = "not in game";
+        goto fail;
+    }
 
     mo = players[pn].mo;
-    if( ! mo )  return;
+    if( ! mo )
+    {
+        fail_msg = "no mobj";
+        goto fail;
+    }
 
-    mo->angle = netbuffer->u.repair.pos.angle;
-    mo->x = netbuffer->u.repair.pos.x;
-    mo->y = netbuffer->u.repair.pos.y;
-    mo->z = netbuffer->u.repair.pos.z;
-    mo->momx = netbuffer->u.repair.pos.momx;
-    mo->momy = netbuffer->u.repair.pos.momy;
-    mo->momz = netbuffer->u.repair.pos.momz;
+    angle_t  r_angle = LE_SWAP32( netbuffer->u.repair.pos.angle );
+    fixed_t  r_x = LE_SWAP32( netbuffer->u.repair.pos.x );
+    fixed_t  r_y = LE_SWAP32( netbuffer->u.repair.pos.y );
+    fixed_t  r_z = LE_SWAP32( netbuffer->u.repair.pos.z );
+    fixed_t  r_momx = LE_SWAP32( netbuffer->u.repair.pos.momx );
+    fixed_t  r_momy = LE_SWAP32( netbuffer->u.repair.pos.momy );
+    fixed_t  r_momz = LE_SWAP32( netbuffer->u.repair.pos.momz );
+
+    if( mo->angle != r_angle )
+    {
+        GenPrintf( EMSG_warn, "Client player_repair: ANGLE  client %x  server %x\n", mo->angle, r_angle );
+        mo->angle = r_angle;
+    }
+
+    if(  mo->x != r_x || mo->y != r_y || mo->z != r_z )
+    {
+        GenPrintf( EMSG_warn, "Client player_repair: POS  client (%x.%x, %x.%x, %x.%x)  server (%x.%x, %x.%x, %x.%x)\n",
+                   mo->x>>16, mo->x&0xFFFF, mo->y>>16, mo->y&0xFFFF, mo->z>>16, mo->z&0xFFFF,
+                   r_x>>16, r_x&0xFFFF, r_y>>16, r_y&0xFFFF, r_z>>16, r_z&0xFFFF  );
+        mo->x = r_x;
+        mo->y = r_y;
+        mo->z = r_z;
+    }
+
+    if(  mo->momx != r_momx || mo->momy != r_momy || mo->momz != r_momz )
+    {
+        GenPrintf( EMSG_warn, "Client player_repair: MOM  client (%x.%x, %x.%x, %x.%x)  server (%x.%x, %x.%x, %x.%x)\n",
+                   mo->momx>>16, mo->momx&0xFFFF, mo->momy>>16, mo->momy&0xFFFF, mo->momz>>16, mo->momz&0xFFFF,
+                   r_momx>>16, r_momx&0xFFFF, r_momy>>16, r_momy&0xFFFF, r_momz>>16, r_momz&0xFFFF  );
+        mo->momx = r_momx;
+        mo->momy = r_momy;
+        mo->momz = r_momz;
+    }
+    return;
+
+fail:
+    GenPrintf( EMSG_warn, "Server Send_player_repair: player %i, %s\n", pn, fail_msg );
+    return;
 }
 
 // By Server.
-// Send a position repair to the client.
 //  to_node : to the player node
 //  repair_type : RQ_PLAYER, RQ_SUG_SAVEGAME
-static void SV_Send_Pos_repair( byte repair_type, byte to_node )
+static void SV_Send_repair( byte repair_type, byte to_node )
 {
     netbuffer->packettype = PT_REPAIR;
-    netbuffer->u.repair.gametic = LE_SWAP32_FAST(gametic);
+    netbuffer->u.repair.gametic = LE_SWAP32(gametic);
     get_random_state( & netbuffer->u.repair.rs ); // to sync P_Random
-       
-#ifdef JOININGAME
-    if( repair_type == RQ_SUG_SAVEGAME )
+
+    netbuffer->u.repair.repair_type = repair_type;
+    if( repair_type == RQ_PLAYER )
     {
-        netbuffer->u.repair.repair_type = RQ_SUG_SAVEGAME;
-        HSendPacket(to_node, false, 0, sizeof(repair_pak_t));
+        SV_Send_player_repair( 0, to_node );  // main player
+        SV_Send_player_repair( 1, to_node );  // splitscreen
         return;
     }
-#endif
 
-    SV_Send_player_repair( nnode_to_player[0][ to_node ], to_node );
-   
-    byte pn2 = nnode_to_player[1][ to_node ];  // splitscreen player at the node
-    if( pn2 < MAXPLAYERS )
+    // simple messages
+    if( ! HSendPacket(to_node, true, 0, sizeof(repair_pak_t)) )
     {
-        SV_Send_player_repair( pn2, to_node );
+        nnode_state[to_node] = NOS_fatal;
     }
+    return;
 }
 
 
-#ifdef JOININGAME
 // By Client.
-// Send a request for a savegame.
-//  msg_type : RQ_REQ_SAVEGAME, RQ_REQ_PLAYER
-static void CL_Send_Req_repair( repair_type_e msg_type )
+//  repair_type : RQ_REQ_SAVEGAME, RQ_REQ_PLAYER, RQ_CLOSE_ACK
+static void CL_Send_Req_repair( repair_type_e repair_type )
 {
-    netbuffer->packettype=PT_REPAIR;
-    netbuffer->u.repair.repair_type = msg_type;
+    netbuffer->packettype = PT_REPAIR;
+    netbuffer->u.repair.repair_type = repair_type;
 
-    HSendPacket(servernode, true, 0, sizeof(repair_pak_t));
+    // The fields are there, so fill them.  Easier to fill them everytime.
+    netbuffer->u.repair.gametic = LE_SWAP32(gametic);
+    get_random_state( & netbuffer->u.repair.rs ); // to sync P_Random
+
+    if( ! HSendPacket(servernode, true, 0, sizeof(repair_pak_t)) )  // reliable
+        network_state = NETS_fatal;
 }
-#endif
+
 
 // [WDJ] Attempt to fix consistency errors.
-// By Client and Server
-// Act upon the received position repair from server.
-static void repair_handler( byte nnode )
+// PT_REPAIR
+// By Client
+static void repair_handler_client( byte nnode )
 {
     // Message is PT_REPAIR
-    int msg_type = netbuffer->u.repair.repair_type;
-    if( (msg_type < RQ_REQ_TO_SERVER) && ! server )
+    byte msg_type = netbuffer->u.repair.repair_type;
+   
+    if( server )
+        return;  // Ignore attempts to corrupt server.
+
+    if( msg_type < RQ_REQ_TO_SERVER )
     {
         // Server repairs client.
+        if( gametic != netbuffer->u.repair.gametic )
+            GenPrintf( EMSG_warn, "Client player_repair: gametic client %u  server %u\n", gametic, netbuffer->u.repair.gametic );
         gametic = LE_SWAP32_FAST(netbuffer->u.repair.gametic);
-        set_random_state( & netbuffer->u.repair.rs, NULL ); // to sync P_Random
+        random_state_checkset( & netbuffer->u.repair.rs, NULL, SET_RANDOM ); // to sync P_Random
     }
    
     switch( msg_type )
     {
-     case RQ_PLAYER:
-        // Server repairs player position.
-        CL_player_repair();
-        break;
-
-#ifdef JOININGAME
      case RQ_SUG_SAVEGAME:
-        // Server suggests downloading a savegame from the server.
+#ifdef JOININGAME
+        // CLIENT: Server suggests downloading a savegame from the server.
+        if(( cv_download_savegame.EV == 0 ) || ( cv_netrepair.EV < 2 ))
+        {
+            CL_Send_Req_repair( RQ_REQ_PLAYER ); // to server
+            break;
+        }
+
+        // Client: prepare for savegame download.
+        cl_mode = CLM_download_savegame;
         CL_Prepare_download_savegame(tmpsave);
         CL_Send_Req_repair( RQ_REQ_SAVEGAME ); // to server
         // Loop here while savegame is downloaded.
         while( netfile_download )
         {
             Net_Packet_Handler();
-            if( network_state < NETS_open )
+            if( network_state < NETS_active )  // Need client to server connection
                 goto reset_to_title_exit;  // connection closed by cancel or timeout
+#if 1
             if( !server && !netgame )
                 goto reset_to_title_exit;  // connection closed by cancel or timeout
+#endif
 
             Net_AckTicker();
 
@@ -1105,35 +1217,95 @@ static void repair_handler( byte nnode )
         if( cl_mode != CLM_download_done )
         {
             GenPrintf( EMSG_error, "Client player_repair: savegame failed\n" );
-            goto reset_to_title_exit;
+            if( cv_netrepair.EV < 3 )  goto reset_to_title_exit;
+            // aggressive
+            if( cl_error_status > 2 )  goto reset_to_title_exit;
+            cl_error_status = 3;  // retry once
+            // Try again
+            CL_Send_Req_repair( RQ_REQ_SAVEGAME ); // to server
+            break;
         }
+        // Download done
+        CL_Send_Req_repair( RQ_CLOSE_ACK ); // to server
+        cl_mode = CLM_connected;
+        goto close_repair;
+#else
+        CL_Send_Req_repair( RQ_REQ_PLAYER ); // to server
+#endif
+        break;
+
+     case RQ_SAVEGAME_REJ:
+        // Server rejects savegame.
         CL_Send_Req_repair( RQ_REQ_PLAYER ); // to server
         break;
 
-     case RQ_REQ_SAVEGAME:
-        // Client has requested a savegame repair
-        if( ! server ) break;   // only handled by server
-        if(gamestate == GS_LEVEL)
-        {
-            SV_Send_SaveGame( nnode ); // send game data
-            GenPrintf(EMSG_info, "Send savegame\n");
-        }
-        break;
-       
-     case RQ_REQ_PLAYER:
-        // Client has requested a player repair
-        if( ! server ) break;   // only handled by server
-        SV_Send_Pos_repair( RQ_PLAYER, nnode );
-#endif
+     case RQ_PLAYER:
+        // Server repairs player position.
+        CL_player_repair();
+        cl_mode = CLM_connected;
+        goto close_repair;
+
      default:
         break;
     }
     return;
-   
+
+close_repair:
+    // Client closes the repair state. 
+    if( cl_mode != CLM_fatal )
+        CL_Send_Req_repair( RQ_CLOSE_ACK ); // to server
+    cl_error_status = 1;
+    return;
+
 reset_to_title_exit:
+    if( cl_mode != CLM_fatal )
+        D_Quit_NetGame(); // to server
     CL_Reset();
     D_StartTitle();
     return;
+}
+
+// PT_REPAIR
+// By Server only.
+static void repair_handler_server( byte nnode )
+{
+    // Message is PT_REPAIR
+    byte msg_type = netbuffer->u.repair.repair_type;
+    switch( msg_type )
+    {
+     case RQ_REQ_SAVEGAME:
+        // Client has requested a savegame repair
+#ifdef JOININGAME
+        if( (cv_SV_download_savegame.EV == 0) || (cv_SV_netrepair.EV < 2) )
+        {
+            GenPrintf(EMSG_info, "Repair: Send savegame not allowed\n" );
+        }
+        else if(gamestate == GS_LEVEL)
+        {
+            nnode_state[nnode] = NOS_repair_savegame;
+            SV_Send_SaveGame( nnode ); // send game data
+            GenPrintf(EMSG_info, "Repair: Send savegame\n");
+            // Client will return  RQ_REQ_SAVEGAME, RQ_REQ_PLAYER, RQ_CLOSE_ACK, or PT_CLIENTQUIT
+            break;	    
+        }
+#else
+        GenPrintf(EMSG_info, "Repair: Send savegame not allowed, no Join-in-game.\n" );
+#endif
+        SV_Send_repair( RQ_SAVEGAME_REJ, nnode );
+        break;
+       
+     case RQ_REQ_PLAYER:
+        // Client has requested a player repair
+        nnode_state[nnode] = NOS_repair_player;
+        SV_Send_repair( RQ_PLAYER, nnode );  // includes player1, player2 position
+        break;
+
+     case RQ_CLOSE_ACK:
+        // Client is ending the repair.
+        random_state_checkset( & netbuffer->u.repair.rs, "Repair Close", 0 ); // to check P_Random
+        nnode_state[nnode] = NOS_active;
+        break;
+    }
 }
 
 
@@ -1630,7 +1802,7 @@ static void CL_ConnectToServer( void )
                     goto reset_to_searching;
                 }
 
-                // got samegame
+                // got savegame
                 if( ! SendPacket( servernode, PT_CLIENTREADY ) )
                     goto reset_to_searching;
 
@@ -1855,6 +2027,7 @@ void CL_Reset (void)
     doomcom->num_player_netnodes=1;
 #endif
     num_player_slots = 1;
+    cl_error_status = 0;
     SV_StopServer();
     SV_ResetServer();
 
@@ -2977,6 +3150,45 @@ drop_packet:
     return;
 }
 
+
+// Detected a consistency fault.
+//  nnode : the client node
+//  client_pn : the client player num
+static void SV_consistency_fault( byte nnode, byte client_pn )
+{
+    byte confault = ++consistency_faults[nnode];  // failure count
+
+    if( confault >= consistency_limit_fatal[cv_SV_netrepair.EV] )
+    {
+        // Failed the consistency check too many times
+#if 1
+        Send_NetXCmd_p2(XD_KICK, client_pn, KICK_MSG_CON_FAIL);
+#else
+        // Debug message instead.
+        GenPrintf(EMSG_warn, "Kick player %d at tic %d, consistency failure\n",
+            client_pn, start_tic);
+#endif
+        DEBFILE(va("Kick player %d at tic %d, consistency %d != %d\n",
+            client_pn, start_tic, consistency[btic],
+            LE_SWAP16_FAST(netbuffer->u.clientpak.consistency)));
+
+    }
+#ifdef JOININGAME
+    else if( ( (consistency_sg_bit[cv_SV_netrepair.EV] >> (confault-1)) & 0x01)
+             && ( cv_SV_download_savegame.EV ))
+    {
+        // try to use savegame to fix consistency
+        SV_Send_repair(RQ_SUG_SAVEGAME, nnode);
+    }
+#endif
+    else
+    {
+        // try to fix consistency
+        SV_Send_repair(RQ_PLAYER, nnode);
+    }
+}
+
+
 // By Server
 // PT_CLIENTCMD, PT_CLIENT2CMD, PT_CLIENTMIS, PT_CLIENT2MIS,
 // PT_NODEKEEPALIVE, PT_NODEKEEPALIVEMIS from Client.
@@ -3026,34 +3238,8 @@ static void client_cmd_handler( byte netcmd, byte nnode, byte client_pn )
         if(consistency[btic] != LE_SWAP16_FAST(netbuffer->u.clientpak.consistency))
         {
             // Failed the consistency check.
-            byte confault = ++consistency_faults[nnode];  // failure count
-            if( confault > 7 )
-            {
-                // Failed the consistency check too many times
-#if 1
-                Send_NetXCmd_p2(XD_KICK, client_pn, KICK_MSG_CON_FAIL);
-#else
-                // Debug message instead.
-                GenPrintf(EMSG_warn, "Kick player %d at tic %d, consistency failure\n",
-                    client_pn, start_tic);
-#endif
-                DEBFILE(va("Kick player %d at tic %d, consistency %d != %d\n",
-                    client_pn, start_tic, consistency[btic],
-                    LE_SWAP16_FAST(netbuffer->u.clientpak.consistency)));
-
-            }
-#ifdef JOININGAME
-            else if( (confault & 0x3) == 3 )
-            {
-                // try to use savegame to fix consistency
-                SV_Send_Pos_repair(RQ_SUG_SAVEGAME, nnode);
-            }
-#endif
-            else
-            {
-                // try to fix consistency
-                SV_Send_Pos_repair(RQ_PLAYER, nnode);
-            }
+            SV_consistency_fault( nnode, client_pn );
+            return;  // packet contents lost when other messages sent
         }
         else if( consistency_faults[nnode] > 0 )
         {
@@ -3241,7 +3427,7 @@ static void Net_Packet_Handler(void)
                     num_netplayer = netbuffer->u.netwait.num_netplayer;
                     wait_netplayer = netbuffer->u.netwait.wait_netplayer;
                     wait_tics = LE_SWAP16( netbuffer->u.netwait.wait_tics );
-                    set_random_state( & netbuffer->u.netwait.rs, NULL ); // to sync P_Random
+                    random_state_checkset( & netbuffer->u.netwait.rs, NULL, SET_RANDOM ); // to sync P_Random
                 }
                 continue;
              case PT_STATE:
@@ -3249,7 +3435,7 @@ static void Net_Packet_Handler(void)
                     state_handler();  // to client
                 continue;
              case PT_REPAIR:
-                repair_handler( nnode );  // from server
+                repair_handler_client( nnode );  // from server
                 continue;
              default:
                 break;
@@ -3293,29 +3479,27 @@ static void Net_Packet_Handler(void)
                 server_askinfo_handler( nnode );
                 continue;
              case PT_REQUESTFILE :
-                if( cv_SV_download_files.EV )
-                {
-                    Got_RequestFilePak(nnode);
-                }
-                else
+                if( cv_SV_download_files.EV == 0 )
                 {
                     GenPrintf(EMSG_ver, "RequestFile: Blocked, Not Allowed\n" );
+                    continue;
                 }
+                Got_RequestFilePak(nnode);
                 continue;
              case PT_CLIENTJOIN:
                 client_join_handler( nnode );
                 continue;
-             case PT_NODE_TIMEOUT:  // from client
-             case PT_CLIENTQUIT:
-                Net_CloseConnection(nnode, 0);  // normal closing
+             case PT_CLIENTREADY:
+                ready_handler( nnode );
                 continue;
              case PT_REPAIR:
                 if( nodestate >= NOS_recognized )
-                    repair_handler( nnode );  // from client
+                    repair_handler_server( nnode );  // from client
                 continue;
-             case PT_CLIENTREADY:
-                ready_handler( nnode );
-                break;	        
+             case PT_NODE_TIMEOUT:  // from unknown client
+             case PT_CLIENTQUIT:  // when unknown client
+                Net_CloseConnection(nnode, 0);  // normal closing
+                continue;
             }
         }
 
@@ -3352,17 +3536,6 @@ static void Net_Packet_Handler(void)
         {
          case PT_SERVERCFG :  // server cfg at wrong time
             continue;  // ignore
-
-             case PT_NETWAIT:
-                if( !server )
-                {
-                    // Updates of wait for players, from the server.
-                    wait_netplayer = netbuffer->u.netwait.wait_netplayer;
-                    wait_tics = LE_SWAP16( netbuffer->u.netwait.wait_tics );
-                    set_random_state( & netbuffer->u.netwait.rs, NULL ); // to sync P_Random
-printf( "ANY PacketHandler: wait_netplayer=%d cl_mode=%d\n", wait_netplayer, cl_mode );
-                }
-                continue;
         }
 
         // Packet not accepted.

@@ -1022,7 +1022,7 @@ static char *packettypename[NUMPACKETTYPE]={
     "ASKINFO",
     "SERVERINFO",
     "REQUESTFILE",
-    "REPAIR",
+    "DUMMY15",
     "ACKS",
     "STATE",
     "DUMMY18",
@@ -1034,7 +1034,8 @@ static char *packettypename[NUMPACKETTYPE]={
     "CLIENTJOIN",
     "NODETIMEOUT",
     "WAITINFO",
-
+    "CLIENTREADY",
+    "REPAIR",
 };
 
 static void DebugPrintpacket(char *header)
