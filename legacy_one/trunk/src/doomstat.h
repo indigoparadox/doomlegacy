@@ -261,13 +261,13 @@ extern boolean         nosoundfx; // had clash with WATCOM i86.h nosound() funct
 // =========================
 //
 
+extern  byte    paused;         // Game Pause, multiple bits
+
 // Depending on view size - no status bar?
 // Note that there is no way to disable the
 //  status bar explicitely.
 extern  boolean statusbaractive;
-
 extern  boolean menuactive;     // Menu overlayed?
-extern  boolean paused;         // Game Pause?
 
 extern  boolean nodrawers;
 extern  boolean noblit;

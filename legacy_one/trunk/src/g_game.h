@@ -243,6 +243,8 @@ boolean G_CheckDemoStatus (void);
 void G_ExitLevel (void);
 void G_SecretExitLevel (void);
 void G_NextLevel (void);
+void G_DoCompleted( void );
+void G_Start_Intermission( void );
 
 void G_Ticker (void);
 boolean G_Responder (event_t*   ev);

@@ -1055,6 +1055,7 @@ static char *packettypename[NUMPACKETTYPE]={
     "WAITINFO",
     "CLIENTREADY",
     "REPAIR",
+    "CONTROL",
 };
 
 static void DebugPrintpacket(char *header)
