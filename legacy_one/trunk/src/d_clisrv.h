@@ -438,8 +438,8 @@ void    SV_Send_State( byte server_pause );
 //  wait_timeout : wait timeout in ticks
 void    SV_network_wait_timer( uint16_t wait_timeout );
 
-void    CL_AddSplitscreenPlayer( void );
-void    CL_RemoveSplitscreenPlayer( void );
+// By Client
+void    CL_Splitscreen_Player_Manager( void );
 void    CL_Reset (void);
 void    CL_Update_ServerList( boolean internetsearch );
 // is there a game running

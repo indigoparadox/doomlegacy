@@ -324,10 +324,7 @@ void SplitScreen_OnChange(void)
 
     if( !demoplayback)
     {
-        if( cv_splitscreen.EV )
-            CL_AddSplitscreenPlayer();
-        else
-            CL_RemoveSplitscreenPlayer();
+        CL_Splitscreen_Player_Manager();
 
         if(server && !netgame)
             multiplayer = cv_splitscreen.EV;
