@@ -1606,3 +1606,15 @@ boolean P_UseArtifact(player_t *player, artitype_t arti)
 ret_fail:   
     return(false);
 }
+
+
+void P_SetPlayer_color( player_t * player, byte color )
+{
+    color = color % NUMSKINCOLORS;
+    player->skincolor = color;
+
+    // a copy of color, in proper position for use with color tables
+    mobj_t *  pmo = player->mo;
+    if( pmo )
+        pmo->tflags = (pmo->tflags & ~MFT_TRANSLATION6) | (color << MFT_TRANSSHIFT);
+}

@@ -203,6 +203,7 @@ extern fixed_t jumpgravity;  // variable by fragglescipt
 
 void   P_ResetCamera (player_t* player);
 void   P_PlayerThink (player_t* player);
+void   P_SetPlayer_color( player_t * player, byte color );
 
 // client prediction
 void   CL_ResetSpiritPosition (mobj_t *mobj);

@@ -808,16 +808,28 @@ void SF_SkinColor(void)
             goto done;
         }
 
-        players[playernum].skincolor = colour;
-        players[playernum].mo->tflags =
-           (players[playernum].mo->tflags & ~MFT_TRANSLATION6)
-           | (players[playernum].mo->player->skincolor);
+        P_SetPlayer_color( &players[playernum], colour );
 
         // Test for netplay and splitscreen usage.
+#if 1
+        // Would automatically trigger a NetXCmd to other clients, but is that necessary ?
+        // Should not affect user settings.
+        if( playernum == displayplayer )
+        {
+            cv_playercolor[0].EV = colour;
+//            Send_NameColor_pind( 0 );
+	}
+        else  if( playernum == displayplayer2 )
+        {
+            cv_playercolor[1].EV = colour;
+//            Send_NameColor_pind( 1 );
+	}
+#else
         if( playernum == displayplayer )
             CV_SetValue (&cv_playercolor[0], colour);  // affects user config value
         else  if( playernum == displayplayer2 )
             CV_SetValue (&cv_playercolor[1], colour);  // affects user config value
+#endif
     }
 
     t_return.value.i = players[playernum].skincolor;

@@ -112,5 +112,7 @@ typedef enum {
 void D_Register_ClientCommands (void);
 void D_Send_PlayerConfig(void);
 void Command_ExitGame_f(void);
+//void Send_NameColor_player( byte pn, byte pind );
+void Send_NameColor_pn( byte pn, const char * playername, byte color, const char * skinname, byte textcmd_pind );
 
 #endif
