@@ -1072,9 +1072,9 @@ void CV_RegisterVar (consvar_t *cvar)
 
 #ifdef PARANOIA
     if ((cvar->flags & CV_NOINIT) && !(cvar->flags & CV_CALL))
-        I_Error("variable %s has CV_NOINIT without CV_CALL\n");
+        I_Error("variable %s has CV_NOINIT without CV_CALL\n",cvar->name);
     if ((cvar->flags & CV_CALL) && !cvar->func)
-        I_Error("variable %s has CV_CALL without func");
+        I_Error("variable %s has CV_CALL without func",cvar->name);
 #endif
     CV_set_str_value( cvar, cvar->defaultvalue,
                      ((cvar->flags & CV_NOINIT) == 0), // call_enable
