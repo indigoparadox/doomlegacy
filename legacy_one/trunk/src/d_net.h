@@ -75,9 +75,17 @@ extern uint64_t  stat_sendbytes;        // realtime updated
 void    Net_AckTicker(void);
 boolean Net_AllAckReceived(void);
 
+typedef enum {
+  SP_reliable = 0x01,
+  SP_queue  = 0x02,
+  SP_error_handler  = 0x08,
+} sendpacket_flag_e;
+
 // if reliable return true if packet sent, 0 else
-boolean HSendPacket(int to_node, boolean reliable, byte acknum, int packetlength);
+// Return network_error_e (NE_xx).
+byte  HSendPacket(byte to_node, byte flags, byte acknum, int packetlength);
 boolean HGetPacket (void);
+void  network_error_print( byte errcode, const char * who );
 // Returns true when a network connection is made.
 boolean D_Startup_NetGame(void);
 void    D_CloseConnection( void );

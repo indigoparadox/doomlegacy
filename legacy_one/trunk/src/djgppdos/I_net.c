@@ -76,16 +76,38 @@ typedef enum
 
 static int doomatic;
 
+// Antique interfaces
 boolean External_Driver_Get(void);
 boolean External_Driver_Send(void);
 void External_Driver_FreeNode(int nodenum);
 
+// Ver 1.48 compatible hooks.
+void  Hook_FreeNode(byte nnode)
+{
+    External_Driver_FreeNode(nodenum);
+}
+
+byte  Hook_network_Get(void)
+{
+    // Lack of error information
+    if( ! External_Driver_Get() )  return NE_fail;
+    return NE_success;
+}
+
+byte  Hook_network_Send(void)
+{
+    // Lack of error information
+    if( ! External_Driver_Send() )  return NE_fail;
+    return NE_success;
+}
+
+
 boolean External_Driver_OpenSocket()
 {
-    I_NetGet  = External_Driver_Get;
-    I_NetSend = External_Driver_Send;
+    I_NetGet  = Hook_network_Get;
+    I_NetSend = Hook_network_Send;
     I_NetCloseSocket = NULL;
-    I_NetFreeNode = External_Driver_FreeNode;
+    I_NetFreeNode = Hook_FreeNode;
     
     return true;
 }
