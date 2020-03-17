@@ -276,7 +276,7 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1503"
+#define SVN_REV "1504"
 #endif
 
 
@@ -1202,7 +1202,7 @@ void D_StartTitle(void)
     playerdeadview = false;
     displayplayer = consoleplayer = statusbarplayer = 0;
     displayplayer_ptr = consoleplayer_ptr = &players[0]; // [WDJ]
-    paused = false;
+    paused = 0;
     demo_ctrl = 0;  // enable screens and seq demos
     demosequence = -1;
     CON_ToggleOff();

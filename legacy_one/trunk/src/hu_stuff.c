@@ -280,6 +280,7 @@ void Command_Say_f (void)
         strcat(&buf[1]," ");
         strcat(&buf[1],COM_Argv(i));
     }
+    // as mainplayer
     Send_NetXCmd(XD_SAY, buf, strlen(buf+1)+2);
        // +2 because 1 for buf[0] and the other for null terminated string
 }
@@ -309,6 +310,7 @@ void Command_Sayto_f (void)
         strcat(&buf[1]," ");
         strcat(&buf[1],COM_Argv(i));
     }
+    // as mainplayer
     Send_NetXCmd(XD_SAY, buf, strlen(buf+1)+2);
 }
 
@@ -332,6 +334,7 @@ void Command_Sayteam_f (void)
         strcat(&buf[1]," ");
         strcat(&buf[1],COM_Argv(i));
     }
+    // as mainplayer
     Send_NetXCmd(XD_SAY, buf, strlen(buf+1)+2);
         // +2 because 1 for buf[0] and the other for null terminated string
 }

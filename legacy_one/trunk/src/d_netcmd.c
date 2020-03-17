@@ -488,6 +488,7 @@ void Got_NetXCmd_NameColor(xcmd_t * xc)
     // name
     if( EV_legacy >= 128 )
     {
+        // compacted string space in message
         if (strcasecmp(pname, lcp))
             CONS_Printf("%s renamed to %s\n", pname, lcp);
         // [WDJ] String overflow safe
@@ -501,6 +502,7 @@ void Got_NetXCmd_NameColor(xcmd_t * xc)
     }
     else
     {
+        // constant string space in message
         memcpy(pname, lcp, MAXPLAYERNAME);
         lcp += MAXPLAYERNAME;
     }
@@ -513,11 +515,13 @@ void Got_NetXCmd_NameColor(xcmd_t * xc)
     {
         if( EV_legacy >= 128 )
         {
+            // compacted string space in message
             SetPlayerSkin(pn, lcp);
             SKIPSTRING(lcp);
         }
         else
         {
+            // constant string space in message
             SetPlayerSkin(pn, lcp);
             lcp += (SKINNAMESIZE + 1);
         }
@@ -739,7 +743,7 @@ void Command_Map_f(void)
         buf[1] &= ~0x02;
     }
 
-    Send_NetXCmd(XD_MAP, buf, 2 + strlen(MAPNAME) + 1);
+    SV_Send_NetXCmd(XD_MAP, buf, 2 + strlen(MAPNAME) + 1); // as server
 }
 
 void Got_NetXCmd_Mapcmd(xcmd_t * xc)
@@ -794,6 +798,7 @@ void Command_Restart_f(void)
         CONS_Printf("You should be in a level to restart it !\n");
 }
 
+// Command, or KEY_PAUSE
 void Command_Pause(void)
 {
     char buf;
@@ -802,7 +807,8 @@ void Command_Pause(void)
         buf = atoi(COM_Argv(1)) != 0;
     else
         buf = !paused;
-    Send_NetXCmd(XD_PAUSE, &buf, 1);
+
+    Send_NetXCmd(XD_PAUSE, &buf, 1);  // as mainplayer
 }
 
 void Got_NetXCmd_Pause(xcmd_t * xc)
@@ -935,7 +941,7 @@ void Command_ExitLevel_f(void)
     if (gamestate != GS_LEVEL || demoplayback)
         CONS_Printf("You should be in a level to exit it !\n");
 
-    Send_NetXCmd(XD_EXITLEVEL, NULL, 0);
+    SV_Send_NetXCmd(XD_EXITLEVEL, NULL, 0);  // as server
 }
 
 void Got_NetXCmd_ExitLevelcmd(xcmd_t * xc)
@@ -967,7 +973,7 @@ void Command_Load_f(void)
 
     // Format: save_slot byte.
     slot = atoi(COM_Argv(1));
-    Send_NetXCmd(XD_LOADGAME, &slot, 1);
+    SV_Send_NetXCmd(XD_LOADGAME, &slot, 1); // as server
 }
 
 void Got_NetXCmd_LoadGame_cmd(xcmd_t * xc)
@@ -1000,7 +1006,7 @@ void Command_Save_f(void)
     strncpy(&p[1], COM_Argv(2), SAVESTRINGSIZE-1);
     p[SAVESTRINGSIZE] = '\0';
 
-    Send_NetXCmd(XD_SAVEGAME, &p, strlen(&p[1]) + 2);
+    SV_Send_NetXCmd(XD_SAVEGAME, &p, strlen(&p[1]) + 2);  // as server
 }
 
 void Got_NetXCmd_SaveGame_cmd(xcmd_t * xc)
