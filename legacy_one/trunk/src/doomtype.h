@@ -124,6 +124,7 @@ typedef enum {
 #endif
 
 #ifdef __GNUC__
+// Mingw32 ignores this.
 #define PACKED_ATTR  __attribute__((packed))
 #else
 #define PACKED_ATTR
