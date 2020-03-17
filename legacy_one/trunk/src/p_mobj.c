@@ -1718,6 +1718,12 @@ void P_MobjThinker(mobj_t * mobj)
     // move player mobj (not the spirit) to spirit position (sent by ticcmd)
     if ((mobj->type == MT_PLAYER)
         && (player)
+#ifdef TICCMD_148
+        && ((player->cmd.ticflags & (TC_XY | TC_received)) == (TC_XY | TC_received))
+#else
+        && ((player->cmd.angleturn & (TICCMD_XY | TICCMD_RECEIVED)) == (TICCMD_XY | TICCMD_RECEIVED))
+#endif
+        && (mobj->player->playerstate == PST_LIVE)	
         && ((player->cmd.angleturn & (TICCMD_XY | TICCMD_RECEIVED)) == (TICCMD_XY | TICCMD_RECEIVED)) && (mobj->player->playerstate == PST_LIVE)
         && (EV_legacy > 130) )
     {

@@ -1241,13 +1241,22 @@ void G_BuildTiccmd(ticcmd_t* cmd, int realtics, byte pind)
     if( gamemode == heretic )
     {
         if (G_KEY_DOWN(gc_flydown))
+#ifdef TICCMD_148
+            cmd->ticflags |= TC_flydown;
+        else
+            cmd->ticflags &= ~TC_flydown;
+#else
             cmd->angleturn |= BT_FLYDOWN;
         else
             cmd->angleturn &= ~BT_FLYDOWN;
+#endif
     }
 
  done:
     memset(gamekeytapped, 0, sizeof(gamekeytapped)); // we're done, reset key-tapping status
+#ifdef TICCMD_148
+    cmd->ticflags |= TC_received;
+#endif
 }
 
 
