@@ -242,6 +242,10 @@ int   PP_SignedRandom( byte pr );
 # define  PP_SignedRandom(pr)  P_SignedRandom()
 #endif
 
+// New Legacy stuffs, unsynced.
+byte N_Random(void);
+int  N_SignedRandom(void);
+
 // M_Random: music, st_stuff, wi_stuff
 // Returns a number from 0 to 255.
 byte M_Random (void);

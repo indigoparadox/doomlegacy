@@ -1547,6 +1547,7 @@ void A_MakePod(mobj_t *actor)
     { // Too many generated pods
         return;
     }
+
     x = actor->x;
     y = actor->y;
     mo = P_SpawnMobj(x, y, ONFLOORZ, MT_POD);

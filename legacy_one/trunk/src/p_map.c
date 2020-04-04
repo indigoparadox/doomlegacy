@@ -676,7 +676,7 @@ static boolean PIT_CheckThing (mobj_t* thing)
         // more heretic stuff
         if (tm_thing->flags2 & MF2_RIP)
         {
-	    // Heretic
+            // Heretic
             damage = ((PP_Random(ph_ripdam) & 3) + 2) * tm_thing->info->damage;
             S_StartObjSound(tm_thing, sfx_ripslop);
             if( P_DamageMobj (thing, tm_thing, tm_thing->target, damage) )
@@ -778,7 +778,7 @@ static boolean PIT_CheckThing (mobj_t* thing)
     // It looks like a mistake.
     if ( !(tm_thing->flags & MF_SOLID) )
       goto ret_blocked;  // A non-solid moving thing is blocked by a solid.
-   
+
     // [WDJ] This z-checking code is for DoomLegacy versions 113..131.
     // After version 132, the heretic z-checking code was added (PASSMOBJ),
     // which is more specific.

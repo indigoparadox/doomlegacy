@@ -1537,9 +1537,8 @@ static boolean P_LookForPlayers ( mobj_t*       actor,
     // BP: first time init, this allow minimum lastlook changes
     if( (lastlook < 0) && (EV_legacy >= 129) )
     {
-        // Legacy use of P_Random, enabled by EV_legacy.
+        // Legacy use of P_Random, enabled by EV_legacy >= 129.
         // Boom, MBF demo assumes MAXPLAYERS=4, but Legacy MAXPLAYERS=32.
-	// FIXME: demo
         lastlook = PP_Random(pL_initlastlook) % MAXPLAYERS;
     }
 
@@ -1814,7 +1813,6 @@ void A_Look (mobj_t* actor)
 {
     mobj_t*     targ;
 
-    
     // Is there a node we must follow?
     if( actor->targetnode )
     {

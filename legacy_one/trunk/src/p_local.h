@@ -445,6 +445,9 @@ extern byte  EN_mbf_telefrag;
 // Heretic, Hexen
 extern byte  EN_inventory;   // Heretic, Hexen
 
+// Use Legacy N_Random, instead of some P_Random.
+extern byte  EN_nrandom;
+
 
 typedef enum {
  // Boom values
@@ -467,6 +470,7 @@ extern byte  boom_detect;
 extern byte  legacy_detect;
 
 void  DemoAdapt_p_user( void );
+void  DemoAdapt_p_mobj( void );
 void  DemoAdapt_p_enemy( void );
 void  DemoAdapt_p_floor( void );
 void  DemoAdapt_bots( void );

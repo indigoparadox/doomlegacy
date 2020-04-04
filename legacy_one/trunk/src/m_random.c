@@ -65,6 +65,7 @@ static byte     rndindex = 0;
 static byte     prndindex = 0;
 static byte     arndindex = 0;  // ambience
 static byte     brndindex = 0;  // bots and other automation
+static byte     nrndindex = 0;  // new legacy stuffs
 
 #ifndef DEBUGRANDOM
 
@@ -127,6 +128,19 @@ void M_ClearRandom (void)
 {
     rndindex = prndindex = 0;
     arndindex = brndindex = 0;
+    nrndindex = 0;
+}
+
+// For new Legacy stuff, to not use any existing random.
+byte N_Random (void)
+{
+    return rndtable[++nrndindex];
+}
+
+int  N_SignedRandom(void)
+{
+    int n1 = N_Random();
+    return n1 - N_Random();
 }
 
 // for savegame and join in game

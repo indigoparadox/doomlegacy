@@ -285,8 +285,8 @@ void P_CalcHeight (player_t* player)
 
 
 
-byte  EN_move_doom = 0;
-byte  EN_cmd_abs_angle = 1;  // legacy absolute angle commands
+static byte  EN_move_doom = 0;
+static byte  EN_cmd_abs_angle = 1;  // legacy absolute angle commands
 
 // local version control
 void DemoAdapt_p_user( void )
