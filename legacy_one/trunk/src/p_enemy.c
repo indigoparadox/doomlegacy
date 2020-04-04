@@ -1536,7 +1536,12 @@ static boolean P_LookForPlayers ( mobj_t*       actor,
     // This is not in PrBoom, EternityEngine, and it uses P_Random !!!
     // BP: first time init, this allow minimum lastlook changes
     if( (lastlook < 0) && (EV_legacy >= 129) )
-        lastlook = P_Random () % MAXPLAYERS;
+    {
+        // Legacy use of P_Random, enabled by EV_legacy.
+        // Boom, MBF demo assumes MAXPLAYERS=4, but Legacy MAXPLAYERS=32.
+	// FIXME: demo
+        lastlook = PP_Random(pL_initlastlook) % MAXPLAYERS;
+    }
 
     actor->lastlook = lastlook;
     stop = (lastlook-1)&PLAYERSMASK;
@@ -1584,7 +1589,8 @@ static boolean P_LookForPlayers ( mobj_t*       actor,
             { // Player is sneaking - can't detect
                 goto  none_found;
             }
-            if(P_Random() < 225)
+
+            if(PP_Random(ph_notseen) < 225)
             { // Player isn't sneaking, but still didn't detect
                 goto  none_found;
             }
@@ -2212,7 +2218,7 @@ void A_Chase (mobj_t*   actor)
     if (actor->info->activesound
         && PP_Random(pr_see) < 3)
     {
-        if(actor->type == MT_WIZARD && P_Random() < 128)
+        if(actor->type == MT_WIZARD && PP_Random(ph_wizscream) < 128)
             S_StartScreamSound(actor, actor->info->seesound);
         else if(actor->type == MT_SORCERER2)
             S_StartSound( actor->info->activesound );
@@ -3014,10 +3020,8 @@ void A_SkullAttack (mobj_t* actor)
                 // fuzzy player
                 if (dest->flags & MF_SHADOW)
                 {
-                        if( EN_heretic )
-                            ang += P_SignedRandom()<<21;
-                        else
-                            ang += P_SignedRandom()<<20;
+                    int aa = PP_SignedRandom(pr_shadow);
+                    ang += ( EN_heretic )? (aa << 21) : (aa << 20);
                 }
 
                 actor->angle = ang;
@@ -3285,7 +3289,7 @@ void A_Explode (mobj_t* actor)
         damage = 24;
         break;
     case MT_SOR2FX1: // D'Sparil missile
-        damage = 80+(P_Random()&31);
+        damage = 80+(PP_Random(ph_soratkdam)&31);
         break;
     default:
         break;

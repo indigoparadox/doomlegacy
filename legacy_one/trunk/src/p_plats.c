@@ -302,7 +302,7 @@ int  EV_DoPlat ( line_t* line, plattype_e type, int amount )
                 plat->high = sec->floorheight;
 
             plat->wait = PLATWAIT * adj_ticks_per_sec;  // [WDJ]
-            plat->status = P_Random()&1;
+            plat->status = PP_Random(pr_plats)&1;
 
             S_StartSecSound(sec, sfx_pstart);
             break;

@@ -676,7 +676,8 @@ static boolean PIT_CheckThing (mobj_t* thing)
         // more heretic stuff
         if (tm_thing->flags2 & MF2_RIP)
         {
-            damage = ((P_Random () & 3) + 2) * tm_thing->info->damage;
+	    // Heretic
+            damage = ((PP_Random(ph_ripdam) & 3) + 2) * tm_thing->info->damage;
             S_StartObjSound(tm_thing, sfx_ripslop);
             if( P_DamageMobj (thing, tm_thing, tm_thing->target, damage) )
             {

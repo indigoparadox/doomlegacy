@@ -320,7 +320,8 @@ void SF_Rnd(void)
 void SF_PRnd(void)
 {
     t_return.type = FSVT_int;
-    t_return.value.i = P_Random();
+    // Legacy Fragglescript use of P_Random, not in Doom.
+    t_return.value.i = PP_Random(pL_PRnd);
 }
 
 // Find the next outermost

@@ -628,17 +628,17 @@ void P_ChickenPlayerThink(player_t *player)
         return;
     }
     // Heretic uses of P_Random
-    if(!(pmo->momx+pmo->momy) && P_Random() < 160)
+    if(!(pmo->momx+pmo->momy) && PP_Random(ph_chickenthink) < 160)
     { // Twitch view angle
-        pmo->angle += P_SignedRandom()<<19;
+        pmo->angle += PP_SignedRandom(ph_chickenthink)<<19;
     }
-    if((pmo->z <= pmo->floorz) && (P_Random() < 32))
+    if((pmo->z <= pmo->floorz) && (PP_Random(ph_chickenthink) < 32))
     { // Jump and noise
         pmo->momz += FRACUNIT;
         P_SetMobjState(pmo, S_CHICPLAY_PAIN);
         return;
     }
-    if(P_Random() < 48)
+    if(PP_Random(ph_chickenthink) < 48)
     { // Just noise
         S_StartScreamSound(pmo, sfx_chicact);
     }
@@ -1493,7 +1493,7 @@ void P_ArtiTele(player_t *player)
     if( deathmatch )
     {
         // Heretic use of P_Random
-        i = P_Random()%numdmstarts;
+        i = PP_Random(ph_telearti) % numdmstarts;
         mtp = deathmatchstarts[i];
     }
     else

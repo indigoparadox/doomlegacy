@@ -2668,7 +2668,7 @@ void P_ProcessSpecialSector(player_t* player, sector_t* sector, boolean instantd
           // STROBE HURT
           // 10/20 unit damage, with blinking warning light.
           if (!player->powers[pw_ironfeet]  // rad suit is intermittant protection
-              || (P_Random()<5) )  // pr_slimehurt
+              || (PP_Random(pr_slimehurt)<5) )  // even with suit, take damage
           {
               if (instantdamage)
                   P_DamageMobj (player->mo, NULL, NULL, 20);
@@ -2714,7 +2714,7 @@ void P_ProcessSpecialSector(player_t* player, sector_t* sector, boolean instantd
              P_DamageMobj (player->mo, NULL, NULL, 10);
          break;
        case 3: // 10/20 damage per 31 ticks
-         if ((!player->powers[pw_ironfeet] || P_Random()<5) // pr_slimehurt
+         if ((!player->powers[pw_ironfeet] || PP_Random(pr_slimehurt)<5)
              && instantdamage)  // take damage even with suit
          {
              P_DamageMobj (player->mo, NULL, NULL, 20);

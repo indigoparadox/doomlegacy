@@ -112,8 +112,10 @@ void A_SmokeTrailer (mobj_t* actor)
                       actor->z, MT_SMOK);
 
     th->momz = FRACUNIT;
+
+    // Legacy use of P_Random, enabled by EV_legacy.
     // Do not use P_Random during Doom and Boom demos.
-    th->tics -= (EV_legacy ? P_Random() : A_Random() ) & 3;
+    th->tics -= (EV_legacy ? PP_Random(pL_smoketrail) : A_Random() ) & 3;
     if (th->tics < 1)
         th->tics = 1;
 }
