@@ -447,7 +447,7 @@ void B_Regulate_Bots( int req_numbots )
     }
 }
 
-void B_Register_Commands()
+void B_Register_Commands( void )
 {
     COM_AddCommand ("addbot", Command_AddBot, CC_command);
 }

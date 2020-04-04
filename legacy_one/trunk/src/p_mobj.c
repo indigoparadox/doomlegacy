@@ -2282,8 +2282,8 @@ void P_RespawnSpecials(void)
     int i;
 
     // only respawn items in deathmatch
-    if( !cv_itemrespawn.EV )
-        return;
+//    if( !cv_itemrespawn.EV )
+//        return;
 
     // nothing left to respawn?
     if (iquehead == iquetail)

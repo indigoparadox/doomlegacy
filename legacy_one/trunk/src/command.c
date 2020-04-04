@@ -1229,6 +1229,7 @@ void  CV_cvar_call( consvar_t *cvar, byte user_enable )
 
 // Set variable value, for user settings, save games, and network settings.
 // Updates value and EV.
+// Does NOT relay NETVAR to clients.
 //  call_enable : when 0, blocks CV_CALL
 //  user_enable : enable setting the string value which gets saved in config files.
 static
