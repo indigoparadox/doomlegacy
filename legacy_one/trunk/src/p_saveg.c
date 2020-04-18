@@ -551,7 +551,7 @@ typedef enum
     PD_CHICKENPECK = 0x8000,
     PD_FLAMECOUNT  = 0x10000,
     PD_FLYHEIGHT   = 0x20000,
-    PD_BOT         = 0x40000,
+    PD_BOT         = 0x40000,  // not used
 } player_diff;
 
 //

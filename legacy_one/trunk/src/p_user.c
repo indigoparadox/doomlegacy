@@ -204,7 +204,11 @@ void P_CalcHeight (player_t* player)
     }
 
     if( EV_legacy )
+#ifdef CLIENTPREDICTION2
       angle = (FINEANGLES/20*localgametic/NEWTICRATERATIO)&FINEMASK;
+#else     
+      angle = (FINEANGLES/20*leveltime/NEWTICRATERATIO)&FINEMASK;
+#endif
     else
       angle = (FINEANGLES/20*leveltime)&FINEMASK;
     bob = FixedMul ( player->bob/2, finesine[angle]);

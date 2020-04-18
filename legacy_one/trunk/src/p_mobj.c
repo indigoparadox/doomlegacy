@@ -3056,7 +3056,7 @@ void P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z)
 static mobj_t *bloodthing;
 static fixed_t bloodspawnpointx, bloodspawnpointy;
 
-   
+
 #ifdef WALLSPLATS
 static byte  EN_bloodsplat_prandom;    // optional blood splat use of prandom
 

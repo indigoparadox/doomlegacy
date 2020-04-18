@@ -2517,7 +2517,7 @@ boolean P_DamageMobj ( mobj_t*   target,
         if( target->health < -target->info->spawnhealth )
             P_KillMobj ( target, inflictor, source );  // to gibs
         // Keep corpse from ticking the P_Random in the pain test.
-        goto ret_true;    
+        goto ret_true;
     }
 
     // target player specific

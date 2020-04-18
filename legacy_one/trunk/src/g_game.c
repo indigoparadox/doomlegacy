@@ -423,29 +423,19 @@ enum {
 #endif
 
 
-
-language_t      language = english;          // Language.
-boolean         modifiedgame;                  // Set if homebrew PWAD stuff has been added.
-
-
 // Engine state
 gamestate_e     gamestate = GS_NULL;
 gameaction_e    gameaction;
 byte            paused;                 // multiple pause bits
-boolean         gameplay_msg = false;   // enable game play message control
-
-boolean         timingdemo;             // if true, exit with report on completion
-boolean         nodrawers;              // for comparative timing purposes
-boolean         noblit;                 // for comparative timing purposes
-tic_t           demostarttime;              // for comparative timing purposes
 
 boolean         netgame;                // only true if packets are broadcast
 boolean         multiplayer;
+
 // players and bots
+byte            num_game_players = 0;      // number of actual players, from playeringame, incl bots
 byte            playeringame[MAXPLAYERS];  // player active
 byte            player_state[MAXPLAYERS];  // from where, and pending player
 player_t        players[MAXPLAYERS];
-byte            num_game_players = 0;         // number of actual players
 
 // [WDJ] Whenever assign to these must update the _ptr too.
 // They are not changed anywhere as often as players[] appears in IF stmts.
@@ -464,9 +454,20 @@ tic_t           gametic;
 tic_t           levelstarttic;          // gametic at level start
 // [WDJ] Derived from PrBoom basetic.
 // A tic that always starts at 0, and only runs while the demo runs.
-tic_t  game_comp_tic;  // gametic - basetic
+tic_t           game_comp_tic;  // gametic - basetic
 
-int             totalkills, totalitems, totalsecret;    // for intermission
+
+// [WDJ] Keep rarely used state information separate so cache usage is cleaner.
+
+// Support
+boolean         precache = true;        // if true, load all graphics at start
+boolean         gameplay_msg = false;   // enable game play message control
+boolean         modifiedgame;           // Set if homebrew PWAD stuff has been added.
+language_t      language = english;     // Language.
+
+// Intermission state
+int             totalkills, totalitems, totalsecret;
+wb_start_t      wminfo;                 // parms for world map / intermission
 
 // Demo state
 #define DEMONAME_LEN  32
@@ -478,9 +479,11 @@ byte*           demo_p;
 byte*           demoend;
 boolean         singledemo;             // quit after playing a demo from cmdline
 
-boolean         precache = true;        // if true, load all graphics at start
-
-wb_start_t      wminfo;                 // parms for world map / intermission
+// Timing demo state
+boolean         timingdemo;             // if true, exit with report on completion
+boolean         nodrawers;              // for comparative timing purposes
+boolean         noblit;                 // for comparative timing purposes
+tic_t           demostarttime;          // for comparative timing purposes
 
 
 
@@ -1619,9 +1622,14 @@ void G_Ticker (void)
                 B_BuildTiccmd(&players[i], &netcmds[buf][i]);
 
             if (demoplayback)
+            {
                 G_ReadDemoTiccmd (cmd,i);
+            }
             else
+            {
+                // Copy the network ticcmd (and indirectly the local ticcmd) to the player.
                 memcpy (cmd, &netcmds[buf][i], sizeof(ticcmd_t));
+            }
 
             if (demorecording)
                 G_WriteDemoTiccmd (cmd,i);

@@ -826,6 +826,7 @@ void SF_SkinColor(void)
 //            Send_NameColor_pind( 1 );
 	}
 #else
+        // This will affect user settings, and trigger a NetXCmd send to other clients.
         if( playernum == displayplayer )
             CV_SetValue (&cv_playercolor[0], colour);  // affects user config value
         else  if( playernum == displayplayer2 )

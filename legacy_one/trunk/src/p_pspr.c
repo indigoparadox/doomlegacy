@@ -423,7 +423,8 @@ void A_WeaponReady ( player_t*     player,
     }
     else
         player->attackdown = false;
-#ifndef CLIENTPREDICTION2    
+#ifdef CLIENTPREDICTION2
+#else
     {
         int  angf;
         // bob the weapon based on movement speed, in a half arc
@@ -444,7 +445,11 @@ void A_TicWeapon(player_t*     player,
         int angf;
         
         // bob the weapon based on movement speed
+#ifdef CLIENTPREDICTION2
         angf = (128*localgametic/NEWTICRATERATIO) & FINEMASK;
+#else
+        angf = (128*leveltime/NEWTICRATERATIO) & FINEMASK;
+#endif
         psp->sx = FRACUNIT + FixedMul (player->bob, finecosine[angf]);
         angf &= (FINE_ANG180-1);  // mask to limit it to ANG180
         psp->sy = WEAPONTOP + FixedMul (player->bob, finesine[angf]);

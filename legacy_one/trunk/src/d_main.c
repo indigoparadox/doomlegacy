@@ -276,7 +276,7 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1512"
+#define SVN_REV "1513"
 #endif
 
 
@@ -880,7 +880,7 @@ void D_Display(void)
 //   D_DoomLoop
 // =========================================================================
 
-tic_t rendergametic, oldentertics;
+tic_t rendergametic;  // The last gametic that was rendered.
 #ifdef CLIENTPREDICTION2
 boolean spirit_update;
 #endif
