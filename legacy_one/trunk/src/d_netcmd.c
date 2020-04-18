@@ -762,6 +762,32 @@ void Command_Map_f(void)
         buf[1] &= ~0x02;
     }
 
+#ifdef WAIT_GAME_START_INTERMISSION
+    if(server && netgame && num_wait_game_start)
+    {
+#if 1
+        // [WDJ] 1.48 Warn user that Map command does not handle waiting players.       
+        GenPrintf(EMSG_warn,"Waiting players: use exitlevel\n");
+#else
+#if 0
+// [WDJ] The Map command will override any attempt to stay in Intermission, so THIS DOES NOT WORK.
+        // [WDJ] Adding players seems to only work using Intermission.
+        if( gamestate != GS_INTERMISSION )
+        {
+            G_ExitLevel();
+            if( gamestate == GS_LEVEL )
+                G_DoCompleted ();
+            G_Start_Intermission();  // setup intermission
+        }
+#endif
+        // Activate waiting clients
+	// TODO: make this work.
+        // Server won't stay in Intermission, client gets stuck in Intermission.
+        SV_Add_game_start_waiting_players( 1 );
+#endif
+    }
+#endif
+
     SV_Send_NetXCmd(XD_MAP, buf, 2 + strlen(MAPNAME) + 1); // as server
 }
 

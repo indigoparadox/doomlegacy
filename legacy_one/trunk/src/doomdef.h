@@ -165,6 +165,10 @@
 // XBOX controller
 #define XBOX_CONTROLLER
 
+// Allow players to wait for game start.
+#define WAIT_GAME_START_INTERMISSION
+
+
 // Player morph canceling invisibility and MF_SHADOW, is inconsistent.
 // The Heretic vanilla behavior cancels SHADOW when turned into a chicken.
 // #define PLAYER_CHICKEN_KEEPS_SHADOW
