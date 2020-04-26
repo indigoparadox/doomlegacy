@@ -2057,7 +2057,8 @@ boolean CV_Config_check( byte cfg )
 
         if( cv->state & CS_PUSHED )
         {
-            if( CV_Get_Pushed_cvar( cv, cfg, NULL ) )  return true;
+            if( CV_Get_Pushed_cvar( cv, cfg, NULL ) )
+                return true;
         }
     }
     return false;

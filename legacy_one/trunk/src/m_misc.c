@@ -284,7 +284,8 @@ char * configfile_main = NULL;
 char * configfile_drawmode = NULL;
 // true once config.cfg loaded, and values are present.
 // Bit 0x80 is used to flag that some configfile was loaded.
-static byte config_loaded = 0;
+// Bit 0x40 is used to flag empty CFG_main.
+static byte config_loaded = 0;  // bit per cfg
 static const byte  config_load_bit[ 4 ] = { 0, 0x01, 0x02, 0x04 };  // bit masks
 
 void  M_Set_configfile_main( const char * filename )
@@ -469,7 +470,12 @@ void M_LoadConfig( byte cfg, const char * cfgfile )
 
     // Check that it can be opened.
     fr = fopen ( cfgfile, "r" );
-    if( ! fr )  return;
+    if( ! fr )
+    {
+        if( cfg == CFG_main )
+            config_loaded |= 0x40;  // set flag bit, so can create CFG_main later
+        return;
+    }
     fclose( fr );
    
     COM_BufExecute( CFG_none );  // Clear buffer of any COM commands, before Loading
@@ -494,7 +500,8 @@ void M_SaveConfig( byte cfg, const char * cfgfile )
     // When CFG_main, also save CFG_none vars
     byte cfg2;
 
-    if( ! cfgfile )  return;
+    if( ! cfgfile )
+        return;
 
     // make sure not to write back the config until
     //  it's been correctly loaded
@@ -503,8 +510,9 @@ void M_SaveConfig( byte cfg, const char * cfgfile )
 
     // Write this config file if one was loaded,
     // or if there are some values of that config now.
-    if( ! (config_loaded & config_load_bit[cfg])
-        && ! CV_Config_check( cfg ) )
+    if( (cfg != CFG_main) // CFG_main always gets saved, has all CFG_none var too.
+        && ! (config_loaded & config_load_bit[cfg])  // cfg was NOT loaded
+        && ! CV_Config_check( cfg ) ) // NOT any of the cfg is (current or pushed).
         return;
 
     fw = fopen (cfgfile, "w");
@@ -520,7 +528,7 @@ void M_SaveConfig( byte cfg, const char * cfgfile )
     //FIXME: save key aliases if ever implemented..
 
     // Save CV variables
-    // The main configfile also gets the uninitialized variables.
+    // The main configfile also gets the uninitialized variables (CFG_none).
     // There are no CFG_null variables.
     cfg2 = (cfg == CFG_main) ? CFG_none : CFG_null;
     for( cv = CV_IteratorFirst(); cv ; cv = CV_Iterator( cv ) )

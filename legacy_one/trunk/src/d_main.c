@@ -276,13 +276,13 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1517"
+#define SVN_REV "1518"
 #endif
 
 
 // Version number: major.minor.revision
 const int  VERSION  = 148; // major*100 + minor
-const int  REVISION = 1;   // for bugfix releases, should not affect compatibility. has nothing to do with svn revisions.
+const int  REVISION = 2;   // for bugfix releases, should not affect compatibility. has nothing to do with svn revisions.
 static const char VERSIONSTRING[] = "(rev " SVN_REV ")";
 //static const char VERSIONSTRING[] = "beta (rev " SVN_REV ")";
 char VERSION_BANNER[80];
