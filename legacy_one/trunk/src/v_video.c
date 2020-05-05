@@ -486,6 +486,14 @@ consvar_t cv_con_fontsize =
 consvar_t cv_msg_fontsize =
   { "msg_fontsize", "Large", CV_SAVE|CV_CALL, fontsize_t, CV_fontsize_OnChange };
 
+// Controls FinalText output.
+CV_PossibleValue_t textout_sel_t[] = {
+   {0,"Off"},
+   {1,"Vanilla"},
+   {2,"UTF8"},
+   {0,NULL} };
+consvar_t cv_textout = { "textout", "2", CV_SAVE, textout_sel_t, NULL };
+
 
 CV_PossibleValue_t ticrate_sel_t[] = {
    {0,"Off"},
@@ -950,6 +958,7 @@ void V_Init_VideoControl( void )
    
     CV_RegisterVar(&cv_vidwait);
     CV_RegisterVar(&cv_ticrate);
+    CV_RegisterVar(&cv_textout);
     CV_RegisterVar(&cv_darkback);
     CV_RegisterVar(&cv_con_fontsize);
     CV_RegisterVar(&cv_msg_fontsize);
@@ -959,7 +968,7 @@ void V_Init_VideoControl( void )
     CV_RegisterVar(&cv_black);
     CV_RegisterVar(&cv_bright);
     CV_RegisterVar(&cv_gammafunc);
-   
+
     // Screen
     CV_RegisterVar(&cv_fullscreen);     // only for opengl so use differant name please and move it to differant place
     CV_RegisterVar(&cv_scr_depth);

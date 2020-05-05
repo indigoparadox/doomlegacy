@@ -276,7 +276,7 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1520"
+#define SVN_REV "1521"
 #endif
 
 
@@ -3185,7 +3185,9 @@ void D_Quit_Save ( quit_severity_e severity )
     {
         quitseq = 10;
         if( (severity == QUIT_normal)
-             && ! M_CheckParm("-noendtxt") )
+             && ! M_CheckParm("-noendtext")  // normal spelling, docs
+             && ! M_CheckParm("-noendtxt")   // previous versions
+             && cv_textout.EV > 0 )
         {
             // [WDJ] Check on errors during I_Error shutdown.
             // Avoid repeat errors during bad environment shutdown.

@@ -88,6 +88,8 @@ extern  consvar_t cv_gammafunc;
 extern  consvar_t cv_black;	// input to gammafunc
 extern  consvar_t cv_bright;	// input to gammafunc
 
+extern  consvar_t cv_textout;
+
 extern byte  set_drawmode;
 extern byte  drawmode_recalc;
 extern byte  rendermode_recalc;
