@@ -1719,9 +1719,13 @@ boolean HGetPacket (void)
     if (!netgame)   goto fail_ret;
 
     byte errcode = I_NetGet();
-    if( errcode == NE_empty )   return false;  // no packet
-    if( errcode >= NE_fail )   goto ret_errcode;  // some other error
-
+    if( errcode >= NE_fail )
+        goto ret_errcode;  // some other error
+    if( errcode >= NE_empty )
+        return false;  // no packet
+    if( doomcom->remotenode < 0 )
+        return false; // no packet
+   
     stat_getbytes += (net_packetheader_length + doomcom->datalength); // for stat
 
     if( doomcom->remotenode < MAXNETNODES )
