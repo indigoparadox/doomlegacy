@@ -276,7 +276,7 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1519"
+#define SVN_REV "1520"
 #endif
 
 
@@ -2668,6 +2668,7 @@ restart_command:
         CONS_Printf ("config file: %s\n", configfile_main);
     }
     // This config will load the config drawmode setting.
+    M_ClearConfig( CFG_main );  // due to launcher loop
     M_LoadConfig( CFG_main, configfile_main );        // WARNING : this do a "COM_BufExecute()"
 
 
@@ -2746,6 +2747,7 @@ restart_command:
 #endif
 #endif
 
+        M_ClearConfig( CFG_drawmode );  // due to launcher loop
         // Load the config file for this drawmode.       
         // example: /home/user/.legacy/config32.cfg
         M_Set_configfile_drawmode( set_drawmode );

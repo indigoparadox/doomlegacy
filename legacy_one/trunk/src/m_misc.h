@@ -102,8 +102,11 @@ void Command_ChangeConfig_f (void);
 
 void M_Set_configfile_main( const char * filename );
 void M_Set_configfile_drawmode( byte drawmode );
-void M_LoadConfig( byte cs_config, const char * cfgfile );
-void M_SaveConfig( byte cs_config, const char * cfgfile );
+byte M_Have_configfile_drawmode( void );
+void M_Set_configfile_drawmode_present( void );
+void M_ClearConfig( byte cfg );
+void M_LoadConfig( byte cfg, const char * cfgfile );
+void M_SaveConfig( byte cfg, const char * cfgfile );
 void M_SaveAllConfig( void );
 
 //===========================================================================

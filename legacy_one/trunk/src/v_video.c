@@ -305,6 +305,7 @@ byte drawmode_to_rendermode[] = {
    render_d3d,    // D3D
 };
 
+#if 0
 // Indexed by rendermode_e
 const char * rendermode_name[] = {
     "",
@@ -318,6 +319,7 @@ const char * rendermode_name[] = {
 #endif
     "None"
 };
+#endif
 
 
 
@@ -415,7 +417,7 @@ byte  V_switch_drawmode( byte drawmode, byte change_config )
         }
 
         // Remove the config values from the previous drawmode.
-        CV_Clear_Config( CFG_drawmode );
+        M_ClearConfig( CFG_drawmode );
 
         if( drawmode <= DRM_END )
         {
