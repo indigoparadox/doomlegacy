@@ -116,8 +116,6 @@ void  Z_ChangeTag_debug (void *ptr, memtag_e chtag, char * fn, int ln);
 void    Z_ChangeTag (void *ptr, memtag_e chtag);
 #endif
 
-#endif
-
 // Change all allocations of old_tag to new_tag.
 void	Z_ChangeTags_To( memtag_e old_tag, memtag_e new_tag );
 
@@ -166,3 +164,7 @@ typedef struct memblock_s
 // Return true when the memory block is valid
 byte  verify_Z_Malloc( void * mp );
 #endif
+
+
+#endif
+

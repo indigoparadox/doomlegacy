@@ -276,7 +276,7 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1523"
+#define SVN_REV "1524"
 #endif
 
 
@@ -545,6 +545,7 @@ gamestate_e wipegamestate = GS_DEMOSCREEN;
 CV_PossibleValue_t screenslink_cons_t[] = { {0, "None"}, {wipe_ColorXForm + 1, "Crossfade"}, {wipe_Melt + 1, "Melt"}, {0, NULL} };
 consvar_t cv_screenslink = { "screenlink", "2", CV_SAVE, screenslink_cons_t };
 
+// Not called when dedicated.
 static
 void D_Display(void)
 {
@@ -561,9 +562,6 @@ void D_Display(void)
     boolean wipe_done;
     boolean wipe;
     boolean redrawsbar;
-
-    if (dedicated)
-        return;
 
     if (nodrawers)
         return; // for comparative timing / profiling
@@ -959,7 +957,10 @@ void D_DoomLoop(void)
         I_StartFrame();
 
 #ifdef HW3SOUND
-        HW3S_BeginFrameUpdate();
+        if( ! dedicated )
+        {
+            HW3S_BeginFrameUpdate();
+        }
 #endif
 
         // process tics (but maybe not if realtic==0)
@@ -973,36 +974,47 @@ void D_DoomLoop(void)
             rendergametic = gametic;
             rendertimeout = entertic + TICRATE / 17;
 
-            //added:16-01-98:consoleplayer -> displayplayer (hear sounds from viewpoint)
-            S_UpdateSounds();   // move positional sounds
-            // Update display, next frame, with current state.
-            D_Display();
+            if( ! dedicated )
+            {
+                //added:16-01-98:consoleplayer -> displayplayer (hear sounds from viewpoint)
+                S_UpdateSounds();   // move positional sounds
+                // Update display, next frame, with current state.
+                D_Display();
+	    }
 #ifdef CLIENTPREDICTION2
             spirit_update = false;
 #endif
         }
         else if (rendertimeout < entertic)      // in case the server hang or netsplit
-            D_Display();
+        {
+            if( ! dedicated )
+            {
+                D_Display();
+            }
+        }
 
-        //Other implementations might need to update the sound here.
+        if( ! dedicated )
+        {
+            //Other implementations might need to update the sound here.
 #ifndef SNDSERV
-        // Sound mixing for the buffer is snychronous.
-        I_UpdateSound();
+            // Sound mixing for the buffer is snychronous.
+            I_UpdateSound();
 #endif
-        // Synchronous sound output is explicitly called.
+            // Synchronous sound output is explicitly called.
 #ifndef SNDINTR
-        // Update sound output.
-        I_SubmitSound();
+            // Update sound output.
+            I_SubmitSound();
 #endif
 
 #ifdef CDMUS
-        // check for media change, loop music..
-        I_UpdateCD();
+            // check for media change, loop music..
+            I_UpdateCD();
 #endif
 
 #ifdef HW3SOUND
-        HW3S_EndFrameUpdate();
+            HW3S_EndFrameUpdate();
 #endif
+        }
     }
 }
 
@@ -2968,6 +2980,12 @@ restart_command:
     CONS_Printf(text[S_SETSOUND_NUM]);
     nosoundfx = M_CheckParm("-nosound");
     nomusic = M_CheckParm("-nomusic");
+    if( dedicated )
+    {
+        nosoundfx = 1;
+        nomusic = 1;
+        // allow sound driver to disable self
+    }
     // Music init is in I_StartupSound
     I_StartupSound();
     S_Init(cv_soundvolume.value, cv_musicvolume.value);

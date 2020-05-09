@@ -377,7 +377,7 @@ void I_InitCD (void)
         cd_dev[sizeof(cd_dev) - 1] = 0;
     }
 
-    COM_AddCommand ("cd", command_CD_f);
+    COM_AddCommand ("cd", command_CD_f, CC_command);
 
     CONS_Printf("CD Audio Initialized\n");
 

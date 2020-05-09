@@ -333,6 +333,7 @@ int I_StartSound(sfxid_t sfxid, int vol, int sep, int pitch, int priority)
     //  we will handle the new SFX.
     // Set pointer to raw data, skipping header.
     chanp->data_ptr = (unsigned char *) S_sfx[sfxid].data + 8;
+//    chanp->data_ptr = & header[8];
     // Set pointer to end of raw data.
     chanp->data_end = chanp->data_ptr + S_sfx[sfxid].length;
    
@@ -839,7 +840,7 @@ void I_StartupSound(void)
 {
   static SDL_AudioSpec audspec;  // [WDJ] desc name, too many audio in this file
 
-  if (nosoundfx)
+  if( nosoundfx )
   {
       nomusic = true;
       return;

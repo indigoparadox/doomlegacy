@@ -852,7 +852,7 @@ void I_GetEvent(void)
 
 #ifndef POLL_POINTER
       case ButtonPress:
-        if (cv_usemouse.value) {
+        if (cv_usemouse[0].value) {
 /*
             int buttons,i,j=1,k;
             event.type = ev_keydown;
@@ -894,7 +894,7 @@ void I_GetEvent(void)
         break;
 
       case ButtonRelease:
-        if (cv_usemouse.value)
+        if (cv_usemouse[0].value)
         {
 /*
           int buttons,i,j=1,k;
@@ -937,7 +937,7 @@ void I_GetEvent(void)
         break;
 
       case MotionNotify:
-        if (cv_usemouse.value)
+        if (cv_usemouse[0].value)
         {
 #ifdef WITH_DGA
           event.type = ev_mouse;
@@ -1060,7 +1060,7 @@ static void enableScreensaver()
 
 static void I_GrabMouse(void)
 {
-    if(!X_display || cv_usemouse.value == 0 || M_CheckParm("-nomouse"))
+    if(!X_display || cv_usemouse[0].value == 0 || M_CheckParm("-nomouse"))
         return;
 
     if(!Mousegrabbed) {
@@ -1124,7 +1124,7 @@ void I_StartupMouse( boolean play_mode )
     }
     else
     {
-        if( cv_usemouse.value && play_mode ) {
+        if( cv_usemouse[0].value && play_mode ) {
             I_GrabMouse();
         }
         else {
@@ -1146,7 +1146,7 @@ void I_OsPolling(void)
     if (!X_display)
         return;
 
-    if (cv_usemouse.value) {
+    if (cv_usemouse[0].value) {
 #ifdef POLL_POINTER
         XQueryPointer(X_display, X_mainWindow, &dummy, &dummy,
                       &dont_care, &dont_care,
@@ -1447,7 +1447,6 @@ void I_SetPalette(RGBA_t* palette)
 //
 static void grabsharedmemory(int size)
 {
-
   int                   key = ('d'<<24) | ('o'<<16) | ('o'<<8) | 'm';
   struct shmid_ds       shminfo;
   int                   minsize = 320*200;
@@ -1603,10 +1602,9 @@ modestat_t  VID_GetMode_Stat( modenum_t modenum )
 // to display selection name of modes
 char * VID_GetModeName( modenum_t modenum )
 {
-    const char * mark_str = "";
-
     modestat_t ms = VID_GetMode_Stat( modenum );
-    if( ! ms.mark )  goto fail;
+    if( ! ms.mark )
+        goto fail;
 
     // form the string
     snprintf( &vidModeName[modenum.index][0], MAX_LEN_VIDMODENAME, "%s %dx%d",
@@ -1751,14 +1749,20 @@ static int createWindow(boolean set_fullscreen, modenum_t modenum)
     char                 *icon_name = window_name;
 
     // change to the mode
-    if( !set_fullscreen && vidmode_ext) {
-        XF86VidModeSwitchToMode(X_display, X_screen, vidmodes[0]);
+    if( !set_fullscreen )
+    {
+        if( vidmode_ext && vidmodes )
+        {
+            XF86VidModeSwitchToMode(X_display, X_screen, vidmodes[0]);
+	}
+        else if( !vidmode_ext ) // probably not necessary
+        {
+        }
         vidmode_active = false;
     }
-    else if(!set_fullscreen && !vidmode_ext) { // probably not necessary
-        vidmode_active = false;
-    }
-    else {
+    else
+    {
+        // Fullscreen
         XF86VidModeSwitchToMode(X_display, X_screen, vidmodes[vidmap[modenum.index-1]]);
         vidmode_active = true;
         // Move the viewport to top left
@@ -2132,7 +2136,8 @@ int I_Rendermode_setup( void )
 
     if( rendermode == render_opengl )
     {
-        if( HWD_current == render_opengl )  return;
+        if( HWD_current == render_opengl )
+            return 1;
 
         // only set MESA_GLX_FX if not set by set user
         if(!getenv("MESA_GLX_FX"))
@@ -2265,7 +2270,8 @@ void I_StartupGraphics(void)
 
     // window
     initialmode = VID_GetModeForSize( vid.width, vid.height, MODE_window );
-    if( createWindow( false, initialmode) < 0 )  goto abort_error;
+    if( createWindow( false, initialmode) < 0 )
+        goto abort_error;
    
     // startupscreen does not need a grabbed mouse
     I_UngrabMouse();
@@ -2289,7 +2295,6 @@ abort_error:
 int I_RequestFullGraphics( byte select_fullscreen )
 {
     modenum_t  initialmode;
-    byte  req_bytepp = 1;
     int ret_value;
 
     vid.draw_ready = 0;  // disable print reaching console
@@ -2298,7 +2303,7 @@ int I_RequestFullGraphics( byte select_fullscreen )
 
     // setup vid 19990110 by Kin
 
-    if( req_drawmode == REQ_opengl ) 
+    if( req_drawmode == DRM_opengl ) 
     {
         ret_value = I_Rendermode_setup();  // some functions needed immediately
         if( ret_value < 0 )
@@ -2393,7 +2398,7 @@ accept:
 
     vid.recalc = true;
     graphics_state = VGS_fullactive;
-    return;
+    return 1;
 
 no_modes:
     return FAIL_select;
@@ -2414,8 +2419,12 @@ void I_ShutdownGraphics(void)
     destroyWindow();
 
     // return to normal mode
-    if (vidmode_ext /*active*/) {
-        XF86VidModeSwitchToMode(X_display, X_screen, vidmodes[0]);
+    if( vidmode_ext )
+    {
+        if( vidmodes )
+        {
+            XF86VidModeSwitchToMode(X_display, X_screen, vidmodes[0]);
+        }
     }
 
     if(rendermode != render_soft) {

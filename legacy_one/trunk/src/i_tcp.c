@@ -288,7 +288,7 @@ static boolean  ipx_select;
 // If this actually ever moved, we would have to ensure uniformity over all systems.
 #ifdef IPPORT_USERRESERVED
 # if IPPORT_USERRESERVED != 5000
-#   warn IPPORT_USERRESERVED non-standard, DoomLegacy uses sock port 5029.
+#   warning IPPORT_USERRESERVED non-standard, DoomLegacy uses sock port 5029.
 # endif
 #else
 # define IPPORT_USERRESERVED 5000
