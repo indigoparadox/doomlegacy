@@ -572,10 +572,13 @@ boolean R_AddSingleSpriteDef (char* sprname, spritedef_t* spritedef, int wadnum,
             // [WDJ] Do endian while translate temp to internal.
             spritelump_id = R_Get_spritelump();  // get next index, may expand and move the table
             spritelump_t * sl = &spritelumps[spritelump_id];  // sprite patch header
-            sl->width = ((uint16_t)( LE_SWAP16(patch.width) ))<<FRACBITS;
-            sl->leftoffset = LE_SWAP16(patch.leftoffset)<<FRACBITS;
-            sl->topoffset = LE_SWAP16(patch.topoffset)<<FRACBITS;
-            sl->height = ((uint16_t)( LE_SWAP16(patch.height) ))<<FRACBITS;
+
+            // uint16_t convserion to block sign-extension of signed LE_SWAP16.
+            // uint32_t conversion needed for shift
+            sl->width = ((uint32_t)((uint16_t)( LE_SWAP16(patch.width) )))<<FRACBITS; // unsigned
+            sl->leftoffset = ((int32_t)LE_SWAP16(patch.leftoffset))<<FRACBITS;  // signed
+            sl->topoffset = ((int32_t)LE_SWAP16(patch.topoffset))<<FRACBITS;  // signed
+            sl->height = ((uint32_t)((uint16_t)( LE_SWAP16(patch.height) )))<<FRACBITS;  // unsigned
 
 #ifdef HWRENDER
             //BP: we cannot use special trick in hardware mode because feet in ground caused by z-buffer

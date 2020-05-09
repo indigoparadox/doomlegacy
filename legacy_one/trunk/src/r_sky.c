@@ -428,7 +428,7 @@ patch_t * R_Generate_Sky( int texnum )
         sl_horizon = sky_top_align * 4 / 5;
 //        sky_color = ci_black;
     }
-    else if(cv_sky_gen.EV == 12);  // extend_bg
+    else if(cv_sky_gen.EV == 12)  // extend_bg
     {
         en_background_transparent = 1;
         sl_horizon = sky_top_align / 2;
