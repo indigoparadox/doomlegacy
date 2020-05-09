@@ -580,6 +580,9 @@ boolean R_AddSingleSpriteDef (char* sprname, spritedef_t* spritedef, int wadnum,
             sl->topoffset = ((int32_t)LE_SWAP16(patch.topoffset))<<FRACBITS;  // signed
             sl->height = ((uint32_t)((uint16_t)( LE_SWAP16(patch.height) )))<<FRACBITS;  // unsigned
 
+#if 0
+// [WDJ] see fig_topoffset, in hw_main.c
+// This does not adjust to changes in drawmode, leaving objects embedded in floor.
 #ifdef HWRENDER
             //BP: we cannot use special trick in hardware mode because feet in ground caused by z-buffer
             if( rendermode != render_soft )
@@ -594,6 +597,7 @@ boolean R_AddSingleSpriteDef (char* sprname, spritedef_t* spritedef, int wadnum,
                        min(p_topoffset+4, p_height)<<FRACBITS;
                 }
             }
+#endif
 #endif
 
             //----------------------------------------------------
