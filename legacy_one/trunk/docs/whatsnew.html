@@ -13,7 +13,68 @@
 
 <div class="column">
 
-<h2>1.48.1 SVN1518 (2020-04-25)</h2>
+<h2>1.48.3 SVN1526 (2020-07-08)</h2>
+
+<h3>FEATURES 1.48.3</h3>
+<ul>
+<li>
+Menu offers to create an initial drawmode config file.
+ <ul>
+ <li> Goto Video menu. </li>
+ <li> Press "F3" to enter drawmode config mode. </li>
+ <li> Select a drawmode. </li>
+ <li> Press "C" to create initial drawmode config mode. </li>
+ <li> Press "INSERT" to add a menu item to the drawmode config mode. </li>
+ <li> Press "F1" to exit drawmode config edit mode. </li>
+ </ul>
+ </li>
+</ul>
+
+<h3>BUG FIXES 1.48.3</h3>
+<ul>
+<li>Fixed some problems during modeswitch, such as a segfault
+due to a palette function not being ready to use yet.
+</li>
+<li>
+Fixed config file loading to properly record when a file has been loaded.
+Fixed the menu instructions for drawmode and video mode, as they
+were giving false information.
+</li>
+<li>
+Implemented fixes proposed by Michael Bäuer for endtext.
+Fixed endtext for big-endian (SDL port).
+Added UTF8 output for endtest.
+<br>Added textout to select between vanilla output and UTF8 output,
+because user setups differ.
+<br>
+Add "-noendtext" as command line parameter, to match the docs,
+as that is the spelling that the user is likely to use.
+The existing "-noendtxt" is left in place for compatibility.
+</li>
+<li>
+Fixed a network error indication that was not caught by tests.
+Fixes bug 0660, based on code by Adam Stylinski.
+</li>
+<li>
+Stray semicolon in sky code, removed.
+Fixes bug 0661, based on code by Adam Stylinski.
+</li>
+<li>
+Fixed type conversion after LE_SWAP, which looked suspicious.
+Fixes bug 0662, aided by Adam Stylinski, Michael Bäuer.
+</li>
+<li>
+Fixed linux_x11 compilation issues.
+Linux_x11 is still using OSS sound, and has some compile warnings.
+</li>
+<li>
+Fixed the feet-in-ground problem for OpenGL, for drawmode switch.
+The original fix did not work when switching drawmode.
+</li>
+</ul>
+
+
+<h2>1.48.2 SVN1518 (2020-04-25)</h2>
 
 <h3>BUG FIXES 1.48.2</h3>
 <ul>

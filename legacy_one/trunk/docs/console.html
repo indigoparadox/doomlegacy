@@ -2599,7 +2599,7 @@ Play audio CDs.  The track numbers start at 1.<br/>
 <h3 id="misc_options">Misc options</h3>
 
 <p>
-Variables controlling screenshot.
+Variables controlling screenshot, and the endtext.
 </p>
 
 <table class="def">
@@ -2620,6 +2620,15 @@ in Targa colormap format.
 <td>
 The directory to save screenshots.  The default is the
 current directory.
+</td></tr>
+
+<tr><td>textout</td><td>enum</td>
+<td>Text encoding for EndText.
+<table class="def">
+<tr><td>Off</td><td>0</td><td>No EndText output.</td></tr>
+<tr><td>Vanilla</td><td>1</td><td>ASCII output encoding, Codepage 437.</td></tr>
+<tr><td>UTF8</td><td>2</td><td>UTF-8 output encoding.</td></tr>
+</table>
 </td></tr>
 
 </table>
