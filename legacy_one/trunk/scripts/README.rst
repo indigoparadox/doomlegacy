@@ -6,10 +6,9 @@ What you will need
 ------------------
 
 1. Doom Legacy executable (e.g. doomlegacy_[VERSION]_windows_32_sdl.zip)
-2. The shared files in doomlegacy_[VERSION]_common.zip (legacy.wad [WADVERSION] and the docs)
+2. The shared files in doomlegacy_[VERSION]_common.zip (contains legacy.wad [WADVERSION] and the docs)
 3. Run-time libraries (SDL, SDL_mixer), unless you already have them installed
-4. One or more IWADs containing the game data (Doom, Plutonia, TNT, Heretic)
-
+4. One or more IWADs containing the game data (Doom, Final Doom, UltDoom, Plutonia, TNT, Heretic, FreeDoom, etc.)
 
 We provide precompiled binaries for Linux and Win32, built with default options.
 You can also compile a binary yourself, the source code package contains the compilation instructions.
@@ -21,7 +20,7 @@ Using SDL is recommended, but there are some other compile options (like X11 nat
 Play setup
 ----------
 
-Extract the executable and the _common package to the same folder.
+Extract the executable and the common package to the same folder.
 
 When run, Doom Legacy will create a hidden directory in your home directory to keep your config
 and game save files.  This directory name varies by operating system, as

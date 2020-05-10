@@ -1,6 +1,6 @@
 #! /bin/bash
-# Bash script for building Doom Legacy releases.
-# Copyright (C) 2014-2017 by DooM Legacy Team.
+# Bash script for building Doom Legacy releases and uploading them to SourceForge.net
+# Copyright (C) 2014-2020 by Doom Legacy Team.
 
 
 #========================================================
