@@ -596,10 +596,12 @@ void I_StartupGraphics(void)
 
 // Called to start rendering graphic screen according to the request switches.
 // Fullscreen modes are possible.
+// param: req_drawmode, req_bitpp, req_alt_bitpp, req_width, req_height.
 // Returns FAIL_select, FAIL_end, FAIL_create, of status_return_e, 1 on success;
 void I_RequestFullGraphics( byte select_fullscreen )
 {
   char * req_errmsg = NULL;
+  modenum_t initialmode;
   int i;
   byte  select_bitpp = 0;
   byte  select_bytepp = 1;
@@ -629,18 +631,15 @@ void I_RequestFullGraphics( byte select_fullscreen )
      }else{
          // Use 8 bit and do the palette lookup.
          if( verbose )
-             GenPrintf( EMSG_ver,"Native %i bpp rejected\n", vid.bitpp );
+             GenPrintf( EMSG_ver,"Native %i bpp rejected\n", native_bitpp );
          select_bitpp = 8;
          select_bytepp = 1;
      }
      break;
+   default:
    case DRM_explicit_bpp:
      select_bitpp = req_bitpp;
      select_bytepp = (select_bpp + 7) >> 3;
-     break;
-   default:
-     select_bitpp = 8;
-     select_bytepp = 1;
      break;
   }
    
@@ -664,11 +663,16 @@ draw_8pal:
 found_modes:
   vid.bitpp = select_bpp;
   vid.bytepp = select_bytepp;
+  vid.width = req_width;
+  vid.height = req_height;
   vid.buffer = NULL;
   vid.display = NULL;
   vid.screen1 = NULL;
 
-  VID_SetMode(0);
+  initialmode = VID_GetModeForSize( req_width, req_height,
+                    (select_fullscreen ? MODE_fullscreen: MODE_window));
+  VID_SetMode( initialmode );
+
   // Go asynchronous
   ggiAddFlags(g_screen, GGIFLAG_ASYNC);
 
@@ -700,6 +704,7 @@ int VID_SetMode(modenum_t modenum)
   }
    
   // Commit to the new mode
+  vid.modenum = modenum;
 
   vid.width = vidmode_res[mi].x;
   vid.height = vidmode_res[mi].y;

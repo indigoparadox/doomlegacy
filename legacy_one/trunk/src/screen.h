@@ -268,8 +268,8 @@ extern void (*skydrawerfunc[2]) (void);
 void SCR_SetMode (void);
 // Recalc screen size dependent stuff
 void SCR_Recalc (void);
-// Check parms once at startup
-void SCR_CheckDefaultMode (void);
+// Apply config or command line settings.
+void SCR_apply_video_settings( void );
 // Set the mode number which is saved in the config
 void SCR_SetDefaultMode (void);
 

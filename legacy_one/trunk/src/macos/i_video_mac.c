@@ -282,11 +282,19 @@ int VID_SetMode(modenum_t modenum)
 {
     boolean set_fullscreen = (modenum.modetype == MODE_fullscreen);
 
+#if 0
+    if( graphics_state == VGS_off )
+        req_bitpp = 16;                     // quick hack as config hasn't been parsed
+                                            // (don't want to assume 32 bit available)
+    if( req_bitpp < 16 )
+        req_bitpp = 16;                     // dont want 8-bit (?)
+#else
     if ( graphics_state == VGS_off )
         cv_scr_depth.value = 16;            // quick hack as config hasn't been parsed
                                             // (don't want to assume 32 bit available)
     if (cv_scr_depth.value<16)
         CV_Set(&cv_scr_depth,"16");         // dont want 8-bit (?)
+#endif
 
     vid.draw_ready = 0;  // disable print reaching console
 
@@ -405,6 +413,7 @@ int I_Rendermode_setup( void )
 
 // Called to start rendering graphic screen according to the request switches.
 // Fullscreen modes are possible.
+// param: req_drawmode, req_bitpp, req_alt_bitpp, req_width, req_height.
 // Returns FAIL_select, FAIL_end, FAIL_create, of status_return_e, 1 on success;
 int I_RequestFullGraphics( byte select_fullscreen )
 {
@@ -415,7 +424,11 @@ int I_RequestFullGraphics( byte select_fullscreen )
     switch( req_drawmode )
     {
       case DRM_opengl:
+#if 0
+        select_bitpp = req_bitpp;
+#else
         select_bitpp = cv_scr_depth.EV;
+#endif
 //        select_bitpp = native_bitpp;
         break;
 #if 0
@@ -438,8 +451,10 @@ int I_RequestFullGraphics( byte select_fullscreen )
    
     allow_fullscreen = true;
     mode_fullscreen = select_fullscreen;  // initial startup
+    vid.width = req_width;
+    vid.height = req_height;
 
-    initialmode = VID_GetModeForSize( vid.width, vid.height,
+    initialmode = VID_GetModeForSize( req_width, req_height,
                    (select_fullscreen ? MODE_fullscreen: MODE_window));
 
     VID_SetMode( initialmode );

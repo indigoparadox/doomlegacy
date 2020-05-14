@@ -387,6 +387,7 @@ abort_error:
 
 // Called to start rendering graphic screen according to the request switches.
 // Fullscreen modes are possible.
+// param: req_drawmode, req_bitpp, req_alt_bitpp, req_width, req_height.
 // Returns FAIL_select, FAIL_end, FAIL_create, of status_return_e, 1 on success;
 int I_RequestFullGraphics( byte select_fullscreen )
 {
@@ -423,9 +424,11 @@ int I_RequestFullGraphics( byte select_fullscreen )
    
     allow_fullscreen = true;
     mode_fullscreen = select_fullscreen;  // initial startup
+    vid.width = req_width;
+    vid.height = req_height;
 
     // set the startup screen
-    initial_mode = VID_GetModeForSize( vid.width, vid.height,
+    initial_mode = VID_GetModeForSize( req_width, req_height,
 				       (select_fullscreen ? MODE_fullscreen: MODE_window))
     ret_value = VID_SetMode ( initial_mode );
     graphics_state = VGS_fullactive;

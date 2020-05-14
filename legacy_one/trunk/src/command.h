@@ -152,6 +152,7 @@ typedef enum
 {
     CS_CONFIG   = 0x07, // the config file source, 3 bits
     CS_PUSHED   = 0x08, // a value from another config has been pushed
+    CS_EV_PROT  = 0x10, // protect the EV value
     CS_EV_PARAM = 0x40, // A command line param is in EV.
     CS_MODIFIED = 0x80, // this bit is set when cvar is modified
 } cv_state_e;

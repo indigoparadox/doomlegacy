@@ -837,12 +837,15 @@ abort_error:
 
 // Called to start rendering graphic screen according to the request switches.
 // Fullscreen modes are possible.
+// 
+// param: req_drawmode, req_bitpp, req_alt_bitpp, req_width, req_height.
 // Set modelist to NULL when fail.
 // Returns FAIL_select, FAIL_end, FAIL_create, of status_return_e, 1 on success;
 int I_RequestFullGraphics( byte select_fullscreen )
 {
     SDL_PixelFormat    req_format;
     SDL_Rect   ** modelist;
+    modenum_t initialmode;
     byte  select_bitpp, select_bytepp;
     int  ret_value = 0;
     int  i;
@@ -970,6 +973,12 @@ found_modes:
 set_modes:
     allow_fullscreen = true;
     mode_fullscreen = select_fullscreen;  // initial startup
+    vid.width = req_width;
+    vid.height = req_height;
+
+    // Need the modenum, even for opengl.
+    initialmode = VID_GetModeForSize( req_width, req_height,
+                   (select_fullscreen ? MODE_fullscreen: MODE_window));
 
 // [WDJ] To be safe, make it conditional
 #ifdef MAC_SDL
@@ -990,15 +999,13 @@ set_modes:
        vid.widthbytes = vid.width * vid.bytepp;
 
        if( verbose>1 )
-          GenPrintf( EMSG_ver, "OglSdlSurface(%i,%i,%i)\n", vid.width, vid.height, mode_fullscreen);
-       if( ! OglSdlSurface(vid.width, vid.height, mode_fullscreen) )
+          GenPrintf( EMSG_ver, "OglSdlSurface(%i,%i,%i)\n", req_width, req_height, mode_fullscreen);
+       if( ! OglSdlSurface(req_width, req_height, mode_fullscreen) )
           return FAIL_create;
     }
 
     if( rendermode == render_soft )
     {
-        modenum_t initialmode = VID_GetModeForSize(vid.width, vid.height,
-                   (select_fullscreen ? MODE_fullscreen: MODE_window));
         ret_value = VID_SetMode( initialmode );
         if( ret_value < 0 )
             return ret_value;
@@ -1009,6 +1016,8 @@ set_modes:
             return FAIL_create;
         }
     }
+
+    vid.modenum = initialmode;
 
     I_StartupMouse( false );
 

@@ -3496,10 +3496,11 @@ void playdemo_restore_settings( void )
     {
         cv_respawnmonsterstime.value = pdss_respawnmonsterstime;
         cv_itemrespawntime.value = pdss_itemrespawntime;
+
+        // only restore when demo has changed some settings
+        G_restore_user_settings();
     }
     pdss_settings_valid = 0;  // so user can change settings between demos
-
-    G_restore_user_settings();
 }
 
 

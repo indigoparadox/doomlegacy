@@ -1251,6 +1251,8 @@ void M_ConnectMenu(int choice)
 {
     if( M_already_playing(0) )  return;
 
+    D_End_commandline();
+   
     Push_Setup_Menu(&Connectdef);
     M_Refresh(0);
 }
@@ -1411,6 +1413,8 @@ void M_StartServerMenu(int choice)
 {
     if( M_already_playing(0) )  return;
 
+    D_End_commandline();
+   
     ServerMenu[0] = (gamemode==doom2_commercial)?
          ServerMenu_Map  // Doom2
        : ServerMenu_EpisodeMap;  // Ult doom, Heretic
@@ -2068,6 +2072,8 @@ void M_SingleNewGame(int choice)
 
     if( M_already_playing(1) )  return;
 
+    D_End_commandline();
+   
     if ( gamemode == doom2_commercial
          || (gamemode == chexquest1 && !modifiedgame) //DarkWolf95: Support for Chex Quest
          )
@@ -3561,6 +3567,7 @@ byte  video_test_key_handler( int key )
       case 'S':
       case 's':
         S_StartSound(menu_sfx_enter);
+        req_command_video_settings = 0;  // disable command line video settings
         goto change_mode;
 
       case 'T':
@@ -3574,6 +3581,7 @@ byte  video_test_key_handler( int key )
         // current active mode becomes the default mode.
         S_StartSound(menu_sfx_action);
         SCR_SetDefaultMode ();
+        req_command_video_settings = 0;  // disable command line video settings
         goto used_key;
 
       default:

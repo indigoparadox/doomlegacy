@@ -884,11 +884,20 @@ int VID_SetMode (modenum_t modenum)
         // it's actually a hack
         if ( (rendermode == render_opengl) || (rendermode == render_d3d) )
         {
+#if 0
+	    // req_bitpp from cv_scr_depth, or command line.
+            // don't accept depth < 16 for OpenGL mode (too much ugly)
+            if( req_bitpp < 16 )
+                req_bitpp = 16;	     
+            vid.bitpp = req_bitpp;
+            vid.bytepp = (req_bitpp + 7) >> 3;
+#else
             // don't accept depth < 16 for OpenGL mode (too much ugly)
             if (cv_scr_depth.value<16)
                 CV_SetValue (&cv_scr_depth,  16);
             vid.bitpp = cv_scr_depth.value;
             vid.bytepp = cv_scr_depth.value/8;
+#endif
             vid.fullscreen = set_fullscreen;
             currentmode_p->bytesperpixel = vid.bytepp;
             currentmode_p->modetype = modenum.modetype;  // redundant
@@ -952,6 +961,7 @@ int VID_SetMode (modenum_t modenum)
 
     // judgecutor:
     I_RestartSysMouse();
+
  done:
     return 1;
 }
@@ -1131,6 +1141,7 @@ abort_error:
 
 // Called to start rendering graphic screen according to the request switches.
 // Fullscreen modes are possible.
+// param: req_drawmode, req_bitpp, req_alt_bitpp, req_width, req_height.
 // Returns FAIL_select, FAIL_end, FAIL_create, of status_return_e, 1 on success;
 int I_RequestFullGraphics( byte select_fullscreen )
 {
@@ -1214,9 +1225,11 @@ int I_RequestFullGraphics( byte select_fullscreen )
     vid.bytepp = (select_bitpp + 7) >> 3;
     allow_fullscreen = true;
     mode_fullscreen = select_fullscreen;  // initial startup
+    vid.width = req_width;
+    vid.height = req_height;
 
     // set the startup screen
-    initial_mode = VID_GetModeForSize( vid.width, vid.height,
+    initial_mode = VID_GetModeForSize( req_width, req.height,
                    (select_fullscreen ? MODE_fullscreen: MODE_window));
     ret_value = VID_SetMode ( initial_mode );
     if( ret_value < 0 )

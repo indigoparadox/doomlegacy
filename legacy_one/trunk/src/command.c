@@ -1401,6 +1401,9 @@ void CV_Restore_User_Settings( void )
     // Check for modified cvar
     for (cvar=consvar_vars; cvar; cvar = cvar->next)
     {
+        if( cvar->state & CS_EV_PROT )  // protected EV value
+            continue;
+
         if((cvar->state & CS_CONFIG) > CFG_other )
         {
             // Undo a push of NETVAR

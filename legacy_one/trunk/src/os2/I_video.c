@@ -240,6 +240,7 @@ abort_error:
 
 // Called to start rendering graphic screen according to the request switches.
 // Fullscreen modes are possible.
+// param: req_drawmode, req_bitpp, req_alt_bitpp, req_width, req_height.
 // Returns FAIL_select, FAIL_end, FAIL_create, of status_return_e, 1 on success;
 int I_RequestFullGraphics( byte select_fullscreen )
 {
@@ -252,8 +253,10 @@ int I_RequestFullGraphics( byte select_fullscreen )
     mode_fullscreen = select_fullscreen;
     mode_bitpp = native_bitpp;
     // Modes are fixed, so no need to get them.
+    vid.width = req_width;
+    vid.height = req_height;
 
-    initialmode = VID_GetModeForSize( vid.width, vid.height, select_fullscreen );
+    initialmode = VID_GetModeForSize( req_width, req_height, select_fullscreen );
     ret_value = VID_SetMode( initialmode );
     if( ret_value < 0 )
         return ret_value;

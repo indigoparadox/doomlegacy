@@ -113,6 +113,8 @@ extern byte req_drawmode;  // vid_drawmode_e
 extern byte req_bitpp;
 // Parameter to V_switch_drawmode
 extern byte req_alt_bitpp;
+extern byte req_command_video_settings;
+extern uint16_t req_width, req_height;
 // From video drivers.
 extern byte native_drawmode;  // vid_drawmode_e
 extern byte native_bitpp;

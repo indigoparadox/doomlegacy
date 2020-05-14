@@ -2279,6 +2279,7 @@ void I_StartupGraphics(void)
     if( verbose )
         GenPrintf(EMSG_ver, "StartupGraphics completed\n" );
 
+    vid.modenum = initialmode;
     vid.recalc = true;
     graphics_state = VGS_active;
     return;
@@ -2291,6 +2292,7 @@ abort_error:
 
 // Called to start rendering graphic screen according to the request switches.
 // Fullscreen modes are possible.
+// param: req_drawmode, req_bitpp, req_alt_bitpp, req_width, req_height.
 // Returns FAIL_select, FAIL_end, FAIL_create, of status_return_e, 1 on success;
 int I_RequestFullGraphics( byte select_fullscreen )
 {
@@ -2385,8 +2387,10 @@ accept:
    
     allow_fullscreen = true;
     mode_fullscreen = select_fullscreen;
+    vid.width = req_width;
+    vid.height = req_height;
 
-    initialmode = VID_GetModeForSize( vid.width, vid.height,
+    initialmode = VID_GetModeForSize( req_width, req_height,
                    (select_fullscreen ? MODE_fullscreen: MODE_window));
     createWindow( select_fullscreen, initialmode );
 
@@ -2396,6 +2400,7 @@ accept:
     if( verbose )
         GenPrintf(EMSG_ver, "RequestFullGraphics completed\n" );
 
+    vid.modenum = initialmode;
     vid.recalc = true;
     graphics_state = VGS_fullactive;
     return 1;
