@@ -34,7 +34,7 @@ You will require the following programs during the build process:
 Compiler:
   GCC 3.3+, the Gnu Compiler Collection which, among other things, is
   a free C/C++ compiler. "http://gcc.gnu.org/"
-  Linux systems most likely already have it installed.</li>
+  Linux systems most likely already have it installed.
   
   Has been compiled on Linux with Gnu 5.5.0.
   Has been compiled on Linux with Clang 3.8.0
@@ -50,7 +50,7 @@ Compiler:
 
 Download the DoomLegacy source.
   "http://sourceforge.net/projects/doomlegacy/"
-  
+
 You can either get the source package or, for the latest code snapshot.
 Checkout the legacy_one/trunk/ directory from the Subversion repository at SourceForge:
 Subversion: "http://subversion.apache.org/">Subversion
@@ -78,8 +78,10 @@ be exactly one of the specified choices.
 * The "make_options" file must be created by you.  It is customized to your
 preferences.
 
-* Select the make_options_xx for your operation system, and copy it
+* Select the make_options_xx for your operating system, and copy it
 to make_options.
+Linux Example:
+>> cp  make_options_nix  make_options
 
 The make_options_xx will contain appropriate selections for your
 operating system.  Copying options from a make_options file for a different
@@ -89,7 +91,7 @@ operating system probably will not work.
 a # at the beginning of that line. Lines without the # are active
 selections.
 
-* MAKE_OPTIONS_PRESENT: indication that the make_options file has
+* MAKE_OPTIONS_PRESENT: this informs 'make' that the make_options file has
 been read. Leave it alone.
 
 * OS: the operating system, such as LINUX, FREEBSD.
@@ -107,9 +109,9 @@ See your compiler docs for the -march, -mcpu, and -mtune command line
 switches specifics. Without this line the compiler will select its
 default build target, such a generic32, or i386.
 
-For a modern x86 process, selecting "ARCH=-march=i686" will compile
+For a modern x86 processor, selecting "ARCH=-march=i686" will compile
 a binary for an x686, which will be smaller and faster than an x386
-binary. The binary will run on any x686 compatible processor.
+binary.  This binary will run on any x686 compatible processor.
 
 If you have a specific processor, like an Athlon, then specifying
 that will have the compiler use specific optimizations for the Athlon.
@@ -119,9 +121,10 @@ other processors too, but in some cases this is not guaranteed.
 * CD_MUSIC: if you don't have the music libraries, then turn off
 music by setting CD_MUSIC=0.  The build will not have music.
 
-* USEASM: generate assembly.  This used to be faster code, but
-modern compilers will now beat this.  The assembly is not updated as
-often enough, so it may not be current.  Avoid this unless you like pain.
+* USEASM: use assembly code for certain operations.
+This used to be slightly faster code, but modern compilers will now beat this.
+The assembly is not updated often enough, so it may not be current.
+Avoid this unless you like pain.
 
 * There are several install options for DoomLegacy.  Each can be
 customized.  See the next section.
@@ -139,9 +142,9 @@ compile environment, as the run setup is quite different.
 
 You can have several doomlegacy versions in your run directory.
 They may have any name you choose.  I suggest making a name that
-identifies the variation, such as "dl_i686_athlon_v3".
+identifies the variation, such as "doomlegacy_i686_athlon_v3".
 
-You must have system permissions for the type of install.
+You must have system permissions for system install.
 An ordinary user can only install_user.
 
 >> make install
@@ -169,43 +172,53 @@ Chapter: Compiling Legacy
 
 1. Open a shell window, like console. Go to the TRUNK directory.
 
-2. Select and configure your make_options file.
-
-3. The top level TRUNK is the default BUILD directory.
-The make_options file there will control the build.
-
-4. Copy one of the make_options_xx files to make_options, and edit it.
-
-5. If you want a separate BUILD directory, then create it.
+2. If you want a separate BUILD directory, then create it.
 Create bin, dep, objs directories there.
-Create a make_options file in the directory by copying one of the make_options files,
-and editing it for your selected build.
+The BUILD directory will need its own make_options file (see step 4).
+This allows you to compile SDL in one directory, and X11 in another.
 >> make BUILD=x11 dirs
 
-6. Edit compile options in doomdef.c.
+3. The top level TRUNK is the default BUILD directory.
+The make_options file there will control the build, when BUILD is not
+specified.
 
-7. To clean the build:
+4. Select and configure your make_options file.
+Copy one of the make_options_xx files to make_options of your BUILD
+directory.  Edit your make_options to set your configure options.
+>> cp  make_options_nix  x11/make_options
+
+5. Edit compile options in doomdef.c.
+These are options within DoomLegacy.
+Some features can be disabled to make a smaller binary.
+There are also some experimental code options, that are kept disabled.
+
+6. To clean the build:
+When you have been copying files, you need to remove old object files.
 >> make clean
 
-8. To build the executable:
+7. To build the executable:
 >> make
 
-9. To build a debug version:
+8. To build a debug version:
+This puts the debugging symbols for the debugger in the binary.
+The debug version also forces DoomLegacy video to an 800x600 window,
+so the user can switch between the debugger window and the DoomLegacy window.
 >> make DEBUG=1
 
-10. To build with bin, obj, dep, in a separate directory (example x11):
+9. To build with bin, obj, dep, in a separate directory (example x11):
 >> make BUILD=x11
 
-11. Example:
+10. Example:
 >> make BUILD=x11d clean
 
-12. Example:
+11. Example:
 >> make BUILD=x11d DEBUG=1 MIXER=1
 
-13. Example MinGW:
+12. Example MinGW:
+Must use mingw32-make, not the make command from MSYS.
 >> mingw32-make DEBUG=1 clean
 
-14. Read the Makefile for the help at the top of the file.
+13. Read the Makefile for the help at the top of the file.
 This will document the latest commands.
 
 

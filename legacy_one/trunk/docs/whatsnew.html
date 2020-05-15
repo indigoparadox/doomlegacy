@@ -13,7 +13,27 @@
 
 <div class="column">
 
-<h2>1.48.3 SVN1526 (2020-07-08)</h2>
+
+<h2>1.48.4 SVN1530 (2020-05-14)</h2>
+
+<h3>BUG FIXES 1.48.4</h3>
+<ul>
+<li>Config file width and height were not passed to the port video drivers.
+Created explicit parameters and functions
+to pass these to the port video drivers, separate from the current video state.
+This clarifies the inputs to the port video drivers.
+</li>
+<li>Prevent the command-line restore code from changing the current
+drawmode setting back to the default drawmode setting, wrongly.
+A new state bit for certain control variables now blocks command-line restore.
+This did not actually change the drawmode.
+It did change the current drawmode display in the drawmode menu.
+which deceived users, and testers.
+</li>
+</ul>
+
+
+<h2>1.48.3 SVN1526 (2020-05-08)</h2>
 
 <h3>FEATURES 1.48.3</h3>
 <ul>
@@ -82,6 +102,7 @@ The original fix did not work when switching drawmode.
 The config file in a new install was not being written.  Fixed.
 </li>
 </ul>
+
 
 <h2>1.48.1 SVN1517 (2020-04-14)</h2>
 

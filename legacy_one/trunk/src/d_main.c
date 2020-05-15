@@ -276,22 +276,22 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1528"
+#define SVN_REV "1530"
 #endif
 
 
 // Version number: major.minor.revision
 const int  VERSION  = 148; // major*100 + minor
-const int  REVISION = 3;   // for bugfix releases, should not affect compatibility. has nothing to do with svn revisions.
+const int  REVISION = 4;   // for bugfix releases, should not affect compatibility. has nothing to do with svn revisions.
 static const char VERSIONSTRING[] = "(rev " SVN_REV ")";
 //static const char VERSIONSTRING[] = "beta (rev " SVN_REV ")";
 char VERSION_BANNER[80];
 
 // [WDJ] change this if legacy.wad is changed
-const short cur_wadversion = 145;	// release wadversion
+const short cur_wadversion = 148;	// release wadversion
 // usually allow one version behind cur_wadversion, for easier testing
 // does not have to be full featured
-const short min_wadversion = 144;
+const short min_wadversion = 145;
 
 
 //

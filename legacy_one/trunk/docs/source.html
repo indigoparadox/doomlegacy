@@ -94,14 +94,19 @@ be exactly one of the specified choices.
 <li>The "make_options" file must be created by you.  It is customized to your
 preferences.</li>
 <li>Select the make_options_xx for your operation system, and copy it
-to make_options.  The make_options_xx will contain appropriate selections for your
+to make_options.</br>
+Linux Example:</br>
+<b><code>>> cp  make_options_nix  make_options</code></b>
+<p>The make_options_xx will contain appropriate selections for your
 operating system.  Copying options from a make_options file for a different
-operating system probably will not work.</li>
+operating system probably will not work.</p>
+</li>
 <li>Lines that start with # are comments.  To turn off an option, put
 a # at the beginning of that line. Lines without the # are active
 selections.</li>
-<li>MAKE_OPTIONS_PRESENT: indication that the make_options file has
-been read. Leave it alone.</li>
+<li>MAKE_OPTIONS_PRESENT: this informs 'make' that the make_options file has
+been read. Leave it alone.
+</li>
 <li>OS: the operating system, such as LINUX, FREEBSD.</li>
 <li>SMIF: the port draw library, such as SDL, or X11.</li>
 <li>ARCH: the cpu architecture.
@@ -122,9 +127,11 @@ other processors too, but in some cases this is not guaranteed.<p>
 </li>
 <li>CD_MUSIC: if you don't have the music libraries, then turn off
 music by setting CD_MUSIC=0.  The build will not have music.</li>
-<li>USEASM: generate assembly.  This used to be faster code, but
-modern compilers will now beat this.  The assembly is not updated as
-often enough, so it may not be current.  Avoid this unless you like pain.</li>
+<li>USEASM: use assembly code for certain operations.
+This used to be slightly faster code, but modern compilers will now beat this.
+The assembly is not updated often enough, so it may not be current.
+Avoid this unless you like pain.
+</li>
 <li>There are several install options for DoomLegacy.  Each can be
 customized.  See the next section.</li>
 </ul>
@@ -143,23 +150,23 @@ identifies the variation, such as "dl_i686_athlon_v3".<p>
 <p>You must have system permissions for the type of install.
 An ordinary user can only install_user.</p>
 
-<b>make install</b>
+<b><code>>> make  install</code></b>
 <br>Provides install instructions.
 
 <p>The following are supported in "make_options":</br>
 <ul>
-<li><b>make install_sys</b>
-<br>Install doomlegacy to the system.
+<li>Install doomlegacy to the system.
+<br><b><code>>> make  install_sys</code></b>
 <br>INSTALL_SYS_DIR: the system directory where the binary will be installed.
 <br>INSTALL_SHARE_DIR: the system directory where the support files will be installed.
 </li>
-<li><b>make install_games</b>
-<br>Install doomlegacy to the system games.
+<li>Install doomlegacy to the system games.
+<br><b><code>>> make  install_games</code></b>
 <br>INSTALL_GAMES_DIR: the system directory where the binary will be installed.
 <br>INSTALL_SHARE_DIR: the system directory where the support files will be installed.
 </li>
-<li><b>make install_user</b>
-<br>Install doomlegacy to a user directory.
+<li>Install doomlegacy to a user directory.
+<br><b><code>>> make  install_user</code></b>
 <br>INSTALL_USER_DIR: the user directory where the binary and suport files will be installed.
 <br>INSTALL_LEGACYWAD_DIR: the directory where the support files will be installed.
 </li>
@@ -170,26 +177,45 @@ An ordinary user can only install_user.</p>
 
 <ol>
 <li>Open a shell window, like console. Go to the <b>TRUNK</b>.</li>
-<li>Select and configure your make_options file.</li>
-<li>The top level TRUNK is the default BUILD directory.
-The make_options file there will control the build.
-<li>Copy one of the make_options_xx files to make_options, and edit
-it.</li>
+
 <li>If you want a separate BUILD directory, then create it.
 Create bin, dep, objs directories there.
-Create a make_options file in the directory by copying one of the make_options files,
-and editing it for your selected build.
-</br><b>make BUILD=x11 dirs</b>
+The BUILD directory will need its own make_options file (see step 4).
+This allows you to compile SDL in one directory, and X11 in another.</br>
+<b><code>>> make  BUILD=x11  dirs</code></b>
 </li>
-<li>Edit compile options in doomdef.c.</li>
-<li>To clean the build:</br> <b>make clean</b></li>
-<li>To build the executable:</br> <b>make</b></li>
-<li>To build a debug version:</br> <b>make DEBUG=1</b></li>
+<li>The top level TRUNK is the default BUILD directory.
+The make_options file there will control the build, when BUILD is not specified.
+</li>
+<li>Select and configure your make_options file.
+Copy one of the make_options_xx files to make_options of your BUILD
+directory.  Edit your make_options to set your configure options.</br>
+<b><code>>> cp  make_options_nix  x11/make_options</code></b>
+</li>
+<li>Edit compile options in doomdef.c.
+These are options within DoomLegacy.
+Some features can be disabled to make a smaller binary.
+There are also some experimental code options, that are kept disabled.
+</li>
+<li>To clean the build:</br>
+<b><code>>> make  clean</code></b></li>
+<li>To build the executable:</br>
+<b><code>>> make</code></b></li>
+<li>To build a debug version:</br>
+This puts the debugging symbols for the debugger in the binary.
+The debug version also forces DoomLegacy video to an 800x600 window,
+so the user can switch between the debugger window and the DoomLegacy window.</br>
+<b><code>>> make  DEBUG=1</code></b>
+</li>
 <li>To build with bin, obj, dep, in a separate directory (example x11):</br>
-<b>make BUILD=x11</b></li>
-<li>Example:</br> <b>make BUILD=x11d clean</b></li>
-<li>Example:</br> <b>make BUILD=x11d DEBUG=1 MIXER=1</b></li>
-<li>Example MinGW:</br> <b>mingw32-make DEBUG=1 clean</b>
+<b><code>>> make  BUILD=x11</code></b></li>
+<li>Example:</br>
+<b><code>>> make  BUILD=x11d  clean</code></b></li>
+<li>Example:</br>
+<b><code>>> make  BUILD=x11d  DEBUG=1  MIXER=1</code></b></li>
+<li>Example MinGW:</br>
+Must use mingw32-make, not the make command from MSYS.</br>
+<b><code>>> mingw32-make  DEBUG=1  clean</code></b>
 </li>
 <li>Read the Makefile for the help at the top of the file.
 This will document the latest commands.</li>
