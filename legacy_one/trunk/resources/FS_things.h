@@ -1,5 +1,4 @@
 // FraggleScript constants
-// $Id$
 
 // Thing numbers
 const PLAYER = 0;
@@ -277,8 +276,19 @@ const LIGHT_COLOR = 5;
 const LIGHT_RADIUS = 6;
 
 // Corona sprites, for use with the CORONA_TYPE function
-const UNDEFINED_SPR = 0;
+// bit flags
 const CORONA_SPR = 1;
 const DYNLIGHT_SPR = 2;
+// types
+const UNDEFINED_SPR = 0;
+const LAMP_C = 32;     // 0x20
+const FIRE_C = 48;     // 0x30
+const LIGHT_C = 96;    // 0x60
+const FIREFLY_C = 208; // 0xD0
+const RANDOM_C = 224;  // 0xE0
+const PULSE_C = 240;   // 0xF0
+// combinations
 const LIGHT_SPR = 3;
-const ROCKET_SPR = 19;
+const ROCKET_SPR = 19; // 0x13
+const LAMP_SPR = 35;   // 0x23
+const FIRE_SPR = 51;   // 0x33
