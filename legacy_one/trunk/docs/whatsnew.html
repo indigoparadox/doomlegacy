@@ -14,7 +14,7 @@
 <div class="column">
 
 
-<h2>1.48.4 SVN1530 (2020-05-14)</h2>
+<h2>1.48.4 SVN1531 (2020-05-16)</h2>
 
 <h3>BUG FIXES 1.48.4</h3>
 <ul>
@@ -29,6 +29,12 @@ A new state bit for certain control variables now blocks command-line restore.
 This did not actually change the drawmode.
 It did change the current drawmode display in the drawmode menu.
 which deceived users, and testers.
+</li>
+<li>
+Fix the config file fullscreen setting not being passed to the port video
+drivers.
+Update the config file fullscreen setting in the video settings after
+the fullscreen enables are set.
 </li>
 </ul>
 
