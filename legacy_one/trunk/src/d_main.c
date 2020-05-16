@@ -276,7 +276,7 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1530"
+#define SVN_REV "1531"
 #endif
 
 
@@ -2808,6 +2808,8 @@ restart_command:
 #else
         I_RequestFullGraphics( cv_fullscreen.EV );
 #endif
+       
+        SCR_ChangeFullscreen();  // enable fullscreen
         drawmode_recalc = false;
 
         // text only, incomplete for rendering

@@ -244,6 +244,7 @@ void SCR_SetMode (void)
     else
     {
         // Select a video mode, within the drawmode and mode list.
+        // Can switch fullscreen.
         ret_value = VID_SetMode(setmodeneeded);
             // sets vid.width, vid.height
     }
@@ -602,10 +603,12 @@ void SCR_SetDefaultMode (void)
 void SCR_ChangeFullscreen (void)
 {
     // used to prevent switching to fullscreen during startup
-    if (!allow_fullscreen)
+    if (!allow_fullscreen)  // by I_RequestFullGraphics
         return;
 
-    if( graphics_state >= VGS_startup )
+//    if( graphics_state >= VGS_fullactive )  // by I_RequestFullGraphics
+//    if( graphics_state >= VGS_active )  //  by I_StartupGraphics()
+    if( graphics_state >= VGS_startup )  // by I_StartupGraphics()
     {
         mode_fullscreen = ( cv_fullscreen.value )? true : false;
         SCR_apply_video_settings();
