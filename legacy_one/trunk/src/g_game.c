@@ -219,6 +219,7 @@ void    G_DoWorldDone (void);
 // code is used for compatibility.
 //
 byte            demoversion;  // engine behavior version
+uint16_t        demoversion_rev;  // demoversion and revision
 
 // Determined by menu selection, or demo.
 skill_e         gameskill;
@@ -3385,7 +3386,7 @@ void G_BeginRecording (void)
                        // 0 would be an older version with new header.
     *demo_p++ = VERSION;  // version of doomlegacy that recorded it.
     *demo_p++ = rec_version;  // actual DoomLegacy demoversion recorded
-    *demo_p++ = 0;     // demo subversion, when needed
+    *demo_p++ = REVISION;     // demo subversion, when needed
     *demo_p++ = gameskill;
     *demo_p++ = gameepisode;
     *demo_p++ = gamemap;
@@ -3628,7 +3629,8 @@ void G_DoPlayDemo (const char *defdemoname)
             demo144_format = *demo_p++;  // DL format num, (1)
             demo_p++;  // recording legacy version number
             demoversion = READBYTE(demo_p);  // DoomLegacy DL demoversion number
-            demo_p++;  // subversion, not used yet
+	    byte rev = READBYTE(demo_p);
+            demoversion_rev = VERREV(demoversion, rev);  // with revision
             // maybe DL header on old demo
             if( demoversion < 111 )  goto broken_header;
             if( demoversion < 143 )  demo144_format = 0;
