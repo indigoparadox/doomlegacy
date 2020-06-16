@@ -1053,7 +1053,7 @@ boolean AddLmpExtradata(byte **demo_point, int playernum)
             // SERVER_PID into player[0], for now.
             // The demo needs to have a player[0].
             if( playernum != 0 )
-                continue;	     
+                continue;
         }
         if( ip->pn != playernum )
             continue;  // wrong player
@@ -1092,6 +1092,10 @@ void ReadLmpExtraData(byte **demo_pointer, int playernum)
     
     if( (buflen + extra_len) >= (MAX_TEXTCMD_BUFF - 2) )
         goto no_text_cmd; // will not fit
+
+    // [WDJ] needed to start external demo play.
+    if( (playernum == 0) && !playeringame[0] )
+        playernum = SERVER_PID; // because of checks
 
     ip = (textcmd_item_t *)  & tcbuf->buff[ buflen ];
     ip->pn = playernum;

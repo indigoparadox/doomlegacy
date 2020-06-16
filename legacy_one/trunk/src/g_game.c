@@ -3266,8 +3266,11 @@ void G_ReadDemoTiccmd (ticcmd_t* cmd,int playernum)
 
         if(ziptic & ZT_EXTRADATA)
             ReadLmpExtraData(&demo_p,playernum);
+#if 0
+// only used to clear textcmd, which is now done in TryRunTics       
         else
             ReadLmpExtraData(0,playernum);
+#endif
 
         memcpy(cmd,&(oldcmd[playernum]),sizeof(ticcmd_t));
     }
@@ -4057,7 +4060,9 @@ void G_DoPlayDemo (const char *defdemoname)
     else
     {
         // wait map command in the demo
-        gamestate = wipegamestate = GS_WAITINGPLAYERS;
+//        gamestate = wipegamestate = GS_WAITINGPLAYERS;  // will display waiting counter
+//        gamestate = wipegamestate = GS_DEMOSCREEN;  // will advance to next demo
+        gamestate = wipegamestate = GS_NULL;
     }
 
     CON_ToggleOff (); // may be also done at the end of map command
