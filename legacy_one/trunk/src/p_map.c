@@ -656,7 +656,8 @@ static boolean PIT_CheckThing (mobj_t* thing)
             {
                 // Boom - Let players missile other players. ??
                 // [WDJ] these are monsters, not players.
-                if( monster_infight != INFT_infight )  // when not infighting
+                // PrBoom and DoomLegacy allow infighting with missile damage.
+                if( monster_infight != INFT_full_infight )  // when not missile infighting
                     goto ret_blocked;  // Explode, but do no damage.
             }
         }

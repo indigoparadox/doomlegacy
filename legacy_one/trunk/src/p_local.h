@@ -449,13 +449,23 @@ extern byte  EN_inventory;   // Heretic, Hexen
 extern byte  EN_nrandom;
 
 
+// Infight values are arranged for quick testing.
+// Any infighting
+#define  MONSTER_INFIGHTING    ((byte)(monster_infight - INFT_infight) < (byte)(INFT_coop - INFT_infight))
+// Missile infighting
+//   if( monster_infight == (INFT_infight|INFT_full) )
+// Other
+//   if( monster_infight == INFT_coop )
+// Cannot change due to being saved in demos.
 typedef enum {
  // Boom values
    INFT_none,     // Boom demo value, Doom default of no infight.
    INFT_infight,  // Boom demo value, Monster to monster fighting.
  // Enhanced values
+   INFT_full_infight = INFT_infight+4,  // infight with missiles
    INFT_coop = 16,  // Legacy enhancement, and ZDoom option
-   INFT_infight_off,  // DEH
+   INFT_force = 0x80, // transient flag
+   INFT_infight_off = INFT_none & INFT_force,  // DEH non-null off (not important in demos)
 } infight_e;
 // Values from infight_e and from Boom demo.
 extern byte  monster_infight; //DarkWolf95:November 21, 2003: Monsters Infight!

@@ -2366,17 +2366,20 @@ static void readmisc(myfile_t *f)
           // cannot confirm any specific valid numbers
           switch( value )
           {
-           case 221: // value=221 -> on (prboom)
            case 0: // previous behavior: default to on
            case 1: // if user tries to set it on
               monster_infight_deh = INFT_infight; // infight on
               break;
+           case 3: // extended behavior, coop monsters
+              monster_infight_deh = INFT_coop;
+              break;
+           case 221: // value=221 -> on (prboom)
+              // PrBoom implements full infight	     
+              monster_infight_deh = INFT_full_infight; // infight on
+              break;
            case 202: // value=202 -> off (prboom)
            default:  // off
               monster_infight_deh = INFT_infight_off; // infight off
-              break;
-           case 3: // extended behavior, coop monsters
-              monster_infight_deh = INFT_coop;
               break;
           }
       }
