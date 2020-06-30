@@ -3202,6 +3202,11 @@ void G_setup_VERSION( void )
 #define ZT_EXTRADATA    0x40
 #define DEMOMARKER      0x80    // demoend
 
+// SERVER_ID appears in Demo 1.48
+#if SERVER_PID < MAXPLAYERS
+#  error "SERVER_PID must be > MAXPLAYERS"
+#endif
+
 ticcmd_t oldcmd[MAXPLAYERS];
 
 // Only called when demoplayback.
