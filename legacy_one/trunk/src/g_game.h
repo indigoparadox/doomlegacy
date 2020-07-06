@@ -148,6 +148,7 @@ extern  tic_t     levelstarttic;
 
 extern consvar_t  cv_showmessages;
 extern consvar_t  cv_pickupflash;
+extern consvar_t  cv_oof_2s;         // Boom 2s line
 extern consvar_t  cv_weapon_recoil;  // Boom weapon recoil
 extern consvar_t  cv_fastmonsters;
 extern consvar_t  cv_predictingmonsters;  //added by AC for predmonsters
@@ -158,6 +159,7 @@ extern consvar_t  cv_allowautoaim;
 extern consvar_t  cv_allowmlook;
 extern consvar_t  cv_allowturbo ;
 extern consvar_t  cv_allowexitlevel;
+
 
 
 void Command_Turbo_f (void);

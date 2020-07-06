@@ -526,6 +526,9 @@ consvar_t cv_allowrocketjump  = {"allowrocketjump","0",CV_NETVAR,CV_YesNo};
 consvar_t cv_allowmlook       = {"allowmlook"  ,"1",CV_NETVAR,CV_YesNo};
 consvar_t cv_allowexitlevel   = {"allowexitlevel", "1", CV_NETVAR, CV_YesNo, NULL };
 
+// oof when hit 2s line (in PrBoom enabled by ! comp_sound)
+consvar_t cv_oof_2s = {"oof_2s", "0", CV_SAVE|CV_CALL, CV_OnOff, DemoAdapt_p_map};
+
 #if MAXPLAYERS>32
 #error please update "player_name" table using the new value for MAXPLAYERS
 #endif
@@ -3168,6 +3171,7 @@ boolean G_Downgrade(int version)
     DemoAdapt_p_enemy(); // local enables of p_enemy
     DemoAdapt_p_fab();   // local enables of p_fab
     DemoAdapt_p_floor(); // local enables of p_floor, TNT MAP30 fix
+    DemoAdapt_p_map();   // local enables of p_map
     DemoAdapt_bots();    // local enables of bots
     return true;
 }
