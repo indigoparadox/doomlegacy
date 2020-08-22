@@ -652,6 +652,7 @@ void I_Sleep(unsigned int ms)
 #endif
 }
 
+#ifdef LOADING_DISK_ICON
 void I_BeginRead(void)
 {
 }
@@ -659,6 +660,7 @@ void I_BeginRead(void)
 void I_EndRead(void)
 {
 }
+#endif
 
 #if 0
 // Unused

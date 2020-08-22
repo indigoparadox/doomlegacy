@@ -213,6 +213,9 @@ void  numerical_name( const char * name, lump_name_t * numname )
 // Other files are single lumps with the base filename
 //  for the lump name.
 //
+
+
+#ifdef WADFILE_RELOAD
 // If filename starts with a tilde, the file is handled
 //  specially to allow map reloads.
 // But: the reload feature is a fragile hack...
@@ -220,6 +223,7 @@ void  numerical_name( const char * name, lump_name_t * numname )
 // [WDJ] FIXME: never set anymore
 static lumpnum_t  reload_lumpnum = NO_LUMP;
 static char*  reload_filename = NULL;
+#endif
 
 
 //  Allocate a wadfile, setup the lumpinfo (directory) and
@@ -425,12 +429,14 @@ int W_Load_WadFile (const char *filename)
 
 
 
+#ifdef WADFILE_RELOAD
 // !!!NOT CHECKED WITH NEW WAD SYSTEM
 //
 // W_Reload
 // Flushes any of the reloadable lumps in memory
 //  and reloads the lump directory.
 //
+// Called from: P_SetupLevel
 void W_Reload (void)
 {
     wadinfo_t           header;
@@ -480,6 +486,7 @@ void W_Reload (void)
     close (handle);
     free(fileinfo);
 }
+#endif
 
 
 //
@@ -708,34 +715,52 @@ int  W_ReadLumpHeader ( lumpnum_t     lump,
                         void*         dest,
                         int           size )
 {
-    int         bytesread;
     lumpinfo_t* lif;
-    int         handle;
+    wadfile_t * wf;
+    int  ln1;
+    int  handle;
+    int  bytesread = 0;
+   
+    ln1 = LUMPNUM(lump);
+    wf = wadfiles[WADFILENUM(lump)];
+   
 #ifdef PARANOIA
 //    if (lump<0) I_Error("W_ReadLumpHeader: lump not exist\n");
-    if ( ! VALID_LUMP(lump) )  I_Error("W_LumpLength: lump not exist\n");
+    if ( ! VALID_LUMP(lump) )
+        I_Error("W_ReadLumpHeader: Invalid lump id\n");
 
-    if (LUMPNUM(lump) >= wadfiles[WADFILENUM(lump)]->numlumps)
+    if( ln1 >= wf->numlumps )
         I_Error ("W_ReadLumpHeader: %i >= numlumps",lump);
 #endif
-    lif = wadfiles[WADFILENUM(lump)]->lumpinfo + LUMPNUM(lump);
 
-    // the good ole 'loading' disc icon TODO: restore it :)
-    // ??? I_BeginRead ();
+    lif = & wf->lumpinfo[ ln1 ];
 
     // empty resource (usually markers like S_START, F_END ..)
     if (lif->size==0)
         return 0;
 
-/*    if (lif->handle == -1)
+#ifdef LOADING_DISK_ICON
+    // the good ole 'loading' disc icon TODO: restore it :)
+    I_BeginRead ();
+    // After this point must go thorugh I_EndRead() before can return.
+#endif
+   
+#ifdef WADFILE_RELOAD
+    if (lif->handle == -1)
     {
         // reloadable file, so use open / read / close
-        if ( (handle = open (reload_filename,O_RDONLY|O_BINARY,0666)) == -1)
-            I_Error ("W_ReadLumpHeader: couldn't open %s",reload_filename);
+        handle = open (reload_filename,O_RDONLY|O_BINARY,0666);
+        if( handle == -1 )
+        {
+            I_SoftError ("W_ReadLumpHeader: couldn't open %s\n", reload_filename);
+            goto done;
+        }
     }
     else
-*/
-        handle = wadfiles[WADFILENUM(lump)]->handle; //lif->handle;
+        handle = wf->handle; //lif->handle;
+#else
+    handle = wf->handle; //lif->handle;
+#endif
 
     // 0 size means read all the lump
     if (!size || size>lif->size)
@@ -744,10 +769,17 @@ int  W_ReadLumpHeader ( lumpnum_t     lump,
     lseek (handle, lif->position, SEEK_SET);
     bytesread = read (handle, dest, size);
 
-    /*if (lif->handle == -1)
-        close (handle);*/
+#ifdef WADFILE_RELOAD
+    if (lif->handle == -1)
+        close (handle);
+#endif
 
-    // ??? I_EndRead ();
+#ifdef WADFILE_RELOAD
+done:
+#endif
+#ifdef LOADING_DISK_ICON
+    I_EndRead ();
+#endif
     return bytesread;
 }
 

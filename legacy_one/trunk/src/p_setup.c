@@ -1916,8 +1916,11 @@ boolean P_SetupLevel (int      to_episode,
     P_Init_Thinkers ();
 
     // Loading new level map.
+
+#ifdef WADFILE_RELOAD
     // if working with a devlopment map, reload it
     W_Reload ();
+#endif
 
     // Load the map from existing game resource or external wad file.
     if (map_wadname && map_wadname[0] )

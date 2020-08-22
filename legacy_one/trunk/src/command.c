@@ -830,7 +830,7 @@ static void COM_Help_f (void)
 
     con_Printf("\2\nRead the console docs for more or type help <command or variable>\n");
 
-    if( devparm )
+    if( devparm > 1 )
             con_Printf("\2Total : %d\n",i);
 }
 

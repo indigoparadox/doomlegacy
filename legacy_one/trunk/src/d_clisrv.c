@@ -5673,7 +5673,7 @@ void SV_Maketic(void)
 
             DEBFILE(va("MISS tic %4u for node %d\n", maketic, nnode));
 #ifdef PARANOIA
-            if( devparm )
+            if( devparm > 1 )
                 GenPrintf(EMSG_dev, "\2Client %d Miss tic %d\n", nnode, maketic);
 #endif
             // Copy the previous tic

@@ -173,6 +173,22 @@
 // The Heretic vanilla behavior cancels SHADOW when turned into a chicken.
 // #define PLAYER_CHICKEN_KEEPS_SHADOW
 
+// Special handling for devparm is somewhat dated.
+// Most users do not ever use it.
+// #define DEVPARM_LOADING
+
+// File reload at level start when filename starts with "~"
+// A fragile development hack that has been mostly disabled for years.
+// ** Broken.
+// #define WADFILE_RELOAD
+
+// Loading disk icon.
+// Disk accesses are too fast for this to be useful anymore.
+// ** Broken
+// #define LOADING_DISK_ICON
+
+
+
 // =========================================================================
 
 // File where all game vars and settings are saved

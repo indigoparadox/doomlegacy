@@ -1333,3 +1333,23 @@ uint64_t I_GetFreeMem(uint64_t *total)
 #endif
 
 }
+
+
+#ifdef LOADING_DISK_ICON
+//  Fab: this is probably to activate the 'loading' disc icon
+//       it should set a flag, that I_FinishUpdate uses to know
+//       whether it draws a small 'loading' disc icon on the screen or not
+//
+//  also it should explicitly draw the disc because the screen is
+//  possibly not refreshed while loading
+//
+void I_BeginRead (void)
+{
+}
+
+//  Fab: see above, end the 'loading' disc icon, set the flag false
+//
+void I_EndRead (void)
+{
+}
+#endif

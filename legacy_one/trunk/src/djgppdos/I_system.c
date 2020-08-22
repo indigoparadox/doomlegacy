@@ -417,6 +417,7 @@ void I_Sleep(unsigned int ms)
 }
 
 
+#ifdef LOADING_DISK_ICON
 //  Fab: this is probably to activate the 'loading' disc icon
 //       it should set a flag, that I_FinishUpdate uses to know
 //       whether it draws a small 'loading' disc icon on the screen or not
@@ -433,6 +434,7 @@ void I_BeginRead (void)
 void I_EndRead (void)
 {
 }
+#endif
 
 byte*   I_AllocLow(int length)
 {

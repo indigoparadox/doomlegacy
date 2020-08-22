@@ -4341,7 +4341,7 @@ void SF_SetCorona(void)
 
 #ifdef SHOW_COLOR_SETTING
                 // Show the corona color setting.
-                if( devparm && verbose )
+                if( devparm > 2 )
                 {
                     if(t_argv[2].type == FSVT_string)
                        debug_Printf( "CORONA_COLOR = %s, rgba=%x\n",
@@ -4375,7 +4375,7 @@ void SF_SetCorona(void)
 
 #ifdef SHOW_COLOR_SETTING
                 // Show the dynamic color setting.
-                if( devparm && verbose )
+                if( devparm > 2 )
                 {
                     if(t_argv[2].type == FSVT_string)
                        debug_Printf( "LIGHT_COLOR = %s, rgba=%x\n",
@@ -4426,7 +4426,7 @@ void SF_SetCorona(void)
 
 #ifdef SHOW_COLOR_SETTING
         // Show the corona color setting.
-        if( devparm && verbose )
+        if( devparm > 2 )
         {
             if(t_argv[4].type == FSVT_string)
                debug_Printf( "CORONA_COLOR = %s, rgba=%x\n",

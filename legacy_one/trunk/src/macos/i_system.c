@@ -289,6 +289,7 @@ void I_Sleep(unsigned int ms)
     usleep( ms * 1000 );
 }
 
+#ifdef LOADING_DISK_ICON
 void I_BeginRead(void)
 {
       //can be used to show a "loading..." thing
@@ -297,6 +298,8 @@ void I_BeginRead(void)
 
 void I_EndRead(void)
 {}
+#endif
+
 
 //
 // I_Error
