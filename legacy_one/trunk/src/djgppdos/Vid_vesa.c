@@ -213,7 +213,7 @@ int  VID_NumModes(void)
 //   request_fullscreen : true if want fullscreen modes
 //   request_bitpp : bits per pixel
 // Return true if there are viable modes.
-boolean  VID_Query_Modelist( byte request_drawmode, boolean request_fullscreen, byte request_bitpp )
+boolean  VID_Query_Modelist( byte request_drawmode, byte request_fullscreen, byte request_bitpp )
 {
     // Require modelist before rendermode is set.
     if( request_drawmode >= DRM_opengl )

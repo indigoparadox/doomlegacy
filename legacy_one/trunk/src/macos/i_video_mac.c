@@ -220,6 +220,7 @@ done:
 }
 
 
+static
 void VID_PrepareModeList(void)
 {
     int i;
@@ -239,7 +240,7 @@ void VID_PrepareModeList(void)
 //   request_fullscreen : true if want fullscreen modes
 //   request_bitpp : bits per pixel
 // Return true if there are viable modes.
-boolean  VID_Query_Modelist( byte request_drawmode, boolean request_fullscreen, byte request_bitpp )
+boolean  VID_Query_Modelist( byte request_drawmode, byte request_fullscreen, byte request_bitpp )
 {
     if( request_drawmode == DRM_opengl )
     {
@@ -419,6 +420,8 @@ int I_RequestFullGraphics( byte select_fullscreen )
 {
     modenum_t  initialmode;  // the initial mode
     byte  select_bitpp = 32;  // to select modes
+    byte  select_fullscreen_mode;
+    int  ret_value;
 
     // Seems to be OpenGL only.
     switch( req_drawmode )
@@ -449,21 +452,20 @@ int I_RequestFullGraphics( byte select_fullscreen )
     if( nummodes == 0 )
         goto no_modes;
    
-    allow_fullscreen = true;
-    mode_fullscreen = select_fullscreen;  // initial startup
     vid.width = req_width;
     vid.height = req_height;
 
-    initialmode = VID_GetModeForSize( req_width, req_height,
-                   (select_fullscreen ? MODE_fullscreen: MODE_window));
-
-    VID_SetMode( initialmode );
+    select_fullscreen_mode = vid_mode_table[select_fullscreen];
+    initialmode = VID_GetModeForSize( req_width, req_height, select_fullscreen_mode );
+    ret_value = VID_SetMode( initialmode );
+    if( ret_value < 0 )
+        return ret_value;
 
     graphics_state = VGS_fullactive;
 
     if( verbose )
         GenPrintf(EMSG_ver, "RequestFullGraphics completed\n" );
-    return;
+    return ret_value;
 
 no_modes:
     return FAIL_select;

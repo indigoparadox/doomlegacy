@@ -284,7 +284,7 @@ static void CONS_Bind_f(void)
 
 // Prepare a colormap for GREEN ONLY translucency over background
 //
-byte*   whitemap;
+byte*   whitemap = NULL;
 byte*   greenmap;
 byte*   graymap;
 

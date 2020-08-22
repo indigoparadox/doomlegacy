@@ -394,6 +394,7 @@ int I_RequestFullGraphics( byte select_fullscreen )
     byte select_bitpp = 0;
     int ret_value;
     modenum_t initial_mode = {MODE_window, 0};
+    byte select_fullscreen_mode;
 
     switch(req_drawmode)
     {
@@ -422,15 +423,16 @@ int I_RequestFullGraphics( byte select_fullscreen )
     if( num_full_vidmodes == 0 )
         goto no_modes;
    
-    allow_fullscreen = true;
-    mode_fullscreen = select_fullscreen;  // initial startup
     vid.width = req_width;
     vid.height = req_height;
 
     // set the startup screen
-    initial_mode = VID_GetModeForSize( req_width, req_height,
-				       (select_fullscreen ? MODE_fullscreen: MODE_window))
+    select_fullscreen_mode = vid_mode_table[select_fullscreen];
+    initial_mode = VID_GetModeForSize( req_width, req_height, select_fullscreen_mode );
     ret_value = VID_SetMode ( initial_mode );
+    if( ret_value < 0 )
+        return ret_value;
+
     graphics_state = VGS_fullactive;
     return ret_value;  // have video mode
 
@@ -452,7 +454,7 @@ int I_Rendermode_setup( void )
 //   request_fullscreen : true if want fullscreen modes
 //   request_bitpp : bits per pixel
 // Return true if there are viable modes.
-boolean  VID_Query_Modelist( byte request_drawmode, boolean request_fullscreen, byte request_bitpp )
+boolean  VID_Query_Modelist( byte request_drawmode, byte request_fullscreen, byte request_bitpp )
 {
     int ret_value;
     byte  old_loaded_driver = loaded_driver; // must put this back

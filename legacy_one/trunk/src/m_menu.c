@@ -3392,7 +3392,6 @@ static modenum_t    vidm_previousmode;  // modenum in format of setmodeneeded
 void M_DrawVideoMode(void)
 {
     modenum_t  mode_320x200 = VID_GetModeForSize( 320, 200, MODE_fullscreen );
-    byte  base_modetype = (mode_fullscreen) ? MODE_fullscreen : MODE_window;
     range_t moderange;
     modenum_t  dmode;  // draw modenum
 #ifdef CONFIG_MENU_PAGE
@@ -3444,11 +3443,11 @@ void M_DrawVideoMode(void)
     }
 #endif
 
-    dmode.modetype = base_modetype;
+    dmode.modetype = vid_mode_table[ cv_fullscreen.EV ];  // fullscreen or window
     vidm_nummodes = 0;
     current_modedesc = NULL;
     current_modename = NULL;
-    moderange = VID_ModeRange( base_modetype );   // indexing
+    moderange = VID_ModeRange( dmode.modetype );   // indexing
     for (i=moderange.first ; i<=moderange.last ; i++)
     {
         dmode.index = i;

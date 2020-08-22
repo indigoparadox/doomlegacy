@@ -183,7 +183,7 @@ byte  ogl_active = 0;
 
 // Called by VID_SetMode
 // SDL-OpenGL version of VID_SetMode
-boolean OglSdlSurface(int w, int h, int isFullscreen)
+boolean OglSdlSurface(int w, int h, byte isFullscreen)
 {
     Uint32 surfaceFlags;
     int cbpp;  // bits per pixel

@@ -1055,7 +1055,7 @@ static int VID_SetDirectDrawMode (viddef_t *lvid, vmode_t * newmode)
 //   request_fullscreen : true if want fullscreen modes
 //   request_bitpp : bits per pixel
 // Return true if there are viable modes.
-boolean  VID_Query_Modelist( byte request_drawmode, boolean request_fullscreen, byte request_bitpp )
+boolean  VID_Query_Modelist( byte request_drawmode, byte request_fullscreen, byte request_bitpp )
 {
     int ret_value;
     byte  old_loaded_driver = loaded_driver; // must put this back
@@ -1223,14 +1223,12 @@ int I_RequestFullGraphics( byte select_fullscreen )
 
     vid.bitpp = select_bitpp;
     vid.bytepp = (select_bitpp + 7) >> 3;
-    allow_fullscreen = true;
-    mode_fullscreen = select_fullscreen;  // initial startup
     vid.width = req_width;
     vid.height = req_height;
 
     // set the startup screen
-    initial_mode = VID_GetModeForSize( req_width, req.height,
-                   (select_fullscreen ? MODE_fullscreen: MODE_window));
+    byte  select_fullscreen_mode = vid_mode_table[select_fullscreen];
+    initial_mode = VID_GetModeForSize( req_width, req.height, select_fullscreen_mode );
     ret_value = VID_SetMode ( initial_mode );
     if( ret_value < 0 )
         return ret_value;

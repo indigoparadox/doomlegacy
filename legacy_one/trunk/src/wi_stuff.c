@@ -386,7 +386,7 @@ static int              me;
 static byte            state;  // state_e
 
 // contains information passed into intermission
-static wb_start_t     * wbs;
+static wb_start_t     * wbs = NULL;
 
 static wb_player_t    * wb_plyr;  // wbs->plyr[]
 

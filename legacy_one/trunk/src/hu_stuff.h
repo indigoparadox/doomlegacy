@@ -72,6 +72,7 @@ extern char    french_shiftxform[];
 #define HU_MAXMSGLEN    80
 
 extern patch_t*       hu_font[HU_FONTSIZE];
+extern byte  hu_fonts_loaded; // 1=partially loaded, 2=fully loaded
 
 //set true by hu_ when entering a chat message
 extern boolean chat_on; 

@@ -143,7 +143,7 @@ consvar_t cv_crosshair[2] = {
 //added:16-02-98: crosshair 0=off, 1=cross, 2=angle, 3=point, see m_menu.c
 static patch_t * crosshair_patch[HU_CROSSHAIRS];     //3 precached crosshair graphics
 
-static byte  hu_fonts_loaded = 0;
+byte  hu_fonts_loaded = 0; // 1=partially loaded, 2=fully loaded
 
 #ifdef HWRENDER
 // The settings of HWR_patchstore by SCR_SetMode seem to be adequate.
@@ -193,7 +193,7 @@ void HU_Load_Graphics( void )
     int         i, j;
     char        buffer[9];
 
-    use_font1 = 0;
+    hu_fonts_loaded = 2;
     // cache the heads-up font
     // Patches are endian fixed when loaded.
     j = (EN_heretic)? 1 : HU_FONTSTART;
@@ -209,7 +209,7 @@ void HU_Load_Graphics( void )
         {
             // font not found
             hu_font[i] = NULL;
-            use_font1 = 1;
+            hu_fonts_loaded = 1;  // partially loaded
             continue;
         }
         hu_font[i] = W_CachePatchName(buffer, PU_STATIC);
@@ -223,7 +223,6 @@ void HU_Load_Graphics( void )
        crosshair_patch[i] = W_CachePatchName(buffer, PU_STATIC);
     }
 
-    hu_fonts_loaded = 1;
 #ifdef HU_HWR_PATCHSTORE_SAVE
     hu_HWR_patchstore = HWR_patchstore;
 #endif

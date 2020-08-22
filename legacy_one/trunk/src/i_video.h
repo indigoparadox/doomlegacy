@@ -62,6 +62,7 @@ typedef enum {
 } vid_drawmode_e;
 
 typedef enum {
+    render_init   = 0,
     render_soft   = 1,
     render_opengl = 2, //Hurdler: the same for render_minigl
     render_d3d    = 3,
@@ -95,18 +96,9 @@ typedef struct {
 } modestat_t;
 
 
-extern boolean  allow_fullscreen;  // controlled by i_video
-extern boolean  mode_fullscreen;   // can window before going to cv_fullscreen
-
-// added for OpenGL gamma correction
-extern consvar_t cv_grgammared;
-extern consvar_t cv_grgammagreen;
-extern consvar_t cv_grgammablue;
-
-// wait for page flipping to end or not
-extern consvar_t cv_vidwait;
-
-extern consvar_t cv_fullscreen; // for fullscreen support
+extern byte  allow_fullscreen;  // controlled by i_video
+// can window before going to cv_fullscreen
+extern byte  mode_fullscreen;   // modetype_e
 
 // Request to video drivers.
 extern byte req_drawmode;  // vid_drawmode_e
@@ -119,6 +111,16 @@ extern uint16_t req_width, req_height;
 extern byte native_drawmode;  // vid_drawmode_e
 extern byte native_bitpp;
 extern byte native_bytepp;
+
+// added for OpenGL gamma correction
+extern consvar_t cv_grgammared;
+extern consvar_t cv_grgammagreen;
+extern consvar_t cv_grgammablue;
+
+// wait for page flipping to end or not
+extern consvar_t cv_vidwait;
+
+extern consvar_t cv_fullscreen; // for fullscreen support
 
 // Return true if engine can draw using the bitpp
 boolean V_CanDraw( byte bitpp );
@@ -165,7 +167,7 @@ modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype );
 //   request_fullscreen : true if want fullscreen modes
 //   request_bitpp : bits per pixel
 // Return true if there are viable modes.
-boolean  VID_Query_Modelist( byte request_drawmode, boolean request_fullscreen, byte request_bitpp );
+boolean  VID_Query_Modelist( byte request_drawmode, byte request_fullscreen, byte request_bitpp );
 
 //  By setting setmodeneeded to a value > 0,
 //  the video mode change is delayed until the start of the next refresh

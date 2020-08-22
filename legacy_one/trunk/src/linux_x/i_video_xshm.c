@@ -179,7 +179,7 @@ int XShmGetEventBase( Display* dpy );
 #include "st_stuff.h"
 #include "g_game.h"
 #include "i_video.h"
-  // mode_fullscreen, etc
+  // vid_mode_table, etc
 #include "screen.h"
   // DRAW8PAL
 #include "hardware/hw_main.h"
@@ -1981,35 +1981,6 @@ static int createWindow(boolean set_fullscreen, modenum_t modenum)
     return 0;
 }
 
-void VID_PrepareModeList(void)
-{
-    if(dedicated)
-        return;
-
-    if(haveVoodoo) // nothing to do
-        return;
-    if(vidmode_ext && mode_fullscreen)
-    {
-        vidmodes_to_vidmap();      
-        if(num_vidmodes > 0)  // do we have any fullscreen modes at all?
-        {
-            lowest_vidmode = num_vidmodes - 1;
-        }
-        else
-        {
-            // switch to windowed
-            mode_fullscreen = 0;
-            GenPrintf(EMSG_info,"No modes below 1600x1200 available\nSwitching to windowed mode ...\n");
-        }
-   }
-   else
-   {
-       num_vidmodes = 0;
-   }
-   allow_fullscreen = true;
-
-   return;
-}
 
 int VID_SetMode( modenum_t modenum )
 {
@@ -2096,7 +2067,7 @@ void detect_Voodoo( void )
 //   request_fullscreen : true if want fullscreen modes
 //   request_bitpp : bits per pixel
 // Return true if there are viable modes.
-boolean  VID_Query_Modelist( byte request_drawmode, boolean request_fullscreen, byte request_bitpp )
+boolean  VID_Query_Modelist( byte request_drawmode, byte request_fullscreen, byte request_bitpp )
 {
     int num;
 
@@ -2270,7 +2241,7 @@ void I_StartupGraphics(void)
 
     // window
     initialmode = VID_GetModeForSize( vid.width, vid.height, MODE_window );
-    if( createWindow( false, initialmode) < 0 )
+    if( ! createWindow( false, initialmode) )
         goto abort_error;
    
     // startupscreen does not need a grabbed mouse
@@ -2297,7 +2268,8 @@ abort_error:
 int I_RequestFullGraphics( byte select_fullscreen )
 {
     modenum_t  initialmode;
-    int ret_value;
+    byte  select_fullscreen_mode;
+    int  ret_value;
 
     vid.draw_ready = 0;  // disable print reaching console
     graphics_state = VGS_startup;
@@ -2382,17 +2354,16 @@ accept:
         // switch to windowed
         select_fullscreen = 0;
         GenPrintf(EMSG_info,"No modes below 1600x1200 available\nSwitching to windowed mode ...\n");
-        goto no_modes;
+//        goto no_modes;
     }
    
-    allow_fullscreen = true;
-    mode_fullscreen = select_fullscreen;
     vid.width = req_width;
     vid.height = req_height;
 
-    initialmode = VID_GetModeForSize( req_width, req_height,
-                   (select_fullscreen ? MODE_fullscreen: MODE_window));
-    createWindow( select_fullscreen, initialmode );
+    select_fullscreen_mode = vid_mode_table[select_fullscreen];
+    initialmode = VID_GetModeForSize( req_width, req_height, select_fullscreen_mode );
+    if( ! createWindow( select_fullscreen, initialmode ) )
+        return FAIL_create;
 
     // startupscreen does not need a grabbed mouse
     I_UngrabMouse();

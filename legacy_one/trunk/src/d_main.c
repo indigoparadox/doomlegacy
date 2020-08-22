@@ -276,7 +276,7 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1542"
+#define SVN_REV "1543"
 #endif
 
 
@@ -538,7 +538,6 @@ void D_Process_Events(void)
 //  draw current display, possibly wiping it from the previous
 //
 
-
 // There is a wipe each change of the gamestate.
 // wipegamestate can be set to GS_FORCEWIPE to force a wipe on the next draw.
 gamestate_e wipegamestate = GS_DEMOSCREEN;
@@ -574,7 +573,7 @@ void D_Display(void)
     //added:21-01-98: check for change of screen size (video mode)
     if( setmodeneeded.modetype || drawmode_recalc )
     {
-        SCR_SetMode();  // change video mode
+        SCR_SetMode( 1 );  // change video mode
         //added:26-01-98: NOTE! setsizeneeded is set by SCR_Recalc()
         SCR_Recalc();
           // setsizeneeded -> redrawsbar
@@ -922,7 +921,7 @@ void D_DoomLoop(void)
     if( setmodeneeded.modetype || drawmode_recalc )
     {
         // This may also execute accumulated commands.
-        SCR_SetMode();      // change video mode
+        SCR_SetMode( 1 );      // change video mode
         SCR_Recalc();
         drawmode_recalc = false;
     }
@@ -981,7 +980,7 @@ void D_DoomLoop(void)
                 S_UpdateSounds();   // move positional sounds
                 // Update display, next frame, with current state.
                 D_Display();
-	    }
+            }
 #ifdef CLIENTPREDICTION2
             spirit_update = false;
 #endif
@@ -2177,6 +2176,7 @@ void D_DoomMain()
 
     dedicated = M_CheckParm("-dedicated") != 0;
 
+    //---------------------------------------------------- START DISPLAY
     //--- Display Error Messages
     CONS_Printf("StartupGraphics...\n");
     // setup loading screen with dedicated=0 and vid=800,600
@@ -2188,6 +2188,10 @@ void D_DoomMain()
         SCR_Startup();
     }
 
+#ifdef PARANOID
+    SCR_Set_dummy_draw();
+#endif
+   
     if( verbose > 1 )
         CONS_Printf("Init DEH, cht, menu\n");
 
@@ -2241,7 +2245,7 @@ void D_DoomMain()
     // It may retry some actions and may execute functions multiple times.
 
 #ifdef LAUNCHER   
-// ----------- launcher restarts here 
+    //---------------------------------------------------- LAUNCHER restarts here
 restart_command:
 
     fatal_error = 0;
@@ -2264,6 +2268,7 @@ restart_command:
     V_SetupFont( 1, NULL, 0 );  // Startup font size
     EOUT_flags = EOUT_text | EOUT_log | EOUT_con;
 
+    //---------------------------------------------------- FIND FILES
     // -devgame is handled later, by IdentifyVersion
     devparm = M_CheckParm("-devparm");  // -devparm
     if (devparm)
@@ -2655,17 +2660,10 @@ restart_command:
 
 
 #ifdef LAUNCHER   
+    //---------------------------------------------------- LAUNCHER display
     if ( fatal_error || init_sequence == 1 || (init_sequence == 0 && myargc < 2 ))
     {
         // [WDJ] Invoke built-in launcher command line
-#if 0
-# if 0
-        setmodeneeded = VID_GetModeForSize(800,600);
-# endif
-        V_SetPalette(0);
-        SCR_SetMode();      // change video mode
-        SCR_Recalc();
-#endif
         if ( fatal_error )
         {
             CONS_Printf("Fatal error display: (press ESC to continue).\n");
@@ -2691,7 +2689,7 @@ restart_command:
     }
 #endif
     
-    //--------------------------------------------------------- 
+    //--------------------------------------------------------- LAUNCHED
     // After this line, commit to the initial game and video port selected.
     // Use I_Error.
 
@@ -2711,7 +2709,7 @@ restart_command:
         I_Error ( "Shutdown due to fatal error.\n" );
     }
 
-    //----------------------------------------------------
+    //---------------------------------------------------- LOAD CONFIG
    
     // The drawmode and video settings are now part of the config.
     // It needs to be loaded before the full graphics.
@@ -2732,6 +2730,12 @@ restart_command:
 
 
     //---------------------------------------------------- READY SCREEN
+#ifdef HWRENDER
+    // Init the rendermode patch storage.
+    HWR_patchstore = 0;
+    EN_HWR_flashpalette = 0;  // software and default
+#endif
+
     // we need to check for dedicated before initialization of some subsystems
     dedicated = M_CheckParm("-dedicated") != 0;
     if( dedicated )
@@ -2744,6 +2748,7 @@ restart_command:
     }
     else
     {
+        //--------------------------------------------------------- GRAPHICS SETTINGS
         set_drawmode = cv_drawmode.EV;
         req_bitpp = 0;  // because of launcher looping
         req_alt_bitpp = 0;
@@ -2829,45 +2834,62 @@ restart_command:
 
         req_command_video_settings = ((req_width > 0) && (req_height > 0));
 
-        //--------------------------------------------------------- CONSOLE
+        //--------------------------------------------------------- FULL GRAPHICS
         // setup loading screen
+        // Still using font1 during this init, up into CON_Init_Video.
         CONS_Printf("RequestFullGraphics...\n");
+        // Allow VID_QueryModelist to detect fullscreen capability.
+        allow_fullscreen = ! M_CheckParm("-window");
+        cv_fullscreen.EV = cv_fullscreen.value && allow_fullscreen;
+
+        // Initial setup of rendermode
         V_switch_drawmode( set_drawmode, 0 );  // command line, do not change config files
+        set_drawmode = DRM_none;
 
         // set user default mode or mode set at cmdline
         SCR_apply_video_settings();  // command line settings, or config file settings.
 
-        I_Rendermode_setup();  // need HWR_SetPalette
-
+        // Full graphics.
         // param: req_drawmode, req_bitpp, req_alt_bitpp, req_width, req_height.
-#ifdef DEBUG_WINDOWED
-        I_RequestFullGraphics( false );
-#else
-        I_RequestFullGraphics( cv_fullscreen.EV );
-#endif
-       
-        SCR_ChangeFullscreen();  // enable fullscreen
-        drawmode_recalc = false;
+        // If fails for one fullscreen mode, does not mean fails for all fullscreen modes.
+        // Calls  I_Rendermode_setup, V_Setup_VideoDraw, HWR_Startup_Render.
+        // Calls  V_SetPalette, HWR_SetPalette.
+        drawmode_recalc = true;
+        rendermode_recalc = true;
+        SCR_SetMode( 0 );
 
-        // text only, incomplete for rendering
-        V_Setup_VideoDraw();
         SCR_Recalc();
-        V_SetPalette (0);  // on new screen
         V_Clear_Display();
 
-#ifdef HWRENDER
-        // Set the rendermode patch storage.
-        HWR_patchstore = (rendermode > render_soft);
-        EN_HWR_flashpalette = 0;  // software and default
-        if( rendermode != render_soft )
-            HWR_Startup_Render();  // hardware render init
-#endif
-        // we need the font of the console
-        CONS_Printf(text[HU_INIT_NUM]);
-        // switch off use_font1 when hu_font is loaded
-        HU_Load_Graphics();  // dependent upon dedicated and game
+        drawmode_recalc = false;
+        rendermode_recalc = false;
 
+        //--------------------------------------------------------- CONSOLE
+        // Need console fonts, colormaps, before can stop using font1.
+        CONS_Printf(text[HU_INIT_NUM]);
+#ifdef PARANOID
+        // Console fonts were loaded by SCR_SetMode.
+        if( hu_fonts_loaded < 2 )
+        {
+            // Do not reload without unloading fonts first.	    
+            if( hu_fonts_loaded == 0 )
+            {
+                GenPrintf( EMSG_warn, "Console fonts not loaded\n" );
+                // Load console fonts, setting hu_fonts_loaded.
+                HU_Load_Graphics();  // dependent upon dedicated and game
+            }
+            else
+            {
+                GenPrintf( EMSG_warn, "Console fonts not complete\n" );
+            }
+        }
+#endif       
+        // Load console colormaps, and size console.
         CON_Init_Video();  // dependent upon vid, hu_font
+
+        if( (hu_fonts_loaded == 2) && whitemap )
+            use_font1 = 0;  // Now use console fonts, no longer using font1.
+
         EOUT_flags = EOUT_log | EOUT_con;
     }
 
@@ -2885,6 +2907,7 @@ restart_command:
     }
 #endif
 
+    //--------------------------------------------------------- GAME SETTINGS
     // get skill / episode / map from parms
     gameskill = sk_medium;
     startepisode = 1;
@@ -3164,7 +3187,7 @@ restart_command:
         }
         else
         {
-	    // Cancel commandline, restore cv_ var.
+            // Cancel commandline, restore cv_ var.
             D_StartTitle();     // start up intro loop
         }
 
@@ -3409,6 +3432,7 @@ static void Help( void )
         "-nomusic        No music\n"
         "-precachesound  Preload sound effects\n"
         "-mb num         Pre-allocate num MiB of memory\n"
+        "-window         No fullscreen\n"
         "-width num      Video mode width\n"
         "-height num     Video mode height\n"
         "-highcolor      Request 15bpp or 16bpp\n"

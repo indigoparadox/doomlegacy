@@ -102,6 +102,8 @@ extern byte drawmode_sel_avail[];
 extern const char * rendermode_name[];
 #endif
 
+extern const byte vid_mode_table[2];  // window, fullscreen
+
 //  drawmode : drawmode_sel_t
 byte  V_switch_drawmode( byte drawmode, byte change_config );
 

@@ -57,7 +57,7 @@ rcsid[] = "$Id$";
 #include "doomstat.h"
 #include "i_system.h"
 #include "i_video.h"
-  // mode_fullscreen etc.
+  // vid_mode_table etc.
 #include "v_video.h"
 #include "m_argv.h"
 #include "d_main.h"
@@ -246,17 +246,17 @@ int I_RequestFullGraphics( byte select_fullscreen )
 {
     int ret_value;
     modenum_t  initialmode;
+    byte  select_fullscreen_mode = vid_mode_table[select_fullscreen];
 
     // This is an old driver that only handles 8 bit palette mode.
     if( req_bitpp != native_bitpp )  goto no_modes;
    
-    mode_fullscreen = select_fullscreen;
     mode_bitpp = native_bitpp;
     // Modes are fixed, so no need to get them.
     vid.width = req_width;
     vid.height = req_height;
 
-    initialmode = VID_GetModeForSize( req_width, req_height, select_fullscreen );
+    initialmode = VID_GetModeForSize( req_width, req_height, select_fullscreen_mode );
     ret_value = VID_SetMode( initialmode );
     if( ret_value < 0 )
         return ret_value;
@@ -353,7 +353,7 @@ char * VID_GetModeName( modenum_t modenum )
 //   request_fullscreen : true if want fullscreen modes
 //   request_bitpp : bits per pixel
 // Return true if there are viable modes.
-boolean  VID_Query_Modelist( byte request_drawmode, boolean request_fullscreen, byte request_bitpp )
+boolean  VID_Query_Modelist( byte request_drawmode, byte request_fullscreen, byte request_bitpp )
 {
     if( request_drawmode == DRM_explicit_bpp )
     {

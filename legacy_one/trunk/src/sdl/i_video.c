@@ -78,7 +78,7 @@ static int testbpp = 0;
 #include "i_system.h"
 #include "i_video.h"
 #include "v_video.h"
-  // mode_fullscreen, etc
+  // vid_mode_table, etc
 #include "m_argv.h"
 #include "m_menu.h"
 #include "d_main.h"
@@ -406,7 +406,7 @@ void I_SetPalette(RGBA_t* palette)
 //   request_fullscreen : true if want fullscreen modes
 //   request_bitpp : bits per pixel
 // Return true if there are viable modes.
-boolean  VID_Query_Modelist( byte request_drawmode, boolean request_fullscreen, byte request_bitpp )
+boolean  VID_Query_Modelist( byte request_drawmode, byte request_fullscreen, byte request_bitpp )
 {
     SDL_PixelFormat    req_format;
     SDL_Rect   **modelist2;
@@ -433,8 +433,8 @@ range_t  VID_ModeRange( byte modetype )
 {
     range_t  mrange = { 1, 1 };  // first is always 1
     mrange.last = (modetype == MODE_fullscreen) ?
-     num_vid_mode   // fullscreen
-     : MAXWINMODES;  // windows
+        num_vid_mode  // fullscreen
+      : MAXWINMODES;  // window
     return mrange;
 }
 
@@ -656,7 +656,7 @@ static void  VID_SetMode_vid( int req_width, int req_height, int reqflags )
 int VID_SetMode(modenum_t modenum)
 {
     int req_width, req_height;
-    boolean set_fullscreen = (modenum.modetype == MODE_fullscreen);
+    byte set_fullscreen = (modenum.modetype == MODE_fullscreen);
 
     vid.draw_ready = 0;  // disable print reaching console
     vid.recalc = true;
@@ -847,6 +847,7 @@ int I_RequestFullGraphics( byte select_fullscreen )
     SDL_Rect   ** modelist;
     modenum_t initialmode;
     byte  select_bitpp, select_bytepp;
+    byte  select_fullscreen_mode;
     int  ret_value = 0;
     int  i;
 
@@ -971,14 +972,12 @@ found_modes:
        GenPrintf( EMSG_ver, "\nFound %d Video Modes at %i bpp\n", num_vid_mode, vid.bitpp);
 
 set_modes:
-    allow_fullscreen = true;
-    mode_fullscreen = select_fullscreen;  // initial startup
     vid.width = req_width;
     vid.height = req_height;
 
     // Need the modenum, even for opengl.
-    initialmode = VID_GetModeForSize( req_width, req_height,
-                   (select_fullscreen ? MODE_fullscreen: MODE_window));
+    select_fullscreen_mode = vid_mode_table[select_fullscreen];
+    initialmode = VID_GetModeForSize( req_width, req_height, select_fullscreen_mode );
 
 // [WDJ] To be safe, make it conditional
 #ifdef MAC_SDL
@@ -995,13 +994,15 @@ set_modes:
            vid.width = 640; // hack to make voodoo cards work in 640x480
            vid.height = 480;
        }
-       vid.fullscreen = mode_fullscreen;
+       vid.fullscreen = select_fullscreen;
        vid.widthbytes = vid.width * vid.bytepp;
 
        if( verbose>1 )
-          GenPrintf( EMSG_ver, "OglSdlSurface(%i,%i,%i)\n", req_width, req_height, mode_fullscreen);
-       if( ! OglSdlSurface(req_width, req_height, mode_fullscreen) )
+          GenPrintf( EMSG_ver, "OglSdlSurface(%i,%i,%i)\n", req_width, req_height, select_fullscreen_mode);
+       if( ! OglSdlSurface(req_width, req_height, select_fullscreen) )
+       {	 
           return FAIL_create;
+       }
     }
 
     if( rendermode == render_soft )

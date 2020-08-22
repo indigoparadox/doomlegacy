@@ -34,7 +34,7 @@
 
 extern byte  ogl_active;
 
-boolean OglSdlSurface(int w, int h, int isFullscreen);
+boolean OglSdlSurface(int w, int h, byte isFullscreen);
 
 void OglSdlFinishUpdate(boolean vidwait);
 

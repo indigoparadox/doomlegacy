@@ -545,7 +545,7 @@ int VID_GetModes( byte select_bpp )
 //   request_fullscreen : true if want fullscreen modes
 //   request_bitpp : bits per pixel
 // Return true if there are viable modes.
-boolean  VID_Query_Modelist( byte request_drawmode, boolean request_fullscreen, byte request_bitpp )
+boolean  VID_Query_Modelist( byte request_drawmode, byte request_fullscreen, byte request_bitpp )
 {
     int ret_value;
     
@@ -605,6 +605,7 @@ void I_RequestFullGraphics( byte select_fullscreen )
   int i;
   byte  select_bitpp = 0;
   byte  select_bytepp = 1;
+  byte  select_fullscreen_mode;
   int ret_value;
 
   vid.draw_ready = 0;  // disable print reaching console
@@ -669,9 +670,11 @@ found_modes:
   vid.display = NULL;
   vid.screen1 = NULL;
 
-  initialmode = VID_GetModeForSize( req_width, req_height,
-                    (select_fullscreen ? MODE_fullscreen: MODE_window));
-  VID_SetMode( initialmode );
+  select_fullscreen_mode = vid_mode_table[select_fullscreen];
+  initialmode = VID_GetModeForSize( req_width, req_height, select_fullscreen_mode );
+  ret_value = VID_SetMode( initialmode );
+  if( ret_value < 0 )
+      return ret_value;
 
   // Go asynchronous
   ggiAddFlags(g_screen, GGIFLAG_ASYNC);
@@ -683,7 +686,7 @@ found_modes:
 
   if( verbose )
         GenPrintf(EMSG_ver, "StartupGraphics completed\n" );
-  return;
+  return ret_value;
 
 no_modes:
     return FAIL_select;
