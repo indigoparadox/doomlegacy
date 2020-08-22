@@ -103,6 +103,19 @@ typedef enum {
     FAIL_select = -102,
 } status_return_e;
 
+typedef enum {
+    FS_NOTFOUND,
+    FS_FOUND,
+    FS_REQUESTED,
+    FS_DOWNLOADING,
+    FS_OPEN,        // is opened and used in w_wad
+    FS_MD5SUMBAD,
+    FS_SECURITY,  // rejected for security reasons
+    FS_FILEERR,   // access error
+    FS_INVALID,   // invalid for the operation
+    FS_NOTWAD,
+    FS_ZIP,
+} filestatus_e;
 
 #ifdef __APPLE_CC__
   // Apple GNAT, GNU C 4.5, __APPLE_CC__ == 1

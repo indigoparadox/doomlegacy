@@ -168,6 +168,20 @@
 // Allow players to wait for game start.
 #define WAIT_GAME_START_INTERMISSION
 
+#ifdef LINUX
+// For now Linux only because it requires libzip.
+#ifdef HAVE_LIBZIP
+// Read zip wads.
+// This requires  HAVE_LIBZIP  be set in make_options to get linking.
+#define ZIPWAD
+#ifdef HAVE_DLOPEN
+// Test for optional ziplib.  Requires lib dlopen.
+// This requires  HAVE_DLOPEN  be set in make_options to get linking.
+#define ZIPWAD_OPTIONAL
+#endif
+#endif
+#endif
+
 
 // Player morph canceling invisibility and MF_SHADOW, is inconsistent.
 // The Heretic vanilla behavior cancels SHADOW when turned into a chicken.

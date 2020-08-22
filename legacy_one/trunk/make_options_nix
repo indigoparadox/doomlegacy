@@ -21,7 +21,7 @@ HAVE_MIXER=1
 
 # Enable compile environment settings be used:
 # NETBSD seems to require this be enabled.
-#COMP_ENVIRONMENT=1
+# COMP_ENVIRONMENT=1
 
 # Put other options here, see the src/Makefile or README_compiling.
 # Compiler select: GCC MINGW WATCOM CLANG
@@ -35,8 +35,6 @@ HAVE_MIXER=1
 # Any valid value for -march= on your compiler may be set here.
 # For more information, ask your compiler.
 # > gcc --target-help
-# GCC info says to use -march, as -mcpu now is same as -mtune.
-# Switch -mtune does not select instruction set, only arranges better.
 # The default for GCC may be generic or i386.
 # generic32, generic64, i386, i486, i586, i686
 # pentium4, prescott, core, core2, athlon, k6, k8, amdfam10, etc.
@@ -45,6 +43,9 @@ HAVE_MIXER=1
 # ARCH=-march=i386
 # ARCH=-march=i486+sse2
 # ARCH=-march=i686 -mtune=athlon -msse -mno-sse4 -m64
+# For PowerPC: 401, 403, 630, 740, 7400, 7450, 8540, power7, etc.
+# ARCH=-march=630
+# ARCH=-mcpu=630 -m64
 # Let the compiler detect your hardware.
 # ARCH=-march=native
 
@@ -55,6 +56,16 @@ HAVE_MIXER=1
 
 # To enable debug code, with no fullscreen.
 # DEBUG=1
+
+# The option ZIPWAD (in doomdef.h) needs libzip. 
+# Have libzip.
+HAVE_LIBZIP=1
+# If have libzip version 1.2 or better, then have zip seek.
+# HAVE_LIBZIP=12
+# The option ZIPWAD_OPTIONAL (in doomdef.h), will load libzip when it is present.
+# This needs dlopen lib.
+# Have dlopen lib.
+HAVE_DLOPEN=1
 
 # Might not have the CD music libraries.
 # CD_MUSIC=0

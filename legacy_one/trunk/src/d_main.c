@@ -276,7 +276,7 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1543"
+#define SVN_REV "1544"
 #endif
 
 
@@ -1486,11 +1486,15 @@ game_desc_t *  D_GameDesc( int i )
 static
 byte  Check_lumps( const char * wadname, const char * lumpnames[], int count )
 {
+#ifdef ZIPWAD
+    byte  zhand;
+#else
+    FILE * 	wadfile;
+#endif
+    const char * reason;
     wadinfo_t   header;
     filelump_t  lumpx;
-    FILE * 	wadfile;
-    const char * reason;
-    int         hli, lc;
+    int         hli, lc, bc;
     byte        result = 0;
 
     // This routine checks the directory, using the system file cache
@@ -1507,19 +1511,52 @@ byte  Check_lumps( const char * wadname, const char * lumpnames[], int count )
     if( count == 0 )  goto ret_result;  // escape NULL list
    
     // Read the wad file header and get directory
+#ifdef ZIPWAD
+    // This handles normal files, and zip archive files.
+    zhand = WZ_open( wadname );
+    if( zhand == 0 )
+        goto open_err;
+
+    bc = WZ_read( zhand, sizeof(header), /*OUT*/ (byte*)&header );
+    if( bc < sizeof(header) )
+        goto read_err;
+#else
     wadfile = fopen( wadname, "rb" );
-    if( wadfile == NULL )  goto open_err;
+    if( wadfile == NULL )
+        goto open_err;
+
     fread( &header, sizeof(header), 1, wadfile);
+#endif
+
     // check for IWAD or PWAD
-    if( strncmp(header.identification+1,"WAD",3) != 0 ) goto not_a_wad;
+    if( strncmp(header.identification+1,"WAD",3) != 0 )
+        goto not_a_wad;
+
     // find directory
     header.numlumps = LE_SWAP32(header.numlumps);
     header.infotableofs = LE_SWAP32(header.infotableofs);
-    if( fseek( wadfile, header.infotableofs, SEEK_SET ))   goto read_err;
+
+#ifdef ZIPWAD
+    bc = WZ_seek( zhand, header.infotableofs ); 
+#else
+    bc = fseek( wadfile, header.infotableofs, SEEK_SET ); 
+#endif
+    if( bc < 0 )
+        goto read_err;
+
     // Check the directory as it is read out of the system file cache.
     for( hli=0; hli<header.numlumps; hli++ )
     {
-        if( fread( &lumpx, sizeof(lumpx), 1, wadfile ) < 1 )   goto read_err;
+#ifdef ZIPWAD
+        bc = WZ_read( zhand, sizeof(lumpx), /*OUT*/ (byte*)&lumpx );
+        if( bc < sizeof(lumpx) )
+            goto read_err;
+#else
+        bc = fread( &lumpx, sizeof(lumpx), 1, wadfile );
+        if( bc < 1 )
+            goto read_err;
+#endif
+
 #ifdef DEBUG       
         int cmp = strncasecmp( lumpx.name, lumpname, 8 );
         if( strncasecmp( lumpx.name, "TITLE", 5 ) == 0 )
@@ -1533,7 +1570,11 @@ byte  Check_lumps( const char * wadname, const char * lumpnames[], int count )
                 result |= 1<<lc;  // found it, record it
         }
     }
+#ifdef ZIPWAD
+    WZ_close( zhand );
+#else
     fclose( wadfile );
+#endif
 
 ret_result:   
     return result;	// default is not found
@@ -1551,8 +1592,12 @@ open_err:
     reason = "Wad file open err";
 
 err_ret0:
-    GenPrintf( EMSG_error, "%s: %s\n", reason, wadname );
+    GenPrintf( EMSG_error, "File %s: %s\n", wadname, reason );
+#ifdef ZIPWAD
+    if( zhand )    WZ_close( zhand );
+#else
     if( wadfile )  fclose( wadfile );
+#endif
     return 0;
 }
 
@@ -1581,17 +1626,33 @@ fail:
 // Return true when found and keylumps verified
 // Leaves name in pathbuf_p, which must be of MAX_PATH length.
 static
-boolean  Check_wad_filenames( int gmi, char * pathbuf_p )
+boolean  Check_wad_filenames( int gmi, /*OUT*/ char * pathbuf_p )
 {
     game_desc_t * gmtp = &game_desc_table[gmi];
+    filestatus_e fse;
     int w;
     // check each possible filename listed
     for( w=0; w<3; w++ )
     {
-        if( gmtp->iwad_filename[w] == NULL ) break;
+        if( gmtp->iwad_filename[w] == NULL )
+            break;
 
-        if( Search_doomwaddir( gmtp->iwad_filename[w], GAME_SEARCH_DEPTH,
-                               /*OUT*/ pathbuf_p ) )
+        fse = Search_doomwaddir( gmtp->iwad_filename[w], GAME_SEARCH_DEPTH,
+                               /*OUT*/ pathbuf_p );
+      
+#ifdef ZIPWAD
+        if( fse == FS_ZIP )
+        {
+            // Check file in archive
+            WZ_open_archive( pathbuf_p );
+            byte fnd = Check_keylumps( gmtp, gmtp->iwad_filename[w] );
+            WZ_close_archive();
+            if( fnd )
+                return true;
+        }
+        else
+#endif
+        if( fse == FS_FOUND )
         {
             // File exists.
             if( Check_keylumps( gmtp, pathbuf_p ) )
@@ -1658,7 +1719,8 @@ void IdentifyVersion()
 
     // Search wad directories.
     doomwaddir[1] = progdir_wads;
-    if( Search_doomwaddir( "legacy.wad", 0, /*OUT*/ pathiwad ) )
+    // Should not be zipped   
+    if( Search_doomwaddir( "legacy.wad", 0, /*OUT*/ pathiwad ) == FS_FOUND )
          goto found_legacy_wad;
 
     I_SoftError( "legacy.wad not found\n" );  // fatal exit
@@ -1706,6 +1768,7 @@ void IdentifyVersion()
 #endif
             goto fatal_err;
         }
+
         for( gmi=0; gmi<GDESC_other; gmi++ )
         {
             // compare to recognized game mode names
@@ -1758,7 +1821,7 @@ void IdentifyVersion()
             }
 #endif
         }
-#endif       
+#endif
     }
    
 
@@ -1766,6 +1829,8 @@ void IdentifyVersion()
     // in the same directory, and/or have legacy.exe only once in a different location
     if (M_CheckParm("-iwad"))
     {
+        filestatus_e fse = FS_NOTFOUND;
+
         // BP: big hack for fullpath wad, we should use wadpath instead in d_addfile
         char *s = M_GetNextParm();
         if ( s == NULL )
@@ -1784,7 +1849,16 @@ void IdentifyVersion()
         {
             // Simple filename.
             // Find the IWAD in the doomwaddir.
-            if( ! Search_doomwaddir( s, IWAD_SEARCH_DEPTH, /*OUT*/ pathiwad ) )
+            fse = Search_doomwaddir( s, IWAD_SEARCH_DEPTH, /*OUT*/ pathiwad );
+#ifdef ZIPWAD
+            if( fse == FS_ZIP )
+            {
+                // Found zip archive in doomwaddir.
+//                cat_filename( pathiwad, "", s );
+            }
+            else
+#endif
+            if( fse != FS_FOUND )
             {
                 // Not found in doomwaddir.
                 cat_filename( pathiwad, "", s );
@@ -1804,10 +1878,29 @@ void IdentifyVersion()
         }
 
         char *filename = FIL_Filename_of( pathiwad );
+#ifdef ZIPWAD
+        char  filename_wad[MAX_WADPATH];
+        if( fse == FS_ZIP )
+        {
+            // Need archive name for lookup.
+            WZ_save_archive_name( filename );
+            // Need wad name for GDESC lookup.
+            if( WZ_make_name_with_extension( filename, "wad", /*OUT*/ filename_wad )  )
+                filename = filename_wad;  // use wad name instead of archive name
+        }
+#endif
+
         if ( gamedesc_index == NUM_GDESC ) // check forcing switch
         {
             // No forcing switch
             // [WDJ] search game table for matching iwad name
+#ifdef ZIPWAD
+            if( fse == FS_ZIP )
+            {
+                // Check file in archive
+                WZ_open_archive( pathiwad );
+            }
+#endif
             for( gmi=0; gmi<GDESC_other; gmi++ )
             {
                 game_desc_t * gmtp = &game_desc_table[gmi];
@@ -1815,9 +1908,21 @@ void IdentifyVersion()
                 // check each possible filename listed
                 for( w=0; w<3; w++ )
                 {
-                    if( gmtp->iwad_filename[w] == NULL ) break;
+                    if( gmtp->iwad_filename[w] == NULL )
+                        break;  // end of list
+
                     if( strcasecmp(gmtp->iwad_filename[w], filename) == 0 )
                     {
+#ifdef ZIPWAD
+                        if( fse == FS_ZIP )
+                        {
+                            // Check file in archive
+                            byte fnd = Check_keylumps( gmtp, filename );
+                            if( fnd )
+                                goto got_gmi_iwad;
+                        }
+                        else
+#endif
                         if( Check_keylumps( gmtp, pathiwad ) )
                             goto got_gmi_iwad;
                     }
@@ -1825,6 +1930,12 @@ void IdentifyVersion()
             }
             // unknown IWAD is GDESC_other
             gamedesc_index = GDESC_other;
+#ifdef ZIPWAD
+            if( archive_open )
+            {
+                WZ_close_archive();
+            }
+#endif
         }
 
         other_names = 1;        // preserve other names when forcing switch
@@ -1849,6 +1960,7 @@ void IdentifyVersion()
         // use pathiwad to output wad path from Check_wad_filenames
         if( Check_wad_filenames( gamedesc_index, pathiwad ) )
             goto got_iwad;
+
         I_SoftError("IWAD %s not found in:\n",
                      game_desc_table[gamedesc_index].iwad_filename[0]);
         Print_search_directories( EMSG_error, 0x02 );
@@ -1902,6 +2014,12 @@ void IdentifyVersion()
        D_AddFile( gamedesc.support_wad );
 
 cleanup_ret:
+#ifdef ZIPWAD
+    if( archive_open )
+    {
+        WZ_close_archive();
+    }
+#endif
     free(legacywad);  // from strdup, free local copy of name
     return;
 
@@ -2237,6 +2355,9 @@ void D_DoomMain()
     // load default control
     G_Controldefault();
    
+#ifdef ZIPWAD
+    WZ_available();  // check for zip lib
+#endif
 
     // Before this line are initializations that are run only one time.
     //---------------------------------------------------- 
@@ -2545,7 +2666,7 @@ restart_command:
     }
 #endif
 
-    // add any files specified on the command line with -file wadfile
+    // Add any files specified on the command line with -file <wadfile>
     // to the wad list
     if (M_CheckParm("-file"))
     {
@@ -2844,7 +2965,6 @@ restart_command:
 
         // Initial setup of rendermode
         V_switch_drawmode( set_drawmode, 0 );  // command line, do not change config files
-        set_drawmode = DRM_none;
 
         // set user default mode or mode set at cmdline
         SCR_apply_video_settings();  // command line settings, or config file settings.
