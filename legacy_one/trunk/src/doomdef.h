@@ -182,6 +182,11 @@
 #endif
 #endif
 
+// DeePsea tall patches.
+// Allows patches that exceed 254 height.
+// Not used by many wads, but not much extra code either.  Relatively safe.
+#define DEEPSEA_TALL_PATCH
+
 
 // Player morph canceling invisibility and MF_SHADOW, is inconsistent.
 // The Heretic vanilla behavior cancels SHADOW when turned into a chicken.

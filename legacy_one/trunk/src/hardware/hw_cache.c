@@ -219,6 +219,10 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
 
     for (block += col*bytepp; ncols--; block+=bytepp, xfrac+=xfracstep)
     {
+#ifdef DEEPSEA_TALL_PATCH
+        // [MB (M. Bauerle), from crispy Doom]  Support for DeePsea tall patches, [WDJ]
+        int  cur_topdelta = -1;
+#endif
         patchcol = (column_t *)((byte *)sw_patch
                                 + sw_patch->columnofs[xfrac>>16]);
 
@@ -226,9 +230,31 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
 
         while (patchcol->topdelta != 0xff)
         {
+#ifdef DEEPSEA_TALL_PATCH
+            // [MB] [WDJ] DeePsea tall patch.
+            // DeepSea allows the patch to exceed 254 height.
+            // A Doom patch has monotonic ascending topdelta values, 0..254.
+            // DeePsea tall patches have an optional relative topdelta.	
+            // When the column topdelta is <= the current topdelta,
+            // it is a DeePsea tall patch relative topdelta.
+            if( patchcol->topdelta <= cur_topdelta )
+            {
+                cur_topdelta += patchcol->topdelta;
+            }
+            else
+            {
+                cur_topdelta = patchcol->topdelta;
+            }
+#endif
+
             source = (byte *)patchcol + 3;
             count  = ((patchcol->length * scale_y) + (FRACUNIT/2)) >> 16;
+
+#ifdef DEEPSEA_TALL_PATCH
+            ypos = originy + cur_topdelta;
+#else
             ypos = originy + patchcol->topdelta;
+#endif
 
             yfrac = 0;
             //yfracstep = (patchcol->length << 16) / count;
