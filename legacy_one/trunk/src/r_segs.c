@@ -303,8 +303,8 @@ void  R_Draw_WallColumn( texture_render_t * texren, int colnum )
     colfunc ();
 #endif
 }
- 
- 
+
+
 // R_GetPatchColumn
 // Masked draw, full patches, 2sided.
 static inline
@@ -313,15 +313,35 @@ byte* R_GetPatchColumn ( texture_render_t * texren, int colnum )
     // Get raw column ptr, one cache array structure.
     byte * data = texren->cache;
 
+#ifdef TEXTURE_LOCK
+#else
     if( !data )
     {
-        // This must be done here because cache can be freed by other operations,
-        // and we do not have the ability to lock individual texture cache.
-        // Puts ptr in texture_render cache.
+        // This must be here because cache can be freed by other operations.
+        // To prevent must lock individual texture cache on every draw.
         data = R_GenerateTexture( texren, TM_masked );
     }
+#endif
 
-    colnum &= texren->width_tile_mask; // set by GenerateTexture
+    if( texren->width_tile_mask )
+    {
+        // width is power of 2
+        colnum &= texren->width_tile_mask; // set by load textures
+    }
+    else
+    {
+        // [WDJ] Similar to PrBoom, will handle negative colnum, and odd widths.
+        // PrBoom: while( colnum < 0 )   colnum += width;
+        // Equiv:  colnum + (width * n)  for some n.
+	// Note: (x % width) ===  x - (width * n) for some n, result 0 .. width-1.
+	// Given: colnum = -1 .. -width, result width-1 .. 0, which is colnum + width.
+	// Consider: -((z-colnum) % width) + z  ==>  colnum + (width * n)
+        // Boundary: (0 % width) + z = width-1  ==>  z = width-1
+        int width = texren->width;
+        colnum = ( colnum < 0 )?
+              width - ( (-1 - colnum) % width ) - 1
+            : colnum % width ;
+    }
     return data + texren->columnofs[colnum];
 }
 
@@ -1128,7 +1148,8 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
     if( x2 >= rdraw_viewwidth )  x2 = rdraw_viewwidth-1;
     for (dc_x = x1 ; dc_x <= x2 ; dc_x++)
     {
-        if (maskedtexturecol[dc_x] != SHRT_MAX)
+        int colnum = maskedtexturecol[ dc_x ];
+        if( colnum != SHRT_MAX )
         {
           // if not masked
           // calculate 3Dfloor lighting
@@ -1140,8 +1161,8 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
             dm_top_patch = dm_windowtop = (centeryfrac - FixedMul(dm_texturemid, dm_yscale));
             realbot = dm_windowbottom = FixedMul(texheightz, dm_yscale) + dm_top_patch;
             dc_iscale = 0xffffffffu / (unsigned)dm_yscale;
-            
-            col_data = R_GetPatchColumn(texren, maskedtexturecol[dc_x]);
+
+            col_data = R_GetPatchColumn(texren, colnum);
 
             // top floor colormap, or fixedcolormap
             dc_colormap = dc_lightlist[0].rcolormap;
@@ -1248,7 +1269,7 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
           dc_iscale = 0xffffffffu / (unsigned)dm_yscale;
 
           // draw texture, as clipped
-          col_data = R_GetPatchColumn(texren, maskedtexturecol[dc_x]);
+          col_data = R_GetPatchColumn(texren, colnum);
           colfunc_2s( col_data );
 
         } // if (maskedtexturecol[dc_x] != SHRT_MAX)
@@ -1882,6 +1903,7 @@ unsigned long   nombre = 100000;
 //profile stuff ---------------------------------------------------------
 
 
+
 // Software Render
 // IN: rw_ parameters
 // Called by R_StoreWallRange
@@ -1961,6 +1983,7 @@ void R_RenderSegLoop (void)
     }
 
 
+    // Loop over width
     for ( ; rw_x < rw_stopx ; rw_x++)
     {
         // mark floor / ceiling areas

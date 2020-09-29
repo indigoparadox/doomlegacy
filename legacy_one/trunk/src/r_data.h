@@ -130,10 +130,11 @@ typedef enum {
    TD_post = 0x02, // posts
    TD_solid_column = 0x08,  // one post of texture height
    TD_masked = 0x10,  // used as masked
+   TD_odd_width = 0x20,  // not power of 2
    TD_message = 0x80
 } texture_detect_e;
 
-  
+
 
 // texture_t describes a rectangular texture, which is composed of
 // one or more graphic patches in texpatch_t structures.
@@ -172,6 +173,7 @@ typedef struct
     byte     * cache;   // graphics data generated full-size texture (maybe TM_patch, or TM_picture)
     uint32_t * columnofs;  // column offset lookup table for this texture
     uint16_t   width_tile_mask;  // mask that tiles the texture
+    uint16_t   width;
 #ifdef DEBUG_WINDOWED   
     texture_model_e  texture_model;	// drawing and storage models
 #else
