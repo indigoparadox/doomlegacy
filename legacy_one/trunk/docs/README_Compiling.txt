@@ -1,6 +1,6 @@
 Title: Compiling Doom Legacy 1.4x
 Author: Wesley Johnson
-Date: 2020-5-8
+Date: 2020-8-25
 
 In order to compile Doom Legacy 1.4x SDL you'll need to have the following
 libraries installed on your system.
@@ -27,6 +27,18 @@ OpenGL
   The standard cross-platform graphics library, usually comes with the OS.
   There may be specific versions for specific video cards.
   OpenGL 1.3+
+
+libzip
+  Optional, for zip archive reading.  Linux Only.
+  Set HAVE_LIBZIP in make_options file.
+  Set HAVE_LIBZIP=12 if you have libzip 1.2 or later, which will
+  use the libzip zip_seek and will disable the local zip_seek function.
+  Enable zip archive reading by setting ZIPWAD in doomdef.h.
+
+dlopen
+  Optional, for ziplib detection.  Linux Only.
+  Set HAVE_DLOPEN in make_options file.
+  Enable libzip detection by setting ZIPWAD_OPTIONAL in doomdef.h.
 
 
 You will require the following programs during the build process:
@@ -187,17 +199,24 @@ Copy one of the make_options_xx files to make_options of your BUILD
 directory.  Edit your make_options to set your configure options.
 >> cp  make_options_nix  x11/make_options
 
-5. Edit compile options in doomdef.c.
+5. Edit compile options in doomdef.h.
 These are options within DoomLegacy.
 Some features can be disabled to make a smaller binary.
 There are also some experimental code options, that are kept disabled.
 
 6. To clean the build:
-When you have been copying files, you need to remove old object files.
+When you have been copying files, or have modified make_options,
+you need to start from a clean build.  This removes old object files.
 >> make clean
+
+With a BUILD directory:
+>> make BUILD=x11 clean
 
 7. To build the executable:
 >> make
+
+To build with bin, obj, dep, in a separate directory (example x11):
+>> make BUILD=x11
 
 8. To build a debug version:
 This puts the debugging symbols for the debugger in the binary.
@@ -205,8 +224,9 @@ The debug version also forces DoomLegacy video to an 800x600 window,
 so the user can switch between the debugger window and the DoomLegacy window.
 >> make DEBUG=1
 
-9. To build with bin, obj, dep, in a separate directory (example x11):
->> make BUILD=x11
+With a BUILD directory:
+>> make BUILD=x11 DEBUG=1
+
 
 10. Example:
 >> make BUILD=x11d clean
