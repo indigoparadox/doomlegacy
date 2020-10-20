@@ -5,13 +5,14 @@ Released [DATE]
 What you will need
 ------------------
 
-1. Doom Legacy executable (e.g. doomlegacy_[VERSION]_windows_32_sdl.zip)
-2. The shared files in doomlegacy_[VERSION]_common.zip (contains legacy.wad [WADVERSION] and the docs)
-3. Run-time libraries (SDL, SDL_mixer). They are included with the Windows executable.
-4. One or more IWADs containing the game data (Doom, Final Doom, UltDoom, Plutonia, TNT, Heretic, FreeDoom, etc.)
+1. Download the Doom Legacy executable for your system (e.g. doomlegacy_[VERSION]_windows_32_sdl.zip)
+2. Download the shared files in doomlegacy_[VERSION]_common.zip (contains legacy.wad [WADVERSION] and the docs)
+3. Linux only: Install the run-time libraries (SDL 1.2.x, SDL_mixer 1.2.x), unless you already have them.
+   These libraries are included with the Windows executable.
+4. Obtain one or more IWADs containing the game data (Doom, Final Doom, UltDoom, Plutonia, TNT, Heretic, FreeDoom, etc.)
 
-We provide precompiled binaries for Linux and Win32, built with default options.
-You can also compile a binary yourself, the source code package contains the compilation instructions.
+We provide precompiled executables for Linux and Win32, built with default options.
+You can also compile an executable yourself, the source code package contains the compilation instructions.
 
 Doom Legacy SDL version requires the SDL and SDL_mixer run-time libraries.
 Using SDL is recommended, but there are some other compile options (like X11 native).
