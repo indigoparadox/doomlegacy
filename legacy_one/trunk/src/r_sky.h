@@ -53,7 +53,7 @@
 extern patch_t * sky_patch;
 extern int     sky_texture;
 extern int     sky_texturemid;
-extern fixed_t sky_height;
+extern int     sky_height;
 extern fixed_t sky_scale;
 extern uint32_t sky_widthmask;
 extern byte    sky_240;  // 0=std 128 sky, 1=240 high sky
