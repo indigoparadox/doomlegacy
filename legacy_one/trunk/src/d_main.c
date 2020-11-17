@@ -276,7 +276,7 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1555"
+#define SVN_REV "1556"
 #endif
 
 
@@ -1358,13 +1358,19 @@ game_desc_t  game_desc_table[ NUM_GDESC ] =
 {
 // Free wads should get their own gamemode identity
 // GDESC_freedoom: FreeDoom project, DoomII replacement
+//  freedoom : prboom-plus, edge
+//  freedoom2 : edge, chocolate
    { "FreeDoom", NULL, "freedoom",
-        {"freedoom2.wad", "freedoom.wad","doom2.wad"}, NULL,
+        {"freedoom2.wad", "freedoom.wad","fdoom2.wad"}, NULL,
         {"FREEDOOM", NULL}, LN_MAP01, 0,
         0, GDESC_freedoom, doom2_commercial },
+// doom2f: french version Doom2, eternity.
+//         prboom-plus
+
 // GDESC_freedm: FreeDM project, DoomII deathmatch
+//  freedm : edge, chocolate
    { "FreeDM", NULL, "freedm",
-        {"freedm.wad","doom.wad",NULL}, NULL,
+        {"freedm.wad","fdoomdm.wad",NULL}, NULL,
         {"FREEDOOM", "FREEDM"}, LN_MAP01, 0,
         0, GDESC_freedm, doom2_commercial },
 // GDESC_doom2: doom2wad
@@ -1373,8 +1379,9 @@ game_desc_t  game_desc_table[ NUM_GDESC ] =
         {NULL, NULL}, LN_MAP01, LN_TITLE,
         GD_idwad, GDESC_doom2, doom2_commercial },
 // GDESC_freedoom_ultimate: FreeDoom project, Ultimate Doom replacement
+//  freedoom1 : edge, chocolate
    { "Ultimate FreeDoom", NULL, "freedu",
-        {"freedoom1.wad", "freedu.wad","doomu.wad"}, NULL,
+        {"freedoom1.wad", "freedu.wad","fdoomu.wad"}, NULL,
         {"FREEDOOM", "E4M1"}, LN_E1M1+LN_E2M2, 0,
         0, GDESC_freedoom_ultimate, ultdoom_retail },
 // GDESC_ultimate: Doom1 1995, doomuwad
@@ -1389,6 +1396,7 @@ game_desc_t  game_desc_table[ NUM_GDESC ] =
         {"E3M9", NULL}, LN_E1M1+LN_E2M2, LN_TITLE,
         GD_idwad, GDESC_doom, doom_registered },
 // GDESC_doom_shareware: DoomI shareware, doom1wad
+//  doom1 : edge, chocolate,
    { "Doom shareware", "DOOM Shareware", "doom1",
         {"doom1.wad","doom.wad",NULL}, NULL,
         {NULL, NULL}, LN_E1M1, LN_TITLE,
@@ -1414,6 +1422,7 @@ game_desc_t  game_desc_table[ NUM_GDESC ] =
         {NULL, NULL}, LN_E1M1+LN_E2M2+LN_TITLE, 0,
         GD_idwad, GDESC_heretic, heretic },
 // GDESC_heretic_shareware: Heretic shareware
+//  heretic1 : chocolate
    { "Heretic shareware", NULL, "heretic1",
         {"heretic1.wad","heretic.wad",NULL}, NULL,
         {NULL, NULL}, LN_E1M1+LN_TITLE, LN_E2M2,
