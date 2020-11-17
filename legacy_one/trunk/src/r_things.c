@@ -1157,7 +1157,7 @@ void R_DrawMaskedColumn ( byte * column_data )
         if (dc_yl <= dc_yh && dc_yl < rdraw_viewheight && dc_yh > 0)  // [WDJ] exclude status bar
         {
 
-#ifdef RANGECHECK
+#ifdef RANGECHECK_DRAW_LIMITS
     // Temporary check code.
     // Due to better clipping, this extra clip should no longer be needed.
     if( dc_yl < 0 )
@@ -1171,6 +1171,7 @@ void R_DrawMaskedColumn ( byte * column_data )
         dc_yh = rdraw_viewheight - 1;
     }
 #endif
+
 #ifdef CLIP2_LIMIT
             //[WDJ] phobiata.wad has many views that need clipping
             if ( dc_yl < 0 )   dc_yl = 0;

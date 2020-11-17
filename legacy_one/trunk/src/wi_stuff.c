@@ -2280,7 +2280,7 @@ static void WI_Init_Variables( wb_start_t * wb_start)
 
     wbs = wb_start;
 
-#ifdef RANGECHECKING
+#ifdef RANGECHECK
     if (gamemode != doom2_commercial)
     {
       if ( gamemode == ultdoom_retail )

@@ -233,13 +233,14 @@ void R_MapPlane ( int y, int x1, int x2 )
     fixed_t     length;
     unsigned    index;
 
-#ifdef RANGECHECK
+#ifdef RANGECHECK_DRAW_LIMITS
     if (x2 < x1
         || x1<0
         || x2>=rdraw_viewwidth
         || (unsigned)y>rdraw_viewheight)    // [WDJ] ??  y>=rdraw_viewheight
     {
-        I_Error ("R_MapPlane: %i, %i at %i",x1,x2,y);
+        I_SoftError ("R_MapPlane: %i, %i at %i",x1,x2,y);
+        return;
     }
 #endif
 

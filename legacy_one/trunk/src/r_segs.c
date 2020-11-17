@@ -276,7 +276,7 @@ void  R_Draw_WallColumn( texture_render_t * texren, int colnum )
     // Draw as monolithic column, ignore posts.
     dc_source = data + texren->pixel_data_offset;
 
-#ifdef RANGECHECK
+#ifdef RANGECHECK_DRAW_LIMITS
     // Temporary check code.
     // Due to better clipping, this extra clip should no longer be needed.
     if( dc_yl < 0 )
@@ -296,7 +296,7 @@ void  R_Draw_WallColumn( texture_render_t * texren, int colnum )
     if( dc_yl < 0 )   dc_yl = 0;
     if( dc_yh >= rdraw_viewheight )   dc_yh = rdraw_viewheight - 1;
 #endif
-   
+
 #ifdef HORIZONTALDRAW
     hcolfunc ();
 #else
@@ -510,7 +510,7 @@ static void R_DrawSplatColumn (column_t* column)
     fixed_t     top_post_sc, bottom_post_sc;  // fixed_t screen coord.
 
     // dc_x is limited to 0..rdraw_viewwidth by caller x1,x2
-#ifdef RANGECHECK
+#ifdef RANGECHECK_DRAW_LIMITS
     if ( (unsigned) dc_x >= rdraw_viewwidth )
     {
         I_SoftError ("R_DrawSplatColumn: dc_x= %i\n", dc_x);
@@ -542,7 +542,7 @@ static void R_DrawSplatColumn (column_t* column)
             dc_yl =  last_ceilingclip[dc_x];
 #endif
 
-#ifdef RANGECHECK
+#ifdef RANGECHECK_DRAW_LIMITS
     // Temporary check code.
     // Due to better clipping, this extra clip should no longer be needed.
     if( dc_yl < 0 )
@@ -556,6 +556,7 @@ static void R_DrawSplatColumn (column_t* column)
         dc_yh = rdraw_viewheight - 1;
     }
 #endif
+
 #ifdef CLIP2_LIMIT
         //[WDJ] phobiata.wad has many views that need clipping
         if ( dc_yl < 0 ) dc_yl = 0;
@@ -868,7 +869,7 @@ void R_Render_PictureColumn ( byte * column_data )
     if (dc_yl >= rdraw_viewheight || dc_yh < 0)
       return;
 
-#ifdef RANGECHECK
+#ifdef RANGECHECK_DRAW_LIMITS
     // Temporary check code.
     // Due to better clipping, this extra clip should no longer be needed.
     if( dc_yl < 0 )
@@ -882,6 +883,7 @@ void R_Render_PictureColumn ( byte * column_data )
         dc_yh = rdraw_viewheight - 1;
     }
 #endif
+
 #ifdef CLIP2_LIMIT
     //[WDJ] phobiata.wad has many views that need clipping
     if ( dc_yl < 0 )   dc_yl = 0;
@@ -1140,10 +1142,14 @@ void R_RenderMaskedSegRange( drawseg_t* ds, int x1, int x2 )
 
     // draw the columns
     // [WDJ] x1,x2 are limited to 0..rdraw_viewwidth to protect [dc_x] access.
-#ifdef RANGECHECK
+#ifdef RANGECHECK_DRAW_LIMITS
     if( x1 < 0 || x2 >= rdraw_viewwidth )
-       I_Error( "R_RenderMaskedSegRange: %i  %i\n", x1, x2);
+    {
+        I_SoftError( "R_RenderMaskedSegRange: %i  %i\n", x1, x2);
+        return;
+    }
 #endif
+
     if( x1 < 0 )  x1 = 0;
     if( x2 >= rdraw_viewwidth )  x2 = rdraw_viewwidth-1;
     for (dc_x = x1 ; dc_x <= x2 ; dc_x++)
@@ -1518,10 +1524,14 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
     column2s_length = dc_texheight;
     
     // [WDJ] x1,x2 are limited to 0..rdraw_viewwidth to protect [dc_x] access.
-#ifdef RANGECHECK
+#ifdef RANGECHECK_DRAW_LIMITS
     if( x1 < 0 || x2 >= rdraw_viewwidth )
-       I_Error( "R_RenderThickSideRange: %i  %i\n", x1, x2);
+    {
+        I_SoftError( "R_RenderThickSideRange: %i  %i\n", x1, x2);
+        return;
+    }
 #endif
+
     if( x1 < 0 )  x1 = 0;
     if( x2 >= rdraw_viewwidth )  x2 = rdraw_viewwidth - 1;
     // draw the columns
@@ -2362,9 +2372,12 @@ void R_StoreWallRange( int   start, int   stop)
     if (ds_p == &drawsegs[max_drawsegs])   expand_drawsegs();
     // Transfer wall attributes to next drawseg ( ds_p ).
     
-#ifdef RANGECHECK
+#ifdef RANGECHECK_DRAW_LIMITS
     if (start >=rdraw_viewwidth || start > stop)
-        I_Error ("Bad R_RenderWallRange: %i to %i", start , stop);
+    { 
+        I_SoftError ("Bad R_RenderWallRange: %i to %i", start , stop);
+        return;
+    }
 #endif
     
     if (curline->v1->y == curline->v2->y)
