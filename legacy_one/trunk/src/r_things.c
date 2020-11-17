@@ -2461,8 +2461,10 @@ void R_Load_Corona( void )
         if( corona_pic )
         {
             // Z_Malloc
-            // The corona pic is INTENSITY_ALPHA, bytepp=2
-            corona_patch = R_Create_Patch( corona_pic->width, corona_pic->height, 1, & corona_pic->data[0], 2, 1, 0, 1 );
+            // The corona pic is INTENSITY_ALPHA, bytepp=2, blank=0
+            corona_patch = (patch_t*) R_Create_Patch( corona_pic->width, corona_pic->height,
+                /*SRC*/    TM_row_image, & corona_pic->data[0], 2, 1, 0,
+                /*DEST*/   TM_patch, CPO_blank_trim, NULL );
             Z_ChangeTag( corona_patch, PU_STATIC );
             corona_patch->leftoffset += corona_pic->width/2;
             corona_patch->topoffset += corona_pic->height/2;
