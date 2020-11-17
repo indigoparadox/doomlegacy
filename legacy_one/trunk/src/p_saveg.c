@@ -1793,6 +1793,9 @@ void P_ArchiveThinkers(void)
     // save the current thinkers
     for (th = thinkercap.next; th != &thinkercap; th = th->next)
     {
+        // Must be up here because of continue stmts.
+        SG_Writebuf();
+
         if (th->function.acp1 == (actionf_p1) P_MobjThinker)
         {
             // Mobj thinker
@@ -2179,8 +2182,6 @@ void P_ArchiveThinkers(void)
             I_SoftError("SaveGame: Unknown thinker type %p\n", th->function.acp1);
         }
 #endif
-
-        SG_Writebuf();
     }
 
     // mark the end of the save section using reserved type mark
