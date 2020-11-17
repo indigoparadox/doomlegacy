@@ -182,7 +182,6 @@ int             texturememory;	// all textures
 //faB: highcolor stuff
 // [WDJ] 2012-02-06 shared for DRAW15, DRAW16, DRAW24, DRAW32
 union color8_u   color8;  // remap color index to rgb value
-uint16_t*  hicolormaps = NULL;  // test a 32k colormap remaps high -> high
 #ifdef ENABLE_DRAW8_USING_12
 byte  color12_to_8[ 0x1000 ];
 #endif
@@ -2986,17 +2985,6 @@ void R_Init_color8_translate ( RGBA_t * palette )
         }
     }
 
-#ifdef HIGHCOLORMAPS
-#if defined( ENABLE_DRAW15 ) || defined( ENABLE_DRAW16 )
-    if( hicolormaps == NULL )
-    {
-        // test a big colormap
-        hicolormaps = Z_Malloc (32768 /**34*/, PU_STATIC, 0);
-        for (i=0;i<16384;i++)
-            hicolormaps[i] = color8.to16[ dc_colormap[ i ] ];
-     }
-#endif
-#endif
 }
 #endif
 
