@@ -165,7 +165,6 @@
   // I_PlayCD()..
 #include "i_system.h"
   // I_Sleep
-#include "r_sky.h"
 
 #include "r_data.h"
 #include "r_things.h"

@@ -106,6 +106,7 @@ void  set_sky_flat( byte * sflat, byte * srcp, byte sample_y, int sample_width, 
 {
 #if 0
     // A pattern just looks like vertical wall.
+    // Sample the sky
     int i;
     for( i=0; i<(SKY_FLAT_WIDTH*SKY_FLAT_HEIGHT); i++ )
     {
@@ -886,6 +887,10 @@ void R_Setup_SkyDraw (void)
             max_height = wpatch.height;
         texpatch++;
     }
+
+    // Doom:  sky texture height=128, sky patch height=128
+    // Heretic: sky texture height=128, sky patch height=200, leftoffset=127, topoffset=195
+    // Legacy wad RSKY: sky patch height = 240
    
     if( sky_pict )
     {
@@ -901,9 +906,12 @@ void R_Setup_SkyDraw (void)
 
     if(max_height > 128)
     {
+        // Need to convince R_GenerateTexture2 of new height.
+        if( max_height > textures[sky_texture]->height )
+            textures[sky_texture]->height = max_height;
+        sky_height = max_height;
         sky_pict = R_GenerateTexture2( sky_texture, & texture_render[sky_texture], TM_picture );
         sky_240 = 1;
-        sky_height = SKY_HEIGHT;
         // horizon line on 256x240 freelook textures of Legacy or heretic
         sky_texturemid = 200<<FRACBITS;
     }
