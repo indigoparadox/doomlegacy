@@ -900,7 +900,9 @@ static int     comskips,varskips;
         }
         else
         {
-            strcpy (inputlines[inputline],inputlines[inputhist]);
+            // [WDJ] GCC 10 complains that strings may overlap so cannot use strcpy.
+            // But overlap case handled above.
+            memmove( inputlines[inputline], inputlines[inputhist], CON_MAX_LINELEN );
             input_cx = strlen(inputlines[inputline]);
         }
         return true;
