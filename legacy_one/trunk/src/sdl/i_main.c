@@ -56,7 +56,18 @@
 
 #ifdef LOGMESSAGES
 #include <stdio.h>
+#define  LOGFILENAME   "log.txt"
 FILE *logstream = NULL;
+
+void  shutdown_logmessage( const char * who, const char * msg )
+{
+    if( logstream )
+    {
+        fprintf( logstream, "%s: %s\n", who, msg );
+        fclose( logstream );
+        logstream = NULL;
+    }
+}
 #endif
 
 int main(int argc, char **argv)
@@ -75,11 +86,9 @@ int main(int argc, char **argv)
 
 #ifdef LOGMESSAGES
     //Hurdler: only write log if we have the permission in the current directory
-    logstream = fopen(".log/log.txt", "w");
-    if (!logstream)
-    {
-      // do something?
-    }
+    logstream = fopen( LOGFILENAME, "w");
+    // console and GenPrintf not initialized yet.
+    printf( "Log file %s: %s\n", (logstream)? "opened":"open failed", LOGFILENAME );
 #endif
 
     D_DoomMain ();

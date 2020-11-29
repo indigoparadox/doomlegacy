@@ -1188,7 +1188,7 @@ void V_CopyRect(int srcx, int srcy, int srcscrn, int width, int height, int dest
     V_MarkRect(destx, desty, width, height);
 #endif
 
-#ifdef DEBUG
+#ifdef DEBUG_COPYRECT
     CONS_Printf("V_CopyRect: vidwidth %d screen[%d]=%x to screen[%d]=%x\n", vid.width, srcscrn, screens[srcscrn], destscrn, screens[destscrn]);
     CONS_Printf("..........: srcx %d srcy %d width %d height %d destx %d desty %d\n", srcx, srcy, width, height, destx, desty);
 #endif

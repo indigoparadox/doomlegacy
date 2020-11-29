@@ -96,7 +96,19 @@ HCURSOR         windowCursor=NULL;                      // main window cursor
 boolean         appActive = false;                      //app window is active
 
 #ifdef LOGMESSAGES
+#define  LOGFILENAME   "log.txt"
 FILE * logstream = NULL;
+
+
+void  shutdown_logmessage( const char * who, const char * msg )
+{
+    if( logstream )
+    {
+        fprintf( logstream, "%s: %s\n", who, msg );
+        fclose( logstream );
+        logstream = NULL;
+    }
+}
 #endif
 
 // faB: the MIDI callback is another thread, and Midi volume is delayed here in window proc
@@ -439,7 +451,7 @@ int WINAPI HandledWinMain(HINSTANCE hInstance,
     LPTSTR          args;
 
 #ifdef LOGMESSAGES
-    logstream = fopen("log.txt", "w");
+    logstream = fopen( LOGFILENAME, "w");
 #endif
 
     // fill myargc,myargv for m_argv.c retrieval of cmdline arguments
@@ -479,6 +491,7 @@ int WINAPI HandledWinMain(HINSTANCE hInstance,
     // back to Windoze
     return 0;
 }
+
 
 
 // -----------------------------------------------------------------------------

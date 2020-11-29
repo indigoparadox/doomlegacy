@@ -112,6 +112,21 @@ byte mouse_detected=false;
 volatile tic_t ticcount;   //returned by I_GetTime(), updated by timer interrupt
 
 
+#ifdef LOGMESSAGES
+#define  LOGFILENAME   "log.txt"
+FILE *logstream = NULL;
+
+void  shutdown_logmessage( const char * who, const char * msg )
+{
+    if( logstream )
+    {
+        fprintf( logstream, "%s: %s\n", who, msg );
+        fclose( logstream );
+        logstream = NULL;
+    }
+}
+#endif
+
 
 
 void I_Tactile ( int   on,   int   off,   int   total )
@@ -253,6 +268,8 @@ void I_InitJoystick (void)
 }
 
 
+
+
 //
 // I_Error
 //
@@ -268,30 +285,11 @@ void I_OutputMsg (char *error, ...)
     // dont flush the message!
 }
 
-#if 0
-int errorcount=0; // control recursive errors
-int shutdowning=false;
-#endif
 
 //added 31-12-97 : display error messy after shutdowngfx
 void I_Error (char *error, ...)
 {
     va_list     argptr;
-    // added 11-2-98 recursive error detecting
-
-#if 0
-    if(shutdowning)
-    {
-        errorcount++;
-        if(errorcount==5)
-           I_ShutdownGraphics();
-        if(errorcount==6)
-           I_ShutdownSystem();
-        if(errorcount>7)
-          exit(-1);       // recursive errors detected
-    }
-    shutdowning=true;
-#endif
 
     // put message to stderr
     va_start (argptr,error);
@@ -307,25 +305,11 @@ void I_Error (char *error, ...)
 
     va_end (argptr);
 
-#if 1
+
     D_Quit_Save( QUIT_panic );  // No save, safe shutdown
-#else
-    //added:18-02-98: save one time is enough!
-    if (!errorcount)
-    {
-        M_SaveConfig (NULL);   //save game config, cvars..
-    }
 
-    //added:16-02-98: save demo, could be useful for debug
-    //                NOTE: demos are normally not saved here.
-    if (demorecording)
-        G_CheckDemoStatus();
-
-    D_Quit_NetGame ();
-
-    I_Sleep( 3000 );  // to see some messages
-    /* shutdown everything that was started ! */
-    I_ShutdownSystem();
+#ifdef LOGMESSAGES
+    shutdown_logmessage( "I_Error()", "shutdown" );
 #endif
 
     fprintf (stderr, "\nPress ENTER");
@@ -339,49 +323,12 @@ void I_Error (char *error, ...)
 // The system dependent part of I_Quit.
 void I_Quit_System (void)
 {
-    exit(0);
-}
-
-
-#if 0
-// Replaced by D_Quit_Save, I_Quit_System
-//
-// I_Quit : shutdown everything cleanly, in reverse order of Startup.
-//
-void I_Quit (void)
-{
-    byte* endoom;
-
-    //added:16-02-98: when recording a demo, should exit using 'q' key,
-    //        but sometimes we forget and use 'F10'.. so save here too.
-    if (demorecording)
-        G_CheckDemoStatus();
-
-    M_SaveConfig (NULL);   //save game config, cvars..
-
-
-    endoom = W_CacheLumpName("ENDOOM",PU_CACHE);
-
-
-    //added:03-01-98: maybe it needs that the ticcount continues,
-    // or something else that will be finished by ShutdownSystem()
-    // so I do it before.
-    D_Quit_NetGame ();
-
-    /* shutdown everything that was started ! */
-    I_ShutdownSystem();
-
-    puttext(1,1,80,25,endoom);
-    gotoxy(1,24);
-
-    if(shutdowning || errorcount)
-        I_Error("Errors detected (count=%d)", errorcount);
-
-    fflush(stderr);
-
-    exit(0);
-}
+#ifdef LOGMESSAGES
+    shutdown_logstream( "I_Quit()", "end of logstream" );
 #endif
+    exit(0);
+}
+
 
 // Show the EndText, after the graphics are shutdown.
 void I_Show_EndText( uint16_t * text )
@@ -399,11 +346,6 @@ void I_Show_EndText( uint16_t * text )
     puttext(1,1,80,25,endoom);
 #endif
     gotoxy(1,24);
-
-#if 0   
-    if(shutdowning || errorcount)
-        I_Error("Errors detected (count=%d)", errorcount);
-#endif
 
     fflush(stderr);
 }
@@ -1170,6 +1112,7 @@ static char msg[] = "Oh no! Back to reality!\r\n";
 }
 
 
+
 //added:08-01-98: now this replaces allegro_init()
 //
 //  REMEMBER: THIS ROUTINE MUST BE STARTED IN i_main.c BEFORE D_DoomMain()
@@ -1199,6 +1142,9 @@ void  I_StartupSystem(void)
    signal(SIGKILL, break_handler);
    signal(SIGQUIT, break_handler);
 
+#ifdef LOGMESSAGES
+    logstream = fopen( LOGFILENAME, "w");
+#endif
 }
 
 // Init system called by d_main

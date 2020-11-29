@@ -48,7 +48,7 @@
 #ifndef Z_ZONE_H
 #define Z_ZONE_H
 
-//#define ZDEBUG
+//#define DEBUG_ZONE
 
 #include <stdio.h>
 #include "doomdef.h"
@@ -124,7 +124,7 @@ int     Z_TagUsage(memtag_e usetag);
 
 void    Z_FreeMemory (int *realfree, int *cachemem, int *usedmem, int *largefreeblock);
 
-#ifdef ZDEBUG
+#ifdef DEBUG_ZONE
 #define Z_Free(p) Z_Free2(p,__FILE__,__LINE__)
 void    Z_Free2 (void *ptr,char *file,int line);
 #define Z_Malloc(s,t,p) Z_Malloc2(s,t,p,0,__FILE__,__LINE__)
@@ -152,7 +152,7 @@ typedef struct memblock_s
   void**              user;   // if the block has a single owner, *user points to the beginning of the data area after header
   struct memblock_s*  next;
   struct memblock_s*  prev;
-#ifdef ZDEBUG
+#ifdef DEBUG_ZONE
     char             *ownerfile;
     int               ownerline; 
 #endif

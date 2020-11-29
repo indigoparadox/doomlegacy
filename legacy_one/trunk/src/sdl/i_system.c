@@ -130,7 +130,6 @@ void I_OutputMsg       (char *fmt, ...)
     va_start (argptr,fmt);
     vfprintf (stderr,fmt,argptr);
     va_end (argptr);
-
 }
 
 //
@@ -903,41 +902,17 @@ void I_Sleep(unsigned int ms)
   SDL_Delay(ms);
 }
 
-#if 0
-// Replaced by D_Quit_Save, I_Quit_System
-//
-// I_Quit
-//
-void I_Quit (void)
-{
-    // prevent recursive I_Quit()
-    static byte quitting = 0;
 
-    if (quitting)   return;
-    quitting = 1;
+void shutdown_logmessage( const char * who, const char * msg );
 
-  //added:16-02-98: when recording a demo, should exit using 'q' key,
-  //        but sometimes we forget and use 'F10'.. so save here too.
-    if (demorecording)
-        G_CheckDemoStatus();
-    D_Quit_NetGame ();
-    I_ShutdownSound();
-#ifdef CDMUS
-    I_ShutdownCD();
-#endif
-   // use this for 1.28 19990220 by Kin
-    M_SaveConfig (NULL);
-    I_ShutdownJoystick();
-    I_ShutdownGraphics();
-    I_ShutdownSystem();
-    printf("\r");
-    ShowEndTxt();
-}
-#endif
 
 // The final part of I_Quit, system dependent.
 void I_Quit_System (void)
 {
+#ifdef LOGMESSAGES
+    shutdown_logmessage( "I_Quit()", "end of logstream" );
+#endif
+
     exit(0);
 }
 
@@ -962,22 +937,12 @@ void I_Error (const char *error, ...)
 
     fflush( stderr );
 
-#if 1
     D_Quit_Save( QUIT_panic );  // No save, safe shutdown
-#else
-    // Shutdown. Here might be other errors.
-    if (demorecording)
-        G_CheckDemoStatus();
 
-    D_Quit_NetGame ();
-    I_ShutdownJoystick();
-    I_ShutdownSound();
-    I_Sleep( 3000 );  // to see some messages
-    I_ShutdownGraphics();
-    // shutdown everything else which was registered
-    I_ShutdownSystem();
+#ifdef LOGMESSAGES
+    shutdown_logmessage( "I_Error()", "shutdown" );
 #endif
-
+   
     exit(-1);
 }
 

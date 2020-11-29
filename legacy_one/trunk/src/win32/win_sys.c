@@ -450,10 +450,8 @@ void I_StartupTimer(void)
 //                                        EXIT CODE, ERROR HANDLING
 // ===========================================================================
 
-#if 0
-int     errorcount = 0;  // control recursive errors
-int shutdowning= false;
-#endif
+
+void  shutdown_logstream( const char * who, const char * msg );
 
 #if defined(NDEBUG)
 //
@@ -496,12 +494,7 @@ static void signal_handler(int num)
     }
     
 #ifdef LOGMESSAGES
-    if( logstream )
-    {
-        fprintf (logstream,"signal_handler() error: %s\n", sigmsg);
-        fclose( logstream );
-        logstream = NULL;
-    }
+    shutdown_logmessage( "signal_handler()", sigmsg );
 #endif    
     
     MessageBox(hWnd_main,va("signal_handler() : %s",sigmsg),"Doom Legacy error",MB_OK|MB_ICONERROR);
@@ -528,13 +521,16 @@ void I_OutputMsg (char *error, ...)
     va_start (argptr,error);
     vsprintf (txt,error,argptr);
     va_end (argptr);
-        
-    fprintf (stderr, "Error: %s\n", txt);
+
+    // All messages already have formatting and \n.
+//    fprintf (stderr, "Error: %s\n", txt);
+    fprintf (stderr, "%s", txt);
     // dont flush the message!
 
-#ifdef LOGMESSAGES
+#ifdef LOGMESSAGES_xx
+    // Already handled by console
     if (logstream)
-        fprintf (logstream, "Error: %s\n", txt);
+        fprintf (logstream, "%s", txt);
 #endif
 }
 
@@ -547,27 +543,6 @@ void I_Error (const char *error, ...)
     va_list     argptr;
     char        txt[512];
 
-#if 0
-    // added 11-2-98 recursive error detecting
-    if(shutdowning)
-    {
-        errorcount++;
-        // try to shutdown separetely each stuff
-        if(errorcount==5)
-            I_ShutdownGraphics();
-        if(errorcount==6)
-            I_ShutdownSystem();
-        if(errorcount==7)
-            M_SaveConfig (NULL);
-        if(errorcount>20)
-        {
-            MessageBox(hWnd_main,txt,"Doom Legacy Recursive Error",MB_OK|MB_ICONERROR);
-            exit(-1);     // recursive errors detected
-        }
-    }
-    shutdowning=true;
-#endif
-        
     // put message to stderr
     va_start (argptr,error);
     wvsprintf (txt, error, argptr);
@@ -576,35 +551,12 @@ void I_Error (const char *error, ...)
     CONS_Printf("I_Error(): %s\n",txt);
     //wsprintf (stderr, "I_Error(): %s\n", txt);
         
-#if 1
     D_Quit_Save( QUIT_panic );  // No save, safe shutdown
-#else
-    //added:18-02-98: save one time is enough!
-    if (!errorcount)
-    {
-        M_SaveConfig (NULL);   //save game config, cvars..
-    }
-        
-    //added:16-02-98: save demo, could be useful for debug
-    //                NOTE: demos are normally not saved here.
-    if (demorecording)
-        G_CheckDemoStatus();
-        
-    D_Quit_NetGame();
-        
-    I_Sleep( 3000 );  // to see some messages
-    // shutdown everything that was started !
-    I_ShutdownSystem();
-#endif
 
 #ifdef LOGMESSAGES
-    if( logstream )
-    {
-        fclose( logstream );
-        logstream = NULL;
-    }
+    shutdown_logmessage( "I_Error()", "shutdown" );
 #endif
-    
+
     MessageBox (hWnd_main, txt, "Doom Legacy Error", MB_OK|MB_ICONERROR);
 
     //getchar();
@@ -612,61 +564,11 @@ void I_Error (const char *error, ...)
 }
 
 
-#if 0
-// Replaced by D_Quit_Save, I_Quit_System
-//
-// I_Quit : shutdown everything cleanly, in reverse order of Startup.
-//
-void I_Quit (void)
-{
-    //added:16-02-98: when recording a demo, should exit using 'q' key,
-    //        but sometimes we forget and use 'F10'.. so save here too.
-    if (demorecording)
-        G_CheckDemoStatus();
-        
-    M_SaveConfig (NULL);   //save game config, cvars..
-
-    //TODO: do a nice ENDOOM for win32 ?
-    //    endoom = W_CacheLumpName("ENDOOM",PU_CACHE);
-        
-    //added:03-01-98: maybe it needs that the ticcount continues,
-    // or something else that will be finished by ShutdownSystem()
-    // so I do it before.
-    D_Quit_NetGame();
-        
-    // shutdown everything that was started !
-    I_ShutdownSystem();
-        
-    if (shutdowning || errorcount)
-        I_Error("Errors detected (count=%d)", errorcount);
-
-#ifdef LOGMESSAGES
-    if( logstream )
-    {
-        fprintf (logstream,"I_Quit(): end of logstream.\n");
-        fclose( logstream );
-        logstream = NULL;
-    }
-#endif
-
-    // cause an error to test the exception handler
-    //i = *((unsigned long *)0x181596);
-
-    fflush(stderr);
-    exit(0);
-}
-#endif
-
 // The final part of I_Quit, system dependent.
 void I_Quit_System (void)
 {
 #ifdef LOGMESSAGES
-    if( logstream )
-    {
-        fprintf (logstream,"I_Quit(): end of logstream.\n");
-        fclose( logstream );
-        logstream = NULL;
-    }
+    shutdown_logstream( "I_Quit()", "end of logstream" );
 #endif
 
     // cause an error to test the exception handler

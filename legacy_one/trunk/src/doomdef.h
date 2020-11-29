@@ -28,15 +28,15 @@
 // =========================================================================
 // Compile settings, configuration, tuning, and options
 
-#ifdef DEBUG
+#ifdef DEBUG_WINDOWED
 // Uncheck this to compile debugging code
 #define RANGECHECK
 #define RANGECHECK_DRAW_LIMITS
 // Do some extra tests, that never happens but maybe.
 #define PARANOIA
-// write message in log.txt (win32 and Linux only for the moment)
+// Write message in log.txt (win32 and Linux only for the moment)
 #define LOGMESSAGES
-// Default to show debug messages.
+// Show debug messages.
 #define DEBUG_MESSAGES_ON
 #else
 // Normal compile

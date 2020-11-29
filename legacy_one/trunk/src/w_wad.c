@@ -495,7 +495,8 @@ int W_Load_WadFile ( const char * filename )
     //  generate md5sum
     // 
     {
-#ifdef DEBUG_MESSAGES_ON
+//#define DEBUG_MD5_TIME
+#ifdef DEBUG_MD5_TIME
         // [WDJ] Do not know why timing the md5 calc was important, ever.
         int t;
         if( devparm >= 3 )
@@ -517,7 +518,7 @@ int W_Load_WadFile ( const char * filename )
             fclose(fhandle);
         }
 
-#ifdef DEBUG_MESSAGES_ON
+#ifdef DEBUG_MD5_TIME
         if( devparm >= 3 )
         {
             GenPrintf(EMSG_dev, "Load_WadFile %s: md5 calc took %f second\n",

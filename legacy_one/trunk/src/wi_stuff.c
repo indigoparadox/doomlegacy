@@ -467,6 +467,14 @@ static patch_t**        lnames = NULL;
 static int              num_lnames = 0;
 
 
+#ifdef RANGECHECK
+void detect_range_violation( int item, int lowlim, int highlim )
+{
+    if( item < lowlim || item > highlim )
+        GenPrintf( EMSG_error, "Range violation  %i, limits=(%i..%i)\n", item, lowlim, highlim );
+}
+#endif
+
 // [WDJ] All patch endian conversion is done in W_CachePatchNum
 
 //
@@ -2284,17 +2292,17 @@ static void WI_Init_Variables( wb_start_t * wb_start)
     if (gamemode != doom2_commercial)
     {
       if ( gamemode == ultdoom_retail )
-        RNGCHECK(wbs->epsd, 0, 3);
+        detect_range_violation(wbs->epsd, 0, 3);
       else
-        RNGCHECK(wbs->epsd, 0, 2);
+        detect_range_violation(wbs->epsd, 0, 2);
     }
     else
     {
-        RNGCHECK(wbs->lev_prev, 0, 8);
-        RNGCHECK(wbs->lev_next, 0, 8);
+        detect_range_violation(wbs->lev_prev, 0, 8);
+        detect_range_violation(wbs->lev_next, 0, 8);
     }
-    RNGCHECK(wbs->pnum, 0, MAXPLAYERS);
-    RNGCHECK(wbs->pnum, 0, MAXPLAYERS);
+    detect_range_violation(wbs->pnum, 0, MAXPLAYERS);
+    detect_range_violation(wbs->pnum, 0, MAXPLAYERS);
 #endif
 
     accelerate_stage = 0;
