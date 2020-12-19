@@ -381,8 +381,8 @@ extern byte*            rejectmatrix;   // for fast sight rejection
 // Expand from 16bit wad to internal 32bit blockmap.
 extern uint32_t*        blockmaphead;   // offsets in blockmap are from here
 extern uint32_t*        blockmapindex;  // Big blockmap, SSNTails
-extern int              bmapwidth;
-extern int              bmapheight;     // in mapblocks
+extern unsigned int     bmapwidth;
+extern unsigned int     bmapheight;     // in mapblocks
 extern fixed_t          bmaporgx;
 extern fixed_t          bmaporgy;       // origin of block map
 extern mobj_t**         blocklinks;     // for thing chains
