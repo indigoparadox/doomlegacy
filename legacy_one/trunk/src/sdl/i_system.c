@@ -56,8 +56,6 @@
 //
 //-----------------------------------------------------------------------------
 
-//#define DEBUG_MOUSEMOTION
-  
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -81,10 +79,6 @@
 # endif
 #endif
 
-#ifdef LMOUSE2
-#include <termios.h>
-#endif
-
 #include <libgen.h>
   // dirname function
 
@@ -104,6 +98,19 @@
 #include "m_argv.h"
 
 
+// MOUSE2_NIX dependent upon DoomLegacy headers.
+#ifdef MOUSE2_NIX
+#include <termios.h>
+#include <sys/ioctl.h>
+#endif
+
+//#define DEBUG_MOUSEMOTION
+  
+//#define DEBUG_MOUSE2
+//#define DEBUG_MOUSE2_STIMULUS
+
+
+
 extern void D_PostEvent(event_t*);
 
 // 4 joysticks should be enough for most purposes
@@ -111,10 +118,6 @@ extern void D_PostEvent(event_t*);
 int num_joysticks = 0;
 SDL_Joystick *joysticks[MAX_JOYSTICKS]; 
 
-#ifdef LMOUSE2
-int fdmouse2 = -1;
-int mouse2_started = 0;
-#endif
 
 #ifdef XBOX_CONTROLLER
 boolean check_Joystick_Xbox[ MAX_JOYSTICKS ] = {false, false, false, false};
@@ -137,7 +140,7 @@ void I_OutputMsg       (char *fmt, ...)
 //
 int  I_GetKey          (void)
 {
-    // Warning: I_GetKey emties the event queue till next keypress
+    // Warning: I_GetKey empties the event queue till next keypress
     event_t*    ev;
     int rc=0;
 
@@ -247,6 +250,8 @@ int I_JoystickGetAxis(int joynum, int axisnum)
     return 0;
 }
 
+
+
 static int vid_center_x = 100;
 static int vid_center_y = 100;
 static int mouse_x_min = 25;
@@ -255,10 +260,6 @@ static int mouse_y_min = 25;
 static int mouse_y_max = 175;
 static int lastmousex = 0;
 static int lastmousey = 0;
-
-#ifdef LMOUSE2
-static void I_GetMouse2Event(void);
-#endif
 
 // current modifier key status
 boolean shiftdown = false;
@@ -277,6 +278,21 @@ Uint8 jhat_directions[8] = {
 Uint8 previous_jhat[2] = {0, 0};
 
 
+// MOUSE2_NIX dependent upon DoomLegacy headers.
+#ifdef MOUSE2_NIX
+int mouse2_fd = -1;
+byte mouse2_started = 0;
+static void I_GetMouse2Event(void);
+#endif
+#ifdef MOUSE2_WIN
+HANDLE mouse2_filehandle = 0;
+static void I_GetMouse2Event(void);
+#endif
+#ifdef DEBUG_MOUSE2_STIMULUS
+// trigger mouse2 stimulus
+static byte  mouse2_stim_trigger = 0;
+#endif
+
 void I_GetEvent(void)
 {
   SDL_Event inputEvent;
@@ -285,8 +301,13 @@ void I_GetEvent(void)
 
   event_t event;
 
-#ifdef LMOUSE2
-  I_GetMouse2Event();
+#ifdef MOUSE2_NIX
+  if( mouse2_started )
+      I_GetMouse2Event();
+#endif
+#ifdef MOUSE2_WIN
+  if( mouse2_filehandle )
+      I_GetMouse2Event();
 #endif
 
   while (SDL_PollEvent(&inputEvent))
@@ -313,6 +334,15 @@ void I_GetEvent(void)
           else
             event.data2 = 0; // non-ASCII char
 
+#ifdef DEBUG_MOUSE2_STIMULUS
+          // Intercept some keys and fake the mouse2 input using mouse2_stim_trigger.
+          if( (event.data1 >= KEY_KEYPAD1) && (event.data1 <= KEY_KEYPAD9) )
+	  {
+              mouse2_stim_trigger = event.data1 - KEY_KEYPAD0;
+	      break;
+	  }
+#endif
+
           D_PostEvent(&event);
           break;
 
@@ -329,7 +359,7 @@ void I_GetEvent(void)
           break;
 
         case SDL_MOUSEMOTION:
-          if(cv_usemouse[0].value)
+          if(cv_usemouse[0].EV)
           {
               event.type = ev_mouse;
               event.data1 = 0;
@@ -418,7 +448,7 @@ void I_GetEvent(void)
 
         case SDL_MOUSEBUTTONDOWN:
         case SDL_MOUSEBUTTONUP:
-          if(cv_usemouse[0].value)
+          if(cv_usemouse[0].EV)
           {
               if (inputEvent.type == SDL_MOUSEBUTTONDOWN)
                 event.type = ev_keydown;
@@ -435,6 +465,7 @@ void I_GetEvent(void)
           event.type = ev_keydown;
           event.data1 = Translate_Joybutton(inputEvent.jbutton.which,
                                            inputEvent.jbutton.button);
+          event.data2 = 0;
           D_PostEvent(&event);
           break;
 
@@ -442,11 +473,13 @@ void I_GetEvent(void)
           event.type = ev_keyup;
           event.data1 = Translate_Joybutton(inputEvent.jbutton.which,
                                            inputEvent.jbutton.button);
+          event.data2 = 0;
           D_PostEvent(&event);
           break;
 
         case SDL_JOYHATMOTION: // Adding event to allow joy hat mapping
           // [Leonardo Montenegro]
+          event.data2 = 0;
           if(inputEvent.jhat.value != SDL_HAT_CENTERED)
           {
               // Joy hat pressed
@@ -546,6 +579,7 @@ void I_GetEvent(void)
           {
               if(inputEvent.jaxis.axis == 2 || inputEvent.jaxis.axis == 5)
               {
+                  event.data2 = 0;
                   if(inputEvent.jaxis.value > 0)
                   {
                       // Trigger pressed
@@ -610,7 +644,7 @@ void I_StartupMouse( boolean play_mode )
     vid_center_y = vid.height >> 1;
     lastmousex = vid_center_x;
     lastmousey = vid_center_y;
-    if( cv_usemouse[0].value && play_mode )
+    if( cv_usemouse[0].EV && play_mode )
     {
         // Enable mouse containment during play.
         SDL_Event inputEvent;
@@ -729,73 +763,360 @@ void I_OsPolling(void)
 }
 
 
-
-#ifdef LMOUSE2
 //
 // I_GetMouse2Event
 //
+
+#ifdef MOUSE2
+
+#ifdef DEBUG_MOUSE2
+static void  dump_packet( const char * msg, byte * packet, int len )
+{
+    char  bb[128];
+    int   bn = 0;
+    int   i;
+
+    if( len > 127 )  len=127;
+    for( i=0; i<len; i++ )
+        bn += snprintf( &bb[bn], 128-bn, " %X", packet[i] );
+    bb[127] = 0;
+    CONS_Printf( "%s len=%i : %s\n", msg, len, bb );
+}
+#endif
+
+#ifdef DEBUG_MOUSE2_STIMULUS
+const byte PC_stim[] = {
+ 0x40, 0x04, 0x00, 0x40, 0x10, 0x00, 0x40, 0x08, 0x00, 0x41, 0x00, 0x00,
+ 0x43, 0x31, 0x00, 0x43, 0x20, 0x00, 0x43, 0x28, 0x00, 0x43, 0x21, 0x00,
+ 0x40, 0x00, 0x10, 0x40, 0x00, 0x20, 0x40, 0x00, 0x1F, 0x44, 0x00, 0x00,
+ 0x4C, 0x00, 0x3F, 0x4C, 0x00, 0x32, 0x4C, 0x00, 0x31, 0x4C, 0x00, 0x20,
+ 0x60, 0x00, 0x00, 0x40, 0x00, 0x00, 0x50, 0x00, 0x00, 0x40, 0x00, 0x00,
+};
+const byte PC_stim_len = 12;
+const byte PC_stim_index[] = { 0, 0, 12, 24, 36, 48, 3, 15, 18, 48, 0 };
+#endif
+
+
+#define MOUSE2_BUFFER_SIZE 256
+
+// This table converts PC-Mouse button order (LB, RB)
+// to our internal button order (B3, B2, B1).
+// Converts  (LB, RB) ==> (RB, CB, LB)
+const byte PC_Mouse_to_button[4] = {0,4,1,5};
+
+// This table converts MouseSystems button order (LB, CB, RB)
+// to our internal button order (B3, B2, B1).
+// Converts  (LB, CB, RB) ==> (RB, CB, LB)
+//const byte MouseSystems_to_button[8] = {0,4,2,6,1,5,3,7}; // true high
+const byte MouseSystems_to_button[8] = {7,3,5,1,6,2,4,0}; // true low
+
+// Converts  (MB, RB, LB) ==> (RB, CB, LB)
+const byte PS2_to_button[8] = {0,1,4,5,2,3,6,7};
+
 static void I_GetMouse2Event()
 {
-  static unsigned char mdata[5];
-  static int i = 0,om2b = 0;
-  int di,j,mlp,button;
-  event_t event;
-  const int mswap[8] = {0,4,1,5,2,6,3,7};
-  if(!mouse2_started) return;
-  for(mlp=0;mlp<20;mlp++) {
-    for(;i<5;i++) {
-      di = read(fdmouse2,mdata+i,1);
-      if(di==-1) return;
+    // The system update of the serial ports is slow and there may be 15 to 30 calls
+    // before the next data read is ready.
+    // We may get an incomplete mouse packet, the partial packet is kept in m2pkt.
+    static int   m2plen = 7;  // mouse2 packet length
+    static byte  m2pkt[8];    // mouse2 packet
+    static byte  mouse2_ev_buttons = 0;
+    static byte  staleness = 0;
+
+    event_t event;
+
+    // System read is expensive, so read to buffer, and process all of it.
+    byte m2_buffer[MOUSE2_BUFFER_SIZE];
+    int  m2_len;
+    int  m2i;
+    int  mouse2_rd_x, mouse2_rd_y;
+    byte  mouse2_rd_buttons;
+
+#ifdef DEBUG_MOUSE2_STIMULUS
+    if( cv_mouse2type.EV == 0 )
+    {
+        if( staleness < 15 )  goto no_input;
+        if( mouse2_stim_trigger == 0 )  goto no_input;
+        if( cv_mouse2type.EV == 0 )
+        {
+            memcpy( m2_buffer, &PC_stim[ PC_stim_index[mouse2_stim_trigger]], PC_stim_len );
+            m2_len = PC_stim_len;
+        }
+        mouse2_stim_trigger = 0;
+        goto got_packet;
     }
-    if((mdata[0]&0xf8)!=0x80) {
-      for(j=1;j<5;j++) {
-        if((mdata[j]&0xf8)==0x80) {
-          for(i=0;i<5-j;i++) { // shift
-            mdata[i] = mdata[i+j];
-          }
+#endif
+   
+#ifdef MOUSE2_NIX
+  {
+    // Fill m2_buffer, without knowing start of packet.
+    m2_len = read(mouse2_fd, m2_buffer, MOUSE2_BUFFER_SIZE);
+    if( m2_len < 1 )
+        goto no_input;
+  }
+#endif
+
+#ifdef MOUSE2_WIN
+  {
+    COMSTAT    ComStat ;
+    DWORD      dwErrorFlags;
+    DWORD      dwLength;
+
+    ClearCommError( mouse2_filehandle, &dwErrorFlags, &ComStat ) ;
+    dwLength = min( MOUSE2_BUFFER_SIZE, ComStat.cbInQue ) ;
+
+    if( dwLength <= 0 )
+        goto no_input;
+
+    if(!ReadFile( mouse2_filehandle, m2_buffer, dwLength, &dwLength, NULL ))
+    {
+        CONS_Printf("\2Read Error on secondary mouse port\n");
+        goto no_input;
+    }
+    m2_len = dwLength;
+  }
+#endif
+
+#ifdef DEBUG_MOUSE2_STIMULUS
+got_packet:
+#endif
+       
+#ifdef DEBUG_MOUSE2
+    CONS_Printf("staleness= %i \n", staleness);
+    if( m2plen > 0 && m2plen < 5 )
+    {
+       dump_packet(" leftover", m2pkt, m2plen );
+    }
+    dump_packet( "mouse buffer", m2_buffer, m2_len );
+#endif
+
+    // Defer processing inits, most often will not have any input.
+    staleness = 0;
+    mouse2_rd_buttons = mouse2_ev_buttons; // to detect changes
+    mouse2_rd_x = mouse2_rd_y = 0;
+
+    // Mouse packets can be 3 or 4 bytes.
+    // Parse the mouse packets
+    for(m2i=0; m2i<m2_len; m2i++)
+    {
+        byte mb = m2_buffer[m2i];
+
+        // Sync detect
+        switch( cv_mouse2type.EV )
+        {
+          case 0:  // PC Mouse
+            if( mb & 0x40 )  // first byte
+                m2plen = 0;
+            break;
+
+          case 1:  // MouseSystems
+            if( (m2plen >= 5) && (mb & 0x80) )  // first byte
+                m2plen = 0;
+            break;
+
+          case 2:  // PS/2
+            if( (m2plen >= 3) && (mb & 0x04) )  // maybe first byte
+                m2plen = 0;
+            break;
+
+#if 0	     
+          default: // no sync detect, count bytes
+            if( m2plen >= 3 )
+                m2plen = 0;
+            break; 
+#endif
         }
-      }
-      if(i<5) continue;
-    } else {
-      button = mswap[~mdata[0]&0x07];
-      for(j=0;j<MOUSEBUTTONS;j++) {
-        if(om2b&(1<<j)) {
-          if(!(button&(1<<j))) { //keyup
-            event.type = ev_keyup;
-            event.data1 = KEY_MOUSE2+j;
-            D_PostEvent(&event);
-            om2b ^= 1 << j;
-          }
-        } else {
-          if(button&(1<<j)) {
-            event.type = ev_keydown;
-            event.data1 = KEY_MOUSE2+j;
-            D_PostEvent(&event);
-            om2b ^= 1 << j;
-          }
+            
+        if(m2plen > 6)  continue;
+            
+#ifdef DEBUG_MOUSE2
+        CONS_Printf( " m2pkt[%i]= %X = m2_buffer[%i]\n", m2plen, mb, m2i);
+#endif
+        m2pkt[m2plen++] = mb;
+
+        switch( cv_mouse2type.EV )
+        {
+          case 0:  // PC Mouse
+            if(m2plen==3)
+            {
+#ifdef DEBUG_MOUSE2
+                dump_packet( "PC", m2pkt, 3 );
+#endif
+                // PC mouse format, Microsoft protocol, 2 buttons.
+                mouse2_rd_buttons &= ~0x05; // B1, B3
+                mouse2_rd_buttons |= PC_Mouse_to_button[ (m2pkt[0] & 0x30) >> 4];  // RB, LB
+                int dx = (int8_t)(((m2pkt[0] & 0x03) << 6) | (m2pkt[1] & 0x3F)); // signed
+                int dy = (int8_t)(((m2pkt[0] & 0x0C) << 4) | (m2pkt[2] & 0x3F)); // signed
+#ifdef DEBUG_MOUSE2
+                CONS_Printf( "mouse buttons= %X  dx,dy = ( %i, %i )\n", mouse2_rd_buttons, dx, dy);
+#endif
+                mouse2_rd_x += (int) dx;
+                mouse2_rd_y += (int) dy;
+                goto post_event;
+            }
+            else if(m2plen==4) // fourth byte (logitech mouses)
+            {
+                 // Logitech extension to Microsoft protocol
+                 // This is only sent when CB is pressed.
+                mouse2_rd_buttons &= ~0x02;
+                mouse2_rd_buttons |= (m2pkt[3] & 0x20) >> 4; // CB => B2
+#ifdef DEBUG_MOUSE2
+                CONS_Printf( "mouse Logitech buttons %i\n", mouse2_rd_buttons);
+#endif
+                goto post_event;
+            }
+            continue;
+
+          case 1:  // MouseSystems
+            if(m2plen==5)
+            {
+#ifdef DEBUG_MOUSE2
+                dump_packet( "MS", m2pkt, 5 );
+#endif
+                // MouseSystems mouse buttons
+                mouse2_rd_buttons = MouseSystems_to_button[m2pkt[0] & 0x07];  // true low
+                // MouseSystems mouse movement
+                int dx = (int8_t)(m2pkt[1]);
+                int dy = (int8_t)(m2pkt[2]);
+                dx += (int8_t)(m2pkt[3]);
+                dy += (int8_t)(m2pkt[4]);
+#ifdef DEBUG_MOUSE2
+                CONS_Printf( "mouse buttons= %X  dx,dy = ( %i, %i )\n", mouse2_rd_buttons, dx, dy);
+#endif
+                mouse2_rd_x += dx;
+                mouse2_rd_y += dy;
+                goto post_event;
+            }
+            continue;
+
+          case 3:  // PS/2
+            if(m2plen==3)
+            {
+#ifdef DEBUG_MOUSE2
+                dump_packet( "PS2", m2pkt, 3 );
+#endif
+                // PS/2 mouse buttons
+                mouse2_rd_buttons = PS2_to_button[m2pkt[0] & 0x07];
+                // PS/2 mouse movement
+                int dx = (int8_t)((m2pkt[0] & 0x10)<<3);  // signed
+                int dy = (int8_t)((m2pkt[0] & 0x20)<<2);  // signed
+                dx = (dx<<1) | m2pkt[1];
+                dy = (dy<<1) | m2pkt[2];
+#ifdef DEBUG_MOUSE2
+                CONS_Printf( "mouse buttons= %X  dx,dy = ( %i, %i )\n", mouse2_rd_buttons, dx, dy);
+#endif
+                mouse2_rd_x += dx;
+                mouse2_rd_y += dy;
+                goto post_event;
+            }
+            continue;
+        } // switch
+        continue;
+
+    post_event:
+       {
+        // Post mouse2 events
+        byte mbk = (mouse2_rd_buttons ^ mouse2_ev_buttons); // changed buttons
+        if( mbk )  // button changed, infrequent
+        {
+            mouse2_ev_buttons = mouse2_rd_buttons;
+
+            int k;
+            for(k=0; mbk; k++, mbk>>=1)  // until have processed all changed buttons
+            {
+                if(mbk & 0x01)  // button changed
+                {
+                    byte mbm = 1<<k;
+                    event.type = (mouse2_rd_buttons & mbm)? ev_keydown : ev_keyup;
+                    event.data1= KEY_MOUSE2+k;
+                    event.data2= 0;  // must for ev_keydown
+                    D_PostEvent(&event);
+                }
+#ifdef DEBUG_MOUSE2
+                if( k > 5 )
+                {
+                    CONS_Printf("Mouse2 button in tight-loop\n");
+                    break;
+                }
+#endif
+            }
         }
-      }
-      event.data2 = ((signed char)mdata[1])+((signed char)mdata[3]);
-      event.data3 = ((signed char)mdata[2])+((signed char)mdata[4]);
-      if(event.data2&&event.data3) {
+       }
+    }
+
+    // Only post sum of mouse movement, as there is only one movement per tick anyway.
+    if( mouse2_rd_x | mouse2_rd_y )  // any movement
+    {
         event.type = ev_mouse2;
         event.data1 = 0;
+        event.data2 = mouse2_rd_x;
+        event.data3 = - mouse2_rd_y;
         D_PostEvent(&event);
-      }
     }
-    i = 0;
-  }
+
+#ifdef DEBUG_MOUSE2xx
+    if( m2plen > 0 && m2plen < 5 )
+    {
+       dump_packet("Exit leftover", m2pkt, m2plen );
+    }
+#endif
+
+    return;
+
+no_input:
+    if( staleness < 127 )
+    {
+        if( ++staleness == 32 )
+            m2plen = 7;  // clear leftover
+    }
+
+    return;
 }
+#endif
+
+
 
 //
 // I_ShutdownMouse2
 //
-static void I_ShutdownMouse2(void)
+#ifdef MOUSE2_NIX
+static void I_ShutdownMouse2_NIX(void)
 {
-  if(fdmouse2!=-1) close(fdmouse2);
+  if(mouse2_fd!=-1) close(mouse2_fd);
   mouse2_started = 0;
 }
+#endif
 
+#ifdef MOUSE2_WIN
+static void I_ShutdownMouse2_WIN(void)
+{
+    if(mouse2_filehandle)
+    {
+        event_t event;
+        int i;
+
+        SetCommMask( mouse2_filehandle, 0 ) ;
+
+        EscapeCommFunction( mouse2_filehandle, CLRDTR ) ;
+        EscapeCommFunction( mouse2_filehandle, CLRRTS ) ;
+
+        PurgeComm( mouse2_filehandle, PURGE_TXABORT | PURGE_RXABORT |
+                                     PURGE_TXCLEAR | PURGE_RXCLEAR ) ;
+
+
+        CloseHandle(mouse2_filehandle);
+
+        // emulate the up of all mouse buttons
+        for(i=0;i<MOUSEBUTTONS;i++)
+        {
+            event.type=ev_keyup;
+            event.data1=KEY_MOUSE2+i;
+            D_PostEvent(&event);
+        }
+
+        mouse2_filehandle=0;
+    }
+}
 #endif
 
 //
@@ -803,61 +1124,175 @@ static void I_ShutdownMouse2(void)
 // 
 void I_StartupMouse2 (void)
 {
-#ifdef LMOUSE2
-  struct termios m2tio;
-  int i,dtr,rts;
-
-  I_ShutdownMouse2();
-  if(cv_usemouse[1].value == 0) return;
-
-  if((fdmouse2 = open(cv_mouse2port.string,O_RDONLY|O_NONBLOCK|O_NOCTTY))==-1) {
-    CONS_Printf("Error opening %s!\n",cv_mouse2port.string);
-    return;
-  }
-
-  tcflush(fdmouse2, TCIOFLUSH);
-  m2tio.c_iflag = IGNBRK;
-  m2tio.c_oflag = 0;
-  m2tio.c_cflag = CREAD|CLOCAL|HUPCL|CS8|CSTOPB|B1200;
-  m2tio.c_lflag = 0;
-  m2tio.c_cc[VTIME] = 0;
-  m2tio.c_cc[VMIN] = 1;
-  tcsetattr(fdmouse2, TCSANOW, &m2tio);
-  strupr(cv_mouse2opt.string);
-  for(i=0,rts = dtr = -1;i<strlen(cv_mouse2opt.string);i++) {
-    if(cv_mouse2opt.string[i]=='D') {
-      if(cv_mouse2opt.string[i+1]=='-') {
-        dtr = 0;
-      } else {
-        dtr = 1;
-      }
-    }
-    if(cv_mouse2opt.string[i]=='R') {
-      if(cv_mouse2opt.string[i+1]=='-') {
-        rts = 0;
-      } else {
-        rts = 1;
-      }
-    }
-  }
-  if((dtr!=-1)||(rts!=-1)) {
-    if(!ioctl(fdmouse2, TIOCMGET, &i)) {
-      if(!dtr) {
-        i &= ~TIOCM_DTR;
-      } else {
-        if(dtr>0) i |= TIOCM_DTR;
-      }
-      if(!rts) {
-        i &= ~TIOCM_RTS;
-      } else {
-        if(rts>0) i |= TIOCM_RTS;
-      }
-      ioctl(fdmouse2, TIOCMSET, &i);
-    }
-  }
-  mouse2_started = 1;
+#ifdef DEBUG_MOUSE2
+    GenPrintf(EMSG_warn, "I_StartupMouse2\n");
 #endif
+
+#ifdef MOUSE2_NIX
+// I_StartupMouse2_NIX (void)
+    struct termios m2tio;
+    int i;
+
+    I_ShutdownMouse2_NIX();
+
+    if(cv_usemouse[1].EV == 0)  return;
+
+    #define M2PORT_LEN  24
+    char m2port[M2PORT_LEN];
+    snprintf( m2port, M2PORT_LEN-2, "/dev/%s", cv_mouse2port.string );
+    m2port[M2PORT_LEN-1] = 0;
+    mouse2_fd = open( m2port, O_RDONLY|O_NONBLOCK|O_NOCTTY );
+    if(mouse2_fd == -1)
+    {
+        CONS_Printf("Error opening %s\n", m2port);
+#ifdef DEBUG_MOUSE2_STIMULUS
+        goto mouse2_stimulus;
+#else
+        return;
+#endif
+    }
+
+    tcflush(mouse2_fd, TCIOFLUSH);
+    m2tio.c_iflag = IGNBRK;
+    m2tio.c_oflag = 0;
+    m2tio.c_cflag = ( cv_mouse2type.EV == 0 )?
+        CREAD|CLOCAL|HUPCL|CSTOPB|B1200 | CS7  // PC mouse
+      : CREAD|CLOCAL|HUPCL|CSTOPB|B1200 | CS8; // MS and others
+    m2tio.c_lflag = 0;
+    m2tio.c_cc[VTIME] = 0;
+    m2tio.c_cc[VMIN] = 1;
+    tcsetattr(mouse2_fd, TCSANOW, &m2tio);
+
+    // Determine DTR and RTS state from opt string.
+    unsigned int  tiocm_0 = 0;
+    unsigned int  tiocm_1 = 0;
+    int optlen = strlen(cv_mouse2opt.string) - 1;  // need 2 char
+    for(i=0; i< optlen; i++)
+    {
+        char c1 = cv_mouse2opt.string[i];
+        char c2 = cv_mouse2opt.string[i+1];
+        if( c1=='D' || c1=='d' )
+        {
+            if(c2 == '-')
+	        tiocm_0 |= TIOCM_DTR;  // DTR off
+            else
+                tiocm_1 |= TIOCM_DTR;  // DTR on
+        }
+        if( c1=='R' || c1=='r' )
+        {
+            if(c2 == '-')
+                tiocm_0 |= TIOCM_RTS;  // RTS off
+            else
+                tiocm_1 |= TIOCM_RTS;  // RTS on
+        }
+    }
+    // Set DTR and RTS
+    if( tiocm_0 | tiocm_1 )
+    {
+        unsigned int tiocm_v;
+        if(!ioctl(mouse2_fd, TIOCMGET, &tiocm_v)) {
+            tiocm_v &= ~tiocm_0;  // DTR,RTS off
+            tiocm_v |= tiocm_1;  // DTR,RTS on
+            ioctl(mouse2_fd, TIOCMSET, &tiocm_v);
+        }
+    }
+    mouse2_started = 1;
+#endif
+
+#ifdef MOUSE2_WIN
+// I_StartupMouse2_WIN (void)
+    // secondary mouse don't use directX, therefore forget all about grabing, acquire, etc...
+    DCB        dcb ;
+
+    I_ShutdownMouse2_WIN();
+
+    if(cv_usemouse[1].EV == 0)  return;
+   
+    if(!mouse2_filehandle)
+    {
+#ifdef DEBUG_MOUSE2
+        printf("Open Mouse2 device\n");
+        GenPrintf(EMSG_warn, "Open Mouse2 device\n");
+#endif
+
+        // COM file handle
+        mouse2_filehandle = CreateFile( cv_mouse2port.string, GENERIC_READ | GENERIC_WRITE,
+                                       0,                     // exclusive access
+                                       NULL,                  // no security attrs
+                                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
+        if( mouse2_filehandle == INVALID_HANDLE_VALUE )
+        {
+	    const char * msg = "Error";
+            int e=GetLastError();
+            if( e==5 )  msg = "Access denied, may be in use";
+            CONS_Printf("\2Can't open %s : %s.\n", cv_mouse2port.string, msg );
+            mouse2_filehandle=0;
+#ifdef DEBUG_MOUSE2_STIMULUS
+	    goto mouse2_stimulus;
+#else
+            return;
+#endif
+        }
+    }
+#ifdef DEBUG_MOUSE2
+    printf("Setup Mouse2\n");
+    GenPrintf(EMSG_warn, "Setup Mouse2\n");
+#endif
+    // getevent when somthing happens
+    //SetCommMask( mouse2_filehandle, EV_RXCHAR ) ;
+    
+    // buffers
+    SetupComm( mouse2_filehandle, MOUSE2_BUFFER_SIZE, MOUSE2_BUFFER_SIZE ) ;
+    
+    // purge buffers
+    PurgeComm( mouse2_filehandle, PURGE_TXABORT | PURGE_RXABORT |
+                                 PURGE_TXCLEAR | PURGE_RXCLEAR ) ;
+
+    // setup port to 1200 7N1
+    dcb.DCBlength = sizeof( DCB ) ;
+
+    GetCommState( mouse2_filehandle, &dcb ) ;
+
+    dcb.BaudRate = CBR_1200;
+    // PC mouse is 7-bit, others are 8-bit
+//    dcb.ByteSize = 7;
+//    dcb.ByteSize = 8;
+    dcb.ByteSize = (cv_mouse2type.EV == 0)? 7 : 8;
+
+    dcb.Parity = NOPARITY ;
+    dcb.StopBits = ONESTOPBIT ;
+
+    dcb.fDtrControl = DTR_CONTROL_ENABLE ;
+    dcb.fRtsControl = RTS_CONTROL_ENABLE ;
+
+    dcb.fBinary = TRUE ;
+    dcb.fParity = TRUE ;
+
+    SetCommState( mouse2_filehandle, &dcb ) ;
+
+    I_AddExitFunc (I_ShutdownMouse2_WIN);
+#endif
+   
+   
+#ifdef DEBUG_MOUSE2_STIMULUS
+mouse2_stimulus:
+    if( cv_mouse2type.EV == 0 )
+    {
+        // Enable mouse2 for fake input.        
+#ifdef MOUSE2_NIX
+        mouse2_started = 1;
+#endif
+#ifdef MOUSE2_WIN
+        mouse2_filehandle = 5; // fake, but effective
+#endif
+        return;
+    }
+#endif
+
+    return;
 }
+
+
 
 byte     mb_used = 6+2; // 2 more for caching sound
 
@@ -1069,8 +1504,7 @@ char *I_GetUserName(void)
         if ((p = getenv("username")) == NULL)
           return NULL;
 
-  strncpy(username, p, MAXPLAYERNAME-1);
-  username[MAXPLAYERNAME-1] = 0;
+  strncpy(username, p, MAXPLAYERNAME);
 
 #ifdef WIN32
   }

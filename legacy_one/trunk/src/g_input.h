@@ -124,13 +124,22 @@ extern consvar_t   cv_mouse_motion;
 #endif
 
 // mouse2
-extern consvar_t   cv_mouse2port;
-#ifdef LMOUSE2
-extern consvar_t   cv_mouse2opt;
-#endif
 extern consvar_t   cv_mouse2_invert;
 extern consvar_t   cv_mouse2_sens_x;
 extern consvar_t   cv_mouse2_sens_y;
+#ifdef MOUSE2
+extern consvar_t   cv_mouse2port;
+extern consvar_t   cv_mouse2opt;
+#ifdef SMIF_SDL
+extern consvar_t   cv_mouse2type;
+#endif
+# ifdef LINUX
+#  define MOUSE2_NIX
+# endif
+# ifdef WIN32
+#  define MOUSE2_WIN
+# endif
+#endif
 
 extern consvar_t   cv_mouse_double;
 

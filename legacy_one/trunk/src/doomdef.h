@@ -180,6 +180,9 @@
 // XBOX controller
 #define XBOX_CONTROLLER
 
+// Second mouse
+#define MOUSE2
+
 // Allow players to wait for game start.
 #define WAIT_GAME_START_INTERMISSION
 

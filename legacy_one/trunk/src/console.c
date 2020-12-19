@@ -713,6 +713,10 @@ static int     comskips,varskips;
         return false;
     }
 
+    if( key >= KEY_NUMKB )
+        return false;  // mouse, joystick button
+
+   
     // Console prompt active
     // [WDJ] Trying to use a switch stmt, increases the size for unknown
     // reasons related to optimization.  It uses extra tests to gain speed.
