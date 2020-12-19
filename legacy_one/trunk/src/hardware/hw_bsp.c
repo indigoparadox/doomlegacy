@@ -1885,7 +1885,7 @@ void loading_status( void )
 // Recursive
 // Called from HWR_CreatePlanePolygons at load time.
 static
-void HWR_WalkBSPNode (int bspnum, wpoly_t* poly, unsigned short* leafnode, fixed_t *bbox)
+void HWR_WalkBSPNode (int bspnum, wpoly_t* poly, uint16_t * leafnode, fixed_t *bbox)
 {
     node_t*     bsp;
 
@@ -2007,7 +2007,7 @@ bad_subsector:
                 else if (num_poly_subsector > 0x7fff)
                     I_Error ("HWR_WalkBSPNode : num_poly_subsector > 0x7fff\n");
 
-                *leafnode = (unsigned short)num_poly_subsector | NF_SUBSECTOR;
+                *leafnode = (uint16_t)(num_poly_subsector | NF_SUBSECTOR);
                 poly_subsectors[num_poly_subsector].planepoly = poly;
                 num_poly_subsector++;
 

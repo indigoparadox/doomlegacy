@@ -185,17 +185,21 @@ static boolean P_SightTraverseIntercepts ( void )
     
     while (count--)
     {
+        // Find closest
         dist = FIXED_MAX;
         for (scan = intercepts ; scan<intercept_p ; scan++)
+        {
             if (scan->frac < dist)
             {
                 dist = scan->frac;
                 in = scan;
             }
-            
-            if ( !PTR_SightTraverse (in) )
-                return false;                   // don't bother going farther
-            in->frac = FIXED_MAX;
+	}
+
+        if ( !PTR_SightTraverse (in) )
+            return false;                   // don't bother going farther
+
+        in->frac = FIXED_MAX;  // remove from find-closest
     }
     
     return true;            // everything was traversed

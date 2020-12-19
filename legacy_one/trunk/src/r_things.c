@@ -2854,7 +2854,8 @@ void Sprite_Corona_Light_setup( vissprite_t * vis )
     // more realistique corona !
     if( cz >= Z2 )  goto no_corona;
 
-    if( Sprite_Corona_Light_fade( lsp, cz, (int)vismobj ) == 0 )  goto no_corona;
+    int mobjid = (uintptr_t)vismobj; // mobj dependent id
+    if( Sprite_Corona_Light_fade( lsp, cz, mobjid>>1 ) == 0 )  goto no_corona;
    
     if( corona_bright )
     {

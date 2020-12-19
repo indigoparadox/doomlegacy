@@ -3205,7 +3205,6 @@ int V_StringWidth( const char *string)
 {
     int i;
     int sw = 0;
-    int c;
     int ln = strlen(string);
 
     if(use_font1)
@@ -3217,7 +3216,9 @@ int V_StringWidth( const char *string)
     for (i = 0; i < ln; i++)
     {
         // hufont only has uppercase
-        c = toupper(string[i]) - HU_FONTSTART;
+        // Prevent using signed char as index.
+        unsigned char uc = string[i];
+        int c = toupper(uc) - HU_FONTSTART;
         if (c < 0 || c >= HU_FONTSIZE)
             sw += 4;
         else

@@ -36,7 +36,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-int strupr(char *n) {
+int strupr(unsigned char *n) {
       int i;
       for (i=0;n[i];i++) {
                n[i] = toupper(n[i]);
@@ -44,7 +44,7 @@ int strupr(char *n) {
       return 1;
 }
 
-int strlwr(char *n) {
+int strlwr(unsigned char *n) {
       int i;
       for (i=0;n[i];i++) {
                n[i] = tolower(n[i]);

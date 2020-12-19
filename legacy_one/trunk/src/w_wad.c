@@ -269,14 +269,14 @@ int W_Load_WadFile ( const char * filename )
     // findfile requires a buffer of (at least) MAX_WADPATH
     char             filenamebuf[MAX_WADPATH];
     char *           msg;
-    lumpinfo_t *     lumpinfo;
+    lumpinfo_t *     lumpinfo = NULL;
     lumpcache_t *    lumpcache;
     wadfile_t *      wadfile;
 #ifdef HWRENDER    
     MipPatch_t *     grPatch;
 #endif
     int              filenum;  // return value
-    int              numlumps;
+    int              numlumps = 0;
     int              handle = -1;
     filestatus_e     fs;
     int              i, m;
@@ -384,7 +384,7 @@ int W_Load_WadFile ( const char * filename )
         lumpinfo->position = 0;
         lumpinfo->size = file_size;
         lumpinfo->lump_namespace = LNS_dehacked;
-        strncpy(lumpinfo->name, "DEHACKED", 8);
+        memcpy(lumpinfo->name, "DEHACKED", 8);  // name array, no term
     }
     else if( fc == FC_wad )
     {

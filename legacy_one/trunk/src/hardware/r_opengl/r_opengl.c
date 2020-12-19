@@ -346,11 +346,12 @@ void DBG_Printf( LPCTSTR lpFmt, ... )
 // To Fix overrun of DBG_Printf buffer by long GL_EXTENSION string
 void  DBG_Print_lines( const char * longstr )
 {
-    char lbf[ LOGLINELEN+1 ];
+    char lbf[ LOGLINELEN+2 ];
     while( longstr )
     {
-        lbf[LOGLINELEN] = 0;
-        strncpy( lbf, longstr, LOGLINELEN+1 );  // get some or all
+        lbf[LOGLINELEN+1] = 0; // safety
+        lbf[LOGLINELEN] = 0;  // detect
+        strncpy( lbf, longstr, LOGLINELEN );  // get some or all
         if( lbf[LOGLINELEN] )  // too long, partial copy
         {
             lbf[LOGLINELEN] = 0;

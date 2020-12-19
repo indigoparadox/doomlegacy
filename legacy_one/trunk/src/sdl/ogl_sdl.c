@@ -44,6 +44,8 @@
 #include "doomincl.h"
 
 #include <SDL.h>
+// Will use gl.h, so block SDL glext redefine.
+#define NO_SDL_GLEXT
 #include <SDL_opengl.h>
 
 #include "hardware/r_opengl/r_opengl.h"

@@ -433,8 +433,9 @@ void HWR_DoCoronasLighting(vxtx3d_t *outVerts, gr_vissprite_t *spr)
         if( cz >= Z2 )
             return;
 
-        if( Sprite_Corona_Light_fade( lsp, cz, ((int)spr->mobj) ) ==  0 )  goto no_corona;
-       
+        int mobjid = (uintptr_t)spr->mobj;  // mobj dependent light selector
+        if( Sprite_Corona_Light_fade( lsp, cz, mobjid>>1 ) ==  0 )  goto no_corona;
+
         // Sprite has a corona, and coronas are enabled.
         Surf.FlatColor.rgba = lsp->corona_color.rgba;
         Surf.FlatColor.s.alpha = corona_alpha;
