@@ -1,6 +1,6 @@
 Title: Compiling Doom Legacy 1.4x
 Author: Wesley Johnson
-Date: 2020-8-25
+Date: 2020-12-20
 
 In order to compile Doom Legacy 1.4x SDL you'll need to have the following
 libraries installed on your system.
@@ -228,19 +228,22 @@ With a BUILD directory:
 >> make BUILD=x11 DEBUG=1
 
 
-10. Example:
+10. Example: X11 DEBUG
 >> make BUILD=x11d clean
-
-11. Example:
 >> make BUILD=x11d DEBUG=1 MIXER=1
 
-12. Example MinGW:
+Debugging with X11 can be difficult.
+Keep your game window and debugging window separated.
+Be prepared to switch to another console and kill the game.
+Print information to a log file rather than try to look at it
+with a debugger.
+
+11. Example: MinGW
 Must use mingw32-make, not the make command from MSYS.
 >> mingw32-make DEBUG=1 clean
 
-13. Read the Makefile for the help at the top of the file.
+12. Read the Makefile for the help at the top of the file.
 This will document the latest commands.
 
 
 See docs/source.html for more details.
-
