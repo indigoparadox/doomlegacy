@@ -253,7 +253,7 @@ void I_Show_EndText( uint16_t * text )
         if( cv_textout.EV == 2 )  // UTF8
         {
             // [MB] 2020-04-26: Convert data to Unicode and print as UTF-8
-            printf( cp437_to_utf[c] );
+            printf( "%s", cp437_to_utf[c] );
 	}
         else
         {

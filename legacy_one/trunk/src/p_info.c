@@ -621,7 +621,7 @@ void P_Load_LevelInfo( void )
     endlump_cp = lump + lumpsize; // end of lump
     while(fs_src_cp < endlump_cp)
     {
-        register char ch = *fs_src_cp;
+        register unsigned char ch = *fs_src_cp;
         if(ch == '\n') // end of line
         {
           *rlp = '\0';

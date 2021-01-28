@@ -3299,12 +3299,16 @@ void P_UnArchiveScripts()
 static
 boolean SG_fragglescript_detect( void )
 {
+    int i;
 #ifdef FS_ARRAYLIST_STRUCTHEAD
     if( fs_arraylist.next ) goto found_state;	// start of arrays
 #else
     if( fs_arraylist ) goto found_state;	// start of arrays
 #endif
-    if( fs_levelscript.variables ) goto found_state;  // levelscript has vars
+    for(i=0; i<VARIABLESLOTS; i++)
+    {
+        if( fs_levelscript.variables[i] ) goto found_state;  // levelscript has vars
+    }
     if( fs_runningscripts.next ) goto found_state;  // there is a running script
     if( script_camera_on ) goto found_state;
     if( script_camera.mo || script_camera.viewheight

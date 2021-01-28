@@ -369,7 +369,7 @@ typedef void (*menufunc_t)(int choice);
 
 // [smite] dirty hack, contains a second parameter to IT_KEYHANDLER functions
 // (int choice is the key)
-static char input_char;
+static unsigned char input_char;
 // Return 0= continue, 1= intercept key, 2= testing.
 static byte (*key_handler2)(int key) = NULL;  // keyboard intercept 
 
@@ -5316,7 +5316,7 @@ boolean M_Responder (event_t* ev)
     int i;
     int key = KEY_NULL; // key pressed (if any)
     int button_key = 0; // mouse and joystick specific
-    char ch = '\0';  // ASCII char it corresponds to
+    unsigned char ch = '\0';  // ASCII char it corresponds to
 
     switch (ev->type )
     {

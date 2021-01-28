@@ -314,7 +314,7 @@ void HWR_WallLighting(vxtx3d_t *wlVerts)
         if( !dynlights->mo[j]->state )
             return;
         // next state is null so fade out with alpha
-        if( (dynlights->mo[j]->state->nextstate == S_NULL) )
+        if( dynlights->mo[j]->state->nextstate == S_NULL )
             Surf.FlatColor.s.alpha *= (float)dynlights->mo[j]->tics/(float)dynlights->mo[j]->state->tics;
 
         HWD.pfnDrawPolygon ( &Surf, wlVerts, 4, LIGHTMAPFLAGS );
@@ -392,7 +392,7 @@ void HWR_PlaneLighting(vxtx3d_t *clVerts, int nrClipVerts)
             return;
 
         // next state is null so fade out with alpha
-        if( (dynlights->mo[j]->state->nextstate == S_NULL) )
+        if( dynlights->mo[j]->state->nextstate == S_NULL )
             Surf.FlatColor.s.alpha *= (float)dynlights->mo[j]->tics/(float)dynlights->mo[j]->state->tics;
 
         HWD.pfnDrawPolygon ( &Surf, clVerts, nrClipVerts, LIGHTMAPFLAGS );

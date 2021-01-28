@@ -2050,7 +2050,7 @@ void SF_LineAttack(void)
     mobj_t * mo;
     angle_t aiming;
     int  damage, angle, slope;
-    int	 short fixedtodeg = 182.033;
+    const int short fixedtodeg = 182; // 182.033
 
     if (t_argc < 3)  goto err_numarg; // [WDJ]
 

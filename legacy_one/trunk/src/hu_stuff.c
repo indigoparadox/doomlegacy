@@ -159,9 +159,9 @@ static byte  hu_HWR_patchstore;  // the HWR_patchstore setting used by fonts.
 // -------
 // protos.
 // -------
-static void  HU_Draw_DeathmatchRankings (void);
-static void  HU_Draw_Crosshair (void);
-static void  HU_Draw_Tip();
+static void  HU_Draw_DeathmatchRankings( void );
+static void  HU_Draw_Crosshair( void );
+static void  HU_Draw_Tip( void );
 
 
 
@@ -272,12 +272,12 @@ void Command_Say_f (void)
         return;
     }
 
-    buf[0]=255;  // broadcast
-    strcpy(&buf[1],COM_Argv(1));
+    buf[0]=(unsigned char)255;  // broadcast
+    strcpy(&buf[1], COM_Argv(1));
     for(i=2; i<j; i++)
     {
         strcat(&buf[1]," ");
-        strcat(&buf[1],COM_Argv(i));
+        strcat(&buf[1], COM_Argv(i));
     }
     // as mainplayer
     Send_NetXCmd(XD_SAY, buf, strlen(buf+1)+2);
@@ -302,7 +302,7 @@ void Command_Sayto_f (void)
     if(playernum > MAXPLAYERS)
         return;  // not found
 
-    buf[0] = playernum;    // 0..127
+    buf[0] = (unsigned char)playernum;    // 0..127
     strcpy(&buf[1],COM_Argv(2));
     for(i=3; i<j; i++)
     {
@@ -326,7 +326,7 @@ void Command_Sayteam_f (void)
     }
 
     // Players 0..(MAXPLAYERS-1) are known as Player 1 to MAXPLAYERS to user.
-    buf[0] = consoleplayer & 0x80;  // 128..254
+    buf[0] = (unsigned char)( consoleplayer & 0x80 );  // 128..254
     strcpy(&buf[1],COM_Argv(1));
     for(i=2; i<j; i++)
     {
@@ -468,7 +468,7 @@ static boolean HU_Chat_push_back(char c)
   return true;
 }
 
-static boolean HU_Chat_pop_back()
+static boolean HU_Chat_pop_back( void )
 {
   if (tail == 0)
     return false;
@@ -478,18 +478,20 @@ static boolean HU_Chat_pop_back()
   return true;
 }
 
-static void HU_Chat_clear()
+static void HU_Chat_clear( void )
 {
   tail = 0;
   w_chat[tail] = '\0';
 }
 
-static boolean HU_Chat_empty()
+static inline boolean HU_Chat_empty( void )
 {
   return tail == 0;
 }
 
-static void HU_Chat_send()
+// global
+//  w_chat : string
+static void HU_Chat_send( void )
 {
   COM_BufInsertText(va("say %s", w_chat));
 }
@@ -549,7 +551,7 @@ boolean HU_Responder (event_t *ev)
           {
               // send the message
               if (tail > 1)
-                HU_Chat_send(w_chat);
+                HU_Chat_send();  // w_chat
 
               HU_Chat_clear();
               chat_on = false;

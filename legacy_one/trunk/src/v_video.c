@@ -3259,7 +3259,7 @@ lumpnum_t  FontBBaseLump;
 // per drawinfo
 void V_DrawTextB(const char *text, int x, int y)
 {
-    char c;
+    unsigned char c;
     patch_t *p;
 
     while ((c = *text++) != 0)
@@ -3282,7 +3282,7 @@ void V_DrawTextB(const char *text, int x, int y)
 // per drawinfo
 void V_DrawTextBGray(const char *text, int x, int y)
 {
-    char c;
+    unsigned char c;
     patch_t *p;
 
     while ((c = *text++) != 0)
@@ -3312,7 +3312,7 @@ void V_DrawTextBGray(const char *text, int x, int y)
 
 int V_TextBWidth(const char *text)
 {
-    char c;
+    unsigned char c;
     int width;
     patch_t *p;
 

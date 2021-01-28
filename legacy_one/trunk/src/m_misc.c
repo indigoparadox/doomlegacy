@@ -391,7 +391,7 @@ void Command_LoadConfig_f (void)
     char cfgname[MAX_WADPATH];
     COM_args_t  carg;
     byte  namearg = 1;
-    char  other_flag = 0;
+    unsigned char  other_flag = 0;
     
     COM_Args( &carg );
     if( carg.num < 2 || carg.num > 3 )  goto bad_syntax;
