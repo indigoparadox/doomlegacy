@@ -130,7 +130,7 @@ extern consvar_t   cv_mouse2_sens_y;
 #ifdef MOUSE2
 extern consvar_t   cv_mouse2port;
 extern consvar_t   cv_mouse2opt;
-#ifdef SMIF_SDL
+#if defined( SMIF_SDL ) || defined( SMIF_WIN32 ) || defined( SMIF_X11 )
 extern consvar_t   cv_mouse2type;
 #endif
 # ifdef LINUX

@@ -237,19 +237,23 @@ int btmask = 0;
 #ifdef LJOYSTICK
 extern void I_GetJoyEvent();
 #endif
-#ifdef LMOUSE2
-extern void I_GetMouse2Event();
+#ifdef MOUSE2
+extern byte mouse2_started = 0;
+static void I_GetMouse2Event(void);
 #endif
 
 void I_GetEvent(void)
 {
   struct timeval nowait = { 0, 0 };
-#ifdef LMOUSE2
-  I_GetMouse2Event();
+
+#ifdef MOUSE2
+  if( mouse2_started )
+    I_GetMouse2Event();
 #endif
 #ifdef LJOYSTICK
   I_GetJoyEvent();
 #endif
+
   while (ggiEventPoll(g_screen, ev_mask, &nowait)!=evNothing) {
     // There is a desirable event
     ggi_event ggi_ev;
@@ -265,14 +269,26 @@ void I_GetEvent(void)
     case evKeyPress:
       doom_ev.type = ev_keydown;
       if (I_GIITranslateKey(&ggi_ev.key, &doom_ev) >0 )
+      {
+#ifdef DEBUG_MOUSE2_STIMULUS
+        // Intercept some keys and fake the mouse2 input using mouse2_stim_trigger.
+        if( (event.data1 >= KEY_KEYPAD1) && (event.data1 <= KEY_KEYPAD9) )
+        {
+            mouse2_stim_trigger = event.data1 - KEY_KEYPAD0;
+            break;
+        }
+#endif
         D_PostEvent(&doom_ev);
       //GenPrintf( EMSG_debug,"p:%4x\n",doom_ev.data1);
+      }
       break;
     case evKeyRelease:
       doom_ev.type = ev_keyup;
       if (I_GIITranslateKey(&ggi_ev.key, &doom_ev) >0 )
+      {
         D_PostEvent(&doom_ev);
       //GenPrintf( EMSG_debug,"r:%4x\n",doom_ev.data1);
+      }
       break;
     case evPtrRelative:
       m_x += ggi_ev.pmove.x;

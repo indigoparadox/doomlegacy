@@ -820,19 +820,26 @@ boolean         shmFinished;
 #ifdef LJOYSTICK
 extern void I_GetJoyEvent();
 #endif
-#ifdef LMOUSE2
-extern void I_GetMouse2Event();
+#ifdef MOUSE2
+extern byte mouse2_started;
+#ifdef DEBUG_MOUSE2_STIMULUS
+extern byte mouse2_stim_trigger;
 #endif
+void I_GetMouse2Event(void);
+#endif
+
+
 void I_GetEvent(void)
 {
-
     event_t event;
 #ifdef LJOYSTICK
     I_GetJoyEvent();
 #endif
-#ifdef LMOUSE2
-    I_GetMouse2Event();
+#ifdef MOUSE2
+    if( mouse2_started )
+        I_GetMouse2Event();
 #endif
+
     // put event-grabbing stuff in here
     XNextEvent(X_display, &X_event);
     switch (X_event.type)
@@ -841,6 +848,14 @@ void I_GetEvent(void)
         event.type = ev_keydown;
         event.data1 = xlatekey(X_event.xkey.keycode, 1);
         event.data2 = to_ASCII(event.data1, shiftdown);
+#ifdef DEBUG_MOUSE2_STIMULUS
+        // Intercept some keys and fake the mouse2 input using mouse2_stim_trigger.
+        if( (event.data1 >= KEY_KEYPAD1) && (event.data1 <= KEY_KEYPAD9) )
+        {
+            mouse2_stim_trigger = event.data1 - KEY_KEYPAD0;
+	    break;
+	}
+#endif
         D_PostEvent(&event);
         break;
 
@@ -1479,11 +1494,11 @@ static void grabsharedmemory(int size)
               GenPrintf(EMSG_info,
                       "Was able to kill my old shared memory\n");
             else
-              I_Error("Was NOT able to kill my old shared memory");
+              I_Error("Was NOT able to kill my old shared memory\n");
 
             id = shmget((key_t)key, size, IPC_CREAT|0777);
             if (id==-1)
-              I_Error("Could not get shared memory");
+              I_Error("Could not get shared memory\n");
 
             rc=shmctl(id, IPC_STAT, &shminfo);
 
@@ -1509,7 +1524,7 @@ static void grabsharedmemory(int size)
       }
       else
       {
-        I_Error("could not get stats on key=%d", key);
+        I_Error("could not get stats on key=%d\n", key);
       }
     }
     else
@@ -1518,7 +1533,7 @@ static void grabsharedmemory(int size)
       if (id==-1)
       {
         GenPrintf(EMSG_error, "errno=%d\n", errno);
-        I_Error("Could not get any shared memory");
+        I_Error("Could not get any shared memory\n");
       }
       break;
     }

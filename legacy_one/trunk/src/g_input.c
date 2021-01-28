@@ -98,8 +98,8 @@ CV_PossibleValue_t mouse2port_cons_t[] = {
 #endif
 consvar_t cv_mouse2port = { "mouse2port", CV_DEFAULT_PORT , CV_SAVE|CV_STRING|CV_CALL|CV_NOINIT, mouse2port_cons_t, I_StartupMouse2 };
 consvar_t cv_mouse2opt = { "mouse2opt", "0", CV_SAVE|CV_STRING|CV_CALL|CV_NOINIT, NULL, I_StartupMouse2 };
-#if defined( SMIF_SDL ) || defined( SMIF_WIN32 )
-// Only in SDL, WIN32 for now.
+#if defined( SMIF_SDL ) || defined( SMIF_WIN32 ) || defined( SMIF_X11 )
+// Only in SDL, WIN32, X11 for now.
 CV_PossibleValue_t mouse2type_cons_t[] = { {0, "PC"}, {1, "MS"}, {2, "PS2"}, {0, NULL} };
 consvar_t cv_mouse2type = { "mouse2type", "0" , CV_SAVE|CV_STRING|CV_CALL|CV_NOINIT, mouse2type_cons_t, I_StartupMouse2 };
 #endif
