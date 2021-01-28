@@ -170,6 +170,7 @@ int XShmGetEventBase( Display* dpy );
 #include "doomstat.h"
 #include "i_system.h"
 #include "v_video.h"
+  // vid_mode_table
 #include "m_argv.h"
 #include "m_menu.h"
 #include "d_main.h"
@@ -179,7 +180,6 @@ int XShmGetEventBase( Display* dpy );
 #include "st_stuff.h"
 #include "g_game.h"
 #include "i_video.h"
-  // vid_mode_table, etc
 #include "screen.h"
   // DRAW8PAL
 #include "hardware/hw_main.h"
@@ -271,9 +271,10 @@ static int voodooModes[NUM_VOODOOMODES][2] = {
 
 static boolean vidmode_ext; // Are videmode extensions available?
 static boolean vidmode_active = false;
-static XF86VidModeModeInfo **vidmodes;
+// List of vidmodes from XF86. vidmap will index into this list.
+// Alloc by XF86, free by caller.
+static XF86VidModeModeInfo ** fullvidmodes = NULL;
 static int num_fullvidmodes = 0;  // num in vidmodes
-static int lowest_vidmode = 0;
 
 // [WDJ] Submitted by pld-linux patch lib.  Handle larger number of vidmodes without crash.
 #define MAX_NUM_VIDMODES (100)
@@ -288,45 +289,39 @@ static int vidmap[MAX_NUM_VIDMODES];
 // excluding those too large for our limits
 static void vidmodes_to_vidmap( void )
 {
-    boolean finished = false;  // bubble sort done
-    int i;
+    int i, j;
    
     // initialize mapping
     // exclude modes which are too large (to prevent X-Server problems)
     num_vidmodes = 0;
     for(i=0; i<num_fullvidmodes; i++)
     {
-        if(vidmodes[i]->hdisplay <= MAXVIDWIDTH
-           && vidmodes[i]->vdisplay <= MAXVIDHEIGHT)
+        XF86VidModeModeInfo * vm = fullvidmodes[i];
+        if(vm->hdisplay <= MAXVIDWIDTH
+           && vm->vdisplay <= MAXVIDHEIGHT)
         {
             // only init vidmap when mode sizes are within our limits
-            vidmap[num_vidmodes++] = i;
+            // Insert sort, largest first.
+            unsigned int vs1 = vm->hdisplay * vm->vdisplay;
+            for(j=0; j<num_vidmodes; j++)
+            {
+                XF86VidModeModeInfo * vm2 = fullvidmodes[ vidmap[j] ];
+                unsigned int vs2 = vm2->hdisplay * vm2->vdisplay;
+                // Largest first in the vidmap.
+                if( vs1 > vs2 )
+                {
+                    memmove( &vidmap[j+1], &vidmap[j], (num_vidmodes - j) * sizeof(int) );
+                    break;
+                }
+            }
+            vidmap[j] = i;
+            num_vidmodes++;
+
             // limit num of modes at usage of index
             if( num_vidmodes >= MAX_NUM_VIDMODES )
                 break;
         }
     }
-   
-    // bubble sort modes, largest first
-    do
-    {
-        finished = true;
-
-        for(i=0; i<num_vidmodes-1; i++)
-        {
-            int e1 = vidmap[i];
-            int e2 = vidmap[i+1];
-            // compare h*w of [i] with [i+1]
-            if(vidmodes[e1]->hdisplay * vidmodes[e1]->vdisplay <
-               vidmodes[e2]->hdisplay * vidmodes[e2]->vdisplay)
-            {
-                // swap entries
-                vidmap[i] = e2;
-                vidmap[i+1] = e1;
-                finished = false;
-            }
-        }
-    } while(!finished);
 }
 
 // Set hardware vidmodes and vidmap, from X_display, X_screen
@@ -334,12 +329,16 @@ static void determine_VidModes(void)
 {
     if(vidmode_ext)
     {
-        // get fullscreen modes to vidmodes
-        XF86VidModeGetAllModeLines(X_display, X_screen, &num_fullvidmodes, &vidmodes);
+        // Only get this once, to preserve the orig vidmode.
+        if( fullvidmodes == NULL )
+        {
+            // get fullscreen modes to vidmodes
+            XF86VidModeGetAllModeLines(X_display, X_screen, &num_fullvidmodes, &fullvidmodes);
+              // vidmodes is allocated, and should be freed by caller.
+              // The first element is the current mode.
+        }
 
         vidmodes_to_vidmap();
-
-        lowest_vidmode = num_vidmodes - 1;
     }
     else
     {
@@ -392,7 +391,7 @@ static void findVisual(void)
       (XMatchVisualInfo(X_display, X_screen, 32, TrueColor, &X_visualinfo))
       { x_drawmode = DRAW32; }
    else
-      I_Error("no supported visual found");
+      I_Error("no supported visual found\n");
    X_visual = X_visualinfo.visual;
 
    return;
@@ -492,27 +491,29 @@ static void determineColorMask(void)
 // Sets x_bitpp and x_bytepp from X_visualinfo.depth
 static void determineBPP(void)
 {
-   int count;
+   int pixmap_count;
    XPixmapFormatValues* X_pixmapformats;  // temp
 
-   X_pixmapformats = XListPixmapFormats(X_display,&count);
+   X_pixmapformats = XListPixmapFormats(X_display, &pixmap_count);
 
    // valid depth are 1, 4, 8, 15, 16, 24, 32
    if (X_pixmapformats) {
       int i;
       x_bitpp=0;
       // search pixmapformats for the depth
-      for (i=0; i<count; i++) {
+      for (i=0; i<pixmap_count; i++) {
          if (X_pixmapformats[i].depth == X_visualinfo.depth) {
             x_bitpp = X_pixmapformats[i].bits_per_pixel;
             break;
          }
       }
       if (x_bitpp==0)
-         I_Error("Could not determine bits_per_pixel");
+         I_Error("Could not determine bits_per_pixel\n");
+
       XFree(X_pixmapformats);
    } else
-      I_Error("Could not get list of pixmap formats");
+      I_Error("Could not get list of pixmap formats\n");
+
    x_bytepp = (x_bitpp+7)/8;
    if( verbose )
       GenPrintf(EMSG_ver, "Video depth %i, x_bitpp %i, x_bytepp %i\n", X_visualinfo.depth, x_bitpp, x_bytepp );
@@ -548,9 +549,9 @@ static char * initDisplay(void)
     if (!X_display)
     {
         if (displayname)
-            I_Error("Could not open display [%s]", displayname);
+            I_Error("Could not open display [%s]\n", displayname);
         else
-            I_Error("Could not open display (DISPLAY=[%s])", getenv("DISPLAY"));
+            I_Error("Could not open display (DISPLAY=[%s])\n", getenv("DISPLAY"));
     }
 
     if(!displayname)
@@ -1547,6 +1548,10 @@ static void grabsharedmemory(int size)
 range_t  VID_ModeRange( byte modetype )
 {
     range_t  mrange = { 1, 1 };  // first is always 1
+
+    if( num_vidmodes == 0 ) 
+        determine_VidModes();
+
     if(haveVoodoo)
         mrange.last = NUM_VOODOOMODES;
     else
@@ -1574,8 +1579,9 @@ modestat_t  VID_GetMode_Stat( modenum_t modenum )
         int mi = modenum.index - 1;
         if(mi >= num_vidmodes)   goto fail;
 
-        ms.width = vidmodes[vidmap[mi]]->hdisplay;
-        ms.height = vidmodes[vidmap[mi]]->vdisplay;
+        XF86VidModeModeInfo * vm3 = fullvidmodes[ vidmap[mi] ];
+        ms.width = vm3->hdisplay;
+        ms.height = vm3->vdisplay;
         ms.type = MODE_fullscreen;
         ms.mark = "";
     }
@@ -1607,6 +1613,7 @@ char * VID_GetModeName( modenum_t modenum )
         goto fail;
 
     // form the string
+    // vidModeName[MAX_NUM_VIDMODES][MAX_LEN_VIDMODENAME+1];
     snprintf( &vidModeName[modenum.index][0], MAX_LEN_VIDMODENAME, "%s %dx%d",
               ms.mark, ms.width, ms.height );
     vidModeName[modenum.index][MAX_LEN_VIDMODENAME] = 0;
@@ -1652,7 +1659,7 @@ modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
 
         for (i = 0; i < num_vidmodes; i++)
         {
-            XF86VidModeModeInfo * vmm = vidmodes[vidmap[i]];
+            XF86VidModeModeInfo * vmm = fullvidmodes[ vidmap[i] ];
             tdist = abs(vmm->hdisplay - rw) + abs(vmm->vdisplay - rh);
             // find closest dist
             if( bestdist > tdist )
@@ -1703,7 +1710,7 @@ static void destroyWindow(void)
 
        if(doShm) {
            if (!XShmDetach(X_display, &X_shminfo))
-               I_Error("XShmDetach() failed in destroyWindow()");
+               I_Error("destroyWindow: XShmDetach() failed\n");
 
            // Release shared memory.
            shmdt(X_shminfo.shmaddr);
@@ -1751,10 +1758,13 @@ static int createWindow(boolean set_fullscreen, modenum_t modenum)
     // change to the mode
     if( !set_fullscreen )
     {
-        if( vidmode_ext && vidmodes )
+        // Turn off existing fullscreen.
+        if( vidmode_ext && fullvidmodes && vidmode_active )
         {
-            XF86VidModeSwitchToMode(X_display, X_screen, vidmodes[0]);
-	}
+            // Complains of BadAccess when try to switch mode of main screen.
+            // First mode was current mode, so restore to [0].
+            XF86VidModeSwitchToMode(X_display, X_screen, fullvidmodes[0]);
+        }
         else if( !vidmode_ext ) // probably not necessary
         {
         }
@@ -1763,7 +1773,7 @@ static int createWindow(boolean set_fullscreen, modenum_t modenum)
     else
     {
         // Fullscreen
-        XF86VidModeSwitchToMode(X_display, X_screen, vidmodes[vidmap[modenum.index-1]]);
+        XF86VidModeSwitchToMode(X_display, X_screen, fullvidmodes[vidmap[modenum.index-1]]);
         vidmode_active = true;
         // Move the viewport to top left
         XF86VidModeSetViewPort(X_display, X_screen, 0, 0);
@@ -1917,12 +1927,12 @@ static int createWindow(boolean set_fullscreen, modenum_t modenum)
         if (!image->data)
         {
             perror("");
-            I_Error("shmat() failed in InitGraphics()");
+            I_Error("InitGraphics: shmat() failed\n");
         }
 
         // get the X server to attach to it
         if (!XShmAttach(X_display, &X_shminfo))
-            I_Error("XShmAttach() failed in InitGraphics()");
+            I_Error("InitGraphics(): XShmAttach() failed\n");
       }
       else
       {
@@ -1954,12 +1964,15 @@ static int createWindow(boolean set_fullscreen, modenum_t modenum)
       vid.direct = (byte*)image->data;
       vid.direct_rowbytes = vid.width * x_bytepp;
       vid.direct_size = vid.direct_rowbytes * vid.height;
+#if 0
+// [WDJ] This used to work with my nVidia, but segfaults after a few writes with my Radeon.
       if( x_bytepp == vid.bytepp && vid.direct_rowbytes == vid.widthbytes )
       {
           // can draw direct into image
           vid.display = vid.direct;
           GenPrintf(EMSG_info, "Draw direct\n");
       }
+#endif
 #endif
       // Will segfault on the verbose messages if the screen is not setup.
       V_Setup_VideoDraw();
@@ -2003,8 +2016,9 @@ int VID_SetMode( modenum_t modenum )
         if(mi >= num_vidmodes)   goto fail_end;
 
         destroyWindow();
-        vid.width = vidmodes[vidmap[mi]]->hdisplay;
-        vid.height = vidmodes[vidmap[mi]]->vdisplay;
+        XF86VidModeModeInfo * vm3 = fullvidmodes[ vidmap[mi] ];
+        vid.width = vm3->hdisplay;
+        vid.height = vm3->vdisplay;
     }
     else { // X11
         int mi = modenum.index;
@@ -2185,7 +2199,7 @@ int I_Rendermode_setup( void )
        // check gl renderer lib
        if (HWD.pfnGetRenderVersion() != DOOMLEGACY_COMPONENT_VERSION)
        {
-           I_Error ("The version of the renderer doesn't match the version of the executable\nBe sure you have installed Doom Legacy properly.\n");
+           I_Error ("Renderer version does not match executable version\n");
        }
 
        HWD_current = render_opengl;
@@ -2289,7 +2303,8 @@ int I_RequestFullGraphics( byte select_fullscreen )
 
     // Set hardware vidmodes and vidmap, from X_display, X_screen
 
-    determine_VidModes();
+    if( select_fullscreen )
+        determine_VidModes();
 
     findVisual();  // Set X_screen, X_visualinfo, X_visual, x_drawmode
 
@@ -2353,7 +2368,7 @@ accept:
     {
         // switch to windowed
         select_fullscreen = 0;
-        GenPrintf(EMSG_info,"No modes below 1600x1200 available\nSwitching to windowed mode ...\n");
+        GenPrintf(EMSG_info,"No usable video modes,\nSwitching to windowed mode ...\n");
 //        goto no_modes;
     }
    
@@ -2395,16 +2410,21 @@ void I_ShutdownGraphics(void)
     destroyWindow();
 
     // return to normal mode
-    if( vidmode_ext )
+    if( vidmode_ext && vidmode_active && fullvidmodes )
     {
-        if( vidmodes )
-        {
-            XF86VidModeSwitchToMode(X_display, X_screen, vidmodes[0]);
-        }
+        // First item of vidmodes was the current mode.       
+        XF86VidModeSwitchToMode(X_display, X_screen, fullvidmodes[0]);
+        vidmode_active = false;
     }
 
     if(rendermode != render_soft) {
         HWD.pfnShutdown();
+    }
+
+    if( fullvidmodes )
+    {
+        free( fullvidmodes );
+        fullvidmodes = NULL;
     }
 
     XCloseDisplay(X_display);

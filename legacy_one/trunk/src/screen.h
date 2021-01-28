@@ -273,7 +273,7 @@ void SCR_SetMode( byte change_flag );
 // Recalc screen size dependent stuff
 void SCR_Recalc (void);
 // Apply config or command line settings.
-void SCR_apply_video_settings( void );
+void SCR_apply_video_settings( byte calc_setmodeneeded );
 // Set the mode number which is saved in the config
 void SCR_SetDefaultMode (void);
 

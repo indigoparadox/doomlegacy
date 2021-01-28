@@ -62,6 +62,8 @@
 // Debugging unfinished MAC_SDL
 //#define DEBUG_MAC  1
 
+//#define DEBUG_VID
+
 //#define TESTBPP
 #ifdef TESTBPP
 // [WDJ] Test drawing in a testbpp mode, using native mode conversion.
@@ -424,6 +426,10 @@ boolean  VID_Query_Modelist( byte request_drawmode, byte request_fullscreen, byt
         req_format.BitsPerPixel = request_bitpp;
     }
     modelist2 = SDL_ListModes(&req_format, (request_fullscreen)? surfaceFlags_fullscreen : surfaceFlags );
+#ifdef DEBUG_VID
+    printf( "VID_Query_Modelist: drawmode=%i, bitpp=%i, req BitsPerPixel=%i,  %s modelist\n",
+        request_drawmode, request_bitpp, req_format.BitsPerPixel, modelist2? "VALID":"NO" );
+#endif
     return ( modelist2 != NULL );
 }
 
@@ -502,13 +508,18 @@ modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
 {
     modenum_t  modenum = { MODE_NOP, 0 };
     int bestdist = INT_MAX;
-    int best, tdist, i;
+    int tdist, i;
 
     if( rmodetype == MODE_fullscreen )
     {
-        if( num_vid_mode == 0 )  goto done;
-        best = num_vid_mode - 1;  // default is smallest mode
+#ifdef DEBUG_VID
+        printf( "VID_GetModeFor_Size Fullscreen rw=%i, rh=%i, num_vid_mode=%i\n", rw, rh, num_vid_mode );
+#endif
 
+        if( num_vid_mode == 0 )
+            goto done;
+
+        modenum.index = num_vid_mode - 1;  // default is smallest mode
         // search our copy of the SDL modelist
         for(i=0; i<num_vid_mode; i++)
         {
@@ -517,15 +528,15 @@ modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
             if( bestdist > tdist )
             {
                 bestdist = tdist;
-                best = i;
-                if( tdist == 0 )  break;   // found exact match
+                modenum.index = i + 1;  // 1..
+                if( tdist == 0 )
+		    goto ret_vidmode;   // found exact match
             }
         }
-        modenum.index = best + 1;  // 1..
     }
     else
     {
-        best = MAXWINMODES;  // default is smallest mode
+        modenum.index = MAXWINMODES;  // default is smallest mode
 
         // window mode index returned 1..
         for(i=1; i<=MAXWINMODES; i++)
@@ -535,12 +546,13 @@ modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
             if( bestdist > tdist )
             {
                 bestdist = tdist;
-                best = i;
-                if( tdist == 0 )  break;   // found exact match
+                modenum.index = i; // 1..
+                if( tdist == 0 )
+                    goto ret_vidmode;   // found exact match
             }
         }
-        modenum.index = best; // 1..
     }
+ret_vidmode:   
     modenum.modetype = rmodetype;
 done:
     return modenum;
@@ -853,20 +865,10 @@ int I_RequestFullGraphics( byte select_fullscreen )
 
     vid.draw_ready = 0;  // disable print reaching console
 
-    // Get video info for screen resolutions
-    // even if I set vid.bytepp and highscreen properly it does seem to
-    // support only 8 bit  ...  strange
-    // so lets force 8 bit, default
+    // Get video info for screen resolutions.
+    // Lets default to 8 bit.
     req_format.BitsPerPixel = 8;
     req_format.BytesPerPixel = 0;
-//    vid.bitpp = 8;
-    // Set color depth; either 1=256pseudocolor or 2=hicolor
-//    vid.bytepp = 1;
-
-#if 0   
-    modelist = SDL_ListModes(NULL, SDL_FULLSCREEN|surfaceFlags);
-    modelist_bitpp = native_bitpp;
-#endif
 
     switch(req_drawmode)
     {
