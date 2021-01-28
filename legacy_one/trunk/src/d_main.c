@@ -276,7 +276,7 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1570"
+#define SVN_REV "1571"
 #endif
 
 
@@ -1954,11 +1954,9 @@ void IdentifyVersion()
 
         other_names = 1;        // preserve other names when forcing switch
         // for save game header
-        strncpy( other_iwad_filename, filename, DESCNAME_SIZE );
-        other_iwad_filename[ DESCNAME_SIZE-1 ] = 0; // safe
+        dl_strncpy( other_iwad_filename, filename, DESCNAME_SIZE );
         // create game name from the wad name, used in save game
-        strncpy( other_gname, other_iwad_filename, DESCNAME_SIZE );
-        other_gname[ DESCNAME_SIZE-1 ] = 0;	// safe
+        dl_strncpy( other_gname, other_iwad_filename, DESCNAME_SIZE );
                // use the wad name, without the ".wad" as the gname
         {
             char * dp = strchr( other_gname, '.' );
@@ -2855,8 +2853,7 @@ fatal_error_action:
     if (p && p<myargc-1)
     {
         // substitute config file
-        strncpy (cfgbuf, myargv[p+1], MAX_WADPATH-1);
-        cfgbuf[MAX_WADPATH-1] = '\0';
+        dl_strncpy(cfgbuf, myargv[p+1], MAX_WADPATH);
         M_Set_configfile_main( cfgbuf );
         CONS_Printf ("config file: %s\n", configfile_main);
     }
@@ -3062,8 +3059,7 @@ fatal_error_action:
     if (p && p<myargc-1)
     {
         // Add mod config file
-        strncpy (cfgbuf, myargv[p+1], MAX_WADPATH-1);
-        cfgbuf[MAX_WADPATH-1] = '\0';
+        dl_strncpy(cfgbuf, myargv[p+1], MAX_WADPATH);
         // not saveable, so do not need to save name
         CONS_Printf ("add config file: %s\n", cfgbuf);
         // This cannot change the drawmode.
@@ -3294,8 +3290,7 @@ fatal_error_action:
         // it is NOT possible to play an internal demo using -playdemo,
         // rather push a playdemo command.. to do.
 
-        strncpy(demo_name, M_GetNextParm(), MAX_WADPATH-1);
-        demo_name[MAX_WADPATH-1] = '\0';
+        dl_strncpy(demo_name, M_GetNextParm(), MAX_WADPATH);
         // get spaced filename or directory
         while (M_IsNextParm())
         {

@@ -612,8 +612,7 @@ void Command_Playdemo_f(void)
     }
 
     // copy demo lump name, or demo file name (.lmp will be added later)
-    strncpy(name, carg.arg[1], MAX_WADPATH-1);
-    name[MAX_WADPATH-1] = '\0';
+    dl_strncpy(name, carg.arg[1], MAX_WADPATH);
     // dont add .lmp so internal game demos can be played
 
     CONS_Printf("Playing back demo '%s'.\n", name);
@@ -644,8 +643,7 @@ void Command_Timedemo_f(void)
     }
 
     // copy demo lump name, or demo file name (.lmp will be added later)
-    strncpy(name, carg.arg[1], MAX_WADPATH-1);
-    name[MAX_WADPATH-1] = '\0';
+    dl_strncpy(name, carg.arg[1], MAX_WADPATH);
     // dont add .lmp so internal game demos can be played
 
     CONS_Printf("Timing demo '%s'.\n", name);
@@ -687,8 +685,7 @@ void Command_Map_f(void)
     }
 
     // By Server.
-    strncpy(MAPNAME, carg.arg[1], MAX_WADPATH-1);
-    MAPNAME[MAX_WADPATH-1] = '\0';
+    dl_strncpy(MAPNAME, carg.arg[1], MAX_WADPATH);
 
     if (FIL_CheckExtension(MAPNAME))
     {
@@ -794,8 +791,8 @@ void Got_NetXCmd_Mapcmd(xcmd_t * xc)
             nomonsters = (opt > 0);
         }
     }
-    strncpy(mapname, (char*)xc->curpos, MAX_WADPATH-1);
-    mapname[MAX_WADPATH-1] = '\0';
+    dl_strncpy(mapname, (char*)xc->curpos, MAX_WADPATH);
+
     xc->curpos += strlen(mapname) + 1;
 
     CONS_Printf("Warping to map...\n");
@@ -1027,9 +1024,8 @@ void Command_Save_f(void)
     // Format: save_slot byte, save_description str0.
     // By Server.
     p[0] = atoi(COM_Argv(1));  // slot num 0..99
-    // save description string at [1]
-    strncpy(&p[1], COM_Argv(2), SAVESTRINGSIZE-1);
-    p[SAVESTRINGSIZE] = '\0';
+    // save description string at p[1], p[SAVESTRINGSIZE + 1]
+    dl_strncpy(&p[1], COM_Argv(2), SAVESTRINGSIZE);
 
     SV_Send_NetXCmd(XD_SAVEGAME, &p, strlen(&p[1]) + 2);  // as server
 }
@@ -1042,8 +1038,7 @@ void Got_NetXCmd_SaveGame_cmd(xcmd_t * xc)
     // Format: save_slot byte, save_description str0.
     slot = *(xc->curpos++);
     // Transmitted as SAVESTRINGSIZE, but protect against net error or attack.
-    strncpy(description, (char*)xc->curpos, SAVESTRINGSIZE-1);
-    description[SAVESTRINGSIZE-1] = '\0';
+    dl_strncpy(description, (char*)xc->curpos, SAVESTRINGSIZE);
     xc->curpos += strlen(description) + 1;
 
     // Write the save game file

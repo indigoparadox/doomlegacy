@@ -123,6 +123,7 @@
 
 #include "md5.h"
 #include "m_swap.h"
+#include "m_misc.h"
 
 #ifdef HWRENDER
 #include "hardware/hw_main.h"
@@ -298,8 +299,7 @@ int W_Load_WadFile ( const char * filename )
         goto return_fail_msg;
     }
 
-    strncpy(filenamebuf, filename, MAX_WADPATH-1);
-    filenamebuf[MAX_WADPATH-1] = '\0';
+    dl_strncpy(filenamebuf, filename, MAX_WADPATH);
 
 #ifdef ZIPWAD
     // When not ziplib_present, then cannot have archive_open.
@@ -458,7 +458,7 @@ int W_Load_WadFile ( const char * filename )
         {
             // Make name compatible with compares using numerical_name.
             *((uint64_t*)&lump_p->name) = 0;  // clear
-            strncpy (lump_p->name, flp->name, 8);
+            strncpy (lump_p->name, flp->name, 8);  // pad 0
             // Check for namespace markers using clean lump name.
             for( m=0; m < NUM_MARKER_IDENT; m++ )
             {

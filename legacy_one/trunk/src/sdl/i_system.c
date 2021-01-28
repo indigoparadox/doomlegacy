@@ -1504,7 +1504,7 @@ char *I_GetUserName(void)
         if ((p = getenv("username")) == NULL)
           return NULL;
 
-  strncpy(username, p, MAXPLAYERNAME);
+  dl_strncpy(username, p, MAXPLAYERNAME);
 
 #ifdef WIN32
   }

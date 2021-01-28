@@ -121,4 +121,8 @@ void cat_filename( char * dest, const char * dn, const char * fn );
 void strcatbf(char *s1, const char *s2, const char *s3);
 #endif
 
+// This truncates the src when the dest buffer is full.
+// Will always write the terminating 0.
+void dl_strncpy( char * dest, const char * src, int destsize );
+
 #endif
