@@ -186,18 +186,9 @@ static boolean soundStarted = false;
 static unsigned int sound_age = 1000;  // age counter
 
 
-//
-// SFX API
-// Note: this was called by S_Init.
-// However, whatever they did in the
-// old DPMS based DOS version, this
-// were simply dummies in the Linux version.
-// See soundserver initdata().
-//
-// Well... To keep compatibility with legacy doom, I have to call this in
-// I_InitSound since it is not called in S_Init... (emanne@absysteme.fr)
-
-static void I_SetChannels(void)
+// At one time was called by S_Init.
+// Called by I_InitSound    (emanne@absysteme.fr)
+static void setup_mixer_tables(void)
 {
     // Init internal lookups (raw data, mixing buffer, channels).
     // This function sets up internal lookups used during
@@ -224,6 +215,24 @@ static void I_SetChannels(void)
             vol_lookup[i * 256 + j] = (i * (j - 128) * 256) / 127;
         }
     }
+}
+
+//
+// SFX API
+
+// Called by NumChannels_OnChange, S_Init
+//  num_sfx_channels : the number of sfx maintained at one time.
+void I_SetSfxChannels( byte num_sfx_channels )
+{
+    // Uses constant number of mix channels.
+#if 0
+    // set from cv_numChannels
+    mix_num_channels = ( num_sfx_channels > NUM_CHANNELS ) ?
+          NUM_CHANNELS  // max
+        : num_sfx_channels;
+
+    // setup_mixer_tables();
+#endif
 }
 
 void I_SetSfxVolume(int volume)
@@ -856,7 +865,8 @@ void I_StartupSound(void)
   // From eternity, adjust for new samplerate
   audspec.samples = SAMPLECOUNT * SAMPLERATE / DOOM_SAMPLERATE;
   audspec.callback = I_UpdateSound_sdl;
-  I_SetChannels();
+
+  setup_mixer_tables();
 
 #ifndef HAVE_MIXER
   // no mixer, no music

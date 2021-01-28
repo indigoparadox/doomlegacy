@@ -186,8 +186,8 @@ consvar_t cv_musicvolume = { "musicvolume", "15", CV_SAVE, soundvolume_cons_t };
 consvar_t cv_rndsoundpitch = { "rndsoundpitch", "Off", CV_SAVE, CV_OnOff };
 
 // number of channels available
-static void SetChannelsNum(void);
-consvar_t cv_numChannels = { "snd_channels", "16", CV_SAVE | CV_CALL, CV_byte, SetChannelsNum };
+static void NumChannels_OnChange(void);
+consvar_t cv_numChannels = { "snd_channels", "16", CV_SAVE | CV_CALL, CV_byte, NumChannels_OnChange };
 
 #ifdef SURROUND_SOUND
 consvar_t cv_surround = { "surround", "0", CV_SAVE, CV_OnOff };
@@ -310,15 +310,20 @@ void S_Register_SoundStuff(void)
 #endif
 }
 
-static void SetChannelsNum(void)
+static void NumChannels_OnChange(void)
 {
-    int i;
+    byte i;
 
     // Allocating the internal channels for mixing
     // (the maximum number of sounds rendered
     // simultaneously) within zone memory.
     if (channels)
         Z_Free(channels);
+
+    // Port drivers may use this to reconfigure.
+    // Most port drivers will ignore this.
+    // The number of sfx maintained at one time.
+    I_SetSfxChannels( cv_numChannels.EV );
 
 #ifdef HW3SOUND
     if (hws_mode != HWS_DEFAULT_MODE)
@@ -327,10 +332,10 @@ static void SetChannelsNum(void)
         return;
     }
 #endif
-    channels = (channel_t *) Z_Malloc(cv_numChannels.value * sizeof(channel_t), PU_STATIC, 0);
+    channels = (channel_t *) Z_Malloc(cv_numChannels.EV * sizeof(channel_t), PU_STATIC, 0);
 
     // Free all channels for use
-    for (i = 0; i < cv_numChannels.value; i++)
+    for (i = 0; i < cv_numChannels.EV; i++)
     {
         channels[i].sfxinfo = NULL;
         channels[i].origin = NULL;
@@ -480,7 +485,7 @@ void S_Init(int sfxVolume, int musicVolume)
     S_SetSfxVolume(sfxVolume);
     S_SetMusicVolume(musicVolume);
 
-    SetChannelsNum();
+    NumChannels_OnChange();
 
     // no sounds are playing, and they are not mus_paused
     mus_paused = false;

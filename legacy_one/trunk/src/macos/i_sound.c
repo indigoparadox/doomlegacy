@@ -220,8 +220,18 @@ static int addsfx ( int		sfxid,
     return slot;   // handle is slot
 }
 
-void I_SetChannels(void)
-{}	
+// Called by NumChannels_OnChange, S_Init
+//  num_sfx_channels : the number of sfx maintained at one time.
+void I_SetSfxChannels( byte num_channels )
+{
+    // Uses constant number of mix channels.
+#if 0
+    // set from cv_numChannels   
+    mix_num_channels = ( num_channels > NUM_CHANNELS ) ?
+          NUM_CHANNELS  // max
+        : num_channels;
+#endif
+}
 
 void I_SetSfxVolume(int volume)
 {

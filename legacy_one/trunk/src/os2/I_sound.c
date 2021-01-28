@@ -284,34 +284,15 @@ int  addsfx( int sfxid, int vol, int step, int sep )
 
 
 
-
-
-//
-// SFX API
-// Note: this was called by S_Init.
-// However, whatever they did in the
-// old DPMS based DOS version, this
-// were simply dummies in the Linux
-// version.
-// See soundserver initdata().
-//
-void I_SetChannels()
+// At one time was called by S_Init.
+// Called by I_InitSound.
+void  setup_mixer_tables( void )
 {
   // Init internal lookups (raw data, mixing buffer, channels).
   // This function sets up internal lookups used during
   //  the mixing process.
-  int        i;
-  int        j;
-
-  int*    steptablemid = steptable + 128;
-
-  printf( "I_SetChannels\n");
-
-  // Okay, reset internal mixing channels to zero.
-  /*for (i=0; i<NUM_CHANNELS; i++)
-  {
-    channels[i] = 0;
-  }*/
+  int  i, j;
+  int * steptablemid = steptable + 128;
 
   // This table provides step widths for pitch parameters.
   // I fail to see that this is currently used.
@@ -327,6 +308,24 @@ void I_SetChannels()
       vol_lookup[i*256+j] = (i*(j-128)*256)/127;
 }
 
+
+//
+// SFX API
+
+// Called by NumChannels_OnChange, S_Init
+//  num_sfx_channels : the number of sfx maintained at one time.
+void I_SetSfxChannels( byte num_sfx_channels )
+{
+  // Uses constant number of mix channels.
+#if 0   
+  printf( "I_SetChannels %d\n", num_channels);
+
+  // set from cv_numChannels   
+  mix_num_channels = ( num_sfx_channels > NUM_CHANNELS ) ?
+          NUM_CHANNELS  // max
+        : num_sfx_channels;
+#endif
+}
 
 void I_SetSfxVolume(int volume)
 {
@@ -682,7 +681,7 @@ void I_StartupSound()
    for ( i = 0; i< MIXBUFFERSIZE; i++ )
       mixbuffer[i] = 0;
 
-   I_SetChannels();
+   setup_mixer_tables();
 
    // Finished initialization.
    printf( "I_InitSound: sound module ready\n");

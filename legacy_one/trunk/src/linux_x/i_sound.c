@@ -206,6 +206,9 @@ static int msg_id = -1;
 // The actual output device and a flag for using 8bit samples.
 static int audio_fd;
 static byte audio_8bit_flag;
+#ifndef SNDSERV
+static byte  mix_num_channels; // set from cv_numChannels
+#endif
 
 
 
@@ -396,7 +399,7 @@ int addsfx_ch(int sfxid, int vol, int step, int sep)
     if (S_sfx[sfxid].flags & SFX_single)
     {
         // Loop all channels, check.
-        for( chp2 = &channel[0]; chp2 < &channel[cv_numChannels.value]; chp2++ )
+        for( chp2 = &channel[0]; chp2 < &channel[mix_num_channels]; chp2++ )
         {
             // Active, and using the same SFX?
             if (chp2->data && (chp2->id == sfxid))
@@ -413,7 +416,7 @@ int addsfx_ch(int sfxid, int vol, int step, int sep)
     // Find inactive channel, or oldest channel.
     chp = &channel[0];  // default
     oldest = INT_MAX;
-    for ( chp2 = &channel[0]; chp2 < &channel[cv_numChannels.value]; chp2++ )
+    for ( chp2 = &channel[0]; chp2 < &channel[mix_num_channels]; chp2++ )
     {
         if( chp2->data == NULL )
         {
@@ -502,7 +505,7 @@ int addsfx_ch(int sfxid, int vol, int step, int sep)
 // were simply dummies in the Linux version.
 // See soundserver initdata().
 //
-void I_SetChannels()
+void setup_mixer_tables()
 {
     // Init internal lookups (raw data, mixing buffer, channels).
     // This function sets up internal lookups used during
@@ -535,6 +538,20 @@ void I_SetChannels()
     }
 }
 #endif
+
+// Called by NumChannels_OnChange, S_Init
+//  num_sfx_channels : the number of sfx maintained at one time.
+void I_SetSfxChannels( byte num_sfx_channels )
+{
+#ifndef SNDSERV
+    // set from cv_numChannels   
+    mix_num_channels = ( num_sfx_channels > NUM_CHANNELS ) ?
+          NUM_CHANNELS  // max
+        : num_sfx_channels;
+
+    setup_mixer_tables(); // invoked by S_Init
+#endif
+}
 
 
 // new_volume : 0..31
@@ -569,7 +586,7 @@ void I_SetSfxVolume(int volume)
 
     // Update existing channel volumes.
     register channel_info_t * chp;
-    for( chp = &channel[0]; chp < &channel[cv_numChannels.value]; chp++ )
+    for( chp = &channel[0]; chp < &channel[mix_num_channels]; chp++ )
     {
         if( chp->data )
         {
@@ -761,7 +778,7 @@ void I_UpdateSound(void)
         // Love thy L2 chache - made this a loop.
         // Now more channels could be set at compile time
         //  as well. Thus loop those  channels.
-        for( chp = &channel[0]; chp < &channel[cv_numChannels.value]; chp++ )
+        for( chp = &channel[0]; chp < &channel[mix_num_channels]; chp++ )
         {
             // Check channel, if active.
             if (chp->data)
@@ -858,22 +875,6 @@ void I_UpdateSound(void)
         // Increment mix_cnt for update.
         mix_cnt++;
     }
-}
-#endif
-
-#ifdef SNDSERV
-// [WDJ] Fix this in d_main.c
-void I_SubmitSound(void)
-{
-}
-#else
-// This is used to write out the mixbuffer
-//  during each game loop update.
-//
-void I_SubmitSound(void)
-{
-    if (dedicated)
-        return;
 
     // Write it to DSP device.
     if (mix_cnt)
@@ -931,9 +932,9 @@ void LX_ShutdownSound(void)
 
     while (!done)
     {
-        for (i = 0; i < cv_numChannels.value; i++)
+        for (i = 0; i < mix_num_channels; i++)
            if( channel[i].data ) break;  // any busy channel
-        if (i == cv_numChannels.value)
+        if (i == mix_num_channels)
             done++;
         else
         {

@@ -579,6 +579,17 @@ void I_SetSfxVolume(int volume)
     //    CONS_Printf ("setvolumne failed\n");
 }
 
+// Called by NumChannels_OnChange, S_Init
+//  num_sfx_channels : the number of sfx maintained at one time.
+void I_SetSfxChannels( byte num_sfx_channels )
+{
+    // Mixing done by DirectSound, which takes more buffers,
+    // independent of cv_numChannels.
+#if 0   
+//    printf( "I_SetChannels %d\n", num_sfx_channels);
+#endif
+}
+
 
 // --------------------------------------------------------------------------
 // Update the volume for a secondary buffer, make sure it was created with

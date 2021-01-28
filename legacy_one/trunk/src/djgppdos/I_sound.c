@@ -150,6 +150,12 @@ void I_FreeSfx (sfxinfo_t* sfx)
 }
 
 
+// Called by NumChannels_OnChange, S_Init
+//  num_sfx_channels : the number of sfx maintained at one time.
+void I_SetSfxChannels( byte num_sfx_channels )
+{
+}
+
 void I_SetSfxVolume(int volume)
 {
     if(nosoundfx)
@@ -260,10 +266,6 @@ void I_UpdateSound( void )
 //  only output be done asynchronous?
 //
 
-void I_SubmitSound( void )
-{
-  //this should no longer be necessary cuz allegro is doing all the sound mixing now
-}
 
 // cut and past from ALLEGRO he don't share it :(
 static inline int absolute_freq(int freq, SAMPLE *spl)
