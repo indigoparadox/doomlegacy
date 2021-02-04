@@ -57,10 +57,10 @@ ARCH=-march=i686
 
 # The option ZIPWAD (in doomdef.h) needs libzip. 
 # Have libzip.
-HAVE_LIBZIP=1
+# HAVE_LIBZIP=1
 # If have libzip version 1.2 or better, then have zip seek.
 # HAVE_LIBZIP=12
-# The option ZIPWAD_OPTIONAL (in doomdef.h), will load libzip when it is present.
+# The option OPT_LIBZIP (in doomdef.h), will load libzip when it is present.
 # This needs dlopen lib.
 # Have dlopen lib.
 HAVE_DLOPEN=1

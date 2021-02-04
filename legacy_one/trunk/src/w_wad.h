@@ -324,7 +324,7 @@ typedef enum {
     FH_mask = 0xF0,
 } file_handle_e;
 
-extern byte  ziplib_present;
+extern byte  libzip_present;
 extern byte  archive_open;
 extern byte  archive_filenum;
 

@@ -302,7 +302,7 @@ int W_Load_WadFile ( const char * filename )
     dl_strncpy(filenamebuf, filename, MAX_WADPATH);
 
 #ifdef ZIPWAD
-    // When not ziplib_present, then cannot have archive_open.
+    // When not libzip_present, then cannot have archive_open.
     if( archive_open )
     {
         handle = WZ_open_file_z( filename );
@@ -353,7 +353,7 @@ int W_Load_WadFile ( const char * filename )
     if( fc == FC_zip )
     {
 #ifdef ZIPWAD
-        if( ! ziplib_present )
+        if( ! libzip_present )
         {
             msg = "Cannot read zip file, ziplib not present.";
                 goto read_failure;

@@ -195,7 +195,7 @@
 #ifdef HAVE_DLOPEN
 // Test for optional ziplib.  Requires lib dlopen.
 // This requires  HAVE_DLOPEN  be set in make_options to get linking.
-#define ZIPWAD_OPTIONAL
+#define OPT_LIBZIP
 #endif
 #endif
 #endif
