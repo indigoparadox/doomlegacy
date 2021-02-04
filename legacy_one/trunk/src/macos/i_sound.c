@@ -48,6 +48,8 @@
 
 
 static void COM_PlaySong (void);
+static void init_music(void);
+static void shutdown_music(void);
 
 // The number of internal mixing channels,
 //  the samples calculated for each mixing step,
@@ -325,11 +327,10 @@ int I_SoundIsPlaying(int handle)
 
 void I_UpdateSound (void)
 {
+    // Mac does mixing of channels.
+
     MusicEvents();  //for QuickTime music playing
 }
-
-void I_SubmitSound(void)
-{}
 
 // You need the handle returned by StartSound.
 void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
@@ -376,7 +377,8 @@ void I_ShutdownSound(void)
         SndDisposeChannel (soundChannels[i], true);
     }
     
-    CONS_Printf("\tshut down\n");
+    // Music
+    shutdown_music();
 }
 
 
@@ -395,10 +397,11 @@ void I_StartupSound()
     {
 	soundChannels[i] = NULL;
 	channelbusy[i] = 0;
-	err = SndNewChannel (&soundChannels[i], sampledSynth, initMono, 		NewSndCallBackUPP(soundCallback));
+	err = SndNewChannel (&soundChannels[i], sampledSynth, initMono, NewSndCallBackUPP(soundCallback));
     }
 
 #if 0   
+    CONS_Printf("\tload all sound data\n");
     for (i=1 ; i<NUMSFX ; i++)
     { 
 	// Alias? Example is the chaingun sound linked to pistol.
@@ -417,8 +420,9 @@ void I_StartupSound()
 	}
     }
 #endif
-
-    CONS_Printf("\tpre-cached all sound data\n");
+   
+    // InitMusic
+    init_music();
 }
 
 //
@@ -556,12 +560,13 @@ void MusicEvents (void)
     }
 }
 
-void I_ShutdownMusic(void) 
+static
+void shutdown_music(void) 
 {
     if(nomusic)
 	return;
 	
-    CONS_Printf("I_ShutdownMusic:\n");
+    CONS_Printf("shutdown_music:\n");
 	
     if (midiMovie)
     {
@@ -570,20 +575,19 @@ void I_ShutdownMusic(void)
         ExitMovies ();
         midiMovie = NULL;
     }
-
-    CONS_Printf("\tshut down\n");
 }
 
-void I_InitMusic(void)
+static
+void init_music(void)
 {
     if(nomusic)
 	return;
 	
-    CONS_Printf("I_InitMusic:\n");
+    CONS_Printf("init_music:\n");
 	
     if (EnterMovies () != noErr)
     {
-        CONS_Printf("\tI_InitMusic: Couldn't initialise Quicktime\n");
+        CONS_Printf("\tinit_music: Couldn't initialise Quicktime\n");
         nomusic = true;
     }
 
@@ -597,8 +601,6 @@ void I_InitMusic(void)
 
     COM_AddCommand ("nextsong",COM_SkipNext);
     COM_AddCommand ("prevsong",COM_SkipPrev);
-	
-    CONS_Printf("\tdone\n");
 }
 
 void I_PlaySong(int handle, int looping)

@@ -276,7 +276,7 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1574"
+#define SVN_REV "1575"
 #endif
 
 
@@ -997,8 +997,7 @@ void D_DoomLoop(void)
         {
             //Other implementations might need to update the sound here.
 #ifndef SNDSERV
-            // Sound mixing for the buffer is called by the sound driver.
-            // Handles sychronous driver, and SNDINTR.
+            // Handles sound mixing, and synchronous driver.
             I_UpdateSound();
 #endif
 

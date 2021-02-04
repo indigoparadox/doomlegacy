@@ -160,18 +160,6 @@ ULONG  I_GetTime (void)
 
 
 
-#if 0
-//[WDJ] Apparently abandoned
-//
-// I_Init
-//
-void I_Init (void)
-{
-    I_StartupSound();
-    I_InitMusic();
-    //  I_InitGraphics();
-}
-#endif
 
 #if 0
 // Replaced by D_Quit_Save, I_Quit_System

@@ -390,7 +390,7 @@ static
 int addsfx_ch(int sfxid, int vol, int step, int sep)
 {
     channel_info_t * chp, * chp2;
-    int i, oldest;
+    int oldest;
     int slot;
     int leftvol, rightvol;
 
@@ -430,13 +430,16 @@ int addsfx_ch(int sfxid, int vol, int step, int sep)
         }
     }
 
+//    byte * header = S_sfx[sfxid].data;
+   
     // Okay, in the less recent channel,
     //  we will handle the new SFX.
     // Preserve sound SFX id,
     //  e.g. for avoiding duplicates of chainsaw.
     chp->id = sfxid;
     // Set pointer to raw data.
-    chp->data = & S_sfx[sfxid].data[8];  // after header
+//    chp->data = & S_sfx[sfxid].data[8];  // after header
+    chp->data = (byte *) S_sfx[sfxid].data + 8;  // after header
     // Set pointer to end of raw data.
     chp->data_end = chp->data + S_sfx[sfxid].length - 8; // without header
 
@@ -492,6 +495,7 @@ int addsfx_ch(int sfxid, int vol, int step, int sep)
 
     // Assign current handle number.
     // Preserved so sounds could be stopped (unused).
+    slot = chp - &channel[0];
     chp->handle = slot | ((chp->handle + NUM_CHANNELS) & ~CHANNEL_NUM_MASK);
     return chp->handle;
 }
@@ -590,13 +594,12 @@ void I_SetSfxVolume(int volume)
     {
         if( chp->data )
         {
-            chp->left_vol_tab = &volume_lookup[(chp->left_volume * volume)/31][0];
-            chp->right_vol_tab = &volume_lookup[(chp->right_volume * volume)/31][0];
+            chp->left_vol_tab = &vol_lookup[(chp->left_volume * volume)/31][0];
+            chp->right_vol_tab = &vol_lookup[(chp->right_volume * volume)/31][0];
         }
     }
 }
 #endif
-}
 
 
 
@@ -651,7 +654,7 @@ int I_StartSound ( sfxid_t sfxid, int vol, int sep, int pitch, int priority )
     //GenPrintf(EMSG_debug, "starting sound %d", id );
 
     // Returns a handle.
-    int handle = addsfx_ch(id, vol, steptable[pitch], sep);
+    int handle = addsfx_ch(sfxid, vol, steptable[pitch], sep);
 
     //GenPrintf(EMSG_debug, "/handle is %d\n", id );
 
@@ -677,7 +680,7 @@ void I_StopSound(int handle)
     int slot = handle & CHANNEL_NUM_MASK;
     if (channel[slot].handle == handle)
     {
-        channel[i].data = NULL;
+        channel[slot].data = NULL;
     }
 #endif
 }
@@ -691,7 +694,7 @@ int I_SoundIsPlaying(int handle)
     if (channel[slot].handle == handle)
     {
 #if 1
-        return ( channel[chan].data != NULL );
+        return ( channel[slot].data != NULL );
 
 #else
         // old code
@@ -876,6 +879,7 @@ void I_UpdateSound(void)
         mix_cnt++;
     }
 
+    // Submit
     // Write it to DSP device.
     if (mix_cnt)
     {
@@ -938,8 +942,7 @@ void LX_ShutdownSound(void)
             done++;
         else
         {
-            I_UpdateSound();
-            I_SubmitSound();
+            I_UpdateSound();  // mix and submit
         }
     }
 

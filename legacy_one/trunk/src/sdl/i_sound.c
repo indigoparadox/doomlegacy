@@ -186,6 +186,9 @@ static boolean soundStarted = false;
 static unsigned int sound_age = 1000;  // age counter
 
 
+//
+// SFX API
+
 // At one time was called by S_Init.
 // Called by I_InitSound    (emanne@absysteme.fr)
 static void setup_mixer_tables(void)
@@ -217,21 +220,14 @@ static void setup_mixer_tables(void)
     }
 }
 
-//
-// SFX API
-
 // Called by NumChannels_OnChange, S_Init
 //  num_sfx_channels : the number of sfx maintained at one time.
 void I_SetSfxChannels( byte num_sfx_channels )
 {
-    // Uses constant number of mix channels.
-#if 0
-    // set from cv_numChannels
-    mix_num_channels = ( num_sfx_channels > NUM_CHANNELS ) ?
-          NUM_CHANNELS  // max
-        : num_sfx_channels;
-
-    // setup_mixer_tables();
+    // Fixed number of channels for now.
+    // Test with X11 first (2021/1/25)
+#if 0   
+//    printf( "I_SetSfxChannels %d\n", num_sfx_channels);
 #endif
 }
 
@@ -520,13 +516,6 @@ int I_SoundIsPlaying(int handle)
 }
 
 //
-// Not used by SDL version
-//
-void I_SubmitSound(void)
-{
-}
-
-//
 // This function loops all active (internal) sound
 //  channels, retrieves a given number of samples
 //  from the raw sound data, modifies it according
@@ -539,6 +528,8 @@ void I_SubmitSound(void)
 //
 void I_UpdateSound(void)
 {
+    // Uses SDL callback to I_UpdateSound_sdl.
+
     /*
        Pour une raison que j'ignore, la version SDL n'appelle jamais
        ce truc directement. Fonction vide pour garder une compatibilité
@@ -868,6 +859,7 @@ void I_StartupSound(void)
 
   setup_mixer_tables();
 
+  // InitMusic
 #ifndef HAVE_MIXER
   // no mixer, no music
   nomusic = true;
@@ -952,7 +944,7 @@ void I_ShutdownSound(void)
   CONS_Printf("shut down\n");
   soundStarted = false;
 
-  // music
+  // ShutdownMusic
   if (musicStarted)
   {
       Z_Free(midi_buffer);

@@ -146,11 +146,12 @@ typedef struct {
 
 #ifdef FMOD_SOUND
 // SSNTails 12-13-2002
-FSOUND_STREAM *fmus = NULL;
+FSOUND_STREAM * fmus = NULL;
 extern boolean  fmod_music;
 #endif
 
-static void I_ShutdownMusic(void);
+static void init_music(void);
+static void shutdown_music(void);
 
 byte    sound_started=0;
 byte    music_started=0;
@@ -586,7 +587,7 @@ void I_SetSfxChannels( byte num_sfx_channels )
     // Mixing done by DirectSound, which takes more buffers,
     // independent of cv_numChannels.
 #if 0   
-//    printf( "I_SetChannels %d\n", num_sfx_channels);
+//    printf( "I_SetSfxChannels %d\n", num_sfx_channels);
 #endif
 }
 
@@ -1311,10 +1312,10 @@ void I_InitAudioMixer (void)
 
 
 // -----------
-// I_InitMusic
+// InitMusic
 // Startup Midi device for streaming output
 // -----------
-static void I_InitMusic(void)
+static void init_music(void)
 {
     DWORD       idx;
     MMRESULT    mmrRetVal;
@@ -1322,7 +1323,7 @@ static void I_InitMusic(void)
     MIDIOUTCAPS MidiOutCaps;
     char*       szTechnology;
 
-    CONS_Printf("I_InitMusic: \n");
+    CONS_Printf("init_music: \n");
 
 #ifdef FMOD_SOUND
     if(fmod_music)
@@ -1438,17 +1439,17 @@ no_fmod:
     // ----------------------------------------------------------------------
     
     // register exit code
-    I_AddExitFunc (I_ShutdownMusic);
+    I_AddExitFunc (shutdown_music);
 
     music_started = true;
 }
 
 
 // ---------------
-// I_ShutdownMusic
+// ShutdownMusic
 // ---------------
 // Is also a registered exit func
-static void I_ShutdownMusic(void)
+static void shutdown_music(void)
 {
     DWORD       idx;
     MMRESULT    mmrRetVal;
@@ -1456,15 +1457,18 @@ static void I_ShutdownMusic(void)
     if( nomusic )
         return;
 
-    CONS_Printf("I_ShutdownMusic: \n");
+    CONS_Printf("shutdown_music: \n");
 
 #ifdef FMOD_SOUND
     if(fmod_music)
     {
+        if( ! fmus )  return;
+
         FSOUND_Stream_Stop(fmus);
         FSOUND_Stream_Close(fmus);
         FSOUND_Close();
         remove("mus.tmp"); // Delete the temp file
+        fmus = NULL;
         return;
     }
 #endif
@@ -2282,7 +2286,7 @@ void I_StartupSound(void)
    
     if ( ! nomusic )
     {
-        I_InitMusic();
+        init_music();
     }
 }
 
@@ -2294,14 +2298,10 @@ void I_ShutdownSound(void)
     }
     if( ! nomusic)
     {
-        I_ShutdownMusic();
+        shutdown_music();
     }
 }
 
-
-void I_SubmitSound(void)
-{
-}
 
 void I_UpdateSound(void)
 {

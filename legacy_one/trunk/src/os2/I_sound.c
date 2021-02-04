@@ -86,16 +86,20 @@ static  char*           MidiData_buf;      // buffer allocated at program start 
 #endif
 int                     music_started=0;
 
+static void init_music(void);
+static void shutdown_music(void);
+
+
 // A quick hack to establish a protocol between
 // synchronous mix buffer updates and asynchronous
 // audio writes. Probably redundant with gametic.
 static int flag = 0;
 
+
 // The number of internal mixing channels,
 //  the samples calculated for each mixing step,
 //  the size of the 16bit, 2 hardware channel (stereo)
 //  mixing buffer, and the samplerate of the raw data.
-
 
 // Needed for calling the actual sound output.
 #define SAMPLECOUNT        512
@@ -318,7 +322,7 @@ void I_SetSfxChannels( byte num_sfx_channels )
 {
   // Uses constant number of mix channels.
 #if 0   
-  printf( "I_SetChannels %d\n", num_channels);
+  printf( "I_SetSfxChannels %d\n", num_channels);
 
   // set from cv_numChannels   
   mix_num_channels = ( num_sfx_channels > NUM_CHANNELS ) ?
@@ -479,6 +483,8 @@ int I_SoundIsPlaying(int handle)
 //  contents of the mixbuffer to the (two)
 //  hardware channels (left and right, that is).
 //
+//  Writes the mixer buffer to the DSP device.
+//
 // This function currently supports only 16bit.
 //
 void I_UpdateSound( void )
@@ -597,20 +603,9 @@ void I_UpdateSound( void )
 */
    }
 
-}
-
-
-//
-// This would be used to write out the mixbuffer
-//  during each game loop update.
-// Updates sound buffer and audio device at runtime.
-// It is called during Timer interrupt with SNDINTR.
-// Mixing now done synchronous, and
-//  only output be done asynchronous?
-//
-void I_SubmitSound(void)
-{
-  // Write it to DSP device.
+  // Submit.
+  // Write out the mixbuffer to the DSP device
+  //  during each game loop update.
   write(audio_fd, mixbuffer, SAMPLECOUNT*BUFMUL);
 }
 
@@ -656,6 +651,9 @@ void I_ShutdownSound(void)
 
    ShutdownDART( pmData);
 
+   // Music
+   shutdown_music();
+
    // Done.
    sound_started = false;
    return;
@@ -686,10 +684,12 @@ void I_StartupSound()
    // Finished initialization.
    printf( "I_InitSound: sound module ready\n");
 
+   //Music
+   init_music();
+   
    //added:08-01-98:we use a similar startup/shutdown scheme as Allegro.
    I_AddExitFunc(I_ShutdownSound);
    sound_started = true;
-
 }
 
 
@@ -700,9 +700,10 @@ void I_StartupSound()
 // Still no music done.
 // Remains. Dummies.
 //
-void I_InitMusic(void)
+static
+void init_music(void)
 {
-   printf( "I_InitMusic\n");
+   printf( "init_music\n");
 
    if (nomusic)
       return;
@@ -712,13 +713,13 @@ void I_InitMusic(void)
    MidiData_buf = (char *)Z_Malloc (MIDBUFFERSIZE,PU_STATIC,NULL);
 #endif
 
-   I_AddExitFunc(I_ShutdownMusic);
+//   I_AddExitFunc( shutdown_music );  // also done by I_ShutdownSound
    music_started = true;
 }
 
-void I_ShutdownMusic(void)
+void shutdown_music(void)
 {
-   printf( "I_ShutdownMusic\n");
+   printf( "shutdown_music\n");
 
    if (!music_started)
       return;

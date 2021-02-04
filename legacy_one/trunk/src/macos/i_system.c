@@ -237,6 +237,7 @@ ULONG  I_GetTime (void)
     return (ticks - baseTicks) * TICRATE;
 }
 
+#if 0
 //
 // I_Init
 //
@@ -248,12 +249,12 @@ void I_Init (void)
     SetMenuBar(menuBar);	
         DisposeHandle(menuBar);*/
     
-    I_StartupSound();
-    I_InitMusic();
+    I_StartupSound();  // sfx and music
 #if 0   
     quiting = 0;
 #endif
 }
+#endif
 
 #if 0
 // Replaced by D_Quit_Save, I_Quit_System
@@ -270,8 +271,7 @@ void I_Quit (void)
         G_CheckDemoStatus();
     W_Shutdown();
     D_Quit_NetGame();
-    I_ShutdownMusic();
-    I_ShutdownSound();
+    I_ShutdownSound();  // sfx and music
 #ifdef CDMUS
     I_ShutdownCD();
 #endif
