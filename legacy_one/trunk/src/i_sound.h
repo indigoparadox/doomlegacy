@@ -66,24 +66,8 @@ extern int mix_musicvolume;
 //  SFX I/O
 //
 
-// Sound Device
-typedef enum {
-   SD_NULL = 0,
-   SD_S1 = 1,
-   SD_S2 = 2,
-   SD_S3 = 3,
-   SD_OSS,
-   SD_ESD,
-   SD_ALSA,
-   SD_PULSE,
-   SD_JACK,
-   SD_DEV6,
-   SD_DEV7,
-   SD_DEV8,
-   SD_DEV9,
-} sound_dev_e;
-
-// snd_opt : sound_dev_e
+// SoundOption only implemented in X11
+// snd_opt : sound_dev_e, port_dependent
 void  I_SetSoundOption( byte snd_opt );  // select output device
 
 // Init at program start...

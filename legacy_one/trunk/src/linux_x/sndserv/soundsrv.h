@@ -33,33 +33,59 @@
 #ifndef SNDSERVER_H
 #define SNDSERVER_H
 
-#define SAMPLECOUNT             512
-#define MIXBUFFERSIZE   (SAMPLECOUNT*2*2)
-#define SPEED                   11025
+// External Interface.
 
+// Device Selection.
+// Command: 'd'
+// byte  device_selection;  // snd_opt_cons_t.
 
-void I_InitMusic(void);
-
-void I_InitSound( int samplerate, int samplesound );
-
-void I_SubmitOutputBuffer ( void* samples, int samplecount );
-
-void I_ShutdownSound(void);
-void I_ShutdownMusic(void);
-
-// Format of play sound command.
+// Play sound command.
+// Command: 'p'
 typedef struct {
     uint16_t  sfxid;
     byte      vol;
     byte      pitch;
     int16_t   sep;   // +/- 127, SURROUND_SEP
+    int16_t   priority;  // -10..2560
     uint16_t  handle;
 } server_play_sound_t;
 
+// Update sound
+// Command: 'r'
+typedef struct {
+    uint16_t  handle;
+    byte      vol;
+    byte      pitch;
+    int16_t   sep;   // +/- 127, SURROUND_SEP
+} server_update_sound_t;
+
+// Stop Sound
+// Command: 's'
+// uint16_t  handle;
+
+// Load Sound
+// Command: 'l'
 typedef struct {
     uint16_t id;
     uint32_t flags;
     uint32_t snd_len;
 } server_load_sound_t;
+
+// Volume control
+// Command: 'v'
+// byte  volume
+
+// Server Quit
+// Command: 'q'
+
+
+// ------ Sound driver interface
+// These are only a few of the fields from sfxinfo_t.
+typedef struct {
+    int32_t   length;
+    uint32_t  flags;
+    byte *    data;
+} server_sfx_t;
+
 
 #endif

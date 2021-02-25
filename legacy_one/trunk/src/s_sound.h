@@ -84,16 +84,6 @@ extern consvar_t cv_musicvolume;
 extern consvar_t cv_numChannels;
 extern consvar_t cv_rndsoundpitch;
 
-#ifdef SNDSERV
-extern consvar_t cv_sndserver_cmd;
-extern consvar_t cv_sndserver_arg;
-#endif
-#ifdef MUSSERV
-extern consvar_t cv_musserver_cmd;
-extern consvar_t cv_musserver_arg;
-extern consvar_t cv_musserver_opt;
-#endif
-
 extern CV_PossibleValue_t soundvolume_cons_t[];
 #ifdef CDMUS
 //part of i_cdmus.c

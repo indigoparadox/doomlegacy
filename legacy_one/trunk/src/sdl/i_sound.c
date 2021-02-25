@@ -132,7 +132,7 @@ typedef struct {
    
   // The channel data pointers, start and end.
   byte * data_ptr;  // NULL when inactive
-  byte * data_end;
+  byte * data_end;  // past last sound sample
 
   unsigned int step;  // The channel step amount...
   unsigned int step_remainder;   // ... and a 0.16 bit remainder of last step.

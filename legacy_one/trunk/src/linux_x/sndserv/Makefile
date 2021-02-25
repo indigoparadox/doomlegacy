@@ -58,8 +58,22 @@ endif
 # MUS_OS=SCOUW2
 #unixware7
 # MUS_OS=SCOUW7
-#ESD demon
-# HAVE_ESD=1
+
+# OSS sound for X11
+#   HAVE_OSS
+#   OPTIONAL_OSS
+# ALSA sound for X11
+#   HAVE_ALSA
+#   OPTIONAL_ALSA
+# ESD demon for X11 (esound), not needed for SDL.
+#   HAVE_ESD=1
+#   OPTIONAL_ESD
+# Jack sound for X11
+#   HAVE_JACK
+#   OPTIONAL_JACK
+# PulseAudio sound for X11
+#   HAVE_PULSE
+#   OPTIONAL_PULSE
 
 #CC=gcc
 IFLAGS=-I. -I../../
@@ -86,12 +100,11 @@ LIBS=-lm
 OPTOBJ=
 SNDEXE=llsndserv
 
-
 # Differences from Linux
 
 ifeq ($(SMIF), FREEBSD_X11)
  SUBDIR=freebsd
- CFLAGS:=${CFLAGS} -DFREEBSD
+ CFLAGS+=-DFREEBSD
 else
  SUBDIR=linux
 endif
@@ -127,6 +140,75 @@ SUBDIR=unixware7
 SNDEXE=sndserver
 endif
 
+# Sound Devices
+
+SND_DEVS:=
+SND_CFLAGS:=
+SND_LIBS:=
+SND_LDFLAGS:=
+
+# Sound Devices support.
+# If a sound device is HAVE_xx, its library must be present.
+# If a sound device is OPTIONAL_xx, its library will be detected and loaded dynamically.
+ifdef HAVE_ESD
+  SND_DEVS+=-DDEV_ESD
+  SND_LIBS+=-lesd
+#  SND_CFLAGS	+=	$(shell esd-config --cflags)
+#  SND_LIBS	+=	$(shell esd-config --libs)
+else
+  ifdef OPTIONAL_ESD
+    SND_DEVS+=-DDEV_OPT_ESD
+  endif
+endif
+
+ifdef HAVE_OSS
+  SND_DEVS+=-DDEV_OSS
+else
+  ifdef OPTIONAL_OSS
+    SND_DEVS+=-DDEV_OPT_OSS
+  endif
+endif
+
+ifdef HAVE_ALSA
+  SND_DEVS+=-DDEV_ALSA
+  SND_LIBS+=-lasound -lm -ldl -lpthread -lrt
+else
+  ifdef OPTIONAL_ALSA
+    SND_DEVS+=-DDEV_OPT_ALSA
+  endif
+endif
+
+ifdef HAVE_JACK
+  SND_DEVS+=-DDEV_JACK
+  SND_LIBS+=-ljack -lpthread
+else
+  ifdef OPTIONAL_JACK
+    SND_DEVS+=-DDEV_OPT_JACK
+  endif
+endif
+
+ifdef HAVE_PULSE
+  SND_DEVS+=-DDEV_PULSE
+  SND_CFLAGS+=-D_REENTRANT
+  SND_LIBS+=-L/usr/lib/pulseaudio -lpulse
+  # do not seem to need pulsecommon
+#  SND_LIBS+=-L/usr/lib/pulseaudio -lpulse -lpulsecommon-$(HAVE_PULSE)
+#  SND_LIBS+=-lpulse
+  SND_LDFLAGS+=-L/usr/lib/pulseaudio
+#  SND_LDFLAGS+=-L/usr/lib/pulseaudio -lpulsecommon-$(HAVE_PULSE)
+#  SND_LDFLAGS+=-L/usr/lib/pulseaudio -lpulsecommon
+  # modlibexecdir=/usr/lib/pulse-9.0/modules
+else
+  ifdef OPTIONAL_PULSE
+    SND_DEVS+=-DDEV_OPT_PULSE
+  endif
+endif
+
+
+CFLAGS+=$(SND_CFLAGS) $(SND_DEVS)
+LIBS+=$(SND_LIBS)
+LDFLAGS+=$(SND_LDFLAGS)
+
 
 #############################################
 
@@ -135,17 +217,10 @@ BIN:= $(SERV_BUILD_DIR)bin
 O:= $(SERV_BUILD_DIR)objs/snd_$(SUBDIR)
 
 
-HWOUTOBJ	:=	linux.o
-ifdef HAVE_ESD
-ESDCFLAGS	:=	$(shell esd-config --cflags)
-ESDLDFLAGS	:=	$(shell esd-config --libs)
-LIBS		+=	$(ESDLDFLAGS)
-HWOUTOBJ	:=	esd.o
-CFLAGS		+=	$(ESDCFLAGS)
-endif
+#HWOUTOBJ	:=	linux.o
+HWOUTOBJ=
 
-
-SNDOBJLIST:=soundsrv.o $(HWOUTOBJ) $(OPTOBJ)
+SNDOBJLIST:=soundsrv.o snd_driver.o $(HWOUTOBJ) $(OPTOBJ)
 SNDOBJ:=$(addprefix $(O)/, $(SNDOBJLIST))
 
 
@@ -169,7 +244,13 @@ $(BIN)/$(SNDEXE): $(SNDOBJ)
 
 # Rule
 $(O)/%.o: %.c
-	$(CC) $(CFLAGS) $(IFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(IFLAGS) $(SND_DEVS) $(OPTS) $(OPTLIB) -c $< -o $@
+
+# snd_driver from linux_x
+# Must be compiled for SNDSERV
+$(O)/snd_driver.o: ../snd_driver.c
+	$(CC) $(CFLAGS) $(IFLAGS) $(SND_DEVS) -DSNDSERV $(OPTS) $(OPTLIB) -c $< -o $@
+
 
 #=======================================================
 # Install binaries
