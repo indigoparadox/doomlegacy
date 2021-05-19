@@ -62,38 +62,45 @@ ARCH=-march=i686
 # To enable debug code, with no fullscreen.
 # DEBUG=1
 
+# The dlopen lib is needed for dynamic loading of device libraries (HAVE_xx=3).
+# The dlopen lib is standard, unless you are making a really minimal Linux.
+# Not having this set means dynamic loading will be disabled,
+# which removes any support code for dynamic loading.
+# Have dlopen lib.
+HAVE_DLOPEN=1
+
 # The option ZIPWAD (in doomdef.h) needs libzip. 
 # Have libzip.
 HAVE_LIBZIP=1
 # If have libzip version 1.2 or better, then have zip seek.
 # HAVE_LIBZIP=12
-# The option ZIPWAD_OPTIONAL (in doomdef.h), will load libzip when it is present.
-# This needs dlopen lib.  It is standard unless you are making a minimal Linux.
-# Have dlopen lib.
-HAVE_DLOPEN=1
+# The option OPT_LIBZIP (in doomdef.h), will load libzip when it is present.
 
 # X11 sound options
 # Sound Server
 SOUND_SERVER=1
 # Have openserver and unixwave sound options.
 # Sound device selection, on Linux native X11.
-# Or sound devices can be optional, where dlopen will be used
-# to load the library.
-# Disable the HAVE_xx to use the OPTIONAL_xx.
+# For sound devices to be optional, where dlopen will be used
+# to load the library, set it to 3.
+#   HAVE_xx=3  (1=linked, 3=dlopen)
 # ESD is Esound, OSS, ALSA, JACK, PULSE is PulseAudio
-#HAVE_OSS=1
-OPTIONAL_OSS=1
+HAVE_OSS=1
 HAVE_ALSA=1
-#OPTIONAL_ALSA=1
-#HAVE_ESD=1
-OPTIONAL_ESD=1
-#HAVE_JACK=1
-OPTIONAL_JACK=1
-#HAVE_PULSE=1
-OPTIONAL_PULSE=1
+# HAVE_ESD=3
+# HAVE_JACK=3
+HAVE_PULSE=3
 
-# Might not have the CD music libraries.
-# CD_MUSIC=0
+# Music Server
+MUSIC_SERVER=1
+# For music devices to be optional, where dlopen will be used
+# to load the library, set it to 3.
+#   HAVE_xx=3  (1=linked, 3=dlopen)
+HAVE_TIMIDITY=1
+#HAVE_FLUIDSYNTH=3
+#HAVE_EXTMIDI=1
+#HAVE_FMSYNTH=3
+#HAVE_AWE32_SYNTH=3
 
 # Have openserver and unixwave sound options.
 # Music options: none
@@ -101,6 +108,10 @@ OPTIONAL_PULSE=1
 #   SCOUW2: unixware2
 #   SCOUW7: unixware7
 # MUS_OS=
+
+# This disables having code to play CD-ROM music tracks.
+# Might not have the CD music libraries.
+# CD_MUSIC=0
 
 # Linux or FreeBSD X11 GGI video interface libs.
 # X11_GGI=1

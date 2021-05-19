@@ -1212,7 +1212,6 @@ update:
 
 
 // Do the CV_CALL, with validity tests, and enforcing user_enable rules.
-static
 void  CV_cvar_call( consvar_t *cvar, byte user_enable )
 {
     // Call the CV_CALL func to restore state dependent upon this setting.

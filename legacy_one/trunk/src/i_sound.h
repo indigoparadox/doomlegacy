@@ -105,7 +105,8 @@ void I_UpdateSoundParams ( int handle, int vol, int sep, int pitch );
 //
 //  MUSIC I/O
 //
-void I_SetMusicOption(void);
+// mus_opt : mus_dev_e, port_dependent
+void I_SetMusicOption( byte mus_opt );
 
 // Volume.
 void I_SetMusicVolume(int volume);

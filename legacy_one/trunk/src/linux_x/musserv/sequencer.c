@@ -3,14 +3,59 @@
 //
 // $Id$
 //
-// Copyright (C) 1995-1996 Michael Heasley (mheasley@hmc.edu)
-//   GNU General Public License
+// Copyright (C) 1995-1997 Michael Heasley (mheasley@hmc.edu)
+//   GNU General Public License Version 2
 // Portions Copyright (C) 1996-2016 by DooM Legacy Team.
-//   GNU General Public License
+//   GNU General Public License Version 2
 //   Heavily modified for use with Doom Legacy.
-//   Removed wad search and Doom version dependencies.
-//   Is now dependent upon IPC msgs from the Doom program
-//   for all wad information, and the music lump id.
+// Date: 2021-3
+//   Interface functions modified for DoomLegacy use.
+
+#include "../lx_ctrl.h"
+  // MUS_DEVICE_OPTION
+  // DEV_xx
+
+
+// #define DEBUG_MUSIC_INIT
+
+// #define DEBUG_MIDI_CONTROL
+
+
+// Some synth, like TiMidity, do not implement all-off effectively.
+// Take drastic measures to kill notes that drone on.
+//#define ALL_OFF_FIX 1
+
+#ifdef DEV_TIMIDITY
+// [WDJ] To make TiMidity dump midi commands to console 1,
+// add switch "--verbose=3" to where it is started.
+// Look in /etc/rc.d/rc.local.
+#endif
+
+
+// Search orders for pref device option.
+// Now that this is changable from the DoomLegacy menu,
+// no longer do search when an specific device is specified.
+// Ext midi is only a port, even when nothing is there, so put it last.
+static char * search_order[] =
+{
+  "",    // DVT_DEFAULT, never used
+  "ALTFE",      // DVT_SEARCH1
+  "AFLTghjkE",  // DVT_SEARCH2, to be customized
+  "kjhgTLFAE",  // DVT_SEARCH3, to be customized
+  "TLE",  // DVT_MIDI
+  "T",    // DVT_TIMIDITY
+  "L",    // DVT_FLUIDSYNTH
+  "E",    // DVT_EXT_MIDI
+  "AFL",  // DVT_SYNTH
+  "F",    // DVT_FM_SYNTH
+  "A",    // DVT_AWE32_SYNTH
+  "g",    // DVT_DEV6
+  "h",    // DVT_DEV7
+  "j",    // DVT_DEV8
+  "k"     // DVT_DEV9
+};
+
+
 
 /*************************************************************************
  *  sequencer.c
@@ -47,22 +92,8 @@
   // synth_info
 #include "musserver.h"
 
-// Some synth, like TiMidity, do not implement all-off effectively.
-// Take drastic measures to kill notes that drone on.
-//#define ALL_OFF_FIX 1
-
-// Some operations from soundcard.h cause messages about violating strict aliasing.
-// This is due to an operation  *(short *)&_seqbuf[_seqbufptr+6] = (w14).
-// There is no good way to stop this, as long as -wstrict-aliasing is set.
 
 
-#ifdef DEFAULT_AWE32_SYNTH
-#  define DEFAULT_DEV   DVT_AWE32_SYNTH
-#elif defined(DEFAULT_FM_SYNTH)
-#  define DEFAULT_DEV   DVT_FM_SYNTH
-#else
-#  define DEFAULT_DEV   DVT_MIDI
-#endif
 
 // Arbitrary dev type value.  The Midi dev types all seem to be 0.
 #define DVT_TYPE_TIMIDITY    1001
@@ -133,21 +164,23 @@ static const char * synth_type_txt[] = {
 };
 #endif
 
-// [WDJ] To make TiMidity dump midi commands to console 1,
-// add switch "--verbose=3" to where it is started.
-// Look in /etc/rc.d/rc.local.
+// Some operations from soundcard.h cause messages about violating strict aliasing.
+// This is due to an operation  *(short *)&_seqbuf[_seqbufptr+6] = (w14).
+// There is no good way to stop this, as long as -wstrict-aliasing is set.
 
+// OSS sequencer interface.
 SEQ_USE_EXTBUF();
 SEQ_DEFINEBUF(2048);
 
 int queue_size = 0;
 
-// Write the output buffer to the port.
+// This function must be provided by the program, for the sequencer interface.
 // This function is as specified in /usr/include/linux/soundcard.h
 // to be used by the SEQ_ macros.
 // This will sleep() if the sequencer buffer is full.
 void seqbuf_dump(void)
 {
+  // Write the output buffer to the sequencer port.
   if (_seqbufptr)
   {
     if (write(seqfd, _seqbuf, _seqbufptr) == -1)
@@ -168,6 +201,9 @@ int queue_free( void )
   ioctl(seqfd, SNDCTL_SEQ_GETOUTCOUNT, &queue_free );
   return queue_free;
 }
+
+
+// ============= OSS MIDI SECTION
 
 
 // [WDJ] Notes on ioctrl:
@@ -409,28 +445,6 @@ void list_devs( void )
 }
 
 
-// Search orders for pref device option.
-// Now that this is changable from the DoomLegacy menu,
-// no longer do search when an specific device is specified.
-// Ext midi is only a port, even when nothing is there, so put it last.
-static char * search_order[] =
-{
-  "",    // DVT_DEFAULT, never used
-  "ALTFE",      // DVT_SEARCH1
-  "AFLTghjkE",  // DVT_SEARCH2, to be customized
-  "kjhgTLFAE",  // DVT_SEARCH3, to be customized
-  "TLE",  // DVT_MIDI
-  "T",    // DVT_TIMIDITY
-  "L",    // DVT_FLUIDSYNTH
-  "E",    // DVT_EXT_MIDI
-  "AFL",  // DVT_SYNTH
-  "F",    // DVT_FM_SYNTH
-  "A",    // DVT_AWE32_SYNTH
-  "g",    // DVT_DEV6
-  "h",    // DVT_DEV7
-  "j",    // DVT_DEV8
-  "k"     // DVT_DEV9
-};
 
 
 static

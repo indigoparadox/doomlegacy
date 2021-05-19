@@ -356,6 +356,7 @@ typedef enum {
   IT_CV_STRING =  0x0200,
   IT_CV_NOPRINT = 0x0300,
   IT_CV_NOMOD =   0x0400,
+  IT_CV_DELAY =   0x0500,  // delayed effect
 
   IT_OPTION  = 0x3000,    // field
   IT_YOFFSET = 0x1000,    // alphaKey is offset
@@ -2823,10 +2824,10 @@ menuitem_t SoundMenu[]=
     {IT_SPACE, NULL, NULL, NULL },
 #endif
 #ifdef SOUND_DEVICE_OPTION
-    {IT_STRING | IT_CVAR,  0, "Sound Pref",   &cv_snd_opt, 0},
+    {IT_STRING | IT_CVAR | IT_CV_DELAY,  0, "Sound Pref",   &cv_snd_opt, 0},
 #endif
 #ifdef MUSSERV
-    {IT_STRING | IT_CVAR,  0, "Music Pref",  &cv_musserver_opt, 0},
+    {IT_STRING | IT_CVAR | IT_CV_DELAY,  0, "Music Pref",  &cv_musserver_opt, 0},
 #endif
     {IT_STRING | IT_CVAR,  0, "Random sound pitch",   &cv_rndsoundpitch, 0},
 };
@@ -5206,6 +5207,7 @@ void M_CentreText (int y, char* string)
 // CONTROL PANEL
 //
 
+// Used for inc/dec screen size.
 static
 void  cvar_incdec( consvar_t * cv, int incr )
 {
@@ -5223,6 +5225,10 @@ void  cvar_incdec( consvar_t * cv, int incr )
     S_StartSound(menu_sfx_enter);
 }
 
+// For delayed effective CV change.
+static consvar_t * menu_delay_cv = NULL;
+static byte  menu_delay_ticks = 0;
+
 static
 void M_Change_cvar_value(int choice)
 {
@@ -5236,8 +5242,9 @@ void M_Change_cvar_value(int choice)
 #endif
 
     // Process cvar modification
-    if(((currentMenu->menuitems[itemOn].status & IT_CVARTYPE) == IT_CV_SLIDER )
-     ||((currentMenu->menuitems[itemOn].status & IT_CVARTYPE) == IT_CV_NOMOD  ))
+    uint16_t menuline_status_cvartype = currentMenu->menuitems[itemOn].status & IT_CVARTYPE;
+    if(( menuline_status_cvartype == IT_CV_SLIDER )
+     ||( menuline_status_cvartype == IT_CV_NOMOD  ))
     {
         CV_SetValue(cv, cv->value + d );
     }
@@ -5250,8 +5257,20 @@ void M_Change_cvar_value(int choice)
             sprintf(s,"%.4f",(float)cv->value/FRACUNIT + d * (1.0/16.0));
             CV_Set(cv,s);
         }
+        else if( menuline_status_cvartype == IT_CV_DELAY )
+        {
+            // Do not CALL until after delay.
+            uint32_t flags = cv->flags;
+            cv->flags &= ~CV_CALL;
+            CV_ValueIncDec( cv, d ); // INC/DEC without CALL
+            cv->flags = flags;  // Put back the CV_CALL.
+            menu_delay_cv = cv;
+            menu_delay_ticks = 45;  // 1.5 sec
+        }
         else
+        {
             CV_ValueIncDec( cv, d );
+        }
     }
 
 #ifdef CONFIG_MENU_PAGE
@@ -6079,7 +6098,7 @@ void M_Ticker (void)
         whichSkull ^= 1;
         skullAnimCounter = 8 * NEWTICRATERATIO;
     }
-
+   
     //added:30-01-98:test mode for five seconds
     if( vidm_testing_cnt > 0 )
     {
@@ -6090,6 +6109,20 @@ void M_Ticker (void)
             {
                 vidm_testing_cnt = 1;  // necessary to process ESCAPE
                 key_handler2( KEY_ESCAPE );
+            }
+        }
+    }
+
+    if( menu_delay_ticks > 0)
+    {
+        if( --menu_delay_ticks == 0 )
+        {
+	    if( menu_delay_cv )
+            {
+printf( "Menu CV delayed trigger CV\n" );
+                // Make current value effective.
+                CV_cvar_call( menu_delay_cv, 1 );
+                menu_delay_cv = NULL;
             }
         }
     }

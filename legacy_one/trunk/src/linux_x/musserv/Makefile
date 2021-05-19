@@ -36,6 +36,65 @@ endif
 #unixware7
 # MUS_OS=SCOUW7
 
+
+SND_DEVS:=
+
+# Music Devices support, mostly for Linux X11.
+# MIDI devices do not seem to need libraries.
+
+ifdef HAVE_OSS
+  ifeq ($(HAVE_OSS), OPT)
+    SND_DEVS+=-DDEV_OSS=3
+  else
+    SND_DEVS+=-DDEV_OSS
+  endif
+endif
+
+ifdef HAVE_ALSA
+  ifeq ($(HAVE_ALSA), OPT)
+    SND_DEVS+=-DDEV_ALSA=3
+  else
+    SND_DEVS+=-DDEV_ALSA
+    SND_LIBS+=-lasound
+  endif
+  SND_LIBS+=-lm -ldl -lpthread -lrt
+endif
+
+ifdef HAVE_TIMIDITY
+  ifeq ($(HAVE_TIMIDITY), OPT)
+    SND_DEVS+=-DDEV_TIMIDITY=3
+  else
+    SND_DEVS+=-DDEV_TIMIDITY
+  endif
+endif
+
+ifdef HAVE_FLUIDSYNTH
+  ifeq ($(HAVE_FLUIDSYNTH), OPT)
+    SND_DEVS+=-DDEV_FLUIDSYNTH=3
+  else
+    SND_DEVS+=-DDEV_FLUIDSYNTH
+  endif
+endif
+
+ifdef HAVE_FM_SYNTH
+  ifeq ($(HAVE_FM_SYNTH), OPT)
+    SND_DEVS+=-DDEV_FM_SYNTH=3
+  else
+    SND_DEVS+=-DDEV_FM_SYNTH
+  endif
+endif
+
+ifdef HAVE_AWE32_SYNTH
+  ifeq ($(HAVE_AWE32_SYNTH), OPT)
+    SND_DEVS+=-DDEV_AWE32_SYNTH=3
+  else
+    SND_DEVS+=-DDEV_AWE32_SYNTH
+#   SND_LIBS+=
+  endif
+endif
+
+
+
 ifdef DEBUG
 DEBUGFLG= -g3
 else
@@ -44,6 +103,12 @@ endif
 #CC	= gcc
 
 CFLAGS:=
+OPT:=
+
+ifdef SND_DEVS
+  OPT+=$(SND_DEVS)
+endif
+
 # Machine architecture.
 ifdef ARCH
   # if does not have leading -march, -mcpu, -mtune, or similar.
@@ -101,6 +166,7 @@ OPTOBJ=usleep.o
 SUBDIR=unixware7
 endif
 
+LDFLAGS+=$(SND_LIBS)
 
 #############################################
 # Nothing below this line should be changed #
@@ -130,7 +196,7 @@ dirs:
 	mkdir -p $(O)
 
 $(O)/%.o: %.c
-	${CC} ${DEBUGFLG} ${CFLAGS} ${INCOPT} -c $< -o $@
+	${CC} ${DEBUGFLG} ${CFLAGS} ${OPT} ${INCOPT} -c $< -o $@
 
 #=======================================================
 # Install binaries

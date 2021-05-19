@@ -192,7 +192,8 @@ CV_PossibleValue_t snd_opt_cons_t[] = {
 };
 #endif
 
-#ifdef MUSSERV
+#ifdef MUS_DEVICE_OPTION
+// values from mus_dev_e
 CV_PossibleValue_t musserv_opt_cons_t[] = {
    {0, "Default dev"},
    {1, "Search 1"},
@@ -733,41 +734,70 @@ void I_SetMusicVolume(int volume)
 
 // MUSIC API
 
-// indexed by musserv_opt_cons_t
-char * mus_ipc_opt_tab[] = {
-  "-dd", // Default
-  "-da", // Search 1
-  "-db", // Search 2
-  "-dc", // Search 3
-  "-dM", // Midi
-  "-dT", // TiMidity
-  "-dL", // FluidSynth
-  "-dE", // Ext Midi
-  "-dS", // Synth
-  "-dF", // FM Synth
-  "-dA", // Awe32 Synth
-  "-dg", // Dev6
-  "-dh", // Dev7
-  "-dj", // Dev8
-  "-dk"  // Dev9
+// indexed by sound_dev_e, values of snd_opt_cons_t
+char snd_ipc_opt_tab[] = {
+  'd', // Default
+  'a', // Search 1
+  'b', // Search 2
+  'c', // Search 3
+  'O', // OSS
+  'E', // ESD
+  'A', // ALSA
+  'P', // PulseAudio
+  'J', // JACK
+  'g', // Dev6
+  'h', // Dev7
+  'j', // Dev8
+  'k'  // Dev9
 };
 
-void I_SetMusicOption(void)
+// indexed by mus_dev_e, values of musserv_opt_cons_t
+char mus_ipc_opt_tab[] = {
+  'd', // Default
+  'a', // Search 1
+  'b', // Search 2
+  'M', // Midi
+  'T', // TiMidity
+  'L', // FluidSynth
+  'E', // Ext Midi
+  'S', // Synth
+  'F', // FM Synth
+  'A', // Awe32 Synth
+  'g', // Dev6
+  'h', // Dev7
+  'j', // Dev8
+  'k'  // Dev9
+};
+
+void I_SetMusicOption( byte mus_opt )
 {
-    byte bi = cv_musserver_opt.value;
+#ifdef MUSSERV
+#ifdef SOUND_DEVICE_OPTION
+    byte si = cv_snd_opt.EV;
+#else
+    byte si = SOUND_DEV1;
+#endif
+    char sc, mc;
+
+    if( musserver < 0 )  // during init
+        return;
 
     if( msg_id < 0 )  return;
-    if( bi > 16 )  return;
 
+    // Use 'Z' for MUTE.
+    sc = ( si < SD_DEV9 )? snd_ipc_opt_tab[si] : 'Z';
+    mc = (mus_opt < MDT_DEV9)? mus_ipc_opt_tab[mus_opt] : 'Z';
+   
     msg_buffer.mtype = 6;
     memset(msg_buffer.mtext, 0, MUS_MSG_MTEXT_LENGTH);
-    snprintf(msg_buffer.mtext, MUS_MSG_MTEXT_LENGTH-1, "O%s", mus_ipc_opt_tab[bi] );
+    snprintf(msg_buffer.mtext, MUS_MSG_MTEXT_LENGTH-1, "O-s%c-d%c", sc, mc );
     msg_buffer.mtext[MUS_MSG_MTEXT_LENGTH-1] = 0;
 #ifdef  DEBUG_MUSSERV
     GenPrintf( EMSG_debug, "Send musserver option: %s\n", msg_buffer.mtext );
 #endif
     msg_buffer.mtext[MUS_MSG_MTEXT_LENGTH-1] = 0;
     msgsnd(msg_id, MSGBUF(msg_buffer), MUS_MSG_MTEXT_LENGTH, IPC_NOWAIT);
+#endif
 }
 
 
@@ -907,7 +937,7 @@ int I_RegisterSong( void* data, int len )
 }
 
 // Interface
-void I_PlaySong(int handle, int looping)
+void I_PlaySong(int handle, byte looping)
 {
     music_dies = gametic + (TICRATE * 30);
 

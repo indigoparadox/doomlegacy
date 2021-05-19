@@ -1,3 +1,16 @@
+// Emacs style mode select   -*- C++ -*-
+//-----------------------------------------------------------------------------
+//
+// $Id$
+//
+// Copyright (C) 1995-1997 Michael Heasley (mheasley@hmc.edu)
+//   GNU General Public License Version 2
+// Portions Copyright (C) 1996-2021 by DooM Legacy Team.
+//   GNU General Public License Version 2
+//   Heavily modified for use with Doom Legacy.
+//   Optimized for use with DoomLegacy.
+//   Modified IPC message commands.
+
 /*************************************************************************
  *  musserver.c
  *
@@ -17,6 +30,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *************************************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -61,105 +75,148 @@ static int dev_type = -1;  // as per the ioctl listing
 static unsigned int timeout = DEFAULT_TIMEOUT_SEC;
 
 
+static char help_text[] =
+{
+"Usage: musserver [options]\n"
+"  -l               List detected music devices and exit\n"
+
+#ifdef SOUND_DEVICE_OPTION
+"  -s <snd>         Sound Device selection.\n"
+"<snd>:"
+#ifdef DEV_OSS
+"  O=OSS"
+#endif
+#ifdef DEV_ALSA
+"  A=ALSA"
+#endif
+"\n"
+#endif
+
+#ifdef MUS_DEVICE_OPTION
+"  -d <dev> <port>  MIDI Device selection.\n"
+"<dev>:"
+"  M=Any MIDI"
+#ifdef DEV_TIMIDITY
+"  T=TiMidity"
+#endif
+#ifdef DEV_FLUIDSYNTH
+"  L=FluidSynth"
+#endif
+#ifdef DEV_EXT_MIDI
+"  E=Ext MIDI"
+#endif
+"\n"
+#if defined( DEV_FM_SYNTH ) || defined( DEV_AWE32_SYNTH)
+"  S=Any Synth"
+#ifdef DEV_FM_SYNTH
+"  F=FM Synth"
+#endif
+#ifdef DEV_AWE32_SYNTH
+"  A=Awe32 Synth"
+#endif
+"\n"
+#endif
+#else
+"  -d <port>  MIDI Device selection.\n"
+#endif
+
+"<port>  Optional, defaults to first found.\n"
+
+"  -u <number>      Use device of type <number> where <number> is the type\n"
+"                   reported by 'musserver -l'.\n"
+"  -V <vol>         Ignore volume change messages from Doom\n"
+"  -c               Do not check whether the parent process is alive\n"
+"  -t <number>      Timeout for getting IPC message queue (sec).\n"
+"  -v -v2 -v3       Verbose. Default level 1.\n"
+"  -x               Exit if no devices found.\n"
+"  -h               Help: print this message and exit\n"
+};
+
 void show_help(void)
 {
     printf("musserver version %s\n", MUS_VERSION);
-    printf("Usage: musserver [options]\n\n");
-    printf("  -l               List detected music devices and exit\n");
-    printf("  -d <dev> <port>  Device preference.\n" );
-    printf("    <dev>: M = Any Midi      E = Ext Midi\n" );
-    printf("           L = FluidSynth    T = TiMidity\n" );
-    printf("           S = Any Synth     F = FM Synth\n" );
-#ifdef AWE32_SYNTH_SUPPORT
-    printf("           A = Awe32 Synth\n" );
-#endif
-    printf("    <port>         Optional, defaults to first found. \n");
-    printf("  -u <number>      Use device of type <number> where <number> is the type\n");
-    printf("                   reported by 'musserver -l'.\n");
-    printf("  -V <vol>         Ignore volume change messages from Doom\n");
-    printf("  -c               Do not check whether the parent process is alive\n");
-    printf("  -t <number>      Timeout for getting IPC message queue (sec).\n");
-    printf("  -v -v2 -v3       Verbose. Default level 1.\n");
-    printf("  -x               Exit if no devices found.\n");
-    printf("  -h               Help: print this message and exit\n");
+    printf("%s", help_text );
 }
 
-// Index with dev_e.
-const char * dev_txt[] = {
+//#ifdef MUS_DEVICE_OPTION
+// indexed by mus_dev_e
+const char * music_dev_name[] = {
    "DEFAULT",  // preset default device
    "SEARCH1",
    "SEARCH2",
-   "SEARCH3",
+// MIDI devices
    "MIDI",
    "TIMIDITY",
    "FLUIDSYNTH",
    "EXT_MIDI",
+// SYNTH devices
    "SYNTH"
    "FM_SYNTH",
    "AWE32_SYNTH",
+// unused devices
    "DEV6",
    "DEV7",
    "DEV8",
    "DEV9",
-   "LIST"
+// request
+   "QUERY"
 };
+//#endif
+
+#ifdef SOUND_DEVICE_OPTION
+// indexed by sound_dev_e, values of snd_opt_cons_t
+char snd_ipc_opt_tab[] = {
+  'd', // Default
+  'a', // Search 1
+  'b', // Search 2
+  'O', // OSS
+  'E', // ESD
+  'A', // ALSA
+#if 0
+// Do not really need this part of table.
+  'P', // PulseAudio
+  'J', // JACK
+  'g', // Dev6
+  'h', // Dev7
+  'j', // Dev8
+  'k'  // Dev9
+#endif
+};
+#endif
+
+#ifdef MUS_DEVICE_OPTION
+// indexed by mus_dev_e, values of musserv_opt_cons_t
+char mus_ipc_opt_tab[] = {
+  'd', // Default
+  'a', // Search 1
+  'b', // Search 2
+  'M', // Midi
+  'T', // TiMidity
+  'L', // FluidSynth
+  'E', // Ext Midi
+  'S', // Synth
+  'F', // FM Synth
+  'A', // Awe32 Synth
+  'g', // Dev6
+  'h', // Dev7
+  'j', // Dev8
+  'k'  // Dev9
+};
+#endif
 
 
 // Select preference device.
+//  ch : test char
+//  tab[] : table of chars
+// Return the table index, which will be the SD_ or MDT_ value.
 static
-byte  select_device( char ch )
+byte  find_char_code( char ch, char tab[], byte tabsize )
 {
     byte sd;
-    switch( ch )
-    {
-     case 'M':
-        sd = DVT_MIDI;
-        break;
-     case 'E':
-        sd = DVT_EXT_MIDI;
-        break;
-     case 'T':
-        sd = DVT_TIMIDITY;
-        break;
-     case 'L':
-        sd = DVT_FLUIDSYNTH;
-        break;
-     case 'S':
-        sd = DVT_SYNTH;
-        break;
-     case 'F':
-        sd = DVT_FM_SYNTH;
-        break;
-     case 'A':
-        sd = DVT_AWE32_SYNTH;
-        break;
-     default:
-     case 'a':
-        sd = DVT_SEARCH1;
-        break;
-     case 'b':
-        sd = DVT_SEARCH2;
-        break;
-     case 'c':
-        sd = DVT_SEARCH3;
-        break;
-     case 'd':
-        sd = DVT_DEFAULT;
-        break;
-     case 'g':
-        sd = DVT_DEV6;
-        break;
-     case 'h':
-        sd = DVT_DEV7;
-        break;
-     case 'j':
-        sd = DVT_DEV8;
-        break;
-     case 'k':
-        sd = DVT_DEV9;
-        break;
-    }
-    return sd;
+    for( sd=0; sd < tabsize; sd++ )
+        if( tab[sd] == ch )  return sd;
+    
+    return 0;
 }
 
 static
@@ -189,11 +246,29 @@ void  parse_option_string( const char * optstr )
             while( isdigit(*p) ) p++;
             changevol_allowed = 0;  // fixed volume
             break;
+         case 's':
+            while(*p == ' ') p++;
+            if( isalpha( *p ) )
+            {
+                char dc = *(p++);
+#ifdef SOUND_DEVICE_OPTION
+                sel_snddev = find_char_code( dc, snd_ipc_opt_tab, sizeof(snd_ipc_opt_tab) );
+#else
+                sel_snddev = SOUND_DEV1;
+#endif	       
+                while(*p == ' ') p++;
+            }
+            break;
          case 'd':
             while(*p == ' ') p++;
             if( isalpha( *p ) )
             {
-                sel_dvt = select_device( *(p++) );
+                char dc = *(p++);
+#ifdef MUS_DEVICE_OPTION
+                sel_dvt = find_char_code( dc, mus_ipc_opt_tab, sizeof(mus_ipc_opt_tab) );
+#else
+                sel_dvt = MUS_DEV1;
+#endif
                 while(*p == ' ') p++;
             }
             if( isdigit( *p ) )
@@ -266,7 +341,14 @@ void  command_line( int ac, char * av[] )
                 avstr = *av;
             }
             if( isalpha( *avstr ) )
-                sel_dvt = select_device( *(avstr++) );
+            {
+                char dc = *(avstr++);
+#ifdef MUS_DEVICE_OPTION
+                sel_dvt = find_char_code( dc, mus_ipc_opt_tab, sizeof(mus_ipc_opt_tab) );
+#else
+                sel_dvt = MIDI_DEV1;
+#endif
+            }
             dev_port_num = command_value( avstr, &av );  // optional port num
             break;
          case 'u':
