@@ -229,7 +229,7 @@ gracefully_ignore:
        while( data_len > 16 )
        {
            read_pipe( dum, 16 );  // the snd data
-	   data_len -= 16;
+           data_len -= 16;
        }
        read_pipe( dum, data_len );  // the snd data
    }
@@ -322,8 +322,8 @@ int main ( int c, char** v )
         // Playing sound has priority.  Perform update periodically.
         LXD_UpdateSound();
 
-	// Previous version would handle commands to the exclusion of updating the mixer.
-	// That could affect sound playback.
+        // Previous version would handle commands to the exclusion of updating the mixer.
+        // That could affect sound playback.
 
         mytime++;
 
@@ -354,7 +354,7 @@ int main ( int c, char** v )
                 break;
              case 'r':
                 // update sound parameters
-		SSX_update_sound_param();
+                SSX_update_sound_param();
                 break;
              case 's':
                 // stop sound
@@ -363,9 +363,9 @@ int main ( int c, char** v )
              case 'v':
                 // master volume, num channels
                 read_pipe(commandbuf, 2);
-	        mix_sfxvolume = commandbuf[0];  // local copy  0..31
-		cv_num_channels = commandbuf[1];  // from cv_numChannels
-		LXD_SetSfxVolume( mix_sfxvolume );  // from master volume  0..31
+                mix_sfxvolume = commandbuf[0];  // local copy  0..31
+                cv_num_channels = commandbuf[1];  // from cv_numChannels
+                LXD_SetSfxVolume( mix_sfxvolume );  // from master volume  0..31
                 break;
 #ifdef SOUND_DEVICE_OPTION
              case 'd':
@@ -378,7 +378,7 @@ int main ( int c, char** v )
                 SSX_load_sound_data();
                 break;
              case 'q':
-		goto shutdown;
+                goto shutdown;
                  
 #ifdef DEBUG_PIPE
              case 'D':  // dump sfx
@@ -395,7 +395,7 @@ int main ( int c, char** v )
                }
                 break;
 #endif
-	     case 0:  // a NOP
+             case 0:  // a NOP
                 break;	       
              default:
                 fprintf(stderr, "Did not recognize command %d\n",commandbuf[0]);

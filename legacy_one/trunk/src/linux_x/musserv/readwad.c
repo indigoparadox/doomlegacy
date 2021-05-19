@@ -36,13 +36,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/soundcard.h>
-#include <stdint.h>
 #include "musserver.h"
+#include "musseq.h"
+  // stdint.h
 #include "m_swap.h"
+  // macros
 
-
-extern opl_instr_t  fm_instruments[175];   // from genmidi file
 
 
 #define WADHEADER 8	/* The wad header is 12 bytes, but we only care about
@@ -154,6 +153,15 @@ uint32_t  read_wad_dir( FILE * wadfile, char * filename, int lumpnum,
     return direntry.filepos;
 }
 
+void release_music_data( music_data_t * music_data )
+{
+    if( music_data->data )
+    {
+        free( music_data->data );
+        music_data->data = NULL;
+    }
+}
+
 // Return music size.
 //  music_wad : the wad name and lumpnum
 //  music_data : the music lump read
@@ -191,8 +199,7 @@ int read_wad_music( music_wad_t * music_wad,
   fseek(wadfile, mus_header.header_size, SEEK_CUR);
 
   if( music_data == NULL )   goto done;
-  if( music_data->data )
-      free( music_data->data );
+  release_music_data( music_data );
 
   // Read the music lump to the OUT music_data.
   music_data->data = malloc(mus_header.music_size);
@@ -211,6 +218,10 @@ done:
 
   return mus_header.music_size;
 }
+
+#ifdef DEV_FM_SYNTH   
+// [WDJ] Defined by wad structs, not by OSS.
+extern opl_instr_t  fm_instruments[175];   // sequencer.c
 
 // Read the GENMIDI lump from a wad.
 //  gen_wad : the wad name and lumpnum
@@ -247,4 +258,6 @@ genmidi_not_found:
   cleanup_exit(1, "could not find GENMIDI entry in wadfile");
   return;
 }
+#endif
+
 

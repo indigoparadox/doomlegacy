@@ -74,43 +74,52 @@
 /* End of user-configurable section */
 /************************************/
 
+#include "doomdef.h"
+  // MAX_WADPATH
+#include "doomtype.h"
+  // byte
+#include <stdint.h>
+
+#include "../lx_ctrl.h"
+  // MUS_DEVICE_OPTION
+  // DEV_xx
 
 #ifdef DEFAULT_AWE32_SYNTH
 #  define AWE32_SYNTH_SUPPORT
 #endif
 
+#ifdef AWE32_SYNTH_SUPPORT
+# ifndef DEV_AWE32_SYNTH
+#   define DEV_AWE32_SYNTH
+# endif
+#endif
+
 #ifdef linux
 #  include <sys/soundcard.h>
-#  ifdef AWE32_SYNTH_SUPPORT
+#  ifdef DEV_AWE32_SYNTH
 #    include <linux/awe_voice.h>
 #  endif
 #elif defined(SCOOS5) || defined(SCOUW2) || defined(SCOUW7)
 #  include <sys/soundcard.h>
-#  ifdef AWE32_SYNTH_SUPPORT
+#  ifdef DEV_AWE32_SYNTH
 #    include <sys/awe_voice.h>
 #  endif
 #elif defined(__FreeBSD__)
 #  include <machine/soundcard.h>
-#  ifdef AWE32_SYNTH_SUPPORT
+#  ifdef DEV_AWE32_SYNTH
 #    include <awe_voice.h>
 #  endif
 #endif
 
-#define MUS_VERSION "1.4_DoomLegacy"
+#define MUS_VERSION "1.49_DoomLegacy"
 
-#include <stdint.h>
-#include "doomtype.h"
-  // byte
-//typedef unsigned char   byte;
-#include "doomdef.h"
-  // MAX_WADPATH
 
 // Length of mtext, which now includes a directory/filename.
 #define MUS_MSG_MTEXT_LENGTH    MAX_WADPATH
 // This message structure is dictated by message operations msgrcv, msgsnd.
 typedef struct
 {
-    long  mtype;      /* type of received/sent message */
+    uint32_t  mtype;      /* type of received/sent message */
     char  mtext[MUS_MSG_MTEXT_LENGTH];  /* text of the message */
 } mus_msg_t;
 
@@ -122,41 +131,33 @@ typedef struct
 # define MSGBUF(x)  ((struct msgbuf*)&(x))
 #endif
 
+// Messages (as text):
+// First char is command.
+// "O-sA-dT"    // option string
+// "Dname"      // print music name
+// "Wdoom2.wad" // wad name
+// Second char is sub-command.
+// "V 23"    // volume,  100 = normal, 120 = loud
+// "G 102"  // genmidi lump number
+// "S 97"   // start playing lump number, once
+// "SC97"   // start playing lump number, continuous looping
+// "P 1"    // Pause, 0=off  1=on
+// "I 2013" // Parent pid 2013, exit when parent exits
+// "X"      // Stop song
+// "QQ"     // Quit, Exit musserver.
 
+// Option string:
+// "-v"    // verbose
+// "-V100" // fixed volume, 100 = normal
+// "-sA"   // sound interface  A=ALSA, O=OSS, Z=off
+// "-dT"   // music device
+//         // T=TiMidity,  F=Fluidsynth
+//         // E=Ext MIDI,
+//         // F=FM Synth,  A=Awe32 Synth
+//         // Z=off
+// "-p3"   // port num
 
-typedef struct {
-    uint16_t   flags;
-    byte   finetune;
-    byte   note;
-    sbi_instr_data   patchdata;
-} opl_instr_t;
-
-typedef struct {
-    int32_t    note;
-    int32_t    channel;
-} synth_voice_t;
-
-
-// Device types
-typedef enum {
-   DVT_DEFAULT, // preset default device
-   DVT_SEARCH1,
-   DVT_SEARCH2,
-   DVT_SEARCH3,
-   DVT_MIDI,  // TIMIDITY, FLUIDSYNTH, then EXT_MIDI
-   DVT_TIMIDITY,
-   DVT_FLUIDSYNTH,
-   DVT_EXT_MIDI,
-   DVT_SYNTH,  // synth devices
-   DVT_FM_SYNTH,
-   DVT_AWE32_SYNTH,
-   DVT_DEV6,
-   DVT_DEV7,
-   DVT_DEV8,
-   DVT_DEV9,
-   DVT_LIST,
-} dvtype_e;
-
+#if 0
 // music play state, set by IPC messages
 typedef enum {
    PLAY_OFF,
@@ -167,82 +168,8 @@ typedef enum {
    PLAY_RESTART,
    PLAY_QUITMUS
 } play_e;
-
-#define TERMINATED 0xFFFFF
-
-typedef struct {
-  char * wad_name;  // malloc
-  int  lumpnum;
-  byte state;   // play_e
-} music_wad_t;
-
-typedef struct {
-  uint32_t  filepos;  // position in file
-  uint32_t  size;  // music data size
-  byte *  data;  // music data, malloc
-} music_data_t;
-
-// from IPC message
-extern char * option_string;
-
-extern music_wad_t  music_lump;
-extern music_wad_t  genmidi_lump;
-
-extern byte option_pending;  // msg has set the option string
-extern byte continuous_looping;
-extern byte music_paused;
-extern byte verbose;
-extern byte changevol_allowed;
-extern byte parent_check;  // check parent process
-extern byte no_devices_exit;
-extern char parent_proc[32];  // parent process /proc/num
-
-extern int queue_size;
-int queue_free( void );
+#endif
 
 
-// Music midi timer.
-typedef enum { MMT_START, MMT_STOP, MMT_CONT }  mmt_e;
-// action : mmt_e
-void midi_timer(int action);
 
-void all_off_midi(void);
-void pause_midi(void);
-void reset_midi(void);
-void midi_wait(uint32_t wtime);
-
-void seqbuf_dump(void);
-void note_off(int note, int channel, int volume);
-void note_on(int note, int channel, int volume);
-void pitch_bend(int channel, int value);
-void control_change(int controller, int channel, int value);
-void patch_change(int patch, int channel);
-void vol_change(int volume);
-
-void playmus(music_data_t * music_data, byte check_msg);
-
-extern int qid;  // IPC message queue id
-
-enum{ MSG_NOWAIT=0, MSG_WAIT=1 };
-//  wait_flag : MSG_WAIT, MSG_NOWAIT
-void get_mesg(byte wait_flag);
-
-// Init, load, setup the selected device
-void seq_midi_init_setup(int sel_dev, int dev_type, int port_num);
-void cleanup_midi(void);
-void list_devs(void);
-
-// Wad read
-// Read the GENMIDI lump from a wad.
-//  gen_wad : the wad name and lumpnum
-void read_wad_genmidi( music_wad_t * gen_wad );
-
-// Return music size.
-//  music_wad : the wad name and lumpnum
-//  music_data : the music lump read
-int read_wad_music( music_wad_t * music_wad,
-             /* OUT */  music_data_t * music_data );
-
-// Exit the program.
-void cleanup_exit(int status, char * exit_msg);
 #endif

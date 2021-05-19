@@ -5,7 +5,7 @@
 //
 // Copyright (C) 1995-1996 Michael Heasley (mheasley@hmc.edu)
 //   GNU General Public License
-// Portions Copyright (C) 1996-2016 by DooM Legacy Team.
+// Portions Copyright (C) 1996-2021 by DooM Legacy Team.
 //   GNU General Public License
 //   Heavily modified for use with Doom Legacy.
 //   Removed wad search and Doom version dependencies.
@@ -39,7 +39,6 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
-#include <sys/soundcard.h>
 #include <unistd.h>
 #ifdef linux
 #  include <signal.h>
@@ -52,8 +51,20 @@
 #include <ctype.h>
 #include <sys/time.h>
 
-#include "musserver.h"
+#include <sys/soundcard.h>
+  // MIDI field defines
 
+#include "musserver.h"
+#include "musseq.h"
+
+
+// Throttle playback based on guessing playing time.  Does not work well.
+// Due to ability to purge music queues, do not need to worry about
+// music playing getting far ahead.
+//#define THROTTLE_MIDI
+
+
+#define TERMINATED 0xFFFFF
 
 music_wad_t  music_lump = { NULL, 0 };
 music_wad_t  genmidi_lump = { NULL, 0 };
@@ -85,14 +96,26 @@ void sigfn_do_nothing()
 //-- Service the IPC messages
 
 // In milliseconds
-#define MSG_CHECK_MS  400
+#define MSG_CHECK_MS    50
+#define TIMEOUT_MS    8000
+#define THROTTLE_TIME 2000
 
+#define ERROR_COUNT_LIMIT  50
+
+
+// Change of device, restart playing the music.
+void restart_playing( void )
+{
+    if( music_lump.state == PLAY_RUNNING )
+        music_lump.state = PLAY_RESTART;
+}
 
 void get_mesg(byte wait_flag)
 {
   // [WDJ] This is called often, so do not malloc the buffer.
   static mus_msg_t  recv;  // size MUS_MSG_MTEXT_LENGTH
   static uint32_t   parent_check_counter = 0;
+  static uint32_t   pipe_error_count = 0;
   static char *  wadname = NULL; // malloc
 
   int result;
@@ -110,41 +133,42 @@ void get_mesg(byte wait_flag)
     if (result > 0)
     {
       if (verbose >= 2)
-        printf("ipc: bytes = %d, mtext = %s\n", result, recv.mtext);
+        printf("musserv ipc: bytes = %d, mtext = %s\n", result, recv.mtext);
+
+      pipe_error_count = 0;
        
       switch (recv.mtext[0])
       {
-       case 'v': case 'V':
+       case 'v': case 'V':  // Volume
         if (changevol_allowed)
         {
           int vol = atoi(&recv.mtext[2]);
-          vol_change( vol );
+          master_volume_change( vol );
           if (verbose >= 2)
-            printf("musserver: volume change = %d\n", vol);
+            printf("musserv: volume change = %d\n", vol);
         }
         repeat = 1;
         break;
-       case 'o': case 'O':  // Options
+       case 'o': case 'O':  // Option select
         if( option_string )
           free( option_string );
         option_string = strdup( &recv.mtext[1] );
         option_pending = 1;
-        if( music_lump.state == PLAY_RUNNING )
-          music_lump.state = PLAY_RESTART;
+        restart_playing();
         break;
-       case 'd': case 'D':
+       case 'd': case 'D':  // Obsolete
         if (verbose)
-          printf("music name = %s\n", &recv.mtext[1]);
+          printf("musserv: music name = %s\n", &recv.mtext[1]);
         // no longer search for music names, is only informational
         break;
-       case 'w': case 'W':
+       case 'w': case 'W':  // Wad name
         // Wad name
         if( wadname )
           free( wadname );
         wadname = strdup( &recv.mtext[1] );  // malloc
         repeat = 1;  // Another msg expected.
         break;
-       case 'g': case 'G':
+       case 'g': case 'G':  // Play GenMidi lump
         // GenMidi lump number.
         if( genmidi_lump.wad_name )
             free( genmidi_lump.wad_name );
@@ -152,11 +176,11 @@ void get_mesg(byte wait_flag)
         genmidi_lump.lumpnum = atoi(&recv.mtext[2]);
         genmidi_lump.state = PLAY_START;
         if (verbose >= 2)
-          printf("genmidi lump number = %d, in %s\n", genmidi_lump.lumpnum,
+          printf("musserv: genmidi lump number = %d, in %s\n", genmidi_lump.lumpnum,
                  (wadname? wadname:"WAD NAME MISSING") );
         wadname = NULL;
         break;
-       case 's': case 'S':
+       case 's': case 'S':  // Play music lump
         // Music lump number.
         if( music_lump.wad_name )
             free( music_lump.wad_name );
@@ -166,13 +190,13 @@ void get_mesg(byte wait_flag)
         continuous_looping = (toupper(recv.mtext[1]) == 'C');
         if (verbose >= 2)
         {
-          printf("musserver: Start %s, music lump number = %d, in %s\n",
+          printf("musserv: Start %s, music lump number = %d, in %s\n",
                  (continuous_looping?"Cont":""), music_lump.lumpnum,
                  (wadname?wadname:"WAD NAME MISSING") );
         }
         wadname = NULL;
         break;
-       case 'p': case 'P':
+       case 'p': case 'P':  // Pause
         // Pause and Stop
         music_paused = atoi(&recv.mtext[2]);
         if( music_paused )
@@ -186,11 +210,11 @@ void get_mesg(byte wait_flag)
               music_lump.state = PLAY_RUNNING;
         }
         break;
-       case 'x': case 'X':
+       case 'x': case 'X':  // Stop
         // Stop song
         music_lump.state = PLAY_STOP;
         break;
-       case 'i': case 'I':
+       case 'i': case 'I':  // Identify parent
         {
           // Watch PPID
           int ppid = atoi(&recv.mtext[2]);
@@ -199,13 +223,14 @@ void get_mesg(byte wait_flag)
             parent_check = 1;
         }
         break;
-       case 'q': case 'Q':
+       case 'q': case 'Q':  // Quit
+        // Proper quit is "QQ"
+        if( recv.mtext[1] != 'Q' )  break;  // incomplete, ignore
         // Quit
         music_lump.state = PLAY_QUITMUS;
         if( verbose )
-          printf("musserver: Received QUIT\n");
-        // Close the queue.
-        msgctl(qid, IPC_RMID, (struct msqid_ds *) NULL);
+          printf("musserv: Received QUIT\n");
+        // Do not remove the msg queue until this program actually exits.
         return;
       }
     }
@@ -228,7 +253,7 @@ void get_mesg(byte wait_flag)
 #if defined(linux) || defined(SCOOS5) || defined(SCOUW2) || defined(SCOUW7)
        case EIDRM:
         // Queue was removed while process was waiting for a message.
-        // Can only get EIDRM is process is sleeping while waiting for message.
+        // Can only get EIDRM if process is sleeping while waiting for message.
         fail_msg="IPC message queue, message queue has been removed";
         goto  fail_exit;
 #endif
@@ -238,8 +263,17 @@ void get_mesg(byte wait_flag)
         break;
        case EINVAL:
         // Queue does not exist, or other errors.
+        if( (pipe_error_count ++) < 2000 )
+        {
+            if( pipe_error_count == 1 )   printf(" EINVAL 1 " );
+            if( pipe_error_count == 10 )   printf(" EINVAL 10 " );
+            if( pipe_error_count == 100 )   printf(" EINVAL 100 " );
+            usleep( 1000 );
+            break;
+        }
+
 #if defined(linux) || defined(SCOOS5) || defined(SCOUW2) || defined(SCOUW7)
-        fail_msg="IPC message queue, invalid message size or queue id";
+        fail_msg="IPC message queue, EINVAL invalid message size or queue id";
 #elif defined(__FreeBSD__)
         fail_msg="IPC message queue, message queue has been removed or invalid queue id";
 #else
@@ -248,7 +282,7 @@ void get_mesg(byte wait_flag)
         goto  fail_exit;
 #ifdef __FreeBSD__
        case E2BIG:
-        fail_msg="IPC message queue, invalid message size or queue id";
+        fail_msg="IPC message queue, E2BIG invalid message size or queue id";
         goto  fail_exit;
 #endif
 #if defined(linux) || defined(SCOOS5) || defined(SCOUW2) || defined(SCOUW7)
@@ -287,7 +321,6 @@ fail_exit:
 }
 
 
-//#define THROTTLE_MIDI
 
 #ifdef THROTTLE_MIDI
 // get_float_time is relative to this value, to preserve significant digits
@@ -314,27 +347,37 @@ double  get_float_time(void)
 #endif
 
 
+const byte mus_system_event_to_midi[] =
+{
+  // MUS code 10
+  120,  // 10 All sounds off
+  123,  // 11 All notes off, Note-1
+  126,  // 12 Mono
+  127,  // 13 Poly
+  121   // 14 Reset all controllers, Note-1
+};
+// Note-1: Equipment must respond in order to comply with General Midi Level 1.
+
 void playmus(music_data_t * music_data, byte check_msg)
 {
   byte * musp;
   byte event0, event1, event2;  // bytes of the event
   byte eventtype;
   byte channelnum;
-  byte lastflag = 0;
+  byte lastflag;
   byte notenum;
-  byte notevol;
   unsigned int pitchwheel;
   byte controlnum;
   byte controlval;
   unsigned int ticks;
   byte tdata;
   unsigned int lastvol[16];
-  int queue_thresh;
   double delaytime;
-  double curtime = 0.0;
+  double curtime;
 #ifdef THROTTLE_MIDI
   double clktime, target_time;
 #endif
+  unsigned int timeout;
 
   signal(SIGHUP, sigfn_do_nothing);
   signal(SIGQUIT, sigfn_quitmus);
@@ -342,33 +385,45 @@ void playmus(music_data_t * music_data, byte check_msg)
   signal(SIGTERM, sigfn_quitmus);
   signal(SIGCONT, SIG_IGN);
 
-  // To keep from filling the sequencer queue (which hurts responsiveness).
-  queue_thresh = queue_size - 64;
-
   musp = music_data->data;
 
   reset_midi();
   midi_timer(MMT_START);
+  curtime = 0.0;
+  lastflag = 0;
 
   music_lump.state = PLAY_RUNNING;
 
 #ifdef THROTTLE_MIDI
   start_float_time();
 #endif
-  
+
+// byte mus_to_chan[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 9 };
+     
   for(;;)
   {
-    // Midi event, variable length.
-    // 7 bit data, sign bit is a flag.
+    // MUS event, variable length.
+    // MUS format is nearly same as MIDI, but more compressed.
+    // 1 track, 16 channels.
+    // Fixed speed, must play back at 140 ticks/sec.
     event0 = *musp++;
     channelnum = event0 & 0x0F;
+#if 0
+    if (channelnum == 15)
+      channelnum = 9;  // drum
+    else if (channelnum > 8)
+      channelnum++;
+#else
     if (channelnum > 8)
       channelnum++;
     if (channelnum == 16)
       channelnum = 9;  // drum
+#endif
     eventtype = (event0 >> 4) & 0x07;
     lastflag = event0 & 0x80;
+    // last in a series of commands that happen on the same tick
 
+    // Read MUS format, convert to MIDI.
     switch (eventtype)
     {
     case 0:		/* note off */
@@ -380,18 +435,24 @@ void playmus(music_data_t * music_data, byte check_msg)
     case 1:		/* note on */
       event1 = *musp++;
       notenum = event1 & 0x7F;
-      if (event1 & 0x80)
+      if (event1 & 0x80)  // MUS event has velocity
       {
         event2 = *musp++;
-        notevol = event2 & 0x7F;
-        lastvol[channelnum] = notevol;
+        lastvol[channelnum] = event2 & 0x7F;  // notevol
       }
       note_on(notenum, channelnum, lastvol[channelnum]);
       break;
 
     case 2:		/* pitch wheel */
-      event1 = *musp++;
-      pitchwheel = event1 / 2;
+      event1 = *musp++;   // byte
+      // pitch, 8 bit
+      // 0=down2, 64=down1, 128=normal, 192=up1, 255=up2
+#ifdef PITCHBEND_128
+      pitchwheel = event1;
+#else
+      // From 1.42
+      pitchwheel = event1 / 2;  // normal=64
+#endif
       pitch_bend(channelnum, pitchwheel);
       break;
 
@@ -406,20 +467,70 @@ void playmus(music_data_t * music_data, byte check_msg)
           patch_change(controlval, channelnum);
           break;
         case 3:		/* volume */
-          control_change(CTL_MAIN_VOLUME, channelnum, controlval);
+          // 0=silent, 100=normal, 127=loud
+          // to MIDI ctrl 7
+          // CTL_MAIN_VOLUME = 0x07  soundcard.h
+          volume_change( channelnum, controlval );
           break;
         case 4:		/* pan */
+          // 0=left, 64=center, 127=right
+          // to MIDI ctrl 10
+          // CTL_PAN = 0x0a  soundcard.h
           control_change(CTL_PAN, channelnum, controlval);
+          break;
+        case 1:  // bank select
+          // to MIDI ctrl 0 or 32
+          break;
+        case 2:  // Modulation pot
+          // to MIDI ctrl 1
+          break;
+        case 5:  // Expression pot
+          // to MIDI ctrl 11
+          break;
+        case 6:  // Reverb depth
+          // to MIDI ctrl 91
+          break;
+        case 7:  // Chorus depth
+          // to MIDI ctrl 93
+          break;
+        case 8:  // Sustain pedal
+          // to MIDI ctrl 64
+          break;
+        case 9:  // Soft pedal
+          // to MIDI ctrl 67
           break;
       }
       break;
 
-     case 6:	/* end of music data */
+    case 3:    /* system event */
+      event1 = *musp++;
+#if 1
+      // 10 => 120  All sounds off
+      // 11 => 123  All notes off
+      // 12 => 126  Mono
+      // 13 => 127  Poly
+      // 14 => 121  Reset all controllers.
+
+      if( event1 >= 10 && event1 <= 14 )
+          control_change(mus_system_event_to_midi[ event1 - 10 ], channelnum, 0 );
+#endif
+      break;
+       
+    case 6:	/* end of music data */
         if ( continuous_looping )
         {
           all_off_midi();
-          usleep(100000);
+
           // restart music
+          while( device_playing() )
+          {
+              if (check_msg)
+              {
+                  get_mesg(MSG_NOWAIT);
+                  if (music_lump.state != PLAY_RUNNING)  goto handle_msg;
+              }
+              usleep(500000);
+          }
           musp = music_data->data;
           midi_timer(MMT_START);
           curtime = 0.0;
@@ -433,10 +544,6 @@ void playmus(music_data_t * music_data, byte check_msg)
         }
       break;
 
-    case 3:	/* unknown, but contains data */
-      musp++;
-      break;
-
     default:	/* unknown */
       break;
     }
@@ -444,15 +551,23 @@ void playmus(music_data_t * music_data, byte check_msg)
     if (lastflag)	/* next data portion is time data */
     {
       // get delay time, multiple bytes, most sig first
+      byte numbytes = 0;
       tdata = *musp++;
+      // Variable length number encoding, 7 bits per byte, 0x80 set on all except last byte.
       ticks = tdata & 0x7F;
       while(tdata & 0x80)
       {
         tdata = *musp++;
-        ticks = (ticks * 128) + (tdata & 0x7F);
+        ticks = (ticks<<7) + (tdata & 0x7F);
+        if( ++numbytes > 4 )
+        {
+            printf("musserv: Bad time value\n" );
+            goto handle_msg;
+        }
       }
       // Wait for delaytime,  while checking for messages.
       // Observed delay 0.7 .. 28.0
+      // [WDJ] Spec states 140 ticks/sec for Doom.
 
       // delay is in 128ths of quarter note, which depends upon tempo.
       // approx.  100th second
@@ -471,13 +586,13 @@ void playmus(music_data_t * music_data, byte check_msg)
       
 #ifdef THROTTLE_MIDI
       // Do not let curtime get too far ahead of clktime.
-      clktime = get_float_time();
-      target_time = (curtime/100) - (4*MSG_CHECK_MS/1000.0);
-//      printf( "clktime=%f, target=%f\n", clktime, target_time );
+      timeout = 0;
+      clktime = get_float_time();  // seconds
+      // curtime is approx. 100 ticks/sec
+      target_time = (curtime/100.0) - (THROTTLE_TIME/1000.0);
       for( ; ; )
       {
         // constant time increments between message checks
-//      printf( "  floattime=%f\n", get_float_time() );
         if( get_float_time() > target_time )  break;
         if (check_msg)
         {
@@ -485,6 +600,7 @@ void playmus(music_data_t * music_data, byte check_msg)
           if (music_lump.state != PLAY_RUNNING)  goto handle_msg;
         }
         usleep( MSG_CHECK_MS * 1000 );
+        if( timeout++ > (TIMEOUT_MS/MSG_CHECK_MS) )  break;  // broken time wait, 8 sec
       }
 #endif       
     }
@@ -494,9 +610,21 @@ void playmus(music_data_t * music_data, byte check_msg)
       get_mesg(MSG_NOWAIT);
       if (music_lump.state != PLAY_RUNNING)  goto handle_msg;
     }
+
     // To limit amount of music already in the queue.
-    while( queue_free() < queue_thresh )
+    timeout = 0;
+    while( get_queue_avail() < 0 )
     {
+      if( seq_error_count > ERROR_COUNT_LIMIT )
+      {
+        printf("musserv: too many device errors\n" );
+        break;
+      }
+      if( timeout++ > (TIMEOUT_MS/MSG_CHECK_MS) )
+      {
+        printf("musserv: broken queue wait  queue_avail=%i  device errors=%i\n", get_queue_avail(), seq_error_count );
+        break;  // broken queue wait, 4 sec
+      }
       usleep( MSG_CHECK_MS * 1000 );
     }
     continue;
@@ -509,16 +637,25 @@ handle_msg:
       pause_midi();
       while( music_lump.state == PLAY_PAUSE )
         get_mesg( MSG_WAIT );
-      if (music_lump.state != PLAY_RUNNING)  break;
+      if (music_lump.state != PLAY_RUNNING)
+        break;
       // There is no unpause, unless want to restore all note states.
     }
-    if( music_lump.state != PLAY_RUNNING )  break;
+#if 0     
+    if( music_lump.state == PLAY_RESTART )
+    {
+      reset_midi();
+    }
+#endif     
+    if( music_lump.state != PLAY_RUNNING )
+        break;
     if( verbose >= 2 )
       printf( "Music run\n" );
   } // play loop
 
   if( verbose >= 2 )
     printf( "Music STOP\n" );
+
   reset_midi();
   return;
 }

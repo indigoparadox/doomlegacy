@@ -137,6 +137,7 @@
 #include "searchp.h"
 #include "d_main.h"
 #include "z_zone.h"
+
 #include "command.h"
 
 #include "musserv/musserver.h"
@@ -167,19 +168,19 @@ CV_PossibleValue_t snd_opt_cons_t[] = {
    {SD_S1, "Search 1"},
    {SD_S2, "Search 2"},
    {SD_S3, "Search 3"},
-#if defined( DEV_OSS ) || defined( DEV_OPT_OSS )
+#ifdef DEV_OSS
    {SD_OSS, "OSS"},
 #endif   
-#if defined( DEV_ESD ) || defined( DEV_OPT_ESD )
+#ifdef DEV_ESD
    {SD_ESD, "ESD"},
 #endif   
-#if defined( DEV_ALSA ) || defined( DEV_OPT_ALSA )
+#ifdef DEV_ALSA
    {SD_ALSA, "ALSA"},
 #endif
-#if defined( DEV_JACK ) || defined( DEV_OPT_JACK )
+#ifdef DEV_JACK
    {SD_JACK, "Jack"},
 #endif
-#if defined( DEV_PULSE ) || defined( DEV_OPT_PULSE )
+#ifdef DEV_PULSE
    {SD_PULSE, "PulseAudio"},
 #endif
 #ifdef DEV_8  
@@ -195,21 +196,35 @@ CV_PossibleValue_t snd_opt_cons_t[] = {
 #ifdef MUS_DEVICE_OPTION
 // values from mus_dev_e
 CV_PossibleValue_t musserv_opt_cons_t[] = {
-   {0, "Default dev"},
-   {1, "Search 1"},
-   {2, "Search 2"},
-   {3, "Search 3"},
-   {4, "Midi"},
-   {5, "TiMidity"},
-   {6, "FluidSynth"},
-   {7, "Ext Midi"},
-   {8, "Synth"},
-   {9, "FM Synth"},
-   {10, "Awe32 Synth"},
-   {11, "Dev6"},
-   {12, "Dev7"},
-   {13, "Dev8"},
-   {14, "Dev9"},
+   {MDT_NULL, "Default dev"},
+   {MDT_SEARCH1, "Search 1"},
+   {MDT_SEARCH2, "Search 2"},
+   {MDT_MIDI, "Midi"},    // any MIDI
+   {MDT_SYNTH, "Synth"},  // any SYNTH
+#ifdef DEV_TIMIDITY
+   {MDT_TIMIDITY, "TiMidity"},
+#endif
+#ifdef DEV_FLUIDSYNTH
+   {MDT_FLUIDSYNTH, "FluidSynth"},
+#endif
+#ifdef DEV_EXTMIDI
+   {MDT_EXTMIDI, "Ext Midi"},
+#endif
+#ifdef DEV_FM_SYNTH
+   {MDT_FM_SYNTH, "FM Synth"},
+#endif
+#ifdef DEV_AWE_32SYNTH
+   {MDT_AWE32_SYNTH, "Awe32 Synth"},
+#endif
+#ifdef DEV_7  
+   {MDT_DEV7, "Dev7"},
+#endif
+#ifdef DEV_8  
+   {MDT_DEV8, "Dev8"},
+#endif
+#ifdef DEV_9
+   {MDT_DEV9, "Dev9"},
+#endif
    {0, NULL}
 };
 #endif
@@ -259,6 +274,7 @@ static  lx_sound_history_t  lx_snd_hist[ NUM_LX_HIST ];
 
 #endif
 
+
 #ifdef SNDSERV
 // Init SoundServer.
 static
@@ -307,6 +323,7 @@ void LX_Shutdown_SoundServer(void)
     return;
 }
 #endif
+   
 
 
 // ------------- Interface Functions
@@ -371,8 +388,7 @@ void I_GetSfx(sfxinfo_t * sfx)
     }
 
 #else
-
-    // Internal-Sound Interface.
+    // Direct sound driver.
 #ifdef  HAVE_ALLEGRO   
     // Internal-Sound Interface, with Allegro.
     // convert raw data and header from Doom sfx to a SAMPLE for Allegro
@@ -420,18 +436,20 @@ void I_SetSfxVolume(int volume)
 
     if (sndserver)
     {
+        byte mbuf[4];
+
 #ifdef  DEBUG_SFX_PIPE
         GenPrintf( EMSG_debug," Command V:  volume=%i\n", volume );
 #endif
-        fputc('v', sndserver);
-        fputc((byte) volume, sndserver);
-        fputc((byte) cv_numChannels.EV, sndserver);
+        mbuf[0] = 'v';
+        mbuf[1] = volume;
+        mbuf[2] = cv_numChannels.EV;
+        fwrite( mbuf, 1, 3, sndserver);
         fflush(sndserver);
     }
 
 #else
-
-    // Direct access to mixer.
+    // Direct sound driver.
     LXD_SetSfxVolume( volume );  // from master volume  0..31
 #endif
 }
@@ -478,7 +496,6 @@ int I_StartSound ( sfxid_t sfxid, int vol, int sep, int pitch, int priority )
     return sps.handle;
 
 #else
-
     // Direct sound driver.
     //  sound_age : vrs priority 0..255
     // return handle.
@@ -504,7 +521,7 @@ void I_StopSound(int handle)
     fflush(sndserver);
 
 #else
-
+    // Direct sound driver.
     // Has slot in handle, and direct access to channel.
     LXD_StopSound( handle );
 #endif
@@ -525,7 +542,7 @@ int I_SoundIsPlaying(int handle)
     return  (lxsh->lifetime_tic - gametic) < 0x3FFF;  // gametic < lifetime_tic
 
 #else
-
+    // Direct sound driver.
     // Has slot in handle, and direct access to channel.
     return  LXD_SoundIsPlaying( handle );
 #endif
@@ -569,7 +586,7 @@ void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
     fflush(sndserver);
 
 #else
-
+    // Direct sound driver.
     // Has slot in handle, direct access to sfx.
     LXD_UpdateSoundParams( handle, vol, sep, pitch);
 #endif
@@ -590,6 +607,8 @@ void I_UpdateSound( void )
 //  snd_opt : SD_xx, from sound_dev_e in lx_ctrl.h
 void I_SetSoundOption( byte snd_opt )
 {
+    byte mbuf[4];
+
     if( sound_init == 0 )
         return;  // sound system not ready for this
 
@@ -598,11 +617,12 @@ void I_SetSoundOption( byte snd_opt )
         return;
 
     // Send selection to SoundServer.
-    fputc('d', sndserver);
-    // Turn off, until connect allowed.
-    fputc( snd_opt, sndserver );
+    mbuf[0] = 'd';
+    mbuf[1] = snd_opt;
+    fwrite( mbuf, 1, 2, sndserver );
     fflush(sndserver);
 #else
+    // Direct sound driver.
     LXD_SetSoundOption( snd_opt );
 #endif
 }
@@ -610,13 +630,24 @@ void I_SetSoundOption( byte snd_opt )
 
 
 
-// --- Music
-//#define DEBUG_MUSSERV
+// ================ MUSIC
+// #define DEBUG_MUSSERV
+
+// ======== Music Controls
+
+// Music volume may be set before calling LX_InitMusic.
+static int music_volume = 0;
+
+static byte music_looping = 0;
+static uint32_t  music_dies = -1;
+
+
+// ======== Music Server
 
 // UNIX hack too, unlikely to be removed.
 #ifdef MUSSERV
 static int musserver = -1;
-static int msg_id = -1;
+static int msg_id = -1;  // IPC pipe
 #endif
 
 
@@ -641,9 +672,10 @@ void send_val_musserver( char command, char sub_command, int val )
 }
 #endif
 
-// Music volume may be set before calling LX_InitMusic.
-static int music_volume = 0;
 
+// ======== Music Interface
+
+#ifdef MUSSERV
 //
 // MUSIC API.
 // Music done now, we'll use Michael Heasley's musserver.
@@ -651,7 +683,6 @@ static int music_volume = 0;
 static
 void LX_InitMusic(void)
 {
-#ifdef MUSSERV
     // MusicServer, INIT.
     char buffer[MAX_WADPATH];
     char *fn_mus;
@@ -668,7 +699,6 @@ void LX_InitMusic(void)
     // [WDJ] Use IPC for settings, not command line.
     snprintf(buffer, MAX_WADPATH-1, "%s %s &", fn_mus, cv_musserver_arg.string);
     buffer[MAX_WADPATH-1] = 0;
-
     GenPrintf( EMSG_info, "Starting music server [%s]\n", buffer);
     // Sys call "system()"  seems to work, and does not need \n.
     // It returns 0 on success.
@@ -679,17 +709,21 @@ void LX_InitMusic(void)
         return;
     }
 
+    // Start the IPC after, and mussserver is supposed to wait.
     msg_id = msgget(MUSSERVER_MSG_KEY, IPC_CREAT | 0777);
+   
     if( verbose > 1 )
         GenPrintf( EMSG_info, "Started Musicserver = %i, IPC = %i\n", musserver, msg_id );
+
     send_val_musserver( 'v', ' ', music_volume );
     // [WDJ] Starting with system() gives the process a PPID of 1, which is Init.
     // When DoomLegacy is killed, it is not detected by musserver.
     send_val_musserver( 'I', ' ', getpid() ); // our pid
     // Send this again because it was too early at configure time.
-    I_SetMusicOption();
-#endif
+//    I_SetMusicOption();
+    usleep(100);
 }
+#endif
 
 void LX_ShutdownMusic(void)
 {
@@ -702,7 +736,7 @@ void LX_ShutdownMusic(void)
     // Rely upon one or the other.
 #if 1
     // send a "quit" command.
-    send_val_musserver( 'Q', 'Q', 0 );
+    send_val_musserver( 'Q', 'Q', 0 );  // "QQ" required
 #else
     if (musserver > -1)
     {
@@ -714,6 +748,8 @@ void LX_ShutdownMusic(void)
 #endif
 }
 
+
+// ======== Music Interface
 
 // MUSIC API
 void I_SetMusicVolume(int volume)
@@ -783,7 +819,7 @@ void I_SetMusicOption( byte mus_opt )
         return;
 
     if( msg_id < 0 )  return;
-
+   
     // Use 'Z' for MUTE.
     sc = ( si < SD_DEV9 )? snd_ipc_opt_tab[si] : 'Z';
     mc = (mus_opt < MDT_DEV9)? mus_ipc_opt_tab[mus_opt] : 'Z';
@@ -799,11 +835,6 @@ void I_SetMusicOption( byte mus_opt )
     msgsnd(msg_id, MSGBUF(msg_buffer), MUS_MSG_MTEXT_LENGTH, IPC_NOWAIT);
 #endif
 }
-
-
-
-static byte music_looping = 0;
-static int music_dies = -1;
 
 
 
@@ -960,6 +991,25 @@ int I_QrySongPlaying(int handle)
 }
 #endif
 
+#ifdef FMOD_SONG
+//Hurdler: TODO
+void I_StartFMODSong()
+{
+    CONS_Printf("I_StartFMODSong: Not yet supported under Linux.\n");
+}
+
+void I_StopFMODSong()
+{
+    CONS_Printf("I_StopFMODSong: Not yet supported under Linux.\n");
+}
+void I_SetFMODVolume(int volume)
+{
+    CONS_Printf("I_SetFMODVolume: Not yet supported under Linux.\n");
+}
+#endif
+
+
+// ======== Sound and Music, Startup and Shutdown
 
 //--- Sound system Interface
 // Interface, Start sound system.
@@ -970,12 +1020,9 @@ void I_StartupSound()
 #ifdef SNDSERV
         // Sound Server
         LX_Init_SoundServer();
-
 #else
-       
-        // Direct access to driver.        
+        // Direct sound driver.
         LXD_InitSound();
-
 #endif
     }
 
@@ -986,7 +1033,19 @@ void I_StartupSound()
 #endif
 
     if(! nomusic )
+    {
+#ifdef MUSSERV
         LX_InitMusic();
+
+#ifdef MUS_DEVICE_OPTION
+        // Select device from config.
+        // config file has been loaded
+        I_SetMusicOption( cv_musserver_opt.EV );
+#else
+        I_SetMusicOption( MUS_DEV1 );
+#endif
+#endif
+    }
 }
 
 // Interface, Shutdown sound system.
@@ -999,12 +1058,14 @@ void I_ShutdownSound(void)
 #ifdef SNDSERV
     LX_Shutdown_SoundServer();
 #else
+    // Direct sound driver.
     LXD_ShutdownSound();
 #endif
 
     LX_ShutdownMusic();
 }
 
+// ======== Interrupts
 
 #ifdef SNDINTR
 // Internal-Sound Interface, Interrupts.
@@ -1100,21 +1161,4 @@ static void  LX_Init_interrupts( void )
     LX_SoundTimer_set(SOUND_INTERVAL);
 }
 
-#endif
-
-#ifdef FMOD_SONG
-//Hurdler: TODO
-void I_StartFMODSong()
-{
-    CONS_Printf("I_StartFMODSong: Not yet supported under Linux.\n");
-}
-
-void I_StopFMODSong()
-{
-    CONS_Printf("I_StopFMODSong: Not yet supported under Linux.\n");
-}
-void I_SetFMODVolume(int volume)
-{
-    CONS_Printf("I_SetFMODVolume: Not yet supported under Linux.\n");
-}
 #endif

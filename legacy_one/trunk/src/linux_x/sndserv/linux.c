@@ -48,6 +48,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+
+#if 0
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -65,10 +67,34 @@
 #if defined(SCOOS5) || defined(SCOUW2)
 #include <sys/soundcard.h>
 #endif
+#endif
 
 #include "doomtype.h"
 #include "soundsrv.h"
 
+
+// For info, debug, dev, verbose messages.
+// Print to output set by EOUT_flags.
+void GenPrintf (const byte emsg, const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    va_end(ap);
+}
+
+
+// Internal-Sound Interface.
+#include "../snd_driver.h"
+
+// Internal-Sound Interface.
+// Import interface functions from snd_driver.c.
+// void I_UpdateSound()
+// void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
+// int I_SoundIsPlaying(int handle)
+#include "../snd_driver.c"
+
+#if 0
 int     audio_fd;
 byte    audio_8bit_flag;
 
@@ -98,13 +124,11 @@ void myioctl( int fd, int command, int* arg )
 //        exit(-1);
     }
 }
-
-void I_InitMusic(void)
-{
-}
+#endif
 
 void I_InitSound( int samplerate, int samplesize )
 {
+#if 0   
     int i;
                 
     audio_fd = open("/dev/dsp", O_WRONLY);
@@ -146,6 +170,7 @@ void I_InitSound( int samplerate, int samplesize )
 
     i=11025;
     myioctl(audio_fd, SNDCTL_DSP_SPEED, &i);
+#endif
 }
 
 void I_SubmitOutputBuffer( void* samples, int samplecount )
@@ -163,6 +188,11 @@ void I_ShutdownSound(void)
 {
     if (audio_fd >= 0)
         close(audio_fd);
+}
+
+
+void I_InitMusic(void)
+{
 }
 
 void I_ShutdownMusic(void)

@@ -45,6 +45,9 @@
 #include <ctype.h>
   // isdigit
 #include "musserver.h"
+#include "musseq.h"
+  // soundcard.h
+  // stdint.h
 
 #if defined(SCOUW2)
 #include "usleep.h"
@@ -65,13 +68,14 @@ music_data_t  music_data;
 // Locals
 static FILE *infile;
 
-static byte sel_dvt = DVT_DEFAULT;  // dev_e
+static byte sel_snddev = 99;  // sound_dev_e, MUTE
+static byte sel_dvt = 99;     // mus_dev_e, MUTE
 static int dev_port_num = -1;
 static int dev_type = -1;  // as per the ioctl listing
 
 #define  TIMEOUT_UNIT_MS  200
-#define  DEFAULT_TIMEOUT_SEC  300
 // Timeout in seconds.
+#define  DEFAULT_TIMEOUT_SEC  300
 static unsigned int timeout = DEFAULT_TIMEOUT_SEC;
 
 
@@ -224,8 +228,7 @@ void  parse_option_string( const char * optstr )
 {
     const char * p = optstr;
 
-    option_pending = 0;
-    if( option_string == NULL )  return;
+    if( optstr == NULL )  return;
 
     while( *p != 0 )
     {
@@ -242,7 +245,7 @@ void  parse_option_string( const char * optstr )
          case 'V':
             // fixed volume
             while(*p == ' ') p++;
-            vol_change(atoi(p));
+            master_volume_change(atoi(p));
             while( isdigit(*p) ) p++;
             changevol_allowed = 0;  // fixed volume
             break;
@@ -355,7 +358,11 @@ void  command_line( int ac, char * av[] )
             dev_type = command_value( avstr, &av );
             break;
          case 'l':
-            list_devs();
+           {
+            int num = list_devs();
+            if( num == 0 )  exit(1);
+            exit(0);
+           }
             break;
          case 't':
             val = command_value( avstr, &av ); // optional time
@@ -367,7 +374,7 @@ void  command_line( int ac, char * av[] )
             val = command_value( avstr, &av );  // optional volume
             if( val >= 0 )
             {
-              vol_change(val);
+              master_volume_change(val);
             }
             break;
          case 'c':
@@ -394,13 +401,13 @@ void  command_line( int ac, char * av[] )
       }
     }
    
-//    printf( "dev_sel= %s  dev_port= %i  dev_type= %i\n", dev_txt[sel_dvt], dev_port_num, dev_type );
+//    printf( "dev_sel= %s  dev_port= %i  dev_type= %i\n", music_dev_name[sel_dvt], dev_port_num, dev_type );
 
-#ifndef AWE32_SYNTH_SUPPORT
-    if( sel_dvt == DVT_AWE32_SYNTH )
+#ifndef DEV_AWE32_SYNTH
+    if( sel_dvt == MDT_AWE32_SYNTH )
     {
-        printf("musserver: No AWE32 support\n");
-        sel_dvt = DVT_DEFAULT;
+        printf("musserv: No AWE32 support\n");
+        sel_dvt = MDT_NULL;
     }
 #endif
 }
@@ -410,12 +417,19 @@ void  command_line( int ac, char * av[] )
 // Cleanup and Exit
 void cleanup_exit(int status, char * exit_msg)
 {
+
+    seq_shutdown();
+
+#if 1
+    // Close the message queue.
+    msgctl(qid, IPC_RMID, (struct msqid_ds *) NULL);
+#else   
     struct msqid_ds *dummy;
-    
-    cleanup_midi();
     dummy = malloc(sizeof(struct msqid_ds));
     msgctl(qid, IPC_RMID, dummy);
     free(dummy);
+#endif
+
     if( infile )
       fclose(infile);
 
@@ -424,10 +438,13 @@ void cleanup_exit(int status, char * exit_msg)
       if( exit_msg )
       {
         if( strlen(exit_msg) > 0 )
-          printf( "musserver: %s.\n", exit_msg );
-        printf( "musserver: exiting.\n" );
+          printf( "musserv: %s.\n", exit_msg );
+        printf( "musserv: exiting.\n" );
       }
     }
+    fflush( stdout );
+    fflush( stderr );
+    usleep( 200 );
     exit(status);
 }
 
@@ -447,12 +464,13 @@ int main(int argc, char **argv)
 #endif
     command_line( argc, argv );
   
+verbose = 4;
     if( verbose )
-        printf("musserver version %s\n", MUS_VERSION);
+        printf("musserv: version %s\n", MUS_VERSION);
 
     ppid = getpid();  // our pid
     if(verbose >= 2) 
-        printf("musserver pid %d\n", ppid);
+        printf("musserv: pid %d\n", ppid);
 
     if( parent_check )
     {
@@ -474,6 +492,7 @@ int main(int argc, char **argv)
         // Cannot have a printf before checking errno !
         if (qid >= 0 )  break;
 
+        // Error codes are positive from errno.
         switch(errno)
         {
           case ENOENT:  // does not exist yet
@@ -500,13 +519,16 @@ int main(int argc, char **argv)
             fail_msg="Could not connect to IPC";
             goto  fail_exit;
         }
+#if DEBUG_WAIT
+        printf("musserv: wait for queue, %s\n", strerror(errno) );
+#endif
         usleep(TIMEOUT_UNIT_MS * 1000);  // 0.2 sec
     }
     if (verbose >= 2)
-        printf("qid: %d\n", qid);
+        printf("musserv: message queue id= %d\n", qid);
 
     if (verbose >= 2)
-        printf("Waiting for first message from Doom...\n");
+        printf("musserv: Waiting for first message from Doom...\n");
 
     // The DoomLegacy wad search is very complicated, and game dependent.
     // PWAD may also be involved.
@@ -520,14 +542,21 @@ int main(int argc, char **argv)
    
     if( option_pending )
     {
+        option_pending = 0;
+       
         // Parse the option string from doom
         parse_option_string( option_string );
     }
-   
+
+    if((dev_type > 0) || (dev_port_num > 0))
+    {
+        if( sel_snddev > 50 )  sel_snddev = SD_NULL;
+        if( sel_dvt > 50 )  sel_dvt = MDT_NULL;
+    }
     if( verbose >= 2 )
-       printf( " select sel_dvt=%s, dev_type=%i, port=%i\n", dev_txt[sel_dvt], dev_type, dev_port_num );
+       printf( "musserv: select sel_dvt=%s, dev_type=%i, port=%i\n", music_dev_name[sel_dvt], dev_type, dev_port_num );
     // init, load, setup the selected device
-    seq_midi_init_setup(sel_dvt, dev_type, dev_port_num);
+    seq_init_setup( sel_snddev, sel_dvt, dev_type, dev_port_num );
    
     // Instrument setup is done.
     
@@ -542,10 +571,11 @@ int main(int argc, char **argv)
     {
         if( option_pending )
         {
+            option_pending = 0;
             parse_option_string( option_string );
-            cleanup_midi();
+            seq_shutdown();
             // load, setup the selected device
-            seq_midi_init_setup(sel_dvt, dev_type, dev_port_num);
+            seq_init_setup(sel_snddev, sel_dvt, dev_type, dev_port_num);
         }
        
         if( music_lump.state != PLAY_START )
@@ -556,7 +586,7 @@ int main(int argc, char **argv)
         if( music_lump.state != PLAY_START )  continue;
 
         if (verbose >= 2)
-            printf("Playing music resource number %d\n", music_lump.lumpnum + 1);
+            printf("musserv: Playing music resource number %d\n", music_lump.lumpnum + 1);
         musicsize = read_wad_music( & music_lump,
              /* OUT */  & music_data );
         if( musicsize )
@@ -567,17 +597,18 @@ int main(int argc, char **argv)
         switch ( music_lump.state )
         {
           case PLAY_START:
+            reset_midi();
+            release_music_data( & music_data );
             break;
           case PLAY_STOP:
-            free(music_data.data);
-            music_data.data = NULL;
+            release_music_data( & music_data );
             break;
           case PLAY_RESTART:
             music_lump.state = PLAY_START;
             break;
           case PLAY_QUITMUS:
             if (verbose)
-                printf("Terminated\n");
+                printf("musserv: Terminated\n");
             goto normal_exit_terminate;
           default:
             fail_msg = "unknown error in music playing";
@@ -586,6 +617,9 @@ int main(int argc, char **argv)
     }
 
 normal_exit_terminate:
+#ifdef DEBUG_EXIT   
+    printf( "musserv: normal_exit_terminate\n" );
+#endif
     cleanup_exit(0, NULL);
     return 0;
 

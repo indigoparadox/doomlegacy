@@ -57,10 +57,11 @@
 #include "snd_driver.h"
 
 #ifdef NEED_DLOPEN
-# include <dlfcn.h>
-    // dlopen
-# ifndef HAVE_DLOPEN
-#  define HAVE_DLOPEN
+# ifdef HAVE_DLOPEN
+    // dlopen library
+#   include <dlfcn.h>
+#else
+# warning "Need dlopen libary, dynamic loading disabled."
 # endif
 #endif
 
@@ -298,13 +299,13 @@ void setup_mixer_tables( void )
         for (j = 0; j < 256; j++)
         {
 #if 1
-	    // Lower volume, use whole table.
+            // Lower volume, use whole table.
             v = (i * (j - 128) * 256) / 255;
 #else
-	    // Only 64 volume levels got used, otherwise mixing clips.
+            // Only 64 volume levels got used, otherwise mixing clips.
             v = (i * (j - 128) * 256) / 127;
 #endif
-	    vol_lookup[i][j] = (audio_mode == AM_mono8)?
+            vol_lookup[i][j] = (audio_mode == AM_mono8)?
                  v * 4 // 8bit audio
                : v;    // 16bit audio
         }
@@ -397,11 +398,11 @@ char *  load_lib( const lib_sym_t * dlp, byte num, const char * libname, /*OUT*/
         void * lda = dlsym( libp, dlp->func_name );
         if( lda == NULL )
         {
-	    msg = dlerror();
+            msg = dlerror();
             if( msg == NULL )  msg = "library load failed";
             goto done;
-	}
-	*(dlp->DL_func) = lda;
+        }
+        *(dlp->DL_func) = lda;
         dlp++;
     }
    
@@ -490,7 +491,7 @@ void sfx_mixer( unsigned int req_samples )
         {
             // Check for active channels.
             if( chp->data_ptr )  active_channels++;
-	}
+        }
     }
 
 #ifdef DEBUG_MIXER
@@ -508,7 +509,7 @@ void sfx_mixer( unsigned int req_samples )
     if( mixbuffer[MIXBUFFER_BYTESIZE] != MIXBUFFER_CANARY )
     {
         GenPrintf(EMSG_debug, "mixer 1: ERROR  mixerbuffer overrun %i %i %i %i\n",
-		 mixbuffer[MIXBUFFER_BYTESIZE], mixbuffer[MIXBUFFER_BYTESIZE+1], mixbuffer[MIXBUFFER_BYTESIZE+2], mixbuffer[MIXBUFFER_BYTESIZE+3] );
+                 mixbuffer[MIXBUFFER_BYTESIZE], mixbuffer[MIXBUFFER_BYTESIZE+1], mixbuffer[MIXBUFFER_BYTESIZE+2], mixbuffer[MIXBUFFER_BYTESIZE+3] );
         error_trap();
     }
 #endif
@@ -524,7 +525,7 @@ void sfx_mixer( unsigned int req_samples )
     if( req_samples > rem_buf_s2 )
     {
         // Must keep content of mixer buffer contiguous.
-	// Cannot move mixer_mix to buffer[0] until mixer_samples are 0, it is used by some drivers.
+        // Cannot move mixer_mix to buffer[0] until mixer_samples are 0, it is used by some drivers.
         if( mixer_samples == 0 )  // check for buffer empty
         {
 #ifdef MIXOUT_PROTECT
@@ -540,17 +541,17 @@ void sfx_mixer( unsigned int req_samples )
                         req_samples = rem_buf_s1;  // not enough buffer
                     mixer_out = mixer_mix = mixbuffer;
                 }
-	        else
+                else
                     req_samples = rem_buf_s2;  // not enough buffer
-	    }
-	    else
+            }
+            else
                 mixer_out = mixer_mix = mixbuffer;
 #else
             // Mix from start of buffer.
             mixer_out = mixer_mix = mixbuffer;
 #endif
-	}
-	else
+        }
+        else
             req_samples = rem_buf_s2;  // not enough buffer
     }
 
@@ -594,7 +595,7 @@ void sfx_mixer( unsigned int req_samples )
             if (chp->data_ptr)
             {
                 // Get the raw data from the channel. 
-	        register unsigned int sample = * chp->data_ptr;
+                register unsigned int sample = * chp->data_ptr;
                 // Add left and right part for this channel (sound)
                 //  to the current data.
                 // Adjust volume accordingly.
@@ -616,11 +617,11 @@ void sfx_mixer( unsigned int req_samples )
 
                 // Check whether we are done.
                 if( chp->data_ptr >= chp->data_end )
-	        {
+                {
                     chp->data_ptr = NULL;
-		    active_channels --;
+                    active_channels --;
                     // still must output the last sound sample
-		}
+                }
             }
         }
 
@@ -632,29 +633,29 @@ void sfx_mixer( unsigned int req_samples )
 
         if( audio_mode == AM_stereo16 )
         {
-	    // 16 bit stereo
+            // 16 bit stereo
             // Left and right channel are in global mixbuffer, alternating.
             // left channel
             ((int16_t*)mixp)[0] =
                 (dl > 0x7fff)?   0x7fff
               : (dl < -0x8000)? -0x8000
-	      :	dl;
+              :	dl;
 
             // right channel
             ((int16_t*)mixp)[1] =
                 (dr > 0x7fff)?   0x7fff
               : (dr < -0x8000)? -0x8000
-	      :	dr;
-	    mixp += 4; // 2 * 2
+              :	dr;
+            mixp += 4; // 2 * 2
         }
         else
         {
-	    // 8 bit mono
+            // 8 bit mono
             if (dl > 0x7fff)
                 dl = 0x7fff;
             else if (dl < -0x8000)
                 dl = -0x8000;
-	    // [WDJ] Stero to mono combining, from 1.42, with no explanation.
+            // [WDJ] Stero to mono combining, from 1.42, with no explanation.
             uint16_t  sdl = dl ^ 0xfff8000;
 
             if (dr > 0x7fff)
@@ -698,7 +699,7 @@ quiet_mix_append:
     rem_buf_s2 = BYTES_TO_SAMPLES(quiet_b2);
     if( quiet_s1 > rem_buf_s2 )
     {
-	quiet_s1 = rem_buf_s2;
+        quiet_s1 = rem_buf_s2;
     }
 #endif
 
@@ -894,9 +895,9 @@ static byte LXD_init_OSS( void )
             select_audio_mode( AM_stereo16 );
 
 #ifdef __BIG_ENDIAN__
-	    i = AFMT_S16_BE;
+            i = AFMT_S16_BE;
 #else
-	    i = AFMT_S16_LE;
+            i = AFMT_S16_LE;
 #endif
             myioctl(oss_audio_fd, SNDCTL_DSP_SETFMT, &i);
             i = 11 | (2 << 16);
@@ -1339,11 +1340,11 @@ static void  ALSA_callback( snd_async_handler_t *  alsa_async_reg )
         // Required to clear the error ??
         err = snd_pcm_prepare( alsa_handle );
         if( err < 0 )
-	    goto handle_err;
+            goto handle_err;
 
         avail = snd_pcm_avail_update( alsa_handle );
         if( avail < 0 )
-	    goto handle_err;
+            goto handle_err;
     }
 
 #ifdef DEBUG_ALSA
@@ -1487,11 +1488,11 @@ msec_t0 = msec_t1;
         // Required to clear the error ??
         err = snd_pcm_prepare( alsa_handle );
         if( err < 0 )
-	    goto handle_err;
+            goto handle_err;
 
         avail = snd_pcm_avail_update( alsa_handle );
         if( avail < 0 )
-	    goto handle_err;
+            goto handle_err;
     }
     if( avail < 128 )
         return;
@@ -1757,7 +1758,7 @@ static byte LXD_init_ALSA( void )
     for( am = AM_max; ; am -- )  // choices
     {
         if( am > AM_max )  // end of list  (unsigned wrap)
-	    goto report_err;
+            goto report_err;
 
         if( select_audio_mode( am ) > AM_max )  continue;
         alsa_format = alsa_format_table[ am ];
@@ -1930,10 +1931,10 @@ static const char ** (*DL_jack_get_ports) (jack_client_t *, const char *, const 
 
 static int (*DL_jack_connect)(jack_client_t *, const char *, const char *);
 #define jack_connect  (*DL_jack_connect)
-			    
+
 static int (*DL_jack_client_close)(jack_client_t *client) JACK_OPTIONAL_WEAK_EXPORT;
 #define jack_client_close  (*DL_jack_client_close)
-			    
+
 #ifdef JACK_CALLBACK
 static int (*DL_jack_set_process_callback)(jack_client_t *, JackProcessCallback, void *);
 #define jack_set_process_callback  (*DL_jack_set_process_callback)
@@ -2075,7 +2076,7 @@ static byte LXD_init_JACK( void )
     msg = "connect ports";
     ports = jack_get_ports( jack_client, NULL, NULL, JackPortIsInput );
 //			    JackPortIsPhysical | JackPortIsInput );
-			    
+
     if( ports == NULL )  goto report_err;
 
     // Use the first port.
@@ -2455,12 +2456,12 @@ static byte LXD_init_PULSE( void )
         // Block = 1, blocks when nothing in queue, but allows timeout.
         err = pa_mainloop_iterate( pa_ml, 1, NULL );
         if( err < 0 )
-	    goto report_err;
+            goto report_err;
        
         pa_state = pa_context_get_state( pa_ctxt );
         if( pa_state == PA_CONTEXT_READY )  break;
         if( pa_state >= PA_CONTEXT_FAILED )
-	    goto context_err;
+            goto context_err;
     }
 
 #ifdef DEBUG_PULSE
@@ -2474,7 +2475,7 @@ static byte LXD_init_PULSE( void )
     {
         // End of list test
         if( am > AM_max )  // end of list  (unsigned wrap)
-	    goto report_msg;
+            goto report_msg;
 
         if( select_audio_mode( am ) > AM_max )  continue;
 #ifdef DEBUG_INIT_SOUND
@@ -2535,10 +2536,10 @@ static byte LXD_init_PULSE( void )
         if( i>32000 )  goto report_msg;
 
         // Block = 1, allows timeout.
-	// This takes 700 to 6000 iterations to connect stream.
+        // This takes 700 to 6000 iterations to connect stream.
         err = pa_mainloop_iterate( pa_ml, 0, NULL );
         if( err < 0 )
-	    goto report_err;
+            goto report_err;
        
         pa_state = pa_stream_get_state( pa_strm );
         if( pa_state == PA_STREAM_READY )  break;
@@ -2546,7 +2547,7 @@ static byte LXD_init_PULSE( void )
         {
             msg = (pa_state == PA_STREAM_FAILED)? "stream failed" : "stream unk";
             goto report_msg;
-	}
+        }
     }
 #ifdef DEBUG_PULSE
     printf( "PulseAudio: stream ready at i=%i iterations\n", i );
@@ -2954,7 +2955,7 @@ int  LXD_StartSound ( sfxid_t sfxid, int vol, int sep, int pitch, int priority, 
 
 #ifdef DEBUG_SOUND
     GenPrintf(EMSG_debug, "Start Sound %i, len=%i, data_len=%i  sample_rate=%i  pitch=%i  step=%i.%0i\n",
-	sfxid, S_sfx[sfxid].length - 8, chp->data_end - chp->data_ptr, chp->sample_rate, pitch, chp->step>>16, ((chp->step&0xFFFF)*10000)>>16 );
+        sfxid, S_sfx[sfxid].length - 8, chp->data_end - chp->data_ptr, chp->sample_rate, pitch, chp->step>>16, ((chp->step&0xFFFF)*10000)>>16 );
 #endif
    
     // Per left/right channel.
@@ -3099,16 +3100,16 @@ void LXD_UpdateSoundParams(int handle, int vol, int sep, int pitch)
         // Sanity check, clamp volume.
         if (rightvol < 0 || rightvol > 255)
         {
-	    I_SoftError("rightvol out of bounds\n");
-	    rightvol = ( rightvol < 0 ) ? 0 : 255;
-	}
+            I_SoftError("rightvol out of bounds\n");
+            rightvol = ( rightvol < 0 ) ? 0 : 255;
+        }
         chp->right_volume = rightvol; // normalized 0..255
 
         if (leftvol < 0 || leftvol > 255)
         {
-	    I_SoftError("leftvol out of bounds\n");
-	    leftvol = ( leftvol < 0 ) ? 0 : 255;
-	}
+            I_SoftError("leftvol out of bounds\n");
+            leftvol = ( leftvol < 0 ) ? 0 : 255;
+        }
         chp->left_volume = leftvol;  // normalized 0..255
 
         // vol : range 0..255
@@ -3155,7 +3156,7 @@ void LXD_StopSound( int handle )
     {
         if( chp->data_ptr && (chp->handle == handle) )
         {
-	    stop_sound( chp );
+            stop_sound( chp );
             break;
         }
     }
