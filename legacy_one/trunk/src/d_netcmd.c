@@ -189,8 +189,6 @@ void Command_Kill(void);
 //                           CLIENT VARIABLES
 // =========================================================================
 
-static void Send_WeaponPref_pind(byte pind);
-static void Send_NameColor_pind(byte pind);
 
 // [WDJ] Or could just send both when any change is made?
 // See Send_PlayerConfig
@@ -428,7 +426,6 @@ void Send_NameColor_player( byte pn, byte pind )
 // By Client.
 //  name, color, or skin has changed
 //  pind : player index, [0]=main player, [1]=splitscreen player
-static
 void  Send_NameColor_pind( byte pind )
 {
     byte pn = localplayer[pind];
@@ -530,7 +527,6 @@ done:
 }
 
 //  pind : player index, [0]=main player, [1]=splitscreen player
-static
 void Send_WeaponPref_pind( byte pind )
 {
     char buf[NUMWEAPONS + 4];  // need NUMWEAPONS+2
@@ -569,7 +565,7 @@ void D_Send_PlayerConfig(void)
 {
     Send_NameColor_pind(0);
     Send_WeaponPref_pind(0);
-    if (cv_splitscreen.value)
+    if( cv_splitscreen.EV && ( localplayer[1] < MAXPLAYERS ))
     {
         Send_NameColor_pind(1);
         Send_WeaponPref_pind(1);
