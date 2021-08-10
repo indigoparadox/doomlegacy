@@ -102,6 +102,7 @@ extern byte       player_state[MAXPLAYERS];
 // changed to 2d array 19990220 by Kin
 extern char       player_names[MAXPLAYERS][MAXPLAYERNAME];
 extern byte       num_game_players;  // number of actual players
+extern byte       max_num_players;   // dependent upon demo
 
 
 

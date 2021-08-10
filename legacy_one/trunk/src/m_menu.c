@@ -4028,7 +4028,7 @@ void  get_directory_entries( int skip_count )
         if( slotindex >= 0 )  // because of dir list scrolling
         {
             // Only want the name after legacyhome
-            dl_strcpy( savegamedisp[slotindex].desc, dent->d_name, SAVESTRINGSIZE );
+            dl_strncpy( savegamedisp[slotindex].desc, dent->d_name, SAVESTRINGSIZE );
             // The up-dir is passed as an empty string.
             if( strcmp( savegamedisp[slotindex].desc, ".." ) == 0 )
                 savegamedisp[slotindex].desc[0] = 0;

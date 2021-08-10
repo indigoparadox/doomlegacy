@@ -287,7 +287,7 @@ typedef struct {
 
 // aligned to 4 bytes
 typedef struct {
-    byte  pid; // player index   
+    byte  pid; // player index
     byte  playerstate;  // alive or DEAD
     byte  flags;
     byte  readyweapon;

@@ -1982,8 +1982,7 @@ mobj_t * P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
     else
     {
         // Boom, MBF demo assumes MAXPLAYERS=4, but Legacy MAXPLAYERS=32.
-        // FIXME: demo
-        mobj->lastlook = PP_Random(pr_lastlook) % MAXPLAYERS;  // Boom, MBF
+        mobj->lastlook = PP_Random(pr_lastlook) % max_num_players;  // Boom, MBF
     }
 
     // do not set the state with P_SetMobjState,
@@ -2995,11 +2994,11 @@ void P_SpawnSmoke(fixed_t x, fixed_t y, fixed_t z)
     // Legacy use of P_Random, not in Doom, enabled by EV_legacy.
     x = x - ((PP_Random(pL_smokefeet) & 8) * FRACUNIT) - 4 * FRACUNIT;
     y = y - ((PP_Random(pL_smokefeet) & 8) * FRACUNIT) - 4 * FRACUNIT;
-    z += (PP_Random(pr_smokefeet) & 3) * FRACUNIT;
+    z += (PP_Random(pL_smokefeet) & 3) * FRACUNIT;
 
     th = P_SpawnMobj(x, y, z, MT_SMOK);
     th->momz = FRACUNIT;
-    th->tics -= PP_Random(pr_smokefeet) & 3;
+    th->tics -= PP_Random(pL_smokefeet) & 3;
 
     if (th->tics < 1)
         th->tics = 1;
