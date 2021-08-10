@@ -8592,6 +8592,47 @@ updates for all players after the first.
 Fixed by sending the skin and color updates for just our player,
 whenever the general update is blocked.
 
+*** w109_splat
+patchfile = w109_042_splat
+- commit revision 1581
+Players are kicked during netgame when their blood splat setting
+is different than the server.  The control variable is not NETVAR,
+and it uses P_Random.
+
+It was desireable to allow players to turn off blood splats
+independently of the server setting.
+This was fixed by creating a dummy splat function, that uses
+the correct number of P_Random to keep random number sync.
+A DemoAdapt var was created to control calling this splat function.
+Fixes bug 0678.
+This also fixes a demo consistency error.
+
+*** w109_numplayer
+patchfile = w109_043_numplayer
+- commit revision 1582
+There are several places where MAXPLAYERS is used, such as modulo
+calculations.  Demos may expect a different value for MAXPLAYERS.
+This is already determined in the demo read function.
+Export this value as max_number_players, and use it in place
+of MAXPLAYERS where appropriate.
+
+Changed the netgame repair random_state_checkset function to correctly
+report differences in random number settings for the server.
+The message syntax was only appropriate for the client,
+as it reversed the server/client values in the server.
+
+Adjusted some of the uses of P_Random to more closely follow
+PrBoom, with comments to that effect.  Commented where there
+was a usage of P_Random that was controlled by something optional.
+
+Adjusted the xdir/ydir logic that calls TryWalk to more closely
+follow PrBoom, even though it looks like it should not matter.
+The resultant code should also be very slightly faster.
+
+Caught some typos in optional code.
+
+
+=== commit
 
 
 
