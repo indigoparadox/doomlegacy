@@ -1881,8 +1881,53 @@ void loading_status( void )
     I_FinishUpdate ();
 }
 
+
+#if 0
+// [WDJ] Pull the degenerate case out of the main BSP loop.
+// It can only be invoked at the first call.
+// Can get same effect by calling
+// HWR_WalkBSPNode( 0 | NF_SUBSECTOR )
+void HWR_WalkBSPNode_degen (int bspnum)
+{
+    if (bspnum == -1)
+    {
+#if 0
+            // BP: i think this code is useless and wrong because
+            // - bspnum==-1 happens only when numsubsectors == 0
+            // - it can't happens in bsp recursive call since bspnum is a int and children is unsigned short
+            // - the BSP is complet !! (there just can have subsector without segs) (i am not sure of this point)
+
+            // do we have a valid polygon ?
+            if (poly && poly->numpts > 2)
+            {
+                if( verbose )
+                    GenPrintf( EMSG_ver, "Poly: Adding a new subsector !!!\n");
+                if (num_poly_subsector >= num_alloc_poly_subsector)
+                    I_Error ("HWR_WalkBSPNode : not enough poly_subsectors\n");
+                else if (num_poly_subsector > 0x7fff)
+                    I_Error ("HWR_WalkBSPNode : num_poly_subsector > 0x7fff\n");
+
+                *leafnode = (bsp_child_t)(num_poly_subsector | NF_SUBSECTOR);
+                poly_subsectors[num_poly_subsector].planepoly = poly;
+                num_poly_subsector++;
+
+                // frontpoly and backpoly are empty, and were not init.
+                return;
+            }
+#endif
+            
+            //add subsectors without segs here?
+            //HWR_SubsecPoly (0, NULL);
+            I_Error ("HWR_WalkBSPNode : bspnum -1\n");
+    }
+}
+#endif
+
 // poly : the convex polygon that encloses all child subsectors
 // Recursive
+//  bspnum : children[]
+//  leafnode : & children []
+//  Call HWR_WalkBSPNode_degen for degenerate case.
 // Called from HWR_CreatePlanePolygons at load time.
 static
 void HWR_WalkBSPNode (int bspnum, wpoly_t* poly, bsp_child_t * leafnode, fixed_t *bbox)
@@ -1934,6 +1979,7 @@ void HWR_WalkBSPNode (int bspnum, wpoly_t* poly, bsp_child_t * leafnode, fixed_t
 
     // Node reference: bspnum is another node of the tree.
     if( bspnum >= numnodes )  goto bad_node;
+   
     bsp = &nodes[bspnum];
     set_divline(bsp, /*OUT*/ &fdivline);
     wpoly_init_0( &frontpoly );
@@ -1989,37 +2035,6 @@ void HWR_WalkBSPNode (int bspnum, wpoly_t* poly, bsp_child_t * leafnode, fixed_t
     return;
 
 bad_subsector:
-    if (bspnum == -1)
-    {
-#if 0
-            // BP: i think this code is useless and wrong because
-            // - bspnum==-1 happens only when numsubsectors == 0
-            // - it can't happens in bsp recursive call since bspnum is a int and children is unsigned short
-            // - the BSP is complet !! (there just can have subsector without segs) (i am not sure of this point)
-
-            // do we have a valid polygon ?
-            if (poly && poly->numpts > 2)
-            {
-                if( verbose )
-                    GenPrintf( EMSG_ver, "Poly: Adding a new subsector !!!\n");
-                if (num_poly_subsector >= num_alloc_poly_subsector)
-                    I_Error ("HWR_WalkBSPNode : not enough poly_subsectors\n");
-                else if (num_poly_subsector > 0x7fff)
-                    I_Error ("HWR_WalkBSPNode : num_poly_subsector > 0x7fff\n");
-
-                *leafnode = (uint16_t)(num_poly_subsector | NF_SUBSECTOR);
-                poly_subsectors[num_poly_subsector].planepoly = poly;
-                num_poly_subsector++;
-
-                // frontpoly and backpoly are empty, and were not init.
-                return;
-            }
-#endif
-            
-            //add subsectors without segs here?
-            //HWR_SubsecPoly (0, NULL);
-            I_Error ("HWR_WalkBSPNode : bspnum -1\n");
-    }
     I_Error ("HWR_WalkBSPNode : bad secnum %i, numsectors=%i -1\n",
               subsecnum, numsubsectors );
             
@@ -2611,7 +2626,10 @@ void HWR_Create_PlanePolygons ( void )
     rootpv[0]->y = rootpv[3]->y = FIXED_TO_FLOAT( rootbbox[BOXBOTTOM] );
 
     // start at head node of bsp tree
-    HWR_WalkBSPNode ( numnodes-1, &rootp, NULL, rootbbox);
+    // [WDJ] Intercept degenerate case, so BSP node is never -1.
+    HWR_WalkBSPNode( ( (numnodes > 0)? numnodes-1
+                       : ( 0 | NF_SUBSECTOR )),  // Degenerate, sector 0
+                     &rootp, NULL, rootbbox );
 
     SolveTProblem ();
 

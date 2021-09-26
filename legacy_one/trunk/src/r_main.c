@@ -1506,7 +1506,11 @@ void R_RenderPlayerView( byte pind, player_t* player )
     mytotal=0;
     ProfZeroTimer();
 #endif
-    R_RenderBSPNode (numnodes-1);
+
+    // [WDJ] Intercept degenerate case, so BSP node is never -1.
+    R_RenderBSPNode( ( numnodes > 0 )? numnodes-1
+                   : ( 0 | NF_SUBSECTOR ) );  // Degenerate, sector 0
+
 #ifdef TIMING
     RDMSR(0x10,&mycount);
     mytotal += mycount;   //64bit add
