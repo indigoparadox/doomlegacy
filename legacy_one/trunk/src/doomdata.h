@@ -203,7 +203,7 @@ typedef struct
 // BSP node structure.
 
 // Indicate a leaf.
-#define NF_SUBSECTOR    0x8000
+#define MAP_NF_SUBSECTOR    0x8000
 
 // WAD lump structure
 typedef struct

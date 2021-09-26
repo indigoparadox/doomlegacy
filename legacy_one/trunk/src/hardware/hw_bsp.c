@@ -1885,7 +1885,7 @@ void loading_status( void )
 // Recursive
 // Called from HWR_CreatePlanePolygons at load time.
 static
-void HWR_WalkBSPNode (int bspnum, wpoly_t* poly, uint16_t * leafnode, fixed_t *bbox)
+void HWR_WalkBSPNode (int bspnum, wpoly_t* poly, bsp_child_t * leafnode, fixed_t *bbox)
 {
     node_t*     bsp;
 

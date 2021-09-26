@@ -205,6 +205,10 @@
 // Not used by many wads, but not much extra code either.  Relatively safe.
 #define DEEPSEA_TALL_PATCH
 
+// Extended Nodes
+// Reads wads that use extended wads format, such as from DeePBSP.
+#define DEEPSEA_EXTENDED_NODES
+
 
 // Player morph canceling invisibility and MF_SHADOW, is inconsistent.
 // The Heretic vanilla behavior cancels SHADOW when turned into a chicken.
