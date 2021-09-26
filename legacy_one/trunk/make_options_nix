@@ -76,6 +76,11 @@ HAVE_LIBZIP=1
 # HAVE_LIBZIP=12
 # The option OPT_LIBZIP (in doomdef.h), will load libzip when it is present.
 
+# Extended nodes require zlib.
+HAVE_ZLIB=1
+# Optional, load with dlopen.
+# HAVE_ZLIB=3
+
 # X11 sound options
 # Sound Server
 SOUND_SERVER=1

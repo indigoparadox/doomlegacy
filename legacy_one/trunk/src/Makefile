@@ -1188,6 +1188,13 @@ ifeq ($(OS), LINUX)
   endif
 endif
 
+# ZLIB
+ifdef HAVE_ZLIB
+    # When optional uses lib dlopen.
+    LIBS+=-lz
+    OPTS+=-DHAVE_ZLIB=$(HAVE_ZLIB)
+endif
+
 
 # compiler and linker flags
 CFLAGS+=$(WFLAGS)
