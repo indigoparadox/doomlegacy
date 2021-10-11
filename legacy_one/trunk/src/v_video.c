@@ -223,31 +223,6 @@ void Set_drawmode_OnChange( void )
 }
 
 
-// Reverse index into drawmode_sel_t
-// indexed by vid_drawmode_e
-byte drawmode_to_drawmode_sel_t[] = {
-   0,  // DRM_none
-   0,  // DRM_8pal
-   1,  // DRM_15,
-   2,  // DRM_16,
-   3,  // DRM_24,
-   4,  // DRM_32,
-   0,  // DRM_explicit_bpp
-   5,  // DRM_native
-#ifdef HWRENDER
-   6,  // DRM_opengl
-#ifdef SMIF_WIN_NATIVE
-   7,  // DRM_minigl
-   8,  // DRM_glide
-   9,  // DRM_d3d
-#else
-   0, 0, 0,
-#endif
-#else
-   0, 0, 0, 0,
-#endif
-   0   // DRM_END
-};
 
 // indexed by vid_drawmode_e
 byte drawmode_sel_avail[] = {

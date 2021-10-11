@@ -3253,7 +3253,7 @@ void  draw_set_mode_instructions( byte vm_mode, const char * current_mode_name, 
         {
 #if 1
 //          sprintf(temp, "Current drawmode : %s", current_mode_name );
-//          sprintf(temp, "Current default : %s", drawmode_sel_t[ drawmode_to_drawmode_sel_t[ cv_drawmode.value ] ].strvalue );
+//          sprintf(temp, "Current default : %s", CV_get_possiblevalue_string( drawmode_sel_t, cv_drawmode.value ) );
           sprintf(temp, "Current default : %s", cv_drawmode.string );
 #else
           // Redundant, looks like an error.
@@ -3269,7 +3269,7 @@ void  draw_set_mode_instructions( byte vm_mode, const char * current_mode_name, 
     if( test_mkcfg && ! M_Have_configfile_drawmode() )
     {
         // is current_mode_name only during drawmode menu
-        sprintf(temp, "C to make config: %s", drawmode_sel_t[ drawmode_to_drawmode_sel_t[ cv_drawmode.EV ] ].strvalue );
+        sprintf(temp, "C to make config: %s", CV_get_possiblevalue_string( drawmode_sel_t, cv_drawmode.EV ) );
 #if 1
         V_DrawString( 2, 24, V_WHITEMAP, temp);
 #else
@@ -3782,8 +3782,8 @@ void M_Draw_drawmode(void)
     }
 
     byte sel_dm = vidm_drawmode[vidm_current];  // selected drawmode
-    const char * sel_drawmode_str = drawmode_sel_t[ drawmode_to_drawmode_sel_t[ sel_dm ] ].strvalue;
-    const char * cur_drawmode_str = drawmode_sel_t[ drawmode_to_drawmode_sel_t[ cv_drawmode.EV ] ].strvalue;
+    const char * sel_drawmode_str = CV_get_possiblevalue_string( drawmode_sel_t, sel_dm );
+    const char * cur_drawmode_str = CV_get_possiblevalue_string( drawmode_sel_t, cv_drawmode.EV );
     draw_set_mode_instructions( 0, cur_drawmode_str, sel_drawmode_str );
 
     // setup key handler for video modes

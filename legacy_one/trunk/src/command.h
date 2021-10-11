@@ -236,6 +236,10 @@ extern byte command_EV_param;
 void  CV_Set_cvar_string( consvar_t * cvar, const char * str );
 void  CV_Free_cvar_string( consvar_t * cvar );
 
+// Get string for CV_PossibleValue_t
+//  pv_value: a value in the CV_PossibleValue_t list
+const char *  CV_get_possiblevalue_string( CV_PossibleValue_t * pv,  byte pv_value );
+
 // If a OnChange func tries to change other values,
 // this function should be used.
 void CV_Set_by_OnChange (consvar_t *cvar, int value);

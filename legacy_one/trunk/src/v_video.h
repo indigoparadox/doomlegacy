@@ -96,7 +96,6 @@ extern byte  rendermode_recalc;
 extern byte  HWR_patchstore;  // patches are stored in HWR format
 
 extern const byte num_drawmode_sel;
-extern byte drawmode_to_drawmode_sel_t[];
 extern byte drawmode_sel_avail[];
 #if 0
 extern const char * rendermode_name[];
