@@ -489,7 +489,7 @@ int md2_loadTexture (const char *filename)
     MipPatch_t    *grpatch;
 
     grpatch = &md2_tex_patch;
-    //if (!grpatch->mipmap.downloaded && !grpatch->mipmap.grInfo.data)
+    //if (!grpatch->mipmap.downloaded && !grpatch->mipmap.GR_data)
     {
         PcxHeader       header;
         unsigned char   palette[768];
@@ -512,7 +512,7 @@ int md2_loadTexture (const char *filename)
 
         w = header.xmax - header.xmin + 1;
         h = header.ymax - header.ymin + 1;
-        image= Z_Malloc( w*h, PU_HWRCACHE, &grpatch->mipmap.grInfo.data );
+        image= Z_Malloc( w*h, PU_HWRCACHE, &grpatch->mipmap.GR_data );
 
         if (fread ((byte *) palette, sizeof (byte), 768, file) == -1)
         {
@@ -539,7 +539,7 @@ int md2_loadTexture (const char *filename)
         fclose(file);
 
         grpatch->mipmap.downloaded = 0;
-        grpatch->mipmap.grInfo.format = GR_TEXFMT_P_8; 
+        grpatch->mipmap.GR_format = GR_TEXFMT_P_8; 
         grpatch->mipmap.tfflags = 0;
 
         grpatch->width = w;

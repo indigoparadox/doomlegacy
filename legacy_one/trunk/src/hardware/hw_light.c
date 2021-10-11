@@ -663,23 +663,22 @@ void HWR_SetLight( void )
 {
     int    i, j;
 
-    if (!lightmappatch.mipmap.downloaded && !lightmappatch.mipmap.grInfo.data)
+    if( !lightmappatch.mipmap.downloaded && !lightmappatch.mipmap.GR_data )
     {
 
-        uint16_t *Data = Z_Malloc( 128*128*sizeof(uint16_t), PU_HWRCACHE, &lightmappatch.mipmap.grInfo.data );
+        uint16_t * data = Z_Malloc( 128*128*sizeof(uint16_t), PU_HWRCACHE, &lightmappatch.mipmap.GR_data );
                 
         for( i=0; i<128; i++ )
         {
             for( j=0; j<128; j++ )
             {
                 int pos = ((i-64)*(i-64))+((j-64)*(j-64));
-                if (pos <= 63*63)
-                    Data[i*128+j] = ((byte)(255-(4*sqrt(pos)))) << 8 | 0xff;
-                else
-                    Data[i*128+j] = 0;
+                data[i*128+j] = (pos <= 63*63)?
+                    ( ((byte)(255-(4*sqrt(pos)))) << 8 | 0xff )
+                   : 0;
             }
         }
-        lightmappatch.mipmap.grInfo.format = GR_TEXFMT_ALPHA_INTENSITY_88;
+        lightmappatch.mipmap.GR_format = GR_TEXFMT_ALPHA_INTENSITY_88;
 
         lightmappatch.width = 128;
         lightmappatch.height = 128;

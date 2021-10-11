@@ -228,6 +228,8 @@ GLint mag_filter = GL_LINEAR;
 const   GLubyte     *gl_extensions;
 int     oglflags = 0;
 
+static const RGBA_t  RGBA_zero = {0}; // union uint32_t
+
 //Hurdler: 04/10/2000: added for the kick ass coronas as Boris wanted ;-)
 #ifndef MINI_GL_COMPATIBILITY
 static GLdouble    modelMatrix[16];
@@ -243,7 +245,9 @@ static GLint       viewport[4];
 #endif
 
 // shortcut for ((float)1/i)
-static const GLfloat    byte2float[256] = {
+
+// Transform to glcolor space.   (i / 255.0f)
+static const GLfloat    to_glcolor_float[256] = {
     0.000000f, 0.003922f, 0.007843f, 0.011765f, 0.015686f, 0.019608f, 0.023529f, 0.027451f,
     0.031373f, 0.035294f, 0.039216f, 0.043137f, 0.047059f, 0.050980f, 0.054902f, 0.058824f,
     0.062745f, 0.066667f, 0.070588f, 0.074510f, 0.078431f, 0.082353f, 0.086275f, 0.090196f,
@@ -765,10 +769,10 @@ EXPORT void HWRAPI( Draw2DLine ) ( v2d_t * v1, v2d_t * v2, RGBA_t Color )
 
     glDisable( GL_TEXTURE_2D );
 
-    c.red   = byte2float[Color.s.red];
-    c.green = byte2float[Color.s.green];
-    c.blue  = byte2float[Color.s.blue];
-    c.alpha = byte2float[Color.s.alpha];
+    c.red   = to_glcolor_float[Color.s.red];
+    c.green = to_glcolor_float[Color.s.green];
+    c.blue  = to_glcolor_float[Color.s.blue];
+    c.alpha = to_glcolor_float[Color.s.alpha];
 
 #ifndef MINI_GL_COMPATIBILITY
     glColor4fv( (float *)&c );    // is in RGBA float format
@@ -944,81 +948,95 @@ EXPORT void HWRAPI( SetTexture ) ( FTextureInfo_t *pTexInfo )
         RGBA_t          *ptex = tex;
         int             w, h;
 
-        //DBG_Printf ("DownloadMipmap %d %x\n", next_texture_id,pTexInfo->grInfo.data);
+        //DBG_Printf ("DownloadMipmap %d %x\n", next_texture_id, pTexInfo->GR_data);
 
         w = pTexInfo->width;
         h = pTexInfo->height;
 
 #ifdef USE_PALETTED_TEXTURE
-        if( usePalettedTexture &&
-            (pTexInfo->grInfo.format==GR_TEXFMT_P_8) &&
-            !(pTexInfo->flags & TF_CHROMAKEYED) )
+        if( usePalettedTexture
+            && (pTexInfo->GR_format==GR_TEXFMT_P_8)
+            && !(pTexInfo->flags & TF_CHROMAKEYED) )
         {
             // do nothing here.
             // Not a problem with MiniGL since we don't use paletted texture
         }
         else
 #endif
-        if( (pTexInfo->grInfo.format==GR_TEXFMT_P_8) ||
-            (pTexInfo->grInfo.format==GR_TEXFMT_AP_88) )
+        if( (pTexInfo->GR_format == GR_TEXFMT_P_8)
+            || (pTexInfo->GR_format == GR_TEXFMT_AP_88) )
         {
             GLubyte *pImgData;
             int i, j;
-            RGBA_t  t2;
+            byte  src_inc = ( pTexInfo->GR_format == GR_TEXFMT_AP_88 )? 2 : 1;
 
-            pImgData = (GLubyte *)pTexInfo->grInfo.data;
-            for( j=0; j<h; j++ )
+            pImgData = (GLubyte *)pTexInfo->GR_data;
+            if( pTexInfo->tfflags & TF_CHROMAKEYED )
             {
-                for( i=0; i<w; i++)
+                // [WDJ] Chromakey
+                // OpenGL does not use chromakey, it uses alpha.
+                // [WDJ] Chromakey ignores alpha of source ?		       
+                // [WDJ] Much faster to not test every pixel, make use of the lookup to subst chromakey.
+                RGBA_t  myPaletteData_chromakey_save = myPaletteData[ HWR_PATCHES_CHROMAKEY_COLORINDEX ];
+                myPaletteData[ HWR_PATCHES_CHROMAKEY_COLORINDEX ] = RGBA_zero;  // alpha = 0
+
+                for( j=0; j<h; j++ )
                 {
-                    if ( (*pImgData==HWR_PATCHES_CHROMAKEY_COLORINDEX) &&
-                         (pTexInfo->tfflags & TF_CHROMAKEYED) )
+                    for( i=0; i<w; i++)
                     {
-                        t2.s.red   = 0;
-                        t2.s.green = 0;
-                        t2.s.blue  = 0;
-                        t2.s.alpha = 0;
+                        // [WDJ] dest and src are both RGBA_t
+                        tex[w*j+i] = myPaletteData[*pImgData];
+                        pImgData += src_inc;
                     }
-                    else
+                }
+                // [WDJ] Restore palette	       
+                myPaletteData[ HWR_PATCHES_CHROMAKEY_COLORINDEX ] = myPaletteData_chromakey_save;
+            }
+            else if( pTexInfo->GR_format == GR_TEXFMT_AP_88 )
+            {
+                // [WDJ] No Chromakey, color, alpha.
+                for( j=0; j<h; j++ )
+                {
+                    for( i=0; i<w; i++)
                     {
-                        t2.s.red   = myPaletteData[*pImgData].s.red;
-                        t2.s.green = myPaletteData[*pImgData].s.green;
-                        t2.s.blue  = myPaletteData[*pImgData].s.blue;
-                        t2.s.alpha = myPaletteData[*pImgData].s.alpha;
+                        register RGBA_t  t2 = myPaletteData[*pImgData++];
+                        t2.s.alpha = *pImgData++;  // alpha
+                        tex[w*j+i] = t2;
                     }
-
-                    pImgData++;
-
-                    if( pTexInfo->grInfo.format == GR_TEXFMT_AP_88 )
+                }
+            }
+            else
+            {
+                // [WDJ] No Chromakey, color.
+                for( j=0; j<h; j++ )
+                {
+                    for( i=0; i<w; i++)
                     {
-                        if( !(pTexInfo->tfflags & TF_CHROMAKEYED) )
-                            t2.s.alpha = *pImgData;
+                        tex[w*j+i] = myPaletteData[*pImgData];
                         pImgData++;
                     }
-                    tex[w*j+i] = t2;
                 }
             }
         }
-        else if (pTexInfo->grInfo.format==GR_RGBA)            
+        else if( pTexInfo->GR_format == GR_RGBA )
         {
             // corona test : passed as ARGB 8888, which is not in glide formats
             // Hurdler: not used for coronas anymore, just for dynamic lighting
-            ptex = (RGBA_t *) pTexInfo->grInfo.data;
+            ptex = (RGBA_t *) pTexInfo->GR_data;
         }
-        else if (pTexInfo->grInfo.format==GR_TEXFMT_ALPHA_INTENSITY_88)
+        else if( pTexInfo->GR_format == GR_TEXFMT_ALPHA_INTENSITY_88 )
         {
             GLubyte *pImgData;
             int i, j;
-            RGBA_t  t2;
 
-            pImgData = (GLubyte *)pTexInfo->grInfo.data;
+            pImgData = (GLubyte *)pTexInfo->GR_data;
             for( j=0; j<h; j++ )
             {
                 for( i=0; i<w; i++)
                 {
-                    t2.s.red   = *pImgData;
-                    t2.s.green = *pImgData;
-                    t2.s.blue  = *pImgData;
+                    register RGBA_t  t2;
+                    // mono
+                    t2.s.red = t2.s.green = t2.s.blue = *pImgData;
                     pImgData++;
                     t2.s.alpha = *pImgData;
                     pImgData++;
@@ -1027,14 +1045,17 @@ EXPORT void HWRAPI( SetTexture ) ( FTextureInfo_t *pTexInfo )
             }
         }
         else
-            DBG_Printf ("SetTexture(bad format) %d\n", pTexInfo->grInfo.format);
+        {
+            DBG_Printf ("SetTexture(bad format) %d\n", pTexInfo->GR_format);
+            return;
+        }
 
         tex_downloaded = next_texture_id++;
         pTexInfo->downloaded = tex_downloaded;
         glBindTexture( GL_TEXTURE_2D, tex_downloaded );
 
 #ifdef MINI_GL_COMPATIBILITY
-        //if (pTexInfo->grInfo.format==GR_TEXFMT_ALPHA_INTENSITY_88)
+        //if (pTexInfo->GR_format==GR_TEXFMT_ALPHA_INTENSITY_88)
         //    glTexImage2D( GL_TEXTURE_2D, 0, GL_LUMINANCE_ALPHA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, ptex );
         //else
             if (min_filter & MIPMAP_MASK)
@@ -1044,16 +1065,16 @@ EXPORT void HWRAPI( SetTexture ) ( FTextureInfo_t *pTexInfo )
 #else
 #ifdef USE_PALETTED_TEXTURE
             //Hurdler: not really supported and not tested recently
-        if( usePalettedTexture &&
-            (pTexInfo->grInfo.format==GR_TEXFMT_P_8) &&
-            !(pTexInfo->flags & TF_CHROMAKEYED) )
+        if( usePalettedTexture
+            && (pTexInfo->GR_format==GR_TEXFMT_P_8)
+            && !(pTexInfo->flags & TF_CHROMAKEYED) )
         {
             glColorTableEXT(GL_TEXTURE_2D, GL_RGB8, 256, GL_RGB, GL_UNSIGNED_BYTE, palette_tex);
-            glTexImage2D( GL_TEXTURE_2D, 0, GL_COLOR_INDEX8_EXT, w, h, 0, GL_COLOR_INDEX, GL_UNSIGNED_BYTE, pTexInfo->grInfo.data );
+            glTexImage2D( GL_TEXTURE_2D, 0, GL_COLOR_INDEX8_EXT, w, h, 0, GL_COLOR_INDEX, GL_UNSIGNED_BYTE, pTexInfo->GR_data );
         }
         else
 #endif
-        if (pTexInfo->grInfo.format==GR_TEXFMT_ALPHA_INTENSITY_88)
+        if( pTexInfo->GR_format==GR_TEXFMT_ALPHA_INTENSITY_88 )
         {
             //glTexImage2D( GL_TEXTURE_2D, 0, GL_ALPHA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, ptex );
             if (min_filter & MIPMAP_MASK)
@@ -1091,6 +1112,7 @@ EXPORT void HWRAPI( SetTexture ) ( FTextureInfo_t *pTexInfo )
         else // initialisation de la liste
             gr_cachetail = gr_cachehead =  pTexInfo;
     }
+
 #ifdef MINI_GL_COMPATIBILITY
     switch(pTexInfo->flags)
     {
@@ -1139,17 +1161,17 @@ EXPORT void HWRAPI( DrawPolygon ) ( FSurfaceInfo_t  *pSurf,
         if (tint_color_id)
         {
             // Imitate the damage, and special object palette tints
-            c.red   = (tint_rgb.red   + byte2float[pSurf->FlatColor.s.red])  /2.0f;
-            c.green = (tint_rgb.green + byte2float[pSurf->FlatColor.s.green])/2.0f;
-            c.blue  = (tint_rgb.blue  + byte2float[pSurf->FlatColor.s.blue]) /2.0f;
-            c.alpha = byte2float[pSurf->FlatColor.s.alpha];
+            c.red   = (tint_rgb.red   + to_glcolor_float[pSurf->FlatColor.s.red])  /2.0f;
+            c.green = (tint_rgb.green + to_glcolor_float[pSurf->FlatColor.s.green])/2.0f;
+            c.blue  = (tint_rgb.blue  + to_glcolor_float[pSurf->FlatColor.s.blue]) /2.0f;
+            c.alpha = to_glcolor_float[pSurf->FlatColor.s.alpha];
         }
         else
         {
-            c.red   = byte2float[pSurf->FlatColor.s.red];
-            c.green = byte2float[pSurf->FlatColor.s.green];
-            c.blue  = byte2float[pSurf->FlatColor.s.blue];
-            c.alpha = byte2float[pSurf->FlatColor.s.alpha];
+            c.red   = to_glcolor_float[pSurf->FlatColor.s.red];
+            c.green = to_glcolor_float[pSurf->FlatColor.s.green];
+            c.blue  = to_glcolor_float[pSurf->FlatColor.s.blue];
+            c.alpha = to_glcolor_float[pSurf->FlatColor.s.alpha];
         }
 #ifdef MINI_GL_COMPATIBILITY
         glColor4f(c.red, c.green, c.blue, c.alpha);
@@ -1242,18 +1264,18 @@ EXPORT void HWRAPI( SetSpecialState ) (hwd_specialstate_e IdState, int Value)
 
         case HWD_SET_TINT_COLOR: {
             tint_color_id = Value;
-            tint_rgb.blue  = byte2float[((Value>>16)&0xff)];
-            tint_rgb.green = byte2float[((Value>>8)&0xff)];
-            tint_rgb.red   = byte2float[((Value)&0xff)];
+            tint_rgb.blue  = to_glcolor_float[((Value>>16)&0xff)];
+            tint_rgb.green = to_glcolor_float[((Value>>8)&0xff)];
+            tint_rgb.red   = to_glcolor_float[((Value)&0xff)];
             break;
         }
 
         case HWD_SET_FOG_COLOR: {
             GLfloat fogcolor[4];
 
-            fogcolor[0] = byte2float[((Value>>16)&0xff)];
-            fogcolor[1] = byte2float[((Value>>8)&0xff)];
-            fogcolor[2] = byte2float[((Value)&0xff)];
+            fogcolor[0] = to_glcolor_float[((Value>>16)&0xff)];
+            fogcolor[1] = to_glcolor_float[((Value>>8)&0xff)];
+            fogcolor[2] = to_glcolor_float[((Value)&0xff)];
             fogcolor[3] = 0x0;
             glFogfv(GL_FOG_COLOR, fogcolor);
             break;

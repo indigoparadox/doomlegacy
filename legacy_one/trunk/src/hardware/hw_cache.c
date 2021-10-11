@@ -135,6 +135,7 @@ static  int     blockheight;
 
 extern byte *   translucenttables;  // set of translucent tables 
 
+// Uses format values from Glide
 int patchformat   = GR_TEXFMT_AP_88; // use alpha for holes
 int textureformat = GR_TEXFMT_P_8; // use chromakey for hole
 
@@ -160,14 +161,14 @@ typedef union {
 static
 void HWR_DrawPatchInCache (Mipmap_t* mipmap,
                            int blockwidth, int blockheight, int blocklinebyte,
-                           int texturewidth, int textureheight,
+                           int texture_width, int texture_height,
                            int originx, int originy, //where to draw the patch in the surface block
                            patch_t* sw_patch, int bytepp )
 {
     int          x,x1,x2;
     int          col,ncols;
     fixed_t      xfrac, xfracstep;
-    fixed_t      yfrac, yfracstep, ypos, count;
+    fixed_t      yfrac, yfracstep, count;
     fixed_t      scale_y;
 
     // also can be called before translucenttables are setup
@@ -178,7 +179,7 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
     byte         chromakey_mapped = (mipmap->tfflags & TF_CHROMAKEYED)? 1:0;
     byte         alpha;
     byte        *colormap = mipmap->colormap;
-    byte        *block = mipmap->grInfo.data;
+    byte        *block = mipmap->GR_data;
     column_t    *patchcol;
     byte        *source;
     byte        *dest;
@@ -186,24 +187,21 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
     x1 = originx;
     x2 = x1 + sw_patch->width;
 
-    if (x1<0)
-        x = 0;
-    else
-        x = x1;
+    x = (x1<0)? 0: x1;
 
-    if (x2 > texturewidth)
-        x2 = texturewidth;
+    if (x2 > texture_width)
+        x2 = texture_width;
 
-    if( !texturewidth )
-        return;
+    if( texture_width < 1 )
+         return;
 
-    col  = x * blockwidth / texturewidth;
-    ncols= ((x2-x) * blockwidth) / texturewidth;
+    col  = x * blockwidth / texture_width;
+    ncols= ((x2-x) * blockwidth) / texture_width;
 
 #if 0
     CONS_Printf("patch %dx%d texture %dx%d block %dx%d\n",
          sw_patch->width, sw_patch->height,
-         texturewidth, textureheight, blockwidth, blockheight);
+         texture_width, texture_height, blockwidth, blockheight);
     CONS_Printf("      col %d ncols %d x %d\n", col, ncols, x);
 #endif
 
@@ -212,10 +210,12 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
     if (x1<0)
         xfrac = -x1<<16;
 
-    xfracstep = (texturewidth << 16) / blockwidth;
-    yfracstep = (textureheight<< 16) / blockheight;
+    xfracstep = (texture_width << 16) / blockwidth;
+    yfracstep = (texture_height<< 16) / blockheight;
+#ifdef PARANOIA   
     if( bytepp<1 || bytepp > 4 )
         I_Error("HWR_DrawPatchInCache: no drawer defined for this bytepp (%d)\n",bytepp);
+#endif
 
     for (block += col*bytepp; ncols--; block+=bytepp, xfrac+=xfracstep)
     {
@@ -226,7 +226,7 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
         patchcol = (column_t *)((byte *)sw_patch
                                 + sw_patch->columnofs[xfrac>>16]);
 
-        scale_y = (blockheight << 16) / textureheight;
+        scale_y = (blockheight << 16) / texture_height;
 
         while (patchcol->topdelta != 0xff)
         {
@@ -249,30 +249,30 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
 
             source = (byte *)patchcol + 3;
             count  = ((patchcol->length * scale_y) + (FRACUNIT/2)) >> 16;
+            yfrac = 0;
 
 #ifdef DEEPSEA_TALL_PATCH
-            ypos = originy + cur_topdelta;
+            int yi = originy + cur_topdelta;
 #else
-            ypos = originy + patchcol->topdelta;
+            int yi = originy + patchcol->topdelta;
 #endif
-
-            yfrac = 0;
             //yfracstep = (patchcol->length << 16) / count;
-            if (ypos < 0)
+            if( yi < 0 )
             {
                 // [WDJ] Original doom had a bug in clipping.
                 // To reproduce that bug, comment out the next line.
-                yfrac = -ypos<<16;  // skip pixels in patch (not in original doom)
+                yfrac = -yi<<16;  // skip pixels in patch (not in original doom)
 
-                count += (((ypos * scale_y) + (FRACUNIT/2)) >> 16);
-                ypos = 0;
+                count += (((yi * scale_y) + (FRACUNIT/2)) >> 16);
+                yi = 0;
             }
 
-            ypos = ((ypos * scale_y) + (FRACUNIT/2)) >> 16;
-            if (ypos + count >= blockheight )
-                count = blockheight - ypos;
+            if( yi + count >= blockheight )
+                count = blockheight - yi;
 
-            dest = block + (ypos*blocklinebyte);
+            unsigned int ypos = ((yi * scale_y) + (FRACUNIT/2)) >> 16;
+            dest = block + (ypos * blocklinebyte);
+
             while (count>0)
             {
                 byte texel = source[yfrac>>16];
@@ -328,9 +328,9 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
 //       blockwidth
 //       blockheight
 //note :  8bit (1 byte per pixel) palettized format
-static void HWR_ResizeBlock ( int originalwidth,
-                              int originalheight,
-                              GrTexInfo*    grInfo )
+static void HWR_ResizeBlock ( int orig_width,
+                              int orig_height,
+                              Mipmap_t * mipmap )
 {
     //   Build the full textures from patches.
     static const GrLOD_t     gr_lods[9] = {
@@ -363,6 +363,9 @@ static void HWR_ResizeBlock ( int originalwidth,
         {GR_ASPECT_LOG2_1x8,  31, 255}
     };
 
+
+    GrTexInfo *  grInfo = & mipmap->grInfo;
+
     int     j,k;
     int     max,min;
 
@@ -370,38 +373,50 @@ static void HWR_ResizeBlock ( int originalwidth,
     if (cv_grrounddown.value)
     {
         blockwidth = 256;
-        while (originalwidth < blockwidth)
+        while (orig_width < blockwidth)
             blockwidth >>= 1;
-        if (blockwidth<1)
-            I_Error ("3D GenerateTexture : too small");
+        if( blockwidth<1 )
+        {
+            I_SoftError ("3D GenerateTexture : too small");
+            blockwidth = 4;
+        }
 
         blockheight = 256;
-        while (originalheight < blockheight)
+        while (orig_height < blockheight)
             blockheight >>= 1;
-        if (blockheight<1)
-            I_Error ("3D GenerateTexture : too small");
+        if( blockheight<1 )
+        {
+            I_SoftError ("3D GenerateTexture : too small");
+            blockheight = 4;
+        }
     }
 /*    else if (cv_voodoocompatibility.value)
     {
-                if(originalwidth > 256 || originalheight > 256)
+                if(orig_width > 256 || orig_height > 256)
                 {
                         blockwidth = 256;
-                        while (originalwidth < blockwidth)
+                        while (orig_width < blockwidth)
                                 blockwidth >>= 1;
-                        if (blockwidth<1)
-                                I_Error ("3D GenerateTexture : too small");
+                        if( blockwidth<1 )
+                        {
+                            I_SoftError ("3D GenerateTexture : too small");
+                            blockwidth = 4;
+                        }
 
                         blockheight = 256;
-                        while (originalheight < blockheight)
+                        while (orig_height < blockheight)
                                 blockheight >>= 1;
-                        if (blockheight<1)
-                                I_Error ("3D GenerateTexture : too small");
+                        if( blockheight<1 )
+                        {
+                            I_SoftError ("3D GenerateTexture : too small");
+                            blockheight = 4;
+                        }
                 }
                 else
                 {
                         //size up to nearest power of 2
                         blockwidth = 1;
-                        while (blockwidth < originalwidth)
+                        while (blockwidth < orig_width)
                                 blockwidth <<= 1;
                         // scale down the original graphics to fit in 256
                         if (blockwidth>256)
@@ -410,7 +425,7 @@ static void HWR_ResizeBlock ( int originalwidth,
 
                         //size up to nearest power of 2
                         blockheight = 1;
-                        while (blockheight < originalheight)
+                        while (blockheight < orig_height)
                                 blockheight <<= 1;
                         // scale down the original graphics to fit in 256
                         if (blockheight>256)
@@ -422,7 +437,7 @@ static void HWR_ResizeBlock ( int originalwidth,
     {
         //size up to nearest power of 2
         blockwidth = 1;
-        while (blockwidth < originalwidth)
+        while (blockwidth < orig_width)
             blockwidth <<= 1;
         // scale down the original graphics to fit in 256
         if (blockwidth>2048)
@@ -431,7 +446,7 @@ static void HWR_ResizeBlock ( int originalwidth,
 
         //size up to nearest power of 2
         blockheight = 1;
-        while (blockheight < originalheight)
+        while (blockheight < orig_height)
             blockheight <<= 1;
         // scale down the original graphics to fit in 256
         if (blockheight>2048)
@@ -495,14 +510,24 @@ static const int format2bpp[16] = {
 
 static byte * Make_Mip_Block( Mipmap_t * mipmap )
 {
-    int bytepp = format2bpp[mipmap->grInfo.format];
-    byte * block;
+    int bytepp = format2bpp[ mipmap->GR_format ];
+    byte * block = mipmap->GR_data;  // existing block
 
-    if( mipmap->grInfo.data != NULL )  // free any existing data
-        Z_Free(mipmap->grInfo.data);
+    // Reallocate data block if it is wrong size.
+    if( (block == NULL)
+        || ((mipmap->width * mipmap->height) != blocksize) )
+    {
+        // Need new allocation
+        if( block != NULL )  // free any existing data
+            Z_Free( block );
 
-    // set grInfo.data
-    block = Z_Malloc (blocksize*bytepp, PU_STATIC, &(mipmap->grInfo.data));
+        // set mipmap GR_data
+        block = Z_Malloc (blocksize*bytepp, PU_STATIC, &mipmap->GR_data );
+    }
+
+    // mipmap updated with data block
+    mipmap->width = blockwidth;
+    mipmap->height = blockheight;
 
     switch (bytepp)
     {
@@ -529,12 +554,12 @@ static byte * Make_Mip_Block( Mipmap_t * mipmap )
 
 static void release_Mip_Block( Mipmap_t * mipmap )
 {
-    if( mipmap->grInfo.data != NULL )
+    if( mipmap->GR_data != NULL )
     {
         // free existing data       
-        Z_Free(mipmap->grInfo.data);
+        Z_Free( mipmap->GR_data );
         // some Z_Free methods will clear owner, but not all
-        mipmap->grInfo.data = NULL;  // mark as empty
+        mipmap->GR_data = NULL;  // mark as empty
     }
 }
 
@@ -574,13 +599,12 @@ static void HWR_GenerateTexture (int texnum, MipTexture_t* grtex,
         mipmap->tfflags = TF_CHROMAKEYED | TF_WRAPXY;
     mipmap->tfflags |= drawflags;  // TF_Opaquetrans
 
-    HWR_ResizeBlock (texture->width, texture->height, &mipmap->grInfo);
-    mipmap->width = blockwidth;
-    mipmap->height = blockheight;
-    mipmap->grInfo.format = textureformat;
-    bytepp = format2bpp[mipmap->grInfo.format];
+    mipmap->GR_format = textureformat;
+    bytepp = format2bpp[ textureformat ];
 
-    block = Make_Mip_Block( mipmap );  // sets grInfo.data
+    HWR_ResizeBlock( texture->width, texture->height, mipmap );
+
+    block = Make_Mip_Block( mipmap );  // sets GR_data
 
     if (skyspecial) //Hurdler: not efficient, but better than holes in the sky (and it's done only at level loading)
     {
@@ -669,17 +693,15 @@ static void HWR_GenerateFogTexture (int texnum, Mipmap_t * mipmap,
    
     // must have original texture first
     MipTexture_t* base = HWR_GetTexture (texnum, 0);
-    RGBA_t * src = (RGBA_t*) base->mipmap.grInfo.data;
+    RGBA_t * src = (RGBA_t*) base->mipmap.GR_data;
     srcsize = base->mipmap.height * base->mipmap.width;
 
     mipmap->tfflags = TF_WRAPXY | TF_Fogsheet | drawflags;
+    mipmap->GR_format = GR_RGBA;
 
-    HWR_ResizeBlock (FOG_WIDTH, FOG_HEIGHT, &mipmap->grInfo);
-    mipmap->width = blockwidth;
-    mipmap->height = blockheight;
-    mipmap->grInfo.format = GR_RGBA;
+    HWR_ResizeBlock( FOG_WIDTH, FOG_HEIGHT, mipmap );
 
-    rgbablock = (RGBA_t*) Make_Mip_Block( mipmap );  // sets grInfo.data
+    rgbablock = (RGBA_t*) Make_Mip_Block( mipmap );  // sets GR_data
     fb = rgbablock;
     endpixel = rgbablock + ((blockheight * blockwidth) - 1);
 
@@ -807,14 +829,13 @@ void HWR_MakePatch (patch_t* patch, MipPatch_t* grPatch, Mipmap_t *grMipmap,
         grPatch->topoffset = patch->topoffset;
 
         // find the good 3dfx size (boring spec)
-        HWR_ResizeBlock (patch->width, patch->height, &grMipmap->grInfo);
-        grMipmap->width = blockwidth;
-        grMipmap->height = blockheight;
+        HWR_ResizeBlock( patch->width, patch->height, grMipmap );
+
+        // setup the texture info
+        grMipmap->GR_format = patchformat;
 
         // no wrap around, no chroma key
         grMipmap->tfflags = drawflags;  // TF_Opaquetrans
-        // setup the texture info
-        grMipmap->grInfo.format = patchformat;
     }
     else
     {
@@ -823,7 +844,7 @@ void HWR_MakePatch (patch_t* patch, MipPatch_t* grPatch, Mipmap_t *grMipmap,
         blocksize = blockwidth * blockheight;
     }
 
-    block = Make_Mip_Block(grMipmap);  // set grInfo.data
+    block = Make_Mip_Block(grMipmap);  // set GR_data
 
     // if rounddown, rounddown patches as well as textures
     if (cv_grrounddown.value)
@@ -850,7 +871,7 @@ void HWR_MakePatch (patch_t* patch, MipPatch_t* grPatch, Mipmap_t *grMipmap,
         newheight = min( patch->height, blockheight);
     }
 
-    bytepp = format2bpp[grMipmap->grInfo.format];
+    bytepp = format2bpp[ grMipmap->GR_format ];
     HWR_DrawPatchInCache( grMipmap,
                           newwidth, newheight, blockwidth*bytepp,
                           patch->width, patch->height,
@@ -898,9 +919,9 @@ void HWR_Free_TextureCache (void)
     // free references to the textures
     HWD.pfnClearMipMapCache ();
    
-    // free grInfo.data before freeing mipmaps that Z_FreeTags will write
-    // free all hardware-converted graphics cached in the heap
-    // our goal is only the textures since user of the texture is the texture cache
+    // Free GR_data before freeing mipmaps that Z_FreeTags will write.
+    // Free all hardware-converted graphics cached in the heap.
+    // Our goal is only the textures since user of the texture is the texture cache.
     Z_FreeTags (PU_HWRCACHE, PU_HWRCACHE);
 
     // free all skin after each level: must be done after pfnClearMipMapCache!
@@ -1044,7 +1065,7 @@ MipTexture_t* HWR_GetTexture (int tex, uint32_t drawflags)
 #endif
     miptex = &gr_textures[tex];
     mipmap = &(miptex->mipmap);  // mipmap in miptex
-    if ( miptex->mipmap.grInfo.data || miptex->mipmap.downloaded )
+    if( miptex->mipmap.GR_data || miptex->mipmap.downloaded )
     {
         uint32_t tstflags = drawflags & (TF_Opaquetrans|TF_Fogsheet);
         // mipmap already in use, find matching flags
@@ -1059,6 +1080,7 @@ MipTexture_t* HWR_GetTexture (int tex, uint32_t drawflags)
             Mipmap_t * newmip = malloc(sizeof(Mipmap_t));
             if( newmip == NULL )
                I_Error(" HWR_GetTexture : mipmap alloc failed\n");
+
             mipmap->nextcolormap = newmip;  // link
             memset(newmip, 0, sizeof(Mipmap_t));
 
@@ -1073,6 +1095,7 @@ MipTexture_t* HWR_GetTexture (int tex, uint32_t drawflags)
          miptex = HWR_GetTexture (tex, drawflags);  // gen fog texture mipmap
          return miptex;
     }
+
     if( drawflags & TF_Fogsheet )
     {
         // generate mipmap with foggy texture as alternate
@@ -1099,7 +1122,7 @@ static void HWR_CacheFlat (Mipmap_t* grMipmap, int flatlumpnum)
     grMipmap->grInfo.smallLodLog2 = GR_LOD_LOG2_64;
     grMipmap->grInfo.largeLodLog2 = GR_LOD_LOG2_64;
     grMipmap->grInfo.aspectRatioLog2 = GR_ASPECT_LOG2_1x1;
-    grMipmap->grInfo.format = GR_TEXFMT_P_8;
+    grMipmap->GR_format = GR_TEXFMT_P_8;
     grMipmap->tfflags = TF_WRAPXY;
 
     size = W_LumpLength(flatlumpnum);
@@ -1134,7 +1157,7 @@ static void HWR_CacheFlat (Mipmap_t* grMipmap, int flatlumpnum)
     // the flat raw data needn't be converted with palettized textures
     block = Z_Malloc (W_LumpLength(flatlumpnum),
                       PU_HWRCACHE,
-                      &grMipmap->grInfo.data);
+                      &grMipmap->GR_data);
 
     W_ReadLump (flatlumpnum, block);
 }
@@ -1147,8 +1170,8 @@ void HWR_GetFlat (lumpnum_t flatlumpnum)
 
     grmip = &(wadfiles[ WADFILENUM(flatlumpnum) ]->hwrcache[ LUMPNUM(flatlumpnum) ].mipmap);
 
-    if (!grmip->downloaded &&
-        !grmip->grInfo.data)
+    if (!grmip->downloaded
+        && !grmip->GR_data )
             HWR_CacheFlat (grmip, flatlumpnum);
 
     HWD.pfnSetTexture (grmip);
@@ -1162,8 +1185,8 @@ void HWR_GetFlat (lumpnum_t flatlumpnum)
 // Called from HWR_Draw* ->HWR_GetMappedPatch
 static void HWR_LoadMappedPatch(Mipmap_t *grmip, MipPatch_t *gpatch)
 {
-    if( !grmip->downloaded &&
-        !grmip->grInfo.data )
+    if( !grmip->downloaded
+        && !grmip->GR_data )
     {
         // Load patch to temp, free it afterwards
         patch_t* pp = W_CachePatchNum_Endian(gpatch->patch_lumpnum, PU_IN_USE);
@@ -1182,8 +1205,8 @@ static void HWR_LoadMappedPatch(Mipmap_t *grmip, MipPatch_t *gpatch)
 void HWR_GetPatch( MipPatch_t* gpatch )
 {
     // is it in hardware cache
-    if ( !gpatch->mipmap.downloaded &&
-         !gpatch->mipmap.grInfo.data )
+    if( !gpatch->mipmap.downloaded
+        && !gpatch->mipmap.GR_data )
     {
         // load the software patch, PU_STATIC or the Z_Malloc for hardware patch will
         // flush the software patch before the conversion! oh yeah I suffered
@@ -1380,7 +1403,7 @@ MipPatch_t * HWR_GetPic( lumpnum_t lumpnum )
     grpatch = &(wadfiles[ WADFILENUM(lumpnum) ]->hwrcache[ LUMPNUM(lumpnum) ]);
 
     if(    !grpatch->mipmap.downloaded
-        && !grpatch->mipmap.grInfo.data )
+        && !grpatch->mipmap.GR_data )
     {
         pic_t *pic;
         int   len;
@@ -1407,15 +1430,12 @@ MipPatch_t * HWR_GetPic( lumpnum_t lumpnum )
         grpatch->leftoffset = 0;
         grpatch->topoffset = 0;
 
-        // find the good 3dfx size (boring spec)
-        HWR_ResizeBlock (grpatch->width, grpatch->height, &grpatch->mipmap.grInfo);
-        grpatch->mipmap.width = blockwidth;
-        grpatch->mipmap.height = blockheight;
+        grpatch->mipmap.GR_format = ( pic->mode == PALETTE )?
+            textureformat // can be set by driver
+            : picmode2GR[ pic->mode ];
 
-        if( pic->mode == PALETTE )
-            grpatch->mipmap.grInfo.format = textureformat; // can be set by driver
-        else
-            grpatch->mipmap.grInfo.format = picmode2GR[pic->mode];
+        // find the good 3dfx size (boring spec)
+        HWR_ResizeBlock( grpatch->width, grpatch->height, &grpatch->mipmap );
 
         // allocate block
         block = Make_Mip_Block(&grpatch->mipmap);
@@ -1446,19 +1466,19 @@ MipPatch_t * HWR_GetPic( lumpnum_t lumpnum )
         }
 
 
-        if( grpatch->width  == blockwidth && 
-            grpatch->height == blockheight &&
-            format2bpp[grpatch->mipmap.grInfo.format] == format2bpp[picmode2GR[pic->mode]] )
+        if( grpatch->width  == blockwidth
+            && grpatch->height == blockheight
+            && format2bpp[grpatch->mipmap.GR_format] == format2bpp[picmode2GR[pic->mode]] )
         {
             // no conversion needed
-            memcpy(grpatch->mipmap.grInfo.data, pic->data,len);
+            memcpy( grpatch->mipmap.GR_data, pic->data, len );
         }
         else
         {
             HWR_DrawPicInCache(block, newwidth, newheight, 
-                               blockwidth*format2bpp[grpatch->mipmap.grInfo.format],
+                               blockwidth*format2bpp[grpatch->mipmap.GR_format],
                                pic,
-                               format2bpp[grpatch->mipmap.grInfo.format]);
+                               format2bpp[grpatch->mipmap.GR_format]);
         }
 
         // Release PU_IN_USE
@@ -1470,7 +1490,7 @@ MipPatch_t * HWR_GetPic( lumpnum_t lumpnum )
         grpatch->max_t = (float)newheight / (float)blockheight;
     }
     HWD.pfnSetTexture( &grpatch->mipmap );
-    //CONS_Printf("picloaded at %x as texture %d\n",grpatch->mipmap.grInfo.data, grpatch->mipmap.downloaded);
+    //CONS_Printf("picloaded at %x as texture %d\n",grpatch->mipmap.GR_data, grpatch->mipmap.downloaded);
 
     return grpatch;
 }
