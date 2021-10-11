@@ -276,7 +276,7 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1589"
+#define SVN_REV "1590"
 #endif
 
 
@@ -2924,12 +2924,16 @@ fatal_error_action:
         {
             set_drawmode = DRM_opengl; // opengl temporary
         }
-#ifdef SMIF_WIN_NATIVE
-#ifdef HWRENDER   
+#ifdef HWRENDER
         else if( M_CheckParm ("-3dfx") || M_CheckParm ("-glide") )
         {
+#ifdef USE_VOODOO_GLIDE
             set_drawmode = DRM_glide; // glide temporary
+#else
+            I_SoftError( "Voodoo Glide support not present.\n");
+#endif
         }
+#ifdef SMIF_WIN_NATIVE
         else if( M_CheckParm ("-minigl") ) // MiniGL is considered to be opengl
         {
             set_drawmode = DRM_minigl; // opengl temporary

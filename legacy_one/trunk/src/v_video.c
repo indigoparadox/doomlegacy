@@ -202,7 +202,11 @@ CV_PossibleValue_t drawmode_sel_t[] = {
    {DRM_opengl,"OpenGL"},
 #ifdef SMIF_WIN_NATIVE
    {DRM_minigl, "MiniGL"},
+#endif
+#ifdef USE_VOODOO_GLIDE
    {DRM_glide, "Glide"},
+#endif
+#ifdef SMIF_WIN_NATIVE
    {DRM_d3d,   "D3D"},
 #endif
 #endif
@@ -254,10 +258,18 @@ byte drawmode_sel_avail[] = {
    DRM_opengl,  // OpenGL
 #ifdef SMIF_WIN_NATIVE
    DRM_minigl,  // MiniGL
+#else
+   0,
+#endif
+#ifdef USE_VOODOO_GLIDE
    DRM_glide,   // Glide
+#else
+   0,
+#endif
+#ifdef SMIF_WIN_NATIVE
    DRM_d3d,     // D3D
 #else
-   0, 0,
+   0,
 #endif
 #else
    0, 0, 0,
@@ -293,10 +305,14 @@ const char * rendermode_name[] = {
     "Software",
     "OpenGL",
 #ifdef SMIF_WIN_NATIVE
-    "Glide",
     "D3D",
 #else
-     "", "",
+     "",
+#endif
+#ifdef USE_VOODOO_GLIDE
+    "Glide",
+#else
+     "",
 #endif
     "None"
 };

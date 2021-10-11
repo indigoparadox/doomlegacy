@@ -35,6 +35,9 @@
 //
 //-----------------------------------------------------------------------------
 
+#include "doomincl.h"
+
+#ifdef USE_VOODOO_GLIDE
 
 #include <stdio.h>
 #include <unistd.h>
@@ -283,7 +286,7 @@ void I_StartFrame(void)
 }
 
 /* ------------------------------------------------------------------------ */
-/*                              keyboard event handling                                                                         */
+/*  keyboard event handling                                                 */
 /* ------------------------------------------------------------------------ */
 
 static void keyboard_events(void)
@@ -384,3 +387,5 @@ static int xlatekey(int c)
     }
     return rc;
 }
+
+#endif

@@ -143,6 +143,12 @@
 // This may be overridden for some ports.
 #define USE_IPX
 
+// Voodoo video card support (old, from 1990's)
+// Only supports Voodoo 1 and Voodoo 2 card.
+// Glide is the XOrg X11 driver for Voodoo cards,
+// but the driver is also available as a dll for the win32 port.
+//#define USE_VOODOO_GLIDE
+
 // Set the initial window size (width).
 // Expected sizes are 320x200, 640x480, 800x600, 1024x768.
 #define INITIAL_WINDOW_WIDTH   800

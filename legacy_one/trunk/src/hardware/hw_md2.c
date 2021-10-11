@@ -547,10 +547,12 @@ int md2_loadTexture (const char *filename)
         grpatch->mipmap.width = w;
         grpatch->mipmap.height = h;
 
+#ifdef USE_VOODOO_GLIDE
         // not correct!
         grpatch->mipmap.grInfo.smallLodLog2 = GR_LOD_LOG2_256;
         grpatch->mipmap.grInfo.largeLodLog2 = GR_LOD_LOG2_256;
         grpatch->mipmap.grInfo.aspectRatioLog2 = GR_ASPECT_LOG2_1x1;
+#endif
     }
     HWD.pfnSetTexture( &grpatch->mipmap );
     return grpatch->mipmap.downloaded;

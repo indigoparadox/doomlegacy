@@ -73,6 +73,9 @@
 #ifndef SMIF_WIN_NATIVE
 # error r_glide is WIN_NATIVE only
 #endif
+#ifndef USE_VOODOO_GLIDE
+# error r_glide: VOODOO GLIDE is disabled
+#endif
 
 #include <windows.h>
 #include <glide.h>

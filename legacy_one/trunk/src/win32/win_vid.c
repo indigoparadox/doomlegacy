@@ -88,7 +88,7 @@
 #include "win_vid.h"
 
 #ifdef HWRENDER
-#include "win_dll.h"                //loading the Glide Render DLL
+#include "win_dll.h"             //loading DLL, such as opengl, and Glide Render
 #include "hardware/hw_drv.h"     //calling Driver Init & Shutdown
 #include "hardware/hw_main.h"    //calling HWR module Init & Shutdown
 #endif
@@ -602,10 +602,12 @@ int VID_load_driver( byte request_drawmode )
         drvname = "r_opengl.dll";
         errmsg = "OpenGL";
         break;
+#ifdef USE_VOODOO_GLIDE
       case DRM_glide:
         drvname = "r_glide.dll";
         errmsg = "Glide";
         break;
+#endif       
       case DRM_minigl:
         // Here is the only difference between OpenGL and MiniGL in the main code
         drvname = "r_minigl.dll";
@@ -628,11 +630,13 @@ int VID_load_driver( byte request_drawmode )
             int hwdversion = HWD.pfnGetRenderVersion();
             if ( hwdversion != VERSION)
             {
+#ifdef USE_VOODOO_GLIDE
                 if( request_drawmode == DRM_glide )
                 {
                     GenPrintf( EMSG_warn, "WARNING: This r_glide version is not supported, use it at your own risks.\n");
                 }
                 else
+#endif		 
                 {   
                     I_Error ("The version of the renderer (v%d.%d) does not match the version of the executable (v%d.%d)\n"
                              "Be sure you have installed Doom Legacy properly.\n"
@@ -1179,7 +1183,9 @@ int I_RequestFullGraphics( byte select_fullscreen )
        break;
      case DRM_opengl:
      case DRM_minigl:
+#ifdef USE_VOODOO_GLIDE
      case DRM_glide:
+#endif
      case DRM_d3d:
        select_bitpp = native_bitpp;
        break;       

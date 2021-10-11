@@ -332,6 +332,7 @@ static void HWR_ResizeBlock ( int orig_width,
                               int orig_height,
                               Mipmap_t * mipmap )
 {
+#ifdef USE_VOODOO_GLIDE
     //   Build the full textures from patches.
     static const GrLOD_t     gr_lods[9] = {
         GR_LOD_LOG2_256,
@@ -484,6 +485,12 @@ static void HWR_ResizeBlock ( int orig_width,
     if (blockwidth<blockheight)
         j+=4;
     grInfo->aspectRatioLog2 = gr_aspects[j].aspect;
+
+#else
+    // Not Voodoo Glide
+    blockwidth = orig_width;
+    blockheight = orig_height;
+#endif
 
     blocksize = blockwidth * blockheight;
 }
@@ -1119,9 +1126,11 @@ static void HWR_CacheFlat (Mipmap_t* grMipmap, int flatlumpnum)
     int size, flatsize;
 
     // setup the texture info
+#ifdef USE_VOODOO_GLIDE
     grMipmap->grInfo.smallLodLog2 = GR_LOD_LOG2_64;
     grMipmap->grInfo.largeLodLog2 = GR_LOD_LOG2_64;
     grMipmap->grInfo.aspectRatioLog2 = GR_ASPECT_LOG2_1x1;
+#endif   
     grMipmap->GR_format = GR_TEXFMT_P_8;
     grMipmap->tfflags = TF_WRAPXY;
 

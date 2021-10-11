@@ -684,9 +684,11 @@ void HWR_SetLight( void )
         lightmappatch.height = 128;
         lightmappatch.mipmap.width = 128;
         lightmappatch.mipmap.height = 128;
+#ifdef USE_VOODOO_GLIDE
         lightmappatch.mipmap.grInfo.smallLodLog2 = GR_LOD_LOG2_128;
         lightmappatch.mipmap.grInfo.largeLodLog2 = GR_LOD_LOG2_128;
         lightmappatch.mipmap.grInfo.aspectRatioLog2 = GR_ASPECT_LOG2_1x1;
+#endif
         lightmappatch.mipmap.tfflags = 0; //TF_WRAPXY; // DEBUG: view the overdraw !
     }
     HWD.pfnSetTexture( &lightmappatch.mipmap );
