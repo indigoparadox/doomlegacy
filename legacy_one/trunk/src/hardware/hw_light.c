@@ -324,7 +324,7 @@ void HWR_WallLighting(vxtx3d_t *wlVerts)
 
 
 // BP: big hack for a test in lighting ref:1249753487AB
-extern int *bbox;
+extern int * bsp_bbox;
 extern FTransform_t atransform;
 // --------------------------------------------------------------------------
 // calcul du dynamic lighting sur le sol
@@ -339,10 +339,10 @@ void HWR_PlaneLighting(vxtx3d_t *clVerts, int nrClipVerts)
     int     i, j;
     vxtx3d_t p1,p2;
 
-    p1.z=FIXED_TO_FLOAT( bbox[BOXTOP] );
-    p1.x=FIXED_TO_FLOAT( bbox[BOXLEFT] );
-    p2.z=FIXED_TO_FLOAT( bbox[BOXBOTTOM] );
-    p2.x=FIXED_TO_FLOAT( bbox[BOXRIGHT] );
+    p1.z=FIXED_TO_FLOAT( bsp_bbox[BOXTOP] );
+    p1.x=FIXED_TO_FLOAT( bsp_bbox[BOXLEFT] );
+    p2.z=FIXED_TO_FLOAT( bsp_bbox[BOXBOTTOM] );
+    p2.x=FIXED_TO_FLOAT( bsp_bbox[BOXRIGHT] );
     p2.y=clVerts[0].y;
     p1.y=clVerts[0].y;
 
