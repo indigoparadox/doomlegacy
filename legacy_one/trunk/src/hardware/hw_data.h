@@ -103,6 +103,10 @@ struct Mipmap_s {
 };
 typedef struct Mipmap_s Mipmap_t;
 
+// ---- SKY
+extern Mipmap_t  sky_mipmap;
+extern Mipmap_t  skytop_mipmap;
+extern Mipmap_t  ground_mipmap;
 
 //
 // Doom texture info, as cached for hardware rendering

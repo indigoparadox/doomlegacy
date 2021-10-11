@@ -225,10 +225,10 @@ GLint   textureformatGL;
 GLint min_filter = GL_LINEAR;
 GLint mag_filter = GL_LINEAR;
 
+static const RGBA_t  RGBA_zero = {0}; // union uint32_t
+
 const   GLubyte     *gl_extensions;
 int     oglflags = 0;
-
-static const RGBA_t  RGBA_zero = {0}; // union uint32_t
 
 //Hurdler: 04/10/2000: added for the kick ass coronas as Boris wanted ;-)
 #ifndef MINI_GL_COMPATIBILITY

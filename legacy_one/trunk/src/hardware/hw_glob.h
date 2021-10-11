@@ -118,6 +118,8 @@ extern byte  EN_HWR_flashpalette;
 //  palette_num : 0..15
 void HWR_SetFlashPalette( byte palette_num );
 
+void HWR_sky_mipmap( void );
+
 // --------
 // hw_draw.c
 // --------

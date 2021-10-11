@@ -112,6 +112,8 @@ void HWR_MakePatch (patch_t* patch, MipPatch_t* grPatch, Mipmap_t *grMipmap,
 // This releases the allocation made with HWR_MakePatch
 void HWR_release_Patch ( MipPatch_t* grPatch, Mipmap_t *grMipmap );
 
+void HWR_sky_mipmap(void);
+
 void HWR_Create_PlanePolygons (void);
 void HWR_Create_StaticLightmaps (void);
 void HWR_Prep_LevelCache (int numtextures);
