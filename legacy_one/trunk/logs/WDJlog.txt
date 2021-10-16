@@ -8777,3 +8777,12 @@ A blockmap control has been put into the menu.
 2. Large    - On large blockmaps (error prone), Generate instead.
 3. Generate - Always Generate a blockmap.
 4. Auto     - Try to Load, upon significant errors then Generate.
+
+
+*** w109_hw2
+patchfile = w109_057_hw2
+- commit revision 1596
+Fix missing stmt in bsp, when not PARANOIA.
+This was fixed a different way, but that got left out
+of the committed patch.
+

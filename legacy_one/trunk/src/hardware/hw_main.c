@@ -3118,6 +3118,8 @@ bad_subsector:
         // Error situations, should not get here.
 #ifdef PARANOIA
         GenPrintf( EMSG_warn, "Bad BSP subsector: %i\n", subsecnum );
+#else
+        ;  // otherwise compile error
 #endif
     }
     return;
