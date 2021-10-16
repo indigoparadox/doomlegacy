@@ -124,4 +124,7 @@ subsector_t* R_PointInSubsector(fixed_t x, fixed_t y);
 extern boolean  newlevel;
 extern boolean  doom1level;
 
+// Create a blockmap.
+void P_create_blockmap( void );
+
 #endif

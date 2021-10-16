@@ -2493,6 +2493,9 @@ menuitem_t AdvOption2Menu[]=
     {IT_STRING | IT_CVAR,0,"Door Delay"          ,&cv_doordelay          ,0},  // [WDJ]
 #endif
     {IT_STRING | IT_CVAR,0,"Zero Tags"           ,&cv_zerotags           ,0},
+#ifdef GENERATE_BLOCKMAP
+    {IT_STRING | IT_CVAR,0,"Blockmap"            ,&cv_blockmap_gen       ,0},  // [MB,WDJ]
+#endif
     {IT_CALL | IT_WHITESTRING | IT_YOFFSET, 0,"Games Options >>"    ,M_GameOption    ,130},
 };
 

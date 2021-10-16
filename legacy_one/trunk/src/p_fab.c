@@ -64,6 +64,7 @@ consvar_t cv_doordelay = {"doordelay","1",CV_NETVAR|CV_CALL|CV_SAVE,doordelay_co
 #endif
 
 
+
 // [WDJ] 2/3/2011  Insta-death by voodoo doll, subverted.
 CV_PossibleValue_t instadeath_cons_t[]={{0,"Die"}, {1,"Damage"}, {2,"Zap"}, {0,NULL}};
 consvar_t cv_instadeath = {"instadeath", "0", CV_SAVE|CV_NETVAR, instadeath_cons_t, NULL};
@@ -370,6 +371,9 @@ void D_Register_MiscCommands (void)
     CV_RegisterVar (&cv_mbf_staylift);
     CV_RegisterVar (&cv_mbf_help_friend);
     CV_RegisterVar (&cv_mbf_monkeys);
+#ifdef GENERATE_BLOCKMAP
+    CV_RegisterVar (&cv_blockmap_gen);
+#endif
 }
 
 void  DemoAdapt_p_fab(void)  // local enables of p_fab

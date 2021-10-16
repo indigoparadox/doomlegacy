@@ -215,6 +215,9 @@
 // Reads wads that use extended wads format, such as from DeePBSP.
 #define DEEPSEA_EXTENDED_NODES
 
+// Generate blockmap option and controls.
+#define GENERATE_BLOCKMAP
+
 
 // Player morph canceling invisibility and MF_SHADOW, is inconsistent.
 // The Heretic vanilla behavior cancels SHADOW when turned into a chicken.

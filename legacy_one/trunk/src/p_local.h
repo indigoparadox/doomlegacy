@@ -387,6 +387,9 @@ extern fixed_t          bmaporgx;
 extern fixed_t          bmaporgy;       // origin of block map
 extern mobj_t**         blocklinks;     // for thing chains
 
+#ifdef GENERATE_BLOCKMAP
+extern consvar_t cv_blockmap_gen;
+#endif
 
 //
 // P_INTER
