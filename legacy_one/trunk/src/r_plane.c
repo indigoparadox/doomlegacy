@@ -405,7 +405,7 @@ static visplane_t*  new_visplane(unsigned hash)
 //
 visplane_t* R_FindPlane( fixed_t height,
                          int     picnum,
-                         int     lightlevel,
+                         lightlev_t  lightlevel,
                          fixed_t xoff,
                          fixed_t yoff,
                          extracolormap_t* planecolormap,

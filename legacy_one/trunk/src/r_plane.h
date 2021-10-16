@@ -146,7 +146,7 @@ void R_MakeSpans ( int x, int t1, int b1, int t2, int b2 );
 
 visplane_t* R_FindPlane( fixed_t height,
                          int     picnum,
-                         int     lightlevel,
+                         lightlev_t  lightlevel,
                          fixed_t xoff,
                          fixed_t yoff,
                          extracolormap_t* planecolormap,
