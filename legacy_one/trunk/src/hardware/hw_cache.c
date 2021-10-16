@@ -489,8 +489,33 @@ static void HWR_ResizeBlock ( int orig_width,
 
 #else
     // Not Voodoo Glide
+#if 1    
+    // GL prefers power-of-two textures.
+    {
+        // width: size up to nearest power of 2
+        blockwidth = 1;
+        while(blockwidth < orig_width)
+            blockwidth <<= 1;
+        if(blockwidth>2048)
+        {
+	    // scale down the original graphics to fit
+            blockwidth = 2048;
+        }
+
+        //height: size up to nearest power of 2
+        blockheight = 1;
+        while(blockheight < orig_height)
+            blockheight <<= 1;
+        if(blockheight>2048)
+        {
+	    // scale down the original graphics to fit
+            blockheight = 2048;
+        }
+    }
+#else    
     blockwidth = orig_width;
     blockheight = orig_height;
+#endif
 #endif
 
     blocksize = blockwidth * blockheight;
