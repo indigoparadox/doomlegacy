@@ -219,7 +219,6 @@
   // config
 
 
-
 boolean                 menuactive;
 
 // [WDJ] mouse sensitivity, 30 for old feel, 40..50 to reduce
@@ -459,9 +458,10 @@ static sfxid_t menu_sfx_action = sfx_menuac;
 
 CV_PossibleValue_t menusound_cons_t[] =
   {{0,"Auto"}, {1,"Legacy"}, {2,"Doom"}, {3,"Heretic"}, {0,NULL}};
-void CV_menusound_OnChange(void);
+static void CV_menusound_OnChange(void);
 consvar_t cv_menusound = {"menusound", "1", CV_SAVE | CV_CALL, menusound_cons_t, CV_menusound_OnChange };
 
+static
 void CV_menusound_OnChange(void)
 {
     byte menusound = cv_menusound.EV;
@@ -1070,8 +1070,8 @@ boolean  M_already_playing( boolean check_netgame )
     if (check_netgame && netgame)
     {
         // cannot start a new game while in a network game
-        M_SimpleMessage(NEWGAME);
-        snprintf(msgtmp, MSGTMP_LEN, "%s\n%s", NEWGAME, ABORTGAME );
+        M_SimpleMessage( text[NEWGAME_NUM] );
+        snprintf(msgtmp, MSGTMP_LEN, "%s\n%s", text[NEWGAME_NUM], ABORTGAME );
         msgtmp[MSGTMP_LEN-1] = '\0';
         M_StartMessage(msgtmp, M_Choose_to_quit_Response, MM_YESNO);
         return 1;
@@ -1083,9 +1083,9 @@ boolean  M_already_playing( boolean check_netgame )
 //MAIN MENU
 //===========================================================================
 
-void M_Loadgame(int choice);
-void M_Savegame(int choice);
-void M_QuitDOOM(int choice);
+static void M_Loadgame(int choice);
+static void M_Savegame(int choice);
+static void M_QuitDOOM(int choice);
 
 enum
 {
@@ -2022,7 +2022,7 @@ void M_Episode(int choice)
          && choice)
     {
         Push_Setup_Menu(&ReadDef1);
-        M_SimpleMessage(SWSTRING);
+        M_SimpleMessage( text[SWSTRING_NUM] );
         return;
     }
 
@@ -2111,7 +2111,7 @@ void M_ChooseSkill(int choice)
 {
     if (choice == NG_nightmare)
     {
-        M_StartMessage(NIGHTMARE, M_VerifyNightmare, MM_YESNO);
+        M_StartMessage( text[NIGHTMARE_NUM], M_VerifyNightmare, MM_YESNO);
         return;
     }
 
@@ -3383,10 +3383,10 @@ void M_VideoMode_key_handler (int key)
 //===========================================================================
 //                        VIDEO MODE MENU
 //===========================================================================
-void M_DrawVideoMode(void);             //added:30-01-98:
+static void M_DrawVideoMode(void);             //added:30-01-98:
 
-byte  video_test_key_handler( int key );
-byte  drawmode_test_key_handler( int key );
+static byte  video_test_key_handler( int key );
+static byte  drawmode_test_key_handler( int key );
 
 menuitem_t VideoModeMenu[]=
 {
@@ -3421,6 +3421,7 @@ static modenum_t    vidm_previousmode;  // modenum in format of setmodeneeded
 //
 // Draw the video modes list, a-la-Quake
 //
+static
 void M_DrawVideoMode(void)
 {
     modenum_t  mode_320x200 = VID_GetModeForSize( 320, 200, MODE_fullscreen );
@@ -3558,6 +3559,7 @@ draw_instructions:
 
 // keyboard intercept 
 // Return 0= continue, 1= intercept key, 2= testing.
+static
 byte  video_test_key_handler( int key )
 {
     set_drawmode = DRM_none;
@@ -3658,7 +3660,7 @@ byte  video_test_key_handler( int key )
 static byte  vidm_previous_drawmode = 0;  // cv_drawmode
 static byte  vidm_drawmode[MAXCOLUMNMODES+2];  // drawmode for a menu row
 
-void M_Draw_drawmode(void);
+static void  M_Draw_drawmode(void);
 
 menuitem_t DrawmodeMenu[]=
 {
@@ -3680,6 +3682,7 @@ menu_t  DrawmodeDef =
 
 // keyboard intercept 
 // Return 0= continue, 1= intercept key, 2= testing.
+static
 byte  drawmode_test_key_handler( int key )
 {
     set_drawmode = DRM_none;
@@ -3745,6 +3748,7 @@ change_drawmode:
 }
 
 
+static
 void M_Draw_drawmode(void)
 {
     int  i, row, col;
@@ -3798,11 +3802,11 @@ void M_Draw_drawmode(void)
 //===========================================================================
 // GAME DIR MENU
 //===========================================================================
-void M_DrawDir(void);
+static void M_DrawDir(void);
 
-void M_DirSelect(int choice);
-void M_Get_SaveDir(int choice);
-void M_DirEnter(int choice);
+static void M_DirSelect(int choice);
+static void M_Get_SaveDir(int choice);
+static void M_DirEnter(int choice);
 
 #define NUM_DIRLINE  6
 menuitem_t LoadDirMenu[]=
@@ -3832,7 +3836,8 @@ menu_t  DirDef =
 
 
 // Draw the current DIR line above list
-static void draw_dir_line( int line_y )
+static
+void draw_dir_line( int line_y )
 {
     V_DrawString( DirDef.x, line_y, 0, "DIR");
     M_Draw_SaveLoadBorder( DirDef.x+32, line_y, 0);
@@ -3840,6 +3845,7 @@ static void draw_dir_line( int line_y )
 }
 
 // Draw the dir list and DIR line
+static
 void M_DrawDir(void)
 {
     int i;
@@ -3875,9 +3881,10 @@ void M_DrawDir(void)
     }
 }
 
-void M_ReadSaveStrings( int scroll_direction );
+static void M_ReadSaveStrings( int scroll_direction );
 
 // Called from DIR game menu to select a directory
+static
 void M_DirSelect(int choice)
 {
     // LoadDirMenu: slots 0..5 are menu 1..6
@@ -3900,6 +3907,7 @@ void M_DirSelect(int choice)
 }
 
 // Callback after editing new directory name, setup by M_DirEnter
+static
 void M_NewDir( void )
 {
     char dirname[256];
@@ -3917,6 +3925,7 @@ void M_NewDir( void )
 
 
 // Called from DIR game menu to select a directory
+static
 void M_DirEnter(int choice)
 {
     slotindex = 0; // edit
@@ -3928,9 +3937,10 @@ void M_DirEnter(int choice)
     // when done editing, will goto M_NewDir
 }
 
-void M_Dir_scroll (int amount);
+static void M_Dir_scroll (int amount);
 
 // Called from DIR game menu to delete a directory
+static
 void M_Dir_delete (int ch)
 {
     if( ch=='y' && savegamedisp[slotindex].desc[0] )
@@ -3962,6 +3972,7 @@ void M_Dir_delete (int ch)
 #ifdef USE_FTW
 #include <ftw.h>
 // Callback from ftw system call
+static
 int  ftw_directory_entry( const char *file, const struct stat * sb, int flag )
 {
     if( flag == FTW_D )  // only want directories
@@ -3990,6 +4001,7 @@ int  ftw_directory_entry( const char *file, const struct stat * sb, int flag )
 #endif
 
 // Get directories into savegamedisp, starting at skip_count.
+static
 void  get_directory_entries( int skip_count )
 {
 #ifdef USE_FTW
@@ -4044,6 +4056,7 @@ void  get_directory_entries( int skip_count )
 }
 
 
+static
 void M_Dir_scroll (int amount)
 {
     // Do not scroll if at end of list
@@ -4058,6 +4071,7 @@ void M_Dir_scroll (int amount)
 }
 
 // Called from menu
+static
 void M_Get_SaveDir (int choice)
 {
     // Any mode, directory is personal choice
@@ -4076,9 +4090,9 @@ void M_Get_SaveDir (int choice)
 //===========================================================================
 //LOAD GAME MENU
 //===========================================================================
-void M_Draw_Loadgame(void);
+static void M_Draw_Loadgame(void);
 
-void M_LoadSelect(int choice);
+static void M_LoadSelect(int choice);
 
 // SAVEGAME_NUM_MSLOT dependent
 #ifdef SAVEGAMEDIR
@@ -4124,6 +4138,7 @@ menu_t  LoadDef =
 //
 // M_Loadgame & Cie.
 //
+static
 void M_Draw_Loadgame(void)
 {
     int i;
@@ -4165,6 +4180,7 @@ void M_Draw_Loadgame(void)
 // User wants to load this game
 //
 // Called from load game menu to load selected save game
+static
 void M_LoadSelect(int choice)
 {
     // Issue command to save game
@@ -4186,6 +4202,7 @@ void M_LoadSelect(int choice)
 //  and put it in savegame global variable
 //
 #ifdef SAVEGAME99
+static
 void M_ReadSaveStrings( int scroll_direction )
 {
     // [WDJ] saves considerable size and hassle having this test here
@@ -4246,7 +4263,7 @@ void M_ReadSaveStrings( int scroll_direction )
         {
             // read error
             if( skip_unloadable )  continue;
-            slot_str = EMPTYSTRING;
+            slot_str = text[EMPTYSTRING_NUM];
             sprintf( &sgdp->levtime[0], "%2i", nameid );
             slot_status = IT_SPACE | IT_NOTHING;
         }
@@ -4307,7 +4324,7 @@ void M_ReadSaveStrings( int scroll_direction )
 }
 
 #else
-
+static
 void M_ReadSaveStrings(void)
 {
     int     handle;
@@ -4330,7 +4347,7 @@ void M_ReadSaveStrings(void)
         if (handle == -1)
         {
             // read error
-            strcpy(&sgdp->desc[0], EMPTYSTRING);
+            strcpy(&sgdp->desc[0], text[EMPTYSTRING_NUM]);
             LoadgameMenu[i].status = IT_SPACE | IT_NOTHING;
             continue;
         }
@@ -4360,6 +4377,7 @@ void M_ReadSaveStrings(void)
 
 #ifdef SAVEGAME99
 // scroll_callback
+static
 void M_Savegame_scroll (int amount)
 {
     M_ReadSaveStrings( amount ); // skip unloadable
@@ -4368,6 +4386,7 @@ void M_Savegame_scroll (int amount)
 //void M_Save_scroll (int amount);
 
 // delete_callback
+static
 void M_Savegame_delete (int ch)
 {
     if( ch=='y' && (savegamedisp[slotindex].savegameid <= 99) )
@@ -4389,38 +4408,47 @@ void M_Savegame_delete (int ch)
 }
 #endif
 
-//
-// Selected from DOOM menu
-//
-// Called from menu, and key F3
-void M_Loadgame (int choice)
+// Called from pop menu, M_Loadgame, M_Savegame
+static
+void attach_savegame_menu( void )
 {
-// change can't load message to can't load in server mode
-    if (netgame && !server)
-    {
-        // running network game and am not the server, cannot load
-        M_SimpleMessage(LOADNET);
-        return;
-    }
-
-    // Save game load menu with slot choices
-    Push_Setup_Menu(&LoadDef);
 #ifdef SAVEGAME99
     scroll_callback = M_Savegame_scroll;
     delete_callback = M_Savegame_delete;
-    M_ReadSaveStrings( 0 ); // skip unloadable
+    M_ReadSaveStrings( 0 ); // show unloadable
 #else
     M_ReadSaveStrings();
 #endif
 }
 
 
+//
+// Selected from DOOM menu
+//
+// Called from menu (0 to 5), and key F3 (0)
+static
+void M_Loadgame (int choice)
+{
+// change can't load message to can't load in server mode
+    if (netgame && !server)
+    {
+        // running network game and am not the server, cannot load
+        M_SimpleMessage( text[LOADNET_NUM] );
+        return;
+    }
+
+    // Load game menu with slot choices
+    Push_Setup_Menu(&LoadDef);
+    attach_savegame_menu();
+}
+
+
 //===========================================================================
 //                                SAVE GAME MENU
 //===========================================================================
-void M_Draw_Savegame(void);
+static void M_Draw_Savegame(void);
 
-void M_SaveSelect(int choice);
+static void M_SaveSelect(int choice);
 
 // Must have SAVEGAME_NUM_MSLOT entries, plus dir
 menuitem_t SavegameMenu[]=
@@ -4502,6 +4530,7 @@ void M_Draw_SaveLoadBorder(int x, int y, boolean longer )
 //
 //  M_Savegame & Cie.
 //
+static
 void M_Draw_Savegame(void)
 {
     int line_y = LoadDef.y;
@@ -4540,6 +4569,7 @@ void M_Draw_Savegame(void)
 // and from quick Save by M_QuickSaveResponse
 #if defined SAVEGAMEDIR || defined SAVEGAME99
 // slti = savegame index 0..5, or quicksave 6
+static
 void M_DoSavegame(int slti)
 {
     if( savegamedisp[slti].savegameid > 99 )
@@ -4557,6 +4587,7 @@ void M_DoSavegame(int slti)
 }
 #else
 // slot = game id and menu index 0..5
+static
 void M_DoSavegame(int slot)
 {
     // Issue command to save game
@@ -4574,6 +4605,7 @@ void M_DoSavegame(int slot)
 
 
 // Called when desc editing is done
+static
 void M_SaveEditDone( void )
 {
     M_DoSavegame(slotindex);  // index 0..5
@@ -4583,6 +4615,7 @@ void M_SaveEditDone( void )
 // User wants to save. Start string input for M_Responder
 //
 // Called from save game menu to select save game
+static
 void M_SaveSelect(int choice)
 {
 #ifdef SAVEGAMEDIR   
@@ -4605,10 +4638,13 @@ void M_SaveSelect(int choice)
 }
 
 
+
+
 //
 // Selected from DOOM menu
 //
-// Called from menu, and key F2, and quicksave
+// Called from menu (0 to 5), key F2 (0), and quicksave (-2)
+static
 void M_Savegame (int choice)
 {
     if(demorecording)
@@ -4619,7 +4655,7 @@ void M_Savegame (int choice)
 
     if (demoplayback || demorecording)
     {
-        M_SimpleMessage(SAVEDEAD);
+        M_SimpleMessage( text[SAVEDEAD_NUM] );
         return;
     }
 
@@ -4634,13 +4670,7 @@ void M_Savegame (int choice)
 
     // Save game menu with slot choices
     Push_Setup_Menu(&SaveDef);
-#ifdef SAVEGAME99
-    delete_callback = M_Savegame_delete;
-    scroll_callback = M_Savegame_scroll;
-    M_ReadSaveStrings( 0 ); // show unloadable
-#else
-    M_ReadSaveStrings();
-#endif
+    attach_savegame_menu();
 }
 
 //===========================================================================
@@ -4652,6 +4682,7 @@ void M_Savegame (int choice)
 //
 
 // Handles quick save ack from M_QuickSave, and initiates the save.
+static
 void M_QuickSaveResponse(int ch)
 {
     if (ch == 'y')
@@ -4669,6 +4700,7 @@ void M_QuickSaveResponse(int ch)
 }
 
 // Invoked by key F6
+static
 void M_QuickSave(void)
 {
     if (demoplayback || demorecording)
@@ -4682,7 +4714,7 @@ void M_QuickSave(void)
 
     if (quicksave_slotid < 0)   goto pick_slot; // No slot yet.
     // Show save name, ask for quick save ack.
-    snprintf(msgtmp, MSGTMP_LEN, QSPROMPT, savegamedisp[QUICKSAVE_INDEX].desc);
+    snprintf(msgtmp, MSGTMP_LEN, text[QSPROMPT_NUM], savegamedisp[QUICKSAVE_INDEX].desc);
     msgtmp[MSGTMP_LEN-1] = '\0';
     M_StartMessage(msgtmp, M_QuickSaveResponse, MM_YESNO);
     return;
@@ -4701,6 +4733,7 @@ pick_slot:
 // M_QuickLoad
 //
 // Handles quick load ack from M_QuickLoad, and initiates the save.
+static
 void M_QuickLoadResponse(int ch)
 {
     if (ch == 'y')
@@ -4713,22 +4746,23 @@ void M_QuickLoadResponse(int ch)
 }
 
 
+static
 void M_QuickLoad(void)
 {
     if (netgame)
     {
-        M_SimpleMessage(QLOADNET);
+        M_SimpleMessage( text[QLOADNET_NUM] );
         return;
     }
 
     if (quicksave_slotid < 0)
     {
         // No save slot selected
-        M_SimpleMessage(QSAVESPOT);
+        M_SimpleMessage( text[QSAVESPOT_NUM] );
         return;
     }
     // Show load name, ask for quick load ack.
-    snprintf(msgtmp, MSGTMP_LEN, QLPROMPT, savegamedisp[QUICKSAVE_INDEX].desc);
+    snprintf(msgtmp, MSGTMP_LEN, text[QLPROMPT_NUM], savegamedisp[QUICKSAVE_INDEX].desc);
     msgtmp[MSGTMP_LEN-1] = '\0';
     M_StartMessage(msgtmp, M_QuickLoadResponse, MM_YESNO);
 }
@@ -4741,6 +4775,7 @@ void M_QuickLoad(void)
 //
 // M_EndGame
 //
+static
 void M_EndGameResponse(int ch)
 {
     if (ch != 'y')
@@ -4751,6 +4786,7 @@ void M_EndGameResponse(int ch)
     COM_BufAddText("exitgame\n");
 }
 
+static
 void M_EndGame(int choice)
 {
     choice = 0;
@@ -4762,11 +4798,11 @@ void M_EndGame(int choice)
 /*
     if (netgame)
     {
-        M_SimpleMessage(NETEND);
+        M_SimpleMessage( text[NETEND_NUM] );
         return;
     }
 */
-    M_StartMessage(ENDGAME, M_EndGameResponse, MM_YESNO);
+    M_StartMessage( text[ENDGAME_NUM], M_EndGameResponse, MM_YESNO);
 }
 
 //===========================================================================
@@ -4801,7 +4837,7 @@ int     quitsounds2[8] =
 };
 
 
-
+// Called from port drivers.
 void M_QuitResponse(int ch)
 {
     tic_t   dlyd_time;
@@ -4830,7 +4866,7 @@ void M_QuitResponse(int ch)
 
 
 
-
+static
 void M_QuitDOOM(int choice)
 {
   // We pick index 0 which is language sensitive,
@@ -5041,6 +5077,7 @@ menu_t MessageDef =
 
 static menu_t * message_menu_back;
 static byte message_lines, message_length;
+
 
 void M_StartMessage ( const char*       string,
                       void*             routine,
@@ -6085,8 +6122,9 @@ void Pop_Menu( void )
        M_SetupMenu( menustack[ -- menucnt ] );  // back out
 
        // refresh data
-       if( currentMenu == &LoadDef )   M_Loadgame(0);
-       if( currentMenu == &SaveDef )   M_Savegame(0);
+       if(   currentMenu == &LoadDef 
+          || currentMenu == &SaveDef )
+               attach_savegame_menu();
     }
     else
     {
@@ -6130,7 +6168,6 @@ void M_Ticker (void)
         {
 	    if( menu_delay_cv )
             {
-printf( "Menu CV delayed trigger CV\n" );
                 // Make current value effective.
                 CV_cvar_call( menu_delay_cv, 1 );
                 menu_delay_cv = NULL;
@@ -6471,6 +6508,7 @@ menu_t  OGL_DevDef =
 //======================================================================
 // M_DrawOpenGLMenu()
 //======================================================================
+static
 void M_DrawOpenGLMenu(void)
 {
     int             mx,my;
@@ -6489,6 +6527,7 @@ void M_DrawOpenGLMenu(void)
 //======================================================================
 // M_OGL_DrawFogMenu()
 //======================================================================
+static
 void M_OGL_DrawFogMenu(void)
 {
     int             mx,my;
@@ -6732,7 +6771,8 @@ static void CV_game_OnChange(void);
 CV_PossibleValue_t game_cons_t[] = {{-1,"MIN"},{64,"MAX"},{0,NULL}};
 consvar_t cv_game = {"game", "-1", CV_HIDEN|CV_CALL, NULL, CV_game_OnChange};
 
-static void CV_game_OnChange(void)
+static
+void CV_game_OnChange(void)
 {
     // Strings come from GameDesc, not a CV_PossibleValue_t
     // Cannot call CV_Set within CV_CALL routine
@@ -6756,7 +6796,8 @@ static void CV_game_OnChange(void)
 
 
 
-static void M_LaunchCont( void )
+static
+void M_LaunchCont( void )
 {
     init_sequence = 2;
     M_Clear_Menus(true);
