@@ -1324,7 +1324,9 @@ void Command_Turbo_f (void)
 
 //
 // G_DoLoadLevel
+// All games, except loading savegames.
 //
+// Called from:  G_InitNew, G_DoReborn, G_DoWorldDone, Command_Restart_f
 void G_DoLoadLevel (boolean resetplayer)
 {
     int             i;

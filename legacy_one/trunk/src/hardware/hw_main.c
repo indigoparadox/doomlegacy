@@ -341,8 +341,10 @@ byte  corona_draw_choice;
 
 //#define DEBUG_TRIG
 #ifdef DEBUG_TRIG
-static int  trigger_line = 0xFFFFFFFF;
-static int  trigger_sector = 0xFFFFFFFF;
+static uint32_t  trigger_line = 0xFFFFFFFF;
+static uint32_t  trigger_sector = 0xFFFFFFFF;
+static uint32_t  trigger_draw_subsector = 0xFFFFFFFF;
+static uint32_t  trigger_draw_count = 0;
 #endif
 
 // Sky upper and lower halfs.
@@ -2761,10 +2763,11 @@ static void HWR_Subsector(int num)
     }
 
 #ifdef DEBUG_TRIG   
-    if( trigger_sector < numsectors
-        && sub->sector == & sectors[trigger_sector] )
+    if( ( num == trigger_draw_subsector )
+	|| ( trigger_sector < numsectors
+              && sub->sector == & sectors[trigger_sector] ) )
     {
-        GenPrintf(EMSG_DEBUG, "TRIGGER SECTOR %i: first line= %i\n", trigger_sector, sub->firstline );
+        GenPrintf(EMSG_debug, "TRIGGER SECTOR %i SUBSECTOR %i: first line= %i\n", sub->sector - sectors, trigger_draw_subsector, sub->firstline );
     }
 #endif
      
@@ -2979,7 +2982,7 @@ static void HWR_Subsector(int num)
         if( trigger_line < numlines
             && lineseg->linedef == & lines[ trigger_line ] )
         {
-            GenPrintf(EMSG_DEBUG, "TRIGGER LINE %i: side=%i\n", trigger_line, lineseg->side );
+            GenPrintf(EMSG_debug, "TRIGGER LINE %i: side=%i\n", trigger_line, lineseg->side );
         }
 #endif
 

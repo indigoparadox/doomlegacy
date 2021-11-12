@@ -1258,6 +1258,7 @@ void M_ConnectMenu(int choice)
 {
     if( M_already_playing(0) )  return;
 
+    // Restore user settings
     D_End_commandline();
    
     Push_Setup_Menu(&Connectdef);
@@ -1428,6 +1429,7 @@ void M_StartServerMenu(int choice)
 {
     if( M_already_playing(0) )  return;
 
+    // Restore user settings
     D_End_commandline();
    
     ServerMenu[0] = (gamemode==doom2_commercial)?
@@ -2094,6 +2096,7 @@ void M_SingleNewGame(int choice)
 
     if( M_already_playing(1) )  return;
 
+    // Restore user settings
     D_End_commandline();
    
     if ( gamemode == doom2_commercial

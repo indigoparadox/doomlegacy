@@ -88,6 +88,8 @@
 //#define DEBUG_TRACE
 #ifdef DEBUG_TRACE
 static int  trigger_bsp_sector = 0xFFFFFFFF;
+static int  trigger_subsector = 0xFFFFFFFF;
+   // 0xFFFFFFF2 to trace all subsectors
 static byte trigger_trace = 0;
 #endif
 
@@ -2178,6 +2180,13 @@ void HWR_WalkBSPNode (int bspnum, wpoly_t* poly, bsp_child_t * leafnode, fixed_t
     int     i;
 
 
+#ifdef DEBUG_TRACE
+    if( trigger_bsp_sector == 0xFFFFFFF2 )
+    {
+        trigger_trace = 2;  // trace all
+    }
+#endif
+
     // Found a subsector?
     if (bspnum & NF_SUBSECTOR)
     {
@@ -2186,11 +2195,8 @@ void HWR_WalkBSPNode (int bspnum, wpoly_t* poly, bsp_child_t * leafnode, fixed_t
         if( subsecnum >= numsubsectors )  goto bad_subsector;
 
 #ifdef DEBUG_TRACE
-        if( trigger_bsp_sector == 0xFFFFFFFF )
-        {
-            trigger_trace = 2;
-        }
-        else if( subsectors[subsecnum].sector == & sectors[trigger_bsp_sector] )
+        if( trigger_bsp_sector < numsectors
+	    && subsectors[subsecnum].sector == & sectors[trigger_bsp_sector] )
         {
             GenPrintf(EMSG_debug, "BSP TRIGGER SECTOR %i: \n", trigger_bsp_sector );
             trigger_trace = 1;
@@ -2217,7 +2223,8 @@ void HWR_WalkBSPNode (int bspnum, wpoly_t* poly, bsp_child_t * leafnode, fixed_t
 #endif
 
 #ifdef DEBUG_TRACE
-        trigger_trace = 0;
+        if( trigger_trace == 1 )  // only turn off specifc subsector traces
+            trigger_trace = 0;
 #endif
 
         //Hurdler: implement a loading status
@@ -2574,14 +2581,16 @@ void SolveTProblem (void)
 static
 sector_t *  find_poly_sector( wpoly_t * ssp )
 {
-    // Examine linedefs for the best that defines the subsector sector.
+    // Examine every linedef for the closest along the x or y axis.
+    // Use this linedef to assign the sector to the poly subsector.
+
     // There should be no two-sided linedefs actually within the subsector.
     // If there were any one-sided linedefs within the subsector, they would
     // have been segs, and would have decided the issue already.
     polyvertex_t  ap;  // avg of subsector points
     line_t * best_lp = NULL;
     fixed_t best_dd = 0x7fffffff;
-    fixed_t px, py, dd;
+    fixed_t px, py;
     int j,k;
 
     // Find an average point, not on a line, within the sector.
@@ -2598,41 +2607,99 @@ sector_t *  find_poly_sector( wpoly_t * ssp )
     px = (int)(ap.x * 0x10000);
     py = (int)(ap.y * 0x10000);
 
-    // Find closest linedef that faces the point, along x and y axis.
+#ifdef DEBUG_FPS	    
+    GenPrintf( EMSG_debug, "Find Poly Sector: (%6.2f,%6.2f)\n", ap.x, ap.y );
+#endif
+
+    // Find closest linedef to the test point, along x and y axis.
+    // Testing only one axis would work.
+    // But a linedef may be much closer along the other axis, so we test along both X and Y.
     for( k=0; k < numlines; k++ )
     {
         line_t * lp = & lines[k];
         if( lp->frontsector == lp->backsector ) continue;  // self-ref lines lie.
-        if( abs( lp->dx ) > abs( lp->dy ) )
+
+        // Only consider linedef that bracket the test point.
+        fixed_t dx1 = px - lp->v1->x;
+        fixed_t dy1 = py - lp->v1->y;
+        fixed_t dx2 = px - lp->v2->x;
+        fixed_t dy2 = py - lp->v2->y;
+
+        // (dx1 XOR dx2) < 0 means that one was < 0 and the other was > 0,
+        // which means it bracketed the point px,py.
+
+        // Eqn of line: x = x1 + a * dx,  y = y1 + a * dy
+        // At px:  a = (px - x1) / dx
+        // dd = abs( (py - y1) - ( (px - x1) * dy / dx) )
+        if( ((dx1 ^ dx2) < 0) && ( lp->dx != 0 ) )  // bracket px, and line not vert.
         {
-            // Closest linedef in x axis.
-            if( lp->v1->x < px && lp->v2->x < px )  continue;
-            if( lp->v1->x > px && lp->v2->x > px )  continue;
-            dd = abs( py - lp->v1->y + ((px - lp->v1->x) * lp->dy / lp->dx) );
+            // Distance to line, measured along x-axis.
+            // This calc has a tendency to overflow, so use int64_t.
+            int64_t  dy3 = ((int64_t)dx1) * lp->dy / lp->dx;
+#ifdef DEBUG_FPS
+            GenPrintf( EMSG_debug, "FPS X: line= %i  (%6.2f,%6.2f) to (%6.2f,%6.2f) dx,dy=(%6.2f,%6.2f) \n",
+                k, FIXED_TO_FLOAT(lp->v1->x), FIXED_TO_FLOAT(lp->v1->y), FIXED_TO_FLOAT(lp->v2->x), FIXED_TO_FLOAT(lp->v2->y),
+                FIXED_TO_FLOAT(lp->dx), FIXED_TO_FLOAT(lp->dy) );
+#endif
+            if( (dy3 > FIXED_MIN) && (dy3 < FIXED_MAX) )  // within fixed_t range
+            {
+                fixed_t dd = abs( dy1 - (fixed_t) dy3 );
+#ifdef DEBUG_FPS
+                GenPrintf( EMSG_debug, "   X dd=%6.2f\n", FIXED_TO_FLOAT(dd) );
+#endif
+                if( dd < best_dd )
+                {
+                    best_dd = dd;
+                    best_lp = lp;
+#ifdef DEBUG_FPS
+                    GenPrintf( EMSG_debug, "   BEST=%i  X dist=%i\n", k, dd>>16 );
+#endif
+                }
+            }
         }
-        else
+
+        if( ((dy1 ^ dy2) < 0) && ( lp->dy != 0 ) )  // bracket py, and line not horz.
         {
-            // Closest linedef in y axis.
-            if( lp->v1->y < py && lp->v2->y < py )  continue;
-            if( lp->v1->y > py && lp->v2->y > py )  continue;
-            dd = abs( px - lp->v1->x + ((py - lp->v1->y) * lp->dx / lp->dy) );
-        }
-        if( dd < best_dd )
-        {
-            best_dd = dd;
-            best_lp = lp;
+            // Distance to line, measured along y-axis.
+            // This calc has a tendency to overflow, so use int64_t.
+	    int64_t  dx3 = ((int64_t)dy1) * lp->dx / lp->dy;
+#ifdef DEBUG_FPS
+            GenPrintf( EMSG_debug, "FPS Y: line= %i  (%6.2f,%6.2f) to (%6.2f,%6.2f) dx,dy=(%6.2f,%6.2f) \n",
+                k, FIXED_TO_FLOAT(lp->v1->x), FIXED_TO_FLOAT(lp->v1->y), FIXED_TO_FLOAT(lp->v2->x), FIXED_TO_FLOAT(lp->v2->y),
+                FIXED_TO_FLOAT(lp->dx), FIXED_TO_FLOAT(lp->dy) );
+#endif
+            if( (dx3 > FIXED_MIN) && (dx3 < FIXED_MAX) )  // within fixed_t range
+            {
+                fixed_t dd = abs( dx1 - (fixed_t)dx3 );
+#ifdef DEBUG_FPS
+                GenPrintf( EMSG_debug, "   Y dd=%6.2f\n", FIXED_TO_FLOAT(dd) );
+#endif
+                if( dd < best_dd )
+                {
+                    best_dd = dd;
+                    best_lp = lp;
+#ifdef DEBUG_FPS
+                    GenPrintf( EMSG_debug, "   BEST=%i  Y dist=%i\n", k, dd>>16 );
+#endif
+                }
+            }
         }
     }
 
-    if( best_lp == NULL )   return  NULL;
+    if( best_lp == NULL )
+        return  NULL;
 
     // cross product with best_lp, to detect ap on rightside
     double crpd =
        ( (((double)(ap.x)) - FIXED_TO_FLOAT(best_lp->v1->x)) * FIXED_TO_FLOAT(best_lp->dy) )
      - ( (((double)(ap.y)) - FIXED_TO_FLOAT(best_lp->v1->y)) * FIXED_TO_FLOAT(best_lp->dx) );
-    return ( crpd >= 0 )?
+    sector_t * fnd_sector = ( crpd >= 0 )?
          best_lp->frontsector  // rightside of linedef
        : best_lp->backsector;
+#ifdef DEBUG_FPS
+    GenPrintf( EMSG_debug, "   crpd=%6.2f   sector=%i\n", crpd, fnd_sector - sectors );
+#endif
+    return fnd_sector;
 }
 
 
@@ -2828,6 +2895,12 @@ void  finalize_polygons( void )
     for(ssnum=0; ssnum<numsubsectors; ssnum++)
     {
         wpoly = & wpoly_subsectors[ssnum];
+
+#ifdef DEBUG_TRACE
+        if( trigger_subsector == 0xFFFFFFF2 || trigger_subsector == ssnum )
+            wpoly_dump( "Finalize:", wpoly );
+#endif
+
         // Generate poly in poly_t format.
         // Vertex in wpoly_t are ptr, but in poly_t they are a copy of the vertex.
         dpoly = HWR_AllocPoly (wpoly->numpts);
