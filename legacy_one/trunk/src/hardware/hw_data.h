@@ -75,6 +75,7 @@ struct Mipmap_s {
     GrTexInfo       grInfo;         //for TexDownloadMipMap
 #else
     void          * data;
+       // Z_Malloc, PU_HWRCACHE
     byte            format;      // GR_TEXFMT_xx, or GT_RGBA
 #endif
     uint32_t        tfflags;	 // TF_ texture flags
@@ -87,7 +88,7 @@ struct Mipmap_s {
                                  //   typedef unsigned int GLuint
 // Public   
     // multiple texture renderings, by colormap and TF_Opaquetrans
-    struct Mipmap_s   *nextcolormap;  // next for this texture
+    struct Mipmap_s   *nextcolormap;  // next for this texture, linked list, malloc
     byte              *colormap;
 
 // Private to driver   
