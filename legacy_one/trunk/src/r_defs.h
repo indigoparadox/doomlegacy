@@ -1098,9 +1098,9 @@ typedef struct
     sprite_frot_t *     framerotation;  // array[numframes * frame_rot]
 } spritedef_t;
 
-spriteframe_t *  get_spriteframe( const spritedef_t * spritedef, int frame_num );
+spriteframe_t *  get_spriteframe( const spritedef_t * spritedef, unsigned int frame_num );
 sprite_frot_t *  get_framerotation( const spritedef_t * spritedef,
-                                    int frame_num, byte rotation );
+                                    unsigned int frame_num, byte rotation );
 
 extern const byte srp_to_num_rot[4];
 
