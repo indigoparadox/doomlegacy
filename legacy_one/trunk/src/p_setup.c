@@ -945,7 +945,7 @@ void P_LoadThings (int lump)
         P_Setup_Mapthing(mt);
 #endif
 
-        P_SpawnMapthing (mt);
+        P_Spawn_Mapthing(mt, 0);
     }
 
     Z_Free(data);

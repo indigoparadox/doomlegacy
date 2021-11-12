@@ -6397,7 +6397,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
     //SoM: Dogs, and BetaBFG are NOT implemented! These things are here to
     //hold spaces.
     // Marine's best friend :)      // killough 7/19/98
-    {   // MT_DOGS
+    {   // MT_DOG
       888,            // doomednum
 #ifdef DOGS
       S_DOGS_STND,    // spawnstate
