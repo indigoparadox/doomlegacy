@@ -129,11 +129,12 @@ typedef enum {
 
 typedef enum {
    TD_hole = 0x01, // holes in patch
-   TD_post = 0x02, // posts
-   TD_solid_column = 0x08,  // one post of texture height
-   TD_masked = 0x10,  // used as masked
-   TD_odd_width = 0x20,  // not power of 2
-   TD_message = 0x80
+   TD_odd_post = 0x02, // short posts, or multiple posts
+   TD_odd_width = 0x04,  // not power of 2
+   TD_message = 0x08,
+   TD_masked = 0x20,  // used as masked
+   TD_1s_ready = 0x40, // ready to draw as 1s wall
+   TD_2s_ready = 0x80, // ready to draw as 2s, masked
 } texture_detect_e;
 
 
