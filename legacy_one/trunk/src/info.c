@@ -2378,6 +2378,7 @@ state_t states[NUMSTATES] = {
 #endif
     // killough 10/98: mushroom effect
     { SPR_MISL,32769,    8, {A_Mushroom}, S_EXPLODE2},  // S_MUSHROOM
+    { 0,0,-1,{NULL},S_NULL}, // S_BLANK
 };
 
 
@@ -6396,8 +6397,9 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 
     //SoM: Dogs, and BetaBFG are NOT implemented! These things are here to
     //hold spaces.
+    // [WDJ] MBF dogs implemented.
     // Marine's best friend :)      // killough 7/19/98
-    {   // MT_DOG
+    {   // MT_DOGS
       888,            // doomednum
 #ifdef DOGS
       S_DOGS_STND,    // spawnstate

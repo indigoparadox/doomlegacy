@@ -276,7 +276,7 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1605"
+#define SVN_REV "1606"
 #endif
 
 
@@ -3550,6 +3550,7 @@ static void Help( void )
         "-iwad file      The game wad\n"
         "-file file      Load DEH and PWAD files (one or more)\n"
         "-deh  file      Load DEH files (one or more)\n"
+	"-dehthing name  DEH translation: legacy, boom, prboom, ee.\n"
         "-loadgame num   Load savegame num\n"  
         "-episode 2      Goto episode 2, level 1\n"
         "-skill 3        Skill 1 to 5\n"

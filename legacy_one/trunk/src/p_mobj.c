@@ -2765,7 +2765,7 @@ void P_Spawn_Mapthing( mapthing_t* mthing, uint16_t mt_type )
                 // killough 10/98: force it to be a friend
                 mthing->options |= MTF_FRIEND;
                 // haleyjd 9/22/99: deh, bex substitution	       
-                mt_type = ( helper_MT < ENDDOOM_MT )? helper_MT : MT_DOG;
+                mt_type = ( helper_MT < ENDDOOM_MT )? helper_MT : MT_DOGS;
                 goto spawnit;
             }
 #endif

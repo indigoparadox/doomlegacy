@@ -1719,7 +1719,7 @@ void P_KillMobj ( mobj_t*  target,
 
 #ifdef DOGS
     // [WDJ] MBF dogs, extension for DoomLegacy.
-    if( (target->type == MT_DOG) || (target->type == helper_MT) )
+    if( (target->type == MT_DOGS) || (target->type == helper_MT) )
         G_KillDog( target );     
 #endif
 
