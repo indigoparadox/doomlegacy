@@ -270,7 +270,17 @@ void  R_Draw_WallColumn( texture_render_t * texren, int colnum )
     }
 #endif
    
-    colnum &= texren->width_tile_mask;  // set by GenerateTexture
+    if( texren->width_tile_mask )
+        colnum &= texren->width_tile_mask;  // set by load textures
+    else
+    {
+        // Odd width texture, cannot just mask.
+        // Sometime gets colnum = -1 or = width, even without tiling.
+	// Test LostCiv, Map 20, crates.
+        colnum = ( colnum < 0 )?
+            texren->width - (((-colnum - 1) % texren->width) + 1)
+          : colnum % texren->width;
+    }
     data += texren->columnofs[colnum];  // column data
 
     // Draw as monolithic column, ignore posts.
