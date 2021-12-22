@@ -1143,3 +1143,34 @@ void dl_strncpy( char * dest, const char * src, int destsize )
     }
     * dest = 0;
 }
+
+#if defined( __MINGW32__ ) || defined( __WATCOM__ )
+// For systems that are missing strcasestr
+char * dl_strcasestr( const char * haystack,  const char * needle )
+{
+    // Empty needle will match anything.
+    int vcnt = strlen( haystack ) - strlen( needle );
+    while( vcnt-- >= 0 )
+    {
+        const char * e = needle;
+        const char * h = haystack;
+
+        for(;;)
+        {
+            unsigned char ce = * (e ++);
+            unsigned char ch = * (h ++);
+            if( ce == 0 )  goto found;
+            if( ch == 0 )  goto not_found;  // haystack shorter than needle
+            if( tolower(ce) != tolower(ch) )  break;
+        }
+        haystack++;
+    }
+
+not_found:
+    // not found
+    return NULL;
+   
+found:
+    return (char*) haystack;
+}
+#endif

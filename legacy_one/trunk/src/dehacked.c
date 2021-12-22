@@ -91,6 +91,8 @@
 
 #include "p_fab.h"
   // translucent change
+#include "m_misc.h"
+  // dl_strcasestr
 
 boolean deh_loaded = false;
 byte  flags_valid_deh = false;  // flags altered flags (from DEH), boolean
@@ -881,7 +883,11 @@ uint16_t  lookup_thing_type( const char * str, uint16_t ttin )
     // Look at the comments for characteristic words.
     for( dtd = & deh_thing_desc_table[0]; (byte*)dtd < ((byte*)deh_thing_desc_table + sizeof(deh_thing_desc_table)); dtd++ )
     {
+#if defined( __MINGW32__ ) || defined( __WATCOM__ )
+        if( dl_strcasestr( str, dtd->desc ) )
+#else	 
         if( strcasestr( str, dtd->desc ) )
+#endif	   
 	    return dtd->mt_type;  // if no direct code is found
     }
 
