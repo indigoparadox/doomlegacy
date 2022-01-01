@@ -395,10 +395,17 @@ state_ext_t *  state_ext = NULL;
 static unsigned int  num_state_ext_alloc = 0;
 static unsigned int  num_state_ext_used = 0;
 
+// All unused state_ext are set to 0.
+state_ext_t  empty_state_ext = { 0, 0 };
 
 state_ext_t *  P_state_ext( state_t * state )
 {
-    return  &state_ext[ state->state_ext_id ];
+    uint16_t seid = state->state_ext_id;
+    if( seid >= num_state_ext_used )
+        return & empty_state_ext;
+
+    // state_ext[0] is dummy with 0 values.
+    return  &state_ext[ seid ];
 }
 
 #define STATE_EXT_INC  64

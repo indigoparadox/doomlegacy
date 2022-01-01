@@ -5,17 +5,56 @@ Released [DATE]
 What you will need
 ------------------
 
-1. Download the Doom Legacy executable for your system (e.g. doomlegacy_[VERSION]_windows_32_sdl.zip)
-2. Download the shared files in doomlegacy_[VERSION]_common.zip (contains legacy.wad [WADVERSION] and the docs)
-3. Linux only: Install the run-time libraries (SDL 1.2.x, SDL_mixer 1.2.x), unless you already have them.
-   These libraries are included with the Windows executable.
-4. Obtain one or more IWADs containing the game data (Doom, Final Doom, UltDoom, Plutonia, TNT, Heretic, FreeDoom, etc.)
-
 We provide precompiled executables for Linux and Win32, built with default options.
 You can also compile an executable yourself, the source code package contains the compilation instructions.
 
 Doom Legacy SDL version requires the SDL and SDL_mixer run-time libraries.
 Using SDL is recommended, but there are some other compile options (like X11 native).
+
+* DoomLegacy executable:
+   Download the Doom Legacy executable for your system (e.g. doomlegacy_[VERSION]_windows_32_sdl.zip).
+   That download contains this file.
+* legacy.wad and docs package:
+   Download doomlegacy_[VERSION]_common.zip from the Doom Legacy site.
+   It contains legacy.wad [WADVERSION], dogs.wad, and the docs.
+   Install it in the same directory as the Doom Legacy executable.
+   Doom Legacy requires the correct legacy.wad to run.
+* Doom Legacy SDL:
+   Ensure that the SDL 1 libraries are installed.
+   If you have newer SDL 1 libraries then use those.
+   SDL 2 is incompatible and will not be recognized.
+  * Linux:
+    The SDL run-time libraries (SDL 1.2.x, SDL_mixer 1.2.x) may already be installed system wide,
+    as they are commonly used with many games on Linux.
+    You can obtain the SDL package from your Linux system distributor.
+    Otherwise, you can install such libraries in the same directory as the Doom Legacy executable.
+  * Windows:
+    SDL libraries are included with the Windows executable.
+    If you have SDL 1 already installed in the system then you could remove the
+    SDL libraries in the executable directory.
+* LIBZIP library: (optional)
+  The LIBZIP library is used to read zipped wads (such as phobiata.zip).
+  This is currently only for Linux.
+  It is optional, this Doom Legacy release will detect if LIBZIP is present.
+  If it is not present, you will have to unzip all your wad files into a doomwad directory.
+* ZLIB library: (optional)
+  The ZLIB library is used to decompress some extended nodes formats.
+  This is currently only for Linux.
+  It is optional, this Doom Legacy release will detect if ZLIB is present.
+  However, some wads may not be playable without it (very few).
+* Doom Legacy SDL sound devices:
+  Sound devices are handled by the SDL_mixer library.  This should be
+  with your SDL libraries, but could be a separate installation.
+* Doom Legacy X11 sound devices:
+  Some sound devices compiled into Doom Legacy may be required to be present.
+  The library for the sound device must be installed.
+  Most sound devices are detected, and are optional.
+* Wads
+  Obtain one or more IWADs containing the game data (Doom, Final Doom, UltDoom, Plutonia, TNT, Heretic, FreeDoom, etc.)
+  Arrange for them to be in one of the predefined directories, or make such a directory as a link to their location.
+  They may also be in subdirectories.
+  Doom Legacy will search these directories for wad and deh files.
+
 
 
 Play setup
@@ -25,7 +64,7 @@ Extract the executable package and the common package in the same folder.
 
 
 Configuration and saves
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 
 Doom Legacy will create a hidden directory in your home directory to keep your
 config and game save files.  This directory is named ".doomlegacy", or
@@ -56,7 +95,7 @@ drawmode, follow these steps.
 
 
 WAD files
-~~~~~~~~~
+---------
 
 Doom Legacy will search for WADs in predefined directories before it looks in
 the current run directory.
@@ -70,7 +109,7 @@ Doom Legacy will also search sub-directories, so you can organize your WADs.
 
 
 Predefined directories
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 In the DEFWADS strings, ~ denotes the user home directory.
 

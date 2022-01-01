@@ -883,7 +883,7 @@ uint16_t  lookup_thing_type( const char * str, uint16_t ttin )
     // Look at the comments for characteristic words.
     for( dtd = & deh_thing_desc_table[0]; (byte*)dtd < ((byte*)deh_thing_desc_table + sizeof(deh_thing_desc_table)); dtd++ )
     {
-#if defined( __MINGW32__ ) || defined( __WATCOM__ )
+#if defined( __MINGW32__ ) || defined( __WATCOM__ ) || defined( SMIF_X11 )
         if( dl_strcasestr( str, dtd->desc ) )
 #else	 
         if( strcasestr( str, dtd->desc ) )
