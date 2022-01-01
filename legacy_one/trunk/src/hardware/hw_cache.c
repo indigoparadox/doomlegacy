@@ -168,22 +168,23 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
 {
     int          x,x1,x2;
     int          col,ncols;
+    int          count;
     fixed_t      xfrac, xfracstep;
-    fixed_t      yfrac, yfracstep, count;
+    fixed_t      yfrac, yfracstep;
     fixed_t      scale_y;
 
+    byte         alpha;
+    byte         chromakey_mapped = (mipmap->tfflags & TF_CHROMAKEYED)? 1:0;
     // also can be called before translucenttables are setup
     byte        *fx1trans =   // only one opaque trans so far
         ((mipmap->tfflags & TF_Opaquetrans) && translucenttables)?
           & translucenttables[ TRANSLU_TABLE_fx1 ]
           : NULL;
-    byte         chromakey_mapped = (mipmap->tfflags & TF_CHROMAKEYED)? 1:0;
-    byte         alpha;
-    byte        *colormap = mipmap->colormap;
-    byte        *block = mipmap->GR_data;
-    column_t    *patchcol;
-    byte        *source;
-    byte        *dest;
+    byte      *  colormap = mipmap->colormap;
+    byte      *  block = mipmap->GR_data;
+    column_t  *  patchcol;
+    byte      *  source;
+    byte      *  dest_col, *  dest;
 
     x1 = originx;
     x2 = x1 + sw_patch->width;
@@ -213,21 +214,21 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
 
     xfracstep = (texture_width << 16) / blockwidth;
     yfracstep = (texture_height<< 16) / blockheight;
+    scale_y = (blockheight << 16) / texture_height;
+
 #ifdef PARANOIA   
     if( bytepp<1 || bytepp > 4 )
         I_Error("HWR_DrawPatchInCache: no drawer defined for this bytepp (%d)\n",bytepp);
 #endif
 
-    for (block += col*bytepp; ncols--; block+=bytepp, xfrac+=xfracstep)
+    for( dest_col = block + (col * bytepp); ncols--; dest_col += bytepp, xfrac += xfracstep)
     {
 #ifdef DEEPSEA_TALL_PATCH
         // [MB (M. Bauerle), from crispy Doom]  Support for DeePsea tall patches, [WDJ]
         int  cur_topdelta = -1;
 #endif
-        patchcol = (column_t *)((byte *)sw_patch
-                                + sw_patch->columnofs[xfrac>>16]);
-
-        scale_y = (blockheight << 16) / texture_height;
+        patchcol = (column_t *)
+            ((byte *)sw_patch + sw_patch->columnofs[xfrac>>16]);
 
         while (patchcol->topdelta != 0xff)
         {
@@ -248,6 +249,9 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
             }
 #endif
 
+            // The patch is stretched to fill the allocated blockheight.
+            // The hardware draws are not affected, as the drawing will use
+            // the blockheight as the texture height.
             source = (byte *)patchcol + 3;
             count  = ((patchcol->length * scale_y) + (FRACUNIT/2)) >> 16;
             yfrac = 0;
@@ -268,16 +272,22 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
                 yi = 0;
             }
 
-            if( yi + count >= blockheight )
-                count = blockheight - yi;
+#if 0
+            // Cuts off the bottom ?
+            if( count >= texture_height - yi )
+                count = texture_height - yi;
+#endif
 
             unsigned int ypos = ((yi * scale_y) + (FRACUNIT/2)) >> 16;
-            dest = block + (ypos * blocklinebyte);
+            dest = dest_col + (ypos * blocklinebyte);
 
-            while (count>0)
+	    // count of dest, must compare to dest index
+            if( count > blockheight - ypos )
+                count = blockheight - ypos;
+
+            while( count-- > 0 )
             {
                 byte texel = source[yfrac>>16];
-                count--;
 
                 // [WDJ] Fixed, this is fx1 not fire
                 // Verified that 0x40000 is the fx1 translucent table.
@@ -296,7 +306,8 @@ void HWR_DrawPatchInCache (Mipmap_t* mipmap,
 
                 // hope compiler will get this switch out of the loops (dreams...)
                 // gcc do it ! but vcc not ! (why don't use cygnus gcc for win32 ?)
-                switch (bytepp) {
+                switch (bytepp)
+                {
                     case 2 :
                        ((pixelalpha_t*)dest)->pixel = texel;
                        ((pixelalpha_t*)dest)->alpha = alpha;
@@ -657,9 +668,7 @@ static void HWR_GenerateTexture (int texnum, MipTexture_t* grtex,
 
     // Composite the columns together.
     texpatch = texture->patches;
-    for (i=0 ;
-         i<texture->patchcount;
-         i++, texpatch++)
+    for (i=0 ; i<texture->patchcount; i++, texpatch++)
     {
         sw_patch = W_CachePatchNum_Endian( texpatch->lumpnum, PU_CACHE );
         // correct texture size for Legacy's large skies
@@ -1242,7 +1251,8 @@ void HWR_GetPatch( MipPatch_t* gpatch )
         patch_t * swpatch = W_CachePatchNum_Endian(gpatch->patch_lumpnum, PU_IN_USE);
 
 #ifdef PARANOIA
-        if( swpatch->width != gpatch->width || swpatch->height != gpatch->height
+        if( swpatch == 0
+            || swpatch->width != gpatch->width || swpatch->height != gpatch->height
             || swpatch->leftoffset != gpatch->leftoffset || swpatch->topoffset != gpatch->topoffset ) {
             printf("HWR_GetPatch, bad patch: patch_lumpnum = %i\n", gpatch->patch_lumpnum);
         }
