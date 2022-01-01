@@ -324,11 +324,16 @@ typedef enum {
     FH_mask = 0xF0,
 } file_handle_e;
 
+// Dynamically loaded libzip
+#if HAVE_LIBZIP == 3
+# define OPT_LIBZIP
 extern byte  libzip_present;
+void  WZ_available( void );
+#endif
+
 extern byte  archive_open;
 extern byte  archive_filenum;
 
-void  WZ_available( void );
 byte  WZ_filename_cmp( const char * filename1, const char * filename2 );
 byte  WZ_find_file_in_archive( const char * filename, const char * archive_name );
 // Return filename with extension, otherwise NULL.

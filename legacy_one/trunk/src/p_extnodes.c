@@ -330,9 +330,10 @@ void P_LoadNodes_DeePBSP (int lump)
 #include <dlfcn.h>
   // dlopen
 
-// Indirections to libzip functions.
-static int ZEXPORT (*DL_inflateInit)(z_streamp, const char *, int);
-#define inflateInit   (*DL_inflateInit)
+// Indirections to zlib functions.
+static int ZEXPORT (*DL_inflateInit_)(z_streamp, const char *, int);
+// inflateInit is a macro in zlib
+#define inflateInit_   (*DL_inflateInit_)
 
 static int ZEXPORT (*DL_inflate)(z_streamp, int);
 #define inflate  (*DL_inflate)
@@ -349,7 +350,7 @@ byte  zlib_present = 0;
 #endif
 
 
-void WZ_available( void )
+void ZLIB_available( void )
 {
     // Test for zlib being loaded.
     void * lzp = dlopen( ZLIB_NAME, RTLD_LAZY );
@@ -360,7 +361,7 @@ void WZ_available( void )
     if( ! zlib_present )  return;
    
     // Get ptrs for libzip functions.
-    DL_inflateInit = dlsym( lzp, "inflateInit" );
+    DL_inflateInit_ = dlsym( lzp, "inflateInit_" );
     DL_inflate = dlsym( lzp, "inflate" );
     DL_inflateEnd = dlsym( lzp, "inflateEnd" );
 }

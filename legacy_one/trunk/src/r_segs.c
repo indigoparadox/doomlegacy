@@ -264,7 +264,7 @@ void  R_Draw_WallColumn( texture_render_t * texren, int colnum )
         // This must be here because cache can be freed by other operations.
         // To prevent must lock individual texture cache on every draw.
         // Messy update, but probably never executed.
-	// The detect used to select texren would not have changed
+        // The detect used to select texren would not have changed
         // during SegLoop, so do not try to change texren.
         R_GenerateTexture2( rw_texture_num, texren, TM_picture_column );
     }
@@ -276,7 +276,7 @@ void  R_Draw_WallColumn( texture_render_t * texren, int colnum )
     {
         // Odd width texture, cannot just mask.
         // Sometime gets colnum = -1 or = width, even without tiling.
-	// Test LostCiv, Map 20, crates.
+        // Test LostCiv, Map 20, crates.
         colnum = ( colnum < 0 )?
             texren->width - (((-colnum - 1) % texren->width) + 1)
           : colnum % texren->width;
@@ -343,9 +343,9 @@ byte* R_GetPatchColumn ( texture_render_t * texren, int colnum )
         // [WDJ] Similar to PrBoom, will handle negative colnum, and odd widths.
         // PrBoom: while( colnum < 0 )   colnum += width;
         // Equiv:  colnum + (width * n)  for some n.
-	// Note: (x % width) ===  x - (width * n) for some n, result 0 .. width-1.
-	// Given: colnum = -1 .. -width, result width-1 .. 0, which is colnum + width.
-	// Consider: -((z-colnum) % width) + z  ==>  colnum + (width * n)
+        // Note: (x % width) ===  x - (width * n) for some n, result 0 .. width-1.
+        // Given: colnum = -1 .. -width, result width-1 .. 0, which is colnum + width.
+        // Consider: -((z-colnum) % width) + z  ==>  colnum + (width * n)
         // Boundary: (0 % width) + z = width-1  ==>  z = width-1
         int width = texren->width;
         colnum = ( colnum < 0 )?
@@ -1521,7 +1521,7 @@ void R_RenderThickSideRange( drawseg_t* ds, int x1, int x2, ffloor_t* ffloor)
     //     are not stored per-column with post info anymore in Doom Legacy
     // [WDJ] multi-patch transparent texture restored
     if( texren->cache == NULL
-	|| ! (texren->detect & TD_2s_ready) )
+        || ! (texren->detect & TD_2s_ready) )
     {
         R_GenerateTexture( texren, TM_masked );	// first time
     }
@@ -2270,7 +2270,7 @@ void R_RenderSegLoop (void)
 #ifndef TEXTURE_LOCK
                         rw_texture_num = bottomtexture;  // to restore texture cache
 #endif
-		       
+
                         dc_texturemid = rw_bottomtexturemid;
                         dc_texheight = textureheight[bottomtexture] >> FRACBITS;
 

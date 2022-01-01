@@ -240,6 +240,7 @@
 #include "p_fab.h"
 #include "p_info.h"
 #include "p_local.h"
+#include "p_extnodes.h"
 
 #include "r_main.h"
 #include "r_local.h"
@@ -276,7 +277,7 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1609"
+#define SVN_REV "1610"
 #endif
 
 
@@ -2363,7 +2364,15 @@ void D_DoomMain()
     G_Controldefault();
    
 #ifdef ZIPWAD
+# ifdef OPT_LIBZIP
     WZ_available();  // check for zip lib
+# endif
+#endif
+#ifdef HAVE_ZLIB
+# if HAVE_ZLIB == 3
+    // Dynamic load zlib.
+    ZLIB_available();
+# endif
 #endif
 
     // Before this line are initializations that are run only one time.

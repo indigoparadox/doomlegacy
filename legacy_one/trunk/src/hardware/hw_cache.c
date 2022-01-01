@@ -498,7 +498,7 @@ static void HWR_ResizeBlock ( int orig_width,
             blockwidth <<= 1;
         if(blockwidth>2048)
         {
-	    // scale down the original graphics to fit
+            // scale down the original graphics to fit
             blockwidth = 2048;
         }
 
@@ -508,7 +508,7 @@ static void HWR_ResizeBlock ( int orig_width,
             blockheight <<= 1;
         if(blockheight>2048)
         {
-	    // scale down the original graphics to fit
+            // scale down the original graphics to fit
             blockheight = 2048;
         }
     }
@@ -1535,10 +1535,10 @@ MipPatch_t * HWR_GetPic( lumpnum_t lumpnum )
 // Called from: HWR_sky_mipmap
 static
 void HWR_draw_TM_cache( byte tm_format, Mipmap_t* mipmap,
-			int blockwidth, int blockheight, int blocklinebyte,
-			int pict_width, int pict_height,
-			int originx, int originy, // where to draw the patch in the surface block
-			byte * sw_pict, int bytepp )
+                        int blockwidth, int blockheight, int blocklinebyte,
+                        int pict_width, int pict_height,
+                        int originx, int originy, // where to draw the patch in the surface block
+                        byte * sw_pict, int bytepp )
 {
     int          x1, x2;
     int          col,ncols;
@@ -1618,11 +1618,11 @@ void HWR_draw_TM_cache( byte tm_format, Mipmap_t* mipmap,
     {
         unsigned int srccol = xfrac >> 16;
         source = sw_pict + (
-	    (tm_format == TM_picture)?
+            (tm_format == TM_picture)?
                 // TM_picture has columnofs table.
                 ((uint32_t*)sw_pict)[srccol]
-	      : (srccol * pict_height)
-			     );
+              : (srccol * pict_height)
+                             );
 
         // TM_picture is columns of pixels.  Each column is pict_height, no offset.
         yfrac = yfrac0;
@@ -1631,7 +1631,7 @@ void HWR_draw_TM_cache( byte tm_format, Mipmap_t* mipmap,
         count = count0;
         while( count-- > 0 )
         {
-	    byte texel = source[yfrac>>16];
+            byte texel = source[yfrac>>16];
 
 #ifdef TM_PICT_TRANSLUCENT
 
@@ -1657,26 +1657,26 @@ void HWR_draw_TM_cache( byte tm_format, Mipmap_t* mipmap,
             // hope compiler will get this switch out of the loops (dreams...)
             // gcc do it ! but vcc not ! (why don't use cygnus gcc for win32 ?)
             switch (bytepp) {
-	     case 2 :
+             case 2 :
                 ((pixelalpha_t*)dest)->pixel = texel;
                 ((pixelalpha_t*)dest)->alpha = alpha;
                 break;
              case 3 :
-	        {
-	        RGBA_t t2 = V_GetColor(texel);
-	        ((RGBA_t*)dest)->s.red   = t2.s.red;
-	        ((RGBA_t*)dest)->s.green = t2.s.green;
-	        ((RGBA_t*)dest)->s.blue  = t2.s.blue;
-	        break;
-		}
-	     case 4 :
-	        *((RGBA_t*)dest) = V_GetColor(texel);
-	        ((RGBA_t*)dest)->s.alpha = alpha;
-	        break;
-	     default:  // default is 1
-	        *dest = texel;
-	        break;
-	    }
+                {
+                RGBA_t t2 = V_GetColor(texel);
+                ((RGBA_t*)dest)->s.red   = t2.s.red;
+                ((RGBA_t*)dest)->s.green = t2.s.green;
+                ((RGBA_t*)dest)->s.blue  = t2.s.blue;
+                break;
+                }
+             case 4 :
+                *((RGBA_t*)dest) = V_GetColor(texel);
+                ((RGBA_t*)dest)->s.alpha = alpha;
+                break;
+             default:  // default is 1
+                *dest = texel;
+                break;
+            }
 
             dest += blocklinebyte;
             yfrac += yfracstep;

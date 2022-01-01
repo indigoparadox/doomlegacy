@@ -38,17 +38,13 @@
 // Use ziplib to access zip archives (xx.zip).
 // It uses zlib to expand the compressed files.
 
-// Check for libzip >= 1.2 which has zip_fseek.
+// Check for libzip_ver >= 1.2 which has zip_fseek.
 // A loaded libzip may not have zip_fseek.
-#if (HAVE_LIBZIP < 12) || defined(OPT_LIBZIP)
+#if ((LIBZIP_VERSION_MAJOR < 1) || (LIBZIP_VERSION_MAJOR == 1 && LIBZIP_VERSION_MINOR < 2)) || defined(OPT_LIBZIP)
 // Generate WZ_zip_fseek.
 # define GEN_ZIP_SEEK
 #endif
 
-#if (HAVE_LIBZIP >= 12) && defined(OPT_LIBZIP)
-// Test loaded libzip for zip_fseek_present
-# define TEST_ZIP_SEEK
-#endif
 
 #ifdef OPT_LIBZIP
 #include <dlfcn.h>
@@ -70,14 +66,17 @@ static zip_int64_t (*DL_zip_name_locate)(zip_t *, const char *, zip_flags_t);
 static zip_t * (*DL_zip_open)(const char *, int, int *);
 #define zip_open  (*DL_zip_open)
 
+static void (*DL_zip_discard)(zip_t *);
+#define zip_discard  (*DL_zip_discard)
+
+static zip_file_t * (*DL_zip_fopen)(zip_t *, const char *, zip_flags_t);
+#define zip_fopen  (*DL_zip_fopen)
+
 static int (*DL_zip_fclose)(zip_file_t *);
 #define zip_fclose  (*DL_zip_fclose)
 
 static zip_int64_t (*DL_zip_fread)(zip_file_t *, void *, zip_uint64_t);
 #define zip_fread  (*DL_zip_fread)
-
-static void (*DL_zip_discard)(zip_t *);
-#define zip_discard  (*DL_zip_discard)
 
 static zip_error_t * (*DL_zip_file_get_error)(zip_file_t *);
 #define zip_file_get_error  (*DL_zip_file_get_error)
@@ -103,7 +102,7 @@ byte  libzip_present = 0;
 # define LIBZIP_NAME   "libzip.so"
 #endif
 
-// Return 0 when zlib is not available.
+// Set libzip_present=0 when libzip is not available.
 void WZ_available( void )
 {
     // Test for libzip being loaded.
@@ -120,14 +119,16 @@ void WZ_available( void )
     DL_zip_stat = dlsym( lzp, "zip_stat" );
     DL_zip_name_locate = dlsym( lzp, "zip_name_locate" );
     DL_zip_open = dlsym( lzp, "zip_open" );
+    DL_zip_discard = dlsym( lzp, "zip_discard" );
+    DL_zip_fopen = dlsym( lzp, "zip_fopen" );
     DL_zip_fclose = dlsym( lzp, "zip_fclose" );
     DL_zip_fread = dlsym( lzp, "zip_fread" );
-    DL_zip_discard = dlsym( lzp, "zip_discard" );
 
     if( (DL_zip_stat_init == NULL) || (DL_zip_stat_index == NULL)
 	|| (DL_zip_stat == NULL) || (DL_zip_name_locate == NULL)
-	|| (DL_zip_open == NULL) || (DL_zip_fclose == NULL)
-	|| (DL_zip_fread == NULL) || (DL_zip_discard == NULL) )
+	|| (DL_zip_open == NULL) || (DL_zip_discard == NULL)
+	|| (DL_zip_fopen == NULL) || (DL_zip_fclose == NULL)
+	|| (DL_zip_fread == NULL)  )
     {
         libzip_present = 0;
         return;

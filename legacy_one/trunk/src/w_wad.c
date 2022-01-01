@@ -353,11 +353,13 @@ int W_Load_WadFile ( const char * filename )
     if( fc == FC_zip )
     {
 #ifdef ZIPWAD
+# ifdef OPT_LIBZIP
         if( ! libzip_present )
         {
             msg = "Cannot read zip file, ziplib not present.";
                 goto read_failure;
         }
+# endif
 
         // Other files are keep open until shutdown,
         // but zip files are not accessed by handle.
