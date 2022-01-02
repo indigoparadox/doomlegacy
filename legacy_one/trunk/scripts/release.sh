@@ -64,7 +64,7 @@ function package_spec_name() {
      else if [ -e win32/lib ]; then
          lib=win32/lib
      fi fi
-     libfiles="$lib/SDL*"
+     libfiles="$lib/SDL.dll $lib/SDL_mixer.dll"
      ;;
 
   "Windows_SDL_64" )
@@ -82,7 +82,7 @@ function package_spec_name() {
      else if [ -e win64/lib ]; then
          lib=win64/lib
      fi fi
-     libfiles="$lib/SDL*"
+     libfiles="$lib/SDL.dll $lib/SDL_mixer.dll"
      ;;
 
   "Linux_X11_32" )
@@ -112,7 +112,7 @@ function package_spec_name() {
 # sets: packname, portdir, bin, lib, binfiles, libfiles
 function get_binary_spec2() {
   packname=""
-  if [ "$2" != "" ]; then
+  if [ "$2" ]; then
       package_spec_name  $2
   fi
 
@@ -122,7 +122,7 @@ function get_binary_spec2() {
   fi
 
   # Suggest using portdir
-  if [ "$portdir" != "" ]; then
+  if [ "$portdir" ]; then
       if [ ! -e $portdir ]; then
          echo "Suggest put binary, lib, and spec in $portdir."
 	 echo "Or can make $portdir a link to such a directory."
@@ -299,11 +299,10 @@ case "$1" in
 	echo "Copy $binfiles"
 	cp -p $binfiles $tempdir
 	# Copy libraries
-	if [ "$libfiles" != "" ]; then
-            if [ -e "$libfiles" ]; then
-	        echo "Copy $libfiles"
-                cp -p $libfiles $tempdir
-	    fi
+	if [ "$libfiles" ]; then
+	    # One or more library files.
+            echo "Copy $libfiles"
+            cp -p $libfiles  $tempdir
 	fi
 	# Copy spec.txt
         if [ -e $portdir/spec.txt ]; then
@@ -311,7 +310,7 @@ case "$1" in
         else if [ -e $portdir"_spec.txt" ]; then
             specfile=lin32_spec.txt
         fi fi
-	if [ "$specfile" != "" ]; then
+	if [ "$specfile" ]; then
             if [ -e "$specfile" ]; then
                 echo "Copy $specfile"
                 cp -p $specfile  $tempdir
