@@ -73,7 +73,8 @@ Subdirectories will NOT be searched.
 <li>SDL library.
 <p>The SDL library is required for the SDL build of Doom Legacy.  Linux
 users are expected to install the SDL library as a system resource.
-<p>Doom Legacy uses SDL 1.2.
+<p>Doom Legacy uses SDL 1.2.   The SDL 2 library is not compatible,
+and will not work.
 <p>The SDL binaries have an SDL library included, for those users who
 do not have SDL already installed.  If your system does not already
 have SDL libraries or have older SDL libraries, then these library
@@ -90,6 +91,62 @@ The SDL libraries are not needed for such Doom ports.
 Other special libraries may be required to be installed.
 See the make_options file for compiling your port.
 </p>
+
+<li>Dynamic loading library, dlopen.
+<p>The Linux binaries are able to use dlopen to dynamically load other
+libraries.  This is a system standard library for Linux.
+<p>Choosing to dynamically detect and load a library is an option
+that is available for some of the libraries, under Linux.
+Code is generated that uses dlopen to detect and load the library.
+This a more complicated way to use a library and involves extra overhead.
+The advantage is that a binary can be generated that will run, even when
+the user is missing some of those hardware devices, or their libraries.
+<p>The user compiling a binary for themselves does not need such
+capability.  They can simply choose to set hardware options as 1 or 0.
+<p>The same capability is probably possible using Windows, or a Windows
+compatible dlopen could be installed to MSYS.  We will need to find a Windows
+programmer willing to implement one or both of these in Doom Legacy.
+
+<li>The libzip library is used to read zip archives.  This allows
+loading zipped wads directly.
+<p>It is selected as a compile-time option using the make_options file.
+<p>When it normally optioned (1), the libzip library must be present, or else
+the system will refuse to run the Doom Legacy binary.  This will work
+fine for the user compiling a binary just for themselves.
+<p>When the dynamic loading (3) option is selected, then dlopen will
+be used to detect and load libzip. If libzip is not present then
+DoomLegacy will not be able to read zip archives.
+
+<li>The zlib library is used to read some compressed extended nodes.
+These are only used by one extended node format, and as it is an option,
+is probably only present in a few very large wads.
+<p>It is selected as a compile-time option using the make_options file.
+<p>When it normally optioned (1), the zlib library must be present, or else
+the system will refuse to run the Doom Legacy binary.  This will work
+fine for the user compiling a binary just for themselves.
+Zlib is used commonly enough that it may already be installed for another program.
+<p>When the dynamic loading (3) option is selected, then dlopen will
+be used to detect and load zlib.  When zlib is not present then
+DoomLegacy will still be able to run,
+but will not be able to uncompress the extended node map of some wads.
+
+<li>The Linux X11 version has a sound device selection
+mechanism that can select between several sound devices:
+OSS, ESD, ALSA, PulseAudio, and JACK.
+<p>The device could have been compiled in normally, or with dynamic loading.
+<p>If the normal option was used, the device library must be
+present or else the system will refuse to run the Doom Legacy binary.
+<p>If the dynamic loading option was used, then dlopen will
+be used to detect and load the sound device library.
+
+<li>The Linux X11 version has a music device selection mechanism that
+can select between several music devices:
+MIDI, TiMidity, FluidSynth, external MIDI, FM_Synth, and AWE32_Synth.
+<p>The device could have been compiled in normally, or with dynamic loading.
+<p>If the normal option was used, the device library must be
+present or else the system will refuse to run the Doom Legacy binary.
+<p>If the dynamic loading option was used, then dlopen will
+be used to detect and load the music device library.
 
 <li>A Doom IWAD.
 <p>The Doom IWAD can be one of the Id Games Doom wads (which are

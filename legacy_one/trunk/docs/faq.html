@@ -11,7 +11,7 @@
 <body>
 <div class="column">
 <h1>DoomLegacy 1.48 FAQ</h1>
-<h1 class="tagline">Last updated 2021-12-21</h1>
+<h1 class="tagline">Last updated 2021-12-30</h1>
 
 <p>
 If you have any trouble with DoomLegacy, you might find a solution here.
@@ -511,10 +511,10 @@ For new wads, please use BEX.
 The dogs in this wad are not displayed.
   </dt>
   <dd>
-Doom Legacy does provide dog sprites nor sounds in the legacy.wad.
+Doom Legacy does not provide dog sprites nor sounds in the legacy.wad.
 An IWAD or PWAD is expected to supply its own dogs, and dog sounds.
 <p>A supplementary dogs wad for Doom Legacy has been created, called dogs.wad.
-It has a basic German Shepard, with dog sounds.
+It has a basic German Shepherd, with dog sounds.
 <p>
 Specify the dogs.wad first, in case the wad does supply its own
 dog sprites or sounds.  The dogs sprites and sounds, from the wad that is
@@ -530,11 +530,40 @@ work, due to some wads changing the names using dehacked.
 
 <dl>
   <dt>
+The dogs get stuck upon on ledges.  When I play this wad in PrBoom they jump down.
+  </dt>
+  <dd>
+There are several options that control dogs, and they correspond to
+some of the compatibility settings in PrBoom.  These are inherited
+from MBF.
+<ul>
+<li>dogs: adds friendly dogs to your party.</li>
+<li>dogs jumping: allows friendly dogs to jump down, randomly, when player is
+within 144 units.
+When their target is below them, dogs can jump down from 128 high.
+Otherwise is dependent upon the setting of monkeys.</li>
+<li>monkeys: substitutes MBF jump down tests that limit actual floor
+change to 24 units, and dropoff change to 24 units.
+Without monkeys, dogs are limited to 24 high dropoffs when
+their target is not near.
+Monkeys affects dogs, and all monsters too.</li>
+<li>monster dropoff: MBF compatibility which allows dogs and monsters
+to use MBF rules for going over dropoffs.
+This also enables the MBF dogs jumping height tests, and monkeys logic.
+When their target is below them, monsters can jump down from 128 high.
+Without this, all monster jump down is limited to 24 high.
+</ul>
+  </dd>
+</dt>
+
+
+<dl>
+  <dt>
 The monsters walk weird, walk backwards, and moon-walk.
   </dt>
   <dd>
 This started with 1.47.2, and was fixed with 1.48.8.
-<br>Turn OFF the MBF monster avoid hazard option.  That will stop it.
+<br>For the affected versions, turn OFF the MBF monster avoid hazard option.  That will stop it.
   </dd>
 </dl>
 
@@ -610,10 +639,10 @@ internal switch tables.
 Historical Info:
 Doom and Heretic would only load the switches for that version and lower,
 as identified by an episode number in the switch tables.
-The code as Shareware Doom episode = 1, Ultimate Doom episode = 2, Doom II episode = 3.
+The code has Shareware Doom episode = 1, Ultimate Doom episode = 2, Doom II episode = 3.
 Heretic has a similar scheme with Shareware episode = 1,
 and Heretic episode = 2, but it only contained two switches both with episode = 1.
-<p>The Boom SWITCHES lump is loaded for both Doom and Heretic game modes.
+<p>The Boom SWITCHES lump was loaded for both Doom and Heretic game modes.
 The usage problem with Heretic was that in previous DoomLegacy the Heretic
 switch names were distinguished by having an episode = 4 in the entry,
 which required the SWITCHES lump to also have episode = 4.

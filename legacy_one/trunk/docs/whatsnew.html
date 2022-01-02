@@ -13,22 +13,11 @@
 
 <div class="column">
 
-<h2>1.48.10 SVN1609 (2021-12-13)</h2>
+<h2>1.48.10 SVN1612 (2021-12-30)</h2>
 
 <h3>FEATURES 1.48.10</h3>
 
 <ul>
-<li>
-More ports now allow a second mouse.
-This allows using PC, mousesystems, and PS2 type mice.
-The ports that have the second mouse are SDL, WIN32, and X11.
-</li>
-<li>
-The linux X11 port got a total rewrite of sfx sound.
-Added support for ALSA, JACK, and PulseAudio sound,
-as it was only supporting OSS sound, and ESD sound.
-The sound device is selectable in the sound menu.
-</li>
 <li>
 Support for DeepBSP V4 extended nodes (based on crispy doom).
 Also ZDoom extended nodes (based on code from woof 1.2.0), supporting
@@ -59,8 +48,7 @@ The scaling and alignment of the sky in hardware draw has been made
 consistent with software draw.
 The sky movement from head turning is greatly reduced.
 There is still some horizontal wander.
-
-The hardware sky still does not change when the player is Invulnerable.
+<p>The hardware sky still does not change when the player is Invulnerable.
 The hardware draw sky does not support the necessary multiple colormaps right now.
 </li>
 <li>
@@ -78,6 +66,27 @@ This overrides the Automatic translation detection.
 A separate supplementary wad is provided that has dog sprites and sounds.
 Specified before a wad, it provides default dog sprites and sounds.
 Specified after a wad, it replaces the dog sprites in a wad.
+</li>
+<li>
+More ports now allow a second mouse.
+This allows using PC, mousesystems, and PS2 type mice.
+The ports that have the second mouse support are SDL, WIN32, and X11.
+</li>
+<li>
+The Linux X11 port got a total rewrite of sfx sound.
+It previously was only supporting OSS sound, and ESD sound.
+Can now select between  OSS, ALSA, ESD, PulseAudio, and JACK sound
+devices using the sound menu.
+For music, can now select between MIDI, TiMidity, FluidSynth, external
+MIDI, FM_Synth, and AWE32_Synth, using the sound menu.
+This depends upon which support got compiled into the program, as
+selected in the make_options file.
+<p>Many of the options are untested.
+The last two Synth options depend on older specific sound cards, and will not be
+included in released binaries.
+I have not managed to get a FluidSynth installation to work,
+I don't have an external MIDI device to test with,
+and JACK wants to take over the entire sound system.
 </li>
 </ul>
 
@@ -301,6 +310,10 @@ This was mostly due to signed char being used as an index,
 which may cause problems on some platforms.
 Fixes BUG 0671.
 </li>
+<li>
+Fixed a crash when hardware draw (OpenGL) tried to
+compose a texture from patches that exceeded the lower texture boundary.
+</li>
 </ul>
 
 
@@ -317,14 +330,16 @@ When searching for a known file, zip archives of the
 same name (but with .zip) are also searched.
 <br>
 This uses library libzip.
-When built with compile option ZIPWAD_OPTIONAL, DoomLegacy detects if the
+When built with dynamic loading, DoomLegacy detects if the
 libzip library is present on the user machine.
 This allows DoomLegacy to run without the feature, when the user does not have libzip.
 <br>
-A libzip before version 1.2 does not have a seek function.
-A compile option will provide our own zip_seek function, so libzip 1.0
-can be used.
+A libzip before version 1.2 does not have an fseek function.
+The compile will detect the libzip version and generate our own zip_fseek function,
+so libzip 1.0 can be used.  With dynamic loading, the fseek presense
+is also tested at execution.
 </li>
+
 <li>
 Recorded Demos now include both the Version and Revision numbers,
 so revision specific behaviors can be enabled.

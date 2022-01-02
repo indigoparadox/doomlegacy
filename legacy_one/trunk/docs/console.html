@@ -10,8 +10,8 @@
 <!-- $Id$ -->
 
 <body>
-<h1>Doom Legacy 1.48 Console Reference</h1>
-<h1 class="tagline">Last updated 2020-12-19</h1>
+<h1>Doom Legacy 1.48.10 Console Reference</h1>
+<h1 class="tagline">Last updated 2021-12-30</h1>
 
 <div class="floatbox">
 <h2>Contents</h2>
@@ -1500,7 +1500,7 @@ Default is On.
 <tr><td>falloff</td><td>bool</td>
 <td>
 Enable the MBF falloff behavior for objects hanging on a dropoff.
-This torques them until they fall off, or until it gives up on lets
+This torques them until they fall off, or until it gives up and lets
 them stay.
 An MBF behavior.
 Default is On.
@@ -1508,7 +1508,8 @@ Default is On.
 
 <tr><td>monkeys</td><td>bool</td>
 <td>
-Enable the monsters to climb steps more easily.
+Enable the monsters to climb steps more easily, and jump down from
+high dropoffs.
 An MBF behavior.
 Default is Off.
 </td></tr>
@@ -1572,7 +1573,7 @@ Default is 128.
 
 <tr><td>dogs_cnt</td><td>int</td>
 <td>
-Enable friendy dogs.
+Spawns a number of friendy dogs with the player at level start.
 This applies during single player and coop play.
 An MBF behavior.
 Valid range is 0 to 9.
@@ -1581,7 +1582,7 @@ Default is 0.
 
 <tr><td>dogjump</td><td>int</td>
 <td>
-Enable friendy dogs, and BEX designated helper friends, to jump down a
+Enables friendy dogs, and BEX designated helper friends, to jump down a
 dropoff, up to 128 units, to follow their player.
 An MBF behavior.
 Default is On.
@@ -2697,14 +2698,37 @@ Enables loading all sounds at the map startup, to eliminate delays in playing so
 Disk drive activity to load sounds during play can be annoying.
 </td></tr>
 
+<tr><td>snd_opt</td><td>enum</td>
+<td>
+This is only present in the Linux X port.
+<br>Sound Device Preference select.  It determines the order
+that sound ports are tried.
+If the preferred port is not found, some other port will be used.
+A selection is only present if the device was compiled into DoomLegacy.
+<table class="def">
+<tr><td>Default</td><td>The default device.</td></tr>
+<tr><td>Search 1</td><td>Search order 1.</td></tr>
+<tr><td>Search 2</td><td>Search order 2.</td></tr>
+<tr><td>Search 3</td><td>Search order 3.</td></tr>
+<tr><td>OSS</td><td>The OSS sound system.</td></tr>
+<tr><td>ESD</td><td>The Enlightened Sound Daemon.</td></tr>
+<tr><td>ALSA</td><td>The ALSA sound system.</td></tr>
+<tr><td>Jack</td><td>The Jack sound system.</td></tr>
+<tr><td>PulseAudio</td><td>The PulseAudio sound system.</td></tr>
+</table>
+</td></tr>
+
 <tr><td>musserv_opt</td><td>enum</td>
 <td>
 This is only present in the Linux X port with the separate musserver.
 <br>Sound Device Preference select for playing Midi music.  It determines the order
 that sound ports are tried.
 If the preferred port is not found, some other port will be used.
+A selection is only present if the device was compiled into DoomLegacy.
 <table class="def">
 <tr><td>Default</td><td>The default device.</td></tr>
+<tr><td>Search 1</td><td>Search order 1.</td></tr>
+<tr><td>Search 2</td><td>Search order 2.</td></tr>
 <tr><td>Midi</td><td>Any midi synth.</td></tr>
 <tr><td>TiMidity</td><td>TiMidity synth.</td></tr>
 <tr><td>FluidSynth</td><td>FluidSynth synth.</td></tr>

@@ -1,8 +1,10 @@
-Title: Compiling Doom Legacy 1.4x
+Title: Compiling Doom Legacy 1.48.10
 Author: Wesley Johnson
-Date: 2020-12-20
+Date: 2021-12-21
 
-In order to compile Doom Legacy 1.4x SDL you'll need to have the following
+Chapter: Requirements
+
+In order to compile Doom Legacy 1.48.10 you'll need to have the following
 libraries installed on your system.
 Make sure you install the developer packages of the libraries,
 which include both the runtime libraries (DLLs) and
@@ -16,30 +18,102 @@ SDL:
   Version 1.2.10+
   "http://www.libsdl.org/download-1.2.php"
   Ubuntu: libsdl1.2-dev "http://packages.ubuntu.com/libsdl1.2-dev"
+  Used by DoomLegacy SDL port, not needed by X11 port.
 
 SDL Mixer:
   A multichannel mixer library based for SDL.
   Version 1.2.7+
   "http://www.libsdl.org/projects/SDL_mixer/"
   Ubuntu: libsdl-mixer1.2-dev  "http://packages.ubuntu.com/libsdl-mixer1.2-dev"
+  Used by DoomLegacy SDL, but usage can be disabled by HAVE_MIXER=0 in make_options.
   
 OpenGL
   The standard cross-platform graphics library, usually comes with the OS.
   There may be specific versions for specific video cards.
   OpenGL 1.3+
+  Used by OpenGL hardware render (enabled by HWRENDER) in SDL and X11 ports.
 
 libzip
-  Optional, for zip archive reading.  Linux Only.
-  Set HAVE_LIBZIP in make_options file.
-  Set HAVE_LIBZIP=12 if you have libzip 1.2 or later, which will
-  use the libzip zip_seek and will disable the local zip_seek function.
+  Optional, for zip archive reading.  Linux Only (see Note1).
+  This allows loading zipped wads directly.
   Enable zip archive reading by setting ZIPWAD in doomdef.h.
+  
+  The code will detect if you have libzip 1.2 or later, upon which it will
+  use the zip_seek function, and will disable the local WZ_zip_seek function.
+  
+  When it normally optioned (HAVE_LIBZIP=1), the libzip library must be present,
+  or else the system will refuse to run the Doom Legacy binary.  This will work
+  fine for the user compiling a binary just for themselves.
+
+  When the dynamic loading (HAVE_LIBZIP=3) is enabled, then dlopen will
+  be used to detect and load libzip. If libzip is not present then
+  DoomLegacy will not be able to read zip archives.
+
+zlib
+  Optional, for compressed extended nodes reading. Linux Only (see Note1).
+  These are only used by one extended node format, and as it is an option,
+  is probably only present in a few very large wads.
+  It is selected as a compile-time option using the make_options file.
+  
+  Set HAVE_ZLIB=1 in make_options file, which will link zlib and
+  require it be present.
+  This will work fine for the user compiling a binary just for themselves.
+  Zlib is used commonly enough that it may already be installed for another program.
+  
+  Set HAVE_ZLIB=3 if you want dynamic zlib detection and loading using
+  dlopen.  When zlib is not present then DoomLegacy will still be able to run,
+  but will not be able to uncompress the extended node map of some wads.
+
+sound devices
+  The Linux X11 version of Doom Legacy has its own sound device selection
+  mechanism.  It can select between several sound devices:
+  OSS, ESD, ALSA, PulseAudio, and JACK, using the sound menu.
+  In the make_options file you must select the sound
+  devices that are to be included in the Doom Legacy code.
+  
+  When the normal option (=1) is selected, the device library must be
+  present or else the system will refuse to run the Doom Legacy binary.
+  
+  When the dynamic loading (=3) option is selected, then dlopen will
+  be used to detect and load the sound device library.
+
+  The JACK option is untested, as enabling it got involved.
+  OSS does not have a library, it will detect the OSS devices.
+
+music devices
+  The Linux X11 version of Doom Legacy has its own music device selection
+  mechanism.  It can select between several music devices:
+  MIDI, TiMidity, FluidSynth, external MIDI, FM_Synth, and AWE32_Synth,
+  using the sound menu.
+  In the make_options file you must select the sound
+  devices that are to be included in the Doom Legacy code.
+
+  When the normal option (=1) is selected, the device library must be
+  present or else the system will refuse to run the Doom Legacy binary.
+
+  When the dynamic loading (=3) option is selected, then dlopen will
+  be used to detect and load the music device library.
+  
+  The FluidSynth option is untested, as I could not get my installation to work.
+  The external MIDI option is untested, as I did not have such hardware.
+  The last two Synth options depend on older specific sound cards.
+  If you do not have such old sound cards, you should not include them.
 
 dlopen
-  Optional, for ziplib detection.  Linux Only.
+  Optional, for dynamic library detection and loading.  Linux Only (see Note1).
   Set HAVE_DLOPEN in make_options file.
-  Enable libzip detection by setting ZIPWAD_OPTIONAL in doomdef.h.
+  This is a standard Linux library.  It would only be missing on a
+  stripped down Linux.
 
+Note1:
+The Linux Only options (dlopen, zlib, libzip) could be done under
+Windows too.
+This requires someone with a knowledge of Windows to finish the coding,
+such as the library naming, and how to do dynamic library loading, and other details.
+This needs to work for WindowsXP, Mingw32, and MSYS too.
+
+
+Chapter: Programs
 
 You will require the following programs during the build process:
 
@@ -51,7 +125,7 @@ Compiler:
   Has been compiled on Linux with Gnu 5.5.0.
   Has been compiled on Linux with Clang 3.8.0
   
-  Windows users can install MinGW a GCC port.
+  Windows users can install MinGW, a GCC port.
   Windows users can install MSYS, which provides unix commands, and POSIX utilities for Win32.
   MinGW: "http://www.mingw.org/", "http://www.mingw.org/node/18"
 
@@ -247,3 +321,4 @@ This will document the latest commands.
 
 
 See docs/source.html for more details.
+
