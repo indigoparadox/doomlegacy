@@ -16,31 +16,119 @@ readmefile="README.rst"                     # name of the README file to be incl
 # Space separated list of valid binary package names
 valid_binary_spec="Linux_SDL_32  Linux_SDL_64  Windows_SDL_32  Windows_SDL_64  Linux_X11_32"
 
-binary_spec_name() {
+# Look for links to the binary locations.
+#  lin32, lin64, win32, win64, x11_32
+
+# sets: packname, portdir, bin, lib, binfiles, libfiles
+function package_spec_name() {
+  unset libfiles
+  unset binfiles
   case $1 in
-  "Linux_SDL_32"   ) bsn="linux2.6_32_sdl" ;;
-  "Linux_SDL_64"   ) bsn="linux2.6_64_sdl" ;;
-  "Windows_SDL_32" ) bsn="windows_32_sdl" ;;
-  "Windows_SDL_64" ) bsn="windows_64_sdl" ;;
-  "Linux_X11_32"   ) bsn="linux2.6_32_x11" ;;
-  * ) bsn="" ;;
+  "Linux_SDL_32"   )
+     packname="linux2.6_32_sdl"
+     portdir=lin32
+     # prebuilt Doom Legacy executable
+     if [ -e lin32/doomlegacy ]; then
+         bin=lin32
+     else if [ -e lin32/bin ]; then
+         bin=lin32/bin
+     fi fi
+     # prebuilt Doom Legacy executable
+     binfiles="$bin/doomlegacy"
+     ;;
+
+  "Linux_SDL_64"   )
+     packname="linux2.6_64_sdl"
+     portdir=lin64
+     if [ -e lin64/doomlegacy ]; then
+         bin=lin64
+     else if [ -e lin64/bin ]; then
+         bin=lin64/bin
+     fi fi
+     # prebuilt Doom Legacy executable
+     binfiles="$bin/doomlegacy"
+     ;;
+
+  "Windows_SDL_32" )
+     packname="windows_32_sdl"
+     portdir=win32
+     if [ -e win32/doomlegacy.exe ]; then
+         bin=win32
+     else if [ -e win32/bin ]; then
+         bin=win32/bin
+     fi fi
+     # prebuilt Doom Legacy executable
+     binfiles="$bin/doomlegacy.exe"
+     if [ -e win32/SDL.dll ]; then
+         lib=win32
+     else if [ -e win32/lib ]; then
+         lib=win32/lib
+     fi fi
+     libfiles="$lib/SDL*"
+     ;;
+
+  "Windows_SDL_64" )
+     packname="windows_64_sdl"
+     portdir=win64
+     if [ -e win64/doomlegacy.exe ]; then
+         bin=win64
+     else if [ -e win64/bin ]; then
+         bin=win64/bin
+     fi fi
+     # prebuilt Doom Legacy executable
+     binfiles="$bin/doomlegacy.exe"
+     if [ -e win64/SDL.dll ]; then
+         lib=win64
+     else if [ -e win64/lib ]; then
+         lib=win64/lib
+     fi fi
+     libfiles="$lib/SDL*"
+     ;;
+
+  "Linux_X11_32" )
+     packname="linux2.6_32_x11"
+     portdir=x11_32
+     if [ -e x11_32/llxdoom ]; then
+         bin=x11_32
+     else if [ -e x11_32/bin ]; then
+         bin=x11_32/bin
+     fi fi
+     # prebuilt Doom Legacy executable, libraries
+     binfiles="$bin/llxdoom"
+     if [ -e $bin/llsndserv ]; then
+         binfiles=$binfiles "$bin/llsndserv" 
+     fi
+     if [ -e $bin/musserver ]; then
+         binfiles=$binfiles "$bin/musserver" 
+     fi
+     libfiles="$bin/r_opengl.so"
+     ;;
+
+  * ) packname="" ;;
   esac
-  echo $bsn
 }
 
 # binary architecture and platform
-get_binary_spec2() {
-  bsn=""
+# sets: packname, portdir, bin, lib, binfiles, libfiles
+function get_binary_spec2() {
+  packname=""
   if [ "$2" != "" ]; then
-    bsn=$(binary_spec_name $2)
-  fi
-  if [ "$bsn" == "" ]; then
-    select  bspec2 in $valid_binary_spec ; do break; done
-    bsn=$(binary_spec_name $bspec2)
+      package_spec_name  $2
   fi
 
-  # Any echo becomes part of return value
-  echo $bsn
+  if [ "$packname" == "" ]; then
+    select  bspec2 in $valid_binary_spec ; do break; done
+    package_spec_name  $bspec2
+  fi
+
+  # Suggest using portdir
+  if [ "$portdir" != "" ]; then
+      if [ ! -e $portdir ]; then
+         echo "Suggest put binary, lib, and spec in $portdir."
+	 echo "Or can make $portdir a link to such a directory."
+	 mkdir $portdir
+      fi
+  fi
 }
 
 
@@ -56,15 +144,6 @@ if [ ! -e "$srcdir" ]; then
 fi
 
 
-if [ -e "bin" ]; then
-bin="bin"
-else
-bin="$srcdir/bin"
-fi
-if [ ! -e "$bin" ]; then
-  echo "Error: $bin not found"
-  exit
-fi
 
 if [ -e "spec" ]; then
 specfile="spec"
@@ -72,10 +151,6 @@ else if [ -e "spec.txt" ]; then
 specfile="spec.txt"
 fi
 fi
-
-
-wadtool="$bin/wadtool"                      # prebuilt wadtool executable, for updating legacy.wad
-exefile="$bin/doomlegacy"                   # prebuilt Doom Legacy executable to package
 
 
 # read the Doom Legacy version number from the source code
@@ -142,6 +217,14 @@ case "$1" in
             echo "Error: $legacywadfile not found"
             exit
 	fi
+        # find prebuilt wadtool executable, for updating legacy.wad
+        wadtool="wadtool"
+	if [ ! -e $wadtool ]; then
+            if [ -e "bin" ]; then
+                bin="bin"
+                wadtool="$bin/wadtool"
+	    fi
+        fi
 	if [ ! -e $wadtool ]; then
 	    echo "Must first build wadtool: $wadtool"
 	    exit 1
@@ -205,22 +288,39 @@ case "$1" in
         ;;
 
     binary)
-        binary_spec=$( get_binary_spec2 "" "$2" )
+        get_binary_spec2 "" "$2"
 
-	echo "Building a binary package for "$binary_spec
+	echo "Building a binary package for "$packname
 
 	# prepare the README file
 	echo "Copy README"
 	sed -e "s/\[DATE\]/$releasedate/" -e "s/\[VERSION\]/$version/" -e "s/\[WADVERSION\]/$wadversion/" -e "s/\[SVNREV\]/$svnrev/" <$srcdir/scripts/$readmefile >$tempdir/$readmefile
-        if [ -e "$specfile" ]; then
-	    echo "Copy SPECFILE"
-            cp -p $specfile  $tempdir
+	# Copy binary
+	echo "Copy $binfiles"
+	cp -p $binfiles $tempdir
+	# Copy libraries
+	if [ "$libfiles" != "" ]; then
+            if [ -e "$libfiles" ]; then
+	        echo "Copy $libfiles"
+                cp -p $libfiles $tempdir
+	    fi
 	fi
-	cp -a $exefile $tempdir
+	# Copy spec.txt
+        if [ -e $portdir/spec.txt ]; then
+            specfile=$portdir"/spec.txt"
+        else if [ -e $portdir"_spec.txt" ]; then
+            specfile=lin32_spec.txt
+        fi fi
+	if [ "$specfile" != "" ]; then
+            if [ -e "$specfile" ]; then
+                echo "Copy $specfile"
+                cp -p $specfile  $tempdir
+	    fi
+	fi
 	echo "Make TAR"
-	tar -cjf $releasedir/$prefix"_"$binary_spec".tar.bz2" $tempdir
+	tar -cjf $releasedir/$prefix"_"$packname".tar.bz2" $tempdir
 	echo "Copy to $releasedir"
-	#zip -r $releasedir/$prefix"_"$binary_spec".zip" $tempdir
+	#zip -r $releasedir/$prefix"_"$packname".zip" $tempdir
 	# put a copy of the README file in the release directory
 	cp -a $tempdir/$readmefile $releasedir
 	;;
@@ -248,11 +348,14 @@ case "$1" in
 	rm -r $tempdir
 	rm -r $tempdir"_source"
 	rm -r $tempdir"_wad"
+	rm -r $tempdir"_common"
         ;;
 
     *)
         echo $"Usage: $0 {source|legacywad|common|binary|upload|docs|clean}"
         echo $"       $0 binary Linux_SDL_32"
+        echo "Make port directories with port specific files (or links)"
+	echo "  lin32, lin64, win32, win64, x11_32"
         exit 1
 esac
 echo "Done."
