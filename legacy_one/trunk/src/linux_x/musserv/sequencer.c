@@ -11,6 +11,7 @@
 // Date: 2021-3
 //   Interface functions modified for DoomLegacy use.
 //   Added ALSA support.
+//   Added FluidSynth device.
 
 #include "../lx_ctrl.h"
   // MUS_DEVICE_OPTION
@@ -20,6 +21,8 @@
 // #define DEBUG_MUSIC_INIT
 
 // #define DEBUG_MIDI_CONTROL
+
+// #define DEBUG_MIDI_DATA
 
 // Use the ALSA RAWMIDI interface instead of the library calls
 //#define ALSA_RAWMIDI
@@ -54,7 +57,7 @@ extern const char * music_dev_name[];
 static const char * search_order[] =
 {
   "",    // MDT_NULL, never used
-  "ALTFE",      // MDT_SEARCH1
+  "TLFAE",      // MDT_SEARCH1
   "AFLTghjkE",  // MDT_SEARCH2, to be customized
   "TLE",  // MDT_MIDI  (any MIDI)
   "T",    // MDT_TIMIDITY
@@ -328,7 +331,7 @@ const char * midi_control_string( int controller )
 static void update_all_channel_volume( void );
 static void all_channel_all_notes_off( void );
 static void clear_MDT( void );
-static dev_info_t * detect_MDT( const char * info_string, int port_num, int * dev_type_wb );
+static dev_info_t * detect_MDT( const char * client_name, const char * info_string, int port_num, int * dev_type_wb );
 static void setup_midi_MDT( byte sd_dev, dev_info_t * devinfo );
 static int  determine_setup_MDT( byte sd_dev, byte pref_dev );
 
@@ -811,7 +814,7 @@ int find_midi_OSS(int mdt_type, int dev_type, int port_num, byte en_print )
     ior = ioctl(seqfd, SNDCTL_MIDI_INFO, &minfo);
     if( ior < 0 )  continue;
 
-    detect_MDT( minfo.name, m, &minfo.dev_type );
+    detect_MDT( minfo.name, minfo.name, m, &minfo.dev_type );
 
     if( en_print )
     {
@@ -894,6 +897,9 @@ void pause_midi_OSS(void)
 
 void reset_midi_OSS(void)
 {
+#ifdef DEBUG_MIDI_CONTROL   
+  printf("musserv: reset_midi_OSS\n" );
+#endif
 #ifdef DEV_AWE32_SYNTH
   if (use_mdt == MDT_AWE32_SYNTH)
   {
@@ -1315,11 +1321,16 @@ void seq_setup_OSS(int pref_dev, int dev_type, int port_num)
 {
   int fnd_dev = -1;
 
+#ifdef DEBUG_MIDI_CONTROL  
+  if( verbose )
+    printf( "pref_dev= %i, dev_type= %i, port_num= %i\n", pref_dev, dev_type, port_num );
+#endif
+
   seqfd = open("/dev/sequencer", O_WRONLY, 0);
   if( seqfd < 0 )
   {
     perror("open /dev/sequencer");
-    exit(1);
+    goto no_devices;
   }
 
   // Get the queue size;
@@ -1411,6 +1422,9 @@ void seq_setup_OSS(int pref_dev, int dev_type, int port_num)
   if( verbose )
       printf( "OSS active\n" );
    
+#ifdef DEBUG_MIDI_CONTROL
+  printf("musserv: OSS setup, reset_midi\n" );
+#endif
   reset_midi_OSS();
   return;
 
@@ -1450,6 +1464,8 @@ static
 void seq_init_setup_OSS(int sel_dvt, int dev_type, int port_num)
 {
     seq_setup_OSS(sel_dvt, dev_type, port_num);
+    if( use_dev == SD_NULL )  // no devices
+        return;
 
 #ifdef DEV_FM_SYNTH   
     if (use_mdt == MDT_FM_SYNTH)
@@ -1599,7 +1615,9 @@ uint32_t  ALSA_tick_time( void )
 static
 void  drain_sync_ALSA( int ms_timeout )
 {
- uint32_t loop_cnt = 0;
+#ifdef DEBUG_MIDI_DATA   
+    uint32_t loop_cnt = 0;
+#endif
     int err3;
 
 // ??? FIXME   
@@ -1622,9 +1640,14 @@ void  drain_sync_ALSA( int ms_timeout )
         ms_timeout -= 2;
         if( ms_timeout <= 0 )
         {
+#ifdef DEBUG_MIDI_DATA	   
+            printf( "musserv: drain_sync_ALSA timeout\n" );
+#endif
             return;
         }
-loop_cnt++;
+#ifdef DEBUG_MIDI_DATA   
+        loop_cnt++;
+#endif
     }
 
     // Wait until queue is empty.
@@ -1632,6 +1655,10 @@ loop_cnt++;
     err3 = snd_seq_sync_output_queue( seq_handle_ALSA );
     if( err3 < 0 )
         report_alsa_error( "ALSA sync", err3 );
+
+#ifdef DEBUG_MIDI_DATA   
+    printf( "musserv: drain_sync_ALSA  synced,  loops=%i\n", loop_cnt );
+#endif
 }
 
 
@@ -1793,6 +1820,9 @@ static
 byte  device_playing_ALSA( void )
 {
     uint32_t qtick3 = ALSA_tick_time();
+#ifdef DEBUG_MIDI_DATA   
+//  printf("%s: tick_time=%i    queue_tick_time=%i\n", (midi_tick>qtick3)? "WAIT": "DONE", midi_tick, qtick3 );
+#endif
     return ( midi_tick > qtick3 );
 }
 #endif
@@ -2047,7 +2077,10 @@ void midi_wait_ALSA( uint32_t tick_time )
 static
 void midi_timer_ALSA(byte action)
 {
-
+#ifdef DEBUG_MIDI_DATA
+    printf( "musserv: ALSA start timer, midi_tick=%i\n", midi_tick );
+#endif
+   
 #ifdef ALSA_RAWMIDI
     // indexed by mmt_e
     static const byte MMT_to_MIDI_rawcmd[3] = {
@@ -2213,7 +2246,9 @@ void reset_midi_ALSA(void)
     }
 # endif
 
+# ifdef DEBUG_MIDI_CONTROL
     usleep( 1500 );  // long enough for synth to react
+# endif
    
     int err2 = snd_seq_start_queue( seq_handle_ALSA, self_queue_id, NULL );
     // Still requires drain to make the queue play.
@@ -2224,7 +2259,11 @@ void reset_midi_ALSA(void)
     ev.time.tick = 0; // start queue sets tick to 0
     midi_tick = 0;
 
+# ifdef DEBUG_MIDI_CONTROL
+    printf("musserv: start queue, tick=0\n");
+    fflush(stdout);
     usleep( 1500 );  // long enough for synth to react
+# endif
 
 #endif // RAWMIDI
 }
@@ -2247,11 +2286,18 @@ void seq_shutdown_ALSA(void)
     // Delete the port
     if( self_port_id >= 0 )
     {
+# ifdef DEBUG_MIDI_CONTROL       
+        printf( "musserv: ALSA delete_port  %i\n", self_port_id );
+# endif
         snd_seq_delete_simple_port( seq_handle_ALSA, self_port_id );
         self_port_id = -1;
     }
 
     // Close the ALSA sequencer device connection.
+    
+# ifdef DEBUG_MIDI_CONTROL       
+    printf( "musserv: ALSA seq_close %p\n", seq_handle_ALSA );
+# endif
     snd_seq_close( seq_handle_ALSA );
     seq_handle_ALSA = NULL;
 
@@ -2262,6 +2308,10 @@ void seq_shutdown_ALSA(void)
 
 #ifdef MUS_DEVICE_OPTION
     setup_DUMMY();
+#endif
+
+#ifdef DEBUG_MIDI_CONTROL       
+    fflush(stdout);
 #endif
 }
 
@@ -2276,6 +2326,10 @@ int find_devs_ALSA( byte en_list, byte en_print )
 #endif
     int num_found = 0;
     int err;
+
+#ifdef DEBUG_MIDI_CONTROL
+    printf("musserv: Find_devs_ALSA\n");
+#endif
 
 #ifdef ALSA_RAWMIDI
     if( en_list )
@@ -2320,7 +2374,7 @@ int find_devs_ALSA( byte en_list, byte en_print )
         unsigned int client_id = snd_seq_client_info_get_client( client_info );
         snd_seq_port_info_set_client( port_info, client_id );
         snd_seq_port_info_set_port( port_info, -1 );
-       
+
         for(;;)
         {
             snd_seq_addr_t  port_addr;
@@ -2343,7 +2397,7 @@ int find_devs_ALSA( byte en_list, byte en_print )
             const char * client_name = snd_seq_client_info_get_name( client_info );
             const char * port_name = snd_seq_port_info_get_name( port_info );
             // Do not save into midi_info, as that is dependent upon soundcard.h
-            dev_info_t * dip = detect_MDT( port_name, num_found, NULL );
+            dev_info_t * dip = detect_MDT( client_name, port_name, num_found, NULL );
             if( dip )  // MIDI found
             {
                 // ALSA info fields
@@ -2383,6 +2437,9 @@ void seq_init_setup_ALSA(int sel_dvt, int dev_type, int port_num)
 
 #ifdef DEBUG_MUSIC_INIT
     printf("ALSA init\n");
+#endif
+#ifdef DEBUG_MIDI_CONTROL   
+    printf("musserv: seq_init_setup_ALSA( %i, %i, %i)\n", sel_dvt, dev_type, port_num);
 #endif
     clear_MDT();
    
@@ -2489,6 +2546,10 @@ void seq_init_setup_ALSA(int sel_dvt, int dev_type, int port_num)
 
 # endif  // RAWMIDI
 
+# ifdef DEBUG_MIDI_CONTROL
+    usleep( 2000000 ); // DEBUG
+# endif
+   
     use_dev = SD_ALSA;
     // Assign interface functions
     note_on = note_on_ALSA;
@@ -2540,24 +2601,27 @@ void  clear_MDT( void )
     memset( &dev_info, 0, sizeof(dev_info) );
 }
 
-// name: name from info
+//  client_name: name from info
+//  port_info: info string from info
 //  port_num : index into minfo
 //  dev_type_wb : dev_type writeback ptr
 // return mdt_type
 static
-dev_info_t * detect_MDT( const char * name, int port_num, int * dev_type_wb )
+dev_info_t * detect_MDT( const char * client_name, const char * port_info, int port_num, int * dev_type_wb )
 {
     dev_info_t * dip;  // query info
+    const char * name = "";
     int dev_type = 0;
     byte mdt_type;
 
 #ifdef DEBUG_MUSIC_INIT
-    printf("MIDI %i = %s\n", port_num, name );
+    printf("MIDI %i = %s : %s\n", port_num, client_name, port_info );
 #endif
 
-#ifdef DEV_TIMIDITY
-    if( strstr( name, "TiMidi" ) )
 //    if( strstr( name, "aseqdump" ) )
+
+#ifdef DEV_TIMIDITY
+    if( strstr( client_name, "TiMidi" ) )
     {
 #ifdef DEBUG_MUSIC_INIT
         printf("FOUND Timidity\n");
@@ -2565,12 +2629,13 @@ dev_info_t * detect_MDT( const char * name, int port_num, int * dev_type_wb )
         dev_type = DEV_TYPE_TIMIDITY;
         mdt_type = MDT_TIMIDITY;
         dip = & dev_info.timidity;
+        name = port_info;
         goto recognized;
     }
 #endif
 
 #ifdef DEV_FLUIDSYNTH
-    if( strstr( name, "FLUID" ) )
+    if( strstr( client_name, "FLUID" ) )
     {
 #ifdef DEBUG_MUSIC_INIT
         printf("FOUND FluidSynth\n");
@@ -2578,17 +2643,19 @@ dev_info_t * detect_MDT( const char * name, int port_num, int * dev_type_wb )
         dev_type = DEV_TYPE_FLUIDSYNTH;
         mdt_type = MDT_FLUIDSYNTH;
         dip = & dev_info.fluidsynth;
+        name = client_name;
         goto recognized;
     }
 #endif
 
 #ifdef DEV_EXTMIDI
     // test for physical midi port
-    if( strstr( name, "E" ) )
+    if( strstr( port_info, "Midi Through" ) )
     {
 //        dev_type = 0;
         mdt_type = MDT_EXT_MIDI;
         dip = & dev_info.ext_midi;
+        name = client_name;
         goto recognized;
     }
 #endif
@@ -2827,13 +2894,22 @@ void reset_midi(void)
 }
 
 #ifdef SOUND_DEVICE_OPTION
+// indexed by sound_dev_e
 static byte search_devices_dev[][2] = {
+// Entries are limited to devices for which we have a MIDI search.
   { SD_ALSA, SD_OSS  },  // search 0, default
   { SD_OSS,  SD_ALSA },  // search 1
   { SD_ALSA, SD_OSS  },  // search 2
+  { SD_ALSA, SD_OSS  },  // search 3
   { SD_OSS,  SD_ALSA },  // SD_OSS
   { SD_ALSA, SD_OSS  },  // SD_ESD
   { SD_ALSA, SD_OSS  },  // SD_ALSA
+  { SD_ALSA, SD_OSS  },  // SD_PULSE
+  { SD_ALSA, SD_OSS  },  // SD_JACK
+  { SD_ALSA, SD_OSS  },  // SD_DEV6
+  { SD_ALSA, SD_OSS  },  // SD_DEV7
+  { SD_ALSA, SD_OSS  },  // SD_DEV8
+  { SD_ALSA, SD_OSS  },  // SD_DEV9
 };
 #endif
 
@@ -2845,10 +2921,16 @@ void seq_init_setup( byte sel_snddev, byte sel_dvt, int dev_type, int port_num)
     byte * search_list = NULL; // no search
     int i;
 
-verbose = 4;
+#ifdef DEBUG_MIDI_CONTROL   
+    verbose = 4;
+    printf( "musserv: seq_init_setup( sel_snddev=%i, sel_dvt=%i, dev_type=%i, port_num=%i)\n", sel_snddev, sel_dvt, dev_type, port_num );
+#endif
    
     if( sel_dvt > MDT_QUERY )   // 99
     {
+#ifdef DEBUG_MIDI_CONTROL       
+        printf( "musserv: seq_init_setup: bad sel_dvt = %i\n", sel_dvt );
+#endif
         // MUTE
         seq_shutdown();
         setup_DUMMY();
@@ -2857,7 +2939,7 @@ verbose = 4;
    
     // Always does search due to sound devices that do not support MIDI
     // or we don't have MIDI interface for them.
-    if( sel_snddev > SD_ALSA )
+    if( sel_snddev > SD_DEV9 )
         sel_snddev = SD_NULL; // default to search 0
 
     search_list = & search_devices_dev[ sel_snddev ][0];  // search list
@@ -2873,15 +2955,24 @@ verbose = 4;
         {
 #ifdef DEV_OSS
          case SD_OSS:
+#ifdef DEBUG_MIDI_CONTROL   
+            printf( "musserv: seq_init_setup: search OSS  sel_dvt= %i\n", sel_dvt );
+#endif
             seq_init_setup_OSS( sel_dvt, dev_type, port_num );
             break;
 #endif
 #ifdef DEV_ALSA
          case SD_ALSA:
+#ifdef DEBUG_MIDI_CONTROL   
+            printf( "musserv: seq_init_setup: search ALSA  sel_dvt= %i\n", sel_dvt );
+#endif
             seq_init_setup_ALSA( sel_dvt, dev_type, port_num );
             break;
 #endif
          default:
+#ifdef DEBUG_MIDI_CONTROL   
+            printf( "musserv: seq_init_setup: search unknwon sel_snddev= %i  sel_dvt= %i\n", sel_snddev, sel_dvt );
+#endif
             break;
         }
 
@@ -2907,7 +2998,12 @@ verbose = 4;
 
     // may return without success
     if( (use_dev == SD_NULL) && no_devices_exit )
+    {
+#ifdef DEBUG_MIDI_CONTROL       
+        printf( "musserv: seq_init_setup: EXIT no devices\n" );
+#endif
         cleanup_exit(1, "no music devices found" );
+    }
 }
 
 void seq_shutdown(void)

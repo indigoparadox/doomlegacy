@@ -699,6 +699,9 @@ quiet_mix_append:
     rem_buf_s2 = BYTES_TO_SAMPLES(quiet_b2);
     if( quiet_s1 > rem_buf_s2 )
     {
+# ifdef DEBUG_MIXER_xx
+        GenPrintf(EMSG_debug, "mixer quiet limit: quiet_s1=%i rem_buf_s2=%i\n", quiet_s1, rem_buf_s2 );
+# endif
         quiet_s1 = rem_buf_s2;
     }
 #endif
@@ -2753,6 +2756,7 @@ byte  LXD_Init_sound_device( byte cds )
 // ALSA is standard, good quality.
 // PULSE is new, available, but high latency.
 // JACK is a low latency connector to other drivers.
+static
 byte search_devices_dev[4][6] = {
   { SD_ALSA, SD_OSS, 0, 0, SD_PULSE, 0  },  // search 0, default
   { SD_OSS, SD_ALSA, 0, 0, SD_PULSE, SD_JACK },  // search 1
@@ -2786,7 +2790,7 @@ void LX_select_sound_device( byte selection )
             goto select_device;
 
         // Search
-        if( ! search_list )  break;
+        if( ! search_list )  break;  // No search
     }
     GenPrintf(EMSG_info, "Sound Device: device not found\n" );
     return;

@@ -8963,7 +8963,6 @@ patchfile = w109_070_strcasestr
 Mingw32 does not have strcasestr.
 Had to write one for Mingw32 and Watcom.
 
-=== commit
 
 *** w109_dynload
 patchfile = w109_071_dynload
@@ -8992,4 +8991,14 @@ Update docs for 1.48.10 rev 1612.
 Unused ext state are set to zero.
 Update release scripts.
 
+=== commit
+
+*** w109_x11sound4
+patchfile = w109_074_x11sound4
+- commit revision 1616
+Fix x11 musserver quitting whenever trying
+any device other than TiMidity.
+Make FluidSynth MIDI detection work.
+Include the DEBUG options in #ifdef.
+Fix a HAVE_ZLIB test that would error when compiling for X11.
 

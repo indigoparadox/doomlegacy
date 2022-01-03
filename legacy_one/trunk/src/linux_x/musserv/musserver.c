@@ -173,6 +173,7 @@ char snd_ipc_opt_tab[] = {
   'd', // Default
   'a', // Search 1
   'b', // Search 2
+  'c', // Search 3
   'O', // OSS
   'E', // ESD
   'A', // ALSA
@@ -258,7 +259,7 @@ void  parse_option_string( const char * optstr )
                 sel_snddev = find_char_code( dc, snd_ipc_opt_tab, sizeof(snd_ipc_opt_tab) );
 #else
                 sel_snddev = SOUND_DEV1;
-#endif	       
+#endif
                 while(*p == ' ') p++;
             }
             break;
@@ -519,7 +520,7 @@ verbose = 4;
             fail_msg="Could not connect to IPC";
             goto  fail_exit;
         }
-#if DEBUG_WAIT
+#ifdef DEBUG_WAIT
         printf("musserv: wait for queue, %s\n", strerror(errno) );
 #endif
         usleep(TIMEOUT_UNIT_MS * 1000);  // 0.2 sec

@@ -2318,8 +2318,7 @@ boolean P_SetupLevel (int      to_episode,
         break;
     case MFMT_ZDBSPZ:
         GenPrintf(EMSG_info, "Node format: ZDoom extended (compressed)\n" );
-#if HAVE_ZLIB
-//#ifdef HAVE_LIBZIP
+#ifdef HAVE_ZLIB
         break;
 #else
         errstr = "Compressed nodes not supported";

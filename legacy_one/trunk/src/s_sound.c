@@ -130,6 +130,9 @@
   // SOUND_DEVICE_OPTION
 #endif
 
+// #define DEBUG_SOUND_HEADER
+
+
 #ifdef SOUND_DEVICE_OPTION
 // SMIF_X11 only.
 
@@ -409,6 +412,13 @@ void S_GetSfxLump( sfxinfo_t * sfx )
     memcpy( sfx->data, sfx_lump_data, sfx->length );
     Z_ChangeTag( sfx_lump_data, PU_CACHE );
 
+#ifdef DEBUG_SOUND_HEADER
+    // DEBUG
+    byte * h = (byte*) sfx->data;
+    printf( "sound header  %0i %0i  %0i %0i  %0i %0i  %0i %0i\n",
+             h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7] );
+#endif
+   
     // sound data header format
     // 0,1: 03
     // 2,3: sample rate (11,2B)=11025, (56,22)=22050

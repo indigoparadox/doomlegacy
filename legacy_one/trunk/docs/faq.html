@@ -11,7 +11,7 @@
 <body>
 <div class="column">
 <h1>DoomLegacy 1.48 FAQ</h1>
-<h1 class="tagline">Last updated 2021-12-30</h1>
+<h1 class="tagline">Last updated 2022-1-2</h1>
 
 <p>
 If you have any trouble with DoomLegacy, you might find a solution here.
@@ -938,6 +938,46 @@ only one volume control for a program.  All the Doom ports have had
 problems with this.  DoomLegacy has not implemented any of
 the suggested solutions yet.  One requires starting an independent task to
 play the music, just to get the independent volume control.
+  </dd>
+</dl>
+
+<dl>
+  <dt>
+Sometimes the music will not start in the DoomLegacy X11 port.
+  </dt>
+  <dd>
+If DoomLegacy is terminated, sometimes the Midi ports are not cleanly
+closed.  Starting DoomLegacy again, setting the sound devices to
+something safe, and shutting it down again seems to work.
+After that, I have found that DoomLegacy music will work again.
+  </dd>
+</dl>
+
+<dl>
+  <dt>
+FluidSynth does not make any music.
+  </dt>
+  <dd>
+You have to have a FluidSynth server running before starting Doom
+Legacy.  This would often be started by the system.
+<p>
+If you start FluidSynth yourself, do not forget to specify a
+soundfont with music devices.
+You can use FluidR3_GM.sv2, which also can be used with TiMidity.
+You might also try the GeneralUser_GS sound font.
+<p>
+The FluidR3_GS.sv2 soundfont,
+is just weird sounds and special effects, and does not work for music.
+  </dd>
+</dl>
+
+<dl>
+  <dt>
+FluidSynth sounds much different than TiMidity.
+  </dt>
+  <dd>
+This would be the soundfont used, and FluidSynth default settings.
+The same DoomLegacy code drives both TiMidity and FluidSynth.
   </dd>
 </dl>
 
