@@ -93,15 +93,21 @@ function package_spec_name() {
      else if [ -e x11_32/bin ]; then
          bin=x11_32/bin
      fi fi
+echo "bin=$bin"
      # prebuilt Doom Legacy executable, libraries
      binfiles="$bin/llxdoom"
-     if [ -e $bin/llsndserv ]; then
-         binfiles=$binfiles "$bin/llsndserv" 
+     b2="$bin/llsndserv"
+     if [ -r $b2 ]; then
+         binfiles="$binfiles $b2"
+echo "binfiles=$binfiles"
      fi
-     if [ -e $bin/musserver ]; then
-         binfiles=$binfiles "$bin/musserver" 
+     b3="$bin/musserver"
+     if [ -r $b3 ]; then
+         binfiles="$binfiles $b3"
+echo "binfiles=$binfiles"
      fi
      libfiles="$bin/r_opengl.so"
+echo "binfiles=$binfiles"
      ;;
 
   * ) packname="" ;;
