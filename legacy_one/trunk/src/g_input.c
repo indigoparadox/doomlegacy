@@ -862,17 +862,18 @@ void Command_BindJoyaxis_f()
   { // create a binding
     j.playnum = atoi( carg.arg[3] );
     // carg.arg[0..3] only, use COM_Argv for others
-    j.action  = (joyactions_e)(atoi(COM_Argv(4)));
+    int j_action  = atoi(COM_Argv(4));
     if (carg.num == 6)
       j.scale = atof(COM_Argv(5));
     else
       j.scale = 1.0f;
 
-    if(j.action < 0 || j.action >= num_joyactions)
+    if(j_action < 0 || j_action >= num_joyactions)
     {
-      CONS_Printf("Attempting to bind non-existent action %d.\n", (int)(j.action));
+      CONS_Printf("Attempting to bind non-existent action %d.\n", j_action);
       return;
     }
+    j.action = (joyactions_e)j_action;  // test actual value before convert to enum
 
     // Overwrite existing binding, if any. Otherwise just append.
     for(i=0; i<num_joybindings; i++)

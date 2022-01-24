@@ -235,8 +235,9 @@ static const struct
         { MT_MNTRFX2,     {14, 20}},
         { MT_SRCRFX1,     {20, 28}},
         { MT_SOR2FX1,     {20, 28}},
-        
-        { -1, {-1, -1} } // Terminator
+
+        // 0 = MT_PLAYER, cannot be a missile
+        { 0, {0, 0} } // Terminator
     };
 
     int i;
@@ -254,7 +255,7 @@ static const struct
         fast=false;
     }
 
-    for(i = 0; MonsterMissileInfo[i].type != -1; i++)
+    for(i = 0; MonsterMissileInfo[i].type; i++)
     {
         mobjinfo[MonsterMissileInfo[i].type].speed
             = MonsterMissileInfo[i].speed[cv_fastmonsters.EV]<<FRACBITS;

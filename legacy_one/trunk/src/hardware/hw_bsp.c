@@ -893,7 +893,7 @@ divline_e
 
     // Determine if dividing point is one of the end vertex.
     // Set before and after indexes, relative to v1 index.
-    if( frac < 0.05d  // double
+    if( frac < 0.05  // double
         && SameVertex( &result->divpt, v1, DIVLINE_VERTEX_DIFF ) )
     {
         result->vertex = v1;
@@ -902,7 +902,7 @@ divline_e
         result->at_vert = true;
         return DVL_v1;
     }
-    if( frac > 0.95d  // double
+    if( frac > 0.95  // double
         && SameVertex( &result->divpt, v2, DIVLINE_VERTEX_DIFF ) )
     {
         result->vertex = v2;

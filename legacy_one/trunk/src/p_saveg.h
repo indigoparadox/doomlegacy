@@ -60,7 +60,8 @@ int  P_Savegame_Closefile( boolean writeflag );
 // In case of error
 void  P_Savegame_Error_Closefile( void );
 
-// return -1 if overrun the buffer
+// return SAVEBUF_OVERFLOW_LENGTH if overrun the buffer
+#define SAVEBUF_OVERFLOW_LENGTH  0xFF000000
 size_t  P_Savegame_length( void );
 
 // Write savegame header to savegame buffer.

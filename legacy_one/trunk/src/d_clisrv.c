@@ -2351,7 +2351,8 @@ static void SV_Send_SaveGame(int to_node)
     // buffer will automatically grow as needed.
 
     length = P_Savegame_length();
-    if( length < 0 )   goto buffer_err;	// overrun buffer
+    if( length >= SAVEBUF_OVERFLOW_LENGTH )
+        goto buffer_err;	// overrun buffer
 
     // then send it !
     SV_SendData(to_node, "SAVEGAME", savebuffer, length, TAH_MALLOC_FREE, SAVEGAME_FILEID);

@@ -2764,7 +2764,7 @@ int R_Create_Colormap_str(char *colorstr, char *ctrlstr, char *fadestr)
     // SoM: Get parameters like, fadestart, fadeend, and the fogflag...
     fadestart = CHAR_TO_INT(ctrlstr[3]) + (CHAR_TO_INT(ctrlstr[2]) * 10);
     fadeend = CHAR_TO_INT(ctrlstr[5]) + (CHAR_TO_INT(ctrlstr[4]) * 10);
-    if(fadestart > 32 || fadestart < 0)
+    if(fadestart > 32)
       fadestart = 0;
     if(fadeend > 33 || fadeend < 1)
       fadeend = 33;

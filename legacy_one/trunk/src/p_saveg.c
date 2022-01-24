@@ -145,6 +145,7 @@ int  sg_version = 0;
 #define SAVEBUF_SIZEINC (128*1024)
 #define SAVEBUF_HEADERSIZE   (64 + (80*5) + 1024 + 256)
 #define SAVEBUF_FREE_TRIGGER  (64*1024)
+//#define SAVEBUF_OVERFLOW_LENGTH  0xFF000000
 
 //#define SAVEBUF_REPORT_BUFINC
 // [WDJ] Uncomment the following to see how close to overrunning the buffer.
@@ -200,14 +201,15 @@ byte *  P_Alloc_savebuffer( boolean large_size )
     return savebuffer;
 }
 
-// return -1 if overrun the buffer
+// return SAVEBUF_OVERFLOW_LENGTH if overrun the buffer
+// CLANG: size_t is unsigned
 size_t  P_Savegame_length( void )
 {
     size_t length = save_p - savebuffer;
     if (length > savebuffer_size)
     {
         I_SoftError ("Savegame buffer overrun, need %i\n", length);
-        return -1;
+        return SAVEBUF_OVERFLOW_LENGTH;
     }
 #ifdef SAVEBUF_REPORT_MIN_FREE
     if( (savebuffer_size - length) < savebuf_min_free )
@@ -255,9 +257,11 @@ int  P_Savegame_Closefile( boolean writeflag )
     if( savebuffer )
     {
         size_t length = P_Savegame_length();
-        if( length < 0 )
+        if( length >= SAVEBUF_OVERFLOW_LENGTH )
+        {
             errflag = -13;  // overrun buffer
-        if( writeflag && (length>0) )
+        }
+        else if( writeflag )
         {
             errflag = FIL_ExtWriteFile( &extfile, length );
         }
@@ -300,6 +304,9 @@ void SG_Writebuf( void )
         // No savefile, buffer only
         // increase the buffer size
         size_t newsize = savebuffer_size + SAVEBUF_SIZEINC;
+        if( newsize >= SAVEBUF_OVERFLOW_LENGTH )
+	   goto done;
+
         void * newbuf = realloc( savebuffer, newsize);
         if( newbuf == NULL )
         {
@@ -322,6 +329,9 @@ void SG_Writebuf( void )
     }
 
     // flush the buffer
+    if( length >= SAVEBUF_OVERFLOW_LENGTH )
+        length = savebuffer_size;
+
     if( FIL_ExtWriteFile( &extfile, length ) < 0 )
     {
          I_SoftError ("Savegame buffer write fail: %i\n", extfile.stat_error);
@@ -338,7 +348,7 @@ void SG_Readbuf( void )
 {
     size_t len1 = P_Savegame_length();  // used
    
-    if( len1 < 0 )
+    if( len1 >= SAVEBUF_OVERFLOW_LENGTH )
     {   // buffer overrun
         save_game_abort = 1;
         goto done;

@@ -332,7 +332,7 @@ void SF_ArrayElementAt(void)
 
    // get index from second arg
    index = intvalue(t_argv[1]);
-   if(index < 0 || index >= t_argv[0].value.a->length)  goto err_index;
+   if( index >= t_argv[0].value.a->length )  goto err_index;
 
    // copy full fs_value_t to t_return
    memcpy(&t_return, &(t_argv[0].value.a->values[index]), 
@@ -371,7 +371,7 @@ void SF_ArraySetElementAt(void)
 
    // get index from third arg this time...
    index = intvalue(t_argv[2]);
-   if(index < 0 || index >= t_argv[0].value.a->length)  goto err_index;
+   if( index >= t_argv[0].value.a->length )  goto err_index;
 
    // type checking on value arg: restricted types
    if(t_argv[1].type == FSVT_array || t_argv[1].type == FSVT_string)  goto err_valuetype;

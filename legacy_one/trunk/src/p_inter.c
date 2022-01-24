@@ -248,7 +248,7 @@ boolean P_GiveAmmo ( player_t*     player,
     if (ammo == am_noammo)
         return false;
 
-    if (ammo < 0 || ammo > NUMAMMO)
+    if ( (unsigned)ammo > NUMAMMO)
     {
         GenPrintf(EMSG_warn, "\2P_GiveAmmo: bad type %i", ammo);
         return false;

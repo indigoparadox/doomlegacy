@@ -1080,9 +1080,10 @@ static void CheatArtifact3Func(player_t * player, Cheat_t * cheat)
     artitype_t type;
     int count;
 
-    type = cheat->args[0] - 'a' + 1;
+    int type_num = cheat->args[0] - 'a' + 1;
+    type = (artitype_t) type_num; // clang, must separate numerical and enum
     count = cheat->args[1] - '0';
-    if (type == 26 && count == 0)
+    if (type_num == 26 && count == 0)
     {   // All artifacts
         for (i = arti_none + 1; i < NUMARTIFACTS; i++)
         {
@@ -1100,7 +1101,7 @@ static void CheatArtifact3Func(player_t * player, Cheat_t * cheat)
         }
         P_SetMessage(player, TXT_CHEATARTIFACTS3, 51);
     }
-    else if (type > arti_none && type < NUMARTIFACTS && count > 0 && count < 10)
+    else if (type_num > arti_none && type_num < NUMARTIFACTS && count > 0 && count < 10)
     {
         // [WDJ] Fix strange test of shareware enum
         if (gamedesc_id == GDESC_heretic_shareware)
