@@ -527,7 +527,7 @@ void P_LoadSubsectors( lumpnum_t lumpnum )
 //   flatsize : the flat lump size
 // Called by P_PrecacheLevelFlats at level load time.
 // Called by V_DrawVidFlatFill, HWR_DrawFlatFill.
-uint16_t P_flatsize_to_index( int flatsize, char * name )
+uint16_t P_flatsize_to_index( int flatsize, const char * name )
 {
   // Drawing as 64*64 (lumpsize=4096) was the default.
   // Heretic LAVA flats are 4160, an odd size; use 64*64.
@@ -590,11 +590,11 @@ int P_PrecacheLevelFlats( void )
 // help function for P_LoadSectors, find a flat in the active wad files,
 // allocate an id for it, and set the levelflat (to speedup search)
 //
-int P_AddLevelFlat ( char* flatname )
+int P_AddLevelFlat( const char* flatname )
 {
     lump_name_t name8;
     levelflat_t * lfp;
-    int         i;
+    int  lf_index;
 
     numerical_name( flatname, & name8 );  // fast compares
 
@@ -602,12 +602,12 @@ int P_AddLevelFlat ( char* flatname )
     {
         // scan through the already found flats
         lfp = & levelflats[0];
-        for (i=0; i<numlevelflats; i++)
+        for (lf_index=0; lf_index<numlevelflats; lf_index++)
         {
             // Fast numerical name compare.
             if( *(uint64_t *)lfp->name == name8.namecode )
             {
-                goto found_level_flat;  // return i
+                goto found_level_flat;  // return levelflat index
             }
             lfp ++;
         }
@@ -630,15 +630,15 @@ int P_AddLevelFlat ( char* flatname )
 
         if( levelflats )
         {
+            // Copy existing levelflats to new memory.
             memcpy (new_levelflats, levelflats, numlevelflats*sizeof(levelflat_t));
             Z_Free ( levelflats );
         }
         levelflats = new_levelflats;
     }
 
-    i = numlevelflats;
-    lfp = & levelflats[numlevelflats];  // array moved
-    numlevelflats++;
+    lf_index = numlevelflats++;
+    lfp = & levelflats[lf_index];  // array moved
 
     // store the name
     *(uint64_t *)lfp->name = name8.namecode;
@@ -648,11 +648,12 @@ int P_AddLevelFlat ( char* flatname )
     lfp->size_index = P_flatsize_to_index( W_LumpLength(lfp->lumpnum), flatname );
 
  found_level_flat:
-    return i;    // level flat id
+    return lf_index;    // level flat id
 }
 
 
 // SoM: Do I really need to comment this?
+//  num : index in levelflats
 char * P_FlatNameForNum(int num)
 {
   if(num < 0 || num > numlevelflats)
@@ -720,7 +721,7 @@ void P_LoadSectors( lumpnum_t lumpnum )
         // [WDJ] Clamp the int16_t light field to valid values.
         // Was inadequate, some 256 light levels still got through.
         // There are some lighting tricks with glowing sectors, that
-	// would be blocked.
+        // would be blocked.
         // Have implemented light clip tests at StoreWall.
         if( ss->lightlevel > 255 )  ss->lightlevel = 255;
         if( ss->lightlevel < 0 )    ss->lightlevel = 0;
@@ -1513,8 +1514,8 @@ void P_LoadBlockMap (int lump)
               fprintf( dbmfp,"Blockmap offset[%i]: Overflow 0x%X,  exceeds lastlist=0x%X\n", i, overflow_corr_n, lastlist );
 #endif
 #ifdef GENERATE_BLOCKMAP
-	      if( cv_blockmap_gen.EV > 0 )
-	          goto  generate_blockmap;
+              if( cv_blockmap_gen.EV > 0 )
+                  goto  generate_blockmap;
 #endif
           }
           else
@@ -1526,8 +1527,8 @@ void P_LoadBlockMap (int lump)
               fprintf( dbmfp,"Blockmap offset[%X...]: Overflow correct 0x%X\n", i, overflow_corr );
 #endif
 #ifdef GENERATE_BLOCKMAP
-	      if( cv_blockmap_gen.EV == 1 )
-	          goto  generate_blockmap;
+              if( cv_blockmap_gen.EV == 1 )
+                  goto  generate_blockmap;
 #endif
           }
       }
@@ -1598,8 +1599,8 @@ void P_LoadBlockMap (int lump)
           fprintf( dbmfp, "   prev blockmaphead[%i]=%X\n", i-1, blockmaphead[i-1] );
 #endif
 #ifdef GENERATE_BLOCKMAP
-	  if( cv_blockmap_gen.EV > 0 )
-	     goto  generate_blockmap;
+          if( cv_blockmap_gen.EV > 0 )
+             goto  generate_blockmap;
 #endif
 
           // FIXME: Replace this with something that is more likely to find a usable blockmap list.

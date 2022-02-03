@@ -57,22 +57,12 @@ extern  int             numdmstarts;
 //extern  mapthing_t**    deathmatch_p;
 
 // Animate flats using anim structure instead of using levelflat fields.
-#define ANIM_FLAT_2
-
 // MAP used flats lookup table
 //
 typedef struct
 {
     // most often used reference first, keeps it aligned
     lumpnum_t   lumpnum;        // lump number of the flat (mod by animation)
-
-#ifndef ANIM_FLAT_2   
-    // for flat animation
-    lumpnum_t   base_lumpnum;   // first flat in animation
-    int16_t     animseq;        // start pos. in the anim sequence
-    uint16_t    numpics;
-    int16_t     speed;
-#endif
 
     // for better packing, odd bytes last
     uint16_t    size_index;     // flat size index
@@ -82,8 +72,8 @@ typedef struct
 extern unsigned int    numlevelflats;
 extern levelflat_t*    levelflats;
 
-uint16_t P_flatsize_to_index( int flatsize, char * name );
-int P_AddLevelFlat (char* flatname);
+uint16_t P_flatsize_to_index( int flatsize, const char * name );
+int P_AddLevelFlat( const char* flatname );
 int P_PrecacheLevelFlats (void);
 char * P_FlatNameForNum(int num);
 

@@ -199,19 +199,15 @@ typedef struct {
     int  end_texnum;    // ending texture
 } anim_texture_t;
 
-#ifdef ANIM_FLAT_2
 typedef struct {
+    // flat_ref is kept in animation sequence, so do not need animseq   
     levelflat_t *  flat_ref;  // the animated flat
-    int            animseq;   // offset in the animation
 } anim_flatlist_t;
-#endif
 
 typedef struct {
     lumpnum_t  base_flat_lumpnum;  // starting flat
     lumpnum_t  end_flat_lumpnum;   // ending flat
-#ifdef ANIM_FLAT_2
     anim_flatlist_t *  flat_list;  // array[numpics] entries (owned)
-#endif
 } anim_flat_t;
 
 // 
@@ -222,9 +218,9 @@ typedef struct {
 // [WDJ] 5/18/2010 Eliminate -1 value in boolean field.
 typedef struct
 {
-    int         numpics;
-    int         speed;	// in tics
-    boolean     istexture; // false= flat, true= texture
+    byte        istexture; // false= flat, true= texture
+    byte        numpics;
+    unsigned int  speed;	// in tics
     union {
       anim_texture_t  at;
       // [WDJ] A lumpnum_t might not fit into an int,
@@ -320,7 +316,6 @@ void P_Release_PicAnims(void)
 {
     if( anims == NULL )  return;
 
-#ifdef ANIM_FLAT_2
     animtex_t * ap;
     for (ap = anims ; ap < lastanim ; ap++)
     {
@@ -331,7 +326,6 @@ void P_Release_PicAnims(void)
                 free( ap->af.flat_list );
         }
     }
-#endif
 
     free( anims );
     anims = NULL;
@@ -412,9 +406,7 @@ void P_Init_PicAnims (void)
       lastanim->af.end_flat_lumpnum = R_FlatNumForName (animdefs[i].endname);
       lastanim->af.base_flat_lumpnum = R_FlatNumForName (animdefs[i].startname);
       lastanim->numpics = LUMPNUM(lastanim->af.end_flat_lumpnum) - LUMPNUM(lastanim->af.base_flat_lumpnum) + 1;
-#ifdef ANIM_FLAT_2
       lastanim->af.flat_list = NULL;
-#endif
     }
 
 
@@ -432,7 +424,7 @@ void P_Init_PicAnims (void)
   }
 
   if(animdefs != harddefs)
-    Z_ChangeTag (animdefs, PU_CACHE);
+    Z_ChangeTag (animdefs, PU_LEVEL);  // are referenced
 }
 
 //  Check for flats in levelflats, that are part
@@ -443,11 +435,15 @@ void P_Init_PicAnims (void)
 static
 void P_FindAnimatedFlat (int animnum)
 {
-    int            i, start_ln, end_ln, fln, wadnum;
-    levelflat_t*   foundflats = levelflats;
+    levelflat_t *  foundflats;
+    animtex_t *    animp;
+    anim_flatlist_t * flat_list;
+    int    i, start_ln, end_ln, fln, wadnum;
+    byte   found = 0;
 
-    lumpnum_t start_flat_lumpnum = anims[animnum].af.base_flat_lumpnum;
-    lumpnum_t end_flat_lumpnum   = anims[animnum].af.end_flat_lumpnum;
+    animp = & anims[animnum];
+    lumpnum_t start_flat_lumpnum = animp->af.base_flat_lumpnum;
+    lumpnum_t end_flat_lumpnum   = animp->af.end_flat_lumpnum;
 
     if( ! VALID_LUMP(start_flat_lumpnum) )
         return;
@@ -463,23 +459,29 @@ void P_FindAnimatedFlat (int animnum)
     {
        I_SoftError ("AnimatedFlat start %s not in same wad as end %s\n",
                 animdefs[animnum].startname, animdefs[animnum].endname);
-       anims[animnum].af.base_flat_lumpnum = NO_LUMP;
+       animp->af.base_flat_lumpnum = NO_LUMP;
        return;
     }
 
-    if( anims[animnum].numpics > 128 )  // too many, something is wrong
+    if( animp->numpics > 250 )  // too many, something is wrong
         return;
-   
-#ifdef ANIM_FLAT_2
-    anim_flatlist_t * flat_list = (anim_flatlist_t *) malloc( sizeof(anim_flatlist_t) * anims[animnum].numpics );
-    anims[animnum].af.flat_list = flat_list;
+
+    // Allocate the animation flat list.
+    flat_list = animp->af.flat_list;
     if( flat_list == NULL )
-        return; // allocation error
-    memset( flat_list, 0, sizeof(anim_flatlist_t) * anims[animnum].numpics );
-#endif   
+    {
+        unsigned int list_alloc_size = sizeof(anim_flatlist_t) * animp->numpics;
+        flat_list = (anim_flatlist_t *) malloc( list_alloc_size );
+        animp->af.flat_list = flat_list;
+        if( flat_list == NULL )
+            return; // allocation error
+        memset( flat_list, 0, list_alloc_size );
+    }
+
     //
-    // now search through the levelflats if this anim flat sequence is used
+    // Search through the levelflats, find if this anim flat sequence is used.
     //
+    foundflats = levelflats;
     for (i = 0; i<numlevelflats; i++, foundflats++)
     {
         // is that levelflat from the flat anim sequence ?
@@ -489,35 +491,49 @@ void P_FindAnimatedFlat (int animnum)
         fln = LUMPNUM(foundflats->lumpnum);
         if( fln >= start_ln && fln <= end_ln )
         {
-#ifdef ANIM_FLAT_2
-            int animseq = fln - start_ln;  // index in the anim seq
-            flat_list[animseq].animseq = animseq;
-            flat_list[animseq].flat_ref = foundflats; // ptr to levelflat that will be animated
-
-            if (devparm)
-            {
-                GenPrintf(EMSG_dev,
-                   "animflat: %#03d name:%.8s animseq:%d numpics:%d speed:%d\n",
-                            i, foundflats->name, animseq,
-                            anims[animnum].numpics, anims[animnum].speed);
-            }
-#else
-            foundflats->base_lumpnum = start_flat_lumpnum;
-            foundflats->animseq = fln - start_ln;  // index in the anim seq
-            foundflats->numpics = end_ln - start_ln + 1;
-            foundflats->speed = anims[animnum].speed;
-
-            if (devparm)
-            {
-                GenPrintf(EMSG_dev,
-                   "animflat: %#03d name:%.8s animseq:%d numpics:%d speed:%d\n",
-                            i, foundflats->name, foundflats->animseq,
-                            foundflats->numpics,foundflats->speed);
-            }
-#endif
+            // Found a usage.  Let the found code below, fill in all flats.
+            found = 1;
+            break;
         }
     }
+   
+    // Make sure that all flats of an animation are present.
+    if( found )
+    {
+        // P_AddLevelFlat may move the levelflats.
+        // After that happens, this will need to update bad links,
+        // so do not test the links,
+        // just replace all links to the levelflats.
+        lumpinfo_t * anim_lumpinfo = wadfiles[wadnum]->lumpinfo;
 
+        if (devparm)
+        {
+            GenPrintf(EMSG_dev,
+                "animflat: numpics=%d speed=%d\n", animp->numpics, animp->speed);
+        }
+
+        int animseq;
+        for( animseq=0; animseq<animp->numpics; animseq++ )
+        {
+            // [WDJ] Get levelflat_id.
+            // If this flat is not in the level flats, it will be added.
+            int flat_lumpnum = start_ln + animseq;  // index in the anim seq
+            lumpinfo_t * lump_p = & anim_lumpinfo[flat_lumpnum];
+            unsigned int levelflat_id = P_AddLevelFlat( lump_p->name );
+            // Found it, or created it.  Does not return an error.
+            // This may have moved levelflats, that is dealt with by P_Setup_LevelFlatAnims.
+
+            // The flat_list is in animseq order.	   
+            flat_list[animseq].flat_ref = & levelflats[ levelflat_id ];
+
+            if (devparm)
+            {
+                GenPrintf(EMSG_dev,
+                   "  [%2d]  %#03d name:%.8s\n",
+                   animseq, levelflat_id, levelflats[ levelflat_id ].name );
+            }
+        }
+    }
 }
 
 
@@ -527,20 +543,35 @@ void P_FindAnimatedFlat (int animnum)
 // Called at end of P_LoadSectors
 void P_Setup_LevelFlatAnims (void)
 {
-    int    i;
+    levelflat_t *  old_levelflats = levelflats;
+
     // [WDJ] 5/18/2010 Eliminate -1 value in boolean field.
     // List can be shorter than num_anims_alloc because it is missing entries
     // for flats and textures that do not appear in this level.
     int  animlen = lastanim - anims;  // count of entries
 
-    // the original game flat anim sequences
-    for (i=0 ; i<animlen; i++)
+    byte  loop_limit = 3;
+    while( loop_limit -- )
     {
-        if (!anims[i].istexture)  // flats
+        // the original game flat anim sequences
+        int  i;
+        for (i=0 ; i<animlen; i++)
         {
-            P_FindAnimatedFlat (i);
+            if (!anims[i].istexture)  // flats
+                P_FindAnimatedFlat (i);
         }
+
+        if( levelflats == old_levelflats )
+            break;   // Good, we are done
+       
+        // [WDJ] P_AddLevelFlats moved the levelflats.
+        // Must update all the animations again.
+        // The second time, it will not be adding any flats.
+        old_levelflats = levelflats;
     }
+// [WDJ] If fragglescript changes a flat to an animated flat
+// that has not been found, it will not be animated.
+// The level map needs to have the animated flat in at least one sector.
 }
 
 
@@ -2863,12 +2894,7 @@ void P_PlayerInSpecialSector (player_t* player)
 void P_UpdateSpecials (void)
 {
     animtex_t*  anim;
-#ifdef ANIM_FLAT_2
-    anim_flatlist_t * fl;  // flat animation list
-#else
-    levelflat_t*     foundflats;        // for flat animation
-#endif
-    int  i;
+    unsigned int  i;
 
     //  LEVEL TIMER
     if (timelimit_tics && (timelimit_tics < leveltime))
@@ -2877,57 +2903,32 @@ void P_UpdateSpecials (void)
     //  ANIMATE TEXTURES
     for (anim = anims ; anim < lastanim ; anim++)
     {
-      if( anim->istexture )
-      {
-        // Update animation indirection for all the textures in the animation sequence.
-        // They can be used in large synchronized animations.
-        for (i=anim->at.base_texnum ; i<anim->at.base_texnum+anim->numpics ; i++)
+        unsigned int anim_offset = leveltime / anim->speed;
+        if( anim->istexture )
         {
-          texturetranslation[i] = anim->at.base_texnum + ( (leveltime/anim->speed + i)%anim->numpics );
+            // Texture animation.
+            // Update animation indirection for all the textures in the animation sequence.
+            // They can be used in large synchronized animations.
+            for (i=anim->at.base_texnum ; i<anim->at.base_texnum+anim->numpics ; i++)
+            {
+                texturetranslation[i] = anim->at.base_texnum + ( (anim_offset + i)%anim->numpics );
+            }
         }
-      }
-#ifdef ANIM_FLAT_2
-      else
-      {
-        // Flat animation
-        fl = anim->af.flat_list;
-        if( ! fl )  continue;
-        for(i=anim->numpics; i>0 ; i--)  // count, in case list is full
+        else
         {
-          if( fl->flat_ref == NULL )  break;  // end of list
-          // update the levelflat lump number
-          fl->flat_ref->lumpnum = ADD_TO_LUMPNUM( anim->af.base_flat_lumpnum,
-               (leveltime/anim->speed + fl->animseq) % anim->numpics );
-          fl++;
+            // Flat animation.
+            // The flat_list is kept in animation order, so do not need animseq.	    
+            anim_flatlist_t * fl = anim->af.flat_list;  // flat animation list
+            if( ! fl )  continue;
+            for(i=0; i<anim->numpics; i++, fl++)  // step through the flat_list
+            {
+                if( fl->flat_ref == NULL )  continue;  // should never happen
+                // update the levelflat lump number in levelflats
+                fl->flat_ref->lumpnum = ADD_TO_LUMPNUM( anim->af.base_flat_lumpnum,
+                    (anim_offset + i) % anim->numpics );
+            }
         }
-      }
-#endif
     }
-
-#ifndef ANIM_FLAT_2
-    //  ANIMATE FLATS
-    //Fab:FIXME: do not check the non-animate flat.. link the animated ones?
-    // note: its faster than the original anyway since it animates only
-    //    flats used in the level, and there's usually very few of them
-    foundflats = levelflats;
-    for (i = 0; i<numlevelflats; i++,foundflats++)
-    {
-         if (foundflats->speed) // it is an animated flat
-         {
-#if 1
-             // update the levelflat lump number
-             foundflats->lumpnum = ADD_TO_LUMPNUM( foundflats->base_lumpnum,
-                                   ( (leveltime/foundflats->speed + foundflats->animseq) % foundflats->numpics) );
-#else
-             // Otherwise, how it should be done:
-             int wadnum = WADFILENUM(foundflats->base_lumpnum);
-             int ln = LUMPNUM(foundflats->base_lumpnum);
-             foundflats->lumpnum =
-                WADLUMP(wadnum, ln + ( (leveltime/foundflats->speed + foundflats->animseq) % foundflats->numpics) );
-#endif
-         }
-    }
-#endif
 
     //  DO BUTTONS
     for (i = 0; i < MAXBUTTONS; i++)

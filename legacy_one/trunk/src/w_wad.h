@@ -175,7 +175,7 @@ typedef enum {
 typedef struct wadfile_s
 {
     char *           filename;
-    lumpinfo_t *     lumpinfo;
+    lumpinfo_t *     lumpinfo;   // array
     lumpcache_t *    lumpcache;
 #ifdef HWRENDER
     MipPatch_t *     hwrcache;   // patches are cached in renderer's native format
