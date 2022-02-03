@@ -1185,6 +1185,7 @@ void P_TouchSpecialThing ( mobj_t*       special,
       case SPR_CLIP:
         if (!P_GiveAmmo (player, am_clip,
                ((special_dropped)? clipammo[am_clip]/2 : clipammo[am_clip]) ))
+            return;
         msg = GOTCLIP;
         break;
 

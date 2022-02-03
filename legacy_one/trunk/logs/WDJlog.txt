@@ -8991,8 +8991,6 @@ Update docs for 1.48.10 rev 1612.
 Unused ext state are set to zero.
 Update release scripts.
 
-=== commit
-
 *** w109_x11sound4
 patchfile = w109_074_x11sound4
 - commit revision 1616
@@ -9002,3 +9000,33 @@ Make FluidSynth MIDI detection work.
 Include the DEBUG options in #ifdef.
 Fix a HAVE_ZLIB test that would error when compiling for X11.
 
+*** w109_clang
+patchfile = w109_075_clang
+- commit revision 1618
+Fix a number of clang compiler complaints.
+
+=== commit
+
+*** w109_pickup_clip
+patchfile = w109_076_pickup_clip
+- commit revision 1619
+Player picks up clip when has full ammo.
+A return stmt was left out during patch, w105_22_playermsg, svn 1225.
+This resulted in the clip being used up, even when
+the player already has max ammo.
+
+*** w109_flat_animation
+patchfile = w109_077_flat_animation
+- commit revision 1620
+Rewrite the flat animation.
+A long time ago the flats were optimized by only loading the flats
+that appeared in the level map, into the levelflats.
+This is incompatible with flat animation, as the animation requires
+flats that may not have appeared otherwise.  This results in the
+animation not working for some flats that should be animated (doom2 map17).
+Also, the flat animation uses ptrs into levelflats.
+Trying to add the missing flats later often results in levelflats being
+reallocated and moved out from under the animation ptrs.
+Rewrote the flat animation using the flat_list.
+Updates the flat animation again when levelflats has moved during the update.
+Removed the old animation code that checked all flats in the wad.
