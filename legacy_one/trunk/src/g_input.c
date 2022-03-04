@@ -96,6 +96,12 @@ CV_PossibleValue_t mouse2port_cons_t[] = {
   {0, NULL} };
 #define CV_DEFAULT_PORT  "COM2"
 #endif
+#ifdef MOUSE2_DOS
+CV_PossibleValue_t mouse2port_cons_t[] = {
+  {1, "COM1"}, {2, "COM2"}, {3, "COM3"}, {4, "COM4"},
+  {0, NULL} };
+#define CV_DEFAULT_PORT  "COM2"
+#endif
 consvar_t cv_mouse2port = { "mouse2port", CV_DEFAULT_PORT , CV_SAVE|CV_STRING|CV_CALL|CV_NOINIT, mouse2port_cons_t, I_StartupMouse2 };
 consvar_t cv_mouse2opt = { "mouse2opt", "0", CV_SAVE|CV_STRING|CV_CALL|CV_NOINIT, NULL, I_StartupMouse2 };
 #if defined( SMIF_SDL ) || defined( SMIF_WIN32 ) || defined( SMIF_X11 )

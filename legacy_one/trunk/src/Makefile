@@ -297,6 +297,9 @@ endif
 # invocation of make.
 -include $(MAKE_OPTIONS)
 
+# $(warning OS=$(OS) )
+# $(warning SMIF=$(SMIF) )
+
 ifdef DEBUG
  # Allow DEBUG=0 to turn debugging off.
  ifeq ("$(DEBUG)","1")
@@ -549,11 +552,13 @@ else
 ifeq ($(OS), DOS)
   DOS=1
   DOSFILE=1
+  OPTS+=-DDOS
   #Known Compiler symbols
   # PC_DOS
 else
 ifeq ($(OS), MAC)
   MAC=1
+  OPTS+=-DMAC
   #Known Compiler symbols
   # __APPLE__  __APPLE_CC__  __MACH__
   # Apple GNAT, GNU C 4.5 defines __APPLE_CC__ = 1,  __MACH__,  __GNUC__
@@ -757,7 +762,10 @@ ifeq ($(SMIF), SDL)
     EXENAME:=doomlegacy.exe
     LIBS:=-lopengl32 -lglu32 -lwsock32 -lm
   else
-    ifndef MAC
+    ifdef MAC
+      EXENAME:=doomlegacy
+      LDFLAGS+=-framework OpenGL
+    else
       # default is Linux, for all unix SDL
       EXENAME:=doomlegacy
       LDFLAGS+=-L/usr/X11R6/lib
@@ -765,18 +773,24 @@ ifeq ($(SMIF), SDL)
       # -L/usr/X11R6/lib is needed by Linux 2.4 and others that still have
       # the GLU libraries in an X11 directory.
       # -lm is needed for pow, powf, and other MATH1 functions.
-    else
-      EXENAME:=doomlegacy
-      LDFLAGS+=-framework OpenGL
     endif
 
     SDL_CONFIG:=1
   endif
 
   ifdef SDL_CONFIG
-    OPTINC+=$(shell sdl-config --cflags)
-    LIBS+=$(shell sdl-config --libs)
-  else
+    SDLCONFIG_LIBS:=$(shell sdl-config --libs)
+    ifeq "$(findstring -lSDL, $(SDLCONFIG_LIBS) )" "-lSDL"
+      # Got valid output from sdl-config
+      LIBS+=$(SDLCONFIG_LIBS)
+      OPTINC+=$(shell sdl-config --cflags)
+    else
+      $(warning SDL: sdl-config not found )
+      undefine SDLCONFIG_LIBS
+    endif
+  endif
+  
+  ifndef SDLCONFIG_LIBS
     # Extracted from sdl-config script
     ifeq ($(CC_SELECT), MINGW)
       OPTS+=-D_GNU_SOURCE=1 -Dmain=SDL_main
@@ -800,12 +814,11 @@ ifeq ($(SMIF), SDL)
     endif
     ifdef MAC
     # Some Mac SDL downloads do not have sdl-config.
-    # Because I do not know of a way for MAKE to test this, comment
-    # out the SDL_CONFIG=1 above if you do not have sdl-config.
-    # Put correct mac sdl-config info here (somebody).
-      OPTS+=-D_GNU_SOURCE=1 -D_REENTRANT
-      OPTINC+=-I/usr/include/SDL
-      LIBS+=-L/usr/lib -Wl,-rpath,/usr/lib -lSDL -lpthread
+    # Mac packages can put SDL in /usr or /usr/local, so cover both cases.
+      OPTS+=-D_GNU_SOURCE=1 -D_THREAD_SAFE
+      OPTINC+=-I/usr/include/SDL -I/usr/local/include/SDL
+#      LIBS+=-L/usr/lib -Wl,-rpath,/usr/lib -lSDL -lpthread
+      LIBS+=-L/usr/local/lib -lSDL -Wl,-framework,Cocoa
     endif
   endif
 
@@ -1208,9 +1221,14 @@ else
 ifdef DEBUG
 # No -fomit-frame-pointer because debugging on some machines depends upon it.
   #CFLAGS+=-g3 -O0
-  CFLAGS+=$(DEBUGFLAGS) -fno-guess-branch-probability
+  CFLAGS+=$(DEBUGFLAGS)
+  ifeq ($(CC_CMD), clang)
+    # Clang does not recognize this flag  
+  else
+    CFLAGS+=-fno-guess-branch-probability
+  endif
   ifdef DEBUGLIBS
-# Search debug libraries first, otherwise normal library
+    # Search debug libraries first, otherwise normal library
     LIBS:=$(DEBUGLIBS) $(LIBS)
   endif
 else

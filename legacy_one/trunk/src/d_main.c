@@ -277,7 +277,7 @@
 
 // Versioning
 #ifndef SVN_REV
-#define SVN_REV "1620"
+#define SVN_REV "1621"
 #endif
 
 
@@ -431,13 +431,15 @@ consvar_t cv_iwad = {"iwad", "", CV_HIDEN, NULL};
 
 
 #if defined(__APPLE__) && defined(__MACH__)
-// [WDJ] This is very likely only for a development setup using an .app folder
-#ifdef EXT_MAC_DIR_SPEC
+// [WDJ] This is for a setup using an .app folder
+# ifdef MAC_RESOURCES_DIR
 //[segabor]: for Mac specific resources
-extern char mac_legacy_wad[FILENAME_SIZE];  // legacy.wad in Resources
-extern char mac_md2_wad[FILENAME_SIZE];	    // md2.wad in Resources
-extern char mac_user_home[FILENAME_SIZE];   // for config and savegames
-#endif
+char * mac_resource_dir = NULL;  // app Resources (malloc), to find legacy.wad, md2.wad
+# endif
+# ifdef MAC_HOME_DIR
+// [WDJ] Mac OS X uses  ~ as home dir, like on Linux, so this is not needed.
+char * mac_user_home = NULL;   // for config and savegames (malloc)
+# endif
 #endif
 
 // Setup variable doomwaddir for owner usage.
@@ -1698,11 +1700,15 @@ void IdentifyVersion()
     }
 
 
-#if defined(__APPLE__) && defined(__MACH__) && defined( EXT_MAC_DIR_SPEC )
+#if defined(__APPLE__) && defined(__MACH__) && defined( MAC_RESOURCES_DIR )
     //[segabor]: on Mac OS X legacy.wad is within .app folder
     // for uniformity, use the strdup at found_legacy_wad
-    cat_filename(pathiwad, "", mac_legacy_wad );
-    if( access( mac_legacy_wad, R_OK) == 0 )    goto found_legacy_wad;
+    if( mac_resource_dir && ( access( mac_resource_dir, R_OK) == 0 ) )
+    {
+        cat_filename( pathiwad, mac_resource_dir, "legacy.wad" );
+//        cat_filename( pathiwad, mac_resource_dir, "md2.wad" );
+        if( access( pathiwad, R_OK) == 0 )    goto found_legacy_wad;
+    }
     // check other locations
 #endif
 
@@ -2252,6 +2258,32 @@ void D_DoomMain()
             cat_filename(dirbuf, progdir, "wads");
             progdir_wads = strdup(dirbuf);
         }
+
+#ifdef MAC_RESOURCES_DIR
+#if defined( __APPLE__ ) && defined( __MACH__ )
+#if 1
+        {
+	    // Get Resource path using core foundation.
+            CFURLRef app_ref = CFBundleCopyResourceURL( CFBundleGetMainBundle(), CFSTR("legacy"), CFSTR("wad"), CFSTR("Resources") );
+            CFStringRef mac_path = CFURLCopyFileSystemPath( app_ref, kCFURLPOSIXPathStyle );
+            QString res_path = CFStringGetCStringPtr( mac_path, CFStringGetSystemEncoding() );
+            if( res_path )
+            {
+	        mac_resource_dir = strdup( res_path );
+            }
+            // release core foundation
+            CFRelease( app_ref );
+            CFRelease( mac_path );
+        }
+#else
+        cat_filename( dirbuf, progdir, "../Resources" );
+        if( access( dirbuf, X_OK ) == 0 )
+        {
+	    mac_resource_dir = strdup( dirbuf );
+        }
+#endif
+#endif
+#endif
     }
 
     memset( doomwaddir, 0, sizeof(doomwaddir) );
@@ -2458,7 +2490,15 @@ restart_command:
 #endif
         }
 
-        if (!userhome)
+#if defined(LINUX) || (defined(__APPLE__) && defined(__MACH__))
+        if( !userhome )
+        {
+            // Default userhome, on some systems
+            userhome = "~";
+        }
+#endif
+       
+        if( !userhome )
         {
             if(verbose)
                 GenPrintf(EMSG_ver, "Please set $HOME to your home directory, or use -home switch\n");
@@ -2495,7 +2535,10 @@ restart_command:
         }
 #endif
 
-#if defined(__APPLE__) && defined(__MACH__) && defined( EXT_MAC_DIR_SPEC )
+#if defined(__APPLE__) && defined(__MACH__) && defined( MAC_HOME_DIR )
+// [WDJ] Mac OS X uses  ~ as home dir, and a BSD Unix directory structure, so this is not needed.
+// This is probably OS 8 or OS 9.
+// Code for setting mac_user_home is missing !
         //[segabor] ... ([WDJ] MAC port has vars handy)
 //        sprintf(configfile, "%s/DooMLegacy.cfg", mac_user_home);
         cat_filename( cfgbuf, mac_user_home, "DooMLegacy.cfg" );

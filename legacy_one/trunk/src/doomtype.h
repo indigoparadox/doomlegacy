@@ -74,10 +74,19 @@ typedef  int64_t INT64;
 #endif
 
 // boolean type
-#if defined( __APPLE_CC__ ) && ! defined( __GNUC__ )
+#if defined( __APPLE_CC__ )
+//# if ! defined( __GNUC__ )
+# ifdef __clang__
+//# define boolean uint8_t
+typedef uint8_t  boolean;
+// system header defines true and false as macros.
+# else
 # define boolean int
+# endif
+# ifndef true
 # define false 0
 # define true  1
+# endif
 #elif defined(WIN32)
 # define false   FALSE           // use windows types
 # define true    TRUE

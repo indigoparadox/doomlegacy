@@ -79,6 +79,11 @@
 # endif
 #endif
 
+#ifdef __MACH__
+# include <mach-o/dyld.h>
+  // _NSGetExecutablePath
+#endif
+
 #include <libgen.h>
   // dirname function
 
@@ -100,8 +105,8 @@
 
 // MOUSE2_NIX dependent upon DoomLegacy headers.
 #ifdef MOUSE2_NIX
-#include <termios.h>
-#include <sys/ioctl.h>
+# include <termios.h>
+# include <sys/ioctl.h>
 #endif
 
 //#define DEBUG_MOUSEMOTION
@@ -1523,69 +1528,76 @@ char *I_GetUserName(void)
 // Return true when success, dirbuf contains the directory.
 boolean I_Get_Prog_Dir( char * defdir, /*OUT*/ char * dirbuf )
 {
-    int  len;
     char * dnp;
 
 #ifdef LINUX
 # ifdef FREEBSD
-    len = readlink( "/proc/curproc/file", dirbuf, MAX_WADPATH-1 );
-    if( len > 1 )
-    {
-        dirbuf[len] = 0;  // readlink does not terminate string
-        goto got_path;
-    }
-# if 0
-    // Sysctl to get program path.
-    {
-        // FIXME
-        int mib[4];
-        mib[0] = CTL_KERN;
-        mib[1] = KERN_PROC;
-        mib[2] = KERN_PROC_PATHNAME;
-        mib[3] = -1;
-        sysctl(mib, 4, dirbuf, MAX_WADPATH-1, NULL, 0);
-    }
-# endif
+#  define PROC_EXEC    "/proc/curproc/file"
+# elif defined( NETBSD )
+#  define PROC_EXEC    "/proc/curproc/exe"
 # elif defined( SOLARIS )
-    len = readlink( "/proc/self/path/a.out", dirbuf, MAX_WADPATH-1 );
-    if( len > 1 )
-    {
-        dirbuf[len] = 0;  // readlink does not terminate string
-        goto got_path;
-    }
-#  if 0
-    // [WDJ] Am missing a few details
-    getexecname();
-#  endif
-# elif defined( __MACH__ )
-#  if 0
-    uint32_t  bufsize = MAX_WADPATH-1;
-    // [WDJ] Am missing a few details
-    if( _NSGetExecutablePath( dirbuf, & bufsize ) == 0 )   goto got_path;
-#  endif
+#  define PROC_EXEC    "/proc/self/path/a.out"
 # else
-    // Linux
-    len = readlink( "/proc/self/exe", dirbuf, MAX_WADPATH-1 );
+   // Linux
+#  define PROC_EXEC    "/proc/self/exe"
+# endif
+#endif
+
+#if defined(__APPLE__) && defined( __MACH__ )
+   // derived from BSD, but DOES NOT have /proc
+#endif
+
+#ifdef PROC_EXEC
+    // Get the executable path from /proc
+    int len = readlink( PROC_EXEC, dirbuf, MAX_WADPATH-1 );
     if( len > 1 )
     {
         dirbuf[len] = 0;  // readlink does not terminate string
         goto got_path;
     }
-# endif
-#else
-# ifdef WIN32
+#endif
+   
+#ifdef SOLARIS
+    // [WDJ] Solaris, SunOS 5.10, get pathname of executable.
+    // stdlib
+    // Returns 0 when fails.
+    const char *  execpath = getexecname();
+    if( execpath )
+    {
+        // If not an absolute path (does not start with '/'), then can append it to result of getcwd().
+        // defdir is from getcwd()
+        if( (execpath[0] == '/')  // is absolute path already
+	    || (defdir == NULL) )   // defdir missing
+        {
+            // Prepend nothing
+            defdir = "";
+        }
+        cat_filename( dirbuf, defdir, execpath );
+        goto got_path;
+    }
+#endif
+
+#if defined(__APPLE__) && defined( __MACH__ )
+    uint32_t  bufsize = MAX_WADPATH-1;
+    // [WDJ] Get a path to the executable.
+    // Return -1 if buffer is not large enough, 0 if successful.
+    if( _NSGetExecutablePath( dirbuf, & bufsize ) == 0 )
+        goto got_path;
+#endif
+
+#ifdef WIN32
 //    if(  )
     {
         // MS-Docs say Windows XP, but MinGW does not guard it.
-        len = GetModuleFileName( NULL, dirbuf, MAX_WADPATH-1 );
+        int len = GetModuleFileName( NULL, dirbuf, MAX_WADPATH-1 );
         if( len > 1 )
         {
             dirbuf[len] = 0;  // does not terminate string ??
             goto got_path;
         }
     }
-# endif
 #endif
+
     // The argv[0] method
     char * arg0p = myargv[0];
 //    GenPrintf(EMSG_debug, "argv[0]=%s\n", arg0p );

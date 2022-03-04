@@ -9005,8 +9005,6 @@ patchfile = w109_075_clang
 - commit revision 1618
 Fix a number of clang compiler complaints.
 
-=== commit
-
 *** w109_pickup_clip
 patchfile = w109_076_pickup_clip
 - commit revision 1619
@@ -9030,3 +9028,13 @@ reallocated and moved out from under the animation ptrs.
 Rewrote the flat animation using the flat_list.
 Updates the flat animation again when levelflats has moved during the update.
 Removed the old animation code that checked all flats in the wad.
+
+=== commit
+
+*** w109_mac1
+patchfile = w109_078_mac1
+- commit revision 1621
+Changes to support compiling on Mac OS X (Darwin).
+Uses App folder.
+Based on support from Gibbon.
+

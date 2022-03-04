@@ -241,13 +241,16 @@
 #define DRAWMODE_CONFIGFILENAME  "config%s.cfg"
 
 // Name of local directory for config files and savegames
+// In userhome
 #ifdef LINUX
 #define DEFAULTDIR1 ".doomlegacy"
 #define DEFAULTDIR2 ".legacy"
 #endif
 #ifdef __APPLE__
-#define DEFAULTDIR1 ".doomlegacy"
-#define DEFAULTDIR2 ".legacy"
+// The MAC place for application data, and where some other ports put theirs.
+#define DEFAULTDIR1 "/Library/Application Support/doomlegacy"
+// Doomlegacy traditional, where there may be an existing directory.
+#define DEFAULTDIR2 ".doomlegacy"
 #endif
 #ifdef SMIF_PC_DOS
 #define DEFAULTDIR1 "dmlegacy"
@@ -296,12 +299,17 @@
 #define DEFWADS01  "~/games/doomlegacy/wads"
 #define DEFWADS02  "~/games/doomwads"
 #define DEFWADS03  "~/games/doom"
+
 #define DEFWADS04  "/usr/local/share/games/doomlegacy/wads"
 #define DEFWADS05  "/usr/local/share/games/doomwads"
 #define DEFWADS06  "/usr/local/share/games/doom"
+  // Used by Chocolate doom
+
 #define DEFWADS07  "/usr/local/games/doomlegacy/wads"
 #define DEFWADS08  "/usr/local/games/doomwads"
 #define DEFWADS09  "/usr/share/games/doom"
+  // Used by Chocolate doom
+
 #define DEFWADS10  "/usr/share/games/doomlegacy/wads"
 #define DEFWADS11  "/usr/share/games/doomwads"
 #define DEFWADS12  "/usr/games/doomlegacy/wads"
@@ -318,11 +326,18 @@
 
 #if defined(__APPLE__) && defined(__MACH__)
 // Use defined Mac resources (app folder)
-//#define EXT_MAC_DIR_SPEC
+#define MAC_RESOURCES_DIR
+
+#undef DEFWADS16
+#define DEFWADS16  "~/Library/Application Support/doomlegacy"
 
 // Legacy wad for Mac
 //#define  LEGACYWADDIR  ".app"
+#if 1
+#define  LEGACYWADDIR  "~/Library/Application Support/doomlegacy"
+#else
 #define  LEGACYWADDIR  "/usr/local/share/games/doomlegacy"
+#endif
 
 #else
 // Linux, FreeBSD

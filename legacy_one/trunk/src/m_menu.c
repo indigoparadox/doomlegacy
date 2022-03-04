@@ -6711,9 +6711,9 @@ void M_Register_Menu_Controls( void )
 
     // WARNING : the order is important when init mouse2 
 #ifdef MOUSE2
-#if defined( MOUSE2_NIX ) || defined( MOUSE2_WIN )
+#if defined( MOUSE2_NIX ) || defined( MOUSE2_WIN ) || defined( MOUSE2_DOS )
     // Call of mouse2 init occurs with Register cv_usemouse[1].
-#if defined( SMIF_SDL ) || defined( SMIF_WIN32 )
+#if defined( SMIF_SDL ) || defined( SMIF_WIN32 ) || defined( SMIF_X11 )
     CV_RegisterVar(&cv_mouse2type);
 #endif
     CV_RegisterVar(&cv_mouse2port);

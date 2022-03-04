@@ -65,6 +65,11 @@
 
 GLint  majorver, minorver;
 GLint  numscreens;
+// CGL (Core OpenGL)
+// It is low-level interface to setup portion of Apple OpenGL implementation.
+// Can query the hardware and prepare a drawing context for OpenGL.
+// Does similar interfacing for Mac, as GLX does for X11.
+// NSOpenGL (higher level class interface to OpenGL)
 CGLError  cglerr;
 CGLContextObj  cglcon;
 CGLPixelFormatObj  cglpix;   // ptr, reference counted, release needed
@@ -153,6 +158,11 @@ void  mac_set_context( void )
       GenPrintf( EMSG_info," GL_VENDOR = %s\n", glGetString(GL_VENDOR) );
       GenPrintf( EMSG_info," GL_VERSION = %s\n", glGetString(GL_VERSION) );
 
+// [WDJ] Defined guard added. This is how OS_X VERSION is tested on a mac.  As set by AvailabilityMacros.h
+#if defined( MAC_OS_X_VERSION_MAX_ALLOWED ) && (MAC_OS_X_VERSION_MAX_ALLOWED < 101000)
+      // Carbon Khronos Group calls.
+      // Gibbon reports this is only valid for OS X < 10.10.
+      // Context parameters are available for OS X 10.0 and later.
       GenPrintf( EMSG_info, "CGL Context values\n" );
       mac_report_context_var( "SwapRectangle", kCGLCPSwapRectangle, 4 );
       mac_report_context_var( "SwapInterval", kCGLCPSwapInterval, 1 );
@@ -160,6 +170,7 @@ void  mac_set_context( void )
       mac_report_context_var( "SurfaceSurfaceVolatile", kCGLCPSurfaceSurfaceVolatile, 1 );
       mac_report_context_var( "HasDrawable", kCGLCPHasDrawable, 1 );
       mac_report_context_var( "CurrentRendererID", kCGLCPCurrentRendererID, 1 );
+#endif
    }
    
    // Create context retains the pixel format, so can release it
