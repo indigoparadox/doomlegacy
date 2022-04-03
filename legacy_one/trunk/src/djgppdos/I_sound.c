@@ -456,6 +456,7 @@ void  init_music(void)
 
     _go32_dpmi_lock_data(musicbuffer,MIDBUFFERSIZE);
 //    I_AddExitFunc( shutdown_music );  // also done by I_ShutdownSound
+    EN_port_music = ADM_MUS | ADM_MIDI;
     music_started = true;
 }
 
@@ -525,14 +526,17 @@ void I_UnRegisterSong(int handle)
 //    destroy_midi(currsong);
 }
 
-int I_RegisterSong(void* data,int len)
+//  music_type: music_type_e
+//  data : ptr to lump data
+//  len : length of data
+int I_RegisterSong( byte music_type, void* data, int len)
 {
     int e;
     ULONG midlength;
     if(nomusic)
         return 1;
 
-    if(memcmp(data,"MUS",3)==0)
+    if( music_type == MUSTYPE_MUS )
     {
         // convert mus to mid with a wonderfull function
         // thanks to S.Bacquet for the source of qmus2mid
@@ -547,15 +551,25 @@ int I_RegisterSong(void* data,int len)
         currsong=load_midi_mem(musicbuffer,&e);
     }
     else
-    // supprot mid file in WAD !!!
-    if(memcmp(data,"MThd",4)==0)
     {
+        // MIDI, MP3, OGG
+#ifdef FMOD_SOUND
+        if( ! fmod_music )  // seems that FMOD can play anything we got.
+	{ 
+            if ( music_type != MUSTYPE_MIDI )
+                goto cannot_play;
+
+            // support mid file in WAD !!!
+            currsong=load_midi_mem(data,&e);
+	}
+#else
+        // supports MIDI
+        if( music_type != MUSTYPE_MIDI )
+	    goto cannot_play;
+
+        // support mid file in WAD !!!
         currsong=load_midi_mem(data,&e);
-    }
-    else
-    {
-        CONS_Printf("Music Lump is not MID or MUS lump\n");
-        return 0;
+#endif
     }
 
     if(currsong==NULL)
@@ -565,6 +579,10 @@ int I_RegisterSong(void* data,int len)
     }
 
     return 1;
+
+cannot_play:
+    CONS_Printf("Music Lump is not MID or MUS lump\n");
+    return 0;
 }
 
 #ifdef FMOD_SOUND

@@ -342,10 +342,10 @@ void I_GetEvent(void)
 #ifdef DEBUG_MOUSE2_STIMULUS
           // Intercept some keys and fake the mouse2 input using mouse2_stim_trigger.
           if( (event.data1 >= KEY_KEYPAD1) && (event.data1 <= KEY_KEYPAD9) )
-	  {
+          {
               mouse2_stim_trigger = event.data1 - KEY_KEYPAD0;
-	      break;
-	  }
+              break;
+          }
 #endif
 
           D_PostEvent(&event);
@@ -1179,7 +1179,7 @@ void I_StartupMouse2 (void)
         if( c1=='D' || c1=='d' )
         {
             if(c2 == '-')
-	        tiocm_0 |= TIOCM_DTR;  // DTR off
+                tiocm_0 |= TIOCM_DTR;  // DTR off
             else
                 tiocm_1 |= TIOCM_DTR;  // DTR on
         }
@@ -1227,13 +1227,13 @@ void I_StartupMouse2 (void)
                                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
         if( mouse2_filehandle == INVALID_HANDLE_VALUE )
         {
-	    const char * msg = "Error";
+            const char * msg = "Error";
             int e=GetLastError();
             if( e==5 )  msg = "Access denied, may be in use";
             CONS_Printf("\2Can't open %s : %s.\n", cv_mouse2port.string, msg );
             mouse2_filehandle=0;
 #ifdef DEBUG_MOUSE2_STIMULUS
-	    goto mouse2_stimulus;
+            goto mouse2_stimulus;
 #else
             return;
 #endif
@@ -1567,7 +1567,7 @@ boolean I_Get_Prog_Dir( char * defdir, /*OUT*/ char * dirbuf )
         // If not an absolute path (does not start with '/'), then can append it to result of getcwd().
         // defdir is from getcwd()
         if( (execpath[0] == '/')  // is absolute path already
-	    || (defdir == NULL) )   // defdir missing
+            || (defdir == NULL) )   // defdir missing
         {
             // Prepend nothing
             defdir = "";

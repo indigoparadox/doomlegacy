@@ -171,6 +171,76 @@ consvar_t play_mode = { "play_mode", "0", CV_SAVE, CV_byte };
 #endif
 
 
+// indexed by music_type_e
+byte music_type_to_ADM[] = {
+ ADM_MUS,  // MUSTYPE_MUS,
+ ADM_MIDI, // MUSTYPE_MIDI,
+ ADM_MP3,  // MUSTYPE_MP3,
+ ADM_OGG,  // MUSTYPE_OGG,
+ 0,  // MUSTYPE_OTHER
+};
+
+// indexed by music_type_e
+char * music_type_str[] = {
+ "MUS",  // MUSTYPE_MUS,
+ "MIDI", // MUSTYPE_MIDI,
+ "MP3",  // MUSTYPE_MP3,
+ "OGG",  // MUSTYPE_OGG,
+ "OTHER",  // MUSTYPE_OTHER
+};
+
+byte  EN_port_music = ADM_MUS;  // ADM_ MP3, OGG music
+
+
+#ifdef MUSIC_SOURCE_CONTROL
+// To make the table easier to fill-in
+#ifdef MUSIC_MP3
+# define EN_ADM_MP3  ADM_MP3
+#else
+# define EN_ADM_MP3  0
+#endif
+
+#ifdef MUSIC_OGG
+# define EN_ADM_OGG  ADM_OGG
+#else
+# define EN_ADM_OGG  0
+#endif
+
+static byte src_music_enables[] = {
+  ADM_MUS | ADM_MIDI,   // MUS
+  ADM_MUS | ADM_MIDI | EN_ADM_MP3 | EN_ADM_OGG, // Auto
+  EN_ADM_MP3, // MP3 only
+  EN_ADM_OGG, // OGG only
+};
+
+static byte  EN_src_music = 0;  // ADM_
+static byte  music_num_playing = 0;
+
+void CV_music_source_OnChange( void )
+{
+    EN_src_music = src_music_enables[ cv_music_source.EV ];
+    if( music_num_playing )  // not on startup
+        S_ChangeMusic( music_num_playing, 1 );
+
+    cv_music_source.state &= ~CS_MODIFIED;
+}
+
+// MUS is standard MUS->MIDI
+CV_PossibleValue_t music_source_cons_t[] = { {0, "MUS"}, {1, "Auto"},
+#ifdef MUSIC_MP3
+   {2, "MP3" },
+#endif
+#ifdef MUSIC_OGG
+   {3, "OGG" },
+#endif
+   {0, NULL} };
+consvar_t cv_music_source = { "music_source", "1", CV_SAVE | CV_CALL,
+    music_source_cons_t, CV_music_source_OnChange };
+
+#undef EN_ADM_MP3
+#undef EN_ADM_OGG
+#endif
+
 // stereo reverse 1=true, 0=false
 consvar_t cv_stereoreverse = { "stereoreverse", "0", CV_SAVE, CV_OnOff };
 
@@ -241,10 +311,12 @@ static boolean mus_paused;
 // music currently being played
 static musicinfo_t *mus_playing = NULL;
 
+
 // [WDJ] unused
 #ifdef CLEANUP
 static int nextcleanup;
 #endif
+
 
 //
 // Internals.
@@ -271,6 +343,9 @@ void S_Register_SoundStuff(void)
     CV_RegisterVar(&cv_precachesound);
 #ifdef SURROUND_SOUND
     CV_RegisterVar(&cv_surround);
+#endif
+#ifdef MUSIC_SOURCE_CONTROL
+    CV_RegisterVar(&cv_music_source);
 #endif
 
     if (dedicated)
@@ -1341,9 +1416,49 @@ void S_ChangeMusicName( const char * name, byte looping)
     }
 }
 
+
+// Detect the music type.
+//   can_play_adm:  ADM_ of music types that can be played
+byte detect_music_type( lumpnum_t music_ln, byte can_play_adm )
+{
+    byte  head[10];
+    W_ReadLumpHeader( music_ln, &head, 8 );
+    // Check music header identifiers
+    byte music_type = MUSTYPE_OTHER;
+
+// GenPrintf( EMSG_debug, "Music header %c%c%c%c\n", head[0], head[1], head[2], head[3] );
+    if( memcmp(head,"MUS",3) == 0 )  // MUS
+    {
+        music_type = MUSTYPE_MUS;
+    }
+    else if( memcmp(head,"MThd",3) == 0 )  // MIDI
+    {
+        music_type = MUSTYPE_MIDI;
+    }
+# ifdef MUSIC_MP3
+    else if( memcmp(head,"ID3",3) == 0 )  // MP3
+    {
+        music_type = MUSTYPE_MP3;
+    }
+# endif
+# ifdef MUSIC_OGG
+    else if( memcmp(head,"Ogg",3) == 0 )  // OGG
+    {
+        music_type = MUSTYPE_OGG;
+    }
+# endif
+
+    if( ! (can_play_adm & music_type_to_ADM[music_type]) )  // have decoder for MP3, OGG, etc
+        GenPrintf(EMSG_warn, "MUSIC %s: cannot play\n", music_type_str[music_type] );
+
+    return music_type;
+}
+
+
 void S_ChangeMusic(int music_num, byte looping)
 {
     musicinfo_t *music;
+    byte  music_type = MUSTYPE_MUS;
 
     if (dedicated)
         return;
@@ -1359,14 +1474,66 @@ void S_ChangeMusic(int music_num, byte looping)
     else
         music = &S_music[music_num];
 
-    if (mus_playing == music)
+#ifdef MUSIC_SOURCE_CONTROL
+    if((mus_playing == music)
+       && ( ! ( cv_music_source.state & CS_MODIFIED ) ) )
         return;
+#else   
+    if(mus_playing == music)
+        return;
+#endif
 
     // shutdown old music
     S_StopMusic();
 
     // get lumpnum if neccessary
     // Test of the music ever being looked up, not a test of VALID_LUMP.
+#ifdef MUSIC_SOURCE_CONTROL
+    music_num_playing = 0;
+    if( (music->lumpnum == 0)
+        || ( cv_music_source.state & CS_MODIFIED ) )  // music source has changed
+    {
+        char   lumpname[32];
+        lumpnum_t music_ln = NO_LUMP;
+        byte  adv_music = EN_port_music & EN_src_music;
+
+        // MP3 or OGG
+        if( adv_music & (ADM_MP3 | ADM_OGG) )
+        {
+            // Check for "o_name", which is MP3 or OGG music.
+            snprintf(lumpname, 31, "o_%.6s", music->name);  // Doom MP3
+            lumpname[31] = 0;
+            music_ln = W_Check_Namespace( lumpname, LNS_any );
+            if( VALID_LUMP(music_ln) )
+            {
+                music_type = detect_music_type( music_ln, EN_port_music );
+                byte music_adm = music_type_to_ADM[ music_type ];
+                if( ! (adv_music & music_adm) )  // check on select and required decoder
+                    music_ln = NO_LUMP;
+            }
+        }
+
+        if( ! VALID_LUMP(music_ln) )
+        {
+            // Default music names
+            snprintf(lumpname, 31, (EN_heretic? "%.8s": "d_%.6s"), music->name);
+            lumpname[31] = 0;
+            music_ln = W_Check_Namespace( lumpname, LNS_any );
+            music_type = detect_music_type( music_ln, EN_port_music );
+        }
+
+        music->lumpnum = music_ln;
+        if( ! VALID_LUMP(music_ln) )
+            return;
+
+# ifdef MUSIC_SELECT_ALT_IS_SILENCE
+        // If cannot play MP3, OGG, then silence
+        if( (cv_music_source.EV > 1)   // selected MP3, OGG, etc.
+            && (music_type < MUSTYPE_MP3) )
+            return;  // silence
+# endif
+    }
+#else       
     if( music->lumpnum == 0 )
     {
         if (EN_heretic)
@@ -1374,10 +1541,10 @@ void S_ChangeMusic(int music_num, byte looping)
         else
             music->lumpnum = W_GetNumForName(va("d_%s", music->name));
     }
-#if 0
     // W_GetNumForName will I_Error instead of returning NO_LUMP.
-    if( ! VALID_LUMP(music->lumpnum) )
-        return;
+# ifndef MUSSERV
+    music_type = detect_music_type( music->lumpnum, EN_port_music );
+# endif
 #endif
 
 #ifdef MUSSERV
@@ -1387,12 +1554,15 @@ void S_ChangeMusic(int music_num, byte looping)
 #else
     // load & register it
     music->data = (void *) S_CacheMusicLump(music->lumpnum);
-    music->handle = I_RegisterSong(music->data, W_LumpLength(music->lumpnum));
+    music->handle = I_RegisterSong( music_type, music->data, W_LumpLength(music->lumpnum));
     // play it
     I_PlaySong(music->handle, looping);
 #endif
 
     mus_playing = music;
+#ifdef MUSIC_SOURCE_CONTROL
+    music_num_playing = music_num;
+#endif
 }
 
 

@@ -956,11 +956,11 @@ int I_PlayServerSong( char * name, lumpnum_t lumpnum, byte looping )
 // not MUSSERV
 
 // Interface
-int I_RegisterSong( void* data, int len )
+int I_RegisterSong( byte music_type, void* data, int len )
 {
     if (nomusic)
     {
-        return 1;
+        return 0;
     }
 
     data = NULL;
@@ -1031,6 +1031,9 @@ void I_StartupSound()
     // config file has been loaded
     I_SetSoundOption( cv_snd_opt.EV );
 #endif
+
+    // Only has a MUS player.
+    EN_port_music = ADM_MUS;
 
     if(! nomusic )
     {

@@ -115,6 +115,14 @@ void I_SetMusicVolume(int volume);
 void I_PauseSong(int handle);
 void I_ResumeSong(int handle);
 
+enum music_type_e {
+   MUSTYPE_MUS,
+   MUSTYPE_MIDI,
+   MUSTYPE_MP3,
+   MUSTYPE_OGG,
+   MUSTYPE_OTHER
+};
+
 #ifdef MUSSERV
 // Information for ports with music servers.
 //  name : name of song
@@ -122,9 +130,10 @@ void I_ResumeSong(int handle);
 int I_PlayServerSong( char * name, lumpnum_t lumpnum, byte looping );
 #else
 // Registers a song handle to song data.
+//  music_type: music_type_e
 //  data : ptr to lump data
 //  len : length of data
-int I_RegisterSong( void* data, int len );
+int I_RegisterSong( byte music_type, void* data, int len );
 #endif
 // Called by anything that wishes to start music.
 //  plays a song, and when the song is done,

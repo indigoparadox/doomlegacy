@@ -2837,6 +2837,9 @@ menuitem_t SoundMenu[]=
 #if !defined(CDMUS) || !defined(SMIF_SDL)
     {IT_SPACE, NULL, NULL, NULL },
 #endif
+#ifdef MUSIC_SOURCE_CONTROL
+    {IT_STRING | IT_CVAR | IT_CV_DELAY,  0, "Music src",   &cv_music_source, 0},
+#endif
 #ifdef SOUND_DEVICE_OPTION
     {IT_STRING | IT_CVAR | IT_CV_DELAY,  0, "Sound Pref",   &cv_snd_opt, 0},
 #endif
@@ -2854,7 +2857,7 @@ menu_t  SoundDef =
     M_DrawGenericMenu,
     NULL,
     sizeof(SoundMenu)/sizeof(menuitem_t),
-#if defined(SOUND_DEVICE_OPTION) || defined(MUSSERV)
+#if defined(SOUND_DEVICE_OPTION) || defined(MUSSERV) || defined(MUSIC_SOURCE_CONTROL)
     64,32,
 #else
     80,50,

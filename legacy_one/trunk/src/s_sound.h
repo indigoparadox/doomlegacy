@@ -103,6 +103,19 @@ typedef enum
 extern consvar_t  play_mode;
 #endif
 
+enum adm_music_e {
+   ADM_MUS = 0x01,
+   ADM_MIDI = 0x02,
+   ADM_MP3 = 0x04,
+   ADM_OGG = 0x08
+};
+extern byte EN_port_music;  // ADM_  MP3 and OGG music
+
+#ifdef MUSIC_SOURCE_CONTROL
+extern consvar_t cv_music_source;
+#endif
+
+
 // Register sound vars and commands at game startup.
 void S_Register_SoundStuff (void);
 

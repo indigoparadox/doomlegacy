@@ -31,7 +31,7 @@
 #define MID2STRM_H
 
 // undefine this to remove warning messages
-//#define DEBUGMIDISTREAM
+//#define DEBUG_MIDI_STREAM
 
 #include <windows.h>
 #include <windowsx.h>
@@ -108,7 +108,7 @@ typedef struct
     unsigned char*     pTrackPointer;          // -> next UBYTE to read
     uint32_t           tkNextEventDue;         // Absolute time of next event in track
     BYTE               bRunningStatus;         // Running status from last channel msg
-#ifdef DEBUGMIDISTREAM
+#ifdef DEBUG_MIDI_STREAM
     LONG               nTrack;                 // # of this track for debugging
 #endif
 } INTRACKSTATE, *PINTRACKSTATE;

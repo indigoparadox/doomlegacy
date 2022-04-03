@@ -9029,12 +9029,37 @@ Rewrote the flat animation using the flat_list.
 Updates the flat animation again when levelflats has moved during the update.
 Removed the old animation code that checked all flats in the wad.
 
-=== commit
-
 *** w109_mac1
 patchfile = w109_078_mac1
 - commit revision 1621
 Changes to support compiling on Mac OS X (Darwin).
 Uses App folder.
 Based on support from Gibbon.
+
+=== commit
+
+*** w110_mp3
+patchfile = w110_001_mp3
+- commit revision 1622
+Fix the existing MIDI, MP3, and OGG music playing.
+Put the o_xxx lump read into s_sound.c.
+Put the music type detection into s_sound.c, passing
+it as a parameter to all port music code.
+Add a control to select music type, with an automatic mode.
+Add automatic music type selection and playing.
+
+*** w110_misc
+patchfile = w110_002_misc
+- commit revision 1623
+
+*** w110_sdl2
+patchfile = w110_003_sdl2
+- commit revision 1624
+Add SDL2 support.
+This provides video, sound, and keyboard alterations
+for the SDL2 library calls.
+Still supports SDL1, for target machines that are not supported by SDL2.
+The SDL1 is working better than SDL2, at this point.
+
+
 

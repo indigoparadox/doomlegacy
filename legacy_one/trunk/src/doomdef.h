@@ -174,6 +174,24 @@
 // If surround sound is desired
 #define SURROUND_SOUND
 
+#if defined(SMIF_SDL) || defined(SMIF_WIN_NATIVE)
+// Enable MP3 music
+#define MUSIC_MP3
+
+// Enable OGG music
+#define MUSIC_OGG
+
+#if defined( MUSIC_MP3 ) || defined( MUSIC_OGG )   
+// Select the music lump, provides access to o_xxx music lumps.
+#define MUSIC_SOURCE_CONTROL
+
+// If music source has selected MP3 or OGG,
+// and such are not found or cannot be played, then be silent.
+// Otherwise will play the default MUS or MIDI, like in AUTO.
+#define MUSIC_SELECT_ALT_IS_SILENCE
+#endif
+#endif
+
 // Coronas in dynlights
 #define DYLT_CORONAS
 // Coronas drawn with sprite draw

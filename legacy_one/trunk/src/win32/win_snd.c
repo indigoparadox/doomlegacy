@@ -115,6 +115,7 @@
 # include <fmod_errors.h>	/* optional */
 // FIXME: for what VERSION was this written
 #define FMOD_VERSION_NEEDED    1
+#define FMOD_FILE   "mus.tmp"
 #endif
 
 //#define TESTCODE            // remove this for release version
@@ -1343,20 +1344,22 @@ static void init_music(void)
 	    fmod_music = 0;
 	    goto no_fmod;
 	}
+        EN_port_music = ADM_MUS | ADM_MIDI | ADM_MP3 | ADM_OGG;
         return;
     }
 no_fmod:
 #endif
+
+    EN_port_music = ADM_MUS | ADM_MIDI;
 
     // check out number of MIDI devices available
     //
     cMidiDevs = midiOutGetNumDevs();
     if (!cMidiDevs) {
         CONS_Printf ("No MIDI devices available, music is disabled\n");
-        nomusic = true;
-        return;
+        goto disable_music;
     }
-#ifdef DEBUGMIDISTREAM
+#ifdef DEBUG_MIDI_STREAM
     else {
         CONS_Printf ("%d MIDI devices available\n", cMidiDevs);
     }
@@ -1417,20 +1420,19 @@ no_fmod:
     if( !hBufferReturnEvent )
     {
         I_GetLastErrorMsgBox();
-        nomusic = true;
-        return;
+        goto disable_music;       
     }
 
-    if ((mmrRetVal = midiStreamOpen(&hStream,
-                                    &uMIDIDeviceID,
-                                    (DWORD)1, (DWORD)MidiStreamCallback/*NULL*/,
-                                    (DWORD)0,
-                                    CALLBACK_FUNCTION /*CALLBACK_NULL*/)) != MMSYSERR_NOERROR)
+    mmrRetVal = midiStreamOpen(&hStream,
+                               &uMIDIDeviceID,
+                               (DWORD)1, (DWORD)MidiStreamCallback/*NULL*/,
+                               (DWORD)0,
+                               CALLBACK_FUNCTION /*CALLBACK_NULL*/);
+    if( mmrRetVal != MMSYSERR_NOERROR )
     {
-        CONS_Printf ("I_RegisterSong: midiStreamOpen FAILED\n");
+        CONS_Printf ("Init music: midiStreamOpen FAILED\n");
         MidiErrorMessageBox( mmrRetVal );
-        nomusic = true;
-        return;
+        goto disable_music;
     }
 
     // stream buffers are initially unallocated (set em NULL)
@@ -1442,6 +1444,12 @@ no_fmod:
     I_AddExitFunc (shutdown_music);
 
     music_started = true;
+    return;
+
+disable_music:
+    EN_port_music = 0;
+    nomusic = true;
+    return;
 }
 
 
@@ -1467,7 +1475,7 @@ static void shutdown_music(void)
         FSOUND_Stream_Stop(fmus);
         FSOUND_Stream_Close(fmus);
         FSOUND_Close();
-        remove("mus.tmp"); // Delete the temp file
+        remove( FMOD_FILE ); // Delete the temp file
         fmus = NULL;
         return;
     }
@@ -1580,7 +1588,7 @@ void I_SetMusicVolume(int volume)
 }
 
 
-void I_StartFMODSong (char* musicname, int looping);
+void I_StartFMODSong ( byte looping );
 
 // ----------
 // I_PlaySong
@@ -1597,14 +1605,12 @@ void I_PlaySong(int handle, int looping)
 #ifdef FMOD_SOUND   
     if (fmod_music)
     {
-#if 0
        	// FIXME: Need handle --> musicname
-        I_StartFMODSong ( musicname, looping);
-#endif
+        I_StartFMODSong ( looping );
     }
 #endif
 
-#ifdef DEBUGMIDISTREAM
+#ifdef DEBUG_MIDI_STREAM
     debug_Printf("I_PlaySong: looping %d\n", looping);
 #endif
 
@@ -1647,7 +1653,7 @@ void I_PauseSong (int handle)
     if (nomusic)
         return;
 
-#ifdef DEBUGMIDISTREAM
+#ifdef DEBUG_MIDI_STREAM
     debug_Printf("I_PauseSong: \n");
 #endif
 
@@ -1676,7 +1682,7 @@ void I_ResumeSong (int handle)
     if (nomusic)
         return;
 
-#ifdef DEBUGMIDISTREAM
+#ifdef DEBUG_MIDI_STREAM
     debug_Printf("I_ResumeSong: \n");
 #endif
 
@@ -1708,7 +1714,7 @@ void I_StopSong(int handle)
     }
 #endif
 
-#ifdef DEBUGMIDISTREAM
+#ifdef DEBUG_MIDI_STREAM
     debug_Printf("I_StopSong: \n");
 #endif
 
@@ -1781,7 +1787,7 @@ int I_QrySongPlaying (int handle)
     if (nomusic)
         return 0;
 
-#ifdef DEBUGMIDISTREAM
+#ifdef DEBUG_MIDI_STREAM
     debug_Printf("I_QrySongPlaying: \n");
 #endif
 #ifdef FMOD_SOUND
@@ -1803,61 +1809,39 @@ void I_UnRegisterSong(int handle)
     //     (but we don't cause I hate malloc's)
     Mid2StreamConverterCleanup();
 
-#ifdef DEBUGMIDISTREAM
+#ifdef DEBUG_MIDI_STREAM
     debug_Printf("I_UnregisterSong: \n");
 #endif
 }
 
 #ifdef FMOD_SOUND
 // Special FMOD support SSNTails 12-13-2002
-void I_StartFMODSong (char* musicname, int looping)
+void I_StartFMODSong ( byte looping )
 {
-	char filename[9];
-	void* data;
-	lumpnum_t lumpnum;
+    char filename[9];
+    void* data;
+    lumpnum_t lumpnum;
 
-	if(!fmod_music)
-		return;
+    if(!fmod_music)
+        return;
 
-	if(fmus != NULL)
-	{
-		FSOUND_Stream_Stop(fmus);
-		FSOUND_Stream_Close(fmus);
-	}
+    if(fmus != NULL)
+    {
+        FSOUND_Stream_Stop(fmus);
+        FSOUND_Stream_Close(fmus);
+    }
 
-	// Create the filename we need
-	sprintf(filename, "o_%s", musicname);
-	
-	lumpnum = W_CheckNumForName(filename);
+    // Getting MUS, MP3, OGG lumps is done by s_sound
+    fmus = FSOUND_Stream_Open( FMOD_FILE, looping ? FSOUND_LOOP_NORMAL : 0, 0, 0);
 
-	if( ! VALID_LUMP(lumpnum) )
-	{
-		CONS_Printf("Music file %s not found!\n", filename);
-		fmus = NULL;
-		return; // No music found. Oh well! Just be silent instead.
-		        // Maybe someone (not me, heheh) would like to have it revert to
-		        // MIDI when a digital file isn't found?
-	}
+    if (!fmus)
+    {
+        CONS_Printf("%s:\n%s", FMOD_ErrorString(FSOUND_GetError()), filename);
+        return;
+    }
 
-	data = W_CacheLumpName ( filename, PU_CACHE );
-
-	I_SaveMemToFile (data, W_LumpLength(W_GetNumForName (filename)), "mus.tmp");
-
-	Z_Free(data);
-
-	fmus = FSOUND_Stream_Open("mus.tmp", looping ? FSOUND_LOOP_NORMAL : 0, 0, 0);
-
-	if (!fmus)
-	{
-		CONS_Printf("%s:\n%s", FMOD_ErrorString(FSOUND_GetError()), filename);
-		return;
-	}
-
-	/*
-	    PLAY SONG
-	*/
-
-	FSOUND_Stream_Play(0, fmus);
+    // PLAY SONG
+    FSOUND_Stream_Play(0, fmus);
 }
 #endif
 
@@ -1869,7 +1853,8 @@ void I_StartFMODSong (char* musicname, int looping)
 //   which will continually fill the buffers with new data
 // --------------
 
-int I_RegisterSong(void* data, int len)
+// Return handle (0= fail, 1=MIDI, 2=FMOD)
+int I_RegisterSong( byte music_type, void* data, int len )
 {
     int    err_code;
     byte*  MidiData = NULL;  // MIDI music buffer to be played or NULL
@@ -1878,10 +1863,10 @@ int I_RegisterSong(void* data, int len)
     if (nomusic)
         return 1;
 
-#ifdef DEBUGMIDISTREAM
+#ifdef DEBUG_MIDI_STREAM
     debug_Printf("I_RegisterSong: \n");
 #endif
-    if (!memcmp(data,"MUS",3))
+    if( music_type == MUSTYPE_MUS )
     {
         // convert mus to mid with a wonderful function
         // thanks to S.Bacquet for the sources of qmus2mid
@@ -1891,22 +1876,31 @@ int I_RegisterSong(void* data, int len)
 		   /*INOUT*/    MidiData_buf, &MidiSize );
         if(err_code != QM_success)
         {
-            CONS_Printf("Cannot convert mus to mid, converterror :%d\n", err_code);
+            CONS_Printf("Cannot convert mus to mid, convert error :%d\n", err_code);
             return 0;
         }
         MidiData = MidiData_buf;
     }
-    else if (!memcmp(data,"MThd",4))
+    else
     {
+        // MIDI, MP3, OGG
+#ifdef FMOD_SOUND
+        if( ! fmod_music )  // seems that FMOD can play anything we got.
+	{ 
+            if ( music_type != MUSTYPE_MIDI )
+                goto cannot_play;
+	}
+#else
+	// Only supports MIDI
+        if ( music_type != MUSTYPE_MIDI )
+            goto cannot_play;
+#endif
+
         // support mid file in WAD !!! (no conversion needed)
         MidiData = data;
         MidiSize = len;
     }
-    else
-    {
-        CONS_Printf ("Music lump is not MID or MUS music format\n");
-        return 0;
-    }
+
 
     if (MidiData == NULL)
     {
@@ -1914,13 +1908,21 @@ int I_RegisterSong(void* data, int len)
 		     (char)data[0], (char)data[1], (char)data[2], (char)data[3]);
         return 0;
     }
-#ifdef DEBUGMIDISTREAM
-    else
+
+#ifdef DEBUG_MIDI_STREAM
     {
         I_SaveMemToFile (MidiData, MidiSize, "c:/temp/debug.mid");
     }
 #endif
-    
+
+#ifdef FMOD_SOUND
+    if( fmod_music )
+    {
+	I_SaveMemToFile (data, len, FMOD_FILE);
+        return 2;
+    }
+#endif
+
     // setup midi stream buffer
     if (StreamBufferSetup(MidiData, MidiSize))
     {
@@ -1930,6 +1932,10 @@ int I_RegisterSong(void* data, int len)
     }
 
     return 1;
+
+cannot_play:   
+    CONS_Printf ("Music lump is not MID or MUS music format\n");
+    return 0;
 }
 
 
@@ -1958,7 +1964,7 @@ static BOOL StreamBufferSetup( byte* MidiData, int MidiSize )
     int     nChkErr;
     int     idx;
 
-#ifdef DEBUGMIDISTREAM
+#ifdef DEBUG_MIDI_STREAM
     if (hStream == NULL)
         I_Error ("StreamBufferSetup: hStream is NULL!");
 #endif
@@ -2081,7 +2087,7 @@ void I_SetMidiChannelVolume( DWORD dwChannel, DWORD dwVolumePercent )
     if(( mmrRetVal = midiOutShortMsg( (HMIDIOUT)hStream, dwEvent ))
                                                         != MMSYSERR_NOERROR )
     {
-#ifdef DEBUGMIDISTREAM
+#ifdef DEBUG_MIDI_STREAM
         MidiErrorMessageBox( mmrRetVal );
 #endif
         return;
@@ -2213,7 +2219,7 @@ static void CALLBACK MidiStreamCallback (HMIDIIN hMidi, UINT uMsg, DWORD dwInsta
             pme = (MIDIEVENT *)(pmh->lpData + pmh->dwOffset);
             if( MIDIEVENT_TYPE( pme->dwEvent ) == MIDI_CTRLCHANGE )
             {
-#ifdef DEBUGMIDISTREAM
+#ifdef DEBUG_MIDI_STREAM
                 if( MIDIEVENT_DATA1( pme->dwEvent ) == MIDICTRL_VOLUME_LSB )
                 {
                     debug_Printf ( "Got an LSB volume event" );

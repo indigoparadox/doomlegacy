@@ -84,6 +84,8 @@
 #define MIDBUFFERSIZE   128*1024L          // buffer size for Mus2Midi conversion  (ugly code)
 static  char*           MidiData_buf;      // buffer allocated at program start for Mus2Mid conversion
 #endif
+#define MUSIC_MUS_FILE       "doom.mus"
+#define MUSIC_MIDI_FILE      "doom.mid"
 int                     music_started=0;
 
 static void init_music(void);
@@ -714,6 +716,7 @@ void init_music(void)
 #endif
 
 //   I_AddExitFunc( shutdown_music );  // also done by I_ShutdownSound
+   EN_port_music = ADM_MUS | ADM_MIDI;
    music_started = true;
 }
 
@@ -777,8 +780,8 @@ void I_UnRegisterSong(int handle)
    handle = 0;
    printf( "I_UnRegisterSong\n");
       // remove files
-   unlink( "doom.mid");
-   unlink( "doom.mus");
+   unlink( MUSIC_MIDI_FILE );
+   unlink( MUSIC_MUS_FILE );
 }
 
 // ---------------
@@ -800,7 +803,7 @@ void I_SaveMemToFile (unsigned char* pData, unsigned long iLength, char* sFileNa
     close( fileHandle);
 }
 
-int I_RegisterSong(void* data, int len)
+int I_RegisterSong( byte music_type, void* data, int len )
 {
     int             er;
     char*           MidiData = NULL;       // MIDI music buffer to be played or NULL
@@ -811,14 +814,14 @@ int I_RegisterSong(void* data, int len)
         return 1;
 
 #ifdef MIDI_FILE_TO_FILE
-    I_SaveMemToFile (data, len, "doom.mus");
-    qmus2mid_file( "doom.mus", "doom.mid", 0, 89,64,1);
+    I_SaveMemToFile (data, len, MUSIC_MUS_FILE );
+    qmus2mid_file( MUSIC_MUS_FILE, MUSIC_MIDI_FILE, 0, 89,64,1);
 #else
 
 #ifdef DEBUGMIDISTREAM
     CONS_Printf("I_RegisterSong: \n");
 #endif
-    if (!memcmp(data,"MUS",3))
+    if( music_type == MUSTYPE_MUS )
     {
         // convert mus to mid with a wonderful function
         // thanks to S.Bacquet for the sources of qmus2mid
@@ -832,16 +835,16 @@ int I_RegisterSong(void* data, int len)
         }
         MidiData = MidiData_buf;
     }
-    else if (!memcmp(data,"MThd",4))
+    else
     {
+        // MIDI, MP3, OGG
+        // only supports MIDI
+        if( music_type != MUSTYPE_MIDI )
+	    goto cannot_play;
+
         // support mid file in WAD !!! (no conversion needed)
         MidiData = data;
 	MidiSize = len;
-    }
-    else
-    {
-        CONS_Printf ("Music lump is not MID or MUS music format\n");
-        return 0;
     }
 
     if (MidiData == NULL)
@@ -856,12 +859,16 @@ int I_RegisterSong(void* data, int len)
         I_SaveMemToFile (MidiData, MidiSize, "c:/temp/debug.mid");
     }
 #endif
-    I_SaveMemToFile (MidiData, MidiSize, "doom.mid");
+    I_SaveMemToFile (MidiData, MidiSize, MUSIC_MIDI_FILE );
 #endif
 
     OpenMIDI( pmData);
 
     return 1;
+
+cannot_play:
+    CONS_Printf("Music Lump is not MID or MUS lump\n");
+    return 0;
 }
 
 // Is the song playing?

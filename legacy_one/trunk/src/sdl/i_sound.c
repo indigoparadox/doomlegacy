@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Copyright (C) 2000-2016 by Doom Legacy team
+// Copyright (C) 2000-2022 by Doom Legacy team
 //
 // This source is available for distribution and/or modification
 // only under the terms of the DOOM Source Code License as
@@ -110,7 +110,7 @@
 
 
 // MIDI music buffer
-#define MIDBUFFERSIZE   (128*1024)
+#define MIDI_BUFFER_SIZE   (128*1024)
 
 #define MUSIC_FADE_TIME 400 // ms
 
@@ -295,12 +295,12 @@ int I_StartSound(sfxid_t sfxid, int vol, int sep, int pitch, int priority)
         // Loop all channels, check.
         for (i = 0; i < NUM_CHANNELS; i++)
         {
-	    chanp = & mix_channel[i];
+            chanp = & mix_channel[i];
             // if Active, and using the same SFX
-	    if ((chanp->data_ptr) && (chanp->sfxid == sfxid))
+            if ((chanp->data_ptr) && (chanp->sfxid == sfxid))
             {
-	        if( S_sfx[sfxid].flags & SFX_id_fin )
-		    return chanp->handle;  // already have one
+                if( S_sfx[sfxid].flags & SFX_id_fin )
+                    return chanp->handle;  // already have one
                 // Kill, Reset.
                 chanp->data_ptr = 0;
                 break;
@@ -315,9 +315,9 @@ int I_StartSound(sfxid_t sfxid, int vol, int sep, int pitch, int priority)
     {
         if (! mix_channel[i].data_ptr )  // unused
         {
-	    slot = i;
-	    break;
-	}
+            slot = i;
+            break;
+        }
         // handles sound_age wrap, by considering only diff
         register unsigned int  agpr = sound_age - mix_channel[i].age_priority;
         if (agpr > oldest)   // older
@@ -462,15 +462,15 @@ void I_UpdateSoundParams(int handle, int vol, int sep, int pitch)
         // Sanity check, clamp volume.
         if (rightvol < 0 || rightvol > 127)
         {
-	    I_SoftError("rightvol out of bounds\n");
-	    rightvol = ( rightvol < 0 ) ? 0 : 127;
-	}
+            I_SoftError("rightvol out of bounds\n");
+            rightvol = ( rightvol < 0 ) ? 0 : 127;
+        }
 
         if (leftvol < 0 || leftvol > 127)
         {
-	    I_SoftError("leftvol out of bounds\n");
-	    leftvol = ( leftvol < 0 ) ? 0 : 127;
-	}
+            I_SoftError("leftvol out of bounds\n");
+            leftvol = ( leftvol < 0 ) ? 0 : 127;
+        }
 
         // Get the proper lookup table piece
         //  for this volume level
@@ -568,16 +568,16 @@ static void I_UpdateSound_sdl(void *unused, Uint8 *stream, int len)
         // Love thy L2 chache - made this a loop.
         // Now more channels could be set at compile time
         //  as well. Thus loop those  channels.
-	// Mixing channel index.
+        // Mixing channel index.
         register mix_channel_t * chanp = & mix_channel[ 0 ];
         for (chan = NUM_CHANNELS; chan > 0; chan--)
         {
-	    register byte * chan_data_ptr = chanp->data_ptr;
+            register byte * chan_data_ptr = chanp->data_ptr;
             // Check channel, if active.
             if ( chan_data_ptr )
             {
-	        // Get the raw data from the channel.
-	        register unsigned int sample = * chan_data_ptr;
+                // Get the raw data from the channel.
+                register unsigned int sample = * chan_data_ptr;
                 // Add left and right part for this channel (sound)
                 //  to the current data.
                 // Adjust volume accordingly.
@@ -590,7 +590,7 @@ static void I_UpdateSound_sdl(void *unused, Uint8 *stream, int len)
 #else
                 dr += chanp->rightvol_lookup[sample];
 #endif
-		// 16.16 fixed point step forward in the sound data
+                // 16.16 fixed point step forward in the sound data
                 chanp->step_remainder += chanp->step;
                 // take full steps
                 chan_data_ptr += chanp->step_remainder >> 16;
@@ -600,10 +600,10 @@ static void I_UpdateSound_sdl(void *unused, Uint8 *stream, int len)
                 // Check whether we are done.
                 if (chan_data_ptr >= chanp->data_end)
                     chan_data_ptr = NULL;
-	        
-	        chanp->data_ptr = chan_data_ptr;
+
+                chanp->data_ptr = chan_data_ptr;
             }
-	    chanp ++;  // next channel
+            chanp ++;  // next channel
         }
 
         // Clamp to range. Left hardware channel.
@@ -638,7 +638,8 @@ static void I_UpdateSound_sdl(void *unused, Uint8 *stream, int len)
 //
 
 #ifdef HAVE_MIXER
-/// the "registered" piece of music
+// The SDL_mixer interface.
+// The "registered" piece of music
 static struct music_channel_t
 {
   Mix_Music *mus;
@@ -682,18 +683,18 @@ void Midifile_OLD_SDL_MIXER( byte* midibuf, unsigned long midilength )
     midifile = fopen( midiname, "wb" );
     if( midifile )
     {
-	  fwrite( midibuf, midilength, 1, midifile );
-	  fclose( midifile );
+          fwrite( midibuf, midilength, 1, midifile );
+          fclose( midifile );
           if(verbose)
               fprintf( stderr, "Midifile written: %s size=%li\n", midiname, midilength );
 
           // wants file to have .MID extension, but mkstemp file cannot have extension
-	  music.mus = Mix_LoadMUS( midiname );
+          music.mus = Mix_LoadMUS( midiname );
           if( music.mus == NULL )
           {
-	     I_SoftError("Music load file failed\n");
-	     perror( "Mix_LoadMUS fails when not cd to doomlegacy directory" );
-	  }
+             I_SoftError("Music load file failed\n");
+             perror( "Mix_LoadMUS fails when not cd to doomlegacy directory" );
+          }
     }
 }
 #endif
@@ -761,9 +762,10 @@ void I_UnRegisterSong(int handle)
 
 
 // return handle (always 0)
+//  music_type: music_type_e
 //  data : ptr to lump data
 //  len : length of data
-int I_RegisterSong( void* data, int len )
+int I_RegisterSong( byte music_type, void* data, int len )
 {
 #ifdef HAVE_MIXER
   if (nomusic)
@@ -775,17 +777,17 @@ int I_RegisterSong( void* data, int len )
       return 0;
   }
 
-  if (memcmp(data, MUSHEADER, 4) == 0)
+  if( music_type == MUSTYPE_MUS )
   {
       unsigned long midilength;  // per qmus2mid, SDL_RWFromConstMem wants int
       // convert mus to mid in memory with a wonderful function
       // thanks to S.Bacquet for the source of qmus2mid
-      int err = qmus2mid(data, len, 89, 0, MIDBUFFERSIZE,
+      int err = qmus2mid(data, len, 89, 0, MIDI_BUFFER_SIZE,
                /*INOUT*/ midi_buffer, &midilength);
       if ( err != QM_success )
       {
-	  I_SoftError("Cannot convert MUS to MIDI: error %d.\n", err);
-	  return 0;
+          I_SoftError("Cannot convert MUS to MIDI: error %d.\n", err);
+          return 0;
       }
 #ifdef OLD_SDL_MIXER
       Midifile_OLD_SDL_MIXER( midi_buffer, midilength );
@@ -847,7 +849,7 @@ void I_StartupSound(void)
   }
 
   // Configure sound device
-  CONS_Printf("I_InitSound: ");
+  CONS_Printf("I_InitSound: \n");
 
   // Open the audio device
   audspec.freq = SAMPLERATE;
@@ -860,22 +862,41 @@ void I_StartupSound(void)
   setup_mixer_tables();
 
   // InitMusic
-#ifndef HAVE_MIXER
-  // no mixer, no music
-  nomusic = true;
+#ifdef HAVE_MIXER
+  // Use SDL_mixer for music
 
-  // Open the audio device
-  if (SDL_OpenAudio(&audspec, NULL) < 0)
+  uint32_t mi = Mix_Init( MIX_INIT_FLUIDSYNTH
+# ifdef MUSIC_MP3
+                         | MIX_INIT_MP3
+# endif			  
+# ifdef MUSIC_OGG
+                         | MIX_INIT_OGG
+# endif
+                         );
+  if( verbose )
   {
-      CONS_Printf("Couldn't open audio with desired format.\n");
-      SDL_CloseAudio();
-      nosoundfx = nomusic = true;
-      return;
+      char mb[64];  // uses 21
+      mb[0] = 0;
+# ifdef MUSIC_MP3
+      if( mi & MIX_INIT_MP3 )  strcat( mb, "MP3, " );
+# endif
+# ifdef MUSIC_OGG
+      if( mi & MIX_INIT_OGG )  strcat( mb, "OGG, " );
+# endif
+      if( mi & MIX_INIT_FLUIDSYNTH )  strcat(mb, "FLUIDSYNTH" );
+      GenPrintf( EMSG_ver, "Mixer: Loaded %s\n", mb );
   }
 
-  SDL_PauseAudio(0);
-#else
-  // use SDL_mixer for music
+  // Use normal music when not MP3 or OGG capable.
+  EN_port_music = ADM_MUS | ADM_MIDI;
+# ifdef MUSIC_MP3
+  if( mi & MIX_INIT_MP3 )
+     EN_port_music |= ADM_MP3;
+# endif
+# ifdef MUSIC_OGG
+  if( mi & MIX_INIT_OGG )
+     EN_port_music |= ADM_OGG;
+# endif
 
   // because we use SDL_mixer, audio is opened here.
   if (Mix_OpenAudio(audspec.freq, audspec.format, audspec.channels, audspec.samples) < 0)
@@ -900,31 +921,78 @@ void I_StartupSound(void)
 
   Mix_SetPostMix(audspec.callback, NULL);  // after mixing music, add sound fx
   Mix_Resume(-1); // start all sound channels (although they are not used)
+
+#if 1
+  if( verbose > 1 )
+  {
+      CONS_Printf("Mixer: freq %d Hz, %d channel, %d buffer\n",
+              audspec.freq, number_channels, audspec.samples );
+  }
+#else
+  CONS_Printf("Audio device initialized: %d Hz, %d samples/slice.\n",
+              audspec.freq, audspec.samples);
 #endif
 
-  CONS_Printf("Audio device initialized: %d Hz, %d samples/slice.\n",
-	      audspec.freq, audspec.samples);
-
-#ifdef HAVE_MIXER
   if (!nomusic)
   {
       Mix_ResumeMusic();  // start music playback
-      midi_buffer = (byte *)Z_Malloc(MIDBUFFERSIZE, PU_STATIC, NULL);
+      midi_buffer = (byte *)Z_Malloc(MIDI_BUFFER_SIZE, PU_STATIC, NULL);
 
 #ifdef OLD_SDL_MIXER
-  Init_OLD_SDL_MIXER();
+      Init_OLD_SDL_MIXER();
+#endif
+
+#if defined( MUSIC_MP3) || defined( MUSIC_OGG )
+      {
+          // Print out to console the Mixer decoders available.
+          int  j;
+          int  num_mus_dec = Mix_GetNumMusicDecoders();
+          if( verbose > 1 )
+              GenPrintf( EMSG_ver, "Music decoders:\n");
+          for( j = 0; j < num_mus_dec; j++ )
+          {
+              if( verbose > 1 )
+                  GenPrintf( EMSG_ver, "%i: %s\n", j, Mix_GetMusicDecoder(j));
+          }
+
+          int  num_chunk_dec = Mix_GetNumChunkDecoders();
+          if( verbose > 1 )
+              GenPrintf( EMSG_ver, "Music type decoders:\n");
+          for( j = 0; j < num_chunk_dec; j++ )
+          {
+              if( verbose > 1 )
+                  GenPrintf( EMSG_ver, "%i: %s\n", j, Mix_GetChunkDecoder(j));
+          }
+      }
 #endif
 
       CONS_Printf(" Music initialized.\n");
       musicStarted = true;
   }
+
+#else
+  // No SDL_mixer
+
+  // no mixer, no music
+  nomusic = true;
+
+  // Open the audio device
+  if (SDL_OpenAudio(&audspec, NULL) < 0)
+  {
+      CONS_Printf("Couldn't open audio with desired format.\n");
+      SDL_CloseAudio();
+      nosoundfx = nomusic = true;
+      return;
+  }
+
+  SDL_PauseAudio(0);
 #endif
 
   // Finished initialization.
+#ifdef DEBUG  
   CONS_Printf("I_InitSound: sound module ready.\n");
+#endif
   soundStarted = true;
-
-  CONS_Printf(" done.\n");
 }
 
 
@@ -937,6 +1005,7 @@ void I_ShutdownSound(void)
 
 #ifdef HAVE_MIXER
   Mix_CloseAudio();
+  Mix_Quit();
 #else
   SDL_CloseAudio();
 #endif

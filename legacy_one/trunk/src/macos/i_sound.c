@@ -762,7 +762,11 @@ boolean PlayThis(char *name)
     return true;
 }
 
+// New interface
+int I_RegisterSong( byte music_type, void* data, int len);
+
 // [WDJ] len is unused, keep compatible API
+// THIS IS NOT A VALID INTERFACE
 int I_RegisterSong(int handle, int len)
 {
     Str63 name = "";
