@@ -200,8 +200,8 @@ static byte  mouse2_stim_trigger = 0;
 // dummy 19990119 by Kin
 byte keyboard_started = 0;
 // current modifier key status
-byte shiftdown = 0;
-byte altdown = 0;
+byte shiftdown = false;
+byte altdown = false;
 
 void I_StartupKeyboard (void) {}
 void I_StartupTimer (void) {}

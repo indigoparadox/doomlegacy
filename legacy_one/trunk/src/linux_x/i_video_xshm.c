@@ -648,7 +648,7 @@ static int alt_keyboard_MapTable[256] =
 //
 //  Translates the key currently in X_event
 //
-static int xlatekey( KeyCode keycode, boolean keydown )
+static int xlatekey( KeyCode keycode, byte keydown )
 {
     KeySym keysym;
     int rc;
@@ -784,7 +784,7 @@ static char shift27[] =
   0, ':',  // ':', ';'
 };
 
-int to_ASCII( int kcch, boolean shiftdown )
+int to_ASCII( int kcch, byte shiftdown )
 {
     // SDL does this by  -> Unicode -> ASCII
     if( shiftdown )

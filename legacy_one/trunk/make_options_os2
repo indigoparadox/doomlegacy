@@ -11,6 +11,8 @@ OS=OS2
 #  SDL: the SDL library is recommended and is the best maintained interface
 #  OS2_NATIVE: OS2 native drawing
 SMIF=SDL
+#  Enable to use SDL2, otherwise will use SDL 1.2
+# SDL2=1
 
 # SDL_Mixer library is a separate library from SDL
 HAVE_MIXER=1

@@ -5400,8 +5400,8 @@ boolean M_Responder (event_t* ev)
     menuitem_t * r_menuline;
 
     int i;
-    int key = KEY_NULL; // key pressed (if any)
-    int button_key = 0; // mouse and joystick specific
+    uint16_t key = KEY_NULL; // key pressed (if any)
+    uint16_t button_key = 0; // mouse and joystick specific
     unsigned char ch = '\0';  // ASCII char it corresponds to
 
     switch (ev->type )
@@ -5409,6 +5409,11 @@ boolean M_Responder (event_t* ev)
      case ev_keydown :
         key = ev->data1;  // keycode
         ch  = ev->data2;  // ASCII char
+
+#ifdef SDL2
+        if( ch == 0 )  ch = key;  // SDL2 has separate ASCII event, but we need it here.
+#endif
+
         if( key >= KEY_MOUSE1 )
         {
             button_key = key;  // mouse or joystick

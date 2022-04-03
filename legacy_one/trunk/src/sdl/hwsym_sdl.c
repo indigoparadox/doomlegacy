@@ -97,7 +97,7 @@ void *hwSym(const char *funcName)
     }
     else if(0 == strcmp("SetPalette", funcName))
     {
-	return &OglSdlSetPalette;
+	return &OglSdl_SetPalette;
     }
     else if(0 == strcmp("GetTextureUsed", funcName))
     {

@@ -915,6 +915,9 @@ static int     comskips,varskips;
     // interpret it as input char
     char c = ev->data2;
 
+    if( c == 0 )
+        return true; // eat it to keep from closing console
+
     // allow people to use keypad in console (good for typing IP addresses) - Calum
     if (key >= KEY_KEYPAD0 && key <= KEY_PLUSPAD)
     {

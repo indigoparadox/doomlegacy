@@ -761,24 +761,62 @@ ifeq ($(SMIF), SDL)
     # Windows (MinGW)
     EXENAME:=doomlegacy.exe
     LIBS:=-lopengl32 -lglu32 -lwsock32 -lm
-  else
-    ifdef MAC
-      EXENAME:=doomlegacy
-      LDFLAGS+=-framework OpenGL
-    else
-      # default is Linux, for all unix SDL
-      EXENAME:=doomlegacy
-      LDFLAGS+=-L/usr/X11R6/lib
-      LIBS+=-lGL -lGLU -lm
-      # -L/usr/X11R6/lib is needed by Linux 2.4 and others that still have
-      # the GLU libraries in an X11 directory.
-      # -lm is needed for pow, powf, and other MATH1 functions.
-    endif
-
-    SDL_CONFIG:=1
+  endif
+  ifdef MAC
+    EXENAME:=doomlegacy
+    LDFLAGS+=-framework OpenGL
+  endif
+  ifndef EXENAME
+    # default is Linux, for all unix SDL
+    EXENAME:=doomlegacy
+    LDFLAGS+=-L/usr/X11R6/lib
+    LIBS+=-lGL -lGLU -lm
+    # -L/usr/X11R6/lib is needed by Linux 2.4 and others that still have
+    # the GLU libraries in an X11 directory.
+    # -lm is needed for pow, powf, and other MATH1 functions.
   endif
 
-  ifdef SDL_CONFIG
+  # Try to access sdl-config, for all platforms.
+  ifdef SDL2
+    # SDL 2.x
+    OPTS+=-DSDL2
+    # SDL2 does not support CD-MUSIC.
+    undefine CDMUS
+    SDLCONFIG_LIBS:=$(shell sdl2-config --libs)
+    ifeq "$(findstring -lSDL, $(SDLCONFIG_LIBS) )" "-lSDL"
+      # Got valid output from sdl2-config
+      LIBS+=$(SDLCONFIG_LIBS)
+      OPTINC+=$(shell sdl2-config --cflags)
+    else
+      $(warning SDL2: sdl2-config not found )
+      # Extracted from Linux sdl-config script
+#      sdl_dir="/usr"
+      sdl_dir="/usr/local"
+      ifeq ($(CC_SELECT), MINGW)
+        OPTS+=-Dmain=SDL_main
+        OPTINC+=-I$(sdl_dir)/include/SDL2
+        LIBS+=-L$(sdl_dir)/lib
+        LIBS+=-lmingw32 -mwindows
+        LIBS+=-lSDLmain -lSDL2
+      endif
+      ifeq ($(CC_SELECT), WATCOM)
+        OPTS+=-Dmain=SDL_main
+        OPTINC+=-I$(sdl_dir)/include/SDL2
+#       OPTINC+=-I/watcom/h/SDL2
+        LIBS+=-L$(sdl_dir)/lib
+        LIBS+=-lwatcom -mwindows
+        LIBS+=-lSDLmain -lSDL2
+      endif
+      ifdef MAC
+        # Some Mac SDL downloads do not have sdl2-config.
+        # Mac packages can put SDL in /usr or /usr/local, so cover both cases.
+        OPTS+=-D_REENTRANT
+        OPTINC+=-I$(sdl_dir)/include/SDL
+        LIBS+=-L$(sdl_dir)/lib -Wl,-rpath,$(sdl_dir)/lib -Wl,-enable-new-dtags -lpthread -lSDL2
+      endif
+    endif
+  else
+    # SDL 1.2
     SDLCONFIG_LIBS:=$(shell sdl-config --libs)
     ifeq "$(findstring -lSDL, $(SDLCONFIG_LIBS) )" "-lSDL"
       # Got valid output from sdl-config
@@ -786,39 +824,38 @@ ifeq ($(SMIF), SDL)
       OPTINC+=$(shell sdl-config --cflags)
     else
       $(warning SDL: sdl-config not found )
-      undefine SDLCONFIG_LIBS
-    endif
-  endif
-  
-  ifndef SDLCONFIG_LIBS
-    # Extracted from sdl-config script
-    ifeq ($(CC_SELECT), MINGW)
-      OPTS+=-D_GNU_SOURCE=1 -Dmain=SDL_main
-      OPTINC+=-I/SDL/include/SDL
-#      OPTINC+=-I/mingw/include/SDL
-#      OPTINC+=-I/mingw/include
-      LIBS+=-L/SDL/lib
-#      LIBS+=-L/mingw/lib
-#      LIBS+=-L/windows/system32
-      LIBS+=-lsdl -lmingw32 -mwindows
-      LIBS+=-lSDLmain -lSDL
-    endif
-    ifeq ($(CC_SELECT), WATCOM)
-      OPTS+=-D_GNU_SOURCE=1 -Dmain=SDL_main
-      OPTINC+=-I/SDL/include/SDL
-#     OPTINC+=-I/watcom/h/SDL
-      LIBS+=-L/SDL/lib
-#     LIBS+=-L/windows/system32
-      LIBS+=-lsdl -lwatcom -mwindows
-      LIBS+=-lSDLmain -lSDL
-    endif
-    ifdef MAC
-    # Some Mac SDL downloads do not have sdl-config.
-    # Mac packages can put SDL in /usr or /usr/local, so cover both cases.
-      OPTS+=-D_GNU_SOURCE=1 -D_THREAD_SAFE
-      OPTINC+=-I/usr/include/SDL -I/usr/local/include/SDL
-#      LIBS+=-L/usr/lib -Wl,-rpath,/usr/lib -lSDL -lpthread
-      LIBS+=-L/usr/local/lib -lSDL -Wl,-framework,Cocoa
+      # Extracted from sdl-config script
+#      sdl_dir="/SDL"
+#      sdl_dir="/usr"
+      sdl_dir="/usr/local"
+      ifeq ($(CC_SELECT), MINGW)
+#       sdl_dir="/mingw"
+        OPTS+=-D_GNU_SOURCE=1 -Dmain=SDL_main
+        OPTINC+=-I$(sdl_dir)/include/SDL
+        LIBS+=-L$(sdl_dir)/lib
+#        LIBS+=-L/mingw/lib
+#        LIBS+=-L/windows/system32
+        LIBS+=-lmingw32 -mwindows
+        LIBS+=-lSDLmain -lSDL
+      endif
+      ifeq ($(CC_SELECT), WATCOM)
+#       sdl_dir="/watcom"
+        OPTS+=-D_GNU_SOURCE=1 -Dmain=SDL_main
+        OPTINC+=-I$(sdl_dir)/include/SDL
+#       OPTINC+=-I/watcom/h/SDL
+        LIBS+=-L$(sdl_dir)/lib
+#       LIBS+=-L/windows/system32
+        LIBS+=-lwatcom -mwindows
+        LIBS+=-lSDLmain -lSDL
+      endif
+      ifdef MAC
+        # Some Mac SDL downloads do not have sdl-config.
+        # Mac packages can put SDL in /usr or /usr/local, so cover both cases.
+        OPTS+=-D_GNU_SOURCE=1 -D_THREAD_SAFE
+        OPTINC+=-I/usr/include/SDL -I/usr/local/include/SDL
+#        LIBS+=-L/usr/lib -Wl,-rpath,/usr/lib -lSDL -lpthread
+        LIBS+=-L/usr/local/lib -lSDL -Wl,-framework,Cocoa
+      endif
     endif
   endif
 
@@ -830,7 +867,11 @@ ifeq ($(SMIF), SDL)
     ifeq ("$(HAVE_MIXER)", "1")
       # SDL has separate SDL_Mixer library.
       OPTS+=-DHAVE_MIXER
-      LIBS+=-lSDL_mixer
+      ifdef SDL2
+        LIBS+=-lSDL2_mixer
+      else
+        LIBS+=-lSDL_mixer
+      endif
     endif
   endif
 
@@ -1430,10 +1471,10 @@ $(O)/r_draw.o : $(SD)r_draw.c $(SD)r_draw8.c $(SD)r_draw16.c $(SD)r_draw24.c $(S
 # common obj rules
 
 $(O)/%.o: $(SD)%.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(SND_DEVS) -c $< -o $@
 
 $(O)/%.o: $(SD)$(INTERFACE)/%.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(SND_DEVS) -c $< -o $@
 
 $(O)/%.o: $(SD)hardware/%.c
 	$(CC) $(CFLAGS) -c $< -o $@

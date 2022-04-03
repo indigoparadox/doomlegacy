@@ -34,13 +34,13 @@
 
 extern byte  ogl_active;
 
-boolean OglSdlSurface(int w, int h, byte isFullscreen);
+boolean OglSdl_SetMode(int w, int h, byte req_fullscreen);
 
-void OglSdlFinishUpdate(boolean vidwait);
+void OglSdl_FinishUpdate(void);
 
-void OglSdlShutdown(void);
+void OglSdl_Shutdown(void);
 
-void OglSdlSetPalette(RGBA_t *palette, int gammaRed, int gammaGreen, int gammaBlue);
+void OglSdl_SetPalette(RGBA_t *palette, RGBA_t *gamma);
 
 #endif
 

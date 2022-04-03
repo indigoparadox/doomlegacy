@@ -558,6 +558,9 @@ static void I_UpdateSound_sdl(void *unused, Uint8 *stream, int len)
     // first Sint16 at least partially outside the buffer
     Sint16 *buffer_end = ((Sint16 *)stream) +len/sizeof(Sint16);
 
+    // SDL2 Does not zero the buffer before use.  BUT, the mixer has already
+    // put the music into this buffer, so cannot zero it.
+
     // Mix sounds into the mixing buffer.
     while (rightout < buffer_end)
     {
@@ -642,8 +645,8 @@ static void I_UpdateSound_sdl(void *unused, Uint8 *stream, int len)
 // The "registered" piece of music
 static struct music_channel_t
 {
-  Mix_Music *mus;
-  SDL_RWops *rwop; ///< must not be freed before music is halted
+  Mix_Music * mus;  //
+  SDL_RWops * rwop; // must not be freed before music is halted
 } music = { NULL, NULL };
 
 
@@ -755,11 +758,21 @@ void I_UnRegisterSong(int handle)
   {
       Mix_FreeMusic(music.mus);
       music.mus = NULL;
+      SDL_FreeRW( music.rwop );
       music.rwop = NULL;
   }
 #endif
 }
 
+// indexed by music_type_e
+static byte music_type_to_MUS[] = {
+  MUS_NONE,  //   MUSTYPE_MUS
+  MUS_MID,   //   MUSTYPE_MIDI
+  MUS_MP3,   //   MUSTYPE_MP3
+  MUS_OGG,   //   MUSTYPE_OGG
+  MUS_NONE,  //   MUSTYPE_OTHER
+};
+extern char * music_type_str[];
 
 // return handle (always 0)
 //  music_type: music_type_e
@@ -768,6 +781,8 @@ void I_UnRegisterSong(int handle)
 int I_RegisterSong( byte music_type, void* data, int len )
 {
 #ifdef HAVE_MIXER
+  byte mus_type = MUS_NONE;  // SDL_mixer
+
   if (nomusic)
     return 0;
 
@@ -789,6 +804,7 @@ int I_RegisterSong( byte music_type, void* data, int len )
           I_SoftError("Cannot convert MUS to MIDI: error %d.\n", err);
           return 0;
       }
+      mus_type = MUS_MID;  // SDL_mixer
 #ifdef OLD_SDL_MIXER
       Midifile_OLD_SDL_MIXER( midi_buffer, midilength );
 #else     
@@ -798,22 +814,36 @@ int I_RegisterSong( byte music_type, void* data, int len )
   else
   {
       // MIDI, MP3, Ogg Vorbis, various module formats
+      mus_type = MUS_NONE;  // SDL_mixer auto-detect
+      mus_type = music_type_to_MUS[ music_type ];
+// printf( "mus_type = %s  mus_type = %i\n",  music_type_str[music_type], mus_type );
+
 #ifdef OLD_SDL_MIXER
       Midifile_OLD_SDL_MIXER( data, len );
 #else     
-      music.rwop = SDL_RWFromConstMem(data, len);
-#endif   
+      music.rwop = SDL_RWFromMem(midi_buffer, len);
+//      music.rwop = SDL_RWFromConstMem(data, len);
+#endif
   }
 
 #ifdef OLD_SDL_MIXER
   // In old mixer Mix_LoadMUS_RW does not work.
 #else
   // SDL_mixer automatically frees the rwop when the music is stopped.
-  music.mus = Mix_LoadMUS_RW(music.rwop);
-#endif   
+  // LoadMUS reads the music incrementally, so music must be kept until done playing.
+  // LoadWAV copies the music to a buffer, but uses memory.
+# ifdef SDL2
+  // By explicit music type.
+  music.mus = Mix_LoadMUSType_RW(music.rwop, mus_type, 0 );  // free when done
+# else
+  music.mus = Mix_LoadMUSType_RW(music.rwop, mus_type, 0 );
+//  music.mus = Mix_LoadMUS_RW(music.rwop);
+# endif
+#endif
   if (!music.mus)
   {
       I_SoftError("Couldn't load music lump: %s\n", Mix_GetError());
+      SDL_FreeRW( music.rwop );
       music.rwop = NULL;
   }
 
@@ -865,14 +895,24 @@ void I_StartupSound(void)
 #ifdef HAVE_MIXER
   // Use SDL_mixer for music
 
-  uint32_t mi = Mix_Init( MIX_INIT_FLUIDSYNTH
+   // Mixer 1.2.10
+   uint32_t mi = Mix_Init(
+# ifdef SDL2
+    0 // FLUIDSYNTH does not have a Load INIT in SDL2
+//    | MIX_INIT_MOD
+    | MIX_INIT_MID
+#else
+    // SDL 1.2			 
+    MIX_INIT_FLUIDSYNTH
+#endif
 # ifdef MUSIC_MP3
-                         | MIX_INIT_MP3
+    | MIX_INIT_MP3
 # endif			  
 # ifdef MUSIC_OGG
-                         | MIX_INIT_OGG
+    | MIX_INIT_OGG
 # endif
-                         );
+    );
+
   if( verbose )
   {
       char mb[64];  // uses 21
@@ -883,7 +923,13 @@ void I_StartupSound(void)
 # ifdef MUSIC_OGG
       if( mi & MIX_INIT_OGG )  strcat( mb, "OGG, " );
 # endif
+# ifdef SDL2
+      // FLUIDSYNTH does not have a Load INIT in SDL2
+//      if( mi & MIX_INIT_MOD )  strcat( mb, "MOD, " );
+      if( mi & MIX_INIT_MID )  strcat( mb, "MIDI, " );
+# else
       if( mi & MIX_INIT_FLUIDSYNTH )  strcat(mb, "FLUIDSYNTH" );
+# endif
       GenPrintf( EMSG_ver, "Mixer: Loaded %s\n", mb );
   }
 
@@ -933,6 +979,11 @@ void I_StartupSound(void)
               audspec.freq, audspec.samples);
 #endif
 
+#ifdef SDL2
+//  Explicit music cmd.
+//  Mix_SetMusicCMD( "" );
+#endif
+   
   if (!nomusic)
   {
       Mix_ResumeMusic();  // start music playback
@@ -989,7 +1040,7 @@ void I_StartupSound(void)
 #endif
 
   // Finished initialization.
-#ifdef DEBUG  
+#ifdef DEBUG
   CONS_Printf("I_InitSound: sound module ready.\n");
 #endif
   soundStarted = true;
@@ -1004,8 +1055,9 @@ void I_ShutdownSound(void)
   CONS_Printf("I_ShutdownSound: ");
 
 #ifdef HAVE_MIXER
+//  Mix_HaltMusic();  // Fade-out
   Mix_CloseAudio();
-  Mix_Quit();
+  Mix_Quit();  // Mixer 1.2.10
 #else
   SDL_CloseAudio();
 #endif

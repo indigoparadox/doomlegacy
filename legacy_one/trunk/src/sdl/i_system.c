@@ -4,7 +4,7 @@
 // $Id$
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
-// Copyright (C) 1998-2016 by DooM Legacy Team.
+// Copyright (C) 1998-2022 by DooM Legacy Team.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -116,6 +116,12 @@
 
 
 
+#ifdef SDL2
+// New SDL2 calls need the window.
+extern SDL_Window * sdl_window;
+#endif
+
+
 extern void D_PostEvent(event_t*);
 
 // 4 joysticks should be enough for most purposes
@@ -165,15 +171,125 @@ int  I_GetKey(void)
     return rc;
 }
 
+#ifdef SDL2
+// Indexed by SDL2 scancode/keycode.
+// Starts at SDL_SCANCODE_CAPSLOCK
+uint16_t sdl2_F_to_key[] = {
+  KEY_CAPSLOCK, // SDL_SCANCODE_CAPSLOCK
+  KEY_F1, // SDL_SCANCODE_F1
+  KEY_F2, // SDL_SCANCODE_F2
+  KEY_F3, // SDL_SCANCODE_F3
+  KEY_F4, // SDL_SCANCODE_F4
+  KEY_F5, // SDL_SCANCODE_F5
+  KEY_F6, // SDL_SCANCODE_F6
+  KEY_F7, // SDL_SCANCODE_F7
+  KEY_F8, // SDL_SCANCODE_F8
+  KEY_F9, // SDL_SCANCODE_F9
+  KEY_F10, // SDL_SCANCODE_F10
+  KEY_F11, // SDL_SCANCODE_F11
+  KEY_F12, // SDL_SCANCODE_F12
+  KEY_PRINT, // SDL_SCANCODE_PRINTSCREEN
+  KEY_SCROLLLOCK, // SDL_SCANCODE_SCROLLLOCK
+  KEY_PAUSE, // SDL_SCANCODE_PAUSE
+  KEY_INS, // SDL_SCANCODE_INSERT
+     // PC: insert on PC
+     // MAC: help on some Mac keyboards (but sends code SDL_SCANCODE_INSERT, not SDL_SCANCODE_HELP)
+  KEY_HOME, // SDL_SCANCODE_HOME
+  KEY_PGUP, // SDL_SCANCODE_PAGEUP
+  KEY_DELETE, // SDL_SCANCODE_DELETE
+  KEY_END, // SDL_SCANCODE_END
+  KEY_PGDN, // SDL_SCANCODE_PAGEDOWN
+
+  KEY_RIGHTARROW, // SDL_SCANCODE_RIGHT
+  KEY_LEFTARROW, // SDL_SCANCODE_LEFT
+  KEY_DOWNARROW, // SDL_SCANCODE_DOWN
+  KEY_UPARROW, // SDL_SCANCODE_UP
+
+  KEY_NUMLOCK, // SDL_SCANCODE_NUMLOCKCLEAR
+     // PC: num lock on PC
+     // MAC: clear
+  KEY_KPADSLASH, // SDL_SCANCODE_KP_DIVIDE
+  KEY_KPADMULT, // SDL_SCANCODE_KP_MULTIPLY
+  KEY_MINUSPAD, // SDL_SCANCODE_KP_MINUS
+  KEY_PLUSPAD, // SDL_SCANCODE_KP_PLUS
+  KEY_KPADENTER, // SDL_SCANCODE_KP_ENTER
+  KEY_KEYPAD1, // SDL_SCANCODE_KP_1
+  KEY_KEYPAD2, // SDL_SCANCODE_KP_2
+  KEY_KEYPAD3, // SDL_SCANCODE_KP_3
+  KEY_KEYPAD4, // SDL_SCANCODE_KP_4
+  KEY_KEYPAD5, // SDL_SCANCODE_KP_5
+  KEY_KEYPAD6, // SDL_SCANCODE_KP_6
+  KEY_KEYPAD7, // SDL_SCANCODE_KP_7
+  KEY_KEYPAD8, // SDL_SCANCODE_KP_8
+  KEY_KEYPAD9, // SDL_SCANCODE_KP_9
+  KEY_KEYPAD0, // SDL_SCANCODE_KP_0
+  KEY_KPADPERIOD, // SDL_SCANCODE_KP_PERIOD
+  KEY_NULL, // SDL_SCANCODE_NONUSBACKSLASH
+  KEY_NULL, // SDL_SCANCODE_APPLICATION
+  KEY_NULL, // SDL_SCANCODE_POWER
+  KEY_KPADEQUALS, // SDL_SCANCODE_KP_EQUALS
+};
+
+
+// Indexed by SDL2 scancode/keycode.
+// Starts at SDL_SCANCODE_LCTRL
+uint16_t sdl2_C_to_key[] = {
+  KEY_LCTRL, // SDL_SCANCODE_LCTRL
+  KEY_LSHIFT, // SDL_SCANCODE_LSHIFT
+  KEY_LALT,  // SDL_SCANCODE_LALT
+    // alt, option
+  KEY_LWIN, // SDL_SCANCODE_LGUI
+    // windows, command (apple), meta
+  KEY_RCTRL, // SDL_SCANCODE_RCTRL
+  KEY_RSHIFT, // SDL_SCANCODE_RSHIFT
+  KEY_RALT, // SDL_SCANCODE_RALT
+    // alt gr, option
+  KEY_RWIN, // SDL_SCANCODE_RGUI
+    // windows, command (apple), meta
+};
+
+#endif
+  
 
 //
 //  Translates the SDL key into Doom key
 //
-static int xlatekey(SDLKey sym)
+static uint16_t  xlatekey(uint32_t keycode)
 {
   // leave ASCII codes unchanged, as well as most other SDL keys
-  if (sym >= SDLK_BACKSPACE && sym <= SDLK_MENU)
-    return sym;
+#ifdef SDL2  
+  if(keycode > SDLK_UNKNOWN)
+  {
+      // SDL ASCII keycode are 1 .. 127
+      if(keycode <= 0x7F)
+          return keycode;
+
+      // Other keycode are scancode OR with 0x40000000
+      keycode &= 0xFFFF;  // to scancode
+      // Scancode upto SDLK_SCANCODE_MODE are ( 4 .. 257 )
+      if((keycode >= SDL_SCANCODE_CAPSLOCK) && (keycode <= SDL_SCANCODE_KP_EQUALS))
+          return sdl2_F_to_key[keycode - SDL_SCANCODE_CAPSLOCK];
+      if((keycode >= SDL_SCANCODE_LCTRL) && (keycode <= SDL_SCANCODE_RGUI))
+          return sdl2_C_to_key[keycode - SDL_SCANCODE_LCTRL];
+
+      switch( keycode )
+      {
+       case SDL_SCANCODE_SYSREQ:
+          return KEY_SYSREQ;
+       case SDL_SCANCODE_HELP:
+          return KEY_HELP;
+       case SDL_SCANCODE_MENU:
+          return KEY_MENU;
+       case SDL_SCANCODE_MODE:
+          return KEY_MODE;
+      };
+  }
+#else
+  // SDL 1.2
+  // SDL keycode are 9 .. 322
+  if (keycode > SDLK_UNKNOWN && keycode <= SDLK_MENU)
+    return keycode;
+#endif
 
   return KEY_NULL;
 }
@@ -267,6 +383,7 @@ static int lastmousex = 0;
 static int lastmousey = 0;
 
 // current modifier key status
+// SDL uses modifier masks.
 byte shiftdown = 0;
 byte altdown = 0;
 
@@ -305,8 +422,13 @@ static byte  mouse2_stim_trigger = 0;
 void I_GetEvent(void)
 {
   SDL_Event inputEvent;
-  SDLKey sym;
+#ifdef SDL2
+  SDL_Keymod mod;
+  SDL_Keycode keycode;
+#else   
+  SDLKey keycode;
   SDLMod mod;
+#endif
 
   event_t event;
 
@@ -324,24 +446,28 @@ void I_GetEvent(void)
       switch (inputEvent.type)
       {
         case SDL_KEYDOWN:
-          event.type = ev_keydown;
-          sym = inputEvent.key.keysym.sym;
-          event.data1 = xlatekey(sym); // key symbol
+          event.type = ev_keydown;  // doomlegacy keydown event
+          keycode = inputEvent.key.keysym.sym; // SDL keyboard
+          event.data1 = xlatekey(keycode); // key symbol
 
           mod = inputEvent.key.keysym.mod; // modifier key states
           // this might actually belong in D_PostEvent
           shiftdown = mod & KMOD_SHIFT;
-          altdown = mod & KMOD_ALT;
+          altdown = ((mod & KMOD_ALT) >> 8 ) | (mod & KMOD_ALT);  // force into byte
 
+#ifdef SDL2
+          // SDL2 does not provide char translations in SDL_KEYDOWN.
+          // SDL2 provides TEXTINPUT separately.
+          event.data2 = 0; // non-ASCII char
+//printf( "Key DOWN 0x%04x => D1=0x%04x D2=0x%04x  |%c|\n", keycode, event.data1, event.data2, event.data1 );
+#else
           // Corresponding ASCII char, if applicable (for console etc.)
           // NOTE that SDL handles international keyboards and shift maps for us!
           Uint16 unicode = inputEvent.key.keysym.unicode; // SDL uses UCS-2 encoding (or maybe UTF-16?)
-          if ((unicode & 0xff80) == 0)
-          {
-              event.data2 = unicode & 0x7F;
-          }
-          else
-            event.data2 = 0; // non-ASCII char
+          event.data2 = ((unicode & 0xff80) == 0) ?
+              unicode & 0x7F
+            : 0; // non-ASCII char
+#endif
 
 #ifdef DEBUG_MOUSE2_STIMULUS
           // Intercept some keys and fake the mouse2 input using mouse2_stim_trigger.
@@ -357,15 +483,28 @@ void I_GetEvent(void)
 
         case SDL_KEYUP:
           event.type = ev_keyup;
-          sym = inputEvent.key.keysym.sym;
-          event.data1 = xlatekey(sym);
+          keycode = inputEvent.key.keysym.sym; // SDL keyboard
+          event.data1 = xlatekey(keycode);
 
           mod = inputEvent.key.keysym.mod; // modifier key states
           shiftdown = mod & KMOD_SHIFT;
-          altdown = mod & KMOD_ALT;
+          altdown = ((mod & KMOD_ALT) >> 8 ) | (mod & KMOD_ALT);  // force into byte
 
           D_PostEvent(&event);
           break;
+
+#ifdef SDL2
+        case SDL_TEXTINPUT:
+          // SDL2 provides TEXT input, but DoomLegacy wants ASCII one keypress at a time.
+          event.type = ev_keydown;
+          event.data1 = 0x02;  // STX, dummy non-zero key (must be < KEY_NUMKB)
+          event.data2 = ((inputEvent.text.text[0] & 0xff80) == 0)?
+              inputEvent.text.text[0] & 0xFF
+            : 0; // non-ASCII char
+//printf( "Key TEXT= 0x%x 0x%x => D1=0x%04x D2=0x%04x  |%c|\n", inputEvent.text.text[0], inputEvent.text.text[1], event.data1, event.data2, event.data2 );
+          D_PostEvent(&event);
+          break;
+#endif
 
         case SDL_MOUSEMOTION:
           if(cv_usemouse[0].EV)
@@ -445,7 +584,12 @@ void I_GetEvent(void)
                       (inputEvent.motion.y > mouse_y_max)   )
                   {
                       // Warp the pointer back to the middle of the window
+#ifdef SDL2
+                      SDL_WarpMouseInWindow( sdl_window, vid_center_x, vid_center_y);
+//                      SDL_WarpMouseGlobal(vid_center_x, vid_center_y);
+#else
                       SDL_WarpMouse(vid_center_x, vid_center_y);
+#endif
                       // this issues a mouse event that needs to be ignored
                       lastmouse_warp = 1;
                   }
@@ -619,29 +763,46 @@ void I_GetEvent(void)
   }
 }
 
+
 // [WDJ] 8/2012 Grab mouse re-enabled as option menu item.
 
 static void I_GrabMouse(void)
 {
   if( cv_grabinput.value && !devparm )
   {
-      if(SDL_GRAB_OFF == SDL_WM_GrabInput(SDL_GRAB_QUERY))
-      {
 #ifdef DEBUG_WINDOWED
          // do not grab so can use debugger
 #else
-         SDL_WM_GrabInput(SDL_GRAB_ON);
-#endif
+      // Grab the mouse
+#ifdef SDL2
+      if( ! SDL_GetWindowGrab( sdl_window ) )
+      {
+         SDL_SetWindowGrab( sdl_window, 1 );
       }
+#else
+      // SDL 1.2	  
+      if(SDL_GRAB_OFF == SDL_WM_GrabInput(SDL_GRAB_QUERY))
+      {
+         SDL_WM_GrabInput(SDL_GRAB_ON);
+      }
+#endif
+#endif
   }
 }
 
 void I_UngrabMouse(void)
 {
+#ifdef SDL2
+  if( SDL_GetWindowGrab( sdl_window ) )
+  {
+      SDL_SetWindowGrab( sdl_window, 0 );
+  }
+#else
   if(SDL_GRAB_ON == SDL_WM_GrabInput(SDL_GRAB_QUERY))
   {
       SDL_WM_GrabInput(SDL_GRAB_OFF);
   }
+#endif
 }
 
 // Called on video mode change, usemouse change, mousemotion change,
@@ -658,7 +819,11 @@ void I_StartupMouse( boolean play_mode )
         // Enable mouse containment during play.
         SDL_Event inputEvent;
         // warp to center
+#ifdef SDL2
+        SDL_WarpMouseInWindow( sdl_window, vid_center_x, vid_center_y);
+#else
         SDL_WarpMouse(vid_center_x, vid_center_y);
+#endif
         // remove the mouse event by reading the queue
         SDL_PollEvent(&inputEvent);
 
@@ -700,7 +865,11 @@ static void I_JoystickInit(void)
   for (i=0; i < num_joysticks; i++)
   {
       SDL_Joystick *joy = SDL_JoystickOpen(i);
+#ifdef SDL2
+      const char * jname = SDL_JoystickNameForIndex(i);
+#else
       const char * jname = SDL_JoystickName(i);
+#endif
       joysticks[i] = joy;
       if (devparm || verbose > 1)
       {
@@ -728,7 +897,11 @@ static void I_ShutdownJoystick(void)
   int i;
   for(i=0; i < num_joysticks; i++)
   {
+#ifdef SDL2
+    const char * jname = SDL_JoystickNameForIndex(i);
+#else
     const char * jname = SDL_JoystickName(i);
+#endif
     if( jname )  CONS_Printf("Closing joystick %s.\n", jname);
     SDL_JoystickClose(joysticks[i]);
     joysticks[i] = NULL;
@@ -744,18 +917,22 @@ void I_SysInit(void)
   CONS_Printf("Initializing SDL...\n");
 
   // Initialize Audio as well, otherwise DirectX can not use audio
-  if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0)
+  if( SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) != 0 )
   {
       CONS_Printf(" Couldn't initialize SDL: %s\n", SDL_GetError());
       D_Quit_Save( QUIT_shutdown );
       I_Quit_System();
   }
 
+#ifdef SDL2
+#else
+  // SDL 1.2
   // Window title
   SDL_WM_SetCaption(VERSION_BANNER, "Doom Legacy");
 
   // Enable unicode key conversion
   SDL_EnableUNICODE(1);
+#endif
 
   // Initialize the joystick subsystem.
   I_JoystickInit();

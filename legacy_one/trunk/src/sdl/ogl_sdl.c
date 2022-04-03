@@ -188,19 +188,82 @@ void mac_close_context( void )
 #endif
 
 // public
+#ifdef SDL2
+extern SDL_Window * sdl_window;
+SDL_GLContext sdl_gl_context = NULL;  // where OpenGL draws
+#else
 // Only one vidSurface, else releasing oldest faults in SDL.
 extern SDL_Surface * vidSurface;
+#endif
 byte  ogl_active = 0;
 
+// indexed by fullscreen
+extern const char * fullscreen_str[2];
+
+#ifdef SDL2
+// indexed by fullscreen
+const static uint32_t sdl_ogl_window_flags[2] = {
+  SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_GRABBED | SDL_WINDOW_SHOWN,   // windowed
+  SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS | SDL_WINDOW_INPUT_GRABBED,  // fullscreen
+};
+#else
+// SDL 1.2
+// These flags do not affect the GL attributes, only the 2d blitting.
+// indexed by fullscreen
+Uint32 sdl_ogl_surface_flags[2] = {
+#ifdef MAC_SDL
+  // Mac, Edge   
+  SDL_OPENGL|SDL_DOUBLEBUF,   // windowed
+  SDL_OPENGL|SDL_DOUBLEBUF|SDL_FULLSCREEN,  // fullscreen
+#else
+  SDL_OPENGL,  // windowed
+  SDL_OPENGL|SDL_FULLSCREEN,  // fullscreen
+#endif
+};
+#endif   
+
+// i_video.c
+void VID_SDL_release( void );
 
 
 // Called by VID_SetMode
 // SDL-OpenGL version of VID_SetMode
-boolean OglSdlSurface(int w, int h, byte isFullscreen)
+boolean OglSdl_SetMode(int w, int h, byte req_fullscreen)
 {
-    Uint32 surfaceFlags;
+#ifdef SDL2
+    // SDL 2
+    // Release OpenGL specific.
+    if( sdl_gl_context )
+    {
+        SDL_GL_DeleteContext( sdl_gl_context );
+        sdl_gl_context = NULL;
+    }
+
+    VID_SDL_release();
+#else
+    // SDL 1.2
     int cbpp;  // bits per pixel
 
+    if( vidSurface )
+    {
+        VID_SDL_release();
+#ifdef VOODOOSAFESWITCHING
+        SDL_QuitSubSystem(SDL_INIT_VIDEO);
+        SDL_InitSubSystem(SDL_INIT_VIDEO);
+#endif
+    }
+#endif   
+
+#ifdef SDL2
+    uint32_t window_reqflags = sdl_ogl_window_flags[req_fullscreen];
+#else
+    // SDL 1.2
+    // These flags do not affect the GL attributes, only the 2d blitting.
+    Uint32 reqflags = sdl_ogl_surface_flags[req_fullscreen];
+#endif   
+
+
+#ifdef MAC_SDL   
 #ifdef DEBUG_MAC
     GenPrintf( EMSG_debug, "Detect: "
 # ifdef __MACOSX__
@@ -215,39 +278,12 @@ boolean OglSdlSurface(int w, int h, byte isFullscreen)
 	    "\n" );
 #endif
 
-    if( vidSurface )
-    {
-        SDL_FreeSurface(vidSurface);
-        vidSurface = NULL;
-#ifdef VOODOOSAFESWITCHING
-        SDL_QuitSubSystem(SDL_INIT_VIDEO);
-        SDL_InitSubSystem(SDL_INIT_VIDEO);
-#endif
-    }
-
-    // These flags do not affect the GL attributes, only the 2d blitting.
-    if(isFullscreen)
-    {
-#ifdef MAC_SDL
-        surfaceFlags = SDL_OPENGL|SDL_DOUBLEBUF|SDL_FULLSCREEN; // Mac, Edge
-#else
-        surfaceFlags = SDL_OPENGL|SDL_FULLSCREEN;
-#endif
-    }
-    else
-    {
-#ifdef MAC_SDL
-        surfaceFlags = SDL_OPENGL|SDL_DOUBLEBUF; // Mac, Edge
-#else
-        surfaceFlags = SDL_OPENGL;
-#endif
-    }
-
-#ifdef MAC_SDL   
     mac_init( );
+
 #ifdef DEBUG_MAC
     mac_check_context( "OglSdlSurface 1" );
 #endif
+
     mac_set_context();
 //#define MAC_REINIT_AFTER_CONTEXT  1
 #ifdef MAC_REINIT_AFTER_CONTEXT   
@@ -273,39 +309,74 @@ boolean OglSdlSurface(int w, int h, byte isFullscreen)
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
 #endif
 
-    cbpp = SDL_VideoModeOK(w, h, 16, surfaceFlags);
+#ifdef SDL2
+    SDL_SetHint( SDL_HINT_FRAMEBUFFER_ACCELERATION, "1" );  // enable
+    // SDL_SetHint( SDL_HINT_RENDER_DRIVER, "opengl" );  // allow opengl
+    SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "nearest" );  // nearest, linear, best
+
+    sdl_window = SDL_CreateWindow( "Doom Legacy", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                                   req_width, req_height, window_reqflags );
+    if( sdl_window == NULL)
+        return false;  // Modes were prechecked, SDL should not fail.
+
+    // SDL2 Wiki:
+    // On the Apple OS X you must set the NSHighResolutionCapable Info.plist  property to YES,
+    // otherwise you will not receive a High DPI OpenGL canvas.
+
+    // Create OpenGL drawing connection to the window.
+    // Do not need renderer, nor texture.
+    sdl_gl_context = SDL_GL_CreateContext( sdl_window );
+    if( sdl_gl_context == NULL)
+        return false;
+
+    SDL_DisplayMode sdl_displaymode;
+    SDL_GetWindowDisplayMode( sdl_window, /*OUT*/ & sdl_displaymode );
+   
+    // Not used in OpenGL drawmode
+    vid.bitpp = SDL_BITSPERPIXEL( sdl_displaymode.format );
+    vid.bytepp = (vid.bitpp + 7) >> 3;
+    vid.width = sdl_displaymode.w;
+    vid.height = sdl_displaymode.h;
+    vid.ybytes = vid.width * vid.bytepp;
+   
+    if( verbose )
+    {
+        GenPrintf( EMSG_ver,"  OpenGL Got %ix%i, %i bpp\n",
+            vid.width, vid.height, vid.bitpp );
+    }
+
+#else
+    // SDL 1.2
+    cbpp = SDL_VideoModeOK(w, h, 16, reqflags);
     if (cbpp < 16)
         return false;
 
     if( verbose>1 )
     {
         GenPrintf( EMSG_ver,"OpenGL SDL_SetVideoMode(%i,%i,%i,0x%X)  %s\n",
-		w, h, 16, surfaceFlags,
-		(surfaceFlags&SDL_FULLSCREEN)?"Fullscreen":"Window");
+		w, h, 16, reqflags, fullscreen_str[ req_fullscreen ] );
     }
 
-    vidSurface = SDL_SetVideoMode(w, h, cbpp, surfaceFlags);
+    vidSurface = SDL_SetVideoMode(w, h, cbpp, reqflags);
     if(vidSurface == NULL)
         return false;
 
-    if( verbose )
-    {
-        int32_t vflags = vidSurface->flags;
-        GenPrintf( EMSG_ver,"  OpenGL Got %ix%i, %i bpp, %i bytes\n",
-		vidSurface->w, vidSurface->h,
-		vidSurface->format->BitsPerPixel, vidSurface->format->BytesPerPixel );
-        GenPrintf( EMSG_ver,"  HW-surface= %x, HW-palette= %x, HW-accel= %x, Doublebuf= %x, Async= %x \n",
-		vflags&SDL_HWSURFACE, vflags&SDL_HWPALETTE, vflags&SDL_HWACCEL, vflags&SDL_DOUBLEBUF, vflags&SDL_ASYNCBLIT );
-        if(SDL_MUSTLOCK(vidSurface))
-	    GenPrintf( EMSG_ver,"  Notice: MUSTLOCK video surface\n" );
-    }
     vid.bitpp = vidSurface->format->BitsPerPixel;
     vid.bytepp = vidSurface->format->BytesPerPixel;
     vid.width = vidSurface->w;
     vid.height = vidSurface->h;
     vid.ybytes = vidSurface->pitch;
-    vid.recalc = true;
-    ogl_active = 1;
+
+    if( verbose )
+    {
+        int32_t vflags = vidSurface->flags;
+        GenPrintf( EMSG_ver,"  OpenGL Got %ix%i, %i bpp, %i byte\n",
+		vid.width, vid.height, vid.bitpp, vid.bytepp );
+        GenPrintf( EMSG_ver,"  HW-surface= %x, HW-palette= %x, HW-accel= %x, Doublebuf= %x, Async= %x \n",
+		vflags&SDL_HWSURFACE, vflags&SDL_HWPALETTE, vflags&SDL_HWACCEL, vflags&SDL_DOUBLEBUF, vflags&SDL_ASYNCBLIT );
+        if(SDL_MUSTLOCK(vidSurface))
+	    GenPrintf( EMSG_ver,"  Notice: MUSTLOCK video surface\n" );
+    }
    
 #ifdef DEBUG_SDL
     GenPrintf( EMSG_debug, " vid set: height=%i, width=%i\n", vid.height, vid.width );
@@ -315,6 +386,10 @@ boolean OglSdlSurface(int w, int h, byte isFullscreen)
 		vidSurface->pitch, (vid.width * vid.bytepp) );
     }
 #endif
+#endif
+
+    vid.recalc = true;
+    ogl_active = 1;
 
 #ifdef MAC_SDL   
 #ifdef DEBUG_MAC
@@ -358,7 +433,11 @@ boolean OglSdlSurface(int w, int h, byte isFullscreen)
     VIDGL_Set_GL_Model_View(vid.width, vid.height);
     VIDGL_Set_GL_States();
 
+#ifdef SDL2
+    textureformatGL = (vid.bitpp > 16)?GL_RGBA:GL_RGB5_A1;
+#else
     textureformatGL = (cbpp > 16)?GL_RGBA:GL_RGB5_A1;
+#endif
 
 #if 1
     VIDGL_Query_GL_info( -1 ); // all tests
@@ -366,29 +445,41 @@ boolean OglSdlSurface(int w, int h, byte isFullscreen)
     return true;
 }
 
-void OglSdlFinishUpdate(boolean vidwait)
+void OglSdl_FinishUpdate(void)
 {
+#ifdef SDL2
+    SDL_GL_SwapWindow( sdl_window );
+#else
+    // SDL 1.2
     SDL_GL_SwapBuffers();
+#endif
 }
 
-void OglSdlShutdown(void)
+void OglSdl_Shutdown(void)
 {
     ogl_active = 0;
 
-    if( vidSurface )
+    // Release OpenGL specific.
+#ifdef SDL2
+    if( sdl_gl_context )
     {
-        SDL_FreeSurface(vidSurface);
-        vidSurface = NULL;
+        SDL_GL_DeleteContext( sdl_gl_context );
+        sdl_gl_context = NULL;
     }
+#endif   
+
+    VID_SDL_release();
+
 #ifdef MAC_SDL   
 #ifdef DEBUG_MAC
-    mac_check_context( "OglSdlShutdown" );
+    mac_check_context( "OglSdl_Shutdown" );
 #endif
     mac_close_context();
 #endif
 }
 
-void OglSdlSetPalette(RGBA_t *palette, RGBA_t *gamma)
+//  hwSym SetPalette
+void OglSdl_SetPalette(RGBA_t *palette, RGBA_t *gamma)
 {
     int i;
 

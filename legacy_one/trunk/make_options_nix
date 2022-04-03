@@ -15,6 +15,8 @@ OS=LINUX
 #  LINUX_X11: LINUX X11 native drawing
 #  FREEBSD_X11: FreeBSD X11 native drawing
 SMIF=SDL
+#  Enable to use SDL2, otherwise will use SDL 1.2
+# SDL2=1
 
 # SDL_Mixer library is a separate library from SDL
 HAVE_MIXER=1

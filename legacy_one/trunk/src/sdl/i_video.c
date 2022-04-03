@@ -100,6 +100,13 @@ RGBA_t  gamma_correction = {0x7F7F7F7F};
 
 // SDL vars
 
+#ifdef SDL2
+SDL_Window * sdl_window = NULL;
+SDL_Texture * sdl_texture = NULL;
+SDL_Renderer * sdl_renderer = NULL;
+uint16_t  display_index = 0;  // SDL2 can have multiple displays
+#endif
+
 // Only one vidSurface, else releasing oldest faults in SDL.
 // Shared with ogl.
 SDL_Surface * vidSurface = NULL;
@@ -124,24 +131,45 @@ static  vid_mode_t *  vid_modelist = NULL;
 static  int  num_vid_mode_allocated = 0;
 static  int  num_vid_mode = 0;
 static  byte       modelist_bitpp = 0;  // with modelist
+
+// indexed by fullscreen
+const char * fullscreen_str[2] = {
+  "Windowed",
+  "Fullscreen",
+};
+
+#ifdef SDL2
+// indexed by fullscreen
+const static uint32_t sdl_window_flags[2] = {
+  SDL_WINDOW_INPUT_GRABBED | SDL_WINDOW_SHOWN,   // windowed
+  SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS | SDL_WINDOW_INPUT_GRABBED,  // fullscreen
+};
+
+#else
+// SDL 1.2
 static  byte       request_NULL = 0;  // with modelist
 
+// Surface flags, parameter for SDL 1.2
+// indexed by fullscreen
+const static Uint32 surface_flags[2] = {
 #ifdef __MACOSX__
-// SDL_DOUBLEBUF is unsupported for Mac OS X
-const static Uint32  surfaceFlags = SDL_SWSURFACE|SDL_HWPALETTE;
-// With SDL 1.2.6 there is an experimental software flipping that is
-// accessed using SDL_DOUBLEBUF|SDL_HWSURFACE|SDL_FULLSCREEN
-const static Uint32  surfaceFlags_fullscreen = SDL_DOUBLEBUF|SDL_HWSURFACE|SDL_FULLSCREEN|SDL_HWPALETTE;
+  // SDL_DOUBLEBUF is unsupported for Mac OS X
+  SDL_SWSURFACE|SDL_HWPALETTE,
+  // With SDL 1.2.6 there is an experimental software flipping that is
+  // accessed using SDL_DOUBLEBUF|SDL_HWSURFACE|SDL_FULLSCREEN
+  SDL_DOUBLEBUF|SDL_HWSURFACE|SDL_FULLSCREEN|SDL_HWPALETTE
 #else
 #if 1
-// NO DOUBLEBUF, as we already draw to buffer
-const static Uint32  surfaceFlags = SDL_HWSURFACE|SDL_HWPALETTE;
-const static Uint32  surfaceFlags_fullscreen = SDL_HWSURFACE|SDL_HWPALETTE|SDL_FULLSCREEN;
+  // NO DOUBLEBUF, as we already draw to buffer
+  SDL_HWSURFACE|SDL_HWPALETTE,
+  SDL_HWSURFACE|SDL_HWPALETTE|SDL_FULLSCREEN
 #else
-// DOUBLEBUF
-const static Uint32  surfaceFlags = SDL_HWSURFACE|SDL_HWPALETTE|SDL_DOUBLEBUF;
-const static Uint32  surfaceFlags_fullscreen = SDL_HWSURFACE|SDL_HWPALETTE|SDL_DOUBLEBUF|SDL_FULLSCREEN;
+  // DOUBLEBUF
+  SDL_HWSURFACE|SDL_HWPALETTE|SDL_DOUBLEBUF,
+  SDL_HWSURFACE|SDL_HWPALETTE|SDL_DOUBLEBUF|SDL_FULLSCREEN
 #endif
+#endif
+};
 #endif
 
 
@@ -183,6 +211,18 @@ void  add_vid_mode( int w, int h )
     vm->h = h;
 }
 
+#ifdef SDL2
+// indexed by sw_drawmode_e
+static const uint32_t sdl_pixelformats[6] =
+{
+  SDL_PIXELFORMAT_INDEX8,  // DRAW8PAL
+  SDL_PIXELFORMAT_RGB555,  // DRAW15
+  SDL_PIXELFORMAT_RGB565,  // DRAW16
+  SDL_PIXELFORMAT_RGB888,  // DRAW24
+  SDL_PIXELFORMAT_RGBA8888,  // DRAW32
+  SDL_PIXELFORMAT_RGBA32,  // DRAWGL
+};
+#endif
 
 //
 // I_StartFrame
@@ -219,11 +259,19 @@ void I_FinishUpdate(void)
 {
     if( rendermode == render_soft )
     {
+#ifdef SDL2
+        // From Eternity Engine.
+        // Windows alt-tab during fullscreen will hide fullscreen,
+        // and bad things happen (unspecified) if we draw to it then.
+        if( ! (SDL_GetWindowFlags( sdl_window ) & SDL_WINDOW_SHOWN) )
+            return;
+#else
         // [WDJ] Only lock during transfer itself.  The only access
         // to vid.direct is in this routine.
         if(SDL_MUSTLOCK(vidSurface))
             if(SDL_LockSurface(vidSurface) < 0)
                 return;
+#endif       
 
 #ifdef TESTBPP
         // [WDJ] To test drawing in 15bpp, 16bpp, 24bpp, convert the
@@ -285,7 +333,17 @@ void I_FinishUpdate(void)
         }
         else
 #endif
-       
+
+#ifdef SDL2
+        // Update the SDL_Texture that is in video memory.
+        SDL_UpdateTexture( sdl_texture, NULL, vid.display, vid.direct_rowbytes );
+
+        // SDL2 docs use RenderClear, but we do not have any conflicting drawers.
+//        SDL_RenderClear( sdl_renderer );
+        SDL_RenderCopy( sdl_renderer, sdl_texture, NULL, NULL );  // to video framebuffer
+        SDL_RenderPresent( sdl_renderer );  // make it current
+#else
+        // SDL 1.2
         // [WDJ] SDL Spec says that you can directly read and write the surface
         // while it is locked.
         if(vid.display != vid.direct)
@@ -331,10 +389,11 @@ void I_FinishUpdate(void)
 #else
         SDL_UpdateRect(vidSurface, 0, 0, 0, 0);
 #endif
+#endif
     }
     else
     {
-        OglSdlFinishUpdate(cv_vidwait.value);
+        OglSdl_FinishUpdate();
     }
 
     I_GetEvent();
@@ -391,6 +450,20 @@ void I_SetPalette(RGBA_t* palette)
         localPalette[i].b = palette[i].s.blue;
     }
 
+#ifdef SDL2
+    // Need a surface for palette.
+    if( ! vidSurface )
+        return;
+
+#if defined(MAC_SDL) && defined( DEBUG_MAC )
+    if( SDL_SetPaletteColors(vidSurface->format->palette, localPalette, 0, 256) < 0 )
+    {
+        GenPrintf( EMSG_error,"Error: SDL_SetPaletteColors failed to set all colors\n");
+    }
+#else
+    SDL_SetPaletteColors(vidSurface->format->palette, localPalette, 0, 256);
+#endif
+#else
 #if defined(MAC_SDL) && defined( DEBUG_MAC )
     if( ! SDL_SetColors(vidSurface, localPalette, 0, 256) )
     {
@@ -398,6 +471,7 @@ void I_SetPalette(RGBA_t* palette)
     }
 #else
     SDL_SetColors(vidSurface, localPalette, 0, 256);
+#endif
 #endif
 
     return;
@@ -410,6 +484,44 @@ void I_SetPalette(RGBA_t* palette)
 // Return true if there are viable modes.
 boolean  VID_Query_Modelist( byte request_drawmode, byte request_fullscreen, byte request_bitpp )
 {
+#ifdef SDL2
+    SDL_DisplayMode  mode;
+    int num_modes = SDL_GetNumDisplayModes( display_index );
+    int i;
+
+    if( request_bitpp == 8 || request_drawmode == DRM_opengl )
+    {
+        // 8 bit palette mode
+        // SDL will convert to native, but there is no 8pal modelist.
+        request_bitpp = native_bitpp;
+    }
+
+# ifdef DEBUG_VID
+    printf( "VID_Query_Modelist: drawmode=%i, bitpp=%i   ",
+        request_drawmode, request_bitpp, );
+# endif
+    for(i=0; i<num_modes; i++)
+    {
+        // Query display=0
+        if( SDL_GetDisplayMode( 0, i, & mode ) < 0 )  continue;
+        byte bpp = SDL_BITSPERPIXEL( mode.format );
+        if( (bpp == request_bitpp)
+            && (mode.w <= MAXVIDWIDTH)
+            && (mode.h <= MAXVIDHEIGHT) )
+        {
+# ifdef DEBUG_VID
+                printf( "VALID\n" );
+# endif
+                return true;
+        }
+    }
+# ifdef DEBUG_VID
+    printf( "NO\n" );
+# endif
+    return false;
+
+#else
+    // SDL 1.2
     SDL_PixelFormat    req_format;
     SDL_Rect   **modelist2;
    
@@ -425,13 +537,117 @@ boolean  VID_Query_Modelist( byte request_drawmode, byte request_fullscreen, byt
     {
         req_format.BitsPerPixel = request_bitpp;
     }
-    modelist2 = SDL_ListModes(&req_format, (request_fullscreen)? surfaceFlags_fullscreen : surfaceFlags );
-#ifdef DEBUG_VID
-    printf( "VID_Query_Modelist: drawmode=%i, bitpp=%i, req BitsPerPixel=%i,  %s modelist\n",
-        request_drawmode, request_bitpp, req_format.BitsPerPixel, modelist2? "VALID":"NO" );
-#endif
+# ifdef DEBUG_VID
+    printf( "VID_Query_Modelist: drawmode=%i, bitpp=%i  (%i)   ",
+        request_drawmode, request_bitpp, req_format.BitsPerPixel );
+# endif
+    modelist2 = SDL_ListModes(&req_format, surface_flags[request_fullscreen] );
+# ifdef DEBUG_VID
+    printf( "%s modelist\n", modelist2? "VALID":"NO" );
+# endif
     return ( modelist2 != NULL );
+#endif   
 }
+
+//   request_bitpp :  8,15,16,24,32
+//                    1 = ANY mode, for 8 bit palette
+static
+void  VID_make_fullscreen_modelist( byte request_bitpp )
+{
+#ifdef SDL2
+    SDL_DisplayMode  mode;
+    int num_modes = SDL_GetNumDisplayModes( display_index );
+    int i;
+
+    if( request_bitpp < 8 )
+    {
+        request_bitpp = native_bitpp;
+    }
+    modelist_bitpp = request_bitpp;
+
+    num_vid_mode = 0;
+    for(i=0; i<num_modes; i++)
+    {
+        // Query display=0
+        // SDL2
+        if( SDL_GetDisplayMode( 0, i, & mode ) < 0 )  continue;
+        byte bpp = SDL_BITSPERPIXEL( mode.format );
+
+        if( verbose )
+        {
+            // list the modes
+            GenPrintf( EMSG_ver, "%s %ibpp %ix%i",
+                (((i&0x03)==0)?(i)?"\nModes ":"Modes ":""), bpp, mode.w, mode.h );
+        }
+
+        if( (bpp == request_bitpp)
+            && (mode.w <= MAXVIDWIDTH)
+            && (mode.h <= MAXVIDHEIGHT) )
+        {
+            add_vid_mode( mode.w, mode.h );
+        }
+    }
+    return;
+
+#else
+    SDL_Rect   ** modelist;
+    SDL_PixelFormat    req_format;
+    int i;
+
+    num_vid_mode = 0;
+   
+    // Lets default to 8 bit.
+    if( request_bitpp < 8 )
+    {
+        request_NULL = 1;
+        request_bitpp = 8;
+    }
+    modelist_bitpp = request_bitpp;
+    req_format.BitsPerPixel = request_bitpp;
+    req_format.BytesPerPixel = 0;  // ignored
+
+    // The SDL_ListModes only pays attention to the req_format BitsPerPixel, and the flags.
+    modelist = SDL_ListModes( (request_NULL? NULL : &req_format), surface_flags[1] );
+    if( modelist < 0 )
+    {
+         // SDL return value that indicates that all modes are valid.
+         if( verbose )
+         {
+            GenPrintf( EMSG_ver, "All modes are valid.\n" );
+         }
+       
+         // make a mode list from the windowed modes
+         for( i=1; i<MAXWINMODES; i++ )
+             add_vid_mode( windowedModes[i][0], windowedModes[i][1] );
+
+         modelist_bitpp = request_bitpp;
+         return;
+    }
+
+    if( ! modelist )
+       return;
+   
+    // Prepare Mode List
+    num_vid_mode = 0;
+    // SDL modelist is array of ptr, last ptr is NULL.
+    for( i=0; modelist[i]; i++ )
+    {
+        if( verbose )
+        {
+            // list the modes
+            GenPrintf( EMSG_ver, "%s %ix%i",
+                     (((i&0x03)==0)?(i)?"\nModes ":"Modes ":""),
+                     modelist[i]->w, modelist[i]->h );
+        }
+        if((modelist[i]->w <= MAXVIDWIDTH) && (modelist[i]->h <= MAXVIDHEIGHT))
+        {
+            add_vid_mode( modelist[i]->w, modelist[i]->h );
+        }
+    }
+    return;
+#endif
+}
+
 
 
 // modetype is of modetype_e
@@ -530,7 +746,7 @@ modenum_t  VID_GetModeForSize( int rw, int rh, byte rmodetype )
                 bestdist = tdist;
                 modenum.index = i + 1;  // 1..
                 if( tdist == 0 )
-		    goto ret_vidmode;   // found exact match
+                    goto ret_vidmode;   // found exact match
             }
         }
     }
@@ -558,38 +774,137 @@ done:
     return modenum;
 }
 
-
-// Set video mode and vidSurface, with verbose
-static void  VID_SetMode_vid( int req_width, int req_height, int reqflags )
+// Release SDL buffers
+void VID_SDL_release( void )
 {
-    // [WDJ] SDL_VideoModeOK calls SDL_ListModes which invalidates the previous modelist.
-    // This is why we keep our own copy.
-    int cbpp = SDL_VideoModeOK(req_width, req_height, modelist_bitpp, reqflags);
-    if( cbpp == 0 )
-        return; // SetMode would have failed, keep current buffers
-
-    if( verbose>1 )
-    {
-        GenPrintf( EMSG_ver,"SDL_SetVideoMode(%i,%i,%i,0x%X)  %s\n",
-                req_width, req_height, modelist_bitpp, reqflags,
-                (reqflags&SDL_FULLSCREEN)?"Fullscreen":"Window");
-    }
-
-    if(vidSurface)
+    if( vidSurface )
     {
         SDL_FreeSurface(vidSurface);
         vidSurface = NULL;
     }
+
+#ifdef SDL2
+    // SDL2 may use vidSurface, for 8bit palette.
+    if( sdl_texture )
+    {
+        SDL_DestroyTexture( sdl_texture );
+        sdl_texture = NULL;
+    }
+    if( sdl_renderer )
+    {
+        SDL_DestroyRenderer( sdl_renderer );
+        sdl_renderer = NULL;
+    }
+    if( sdl_window )
+    {
+        SDL_DestroyWindow( sdl_window );
+        sdl_window = NULL;
+    }
+#endif
+}
+
+
+// Set video mode and vidSurface, with verbose
+//   req_fullscreen :  1=fullscreen, used as index
+static
+void  VID_SetMode_vid( int req_width, int req_height, int req_fullscreen )
+{
+#ifdef SDL2
+    uint32_t sdl_reqflags = sdl_window_flags[req_fullscreen];
+    // SDL2 does not have test for VideoModeOK
+#else
+    // [WDJ] SDL_VideoModeOK calls SDL_ListModes which invalidates the previous modelist.
+    // This is why we keep our own copy.
+    uint32_t  sdl_reqflags = surface_flags[req_fullscreen];
+    int cbpp = SDL_VideoModeOK(req_width, req_height, modelist_bitpp, sdl_reqflags);
+    if( cbpp == 0 )
+        return; // SetMode would have failed, keep current buffers
+#endif
+
+    if( verbose>1 )
+    {
+        GenPrintf( EMSG_ver,"SetVideoMode(%i,%i,%ibpp)  %s\n",
+            req_width, req_height, modelist_bitpp, fullscreen_str[req_fullscreen] );
+    }
+
     free(vid.buffer); // was malloc
     vid.display = NULL;
     vid.buffer = NULL;
     vid.direct = NULL;
     vid.width = req_width;
     vid.height = req_height;
-   
-    vidSurface = SDL_SetVideoMode(vid.width, vid.height, modelist_bitpp, reqflags);
-    if(vidSurface == NULL)
+
+#ifdef SDL2
+    VID_SDL_release();
+
+    SDL_SetHint( SDL_HINT_FRAMEBUFFER_ACCELERATION, "0" );  // disable
+//    SDL_SetHint( SDL_HINT_RENDER_DRIVER, "software" );  // no opengl
+    SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "nearest" );  // nearest, linear, best
+
+#ifdef DEBUG_WINDOWED
+//    sdl_window = SDL_CreateWindow( "Doom Legacy", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+    sdl_window = SDL_CreateWindow( "Doom Legacy", 0, 0,
+                                   req_width, req_height, sdl_reqflags );
+#else
+    sdl_window = SDL_CreateWindow( "Doom Legacy", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                                   req_width, req_height, sdl_reqflags );
+#endif
+    if( sdl_window == NULL)
         return;  // Modes were prechecked, SDL should not fail.
+
+    // Can get the window surface, and draw to that.
+    // Or can get a texture, and copy our screen to that.
+    // Do not try to do both, bad things happen.
+    // An SDL_renderer is needed to render anything to GPU memory.
+    // An SDL_Texture resides in GPU memory.
+    // With coronas and other stuff, we are doing software rendering.
+    // But we still must get it into video memory.
+
+#if 1
+    // Note from Eternity Engine: SDL_RENDERER_SOFTWARE fails, use SDL_RENDERER_TARGETTEXTURE.
+    uint32_t rend_reqflags = SDL_RENDERER_TARGETTEXTURE;
+    if( cv_vidwait.EV )   rend_reqflags |= SDL_RENDERER_PRESENTVSYNC;
+
+    sdl_renderer = SDL_CreateRenderer( sdl_window, -1, rend_reqflags );
+    if( sdl_renderer == NULL)
+        goto failed;
+#endif
+
+    // Will need an SDL_Texture.
+    // Get Pixel format (Eternity Engine).
+    uint32_t pixel_format = SDL_GetWindowPixelFormat( sdl_window );
+    if( pixel_format == SDL_PIXELFORMAT_UNKNOWN )
+        pixel_format = sdl_pixelformats[ vid.drawmode ];
+
+    // A texture that is updated each frame (streaming).
+    sdl_texture = SDL_CreateTexture( sdl_renderer, pixel_format,
+                                    SDL_TEXTUREACCESS_STREAMING,
+                                    req_width, req_height );
+    if( sdl_texture == NULL)
+        goto failed;
+
+    // Get surface for palette draw
+//    if( modelist_bitpp == 8 )
+    {
+        vidSurface = SDL_GetWindowSurface( sdl_window );
+
+        vid.bitpp = vidSurface->format->BitsPerPixel;
+        vid.bytepp = vidSurface->format->BytesPerPixel;
+
+        // The video buffer might be padded to power of 2, for some modes (Mac)
+        vid.direct_rowbytes = vidSurface->pitch; // correct, even on Mac
+        vid.direct_size = vidSurface->pitch * vid.height; // correct, even on Mac
+        vid.direct = vidSurface->pixels;
+    }
+
+   
+#else
+    // SDL 1.2
+    VID_SDL_release();
+
+    vidSurface = SDL_SetVideoMode(vid.width, vid.height, modelist_bitpp, surface_flags[req_fullscreen] );
+    if(vidSurface == NULL)
+        goto failed;  // Modes were prechecked, SDL should not fail.
  
     if( verbose )
     {
@@ -623,6 +938,8 @@ static void  VID_SetMode_vid( int req_width, int req_height, int reqflags )
     vid.direct_rowbytes = vidSurface->pitch; // correct, even on Mac
     vid.direct_size = vidSurface->pitch * vid.height; // correct, even on Mac
     vid.direct = vidSurface->pixels;
+#endif
+
 #ifdef TESTBPP
     if( testbpp )
     {
@@ -643,6 +960,7 @@ static void  VID_SetMode_vid( int req_width, int req_height, int reqflags )
         }
     }
 #endif
+
 #if 1
  // normal
     // Because we have to copy by row anyway, buffer can be normal
@@ -660,6 +978,14 @@ static void  VID_SetMode_vid( int req_width, int req_height, int reqflags )
     vid.display = vid.buffer;
     vid.screen1 = vid.buffer + vid.screen_size;
     vid.recalc = true;
+    return;
+
+failed:
+    // To avoid leaving bad fullscreen.
+    if( ! req_fullscreen )
+        return;
+
+    VID_SDL_release();
 }
  
 
@@ -680,7 +1006,7 @@ int VID_SetMode(modenum_t modenum)
    
     if( ogl_active )
     {
-        OglSdlShutdown();
+        OglSdl_Shutdown();
     }
 
     if( set_fullscreen )
@@ -694,12 +1020,12 @@ int VID_SetMode(modenum_t modenum)
 
         if( rendermode == render_soft )
         {
-            VID_SetMode_vid(req_width, req_height, surfaceFlags_fullscreen);  // fullscreen
+            VID_SetMode_vid(req_width, req_height, 1 );  // fullscreen
         }
         else
         {
             // HWR rendermode, fullscreen
-            if(!OglSdlSurface(req_width, req_height, true))
+            if(!OglSdl_SetMode(req_width, req_height, true))
                 goto fail;
         }
     }
@@ -713,17 +1039,23 @@ int VID_SetMode(modenum_t modenum)
 
         if( rendermode == render_soft )
         {
-            VID_SetMode_vid( req_width, req_height, surfaceFlags );  // window
+            VID_SetMode_vid( req_width, req_height, 0 );  // window
         }
         else
         {
             // HWR rendermode, window
-            if(!OglSdlSurface(req_width, req_height, 0))
+            if(!OglSdl_SetMode(req_width, req_height, 0))
                 goto fail;
         }
     }
+
+#ifdef SDL2
+    // sdl_window is shared and required for both sw and hw.
+    if( (sdl_window == NULL) || (sdl_texture == NULL) )  goto fail;
+#else
     // vidSurface is shared and required for both sw and hw.
     if( vidSurface == NULL )  goto fail;
+#endif
 
     vid.modenum = modenum;
     vid.fullscreen = set_fullscreen;
@@ -752,8 +1084,13 @@ boolean  have_voodoo = false;
 // If anyone ever tries a voodoo card again, they will have to fix this.
 static boolean detect_voodoo( void )
 {
+#ifdef SDL2
+    const char * vb = SDL_GetCurrentVideoDriver();  // name
+#else
     char vb[1024];
     SDL_VideoDriverName( vb, 1022 );
+#endif
+
     if( strstr( "Voodoo", vb ) != NULL )
        have_voodoo = true;
     return have_voodoo;
@@ -804,7 +1141,57 @@ void I_StartupGraphics( void )
    
     graphics_state = VGS_startup;
     native_drawmode = DRM_native;
-   
+
+#ifdef SDL2
+    int vi;
+    int num_video_drivers = SDL_GetNumVideoDrivers();
+    for(vi=0; vi < num_video_drivers; vi++)
+    {
+        if( verbose )
+        {
+            GenPrintf( EMSG_ver,"SDL video driver = %s\n",
+                SDL_GetVideoDriver( vi ) );
+        }
+    }
+
+    native_bitpp = 0;
+    int num_video_displays = SDL_GetNumVideoDisplays();
+    for(vi=0; vi < num_video_displays; vi++)
+    {
+        SDL_DisplayMode dispmode;
+        int err = SDL_GetCurrentDisplayMode( vi, &dispmode );
+        if( err < 0 )  continue;
+       
+        // Decode the pixel format.
+        uint32_t pformat = dispmode.format;
+        byte     bpp = SDL_BITSPERPIXEL( pformat );
+        byte     bytepp = SDL_BYTESPERPIXEL( pformat );
+       
+        if( bpp > native_bitpp )
+        {
+            native_bitpp = bpp;
+            native_bytepp = bytepp;
+        }
+
+        if( verbose )
+        {
+            GenPrintf( EMSG_ver,"SDL video display [%i] = %s { %i bpp, %i byte }\n",
+                    vi, SDL_GetDisplayName( vi ), bpp, bytepp );
+            if( verbose > 1 )
+            {
+                GenPrintf( EMSG_ver,"    %s\n",
+                    SDL_GetPixelFormatName( pformat ) );
+            }
+        }
+    }
+
+    if( native_bitpp == 0 )
+    {
+        GenPrintf( EMSG_info,"No SDL video info, use default\n" );
+        native_bitpp = 8;
+        native_bytepp = 1;
+    }
+#else
     // Get and report video info
     const SDL_VideoInfo * videoInfo = (const SDL_VideoInfo *) SDL_GetVideoInfo();
     if( videoInfo )
@@ -813,7 +1200,7 @@ void I_StartupGraphics( void )
         native_bytepp = videoInfo->vfmt->BytesPerPixel;
         if( verbose )
         {
-            GenPrintf( EMSG_ver,"SDL video info = { %i bits, %i bytes }\n",
+            GenPrintf( EMSG_ver,"SDL video info = { %i bpp, %i byte }\n",
                 videoInfo->vfmt->BitsPerPixel, videoInfo->vfmt->BytesPerPixel );
             if( verbose > 1 )
             {
@@ -830,6 +1217,7 @@ void I_StartupGraphics( void )
         native_bitpp = 8;
         native_bytepp = 1;
     }
+#endif   
    
     if( VID_SetMode( initialmode ) <= 0 )
        goto abort_error;
@@ -855,20 +1243,14 @@ abort_error:
 // Returns FAIL_select, FAIL_end, FAIL_create, of status_return_e, 1 on success;
 int I_RequestFullGraphics( byte select_fullscreen )
 {
-    SDL_PixelFormat    req_format;
-    SDL_Rect   ** modelist;
     modenum_t initialmode;
     byte  select_bitpp, select_bytepp;
     byte  select_fullscreen_mode;
     int  ret_value = 0;
-    int  i;
 
     vid.draw_ready = 0;  // disable print reaching console
 
     // Get video info for screen resolutions.
-    // Lets default to 8 bit.
-    req_format.BitsPerPixel = 8;
-    req_format.BytesPerPixel = 0;
 
     switch(req_drawmode)
     {
@@ -909,11 +1291,9 @@ int I_RequestFullGraphics( byte select_fullscreen )
 #endif
 
 get_modelist:
-    // The SDL_ListModes only pays attention to the req_format BitsPerPixel, and the flags.
-    req_format.BitsPerPixel = select_bitpp;
-    modelist_bitpp = select_bitpp;
-    modelist = SDL_ListModes(&req_format, surfaceFlags_fullscreen);
-    if( modelist )  goto found_modes;
+    VID_make_fullscreen_modelist( select_bitpp );
+    if( num_vid_mode )
+        goto found_modes;
 
     if(req_drawmode == DRM_explicit_bpp && select_bitpp > 8)
     {
@@ -925,11 +1305,10 @@ draw_8pal:
     // Let SDL handle 8 bit mode, using conversion.
     if( verbose )
         GenPrintf( EMSG_info,"Draw 8bpp using palette, SDL must convert to %i bpp video modes\n", native_bitpp );
-    request_NULL = 1;
-    modelist_bitpp = 8;
+
     select_bytepp = 1;
-    modelist = SDL_ListModes(NULL, surfaceFlags_fullscreen);
-    if(modelist == NULL)
+    VID_make_fullscreen_modelist( 1 );  // request_NULL or native
+    if( num_vid_mode == 0 )
     {
         // should not happen with fullscreen modes
         GenPrintf( EMSG_error, "No usable fullscreen video modes.\n");
@@ -940,40 +1319,11 @@ found_modes:
     // Have some requested video modes in modelist
     vid.bitpp = modelist_bitpp;
     vid.bytepp = select_bytepp;
-   
-    if( modelist < 0 )
-    {
-         // SDL return value that indicates that all modes are valid.
-         if( verbose )
-         {
-            GenPrintf( EMSG_ver, "All modes are valid.\n" );
-         }
-         goto set_modes;
-    }
-
-    // Prepare Mode List
-    num_vid_mode = 0;
-    // SDL modelist is array of ptr, last ptr is NULL.
-    for( i=0; modelist[i]; i++ )
-    {
-        if( verbose )
-        {
-            // list the modes
-            GenPrintf( EMSG_ver, "%s %ix%i",
-                     (((i&0x03)==0)?(i)?"\nModes ":"Modes ":""),
-                     modelist[i]->w, modelist[i]->h );
-        }
-        if((modelist[i]->w <= MAXVIDWIDTH) && (modelist[i]->h <= MAXVIDHEIGHT))
-        {
-            add_vid_mode( modelist[i]->w, modelist[i]->h );
-        }
-    }
     // Mode List has been prepared
 
     if( verbose )
        GenPrintf( EMSG_ver, "\nFound %d Video Modes at %i bpp\n", num_vid_mode, vid.bitpp);
 
-set_modes:
     vid.width = req_width;
     vid.height = req_height;
 
@@ -1000,8 +1350,8 @@ set_modes:
        vid.widthbytes = vid.width * vid.bytepp;
 
        if( verbose>1 )
-          GenPrintf( EMSG_ver, "OglSdlSurface(%i,%i,%i)\n", req_width, req_height, select_fullscreen_mode);
-       if( ! OglSdlSurface(req_width, req_height, select_fullscreen) )
+          GenPrintf( EMSG_ver, "OglSdl_SetMode(%i,%i,%i)\n", req_width, req_height, select_fullscreen_mode);
+       if( ! OglSdl_SetMode(req_width, req_height, select_fullscreen) )
        {	 
           return FAIL_create;
        }
@@ -1013,7 +1363,11 @@ set_modes:
         if( ret_value < 0 )
             return ret_value;
 
+#ifdef SDL2
+        if( sdl_window == NULL )
+#else
         if(vidSurface == NULL)
+#endif
         {
             GenPrintf( EMSG_error,"Could not set vidmode\n");
             return FAIL_create;
@@ -1046,15 +1400,11 @@ void I_ShutdownGraphics( void )
 
     if( rendermode == render_soft )
     {
-        if( vidSurface )
-        {
-            SDL_FreeSurface(vidSurface);
-            vidSurface = NULL;
-        }
+        VID_SDL_release();       
     }
     else
     {
-        OglSdlShutdown();
+        OglSdl_Shutdown();
     }
     graphics_state = VGS_off;
 
