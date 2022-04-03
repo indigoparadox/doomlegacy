@@ -1981,8 +1981,8 @@ uint16_t  ASCIINames[256] =
 
 
 int pausepressed=0;
-boolean shiftdown = false;
-boolean altdown = false;
+byte shiftdown = false;
+byte altdown = false;
 
 //  Return a key that has been pushed, or 0
 //  (replace getchar() at game startup)

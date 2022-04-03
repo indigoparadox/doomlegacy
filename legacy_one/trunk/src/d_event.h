@@ -63,7 +63,7 @@ extern  int             eventhead;
 extern  int             eventtail;
 
 // current modifier key status
-extern boolean shiftdown;
-extern boolean altdown;
+extern byte shiftdown;
+extern byte altdown;
 
 #endif

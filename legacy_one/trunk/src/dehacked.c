@@ -883,9 +883,11 @@ uint16_t  lookup_thing_type( const char * str, uint16_t ttin )
     // Look at the comments for characteristic words.
     for( dtd = & deh_thing_desc_table[0]; (byte*)dtd < ((byte*)deh_thing_desc_table + sizeof(deh_thing_desc_table)); dtd++ )
     {
-#if defined( __MINGW32__ ) || defined( __WATCOM__ ) || defined( SMIF_X11 )
+//#if defined( __MINGW32__ ) || defined( __WATCOM__ ) || defined( SMIF_X11 )
+#if 1       
         if( dl_strcasestr( str, dtd->desc ) )
 #else	 
+// must #define  __USE_GNU to get strcasestr from strings.h	 
         if( strcasestr( str, dtd->desc ) )
 #endif	   
 	    return dtd->mt_type;  // if no direct code is found

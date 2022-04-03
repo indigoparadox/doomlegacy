@@ -1144,7 +1144,8 @@ void dl_strncpy( char * dest, const char * src, int destsize )
     * dest = 0;
 }
 
-#if defined( __MINGW32__ ) || defined( __WATCOM__ ) || defined( SMIF_X11 )
+//#if defined( __MINGW32__ ) || defined( __WATCOM__ ) || defined( SMIF_X11 )
+#if 1
 // For systems that are missing strcasestr
 char * dl_strcasestr( const char * haystack,  const char * needle )
 {

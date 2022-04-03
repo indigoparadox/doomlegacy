@@ -143,11 +143,11 @@ void I_OutputMsg       (char *fmt, ...)
 //
 // I_GetKey
 //
-int  I_GetKey          (void)
+int  I_GetKey(void)
 {
     // Warning: I_GetKey empties the event queue till next keypress
-    event_t*    ev;
-    int rc=0;
+    event_t * ev;
+    int rc = 0;
 
     // return the first keypress from the event queue
     while (eventtail != eventhead)
@@ -267,8 +267,8 @@ static int lastmousex = 0;
 static int lastmousey = 0;
 
 // current modifier key status
-boolean shiftdown = false;
-boolean altdown = false;
+byte shiftdown = 0;
+byte altdown = 0;
 
 Uint8 jhat_directions[8] = {
   SDL_HAT_UP,
@@ -290,6 +290,10 @@ byte mouse2_started = 0;
 static void I_GetMouse2Event(void);
 #endif
 #ifdef MOUSE2_WIN
+HANDLE mouse2_filehandle = 0;
+static void I_GetMouse2Event(void);
+#endif
+#ifdef MOUSE2_DOS
 HANDLE mouse2_filehandle = 0;
 static void I_GetMouse2Event(void);
 #endif
@@ -696,11 +700,12 @@ static void I_JoystickInit(void)
   for (i=0; i < num_joysticks; i++)
   {
       SDL_Joystick *joy = SDL_JoystickOpen(i);
+      const char * jname = SDL_JoystickName(i);
       joysticks[i] = joy;
       if (devparm || verbose > 1)
       {
           CONS_Printf(" Properties of joystick %d:\n", i);
-          CONS_Printf("    %s.\n", SDL_JoystickName(i));
+          if( jname )  CONS_Printf("    %s.\n", jname);
           CONS_Printf("    %d axes.\n", SDL_JoystickNumAxes(joy));
           CONS_Printf("    %d buttons.\n", SDL_JoystickNumButtons(joy));
           CONS_Printf("    %d hats.\n", SDL_JoystickNumHats(joy));
@@ -708,9 +713,9 @@ static void I_JoystickInit(void)
       }
       
 #ifdef XBOX_CONTROLLER     
-      check_Joystick_Xbox[i] =
-        (  strcmp(SDL_JoystickName(i), "Xbox 360 Wireless Receiver (XBOX)") == 0
-        || strcmp(SDL_JoystickName(i), "Microsoft X-Box 360 pad") == 0  );
+      check_Joystick_Xbox[i] = jname &&
+        (  strcmp(jname, "Xbox 360 Wireless Receiver (XBOX)") == 0
+        || strcmp(jname, "Microsoft X-Box 360 pad") == 0  );
 #endif     
   }
 }
@@ -723,7 +728,8 @@ static void I_ShutdownJoystick(void)
   int i;
   for(i=0; i < num_joysticks; i++)
   {
-    CONS_Printf("Closing joystick %s.\n", SDL_JoystickName(i));
+    const char * jname = SDL_JoystickName(i);
+    if( jname )  CONS_Printf("Closing joystick %s.\n", jname);
     SDL_JoystickClose(joysticks[i]);
     joysticks[i] = NULL;
   }

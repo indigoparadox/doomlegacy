@@ -275,12 +275,13 @@ typedef union {
 // SDL uses the term RGBA, SDL opengl uses it extensively.
 // The literal RGBA() is the same order as RGBA_t, which works for SDL calls,
 // The order of RGBA in memory is (A,B,G,R).
-// BIG_ENDIAN that is (A,B,G,R), and LITTLE_ENDIAN is (R,G,B,A).
+// In a uint32_t, BIG_ENDIAN is (R,G,B,A), and LITTLE_ENDIAN is (A,B,G,R).
 // UINT2RGBA reverses the byte order for LITTLE_ENDIAN, which is often not
 // what you want.  Mostly, it is just confusing, so avoid it.
 // SDL_PixelFormat identifies the actual component order and fields.
 // The component order for 32bit pixels in video buffers is (A,R,G,B),
 // which is different.
+// Use the RGBA_t components, and the RGBA() macro.
 
 #ifdef __BIG_ENDIAN__
     // __BIG_ENDIAN__ is defined on MAC compilers, not on WIN, nor LINUX
