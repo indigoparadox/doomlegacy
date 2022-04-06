@@ -703,6 +703,16 @@ void Midifile_OLD_SDL_MIXER( byte* midibuf, unsigned long midilength )
 #endif
 #endif
 
+#ifdef DONE_CALLBACK
+#ifdef HAVE_MIXER
+// Callback from SDL
+SDLCALL I_music_done_sdl(void)
+{
+    // ??
+}
+#endif
+#endif
+
 
 void I_PlaySong(int handle, byte looping)
 {
@@ -814,15 +824,15 @@ int I_RegisterSong( byte music_type, void* data, int len )
   else
   {
       // MIDI, MP3, Ogg Vorbis, various module formats
-      mus_type = MUS_NONE;  // SDL_mixer auto-detect
+//      mus_type = MUS_NONE;  // SDL_mixer auto-detect
       mus_type = music_type_to_MUS[ music_type ];
 // printf( "mus_type = %s  mus_type = %i\n",  music_type_str[music_type], mus_type );
 
 #ifdef OLD_SDL_MIXER
       Midifile_OLD_SDL_MIXER( data, len );
 #else     
-      music.rwop = SDL_RWFromMem(midi_buffer, len);
-//      music.rwop = SDL_RWFromConstMem(data, len);
+//      music.rwop = SDL_RWFromMem(data, len);
+      music.rwop = SDL_RWFromConstMem(data, len);
 #endif
   }
 
@@ -896,15 +906,17 @@ void I_StartupSound(void)
   // Use SDL_mixer for music
 
    // Mixer 1.2.10
+   // Do not have to preload these decoders, but if loaded
+   // here, then can test for their being present.
+   // Otherwise, could use
    uint32_t mi = Mix_Init(
 # ifdef SDL2
-    0 // FLUIDSYNTH does not have a Load INIT in SDL2
-//    | MIX_INIT_MOD
-    | MIX_INIT_MID
-#else
+    // FLUIDSYNTH does not have a Load INIT in SDL2
+    MIX_INIT_MID
+# else
     // SDL 1.2			 
     MIX_INIT_FLUIDSYNTH
-#endif
+# endif
 # ifdef MUSIC_MP3
     | MIX_INIT_MP3
 # endif			  
@@ -925,7 +937,6 @@ void I_StartupSound(void)
 # endif
 # ifdef SDL2
       // FLUIDSYNTH does not have a Load INIT in SDL2
-//      if( mi & MIX_INIT_MOD )  strcat( mb, "MOD, " );
       if( mi & MIX_INIT_MID )  strcat( mb, "MIDI, " );
 # else
       if( mi & MIX_INIT_FLUIDSYNTH )  strcat(mb, "FLUIDSYNTH" );
@@ -966,6 +977,9 @@ void I_StartupSound(void)
   }
 
   Mix_SetPostMix(audspec.callback, NULL);  // after mixing music, add sound fx
+#ifdef DONE_CALLBACK
+  Mix_HookMusicFinished( I_music_done_sdl );
+#endif
   Mix_Resume(-1); // start all sound channels (although they are not used)
 
 #if 1
@@ -981,6 +995,7 @@ void I_StartupSound(void)
 
 #ifdef SDL2
 //  Explicit music cmd.
+//  Only for music type MUS_CMD, and only loaded from file.
 //  Mix_SetMusicCMD( "" );
 #endif
    

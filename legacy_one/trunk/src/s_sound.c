@@ -1431,7 +1431,7 @@ byte detect_music_type( lumpnum_t music_ln, byte can_play_adm )
     {
         music_type = MUSTYPE_MUS;
     }
-    else if( memcmp(head,"MThd",3) == 0 )  // MIDI
+    else if( memcmp(head,"MThd",4) == 0 )  // MIDI
     {
         music_type = MUSTYPE_MIDI;
     }
@@ -1533,7 +1533,14 @@ void S_ChangeMusic(int music_num, byte looping)
             return;  // silence
 # endif
     }
-#else       
+# ifndef MUSSERV
+    else
+    {
+        music_type = detect_music_type( music->lumpnum, EN_port_music );
+    }
+# endif
+#else
+    // NOT MUSIC_SOURCE_CONTROL
     if( music->lumpnum == 0 )
     {
         if (EN_heretic)

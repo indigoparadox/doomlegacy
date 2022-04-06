@@ -9061,5 +9061,14 @@ for the SDL2 library calls.
 Still supports SDL1, for target machines that are not supported by SDL2.
 The SDL1 is working better than SDL2, at this point.
 
+*** w110_mp3_11
+patchfile = w110_004_mp3
+- commit revision 1625
+Bump the version to 1.48.11.
+Fix MP3 music, by passing the correct data.
+Detect the music type upon replay too.  Otherwise it
+tries to play MP3 as a MUS.
+Some other comments and small changes.
+
 
 

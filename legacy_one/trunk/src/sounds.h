@@ -150,7 +150,7 @@ typedef struct
     lumpnum_t   lumpnum;
 
     // music data
-    void*       data;
+    byte *      data;
 
     // music handle once registered
     int handle;

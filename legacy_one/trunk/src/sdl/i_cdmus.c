@@ -38,6 +38,11 @@
 #include "command.h"
 #include "m_argv.h"
 
+#ifdef SDL2
+// [WDJ] SDL2 does not have support for CDROM music.
+// CDROM music is disabled in the Makefile.
+#endif
+
 // [WDJ] SDL cannot control CDROM volume.
 // This is only present in the case someone wants to experiment, do not
 // turn it on for releases.
