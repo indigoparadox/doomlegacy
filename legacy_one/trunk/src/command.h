@@ -181,6 +181,7 @@ typedef struct {
 // List of values : Next or previous value on the list.
 
 // [WDJ] Ptrs together for better packing. Beware many consts of this type.
+typedef struct consvar_s  consvar_t;
 typedef struct consvar_s
 {
 // Declare in consvar_t instance.  If this order is altered, about 60 instances have to be fixed.
@@ -205,8 +206,7 @@ typedef struct consvar_s
        // Saved user config is in string.
        // When pointing to a PossibleValue, it will need to be a const char *.
        // Otherwise, it is allocated with Z_Alloc, Z_Free.
-    struct  consvar_s * next;
-
+    consvar_t * next;
 } consvar_t;
 
 extern CV_PossibleValue_t CV_OnOff[];

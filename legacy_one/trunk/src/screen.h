@@ -153,9 +153,6 @@ typedef struct viddef_s
  // END PRIVATE
 } viddef_t;
 
-// [WDJ] Do not hide what these are, it makes it more difficult to track effects.
-//#define VIDWIDTH    vid.width
-//#define VIDHEIGHT   vid.height
 
 
 // internal additional info for vesa modes only
@@ -163,11 +160,13 @@ typedef struct {
     int         vesamode;         // vesa mode number plus LINEAR_MODE bit
     void        *linearmem;      // linear address of start of frame buffer
 } vesa_extra_t;
+
 // a video modes from the video modes list,
+typedef struct vmode_s  vmode_t;
 typedef struct vmode_s {
 
-    struct vmode_s  *next;
-    char         *name;
+    vmode_t    * next;
+    char       * name;
     unsigned int width;
     unsigned int height;
     unsigned int rowbytes;          //bytes per scanline

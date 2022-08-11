@@ -206,8 +206,6 @@ typedef struct
 } vertex_t;
 
 
-// Forward of LineDefs, for Sectors.
-struct line_s;
 
 // Each sector has an xyz_t in its center for sound origin purposes.
 // [WDJ] This replaces degenmobj_t, which was prone to breakage.
@@ -244,32 +242,36 @@ typedef enum
 } ffloortype_e;
 
 
+typedef struct ffloor_s  ffloor_t;
+typedef struct sector_s  sector_t;
+typedef struct line_s    line_t;
+
 // created by P_AddFakeFloor
 typedef struct ffloor_s
 {
   // references to model sector, to pass through changes immediately
-  fixed_t          *topheight;  // model sector ceiling
-  short            *toppic;
-  lightlev_t       *toplightlevel;
-  fixed_t          *topxoffs;
-  fixed_t          *topyoffs;
+  fixed_t        * topheight;  // model sector ceiling
+  short          * toppic;
+  lightlev_t     * toplightlevel;
+  fixed_t        * topxoffs;
+  fixed_t        * topyoffs;
 
-  fixed_t          *bottomheight;  // model sector floor
-  short            *bottompic;
-  //lightlev_t     *bottomlightlevel;
-  fixed_t          *bottomxoffs;
-  fixed_t          *bottomyoffs;
+  fixed_t        * bottomheight;  // model sector floor
+  short          * bottompic;
+  //lightlev_t   * bottomlightlevel;
+  fixed_t        * bottomxoffs;
+  fixed_t        * bottomyoffs;
 
   int              model_secnum; // model sector num used in linedef
   ffloortype_e     flags;  // draw and property flags set by special linedef
+ 
+  line_t         * master; // the special linedef generating this floor
 
-  struct line_s  * master; // the special linedef generating this floor
-
-  struct sector_s* taggedtarget; // tagged sector that is affected
+  sector_t       * taggedtarget; // tagged sector that is affected
 
   // double linked list of ffloor_t in sector
-  struct ffloor_s* next;
-  struct ffloor_s* prev;
+  ffloor_t       * next;
+  ffloor_t       * prev;
 
   uint16_t         fw_effect;		// index to fweff, 0 is unused
                                         // FF_FOG, FF_TRANSLUCENT, alpha
@@ -317,13 +319,16 @@ typedef enum {
 //=========
 // ----- for special tricks with HW renderer -----
 
+typedef struct msecnode_s   msecnode_t;
+typedef struct linechain_s  linechain_t;
+
 //
 // For creating a chain with the lines around a sector
 //
 typedef struct linechain_s
 {
-    struct line_s        *line;
-    struct linechain_s   *next;
+    line_t        * line;
+    linechain_t   * next;
 } linechain_t;
 // ----- end special tricks -----
 
@@ -360,7 +365,7 @@ typedef struct sector_s
     byte        floortype;  // see floortype_e
 
     // thing that made a sound (or null)
-    mobj_t*     soundtarget;
+    mobj_t    * soundtarget;
 
     // mapblock bounding box for height changes
     int         blockbox[4];
@@ -411,13 +416,13 @@ typedef struct sector_s
   
     // list of mobjs that are at least partially in the sector
     // thinglist is a subset of touching_thinglist
-    struct msecnode_s *touching_thinglist;               // phares 3/14/98  
+    msecnode_t       *  touching_thinglist;  // phares 3/14/98  
                                     // nodes are ZMalloc PU_LEVEL, by P_GetSecnode
     //SoM: 3/6/2000: end stuff...
 
     // list of ptrs to lines that have this sector as a side
     int                 linecount;
-    struct line_s**     linelist;  // [linecount] size
+    line_t           ** linelist;  // [linecount] size
 
     //SoM: 2/23/2000: Improved fake floor hack
     ffloor_t *          ffloors;    // 3D floor list
@@ -445,7 +450,7 @@ typedef struct sector_s
     boolean             virtualCeiling;
     fixed_t             virtualCeilingheight;
     linechain_t *       sectorLines;
-    struct sector_s **  stackList;
+    sector_t        **  stackList;
 #ifdef SOLARIS
     // Until we get Z_MallocAlign sorted out, make this a float
     // so that we don't get alignment problems.
@@ -480,7 +485,7 @@ typedef struct
     short       linedef_special;
 
     // Sector the SideDef is facing.
-    sector_t*   sector;
+    sector_t  * sector;
 } side_t;
 
 
@@ -606,12 +611,12 @@ typedef struct subsector_s
 
 typedef struct msecnode_s
 {
-  sector_t          *m_sector; // a sector containing this object
-  struct mobj_s     *m_thing;  // this object
-  struct msecnode_s *m_tprev;  // prev msecnode_t for this thing
-  struct msecnode_s *m_tnext;  // next msecnode_t for this thing
-  struct msecnode_s *m_sprev;  // prev msecnode_t for this sector
-  struct msecnode_s *m_snext;  // next msecnode_t for this sector
+  sector_t   *  m_sector; // a sector containing this object
+  mobj_t     *  m_thing;  // this object
+  msecnode_t *  m_tprev;  // prev msecnode_t for this thing
+  msecnode_t *  m_tnext;  // next msecnode_t for this thing
+  msecnode_t *  m_sprev;  // prev msecnode_t for this sector
+  msecnode_t *  m_snext;  // next msecnode_t for this sector
   boolean visited; // killough 4/4/98, 4/7/98: used in search algorithms
 } msecnode_t;
 
@@ -716,12 +721,12 @@ extern byte      corona_alpha, corona_bright;
 spr_light_t *  Sprite_Corona_Light_lsp( int sprnum, state_t * sprstate );
 byte  Sprite_Corona_Light_fade( spr_light_t * lsp, float cz, int objid );
 
-
+typedef struct lightmap_s  lightmap_t;
 typedef struct lightmap_s 
 {
     float               s[2], t[2];
     spr_light_t       * light;
-    struct lightmap_s * next;
+    lightmap_t        * next;
 } lightmap_t;
 
 //=========
@@ -840,37 +845,52 @@ typedef struct
 #define MAXFFLOORS    40
 #endif
 
+typedef struct visplane_s  visplane_t;
+typedef struct vissprite_s  vissprite_t;
+typedef struct drawseg_s  drawseg_t;
+typedef struct drawsprite_s  drawsprite_t;
+typedef struct drawsprite_s  drawsprite_t;
+
+typedef struct drawsprite_s {
+  drawsprite_t * near, * prev;
+  drawseg_t    * dseg;
+  vissprite_t  * sprite;
+  int16_t  x1, x2;  // partial sprite draws
+} drawsprite_t;
+
 //
 // Drawseg for floor and 3D floor thickseg
 //
 typedef struct drawseg_s
 {
-    seg_t*              curline;
-    int                 x1, x2;  // x1..x2
+    int           x1, x2;  // x1..x2
 
-    fixed_t             scale1, scale2;  // scale x1..x2
-    fixed_t             scalestep;
+    fixed_t       scale1, scale2;  // scale x1..x2
+    fixed_t       scalestep;
+    fixed_t       near_scale;   // nearest scale
 
     // silhouette is where a drawseg can overlap a sprite
-    int                 silhouette;	    // bit flags, Silhouette_e
-    fixed_t             sil_top_height;     // do not clip sprites below this
-    fixed_t             sil_bottom_height;  // do not clip sprites above this
+    int           silhouette;	    // bit flags, Silhouette_e
+    fixed_t       sil_top_height;     // do not clip sprites below this
+    fixed_t       sil_bottom_height;  // do not clip sprites above this
 
     // Pointers to lists for sprite clipping,
     //  all three adjusted so [x1] is first value.
-    short*              spr_topclip;     // owned array [x1..x2]
-    short*              spr_bottomclip;  // owned array [x1..x2]
-    short*              maskedtexturecol;  // ref to array [x1..x2]
+    short*        spr_topclip;     // owned array [x1..x2]
+    short*        spr_bottomclip;  // owned array [x1..x2]
+    short*        maskedtexturecol;  // ref to array [x1..x2]
+
+    seg_t      *  curline;
 
     // 3D floors, only use what is needed, often none
-    struct visplane_s*  ffloorplanes[MAXFFLOORS];
-    int                 numffloorplanes;
-    struct ffloor_s*    thicksides[MAXFFLOORS];
-    short*              thicksidecol;
-    int                 numthicksides;
+    int           numffloorplanes;
+    int           numthicksides;
+    visplane_t *  ffloorplanes[MAXFFLOORS];
+    ffloor_t   *  thicksides[MAXFFLOORS];
+    short*        thicksidecol;
 
     // z check for sprite clipping
-    fixed_t          *  backscale_r;  // ref to array [0..vid.width]
+    fixed_t    *  backscale_r;  // ref to array [0..vid.width]
 //    fixed_t             backscale[MAXVIDWIDTH]; // z check for sprite clipping
 //    fixed_t             frontscale[MAXVIDWIDTH]; // z check for sprite clipping
 } drawseg_t;
@@ -979,17 +999,20 @@ typedef enum
   SC_BOTTOM = 2
 } spritecut_e;
 
+
 // A vissprite_t is a thing
 //  that will be drawn during a refresh.
 // I.e. a sprite object that is partly visible.
+typedef struct vissprite_s  vissprite_t;
 typedef struct vissprite_s
 {
     // Doubly linked list.
-    struct vissprite_s* prev;
-    struct vissprite_s* next;
+    vissprite_t       * prev;
+    vissprite_t       * next;
 
     // Screen x range.
-    int                 x1, x2;
+    int                 x0;      // x for texture alignment
+    int                 x1, x2;  // x1, x2 clipped draw range
 
     // global bottom / top for silhouette clipping, world coordinates
     fixed_t             gz_bot;
@@ -1035,7 +1058,7 @@ typedef struct vissprite_s
 //    fixed_t             mobj_height;   // unused
 
     //SoM: Precalculated top and bottom screen coords for the sprite.
-    // [WDJ] sz_ only used in r_things.c, as cut, used for clip tests.
+    // [WDJ] Only used in r_things.c, as cut, used for clip tests.
     // Do not really need cut, just set sz_top, and sz_bot properly.
     int                 sz_bot;
     int                 sz_top;

@@ -141,7 +141,8 @@ char * Z_Strdup(const char *s, memtag_e tag, void **user);
 // return size of data of this block.
 int Z_Datasize( void* ptr );
 
-/// memblock header
+// memblock header
+typedef struct memblock_s  memblock_t;
 typedef struct memblock_s
 {
   // [WDJ] only works for int >= 32bit, or else havoc in Z_ALLOC
@@ -149,11 +150,10 @@ typedef struct memblock_s
   int                 size;   // including the header and possibly tiny fragments
   memtag_e            memtag;    // purgelevel
 
-  void**              user;   // if the block has a single owner, *user points to the beginning of the data area after header
-  struct memblock_s*  next;
-  struct memblock_s*  prev;
+  void **             user;   // if the block has a single owner, *user points to the beginning of the data area after header
+  memblock_t  * next, * prev;
 #ifdef DEBUG_ZONE
-    char             *ownerfile;
+    char            * ownerfile;
     int               ownerline; 
 #endif
 } memblock_t;

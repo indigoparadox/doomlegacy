@@ -401,7 +401,7 @@ int qmus2mid (byte *mus,  // input mus
     track_t* trk;
 
     uint32_t DeltaTime;
-    uint32_t TotalTime=0;
+//    uint32_t TotalTime=0;
 
     int      i;
     unsigned int  event;
@@ -532,7 +532,7 @@ int qmus2mid (byte *mus,  // input mus
         if (last( event ) )
         {
             DeltaTime = ReadTime( &file_mus );
-            TotalTime += DeltaTime;
+//            TotalTime += DeltaTime;
             for (i = 0; i < (int) TrackCnt; i++ )
                 track[i].DeltaTime += DeltaTime;
         }

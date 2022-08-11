@@ -56,31 +56,31 @@
 // ==========================================================================
 
 // WALL SPLATS are patches drawn on top of wall segs
-struct wallsplat_s {
+typedef struct wallsplat_s wallsplat_t;
+typedef struct wallsplat_s {
     int         patch;      // lump id.
     vertex_t    v1, v2;     // vertices along the linedef
     fixed_t     top;
     fixed_t     offset;     // offset in columns<<FRACBITS from start of linedef to start of splat
     int         flags;
-    int*        yoffset;
+    int       * yoffset;
     //short       xofs, yofs;
     //int         tictime;
     line_t*     line;       // the parent line of the splat seg
-    struct wallsplat_s * next;
-};
-typedef struct wallsplat_s wallsplat_t;
+    wallsplat_t * next;
+} wallsplat_t;
 
 // FLOOR SPLATS are pic_t (raw horizontally stored) drawn on top of the floor or ceiling
-struct floorsplat_s {
+typedef struct floorsplat_s floorsplat_t;
+typedef struct floorsplat_s {
     int         pic;        // a pic_t lump id
     int         flags;
     vertex_t    verts[4];   // (x,y) as viewed from above on map
     fixed_t     z;          //     z (height) is constant for all the floorsplat
     subsector_t* subsector;       // the parent subsector
-    struct floorsplat_s * next;
-    struct floorsplat_s * nextvis;
-};
-typedef struct floorsplat_s floorsplat_t;
+    floorsplat_t * next;
+    floorsplat_t * nextvis;
+} floorsplat_t;
 
 
 
@@ -94,9 +94,9 @@ void R_AddWallSplat (line_t* wallline, int sectorside, const char* patchname,
                      fixed_t top, fixed_t wallfrac, int flags);
 void R_AddFloorSplat (subsector_t* subsec, char* picname, fixed_t x, fixed_t y, fixed_t z, int flags);
 
-void R_Clear_VisibleFloorSplats (void);
-void R_AddVisibleFloorSplats (subsector_t* subsec);
-void R_DrawVisibleFloorSplats (void);
+void R_Clear_Visible_FloorSplats (void);
+void R_Add_Visible_FloorSplats (subsector_t* subsec);
+void R_Draw_Visible_FloorSplats (void);
 
 
 #endif // R_SPLATS_H

@@ -225,7 +225,7 @@ typedef struct
 } mapnode_t;
 
 
-
+typedef struct mobj_s  mobj_t;
 
 // Thing definition, position, orientation and type,
 // plus skill/visibility flags and attributes.
@@ -238,7 +238,7 @@ typedef struct
     int16_t             angle;  // normally (0,90,180,270), reported neg sometimes
     uint16_t            type;  // DoomEd id number
     uint16_t            options;  // flags
-    struct mobj_s*      mobj;  // Extra MapThing, voodoo, and FS tests
+    mobj_t            * mobj;  // Extra MapThing, voodoo, and FS tests
 } mapthing_t;
 
 

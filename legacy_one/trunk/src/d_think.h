@@ -69,15 +69,15 @@ typedef actionf_t  think_t;
 
 
 // Doubly linked list of actors.
+typedef struct thinker_s  thinker_t;
 typedef struct thinker_s
 {
-    struct thinker_s*   prev;
-    struct thinker_s*   next;
+    thinker_t  * prev, * next;
     think_t             function;
 
     // killough 8/29/98: maintain thinkers in several equivalence classes,
     // according to various criteria, so as to allow quicker searches.
-    struct thinker_s *  cnext, *cprev; // linked list thinkers in same class
+    thinker_t  * cnext, * cprev; // linked list thinkers in same class
 
 #ifdef REFERENCE_COUNTING
     // killough 11/98: count of how many other objects reference

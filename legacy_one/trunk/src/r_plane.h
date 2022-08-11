@@ -66,10 +66,11 @@
 // Simple : kinda floor/ceiling polygon optimised for Doom rendering.
 // 4124 bytes!
 //
+typedef struct visplane_s  visplane_t;
 typedef struct visplane_s
 {
   //SoM: 3/17/2000
-  struct visplane_s*    next;  // linked in hash table
+  visplane_t       *    next;  // linked in hash table
 
   fixed_t               height;
   fixed_t               viewz;
@@ -79,7 +80,7 @@ typedef struct visplane_s
   int                   minx, maxx;
 
   //SoM: 4/3/2000: Colormaps per sector!
-  extracolormap_t*      extra_colormap;
+  extracolormap_t  *    extra_colormap;
 
   //faB: words sucks .. should get rid of that.. but eats memory
   //added:08-02-98: THIS IS UNSIGNED! VERY IMPORTANT!!
@@ -91,7 +92,7 @@ typedef struct visplane_s
   unsigned short         pad4;
 
   // SoM: [WDJ] highest top and lowest bottom as found by R_PlaneBounds
-  // Set and used only in R_CreateDrawNodes
+  // Set and used only in R_Create_drawnodes
   int                    highest_top, lowest_bottom;
 
   fixed_t xoffs, yoffs;  // SoM: 3/6/2000: Scrolling flats.
@@ -101,7 +102,7 @@ typedef struct visplane_s
   // the old way caused trouble with the drawseg array was re-sized.
 //  int    scaleseg;
 
-  struct ffloor_s* ffloor;  // ffloor_t, when derived from fake floor
+  ffloor_t  * ffloor;  // ffloor_t, when derived from fake floor
 } visplane_t;
 
 
@@ -178,7 +179,7 @@ typedef struct ff_planemgr_s
   short  front_clip_bot[MAXVIDWIDTH];
   short  plane_clip_top[MAXVIDWIDTH];	// and console clipping
 
-  struct ffloor_s  *ffloor;
+  ffloor_t  *  ffloor;
 } ff_planemgr_t;
 
 extern ff_planemgr_t  ffplane[MAXFFLOORS];

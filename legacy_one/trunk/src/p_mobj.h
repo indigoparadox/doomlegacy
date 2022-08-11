@@ -345,7 +345,12 @@ typedef enum
 #endif
 
 
+typedef struct subsector_s  subsector_t;
+typedef struct msecnode_s   msecnode_t;
+typedef struct player_s     player_t;
+
 // Map Object definition.
+typedef struct mobj_s  mobj_t;
 typedef struct mobj_s
 {
     // List: thinker links.
@@ -392,18 +397,16 @@ typedef struct mobj_s
     state_t           * state;
 
     // More list: links in sector (if needed)
-    struct mobj_s     * snext;
-    struct mobj_s     * sprev;
+    mobj_t     * snext, * sprev;
 
     // Interaction info, by BLOCKMAP.
     // Links in blocks (if needed).
-    struct mobj_s     * bnext;
-    struct mobj_s     * bprev;
+    mobj_t     * bnext, * bprev;
 
-    struct subsector_s* subsector;
+    subsector_t       * subsector;
 
     // a linked list of sectors where this object appears
-    struct msecnode_s * touching_sectorlist;
+    msecnode_t        * touching_sectorlist;
 
     //Fab:02-08-98
     // Skin overrides 'sprite' when non NULL (currently hack for player
@@ -416,32 +419,32 @@ typedef struct mobj_s
     // Thing being chased/attacked (or NULL),
     // also the originator for missiles.
   union {
-    struct mobj_s     * target;
+    mobj_t            * target;
     uint32_t            target_id; // used during loading
   };
 
     // Thing being chased/attacked for tracers.
   union {
-    struct mobj_s     * tracer;
+    mobj_t            * tracer;
     uint32_t            tracer_id; // used during loading
   };
 
   union {
-    struct mobj_s     * lastenemy;    // MBF, last known enemy
+    mobj_t            * lastenemy;    // MBF, last known enemy
     uint32_t            lastenemy_id; // used during loading
   };
 
     // Additional info record for player avatars only.
     // Only valid if type == MT_PLAYER
-    struct player_s   * player;
+    player_t          * player;
 
     // For nightmare and itemrespawn respawn.
     mapthing_t        * spawnpoint;
 
     // Nodes
-    struct mobj_s     * nextnode;   // Next node object to chase after touching
+    mobj_t            * nextnode;   // Next node object to chase after touching
                                     // current target (which must be MT_NODE).
-    struct mobj_s     * targetnode; // Target node to remember when encountering a player
+    mobj_t            * targetnode; // Target node to remember when encountering a player
     int			nodescript; // Script to run when this node is touched
     int			nodewait;   // How many ticks to wait at this node
 

@@ -9036,7 +9036,6 @@ Changes to support compiling on Mac OS X (Darwin).
 Uses App folder.
 Based on support from Gibbon.
 
-=== commit
 
 *** w110_mp3
 patchfile = w110_001_mp3
@@ -9070,5 +9069,29 @@ Detect the music type upon replay too.  Otherwise it
 tries to play MP3 as a MUS.
 Some other comments and small changes.
 
+=== commit
+
+
+*** w110_misc5
+patchfile = w110_005_misc5
+- commit revision 1626
+Misc. changes.
+Standardize the usage of structs.
+
+*** w110_rdraw
+patchfile = w110_006_rdraw
+- commit revision 1627
+Remove extraneous texture step statements from Fuzz draw routines.
+Remove extraneous height step calculations from Fog render routine.
+
+*** w110_dyn_cover
+patchfile = w110_007_dyn_cover
+- commit revision 1628
+VISPLANE_DYNAMIC_COVER
+Replace arrays of [MAXVIDWIDTH] in visplane with dynamically
+allocated array of [vid.width].
+This reduces each visplane from 6464 bytes to 3268 bytes.
+Give better locality of reference.
+This will allow MAXVIDWIDTH to be increased, to allow larger screen sizes.
 
 

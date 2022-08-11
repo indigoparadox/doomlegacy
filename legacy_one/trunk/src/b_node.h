@@ -55,6 +55,7 @@ typedef enum
 
 } botdirtype_t;
 
+typedef struct SearchNode_s  SearchNode_t;
 typedef struct SearchNode_s
 {
     boolean  visited;
@@ -66,8 +67,8 @@ typedef struct SearchNode_s
              heuristic,
              x, y;
 
-    struct SearchNode_s  *pprevious, *pnext, *vnext, *vprevious,
-                         *dir[NUMBOTDIRS];
+    SearchNode_t  *pprevious, *pnext, *vnext, *vprevious,
+                  *dir[NUMBOTDIRS];
 
 #ifdef SHOWBOTPATH
     mobj_t   *mo;
