@@ -107,13 +107,17 @@ visplane_t*             vispl_last;*/
 //SoM: 3/23/2000: Use Boom visplane hashing.
 #define           VISPL_HASHSIZE      128
 // visplane hash array, for fast duplicate check
-static visplane_t *vispl_hashtab[VISPL_HASHSIZE];
+static visplane_t * vispl_hashtab[VISPL_HASHSIZE];
 
 // free list of visplane_t
 // [WDJ] head and tail were reversed from normal linked list meanings
 // Insert at tail, take free off head, use next for linking.
-static visplane_t *vispl_free_head;
-static visplane_t **vispl_free_tail = &vispl_free_head;  // addr of head or next ptr
+static visplane_t * vispl_free_head = NULL;
+static visplane_t ** vispl_free_tail = &vispl_free_head;  // addr of head or next ptr
+#ifdef DYNAMIC_VISPLANE_COVER
+static uint16_t visplane_width = 0;  // vid width of all visplanes
+static unsigned int  visplane_cover_size = 0; // sizeof cover array
+#endif
 
 // [WDJ] visplane_t global parameters  vsp_
 // visplane used for drawing in r_bsp and r_segs
@@ -354,6 +358,24 @@ void R_Clear_Planes (player_t *player)
         while( *vispl_free_tail )
             vispl_free_tail = &(*vispl_free_tail)->next;
     }
+   
+#ifdef DYNAMIC_VISPLANE_COVER
+    // Check if the display width has changed.
+    if( vid.width != visplane_width )
+    {
+        // The visplane top and bottom arrays have the wrong sizes.
+        while( vispl_free_head )
+        {
+           visplane_t* vd = vispl_free_head;
+           vispl_free_head = vd->next;
+           free( vd );  // top and bottom arrays are part of the allocation.
+        }
+        // New visplane will be of this width.
+        visplane_width = vid.width;
+        visplane_cover_size = sizeof(vis_cover_t) * vid.width;  // not incl. the pads
+        vispl_free_tail = & vispl_free_head;
+    }
+#endif
 
     lastopening = openings;
 
@@ -385,7 +407,14 @@ static visplane_t*  new_visplane(unsigned hash)
   else
   {
     // list empty, make a new visplane
+#ifdef DYNAMIC_VISPLANE_COVER
+    // The visplane has a dynamically sized cover array.
+    // The cover array is sized to the vid.width.
+    int cover_size = ( vid.width + 1 ) * sizeof(vis_cover_t);  // must include pad2
+    np = calloc(1, sizeof(visplane_t) + cover_size );  // 1 visplane_t, zeroed
+#else
     np = calloc(1, sizeof(visplane_t));  // 1 visplane_t, zeroed
+#endif
   }
   // link into hash, at [hash]
   np->next = vispl_hashtab[hash];
@@ -455,7 +484,11 @@ visplane_t* R_FindPlane( fixed_t height,
     check->viewz = viewz;
     check->viewangle = viewangle;
 
+#ifdef DYNAMIC_VISPLANE_COVER
+    memset (check->cover, 0xff, visplane_cover_size);
+#else
     memset (check->top, 0xff, sizeof(check->top));
+#endif
 
     return check;
 }
@@ -501,8 +534,13 @@ visplane_t*  R_CheckPlane( visplane_t*   pl,
     //added 30-12-97 : 0xff ne vaut plus -1 avec un short...
     // find any x in intersect range where have valid top[]
     for (x=intrl ; x<= intrh ; x++)
+#ifdef DYNAMIC_VISPLANE_COVER
+        if (pl->cover[x].top != TOP_MAX)
+            break;
+#else
         if (pl->top[x] != TOP_MAX)
             break;
+#endif     
 
     //SoM: 3/23/2000: Boom code
     if (x > intrh)
@@ -531,7 +569,11 @@ visplane_t*  R_CheckPlane( visplane_t*   pl,
         pl = new_pl;  // return new visplane
         pl->minx = start;
         pl->maxx = stop;
+#ifdef DYNAMIC_VISPLANE_COVER
+        memset(pl->cover, 0xff, visplane_cover_size);
+#else
         memset(pl->top, 0xff, sizeof pl->top);
+#endif
     }
     return pl;
 }
@@ -593,8 +635,13 @@ void R_ExpandPlane(visplane_t*  pl, int start, int stop)
     // Find any x in start..stop range where have valid top[], thus overlaps.
     int x;
     for (x = start ; x <= stop ; x++)
+#ifdef DYNAMIC_VISPLANE_COVER
+        if (pl->cover[x].top != TOP_MAX)
+            break;
+#else     
         if (pl->top[x] != TOP_MAX)
             break;
+#endif
 
     //SoM: 3/23/2000: Boom code
     if (x > stop)
@@ -730,8 +777,13 @@ void R_Draw_Planes (void)
             // Draw sky and sky flats in loop
             for (dc_x=pl->minx ; dc_x <= pl->maxx ; dc_x++)
             {
+#ifdef DYNAMIC_VISPLANE_COVER
+                dc_yl = pl->cover[dc_x].top;
+                dc_yh = pl->cover[dc_x].bottom;
+#else
                 dc_yl = pl->top[dc_x];
                 dc_yh = pl->bottom[dc_x];
+#endif
 
                 if (dc_yl <= dc_yh && dc_yh >= 0 && dc_yl < rdraw_viewheight )
                 {
@@ -773,8 +825,13 @@ void R_Draw_Planes (void)
             int x;
             for (x=pl->minx ; x <= pl->maxx ; x++)
             {
+#ifdef DYNAMIC_VISPLANE_COVER
+                dc_yl = pl->cover[x].top;
+                dc_yh = pl->cover[x].bottom;
+#else
                 dc_yl = pl->top[x];
                 dc_yh = pl->bottom[x];
+#endif
 
                 if (dc_yl <= dc_yh && dc_yh >= 0 && dc_yl < rdraw_viewheight )
                 {
@@ -918,18 +975,28 @@ void R_DrawSinglePlane(visplane_t* pl)
 
   //set the MAXIMUM value for unsigned short (but is not MAX for int)
   // mark the columns on either side of the valid area
+#ifdef DYNAMIC_VISPLANE_COVER
+  pl->cover[ pl->maxx+1 ].top = TOP_MAX;  // disable setup spanstart
+  pl->cover[ pl->minx-1 ].top = TOP_MAX;  // disable drawing on first call
+#else
   pl->top[pl->maxx+1] = TOP_MAX;  // disable setup spanstart
   pl->top[pl->minx-1] = TOP_MAX;  // disable drawing on first call
 //  pl->bottom[pl->maxx+1] = 0;		// prevent interference from random value
 //  pl->bottom[pl->minx-1] = 0;		// prevent interference from random value
+#endif
 
   stop = pl->maxx + 1;
 
   for (x=pl->minx ; x<= stop ; x++)
   {
     R_MakeSpans( x,
+#ifdef DYNAMIC_VISPLANE_COVER
+                pl->cover[x-1].top, pl->cover[x-1].bottom,  // draw range (except first)
+                pl->cover[x].top, pl->cover[x].bottom	// setup spanstart range
+#else
                 pl->top[x-1], pl->bottom[x-1],	// draw range (except first)
                 pl->top[x], pl->bottom[x]	// setup spanstart range
+#endif
                 );
   }
 
@@ -942,18 +1009,30 @@ void R_DrawSinglePlane(visplane_t* pl)
 void R_PlaneBounds(visplane_t* plane)
 {
   int  i;
-  int  hi, low;
+  uint16_t  hi, low;
 
+#ifdef DYNAMIC_VISPLANE_COVER
+  hi = plane->cover[plane->minx].top;
+  low = plane->cover[plane->minx].bottom;
+#else
   hi = plane->top[plane->minx];
   low = plane->bottom[plane->minx];
+#endif
 
   for(i = plane->minx + 1; i <= plane->maxx; i++)
   {
     // in screen coord, where 0 is top (hi)
+#ifdef DYNAMIC_VISPLANE_COVER
+    if( hi > plane->cover[i].top )
+      hi = plane->cover[i].top;
+    if( low < plane->cover[i].bottom )
+      low = plane->cover[i].bottom;
+#else
     if(plane->top[i] < hi)
       hi = plane->top[i];
     if(plane->bottom[i] > low)
       low = plane->bottom[i];
+#endif
   }
   plane->highest_top = hi;     // highest top
   plane->lowest_bottom = low;  // lowest bottom

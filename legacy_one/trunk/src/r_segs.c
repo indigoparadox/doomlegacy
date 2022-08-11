@@ -2025,8 +2025,13 @@ void R_RenderSegLoop (void)
             // visplane global parameter vsp_ceilingplane
             if (top <= bottom)
             {
+#ifdef DYNAMIC_VISPLANE_COVER
+                vsp_ceilingplane->cover[rw_x].top = top;
+                vsp_ceilingplane->cover[rw_x].bottom = bottom;
+#else
                 vsp_ceilingplane->top[rw_x] = top;
                 vsp_ceilingplane->bottom[rw_x] = bottom;
+#endif
             }
         }
 
@@ -2045,8 +2050,13 @@ void R_RenderSegLoop (void)
             // visplane global parameter vsp_floorplane
             if (top <= bottom && vsp_floorplane)
             {
+#ifdef DYNAMIC_VISPLANE_COVER
+                vsp_floorplane->cover[rw_x].top = top;
+                vsp_floorplane->cover[rw_x].bottom = bottom;
+#else
                 vsp_floorplane->top[rw_x] = top;
                 vsp_floorplane->bottom[rw_x] = bottom;
+#endif
             }
         }
 
@@ -2074,8 +2084,13 @@ void R_RenderSegLoop (void)
 
               if (top_w <= bottom_w)
               {
+#ifdef DYNAMIC_VISPLANE_COVER
+                ffplane[i].plane->cover[rw_x].top = top_w;
+                ffplane[i].plane->cover[rw_x].bottom = bottom_w;
+#else
                 ffplane[i].plane->top[rw_x] = top_w;
                 ffplane[i].plane->bottom[rw_x] = bottom_w;
+#endif
               }
             }
             else if (ffplane[i].height > viewz)
@@ -2091,8 +2106,13 @@ void R_RenderSegLoop (void)
 
               if (top_w <= bottom_w)
               {
+#ifdef DYNAMIC_VISPLANE_COVER
+                ffplane[i].plane->cover[rw_x].top = top_w;
+                ffplane[i].plane->cover[rw_x].bottom = bottom_w;
+#else
                 ffplane[i].plane->top[rw_x] = top_w;
                 ffplane[i].plane->bottom[rw_x] = bottom_w;
+#endif
               }
             }
           }

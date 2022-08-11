@@ -65,6 +65,20 @@
 // Now what is a visplane, anyway?
 // Simple : kinda floor/ceiling polygon optimised for Doom rendering.
 // 4124 bytes!
+// [WDJ] 1.48.8  sizeof(visplane_t) = 6464 bytes.
+#define DYNAMIC_VISPLANE_COVER
+// [WDJ] Allocate top and bottom arrays dynamically sized to vid.width.
+//       At 800x600, sizeof(visplane_t)= 3260.
+// 
+
+#ifdef DYNAMIC_VISPLANE_COVER
+// [WDJ] This gives better locality of reference. One array element is
+// usually referenced, and both top and bottom are usually accessed.
+typedef struct {
+  // 08-02-98: THIS IS UNSIGNED! VERY IMPORTANT!!
+  uint16_t  top, bottom; // screen coord of top, bottom edge
+} vis_cover_t;
+#endif
 //
 typedef struct visplane_s  visplane_t;
 typedef struct visplane_s
@@ -81,19 +95,7 @@ typedef struct visplane_s
 
   //SoM: 4/3/2000: Colormaps per sector!
   extracolormap_t  *    extra_colormap;
-
-  //faB: words sucks .. should get rid of that.. but eats memory
-  //added:08-02-98: THIS IS UNSIGNED! VERY IMPORTANT!!
-  unsigned short         pad1;   // leave pads for [minx-1] and [maxx+1]
-  unsigned short         top[MAXVIDWIDTH];  // screen coord of top edge
-  unsigned short         pad2;
-  unsigned short         pad3;
-  unsigned short         bottom[MAXVIDWIDTH];  // screen coord of bottom edge
-  unsigned short         pad4;
-
-  // SoM: [WDJ] highest top and lowest bottom as found by R_PlaneBounds
-  // Set and used only in R_Create_drawnodes
-  int                    highest_top, lowest_bottom;
+  ffloor_t *            ffloor;  // ffloor_t, when derived from fake floor
 
   fixed_t xoffs, yoffs;  // SoM: 3/6/2000: Scrolling flats.
 
@@ -102,7 +104,26 @@ typedef struct visplane_s
   // the old way caused trouble with the drawseg array was re-sized.
 //  int    scaleseg;
 
-  ffloor_t  * ffloor;  // ffloor_t, when derived from fake floor
+  // SoM: [WDJ] highest top and lowest bottom as found by R_PlaneBounds
+  // Set and used only in R_Create_drawnodes
+  uint16_t              highest_top, lowest_bottom;
+
+#ifdef DYNAMIC_VISPLANE_COVER
+  // Dynamic array, must be last.
+  // Indexed by screen x.
+  vis_cover_t           pad1; // leave pads for [minx-1] and [maxx+1]
+  vis_cover_t           cover[0];  // dynamically allocated
+  //                    pad2 is part of the allocation
+#else
+  //faB: words sucks .. should get rid of that.. but eats memory
+  //added:08-02-98: THIS IS UNSIGNED! VERY IMPORTANT!!
+  uint16_t              pad1;   // leave pads for [minx-1] and [maxx+1]
+  uint16_t              top[MAXVIDWIDTH];  // screen coord of top edge
+  uint16_t              pad2;
+  uint16_t              pad3;
+  uint16_t              bottom[MAXVIDWIDTH];  // screen coord of bottom edge
+  uint16_t              pad4;
+#endif
 } visplane_t;
 
 
