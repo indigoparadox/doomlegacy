@@ -1744,8 +1744,8 @@ void R_RenderFog( ffloor_t* fff, sector_t * intosec, lightlev_t foglight,
     int      texnum;
     fixed_t  texheightz;
     fixed_t  windowclip_top, windowclip_bottom;
-    fixed_t  topheight, heightstep, bot_patch;
-    fixed_t  sec_ceilingheight_viewrel;
+    fixed_t  bot_patch;
+//    fixed_t  topheight, heightstep, sec_ceilingheight_viewrel;  // became unused
     fixed_t  x1 = 0, x2 = rdraw_viewwidth - 1;
 
     // midtexture, 0=no-texture, otherwise valid
@@ -1808,10 +1808,11 @@ void R_RenderFog( ffloor_t* fff, sector_t * intosec, lightlev_t foglight,
     // For TM_picture, textures[texnum]->height
     column2s_length = dc_texheight;
     
+    // To calc topheight.
     // fake floor light heights in screen coord. , at x=0
-    sec_ceilingheight_viewrel = modelsec->ceilingheight - viewz;  // for fog sector
-    topheight = (centeryfrac) - FixedMul(sec_ceilingheight_viewrel, dm_yscale);
-    heightstep = -FixedMul (rw_scalestep, sec_ceilingheight_viewrel);
+//    sec_ceilingheight_viewrel = modelsec->ceilingheight - viewz;  // for fog sector
+//    topheight = (centeryfrac) - FixedMul(sec_ceilingheight_viewrel, dm_yscale);
+//    heightstep = -FixedMul (rw_scalestep, sec_ceilingheight_viewrel);
 
     // Setup lighting based on the presence/lack-of 3D floors.
     dc_numlights = 1;
@@ -1855,7 +1856,7 @@ void R_RenderFog( ffloor_t* fff, sector_t * intosec, lightlev_t foglight,
         dm_windowtop = centeryfrac - FixedMul(windowclip_top, dm_yscale);
         dm_windowbottom = centeryfrac - FixedMul(windowclip_bottom, dm_yscale);
         
-        topheight += heightstep;
+//        topheight += heightstep;
 //        if(topheight > dm_windowtop)
         {
 //	    if( dm_windowbottom > topheight )

@@ -143,8 +143,7 @@ void R_DrawFuzzColumn_16 (void)
 {
     int                 count;
     byte*               dest;
-    fixed_t             frac;
-    fixed_t             fracstep;
+    // Does not use the source pixels.
 
     // Adjust borders. Low...
     if (!dc_yl)
@@ -174,26 +173,23 @@ void R_DrawFuzzColumn_16 (void)
     // Does not work with blocky mode.
     dest = ylookup[dc_yl] + columnofs[dc_x];
 
-    // Looks familiar.
-    fracstep = dc_iscale;
-    frac = dc_texturemid + (dc_yl-centery)*fracstep;
-
     do
     {
         // Lookup framebuffer, and retrieve a pixel that is either one column
-        //  left or right of the current one.
-        // Add index from colormap to index.
-        // Remap existing dest, modify position, dim through LIGHTTABLE[6].
-//        *dest = color8.to16[reg_colormaps[6*256+dest[fuzzoffset[fuzzpos]]]];
-// FIXME, reads dest as palette
-        *(uint16_t*)dest = color8.to16[ reg_colormaps[ LIGHTTABLE(6) + dest[fuzzoffset[fuzzpos]]] ];
+        //  left or right of the current one, dim it 8%, and write it as dest.
+        // 8bpp: *dest = reg_colormaps[6*256+dest[fuzzoffset[fuzzpos]]];
+        register const unsigned int  alpha = 235;  // 92%
+        register uint32_t dc = *(uint16_t*)(dest + fuzzoffset[fuzzpos]);
+        *(uint16_t*)dest=
+              ((((dc & mask_r) * alpha) >> 8) & mask_r)
+            | ((((dc & mask_g) * alpha) >> 8) & mask_g)
+            | ((((dc & mask_b) * alpha) >> 8) & mask_b);
 
         // Clamp table lookup index.
         if (++fuzzpos == FUZZTABLE)
             fuzzpos = 0;
 
         dest += vid.ybytes;
-        frac += fracstep;
     } while (count--);
 }
 //#endif

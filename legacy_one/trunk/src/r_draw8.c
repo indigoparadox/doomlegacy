@@ -309,8 +309,7 @@ void R_DrawFuzzColumn_8(void)
 {
     register int count;
     register byte *dest;
-    register fixed_t frac;
-    register fixed_t fracstep;
+    // Does not use the source pixels.
 
     // Adjust borders. Low...
     if (dc_yl <= 0)
@@ -337,17 +336,12 @@ void R_DrawFuzzColumn_8(void)
     // Does not work with blocky mode.
     dest = ylookup[dc_yl] + columnofs[dc_x];
 
-    // Looks familiar.
-    fracstep = dc_iscale;
-    frac = dc_texturemid + (dc_yl - centery) * fracstep;
-
     do
     {
         // Lookup framebuffer, and retrieve a pixel that is either one column
         //  left or right of the current one.
         // Add index from colormap to index.
         // Remap existing dest, modify position, dim through LIGHTTABLE[6].
-//        *dest = reg_colormaps[6 * 256 + dest[fuzzoffset[fuzzpos]]];
         *dest = reg_colormaps[LIGHTTABLE(6) + dest[fuzzoffset[fuzzpos]]];
 
         // Clamp table lookup index.
@@ -355,8 +349,6 @@ void R_DrawFuzzColumn_8(void)
             fuzzpos = 0;
 
         dest += vid.ybytes;
-
-        frac += fracstep;
     }
     while (count--);
 }
